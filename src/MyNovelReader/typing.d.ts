@@ -1,2 +1,2 @@
 
-declare const $: any
+// declare const $: any

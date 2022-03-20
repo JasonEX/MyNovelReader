@@ -2243,6 +2243,27 @@ const sites = [
       }
   },
 
+  {siteName: "69书吧",
+    url: "https?://www\\.69shu\\.com/txt/\\d+/\\d+",
+    titleSelector: 'h1',
+    contentSelector: ".txtnav",
+    contentRemove: ".txtinfo.hide720",
+    nextSelector: '.page1 a:nth-child(4)',
+    prevSelector: '.page1 a:nth-child(1)',
+    indexSelector: '.page1 a:nth-child(3)',
+    },
+
+  {siteName: "读万卷",
+    url: "https?://www\\.duwanjuan\\.com/html/\\d+/\\d+/\\d+\\.html",
+    titleSelector: 'h1',
+    contentSelector: "#acontent",
+    contentRemove: ".tishi",
+    nextSelector: '.footlink a:nth-child(3)',
+    prevSelector: '.footlink a:nth-child(1)',
+    indexSelector: '.footlink a:nth-child(2)',
+    contentReplace: ['\\(读万卷 www.duwanjuan.com\\)','读万卷 www\\.duwanjuan\\.com'],
+    },
+
 ];
 
 export default sites
