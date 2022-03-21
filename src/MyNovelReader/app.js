@@ -309,8 +309,11 @@ var App = {
             elmOne.onmousedown = null;
         }
 
-        $(document).unbind("keypress");
-        $(document).unbind("keydown");
+        // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
+        try {
+            unsafeWindow.$(unsafeWindow).off()
+        } catch (e) {}
+    
 
         // remove body style
         $('link[rel="stylesheet"], script').remove();

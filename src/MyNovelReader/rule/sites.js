@@ -235,12 +235,18 @@ const sites = [
       contentSelector: '.noveltext',
       contentHandle: false,
       contentRemove: 'font[color], hr',
-      contentPatch: function (fakeStub) {
+      contentPatch: function ($doc) {
           // 移除 h2 的标题
-          fakeStub.find('div:has(>h2)').remove();
-
-          fakeStub.find('#six_list, #sendKingTickets').parent().remove();
-          fakeStub.find("div.noveltext").find("div:first, h1").remove();
+          $doc.find('div:has(>h2)').remove();
+          $doc.find('#six_list, #sendKingTickets').parent().remove();
+          $doc.find("div.noveltext").find("div:first, h1").remove();
+          
+          // 移除VIP章节方块
+          var $node = $doc.find('.noveltext');
+          if ($node.attr("class").split(/\s+/).length === 2) {
+              var fontName = $node.attr("class").split(/\s+/)[1];
+              $node.html(replaceJjwxcCharacter(fontName, $node.html()));
+          }
       },
       contentReplace: [
           '@无限好文，尽在晋江文学城'
@@ -2262,6 +2268,14 @@ const sites = [
     prevSelector: '.footlink a:nth-child(1)',
     indexSelector: '.footlink a:nth-child(2)',
     contentReplace: ['\\(读万卷 www.duwanjuan.com\\)','读万卷 www\\.duwanjuan\\.com'],
+    },
+
+  {siteName: "书山中文网",
+    url: "https?://shushan\\.zhangyue\\.net/book/\\d+/\\d+/",
+    contentSelector: ".art_con",
+    nextSelector: '.next-cha',
+    prevSelector: '.last-cha',
+    indexSelector: 'a:contains(书页)',
     },
 
 ];

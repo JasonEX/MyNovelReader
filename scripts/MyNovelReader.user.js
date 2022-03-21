@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.4.4
+// @version        6.4.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -27,6 +27,8 @@
 // @require        https://cdn.staticfile.org/underscore.js/1.7.0/underscore-min.js
 // @require        https://cdn.staticfile.org/keymaster/1.6.1/keymaster.min.js
 // @require        https://greasyfork.org/scripts/2672-meihua-cn2tw/code/Meihua_cn2tw.js?version=7375
+// 晋江文学城防盗字体对照表
+// @require        https://greasyfork.org/scripts/425673-%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81/code/%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81.js?version=987740
 
 // @connect        *
 // @connect        *://*.qidian.com/
@@ -58,6 +60,7 @@
 // @include        *://shouda8.com/*/*.html
 // @include        *://novel.hongxiu.com/*/*/*.shtml
 // @include        *://www.readnovel.com/novel/*.html
+// @include        *://shushan.zhangyue.net/book/*/*/
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -986,12 +989,18 @@
         contentSelector: '.noveltext',
         contentHandle: false,
         contentRemove: 'font[color], hr',
-        contentPatch: function (fakeStub) {
+        contentPatch: function ($doc) {
             // 移除 h2 的标题
-            fakeStub.find('div:has(>h2)').remove();
-
-            fakeStub.find('#six_list, #sendKingTickets').parent().remove();
-            fakeStub.find("div.noveltext").find("div:first, h1").remove();
+            $doc.find('div:has(>h2)').remove();
+            $doc.find('#six_list, #sendKingTickets').parent().remove();
+            $doc.find("div.noveltext").find("div:first, h1").remove();
+            
+            // 移除VIP章节方块
+            var $node = $doc.find('.noveltext');
+            if ($node.attr("class").split(/\s+/).length === 2) {
+                var fontName = $node.attr("class").split(/\s+/)[1];
+                $node.html(replaceJjwxcCharacter(fontName, $node.html()));
+            }
         },
         contentReplace: [
             '@无限好文，尽在晋江文学城'
@@ -3013,6 +3022,14 @@
       prevSelector: '.footlink a:nth-child(1)',
       indexSelector: '.footlink a:nth-child(2)',
       contentReplace: ['\\(读万卷 www.duwanjuan.com\\)','读万卷 www\\.duwanjuan\\.com'],
+      },
+
+    {siteName: "书山中文网",
+      url: "https?://shushan\\.zhangyue\\.net/book/\\d+/\\d+/",
+      contentSelector: ".art_con",
+      nextSelector: '.next-cha',
+      prevSelector: '.last-cha',
+      indexSelector: 'a:contains(书页)',
       },
 
   ];
@@ -5472,8 +5489,11 @@
               elmOne.onmousedown = null;
           }
 
-          $(document).unbind("keypress");
-          $(document).unbind("keydown");
+          // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
+          try {
+              unsafeWindow.$(unsafeWindow).off();
+          } catch (e) {}
+      
 
           // remove body style
           $('link[rel="stylesheet"], script').remove();
