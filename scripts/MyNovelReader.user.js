@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.4.5
+// @version        6.4.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -813,6 +813,9 @@
           }
       },
       contentPatch: function($doc) {
+          // 移除本章说评论数气泡
+          $doc.find('.review-count').remove();
+
           // 滚屏的方式无法获取下一页
           if ($doc.find('#j_chapterPrev').length === 0) {
               var $node = $doc.find('div[id^="chapter-"]');
@@ -989,17 +992,19 @@
         contentSelector: '.noveltext',
         contentHandle: false,
         contentRemove: 'font[color], hr',
-        contentPatch: function ($doc) {
+        contentPatchAsync: function ($doc, callback) {
             // 移除 h2 的标题
             $doc.find('div:has(>h2)').remove();
             $doc.find('#six_list, #sendKingTickets').parent().remove();
             $doc.find("div.noveltext").find("div:first, h1").remove();
+
+            $doc.find("div[align=right]").remove();
             
             // 移除VIP章节方块
             var $node = $doc.find('.noveltext');
             if ($node.attr("class").split(/\s+/).length === 2) {
                 var fontName = $node.attr("class").split(/\s+/)[1];
-                $node.html(replaceJjwxcCharacter(fontName, $node.html()));
+                replaceJjwxcCharacter(fontName, $node.html()).then(html=>{$node.html(html);callback();});
             }
         },
         contentReplace: [
