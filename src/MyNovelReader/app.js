@@ -325,6 +325,15 @@ var App = {
             }
             return true;
         }).remove();
+
+        // 移除 html 标签中非 head 和 body 的元素
+        $('html').children().filter(function () {
+            let tagName = $(this).prop('tagName').toLowerCase()
+            if (tagName !== 'head' && tagName !== 'body') {
+                return true
+            }
+            return false
+        }).remove()
     },
     initDocument: function(parser) {
         document.title = parser.docTitle;

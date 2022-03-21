@@ -28,6 +28,7 @@
     "@rollup/plugin-typescript": "^5.0.2",
     "@types/jquery": "^3.2.12",
     "@types/minimist": "^1.2.0",
+    "@types/underscore": "^1.11.4",
     "@ywzhaiqi/rollup-plugin-less": "^0.1.1",
     "minimist": "^1.2.0",
     "rollup": "^2.23.1",

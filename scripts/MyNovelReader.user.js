@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.4.3
+// @version        6.4.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -5487,6 +5487,15 @@
                   return false;
               }
               return true;
+          }).remove();
+
+          // 移除 html 标签中非 head 和 body 的元素
+          $('html').children().filter(function () {
+              let tagName = $(this).prop('tagName').toLowerCase();
+              if (tagName !== 'head' && tagName !== 'body') {
+                  return true
+              }
+              return false
           }).remove();
       },
       initDocument: function(parser) {

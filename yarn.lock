@@ -84,6 +84,11 @@
   resolved "https://registry.npm.taobao.org/@types/sizzle/download/@types/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
   integrity sha1-qBG4wY4rq6t9VCszZYh64uTZ3kc=
 
+"@types/underscore@^1.11.4":
+  version "1.11.4"
+  resolved "https://registry.yarnpkg.com/@types/underscore/-/underscore-1.11.4.tgz#62e393f8bc4bd8a06154d110c7d042a93751def3"
+  integrity sha512-uO4CD2ELOjw8tasUrAhvnn2W4A0ZECOvMjCivJr4gA9pGgjv+qxKWY9GLTMVEK8ej85BxQOocUyE7hImmSQYcg==
+
 "@ywzhaiqi/rollup-plugin-less@^0.1.1":
   version "0.1.1"
   resolved "https://registry.npmjs.org/@ywzhaiqi/rollup-plugin-less/-/rollup-plugin-less-0.1.1.tgz#1b72749d4d44e1b0635daacfc485bde7934c1ca5"
