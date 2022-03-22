@@ -3165,19 +3165,21 @@
 
               var currentChapter = chapterList.find(e => e.chapterUid === chapterUid);
 
+              var { chapterIdx } = currentChapter || { chapterIdx: 1 };
+
               var nextUrl, prevUrl, indexUrl;
 
               indexUrl = '/web/reader/' + encode(bookId);
 
-              if (!currentChapter || currentChapter.chapterIdx === chapterList.length) {
+              if (chapterIdx === chapterList.length) {
                   nextUrl = '';
               } else {
-                  var nextChapterUid = chapterList[currentChapter.chapterIdx].chapterUid;
+                  var nextChapterUid = chapterList[chapterIdx].chapterUid;
                   nextUrl = indexUrl + 'k' + encode(nextChapterUid);
               }
 
               if (chapterUid && chapterUid > 1) {
-                  var prevChapterUid = chapterList[currentChapter.chapterIdx - 2].chapterUid;
+                  var prevChapterUid = chapterList[chapterIdx - 2].chapterUid;
                   prevUrl = indexUrl + 'k' + encode(prevChapterUid);
               } else {
                   prevUrl = '';
