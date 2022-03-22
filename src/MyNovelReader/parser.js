@@ -427,6 +427,11 @@ Parser.prototype = {
     handleContentText: function(text, info){
         if(!text) return null;
 
+        if (info.useRawContent) {
+            C.log('内容处理已被自定义站点规则 useRawContent 关闭')
+            return text
+        }
+
         // 贴吧的内容处理比较耗时间
         C.group('开始内容处理');
         C.time('内容处理');

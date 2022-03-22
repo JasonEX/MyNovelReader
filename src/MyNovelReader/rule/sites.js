@@ -1,3 +1,4 @@
+import getMiddleStr from '../utils/string'
 
 // ===== 自定义站点规则 =====
 
@@ -2281,6 +2282,174 @@ const sites = [
     nextSelector: '.next-cha',
     prevSelector: '.last-cha',
     indexSelector: 'a:contains(书页)',
+    },
+  
+  {siteName: "微信读书",
+    url: "https?://weread\\.qq\\.com/web/reader/.*?",
+    contentSelector: ".wr_canvasContainer",
+    nextSelector: '#nextchapter',
+    prevSelector: '#prevchapter',
+    indexSelector: '#bookindex',
+    titleSelector: '.chapterTitle',
+    contentHandle: false,
+    useRawContent: true, //完全关闭 handleContentText 内容处理函数，使用原始内容
+    useiframe: true,
+    mutationSelector: '.wr_canvasContainer',
+    mutationChildCount: 1,
+    contentPatchAsync: function ($doc, callback) {
+        // ---------------参数编解码---------------
+        // 编码
+        function encode(plainText) {
+            if (('number' == typeof plainText && (plainText = plainText.toString()), 'string' != typeof plainText))
+                return plainText
+            var md5Hash = CryptoJS.MD5(plainText).toString(CryptoJS.enc.Hex),
+                _0xf208b6 = md5Hash.substr(0, 3),
+                _0x2045c1 = (function (plainText) {
+                    if (/^\d*$/.test(plainText)) {
+                        for (
+                            var _0x1c7c70 = plainText.length, _0x9fd207 = [], _0x2fd6ee = 0;
+                            _0x2fd6ee < _0x1c7c70;
+                            _0x2fd6ee += 9
+                        ) {
+                            var _0x4089d1 = plainText.slice(_0x2fd6ee, Math.min(_0x2fd6ee + 9, _0x1c7c70))
+                            _0x9fd207.push(parseInt(_0x4089d1).toString(16))
+                        }
+                        return ['3', _0x9fd207]
+                    }
+                    for (var _0x4b46c9 = '', _0x1f2538 = 0; _0x1f2538 < plainText.length; _0x1f2538++)
+                        _0x4b46c9 += plainText.charCodeAt(_0x1f2538).toString(16)
+                    return ['4', [_0x4b46c9]]
+                })(plainText)
+            ;(_0xf208b6 += _0x2045c1[0]), (_0xf208b6 += 2 + md5Hash.substr(md5Hash.length - 2, 2))
+            for (var _0x59bebd = _0x2045c1[1], _0x1aafd3 = 0; _0x1aafd3 < _0x59bebd.length; _0x1aafd3++) {
+                var _0x1af4ac = _0x59bebd[_0x1aafd3].length.toString(16)
+                1 === _0x1af4ac.length && (_0x1af4ac = '0' + _0x1af4ac),
+                    (_0xf208b6 += _0x1af4ac),
+                    (_0xf208b6 += _0x59bebd[_0x1aafd3]),
+                    _0x1aafd3 < _0x59bebd.length - 1 && (_0xf208b6 += 'g')
+            }
+            return (
+                _0xf208b6.length < 20 && (_0xf208b6 += md5Hash.substr(0, 20 - _0xf208b6.length)),
+                (_0xf208b6 += CryptoJS.MD5(_0xf208b6).toString(CryptoJS.enc.Hex).substr(0, 3))
+            )
+        }
+        // 解码
+        function decode(encodedText) {
+            if ('string' != typeof encodedText || encodedText.length <= 3) return ''
+            for (
+                var _0x25eace = encodedText.charAt(3),
+                    _0x6aad1d = 5 + parseInt(encodedText.charAt(4)),
+                    _0x23fa2c = encodedText.length - 3,
+                    _0xb4db26 = '',
+                    _0x2bf2ee = _0x6aad1d;
+                _0x2bf2ee < _0x23fa2c && (_0x2bf2ee === _0x6aad1d || 'g' === encodedText.charAt(_0x2bf2ee));
+
+            ) {
+                if ((_0x2bf2ee !== _0x6aad1d && _0x2bf2ee++, _0x2bf2ee + 2 > _0x23fa2c)) return ''
+                var _0x436006 = parseInt(encodedText.substr(_0x2bf2ee, 2), 16)
+                if (_0x2bf2ee + 2 + _0x436006 > _0x23fa2c) return ''
+                var _0x3f72db = encodedText.substr(_0x2bf2ee + 2, _0x436006),
+                    _0x41cdae = ''
+                if ('3' === _0x25eace) {
+                    var _0x3c987c = parseInt(_0x3f72db, 16)
+                    if (isNaN(_0x3c987c)) return ''
+                    _0x41cdae = '' + _0x3c987c
+                } else
+                    for (var _0x293868 = 0, _0x14b43a = _0x3f72db.length; _0x293868 < _0x14b43a; _0x293868 += 2) {
+                        var _0x4f2610 = parseInt(_0x3f72db.substr(_0x293868, 2), 16)
+                        _0x41cdae += String.fromCharCode(_0x4f2610)
+                    }
+                ;(_0xb4db26 += _0x41cdae), (_0x2bf2ee = _0x2bf2ee + 2 + _0x436006)
+            }
+            return _0xb4db26
+        }
+        // ---------------参数编解码---------------
+
+        function getChapterList(){
+            var self = this
+            var reqObj = {
+                url: this.curPageUrl,
+                method: "GET",
+                overrideMimeType: "text/html;charset=utf-8",
+                headers: {},
+                onload: function(res){
+                    var text = res.responseText;
+                    var json = JSON.parse(getMiddleStr(text, 'window.__INITIAL_STATE__=', ';'))
+                    thenCallback.call(self, json)
+                }
+            };
+            GM_xmlhttpRequest(reqObj)
+        }
+
+        function thenCallback(json) {
+            if(json){
+                this.__weReadJson = json
+            }
+            var chapterList = this.__weReadJson.reader.chapterInfos
+
+            const re = /\/web\/reader\/([0-9a-f]+)k?([0-9a-f]+)?/g
+            const matchs = [...this.curPageUrl.matchAll(re)]
+            let bookId,
+                chapterUid = null
+            if (matchs) {
+                bookId = decode(matchs[0][1])
+                if (matchs[0].length === 3) {
+                    chapterUid = parseInt(decode(matchs[0][2]))
+                }
+            }
+
+            var currentChapter = chapterList.find(e => e.chapterUid === chapterUid)
+
+            var nextUrl, prevUrl, indexUrl
+
+            indexUrl = '/web/reader/' + encode(bookId)
+
+            if (!currentChapter || currentChapter.chapterIdx === chapterList.length) {
+                nextUrl = ''
+            } else {
+                var nextChapterUid = chapterList[currentChapter.chapterIdx].chapterUid
+                nextUrl = indexUrl + 'k' + encode(nextChapterUid)
+            }
+
+            if (chapterUid && chapterUid > 1) {
+                var prevChapterUid = chapterList[currentChapter.chapterIdx - 2].chapterUid
+                prevUrl = indexUrl + 'k' + encode(prevChapterUid)
+            } else {
+                prevUrl = ''
+            }
+
+            var dataUrls = []
+
+            $doc.find('.wr_canvasContainer canvas').each(function () {
+                dataUrls.push(this.toDataURL())
+                $(this).remove()
+            })
+
+            var $body = $doc.find('body')
+            if (nextUrl) {
+                // 加上一页链接
+                $('<div id="nextchapter">').attr('href', nextUrl).appendTo($body)
+            }
+            if (prevUrl) {
+                // 加下一页链接
+                $('<div id="prevchapter">').attr('href', prevUrl).appendTo($body)
+            }
+            // 目录
+            $('<div id="bookindex">目录</div>').attr('href', indexUrl).appendTo($body)
+            // 正文
+            var $container = $doc.find('.wr_canvasContainer')
+            for (const dataUrl of dataUrls) {
+                $('<img>').attr('src', dataUrl).appendTo($container)
+            }
+            callback()
+        }
+
+        if (!this.__weReadJson) {
+            getChapterList.call(this)
+        } else {
+            thenCallback.call(this)
+        }
+    }
     },
 
 ];

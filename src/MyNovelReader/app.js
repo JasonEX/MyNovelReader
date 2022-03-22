@@ -142,6 +142,7 @@ var App = {
             var mutationSelector = App.site.mutationSelector;
             var target = $doc.find(mutationSelector)[0];
             if (target) {
+                var beforeTargetChilren = target.children.length
                 C.log(`target.children.length = ${target.children.length}`, target)
                 if (App.site.mutationChildText) {
                     if (target.textContent.indexOf(App.site.mutationChildText) > -1) {
@@ -158,9 +159,11 @@ var App = {
 
         if (shouldAdd) {
             var observer = new MutationObserver(function(mutations) {
-                var nodeAdded = mutations.some(function(x) {
-                    return x.addedNodes.length > 0;
-                });
+                // var nodeAdded = mutations.some(function(x) {
+                //     return x.addedNodes.length > 0;
+                // });
+                target = $doc.find(mutationSelector)[0]
+                var nodeAdded = target.children.length > beforeTargetChilren
 
                 if (nodeAdded) {
                     observer.disconnect();
@@ -168,8 +171,9 @@ var App = {
                 }
             });
 
-            observer.observe(target, {
-                childList: true
+            observer.observe(document, {
+                childList: true,
+                subtree: true
             });
 
             C.log("添加 MutationObserve 成功：", mutationSelector);
