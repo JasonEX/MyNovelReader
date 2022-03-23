@@ -377,7 +377,7 @@ var App = {
             GM_setValue("auto_enable", false);
             L_setValue("mynoverlreader_disable_once", true);
 
-            location.href = App.activeUrl;
+            location.href = App.activeUrl || App.curPageUrl
         } else {
             GM_setValue("auto_enable", true);
             L_removeValue("mynoverlreader_disable_once");

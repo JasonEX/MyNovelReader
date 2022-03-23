@@ -777,26 +777,26 @@ const sites = [
           "&amp;nbsp",
       ]
   },
-  {siteName: "飞卢小说网",
-      url: "^https?://b\\.faloo\\.com/p/\\d+/\\d+\\.html",
-      titleSelector: "#title h1",
-      bookTitleSelector: "div.nav > a:last",
-      bookTitleReplace: '小说$',
+//   {siteName: "飞卢小说网",
+//       url: "^https?://b\\.faloo\\.com/p/\\d+/\\d+\\.html",
+//       titleSelector: "#title h1",
+//       bookTitleSelector: "div.nav > a:last",
+//       bookTitleReplace: '小说$',
 
-      nextSelector: "a#next_page",
-      prevSelector: "a#pre_page",
-      indexSelector: "a#huimulu",
+//       nextSelector: "a#next_page",
+//       prevSelector: "a#pre_page",
+//       indexSelector: "a#huimulu",
 
-      contentSelector: "#main > .main0",
-      contentRemove: "> *:not(#con_imginfo, #content), .p_content_bottom",
-      contentReplace: [
-          "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
-      ],
-      contentPatch: function(fakeStub){
-          fakeStub.find("#content").find(".p_gonggao").remove();
-          // fakeStub.find("#con_imginfo").prependTo("#content");
-      }
-  },
+//       contentSelector: "#main > .main0",
+//       contentRemove: "> *:not(#con_imginfo, #content), .p_content_bottom",
+//       contentReplace: [
+//           "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
+//       ],
+//       contentPatch: function(fakeStub){
+//           fakeStub.find("#content").find(".p_gonggao").remove();
+//           // fakeStub.find("#con_imginfo").prependTo("#content");
+//       }
+//   },
   {siteName: "顶点小说",
       url: "^https?://www\\.(?:23us|x23us|23wx|xs222)\\.(?:com|cc)/html/\\d+/\\d+/\\d+\\.html$",
       bookTitleSelector: '.crumbs > div > a:last, #amain > dl > dt > a:last',
@@ -2453,6 +2453,22 @@ const sites = [
         }
     }
     },
+
+    {siteName: "飞卢小说网",
+    url: "^https?://b\\.faloo\\.com/\\d+_\\d+\\.html",
+    titleSelector: "h1",
+    bookTitleSelector: "#novelName",
+
+    nextSelector: "a#next_page",
+    prevSelector: "a#pre_page",
+    indexSelector: "a#huimulu",
+
+    contentSelector: ".noveContent",
+    
+    contentReplace: [
+        "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
+    ],
+},
 
 ];
 

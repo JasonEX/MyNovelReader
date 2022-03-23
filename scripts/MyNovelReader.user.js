@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.4.7
+// @version        6.4.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -261,6 +261,7 @@
 // @include        *://www.epzw.com/files/article/html/*/*/*.html
 // @include        *://www.dashubao.co/book/*/*/*.html
 // @include        *://b.faloo.com/p/*/*.html
+// @include        *://b.faloo.com/*_*.html
 // @include        *://www.baikv.com/*/*.html
 // @include        *://www.66721.com/*/*/*.html
 // @include        *://www.3dllc.com/html/*/*/*.html
@@ -1542,26 +1543,26 @@
             "&amp;nbsp",
         ]
     },
-    {siteName: "飞卢小说网",
-        url: "^https?://b\\.faloo\\.com/p/\\d+/\\d+\\.html",
-        titleSelector: "#title h1",
-        bookTitleSelector: "div.nav > a:last",
-        bookTitleReplace: '小说$',
+  //   {siteName: "飞卢小说网",
+  //       url: "^https?://b\\.faloo\\.com/p/\\d+/\\d+\\.html",
+  //       titleSelector: "#title h1",
+  //       bookTitleSelector: "div.nav > a:last",
+  //       bookTitleReplace: '小说$',
 
-        nextSelector: "a#next_page",
-        prevSelector: "a#pre_page",
-        indexSelector: "a#huimulu",
+  //       nextSelector: "a#next_page",
+  //       prevSelector: "a#pre_page",
+  //       indexSelector: "a#huimulu",
 
-        contentSelector: "#main > .main0",
-        contentRemove: "> *:not(#con_imginfo, #content), .p_content_bottom",
-        contentReplace: [
-            "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
-        ],
-        contentPatch: function(fakeStub){
-            fakeStub.find("#content").find(".p_gonggao").remove();
-            // fakeStub.find("#con_imginfo").prependTo("#content");
-        }
-    },
+  //       contentSelector: "#main > .main0",
+  //       contentRemove: "> *:not(#con_imginfo, #content), .p_content_bottom",
+  //       contentReplace: [
+  //           "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
+  //       ],
+  //       contentPatch: function(fakeStub){
+  //           fakeStub.find("#content").find(".p_gonggao").remove();
+  //           // fakeStub.find("#con_imginfo").prependTo("#content");
+  //       }
+  //   },
     {siteName: "顶点小说",
         url: "^https?://www\\.(?:23us|x23us|23wx|xs222)\\.(?:com|cc)/html/\\d+/\\d+/\\d+\\.html$",
         bookTitleSelector: '.crumbs > div > a:last, #amain > dl > dt > a:last',
@@ -3218,6 +3219,22 @@
           }
       }
       },
+
+      {siteName: "飞卢小说网",
+      url: "^https?://b\\.faloo\\.com/\\d+_\\d+\\.html",
+      titleSelector: "h1",
+      bookTitleSelector: "#novelName",
+
+      nextSelector: "a#next_page",
+      prevSelector: "a#pre_page",
+      indexSelector: "a#huimulu",
+
+      contentSelector: ".noveContent",
+      
+      contentReplace: [
+          "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
+      ],
+  },
 
   ];
 
@@ -5749,7 +5766,7 @@
               GM_setValue("auto_enable", false);
               L_setValue("mynoverlreader_disable_once", true);
 
-              location.href = App$1.activeUrl;
+              location.href = App$1.activeUrl || App$1.curPageUrl;
           } else {
               GM_setValue("auto_enable", true);
               L_removeValue("mynoverlreader_disable_once");

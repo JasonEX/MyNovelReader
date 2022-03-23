@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.4.7
+// @version        6.4.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -261,6 +261,7 @@
 // @include        *://www.epzw.com/files/article/html/*/*/*.html
 // @include        *://www.dashubao.co/book/*/*/*.html
 // @include        *://b.faloo.com/p/*/*.html
+// @include        *://b.faloo.com/*_*.html
 // @include        *://www.baikv.com/*/*.html
 // @include        *://www.66721.com/*/*/*.html
 // @include        *://www.3dllc.com/html/*/*/*.html
