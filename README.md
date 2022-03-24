@@ -2,12 +2,13 @@
 
 [MyNovelReader](scripts/MyNovelReader.user.js)：小说阅读脚本
 
+[自定义站点规则说明][siteExample]
+
 # 安装
 
 [Github][install_github]
 
 [jsDelivr][install_jsdelivr]
-
 
 # 原作者主页
 
@@ -20,3 +21,4 @@
 [ywzhaiqi_userscripts]: http://userscripts.org/users/138842/scripts
 [install_github]: https://github.com/821938089/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
+[siteExample]: /src/MyNovelReader/rule/siteExample.js
