@@ -64,7 +64,7 @@ var Rule = {
       '全文阅读$',
   ],
 
-  contentRemove: "script, iframe",          // 内容移除选择器
+  contentRemove: "script, iframe, a",          // 内容移除选择器
   removeLineRegExp: /<p>[　\s。;，！\.∷〖]*<\/p>/g,  // 移除只有一个字符的行
 
   // 以下不常改

@@ -233,6 +233,8 @@
 // @include        *://www.alfagame.net/chapter_www.html?1*
 // @include        *://www.69shu.com/txt/*/*
 // @include        *://www.duwanjuan.com/html/*/*/*.html
+// @include        *://www.imiaobige.com/read/*/*.html
+// @include        *://www.ixs.la/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
