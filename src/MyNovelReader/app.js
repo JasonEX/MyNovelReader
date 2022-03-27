@@ -25,6 +25,8 @@ var App = {
     // 滚动激活相关
     curFocusElement: null,
     curFocusIndex: 1,
+    // 站点字体信息
+    siteFontInfo: null,
 
     init: function() {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
@@ -200,6 +202,18 @@ var App = {
             }
         }
 
+        // 使用站点字体
+        if (App.site.useSiteFont) {
+            if (_.isBoolean(App.site.useSiteFont)) {
+                App.siteFontInfo = App.getSiteFontInfo()
+            } else if (_.isString(App.site.useSiteFont)) {
+                if (!App.site.useSiteFont.trim().endsWith(',')) {
+                    App.site.useSiteFont = App.site.useSiteFont.trim() + ','
+                }
+                App.siteFontInfo = { siteFontFamily: App.site.useSiteFont.trim() }
+            }
+        }
+
         var parser = new Parser(App.site, document);
         var hasContent = !!parser.hasContent();
         if (hasContent) {
@@ -259,6 +273,22 @@ var App = {
         // 插入站点样式
         if (App.site.style) {
             GM_addStyle(App.site.style);
+        }
+
+        // 插入站点字体样式
+        if (App.site.useSiteFont && App.siteFontInfo) {
+            const { external, internal } = App.siteFontInfo
+            if (internal) {
+                $('<style class="noRemove siteFont">')
+                    .text(internal.map(e => e.cssText).join('\n'))
+                    .appendTo('head')
+            }
+            // 插入外部样式表可能会影响阅读界面样式
+            // if (external) {
+            //     for (const href of external) {
+            //         $('<link class="noRemove siteFont" rel="stylesheet">').attr('href', href).prependTo('head')
+            //     }
+            // }
         }
 
         App.appendPage(parser, true);
@@ -908,6 +938,58 @@ var App = {
         downloader(App.parsers, function() {
             App.isSaveing = false;
         });
+    },
+    getSiteFontInfo: function () {
+        const fonts = { external: [], internal: [], family: [] }
+        const { external, internal, family, siteFontFamily } = fonts
+
+        // 获取所有的字体名字
+        for (const font of document.fonts) {
+            family.push(font.family)
+        }
+
+        // 获取外部 css 地址和内部 css 样式文本
+        for (const styleSheet of document.styleSheets) {
+            try {
+                for (const cssRule of styleSheet.cssRules) {
+                    if (cssRule instanceof CSSFontFaceRule) {
+                        const fontFamily = cssRule.style.fontFamily
+                        const cssText = cssRule.cssText
+                        if (!internal.find(o => o.fontFamily === fontFamily)) {
+                            internal.push({ fontFamily, cssText })
+                        }
+                    }
+                }
+            } catch (e) {
+                external.push(styleSheet.href)
+            }
+        }
+        
+        // 处理成 font-family 样式格式
+        let familyList = []
+
+        // 内部样式优先
+        internal.forEach(e => {
+            familyList.push(e.fontFamily)
+        })
+
+        family.forEach(e => {
+            if (!familyList.includes(e)) {
+                familyList.push(e)
+            }
+        })
+        // 含空格字体名补双引号
+        familyList = familyList.map(e => {
+            if (e.includes(' ')) {
+                return `"${e}"`
+            } else {
+                return e
+            }
+        })
+
+        fonts.siteFontFamily = familyList.join(',') + ','
+        
+        return fonts
     }
 };
 

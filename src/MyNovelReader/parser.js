@@ -432,6 +432,20 @@ Parser.prototype = {
             return text
         }
 
+        // https://stackoverflow.com/a/4232971
+        // 删除包裹着文本的标签
+        function unwrapTag(doc, tagName) {
+            const tags = doc.getElementsByTagName(tagName)
+
+            while (tags.length) {
+                var parent = tags[0].parentNode
+                while (tags[0].firstChild) {
+                    parent.insertBefore(tags[0].firstChild, tags[0])
+                }
+                parent.removeChild(tags[0])
+            }
+        }
+
         // 贴吧的内容处理比较耗时间
         C.group('开始内容处理');
         C.time('内容处理');
@@ -486,6 +500,11 @@ Parser.prototype = {
 
         // 采用 DOM 方式进行处理
         var $div = $("<div>").html(text);
+
+        if (this.info.useSiteFont) {
+            // 删除 i 标签，通常用于自定义字体设置
+            unwrapTag($div[0], 'i')
+        }
 
         // contentRemove
         $div.find(Rule.contentRemove).remove();

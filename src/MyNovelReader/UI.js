@@ -18,6 +18,8 @@ var UI = {
         </div>\
         '.uiTrans(),
     skins: {},
+    // 站点字体
+    siteFontFamily: '',
 
     init: function(){
         UI.refreshMainStyle();
@@ -44,8 +46,13 @@ var UI = {
         UI.hidePreferencesButton(Setting.hide_preferences_button);  // 初始化设置按钮是否隐藏
     },
     refreshMainStyle: function(){
+        // 添加站点字体到样式中
+        if (App.site.useSiteFont && App.siteFontInfo) {
+            UI.siteFontFamily = App.siteFontInfo.siteFontFamily
+        }
+
         var mainCss = Res.CSS_MAIN
-                .replace("{font_family}", Setting.font_family)
+                .replace("{font_family}", UI.siteFontFamily + Setting.font_family)
                 .replace("{font_size}", UI.calcContentFontSize(Setting.font_size))
                 .replace("{title_font_size}", UI.calcTitleFontSize(Setting.font_size))
                 .replace("{content_width}", Setting.content_width)
@@ -307,7 +314,7 @@ var UI = {
                     }
                     break;
                 case "font-family":
-                    UI.$content.css("font-family", this.value);
+                    UI.$content.css("font-family", UI.siteFontFamily + this.value);
                     break;
                 case "content_width":
                     UI.$content.css("width", this.value);

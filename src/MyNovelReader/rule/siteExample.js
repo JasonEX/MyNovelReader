@@ -1,12 +1,15 @@
 // 自定义站点规则说明
 
 // 注意：除了 url 选项，其他的都是可选的
+// 最好填一下siteName、exampleUrl，便于处理
 
 ;({
     // 站点名
     siteName: '',
     // 正文页 URL 正则（必填）
-    url: '',
+    /* 二选一 */ url: '',
+    url: / /,
+    exampleUrl: '',// 章节正文URL示例
 
     // ===== 获取书名、章节名 =====
 
@@ -68,6 +71,9 @@
     contentSelector: '', // 章节内容 jQuery 选择器
     checkSection: false, // 是否检查章节存在多页，检测到了会尝试合并为一章
     contentRemove: '', // 被移除元素的 jQuery 选择器
+
+    useSiteFont: false, // 当站点使用了静态自定义字体（即原网页文字显示正常，但在阅读模式下出现乱码的情况）启用
+    useSiteFont: '', // 字体名（family），多个字体使用逗号分隔，需要在 style 规则中填写 font-face 样式
 
     // 正文内容净化
     /* 四选一 */ contentReplace: '',
