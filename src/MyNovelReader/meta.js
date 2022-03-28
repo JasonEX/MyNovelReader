@@ -238,6 +238,7 @@
 // @include        *://www.xs321.net/book/*/*/*.html
 // @include        *://www.hetushu.com/book/*/*.html
 // @include        *://v1.45zw.com/book/*/*.html
+// @include        *://www.zhaishuyuan.org/book/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/

@@ -1138,6 +1138,7 @@ const sites = [
         contentReplace: ['.*www\\.xs321\\.net.*',
                         '本章未完，请点击下一页继续阅读！']
     },
+
     {siteName: '45中文',
         url: 'https?://v1\\.45zw\\.com/book/\\d+/\\d+(_\\d+)?.html',
         useSiteFont: true,
@@ -1145,6 +1146,11 @@ const sites = [
         contentSelector: '#booktxt',
         contentRemove: 'div',
 
+    },
+
+    {siteName: '斋书院',
+        url: 'https?://www\\.zhaishuyuan\\.org/book/\\d+/\\d+(_\\d+)?.html',
+        checkSection: true,
     },
 
 ];

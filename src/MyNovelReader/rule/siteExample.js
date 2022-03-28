@@ -89,23 +89,21 @@
         // $doc = $(document)
         // this 是 App
     },
-    // 异步内容补丁，需要执行 Promise 时使用
-    contentPatchAsync: function ($doc, callback) {
+    // 异步内容补丁，需要执行异步代码时使用
+    contentPatchAsync: async function ($doc) {
         // $doc = $(document)
         // this 是 App
 
-        callback() // 代码执行完后在最后调用
     },
     // 获取内容，返回html
-    getContent: function ($doc, callback) {
+    getContent: async function ($doc) {
         // $doc = $(document)
         // this 是 Parser
 
-        // 代码执行完后在最后调用，用于返回数据
-        callback({
+        return {
             /* 二选一 */ content: '章节内容html',
             html: '章节页面html'
-        })
+        }
     },
 
     // ===== 其他 =====

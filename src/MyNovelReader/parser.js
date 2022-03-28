@@ -839,7 +839,7 @@ Parser.prototype = {
     },
     checkNextUrl: function(url){
         const sectionUrlRegex = /\/\d+[_-]\d+\.html$/
-        if (this.info.checkSection) {
+        if (url && this.info.checkSection) {
             if (!sectionUrlRegex.test(this.curPageUrl) &&
                 !sectionUrlRegex.test(this.prevUrl)) {
                 this.isSection = false;
