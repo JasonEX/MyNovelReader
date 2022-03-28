@@ -150,6 +150,10 @@ Parser.prototype = {
     },
 
     hasContent: function() {
+        if (this.$content) {
+            return this.$content > 0;
+        }
+
         var $content;
 
         // var $ajaxScript = this.$doc.find('.' + READER_AJAX);

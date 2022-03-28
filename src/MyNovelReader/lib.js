@@ -18,7 +18,7 @@ export var C;
 
 export function toggleConsole(debug) {
     if (debug) {
-        C = unsafeWindow.console;
+        C = {...unsafeWindow.console};
     } else {
         C = {
             log: nullFn,

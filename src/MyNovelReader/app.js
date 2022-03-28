@@ -853,7 +853,7 @@ var App = {
             var existSRC = {};
             $(App.tmpDoc).find('img').each(function() {
                 var isrc = $(this).attr('src');
-                if (!isrc || existSRC[isrc]) {
+                if (!isrc || existSRC[isrc] || isrc.slice(0, 4).toLowerCase().startsWith('data')) {
                     return;
                 } else {
                     existSRC[isrc] = true;
