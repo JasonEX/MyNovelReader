@@ -902,7 +902,7 @@ const sites = [
     indexSelector: '#left h3 a',
     useiframe: true,
     // 后面的是 和图书 的干扰码
-    contentRemove: 'h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var',
+    contentRemove: 'h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins',
     contentPatch: function($doc) {
         // 转换 div 到 p
         $doc.find('#content div').each(function() {
@@ -1131,10 +1131,20 @@ const sites = [
         ],
     },
 
-    {siteName:'小说321',
-        url:'https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+.html',
+    {siteName: '小说321',
+        url: 'https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+(_\\d+)?.html',
         useSiteFont: true,
-        checkSection: true
+        checkSection: true,
+        contentReplace: ['.*www\\.xs321\\.net.*',
+                        '本章未完，请点击下一页继续阅读！']
+    },
+    {siteName: '45中文',
+        url: 'https?://v1\\.45zw\\.com/book/\\d+/\\d+(_\\d+)?.html',
+        useSiteFont: true,
+        checkSection: true,
+        contentSelector: '#booktxt',
+        contentRemove: 'div',
+
     },
 
 ];
