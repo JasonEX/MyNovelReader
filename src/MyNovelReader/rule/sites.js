@@ -169,7 +169,7 @@ const sites = [
       contentSelector: '.noveltext',
       contentHandle: false,
       contentRemove: 'font[color], hr',
-      contentPatchAsync: function ($doc, callback) {
+      contentPatchAsync: async function ($doc) {
           // 移除 h2 的标题
           $doc.find('div:has(>h2)').remove();
           $doc.find('#six_list, #sendKingTickets').parent().remove();
@@ -181,7 +181,8 @@ const sites = [
           var $node = $doc.find('.noveltext');
           if ($node.attr("class").split(/\s+/).length === 2) {
               var fontName = $node.attr("class").split(/\s+/)[1];
-              replaceJjwxcCharacter(fontName, $node.html()).then(html=>{$node.html(html);callback()})
+              const html = await replaceJjwxcCharacter(fontName, $node.html())
+              $node.html(html);
           }
       },
       contentReplace: [
