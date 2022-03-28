@@ -130,7 +130,7 @@ export default {
       GM_setValue('speech.autoStopTimeUnit', this.autoStopTimeUnit)
       GM_setValue('speech.autoStopChapter', this.autoStopChapter)
     },
-    start() {
+    async start() {
       this.isPlaying = true
 
       // 获取当前所在的章节
@@ -161,13 +161,13 @@ export default {
         return this.autoStopTime * 3600 * 1000
       }
     },
-    checkNext() {
+    async checkNext() {
       if (!this.isPlaying) return
 
       this.speakIndex += 1;
-      this.checkAgin()
+      await this.checkAgin()
     },
-    checkAgin() {
+    async checkAgin() {
       let speakedChapters = this.speakIndex - this.startSpeakIndex
       if (this.autoStop == 'chapter' && speakedChapters >= this.autoStopChapter) {
         this.stop()
@@ -184,12 +184,12 @@ export default {
       } else {
         this.isFindingNext = true
         // 加载下一章
-        oldApp.scrollForce()
+        await oldApp.scrollForce()
       }
     },
-    waitForNext() {
+    async waitForNext() {
       if (this.isFindingNext && this.isPlaying) {
-        this.checkAgin()
+        await this.checkAgin()
       }
     },
     scrollToNext() {

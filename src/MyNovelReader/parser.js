@@ -4,6 +4,7 @@ import Rule, { CHAR_ALIAS } from './rule'
 import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost } from './lib'
 import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
+import { Request } from './lib'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -56,53 +57,35 @@ Parser.prototype = {
             }
         }
     },
-    applyAsyncPatch: function(callback) {
+    applyAsyncPatch: async function() {
         var contentPatch = this.info.contentPatchAsync;
         if(contentPatch){
             try {
-                contentPatch.call(this, this.$doc, callback.bind(this));
+                await contentPatch.call(this, this.$doc);
                 C.log("Apply Content Patch[Async] Success.");
             } catch (e) {
                 C.log("Error: Content Patch[Async] Error!", e);
             }
-        } else {
-            callback();
         }
     },
-    getAll: function(callback){
-        var self = this;
+    getAll: async function(){
 
         C.debug('开始解析页面');
 
         this.applyPatch();
 
-        this.applyAsyncPatch(function() {
-            self.preProcessDoc(callback);
-        });
+        await this.applyAsyncPatch();
+
+        await this.preProcessDoc();
 
         return this;
     },
-    preProcessDoc: function(callback) {
-        var self = this;
-        var endFn = function(data) {
-            if (data) {
-                var div;
-                if (data.content) {
-                    div = $('<div id="content"></div>').html(data.content);
-                } else if (data.html) {
-                    div = $('<div></div>').html(data.html);
-                }
-
-                self.$doc.find('body').prepend(div);
-            }
-
-            self.parse();
-            callback(self);
-        };
+    preProcessDoc: async function() {
+        let data
 
         if (!this.hasContent() && this.info.getContent) {
             C.log('开始 info.getContent')
-            this.info.getContent.call(this, this.$doc, endFn);
+            data = await this.info.getContent.call(this, this.$doc);
         } else {
             // 特殊处理，例如起点
             var ajaxScript = this.$doc.find('.' + READER_AJAX);
@@ -118,16 +101,6 @@ Parser.prototype = {
                     method: "GET",
                     overrideMimeType: "text/html;charset=" + charset,
                     headers: {},
-                    onload: function(res){
-                        var text = res.responseText;
-                        text = text.replace(/document.write(ln)?\('/, "")
-                                .replace("');", "")
-                                .replace(/[\n\r]+/g, '</p><p>');
-
-                        endFn({
-                            content: text
-                        });
-                    }
                 };
 
                 // Jixun: Allow post data
@@ -139,11 +112,28 @@ Parser.prototype = {
                     reqObj.headers['Content-Type'] = 'application/x-www-form-urlencoded';
                 }
 
-                GM_xmlhttpRequest(reqObj);
-            } else {
-                endFn();
+                let res = await Request(reqObj)
+                var text = res.responseText;
+                text = text.replace(/document.write(ln)?\('/, "")
+                        .replace("');", "")
+                        .replace(/[\n\r]+/g, '</p><p>');
+
+                data = { content: text }
+
             }
         }
+        if (data) {
+            var div;
+            if (data.content) {
+                div = $('<div id="content"></div>').html(data.content);
+            } else if (data.html) {
+                div = $('<div></div>').html(data.html);
+            }
+
+            this.$doc.find('body').prepend(div);
+        }
+
+        this.parse();
     },
     parse: function() {
         C.group('开始获取链接');

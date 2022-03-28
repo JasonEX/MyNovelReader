@@ -18,7 +18,7 @@ export var C;
 
 export function toggleConsole(debug) {
     if (debug) {
-        C = console;
+        C = unsafeWindow.console;
     } else {
         C = {
             log: nullFn,
@@ -90,6 +90,23 @@ export function getUrlHost(url) {
     var a = document.createElement('a');
     a.href = url;
     return a.host;
+}
+
+export function sleep(timeout) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve()
+        }, timeout)
+    })
+}
+
+// GM_xmlhttpRequest Promise 版
+export function Request(options) {
+    return new Promise((resolve, reject) => {
+        options.onerror = options.ontimeout = reject
+        options.onload = resolve
+        GM_xmlhttpRequest(options)
+    })
 }
 
 // 模板

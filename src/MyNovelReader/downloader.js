@@ -4,6 +4,7 @@ import { loading } from './components/message'
 import App from './app'
 import {saveAs, isWindows} from './utils'
 import getNumFromChapterTitle from './utils/getNumFromChapterTitle'
+import { sleep } from './lib'
 
 const chapters = [];
 
@@ -61,7 +62,7 @@ function finish(parser) {
   saveAs(allTxt, fileName.toString());
 };
 
-function getOnePage(parser, nextUrl, endFn) {
+async function getOnePage(parser, nextUrl) {
   var isEnd = false;
   if (parser) {
       toTxt(parser);
@@ -72,9 +73,6 @@ function getOnePage(parser, nextUrl, endFn) {
   if (!nextUrl || isEnd) {
       console.log('全部获取完毕');
       finish(parser);
-      if (typeof endFn == 'functiton') {
-        endFn()
-      }
       return;
   }
 
@@ -83,22 +81,25 @@ function getOnePage(parser, nextUrl, endFn) {
       return;
   }
 
-  setTimeout(function() {
+  sleep(config.download_delay)
+
+  (async function() {
     console.log('[存为txt]正在获取：', nextUrl)
-    App.httpRequest(nextUrl, function(doc) {
-        if (doc) {
-            var par = new Parser(App.site, doc, nextUrl);
-            par.getAll(getOnePage)
-        } else {
-            console.error('超时或连接出错');
-            finish();
-            endFn()
-        }
-    });
-  }, config.download_delay)
+    const doc = await App.httpRequest(nextUrl);
+
+    if (doc) {
+        var par = new Parser(App.site, doc, nextUrl);
+        await par.getAll()
+        await getOnePage(par)
+    } else {
+        console.error('超时或连接出错');
+        finish();
+    }
+
+  })()
 };
 
-function run(cachedParsers=[], endFn) {
+async function run(cachedParsers=[]) {
   console.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`)
 
   cachedParsers.forEach(toTxt);
@@ -108,7 +109,7 @@ function run(cachedParsers=[], endFn) {
   fileName.setStart(firstParser.chapterTitle)
 
   var lastParser = cachedParsers[cachedParsers.length - 1];
-  getOnePage(null, lastParser.nextUrl, endFn);
+  await getOnePage(null, lastParser.nextUrl);
 }
 
 export default run

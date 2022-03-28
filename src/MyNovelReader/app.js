@@ -8,7 +8,7 @@ import {
     toRE, $x
 } from './lib'
 import UI from './UI'
-import { isWindows } from './lib'
+import { isWindows, sleep, Request } from './lib'
 import downloader from './downloader'
 import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
@@ -28,18 +28,14 @@ var App = {
     // 站点字体信息
     siteFontInfo: null,
 
-    init: function() {
+    init: async function() {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
             return;
         }
 
         // 手动调用
-        var readx = function() {
-            // 防止 unsafeWindow cannot call: GM_getValue
-            setTimeout(function() {
-                App.launch();
-            }, 0);
-        };
+        var readx = App.launch
+
         try {
             exportFunction(readx, unsafeWindow, {defineAs: "readx"});
         } catch(ex) {
@@ -60,14 +56,13 @@ var App = {
             return;
         } else if (autoLaunch) {
             if (App.site.mutationSelector) { // 特殊的启动：等待js把内容生成完毕
-                App.addMutationObserve(document, App.launch);
+                await App.addMutationObserve(document);
             } else if (App.site.timeout) { // 延迟启动
-                setTimeout(App.launch, App.site.timeout);
-            } else { // NoScript 下 setTimeout 没用？
-                App.launch();
+                await sleep(App.site.timeout)
             }
+            await App.launch()
         } else {
-            UI.addButton();
+            await UI.addButton();
         }
     },
     loadCustomSetting: function() {
@@ -133,7 +128,7 @@ var App = {
                 return false;
         }
     },
-    addMutationObserve: function(doc, callback) {
+    addMutationObserve: function(doc) {
         var shouldAdd = false;
         var $doc = $(doc);
 
@@ -160,33 +155,30 @@ var App = {
         }
 
         if (shouldAdd) {
-            var observer = new MutationObserver(function(mutations) {
-                // var nodeAdded = mutations.some(function(x) {
-                //     return x.addedNodes.length > 0;
-                // });
-                target = $doc.find(mutationSelector)[0]
-                var nodeAdded = target.children.length > beforeTargetChilren
+            return new Promise(resolve => {
+                var observer = new MutationObserver(function (mutations) {
+                    target = $doc.find(mutationSelector)[0]
+                    var nodeAdded = target.children.length > beforeTargetChilren
 
-                if (nodeAdded) {
-                    observer.disconnect();
-                    callback();
-                }
-            });
+                    if (nodeAdded) {
+                        observer.disconnect()
+                        resolve()
+                    }
+                })
 
-            observer.observe(document, {
-                childList: true,
-                subtree: true
-            });
+                observer.observe(document, {
+                    childList: true,
+                    subtree: true
+                })
 
-            C.log("添加 MutationObserve 成功：", mutationSelector);
-        } else {
-            callback();
+                C.log('添加 MutationObserve 成功：', mutationSelector)
+            })
         }
     },
-    launch: function() {
+    launch: async function() {
         // 只解析一次，防止多次重复解析一个页面
         if (document.body && document.body.getAttribute("name") == "MyNovelReader") {
-            return App.toggle();
+            return await App.toggle();
         }
 
         if (!App.site) {
@@ -219,9 +211,8 @@ var App = {
         if (hasContent) {
             document.body.setAttribute("name", "MyNovelReader");
             App.parsedPages[window.location.href] = true;
-            parser.getAll(function(parser) {
-                App.processPage(parser);
-            });
+            await parser.getAll();
+            await App.processPage(parser);
         } else {
             console.error("当前页面没有找到内容");
         }
@@ -230,7 +221,7 @@ var App = {
         if (App.site.fInit)
             App.site.fInit();
     },
-    processPage: function(parser) {
+    processPage: async function(parser) {
         // 对 Document 进行处理
         document.body.innerHTML = '';
         App.prepDocument();
@@ -303,7 +294,7 @@ var App = {
         App.isTheEnd = parser.isTheEnd;
 
         App.isEnabled = true;
-        UI.addButton();
+        await UI.addButton();
 
         // // 如果已经把当前焦点链接添加到历史记录，则滚动到顶部
         // if (Setting.addToHistory) {
@@ -316,7 +307,7 @@ var App = {
         App.cleanAgain();
 
         if (config.PRELOADER) {
-            App.doRequest();
+            await App.doRequest();
         }
     },
     prepDocument: function() {
@@ -402,7 +393,7 @@ var App = {
             setTimeout(App.clean, 500);
         };
     },
-    toggle: function() {
+    toggle: async function() {
         if (App.isEnabled) { // 退出
             GM_setValue("auto_enable", false);
             L_setValue("mynoverlreader_disable_once", true);
@@ -412,7 +403,7 @@ var App = {
             GM_setValue("auto_enable", true);
             L_removeValue("mynoverlreader_disable_once");
             App.isEnabled = true;
-            App.launch();
+            await App.launch();
         }
     },
     removeListener: function() {
@@ -647,19 +638,19 @@ var App = {
             UI.notice(errorMsg);
         }
     },
-    pauseHandler: function() {
+    pauseHandler: async function() {
         App.paused = !App.paused;
         if (App.paused) {
             UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>暂停</b></span>'.uiTrans());
             App.$loading.html('自动翻页已经<span style="color:red!important;"><b>暂停</b></span>'.uiTrans()).show();
         } else {
             UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>启用</b></span>'.uiTrans());
-            App.scroll();
+            await App.scroll();
         }
     },
-    scroll: function() {
+    scroll: async function() {
         if (!App.paused && !App.working && App.getRemain() < Setting.remain_height) {
-            App.scrollForce()
+            await App.scrollForce()
         }
 
         if (App.isTheEnd) {
@@ -668,11 +659,11 @@ var App = {
 
         App.updateCurFocusElement();
     },
-    scrollForce: function() {
+    scrollForce: async function() {
         if (App.tmpDoc) {
-            App.loaded(App.tmpDoc);
+            await App.loaded(App.tmpDoc);
         } else {
-            App.doRequest();
+            await App.doRequest();
         }
     },
     updateCurFocusElement: function() { // 滚动激活章节列表
@@ -724,7 +715,7 @@ var App = {
         var remain = scrollHeight - window.innerHeight - window.scrollY;
         return remain;
     },
-    doRequest: function() {
+    doRequest: async function() {
         App.working = true;
         var nextUrl = App.requestUrl;
         App.lastRequestUrl = App.requestUrl;
@@ -741,43 +732,45 @@ var App = {
                 .html("")
                 .append($("<img>").attr("src", "data:image/gif;base64,R0lGODlhEAAQAMQAAPf39+/v7+bm5t7e3tbW1s7OzsXFxb29vbW1ta2traWlpZycnJSUlIyMjISEhHt7e3Nzc2tra2NjY1paWlJSUkpKSkJCQjo6OjExMSkpKSEhIRkZGRAQEAgICAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJBQAeACwAAAEADwAOAAAFdaAnet20GAUCceN4LQlyFMRATC3GLEqM1gIc6dFgPDCii6I2YF0eDkinxUkMBBAPBfLItESW2sEjiWS/ItqALJGgRZrNRtvWoDlxFqZdmbY0cVMdbRMWcx54eSMZExQVFhcYGBmBfxWPkZQbfi0dGpIYGiwjIQAh+QQJBQAeACwAAAEADwAOAAAFeKAnep0FLQojceOYQU6DIsdhtVoEywptEBRRZyKBQDKii+JHYGEkxE6LkyAMIB6KRKJpJQuDg2cr8Y7AgjHULCoQ0pUJZWO+uBGeDIVikbYyDgRYHRUVFhcsHhwaGhsYfhuHFxgZGYwbHH4iHBiUlhuYmlMbjZktIQAh+QQFBQAeACwAAAEADwAOAAAFe6Aneh1GQU9UdeOoTVIEOQ2zWG0mSVP0ODYF4iLq7HgaEaaRQCA4HsyOwhp1FgdDxFOZTDYt0cVQSHgo6PCIPOBWKmpRgdDGWCzQ8KUwOHg2FxcYYRwJdBAiGRgZGXkcC3MEjhkalZYTfBMtHRudnhsKcGodHKUcHVUeIQAh+QQJBQAeACwAAAEADwAOAAAFbKAnjp4kURiplmYEQemoTZMpuY/TkBVFVRtRJtJgMDoejaViWT0WiokHc2muMIoEY0pdiRCIgyeDia0OhoJnk8l4PemEh6OprxQFQkS02WiCIhd4HmoiHRx9ImkEA14ciISMBFJeSAQIEBwjIQAh+QQJBQAeACwAAAEADwAOAAAFd6Anel1WTRKFdeO4WRWFStKktdwFU3JNZ6MM5nLZiDQTCCTC4ghXrU7k4bB4NpoMpyXKNBqQa5Y7YiwWHg6WLFK4SWoW95JAMOAbI05xOEhEHWoaFyJ0BgYHWyIcHA4Fj48EBFYtGJKSAwMFFGQdEAgCAgcQih4hACH5BAkFAB4ALAAAAQAPAA4AAAV0oCeKG2ZVFtaNY6dh10lNU8Z2WwbLkyRpI85Gk+GQKr7JqiME3mYSjIe5WbE8GkhkMhVeR48HpLv5ihoOB9l4xTAYYw9nomCLOgzFoiJSEAoIFiIXCwkJC1YVAwMEfwUGBgeBLBMEAouOBxdfHA8HlwgRdiEAIfkECQUAHgAsAAABAA8ADgAABXOgJ4rdpmWZ1o0sZ2YYdlka63XuKVsVVZOuzcrDufQoQxzH1rFMJJiba8jaPCnSjW30lHgGhMJWBIl4D2DLNvOATDwPwSCxHHUgjseFOJAn1B4YDgwND0MTAWAFBgcICgsMUVwDigYICQt7NhwQCGELE1QhACH5BAkFAB4ALAAAAQAPAA4AAAV4oCeOHWdyY+p1JbdpWoam7fZmGYZtYoeZm46Ik7kYhZBBQ6PyWSoZj0FAuKg8mwrF4glQryIKZdL9gicTiVQw4Ko2aYrnwUbMehGJBOPhDAYECVYeGA8PEBNCHhOABgcJCgwNh0wjFQaOCAoLk1EqHBILmg8Vih4hACH5BAkFAB4ALAAAAQAPAA4AAAV6oCd6Hdmd5ThWCee+XCpOwTBteL6lnCAMLVFHQ9SIHgHBgaPyZDKYjcfwszQ9HMwl40kOriKLuDsggD2VtOcwKFibGwrFCiEUEjJSZTLhcgwGBwsYIhkUEhITKRYGCAkKDA0PiBJcKwoKCwwODxETRk0dFA8NDhIYMiEAIfkECQUAHgAsAAABAA8ADgAABXmgJ3rcYwhcN66eJATCsHEpOwXwQGw8rZKDGMIi6vBmokcswWFtNBvVQUdkcTJQj67AGmEyGU+hYOiKMGiP4oC4dDmXS1iCSDR+xYvFovF0FAoLDxgiGxYUFRY/FwsMDQ4PEhOTFH0jFw6QEBKcE5YrHRcTERIUGHghACH5BAkFAB4ALAAAAQAPAA4AAAV4oCd63GMAgfF04zgNQixjrVcJQz4QRLNxI06Bh7CILpkf0CMpGBLL0ebHWhwOl5qno/l5EGCtqAtUmMWeTNfzWCxoNU4maWs0Vq0OBpMBdh4ODxEaIhsXhxkjGRAQEhITExQVFhdRHhoTjo8UFBYbWnoUjhUZLCIhACH5BAkFAB4ALAAAAQAPAA4AAAV5oCd6HIQIgfFw42gZBDEMgjBMbXUYRlHINEFF1FEgEIqLyHKQJToeikLBgI44iskG+mAsMC0RR7NhNRqM8IjMejgcahHbM4E8Mupx2YOJSCZWIxlkUB0TEhIUG2IYg4tyiH8UFRaNGoEeGYgTkxYXGZhEGBWTGI8iIQA7"))
                 .append("<a href='" + nextUrl + "' title='点击打开下一页链接'>正在载入下一页".uiTrans() + (useiframe ? "(iframe)" : "") + "...</a>");
-
-            setTimeout(function() {
-                if (useiframe) {
-                    App.iframeRequest(nextUrl);
-                } else {
-                    App.httpRequest(nextUrl, App.httpRequestDone);
-                }
-            }, App.site.nDelay || 0);
+            
+            await sleep(App.site.nDelay || 0)
+            
+            if (useiframe) {
+                App.iframeRequest(nextUrl); // 不用 await
+            } else {
+                ;(async () => {
+                    const doc = await App.httpRequest(nextUrl)
+                    App.httpRequestDone(doc, nextUrl) // 不用 await
+                })()
+            }
+    
         } else {
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
         }
     },
-    httpRequest: function(nextUrl, callback) {
-        if (!_.isFunction(callback)) {
-            callback = function() {}
-        }
+    httpRequest: async function(nextUrl) {
 
         C.log("获取下一页: " + nextUrl);
         App.parsedPages[nextUrl] += 1;
 
-        GM_xmlhttpRequest({
+        const options = {
             url: nextUrl,
             method: "GET",
             overrideMimeType: "text/html;charset=" + document.characterSet,
             timeout: config.xhr_time,
-            onload: function(res) {
-                var doc = parseHTML(res.responseText);
-                callback(doc, nextUrl);
-            },
-            ontimeout: function() {
-                callback(null, nextUrl);
-            }
-        });
+        }
+
+        let doc = null
+        try {
+            const res = await Request(options)
+            doc = parseHTML(res.responseText)
+        } catch (e) {}
+
+        return doc
     },
-    httpRequestDone: function(doc, nextUrl) {
+    httpRequestDone: async function(doc, nextUrl) {
         if (doc) {
-            App.beforeLoad(doc);
+            await App.beforeLoad(doc);
             return;
         }
 
@@ -789,9 +782,10 @@ var App = {
 
         // 无内容再次尝试获取
         console.error('连接超时, 再次获取');
-        App.httpRequest(nextUrl, App.httpRequestDone);
+        doc = await App.httpRequest(nextUrl)
+        await App.httpRequestDone(doc, nextUrl)
     },
-    iframeRequest: function(nextUrl) {
+    iframeRequest: async function(nextUrl) {
         C.log("iframeRequest: " + nextUrl);
         if (!App.iframe) {
             var i = document.createElement('iframe');
@@ -815,7 +809,7 @@ var App = {
             App.iframe.contentDocument.location.replace(nextUrl);
         }
     },
-    iframeLoaded: function() {
+    iframeLoaded: async function() {
         var iframe = this;
         var body = iframe.contentDocument.body;
 
@@ -832,23 +826,19 @@ var App = {
 
             var mutationSelector = App.site.mutationSelector;
             if (mutationSelector) {
-                App.addMutationObserve(doc, function() {
-                    App.beforeLoad(doc);
-                });
+                await App.addMutationObserve(doc);
             } else {
                 var timeout = App.site.timeout || 0;
-
-                setTimeout(function() {
-                    App.beforeLoad(doc);
-                }, timeout);
+                await sleep(timeout)
             }
+            await App.beforeLoad(doc);
         }
     },
-    beforeLoad: function(htmlDoc) {
+    beforeLoad: async function(htmlDoc) {
         if (config.PRELOADER) {
             App.tmpDoc = htmlDoc;
             App.working = false;
-            App.scroll();
+            await App.scroll();
 
             // 预读图片
             var existSRC = {};
@@ -863,17 +853,16 @@ var App = {
                 img.src = isrc;
             });
         } else {
-            App.loaded(htmlDoc);
+            await App.loaded(htmlDoc);
         }
     },
-    loaded: function(doc) {
+    loaded: async function(doc) {
         var parser = new Parser(App.site, doc, App.curPageUrl);
-        parser.getAll(function() {
-            App.addNextPage(parser);
-        });
+        await parser.getAll();
+        await App.addNextPage(parser);
         App.tmpDoc = null;
     },
-    addNextPage: function(parser) {
+    addNextPage: async function(parser) {
         if (parser.content) {
             App.appendPage(parser);
 
@@ -881,7 +870,7 @@ var App = {
             App.requestUrl = parser.nextUrl;
             App.isTheEnd = parser.isTheEnd;
 
-            App.afterLoad();
+            await App.afterLoad();
         } else {
             App.removeListener();
 
@@ -895,13 +884,12 @@ var App = {
 
         App.working = false;
     },
-    afterLoad: function() {
+    afterLoad: async function() {
         App.tmpDoc = null;
 
         if (config.PRELOADER) {
-            setTimeout(function(){
-                App.doRequest();
-            }, 200);
+            await sleep(200)
+            App.doRequest();  // 不用 await
         }
     },
     fixImageFloats: function(articleContent) {
@@ -922,7 +910,7 @@ var App = {
     },
 
     isSaveing: false,
-    saveAsTxt: function() {
+    saveAsTxt: async function() {
         if (App.site.useiframe) {
             UI.notice('暂不支持', 3000);
             return;
@@ -935,9 +923,8 @@ var App = {
 
         App.isSaveing = true;
 
-        downloader(App.parsers, function() {
-            App.isSaveing = false;
-        });
+        await downloader(App.parsers);
+        App.isSaveing = false;
     },
     getSiteFontInfo: function () {
         const fonts = { external: [], internal: [], family: [] }

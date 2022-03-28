@@ -148,7 +148,7 @@ var UI = {
             $(selector).removeClass("quiet-mode");
         }
     },
-    addButton: function(){
+    addButton: async function(){
         GM_addStyle('\
             .readerbtn {\
                 position: fixed;\
@@ -174,9 +174,9 @@ var UI = {
         $("<div>")
             .addClass("readerbtn")
             .html(App.isEnabled ? "退出".uiTrans() : "阅读模式".uiTrans())
-            .mousedown(function(event){
+            .mousedown(async function(event){
                 if(event.which == 1){
-                    App.toggle();
+                    await App.toggle();
                 }else if(event.which == 2){
                     event.preventDefault();
                     L_setValue("mynoverlreader_disable_once", true);
@@ -336,7 +336,7 @@ var UI = {
 
         // 点击事件
         $form.on('click', 'input:checkbox, input:button', function(event){
-            UI.preferencesClickHandler(event.target);
+            UI.preferencesClickHandler(event.target); // 不用 await
         });
     },
     cleanPreview: function() {
@@ -345,7 +345,7 @@ var UI = {
         // 恢复初始设置（有误操作）
         // UI.$content.removeAttr('style');
     },
-    preferencesClickHandler: function(target){
+    preferencesClickHandler: async function(target){
         var key;
         switch (target.id) {
             case 'close_button':
@@ -402,7 +402,7 @@ var UI = {
                 break;
             case 'saveAsTxt':
                 UI.preferencesCloseHandler();
-                App.saveAsTxt();
+                await App.saveAsTxt();
                 break;
             case 'speech':
                 UI.preferencesCloseHandler();

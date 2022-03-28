@@ -1,4 +1,5 @@
 import getMiddleStr from '../utils/string'
+import { Request } from '../lib';
 
 // ===== 自定义站点规则 =====
 
@@ -102,6 +103,7 @@ const sites = [
       contentHandle: false,
       mutationSelector: "#chaptercontainer",  // 内容生成监视器，第一次运行用到，以后用下面的 getContent 函数
           mutationChildCount: 1,
+      useSiteFont: true,
       startFilter: function() {
           // 下一页需要提前加 1
           unsafeWindow.uuid = parseInt(unsafeWindow.uuid) + 1 + '';
@@ -966,7 +968,7 @@ const sites = [
     useiframe: true,
     mutationSelector: '.wr_canvasContainer',
     mutationChildCount: 1,
-    contentPatchAsync: function ($doc, callback) {
+    contentPatchAsync: async function ($doc) {
         // ---------------参数编解码---------------
         // 编码
         function encode(plainText) {
@@ -1035,110 +1037,104 @@ const sites = [
         }
         // ---------------参数编解码---------------
 
-        function getChapterList(){
-            var self = this
+        if (!this.__weReadJson) {
             var reqObj = {
                 url: this.curPageUrl,
                 method: "GET",
                 overrideMimeType: "text/html;charset=utf-8",
                 headers: {},
                 onload: function(res){
-                    var text = res.responseText;
-                    var json = JSON.parse(getMiddleStr(text, 'window.__INITIAL_STATE__=', ';'))
-                    thenCallback.call(self, json)
+                    
                 }
             };
-            GM_xmlhttpRequest(reqObj)
+            const res = await Request(reqObj)
+            var text = res.responseText;
+            this.__weReadJson = JSON.parse(getMiddleStr(text, 'window.__INITIAL_STATE__=', ';'))
         }
 
-        function thenCallback(json) {
-            if(json){
-                this.__weReadJson = json
+        var chapterList = this.__weReadJson.reader.chapterInfos
+
+        const re = /\/web\/reader\/([0-9a-f]+)k?([0-9a-f]+)?/g
+        const matchs = [...this.curPageUrl.matchAll(re)]
+        let bookId,
+            chapterUid = null
+        if (matchs) {
+            bookId = decode(matchs[0][1])
+            if (matchs[0].length === 3) {
+                chapterUid = parseInt(decode(matchs[0][2]))
             }
-            var chapterList = this.__weReadJson.reader.chapterInfos
-
-            const re = /\/web\/reader\/([0-9a-f]+)k?([0-9a-f]+)?/g
-            const matchs = [...this.curPageUrl.matchAll(re)]
-            let bookId,
-                chapterUid = null
-            if (matchs) {
-                bookId = decode(matchs[0][1])
-                if (matchs[0].length === 3) {
-                    chapterUid = parseInt(decode(matchs[0][2]))
-                }
-            }
-
-            var currentChapter = chapterList.find(e => e.chapterUid === chapterUid)
-
-            var { chapterIdx } = currentChapter || { chapterIdx: 1 }
-
-            var nextUrl, prevUrl, indexUrl
-
-            indexUrl = '/web/reader/' + encode(bookId)
-
-            if (chapterIdx === chapterList.length) {
-                nextUrl = ''
-            } else {
-                var nextChapterUid = chapterList[chapterIdx].chapterUid
-                nextUrl = indexUrl + 'k' + encode(nextChapterUid)
-            }
-
-            if (chapterUid && chapterUid > 1) {
-                var prevChapterUid = chapterList[chapterIdx - 2].chapterUid
-                prevUrl = indexUrl + 'k' + encode(prevChapterUid)
-            } else {
-                prevUrl = ''
-            }
-
-            var dataUrls = []
-
-            $doc.find('.wr_canvasContainer canvas').each(function () {
-                dataUrls.push(this.toDataURL())
-                $(this).remove()
-            })
-
-            var $body = $doc.find('body')
-            if (nextUrl) {
-                // 加上一页链接
-                $('<div id="nextchapter">').attr('href', nextUrl).appendTo($body)
-            }
-            if (prevUrl) {
-                // 加下一页链接
-                $('<div id="prevchapter">').attr('href', prevUrl).appendTo($body)
-            }
-            // 目录
-            $('<div id="bookindex">目录</div>').attr('href', indexUrl).appendTo($body)
-            // 正文
-            var $container = $doc.find('.wr_canvasContainer')
-            for (const dataUrl of dataUrls) {
-                $('<img>').attr('src', dataUrl).appendTo($container)
-            }
-            callback()
         }
 
-        if (!this.__weReadJson) {
-            getChapterList.call(this)
+        var currentChapter = chapterList.find(e => e.chapterUid === chapterUid)
+
+        var { chapterIdx } = currentChapter || { chapterIdx: 1 }
+
+        var nextUrl, prevUrl, indexUrl
+
+        indexUrl = '/web/reader/' + encode(bookId)
+
+        if (chapterIdx === chapterList.length) {
+            nextUrl = ''
         } else {
-            thenCallback.call(this)
+            var nextChapterUid = chapterList[chapterIdx].chapterUid
+            nextUrl = indexUrl + 'k' + encode(nextChapterUid)
         }
+
+        if (chapterUid && chapterUid > 1) {
+            var prevChapterUid = chapterList[chapterIdx - 2].chapterUid
+            prevUrl = indexUrl + 'k' + encode(prevChapterUid)
+        } else {
+            prevUrl = ''
+        }
+
+        var dataUrls = []
+
+        $doc.find('.wr_canvasContainer canvas').each(function () {
+            dataUrls.push(this.toDataURL())
+            $(this).remove()
+        })
+
+        var $body = $doc.find('body')
+        if (nextUrl) {
+            // 加上一页链接
+            $('<div id="nextchapter">').attr('href', nextUrl).appendTo($body)
+        }
+        if (prevUrl) {
+            // 加下一页链接
+            $('<div id="prevchapter">').attr('href', prevUrl).appendTo($body)
+        }
+        // 目录
+        $('<div id="bookindex">目录</div>').attr('href', indexUrl).appendTo($body)
+        // 正文
+        var $container = $doc.find('.wr_canvasContainer')
+        for (const dataUrl of dataUrls) {
+            $('<img>').attr('src', dataUrl).appendTo($container)
+        }
+        
     }
     },
 
     {siteName: "飞卢小说网",
-    url: "^https?://b\\.faloo\\.com/\\d+_\\d+\\.html",
-    titleSelector: "h1",
-    bookTitleSelector: "#novelName",
+        url: "^https?://b\\.faloo\\.com/\\d+_\\d+\\.html",
+        titleSelector: "h1",
+        bookTitleSelector: "#novelName",
 
-    nextSelector: "a#next_page",
-    prevSelector: "a#pre_page",
-    indexSelector: "a#huimulu",
+        nextSelector: "a#next_page",
+        prevSelector: "a#pre_page",
+        indexSelector: "a#huimulu",
 
-    contentSelector: ".noveContent",
+        contentSelector: ".noveContent",
     
-    contentReplace: [
-        "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
-    ],
-},
+        contentReplace: [
+            "飞卢小说网 b.faloo.com 欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在飞卢小说网！",
+        ],
+    },
+
+    {siteName:'小说321',
+        url:'https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+.html',
+        useSiteFont: true,
+        checkSection: true
+    },
 
 ];
 
