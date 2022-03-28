@@ -8,7 +8,7 @@ import {
     toRE, $x
 } from './lib'
 import UI from './UI'
-import { isWindows, sleep, Request } from './lib'
+import { isWindows, sleep, Request, DOMContentLoaded } from './lib'
 import downloader from './downloader'
 import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
@@ -29,6 +29,12 @@ var App = {
     siteFontInfo: null,
 
     init: async function() {
+        // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
+        const focus = unsafeWindow.HTMLElement.prototype.focus
+        unsafeWindow.HTMLElement.prototype.focus = function () {
+            focus.call(this, { preventScroll: true })
+        }
+
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
             return;
         }
@@ -45,6 +51,9 @@ var App = {
 
         App.loadCustomSetting();
         App.site = App.getCurSiteInfo();
+
+        // 等待 DOMContentLoaded 事件触发
+        await DOMContentLoaded()
 
         if (App.site.startLaunch) {
             App.site.startLaunch($(document));
@@ -415,7 +424,7 @@ var App = {
     appendPage: function(parser, isFirst) {
         var chapter = $("article:last");
         if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
-            var lastText = chapter.find("p:last").remove().text().trim();
+            var lastText = chapter.find("p:last").remove().text().trimEnd();
             var newPage = parser.content.replace(/<p>\s+/, "<p>" + lastText);
 
             chapter
