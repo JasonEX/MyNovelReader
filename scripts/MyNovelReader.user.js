@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.4.9
+// @version        6.5.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -235,6 +235,10 @@
 // @include        *://www.duwanjuan.com/html/*/*/*.html
 // @include        *://www.imiaobige.com/read/*/*.html
 // @include        *://www.ixs.la/*/*.html
+// @include        *://www.xs321.net/book/*/*/*.html
+// @include        *://www.hetushu.com/book/*/*.html
+// @include        *://v1.45zw.com/book/*/*.html
+// @include        *://www.zhaishuyuan.org/book/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
@@ -258,7 +262,7 @@
 // @exclude        */Default.html
 // @exclude        */Default.shtml
 
-// @run-at         document-end
+// @run-at         document-start
 // ==/UserScript==
 
 /* This script build by rollup. */
@@ -497,6 +501,11 @@
               resolve();
           }, timeout);
       })
+  }
+
+  // 等待 DOMContentLoaded 事件触发
+  function DOMContentLoaded(){
+      return new Promise(resolve => $(() => resolve()))
   }
 
   // GM_xmlhttpRequest Promise 版
@@ -1488,7 +1497,7 @@
       indexSelector: '#left h3 a',
       useiframe: true,
       // 后面的是 和图书 的干扰码
-      contentRemove: 'h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var',
+      contentRemove: 'h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins',
       contentPatch: function($doc) {
           // 转换 div 到 p
           $doc.find('#content div').each(function() {
@@ -1717,10 +1726,26 @@
           ],
       },
 
-      {siteName:'小说321',
-          url:'https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+.html',
+      {siteName: '小说321',
+          url: 'https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+(_\\d+)?.html',
           useSiteFont: true,
-          checkSection: true
+          checkSection: true,
+          contentReplace: ['.*www\\.xs321\\.net.*',
+                          '本章未完，请点击下一页继续阅读！']
+      },
+
+      {siteName: '45中文',
+          url: 'https?://v1\\.45zw\\.com/book/\\d+/\\d+(_\\d+)?.html',
+          useSiteFont: true,
+          checkSection: true,
+          contentSelector: '#booktxt',
+          contentRemove: 'div',
+
+      },
+
+      {siteName: '斋书院',
+          url: 'https?://www\\.zhaishuyuan\\.org/book/\\d+/\\d+(_\\d+)?.html',
+          checkSection: true,
       },
 
   ];
@@ -3172,14 +3197,21 @@
           return url;
       },
       checkNextUrl: function(url){
-          if (this.info.checkSection) {
-              if (/\/\d+_\d+\.html$/.test(this.curPageUrl)) {
+          const sectionUrlRegex = /\/\d+[_-]\d+\.html$/;
+          if (url && this.info.checkSection) {
+              if (!sectionUrlRegex.test(this.curPageUrl) &&
+                  !sectionUrlRegex.test(this.prevUrl)) {
+                  this.isSection = false;
+              } else if (sectionUrlRegex.test(this.curPageUrl)) {
                   this.isSection = true;
-                  if(url == this.indexUrl){
-                      return false;
-                  }else {
-                      return true;
-                  }
+              } else {
+                  this.isSection = false;
+              }
+
+              if (this.isSection && url == this.indexUrl) {
+                  return false
+              } else {
+                  return true
               }
           }
 
@@ -3914,6 +3946,12 @@
       siteFontInfo: null,
 
       init: async function() {
+          // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
+          const focus = unsafeWindow.HTMLElement.prototype.focus;
+          unsafeWindow.HTMLElement.prototype.focus = function () {
+              focus.call(this, { preventScroll: true });
+          };
+
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
               return;
           }
@@ -3930,6 +3968,9 @@
 
           App$1.loadCustomSetting();
           App$1.site = App$1.getCurSiteInfo();
+
+          // 等待 DOMContentLoaded 事件触发
+          await DOMContentLoaded();
 
           if (App$1.site.startLaunch) {
               App$1.site.startLaunch($(document));
@@ -4299,7 +4340,7 @@
       appendPage: function(parser, isFirst) {
           var chapter = $("article:last");
           if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
-              var lastText = chapter.find("p:last").remove().text().trim();
+              var lastText = chapter.find("p:last").remove().text().trimEnd();
               var newPage = parser.content.replace(/<p>\s+/, "<p>" + lastText);
 
               chapter
