@@ -838,14 +838,21 @@ Parser.prototype = {
         return url;
     },
     checkNextUrl: function(url){
+        const sectionUrlRegex = /\/\d+[_-]\d+\.html$/
         if (this.info.checkSection) {
-            if (/\/\d+_\d+\.html$/.test(this.curPageUrl)) {
+            if (!sectionUrlRegex.test(this.curPageUrl) &&
+                !sectionUrlRegex.test(this.prevUrl)) {
+                this.isSection = false;
+            } else if (sectionUrlRegex.test(this.curPageUrl)) {
                 this.isSection = true;
-                if(url == this.indexUrl){
-                    return false;
-                }else{
-                    return true;
-                }
+            } else {
+                this.isSection = false;
+            }
+
+            if (this.isSection && url == this.indexUrl) {
+                return false
+            } else {
+                return true
             }
         }
 
