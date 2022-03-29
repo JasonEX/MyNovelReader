@@ -27,13 +27,12 @@ var App = {
     curFocusIndex: 1,
     // 站点字体信息
     siteFontInfo: null,
+    // 事件监听器和观察器数组
+    listenerAndObserver: [],
 
     init: async function() {
-        // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
-        const focus = unsafeWindow.HTMLElement.prototype.focus
-        unsafeWindow.HTMLElement.prototype.focus = function () {
-            focus.call(this, { preventScroll: true })
-        }
+        // 注入修改
+        App.injectPolyfill()
 
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
             return;
@@ -69,10 +68,37 @@ var App = {
             } else if (App.site.timeout) { // 延迟启动
                 await sleep(App.site.timeout)
             }
+            // 等待 Dom 稳定
+            await App.DomMutation();
             await App.launch()
         } else {
             await UI.addButton();
         }
+    },
+    injectPolyfill: function () {
+        // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
+        const _focus = unsafeWindow.HTMLElement.prototype.focus
+        unsafeWindow.HTMLElement.prototype.focus = function focus() {
+            _focus.call(this, { preventScroll: true })
+        }
+        // Hook addEventListener 以便需要时移除事件监听器
+        const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener
+        unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener() {
+            App.listenerAndObserver.push(() => {
+                this.removeEventListener(...arguments)
+            })
+            _addEventListener.apply(this, arguments)
+        }
+        // Hook MutationObserver 以便需要时移除观察器
+        const _observe = unsafeWindow.MutationObserver.prototype.observe
+        const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect
+        unsafeWindow.MutationObserver.prototype.observe = function observe() {
+            App.listenerAndObserver.push(() => {
+                _disconnect.apply(this, arguments)
+            })
+            _observe.apply(this, arguments)
+        }
+
     },
     loadCustomSetting: function() {
         var customRules;
@@ -183,6 +209,21 @@ var App = {
                 C.log('添加 MutationObserve 成功：', mutationSelector)
             })
         }
+    },
+    // 等待 Dom 稳定
+    DomMutation: function() {
+        return new Promise(resolve => {
+            const throttled = _.throttle(() => {
+                observer.disconnect()
+                resolve()
+            }, 500)
+            const observer = new MutationObserver(() => throttled())
+            observer.observe(document,{
+                childList: true,
+                subtree: true
+            })
+            throttled()
+        })
     },
     launch: async function() {
         // 只解析一次，防止多次重复解析一个页面
@@ -346,8 +387,17 @@ var App = {
         // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
         try {
             unsafeWindow.$(unsafeWindow).off()
+            unsafeWindow.$(document).off()
         } catch (e) {}
-    
+        
+        // 移除所有事件监听器和观察器
+        App.listenerAndObserver.forEach(remove => remove());
+        
+        // 清理所有定时器
+        var highestTimeoutId = setTimeout(';')
+        for (var i = 0; i < highestTimeoutId; i++) {
+            clearTimeout(i)
+        }
 
         // remove body style
         $('link[rel="stylesheet"], script').remove();

@@ -1153,6 +1153,25 @@ const sites = [
         checkSection: true,
     },
 
+    {siteName: '123读',
+        url: 'https?://www\\.123ds\\.org/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+        checkSection: true,
+        useiframe: true,
+        contentSelector: '#DivContentBG > div:nth-child(9)',
+        contentReplace: ['本章未完，请点击下一页继续阅读！',
+                        '本文来源：123读书网。',
+                        '\\*[,，]转载请注明处：123ds.org 。',
+                        {'。.*提醒你：看后求收藏123读书网，接着再看好方便。':'。'}]
+
+    },
+
+    {siteName: 'YY文轩',
+        url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
+        useiframe: true,
+
+
+    },
+
 ];
 
 export default sites
