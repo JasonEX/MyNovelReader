@@ -174,6 +174,15 @@ Parser.prototype = {
         }
 
         if (!$content || !$content.length) {
+            // 移除不可见元素，仅使用 iframe 加载时可用
+            if (this.info.useiframe) {
+                const hiddenElements = this.$doc.find('div').filter(':hidden')
+                if (hiddenElements) {
+                    C.log('发现隐藏元素：', hiddenElements)
+                    hiddenElements.remove()
+                }
+            }
+            
             // 按照顺序选取
             var selectors = Rule.contentSelectors;
             for(var i = 0, l = selectors.length; i < l; i++){
@@ -300,7 +309,7 @@ Parser.prototype = {
     autoGetChapterTitle: function (document) {
         var
             _main_selector = "h1, h2, h3",
-            _second_selector = "#TextTitle, #title, .ChapterName, #lbChapterName, div.h1",
+            _second_selector = "#TextTitle, #title, .ChapterName, #lbChapterName, div.h1, #nr_title",
             _positive_regexp = Rule.titleRegExp,
             // _positive_regexp = /第?\S+[章节卷回]|\d{2,4}/,
             // _negative_regexp = /[上前下后][一]?[页张个篇章节步]/,
@@ -784,10 +793,17 @@ Parser.prototype = {
             url = this.checkLinks(url);
         }
 
+        var urlElement;
+
         // 再尝试通用规则
         if (!url) {
-            url = this.$doc.find(Rule.nextSelector);
-            url = this.checkLinks(url);
+            urlElement = this.$doc.find(Rule.nextSelector);
+            url = this.checkLinks(urlElement);
+            // 一般下一章按钮文本含页就是多页章节
+            if (url && !this.isSection && urlElement.text().includes('页')) {
+                C.log('检测到多页章节链接，自动尝试开启多页章节合并为一章模式')
+                this.info.checkSection = true
+            }
         }
 
         if (url) {

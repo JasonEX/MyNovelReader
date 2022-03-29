@@ -17,8 +17,8 @@ var Rule = {
   titleReplace: /^章节目录|^文章正文|^正文|全文免费阅读|最新章节|\(文\)/,
 
   // nextRegExp: /[上前下后][一]?[页张个篇章节步]/,
-  nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页')",
-  prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页')",
+  nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
+  prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
   // 忽略的下一页链接，匹配 href
   nextUrlIgnore: [
       /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
@@ -44,7 +44,8 @@ var Rule = {
       "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
       "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
       ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
-      "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", ".content"
+      "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
+      "#booktxt", "#nr", "#rtext", "#novelcontent", ".readcontent", ".txtnav", ".content", "article"
   ],
 
   // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -58,10 +59,21 @@ var Rule = {
     '#sitebar > a:last',
     '.con_top > a:last',
     '.breadCrumb > a:last',
-    '.bookNav > a:last'
+    '.bookNav > a:last',
+    '.srcbox > a:last',
+    '.con_top > a:last',
+    '.location > a:last',
+    '.nav > a:last',
+    '.DivCurrentPos > a:last',
+    '.layout-tit > a:last',
+    '.weizhi a:last',
+    '.path a:last',
+    '.readNav a:last',
+    '.chapter-nav a:last',
+    '.bread > a:nth-child(3)',
   ],
   bookTitleReplace: [
-      '全文阅读$',
+      '全文阅读$', '在线阅读$'
   ],
 
   contentRemove: "script, iframe, a",          // 内容移除选择器
