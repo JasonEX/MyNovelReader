@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.0
+// @version        6.5.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -421,7 +421,7 @@
 
   function toggleConsole(debug) {
       if (debug) {
-          C = unsafeWindow.console;
+          C = {...unsafeWindow.console};
       } else {
           C = {
               log: nullFn,
@@ -1748,6 +1748,25 @@
           checkSection: true,
       },
 
+      {siteName: '123读',
+          url: 'https?://www\\.123ds\\.org/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+          checkSection: true,
+          useiframe: true,
+          contentSelector: '#DivContentBG > div:nth-child(9)',
+          contentReplace: ['本章未完，请点击下一页继续阅读！',
+                          '本文来源：123读书网。',
+                          '\\*[,，]转载请注明处：123ds.org 。',
+                          {'。.*提醒你：看后求收藏123读书网，接着再看好方便。':'。'}]
+
+      },
+
+      {siteName: 'YY文轩',
+          url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
+          useiframe: true,
+
+
+      },
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -2164,6 +2183,9 @@
     '记住手机版网址.*',
     '.*关注微信公众号.*',
     '一秒记住.*',
+    '本章未完.*',
+    '笔趣阁.*最快更新.*',
+    '最新网址：.*',
 
     // 短文字替换
     '\\[txt全集下载\\]',
@@ -2262,8 +2284,8 @@
     titleReplace: /^章节目录|^文章正文|^正文|全文免费阅读|最新章节|\(文\)/,
 
     // nextRegExp: /[上前下后][一]?[页张个篇章节步]/,
-    nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页')",
-    prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页')",
+    nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
+    prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
     // 忽略的下一页链接，匹配 href
     nextUrlIgnore: [
         /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
@@ -2289,7 +2311,8 @@
         "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
-        "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", ".content"
+        "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
+        "#booktxt", "#nr", "#rtext", "#novelcontent", ".readcontent", ".txtnav", ".content", "article"
     ],
 
     // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -2303,10 +2326,21 @@
       '#sitebar > a:last',
       '.con_top > a:last',
       '.breadCrumb > a:last',
-      '.bookNav > a:last'
+      '.bookNav > a:last',
+      '.srcbox > a:last',
+      '.con_top > a:last',
+      '.location > a:last',
+      '.nav > a:last',
+      '.DivCurrentPos > a:last',
+      '.layout-tit > a:last',
+      '.weizhi a:last',
+      '.path a:last',
+      '.readNav a:last',
+      '.chapter-nav a:last',
+      '.bread > a:nth-child(3)',
     ],
     bookTitleReplace: [
-        '全文阅读$',
+        '全文阅读$', '在线阅读$'
     ],
 
     contentRemove: "script, iframe, a",          // 内容移除选择器
@@ -2510,6 +2544,10 @@
       },
 
       hasContent: function() {
+          if (this.$content) {
+              return this.$content > 0;
+          }
+
           var $content;
 
           // var $ajaxScript = this.$doc.find('.' + READER_AJAX);
@@ -2530,6 +2568,15 @@
           }
 
           if (!$content || !$content.length) {
+              // 移除不可见元素，仅使用 iframe 加载时可用
+              if (this.info.useiframe) {
+                  const hiddenElements = this.$doc.find('div').filter(':hidden');
+                  if (hiddenElements) {
+                      C.log('发现隐藏元素：', hiddenElements);
+                      hiddenElements.remove();
+                  }
+              }
+              
               // 按照顺序选取
               var selectors = Rule.contentSelectors;
               for(var i = 0, l = selectors.length; i < l; i++){
@@ -2656,7 +2703,7 @@
       autoGetChapterTitle: function (document) {
           var
               _main_selector = "h1, h2, h3",
-              _second_selector = "#TextTitle, #title, .ChapterName, #lbChapterName, div.h1",
+              _second_selector = "#TextTitle, #title, .ChapterName, #lbChapterName, div.h1, #nr_title",
               _positive_regexp = Rule.titleRegExp,
               // _positive_regexp = /第?\S+[章节卷回]|\d{2,4}/,
               // _negative_regexp = /[上前下后][一]?[页张个篇章节步]/,
@@ -3139,10 +3186,17 @@
               url = this.checkLinks(url);
           }
 
+          var urlElement;
+
           // 再尝试通用规则
           if (!url) {
-              url = this.$doc.find(Rule.nextSelector);
-              url = this.checkLinks(url);
+              urlElement = this.$doc.find(Rule.nextSelector);
+              url = this.checkLinks(urlElement);
+              // 一般下一章按钮文本含页就是多页章节
+              if (url && !this.isSection && urlElement.text().includes('页')) {
+                  C.log('检测到多页章节链接，自动尝试开启多页章节合并为一章模式');
+                  this.info.checkSection = true;
+              }
           }
 
           if (url) {
@@ -3944,13 +3998,12 @@
       curFocusIndex: 1,
       // 站点字体信息
       siteFontInfo: null,
+      // 事件监听器和观察器数组
+      listenerAndObserver: [],
 
       init: async function() {
-          // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
-          const focus = unsafeWindow.HTMLElement.prototype.focus;
-          unsafeWindow.HTMLElement.prototype.focus = function () {
-              focus.call(this, { preventScroll: true });
-          };
+          // 注入修改
+          App$1.injectPolyfill();
 
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
               return;
@@ -3986,10 +4039,37 @@
               } else if (App$1.site.timeout) { // 延迟启动
                   await sleep(App$1.site.timeout);
               }
+              // 等待 Dom 稳定
+              await App$1.DomMutation();
               await App$1.launch();
           } else {
               await UI.addButton();
           }
+      },
+      injectPolyfill: function () {
+          // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
+          const _focus = unsafeWindow.HTMLElement.prototype.focus;
+          unsafeWindow.HTMLElement.prototype.focus = function focus() {
+              _focus.call(this, { preventScroll: true });
+          };
+          // Hook addEventListener 以便需要时移除事件监听器
+          const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener;
+          unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener() {
+              App$1.listenerAndObserver.push(() => {
+                  this.removeEventListener(...arguments);
+              });
+              _addEventListener.apply(this, arguments);
+          };
+          // Hook MutationObserver 以便需要时移除观察器
+          const _observe = unsafeWindow.MutationObserver.prototype.observe;
+          const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect;
+          unsafeWindow.MutationObserver.prototype.observe = function observe() {
+              App$1.listenerAndObserver.push(() => {
+                  _disconnect.apply(this, arguments);
+              });
+              _observe.apply(this, arguments);
+          };
+
       },
       loadCustomSetting: function() {
           var customRules;
@@ -4099,6 +4179,21 @@
                   C.log('添加 MutationObserve 成功：', mutationSelector);
               })
           }
+      },
+      // 等待 Dom 稳定
+      DomMutation: function() {
+          return new Promise(resolve => {
+              const throttled = _.throttle(() => {
+                  observer.disconnect();
+                  resolve();
+              }, 500);
+              const observer = new MutationObserver(() => throttled());
+              observer.observe(document,{
+                  childList: true,
+                  subtree: true
+              });
+              throttled();
+          })
       },
       launch: async function() {
           // 只解析一次，防止多次重复解析一个页面
@@ -4262,8 +4357,17 @@
           // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
           try {
               unsafeWindow.$(unsafeWindow).off();
+              unsafeWindow.$(document).off();
           } catch (e) {}
-      
+          
+          // 移除所有事件监听器和观察器
+          App$1.listenerAndObserver.forEach(remove => remove());
+          
+          // 清理所有定时器
+          var highestTimeoutId = setTimeout(';');
+          for (var i = 0; i < highestTimeoutId; i++) {
+              clearTimeout(i);
+          }
 
           // remove body style
           $('link[rel="stylesheet"], script').remove();
@@ -4767,7 +4871,7 @@
               var existSRC = {};
               $(App$1.tmpDoc).find('img').each(function() {
                   var isrc = $(this).attr('src');
-                  if (!isrc || existSRC[isrc]) {
+                  if (!isrc || existSRC[isrc] || isrc.slice(0, 4).toLowerCase().startsWith('data')) {
                       return;
                   } else {
                       existSRC[isrc] = true;
