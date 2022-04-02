@@ -306,6 +306,8 @@ const replace = {
   '小biao砸': '小婊砸',
 
   '牛1b': '牛b', '微1博': '微博', '内1衣': '内衣',
+
+  '虫\\*{2}流': '虫族交流',
 };
 
 export default replace

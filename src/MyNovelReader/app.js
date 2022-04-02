@@ -83,7 +83,8 @@ var App = {
         }
         // Hook addEventListener 以便需要时移除事件监听器
         const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener
-        unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener() {
+        unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
+            if (!type || !listener) return;
             App.listenerAndObserver.push(() => {
                 this.removeEventListener(...arguments)
             })
@@ -92,13 +93,13 @@ var App = {
         // Hook MutationObserver 以便需要时移除观察器
         const _observe = unsafeWindow.MutationObserver.prototype.observe
         const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect
-        unsafeWindow.MutationObserver.prototype.observe = function observe() {
+        unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
+            if (!target || !options) return;
             App.listenerAndObserver.push(() => {
                 _disconnect.apply(this, arguments)
             })
             _observe.apply(this, arguments)
         }
-
     },
     loadCustomSetting: function() {
         var customRules;
@@ -392,6 +393,7 @@ var App = {
         
         // 移除所有事件监听器和观察器
         App.listenerAndObserver.forEach(remove => remove());
+        C.log(`已移除 ${App.listenerAndObserver.length} 个事件监听器和观察器`)
         
         // 清理所有定时器
         var highestTimeoutId = setTimeout(';')

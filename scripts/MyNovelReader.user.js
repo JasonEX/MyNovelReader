@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.1
+// @version        6.5.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2076,6 +2076,8 @@
     '小biao砸': '小婊砸',
 
     '牛1b': '牛b', '微1博': '微博', '内1衣': '内衣',
+
+    '虫\\*{2}流': '虫族交流',
   };
 
   const replaceAll = [
@@ -4054,7 +4056,8 @@
           };
           // Hook addEventListener 以便需要时移除事件监听器
           const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener;
-          unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener() {
+          unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
+              if (!type || !listener) return;
               App$1.listenerAndObserver.push(() => {
                   this.removeEventListener(...arguments);
               });
@@ -4063,13 +4066,13 @@
           // Hook MutationObserver 以便需要时移除观察器
           const _observe = unsafeWindow.MutationObserver.prototype.observe;
           const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect;
-          unsafeWindow.MutationObserver.prototype.observe = function observe() {
+          unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
+              if (!target || !options) return;
               App$1.listenerAndObserver.push(() => {
                   _disconnect.apply(this, arguments);
               });
               _observe.apply(this, arguments);
           };
-
       },
       loadCustomSetting: function() {
           var customRules;
@@ -4362,6 +4365,7 @@
           
           // 移除所有事件监听器和观察器
           App$1.listenerAndObserver.forEach(remove => remove());
+          C.log(`已移除 ${App$1.listenerAndObserver.length} 个事件监听器和观察器`);
           
           // 清理所有定时器
           var highestTimeoutId = setTimeout(';');
