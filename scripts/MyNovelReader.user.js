@@ -4057,21 +4057,19 @@
           // Hook addEventListener 以便需要时移除事件监听器
           const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener;
           unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
-              if (!type || !listener) return;
+              _addEventListener.apply(this, arguments);
               App$1.listenerAndObserver.push(() => {
                   this.removeEventListener(...arguments);
               });
-              _addEventListener.apply(this, arguments);
           };
           // Hook MutationObserver 以便需要时移除观察器
           const _observe = unsafeWindow.MutationObserver.prototype.observe;
           const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect;
           unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
-              if (!target || !options) return;
+              _observe.apply(this, arguments);
               App$1.listenerAndObserver.push(() => {
                   _disconnect.apply(this, arguments);
               });
-              _observe.apply(this, arguments);
           };
       },
       loadCustomSetting: function() {
