@@ -45,7 +45,7 @@ var Rule = {
       "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
       ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
       "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-      "#booktxt", "#nr", "#rtext", "#novelcontent", ".readcontent", ".txtnav", ".content", "article"
+      "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", ".articlecontent", ".readcontent", ".txtnav", ".content", "article"
   ],
 
   // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -66,6 +66,8 @@ var Rule = {
     '.nav > a:last',
     '.DivCurrentPos > a:last',
     '.layout-tit > a:last',
+    '.ymdz > a:last',
+    '.articletitle > a',
     '.weizhi a:last',
     '.path a:last',
     '.readNav a:last',
@@ -73,7 +75,7 @@ var Rule = {
     '.bread > a:nth-child(3)',
   ],
   bookTitleReplace: [
-      '全文阅读$', '在线阅读$'
+      '全文阅读$', '在线阅读$', '最新章节$',
   ],
 
   contentRemove: "script, iframe, a",          // 内容移除选择器

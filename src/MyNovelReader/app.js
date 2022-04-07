@@ -212,16 +212,16 @@ var App = {
     // 等待 Dom 稳定
     DomMutation: function() {
         return new Promise(resolve => {
-            const throttled = _.throttle(() => {
+            const debounced = _.debounce(() => {
                 observer.disconnect()
                 resolve()
-            }, 500)
-            const observer = new MutationObserver(() => throttled())
+            }, 200)
+            const observer = new MutationObserver(() => debounced())
             observer.observe(document,{
                 childList: true,
                 subtree: true
             })
-            throttled()
+            debounced()
         })
     },
     launch: async function() {

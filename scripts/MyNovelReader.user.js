@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.2
+// @version        6.5.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -239,6 +239,8 @@
 // @include        *://www.hetushu.com/book/*/*.html
 // @include        *://v1.45zw.com/book/*/*.html
 // @include        *://www.zhaishuyuan.org/book/*/*.html
+// @include        *://www.00ksw.com/html/*/*/*.html
+// @include        *://www.99bxwx.com/b/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
@@ -2077,7 +2079,12 @@
 
     '牛1b': '牛b', '微1博': '微博', '内1衣': '内衣',
 
-    '虫\\*{2}流': '虫族交流',
+    '虫\\*{2}流': '虫族交流', '合成\\*{2}流': '合成兽交流',
+    '东[Xx][Zz]': '东西藏', '东躲[Xx][Zz]': '东躲西藏',
+    '幸苦': '辛苦', '就就给': '就交给', 
+    'DU犯': '毒贩', '网络招piao': '网络招嫖', 
+    '犯du': '贩毒', 
+    
   };
 
   const replaceAll = [
@@ -2150,6 +2157,7 @@
     'APPapp',
     '久看中文网首发',
     '顶点小说 ２３ＵＳ．com更新最快',
+    '这候.*?章汜[。.]?',
 
     // 复杂规则的替换
     '(看小说到|爱玩爱看就来|就爱上|喜欢)?(\\s|<|>|&| |[+@＠=:;｀`%？》《〈︾-])?[乐樂](\\s|&lt;|&gt;|&amp;|&nbsp;|[+@＠=:;｀`%？》《〈︾-])?[文].*?[说說][网]?[|]?(.*(3w|[ｗωＷw]{1,3}|[Ｍm]).*[ｍＭm])?[}。\\s]?(乐文小说)?',
@@ -2188,6 +2196,7 @@
     '本章未完.*',
     '笔趣阁.*最快更新.*',
     '最新网址：.*',
+    '.*笔下文学更新速度最快.*',
 
     // 短文字替换
     '\\[txt全集下载\\]',
@@ -2314,7 +2323,7 @@
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-        "#booktxt", "#nr", "#rtext", "#novelcontent", ".readcontent", ".txtnav", ".content", "article"
+        "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", ".articlecontent", ".readcontent", ".txtnav", ".content", "article"
     ],
 
     // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -2335,6 +2344,8 @@
       '.nav > a:last',
       '.DivCurrentPos > a:last',
       '.layout-tit > a:last',
+      '.ymdz > a:last',
+      '.articletitle > a',
       '.weizhi a:last',
       '.path a:last',
       '.readNav a:last',
@@ -2342,7 +2353,7 @@
       '.bread > a:nth-child(3)',
     ],
     bookTitleReplace: [
-        '全文阅读$', '在线阅读$'
+        '全文阅读$', '在线阅读$', '最新章节$',
     ],
 
     contentRemove: "script, iframe, a",          // 内容移除选择器
@@ -4184,16 +4195,16 @@
       // 等待 Dom 稳定
       DomMutation: function() {
           return new Promise(resolve => {
-              const throttled = _.throttle(() => {
+              const debounced = _.debounce(() => {
                   observer.disconnect();
                   resolve();
-              }, 500);
-              const observer = new MutationObserver(() => throttled());
+              }, 200);
+              const observer = new MutationObserver(() => debounced());
               observer.observe(document,{
                   childList: true,
                   subtree: true
               });
-              throttled();
+              debounced();
           })
       },
       launch: async function() {
