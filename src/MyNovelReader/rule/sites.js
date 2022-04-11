@@ -627,7 +627,7 @@ const sites = [
     mutationSelector: "#J_BookRead",  // 内容生成监视器
         mutationChildCount: 1,
     contentSelector: '#J_BookRead',
-    contentRemove: 'i.J_Num',
+    contentRemove: 'i.J_Num, .chapter span',
   },
   // 上下页链接难搞
   {siteName: '长佩文学网',
