@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.3
+// @version        6.5.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1225,9 +1225,6 @@
           mutationChildCount: 1,
       contentSelector: '#J_BookRead',
       contentRemove: 'i.J_Num, .chapter span',
-      contentPatch: function($doc) {
-          $doc.find('.chapter span').remove();
-      }
     },
     // 上下页链接难搞
     {siteName: '长佩文学网',
@@ -2223,6 +2220,8 @@
     '小說，.biquge5200.',
 
     /'ads_wz_txt;',|百度搜索|无弹窗小说网|更新快无弹窗纯文字|高品质更新|小说章节更新最快|\(百度搜.\)|全文字手打|“”&nbsp;看|无.弹.窗.小.说.网|追书网|〖∷∷无弹窗∷纯文字∷ 〗/g,
+
+    '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗]',
   ];
 
   // import _ from 'underscore'
