@@ -86,7 +86,9 @@ var App = {
         unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
             _addEventListener.apply(this, arguments)
             App.listenerAndObserver.push(() => {
-                this.removeEventListener(...arguments)
+                try {
+                    this.removeEventListener(...arguments)
+                } catch (e) {}
             })
         }
         // Hook MutationObserver 以便需要时移除观察器
@@ -95,7 +97,9 @@ var App = {
         unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
             _observe.apply(this, arguments)
             App.listenerAndObserver.push(() => {
-                _disconnect.apply(this, arguments)
+                try {
+                    _disconnect.apply(this, arguments)
+                } catch (e) {}
             })
         }
     },

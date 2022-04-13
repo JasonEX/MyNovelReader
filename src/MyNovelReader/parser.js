@@ -504,6 +504,9 @@ Parser.prototype = {
         // 采用 DOM 方式进行处理
         var $div = $("<div>").html(text);
 
+        // 尝试删除正文中的章节标题
+        $div.find('h1, h2, h3').remove()
+
         if (this.info.useSiteFont) {
             // 删除 i 标签，通常用于自定义字体设置
             unwrapTag($div[0], 'i')
@@ -894,7 +897,7 @@ Parser.prototype = {
                 return false
             case url === this.curPageUrl:
                 return false
-            case Rule.nextUrlCompare.test(this.prevUrl) && !Rule.nextUrlCompare.test(url):
+            case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl) && !Rule.nextUrlCompare.test(url):
                 return false
             default:
                 return true

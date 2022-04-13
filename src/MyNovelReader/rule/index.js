@@ -43,9 +43,11 @@ var Rule = {
       "#text_area", "#chapter_content", "#chapterContent", "#chaptercontent", "#partbody", "#BookContent", "#read-content",
       "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
       "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
-      ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
       "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-      "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", ".articlecontent", ".readcontent", ".txtnav", ".content", "article"
+      "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+      ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
+      ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con",
+      "article",
   ],
 
   // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -69,6 +71,7 @@ var Rule = {
     '.ymdz > a:last',
     '.articletitle > a',
     '.weizhi a:last',
+    '.cover-nav a:last',
     '.path a:last',
     '.readNav a:last',
     '.chapter-nav a:last',

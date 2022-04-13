@@ -241,6 +241,7 @@
 // @include        *://www.zhaishuyuan.org/book/*/*.html
 // @include        *://www.00ksw.com/html/*/*/*.html
 // @include        *://www.99bxwx.com/b/*/*.html
+// @include        *://www.cnhxfilm.com/book/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
@@ -2221,7 +2222,10 @@
 
     /'ads_wz_txt;',|百度搜索|无弹窗小说网|更新快无弹窗纯文字|高品质更新|小说章节更新最快|\(百度搜.\)|全文字手打|“”&nbsp;看|无.弹.窗.小.说.网|追书网|〖∷∷无弹窗∷纯文字∷ 〗/g,
 
-    '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗]',
+    '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗钲鉦鮪歄鎣刬頲櫦磆]',
+    '谷.\\n',
+    '　　谷.',
+    
   ];
 
   // import _ from 'underscore'
@@ -2323,9 +2327,11 @@
         "#text_area", "#chapter_content", "#chapterContent", "#chaptercontent", "#partbody", "#BookContent", "#read-content",
         "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
-        ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-        "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", ".articlecontent", ".readcontent", ".txtnav", ".content", "article"
+        "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+        ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
+        ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con",
+        "article",
     ],
 
     // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -2349,6 +2355,7 @@
       '.ymdz > a:last',
       '.articletitle > a',
       '.weizhi a:last',
+      '.cover-nav a:last',
       '.path a:last',
       '.readNav a:last',
       '.chapter-nav a:last',
@@ -2878,7 +2885,7 @@
           if (info.contentReplace) {
               text = this.replaceText(text, info.contentReplace);
           }
-
+          debugger
           // 移除文字广告等
           text = this.replaceText(text, Rule.replaceAll);
 
@@ -2911,6 +2918,9 @@
 
           // 采用 DOM 方式进行处理
           var $div = $("<div>").html(text);
+
+          // 尝试删除正文中的章节标题
+          $div.find('h1, h2, h3').remove();
 
           if (this.info.useSiteFont) {
               // 删除 i 标签，通常用于自定义字体设置
@@ -3302,7 +3312,7 @@
                   return false
               case url === this.curPageUrl:
                   return false
-              case Rule.nextUrlCompare.test(this.prevUrl) && !Rule.nextUrlCompare.test(url):
+              case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl) && !Rule.nextUrlCompare.test(url):
                   return false
               default:
                   return true
@@ -4072,7 +4082,9 @@
           unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
               _addEventListener.apply(this, arguments);
               App$1.listenerAndObserver.push(() => {
-                  this.removeEventListener(...arguments);
+                  try {
+                      this.removeEventListener(...arguments);
+                  } catch (e) {}
               });
           };
           // Hook MutationObserver 以便需要时移除观察器
@@ -4081,7 +4093,9 @@
           unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
               _observe.apply(this, arguments);
               App$1.listenerAndObserver.push(() => {
-                  _disconnect.apply(this, arguments);
+                  try {
+                      _disconnect.apply(this, arguments);
+                  } catch (e) {}
               });
           };
       },
