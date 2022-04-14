@@ -265,5 +265,5 @@
 // @exclude        */Default.html
 // @exclude        */Default.shtml
 
-// @run-at         document-start
+// @run-at         document-body
 // ==/UserScript==
