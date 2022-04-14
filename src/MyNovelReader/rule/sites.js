@@ -930,6 +930,7 @@ const sites = [
 
   {siteName: "69书吧",
     url: "https?://www\\.69shu\\.com/txt/\\d+/\\d+",
+    contentHandle: false,
     titleSelector: 'h1',
     contentSelector: ".txtnav",
     contentRemove: ".txtinfo.hide720",

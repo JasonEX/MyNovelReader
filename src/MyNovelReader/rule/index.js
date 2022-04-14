@@ -72,6 +72,7 @@ var Rule = {
     '.articletitle > a',
     '.weizhi a:last',
     '.cover-nav a:last',
+    '.path > .p > a:last',
     '.path a:last',
     '.readNav a:last',
     '.chapter-nav a:last',

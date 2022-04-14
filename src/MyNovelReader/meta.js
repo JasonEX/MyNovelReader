@@ -242,6 +242,8 @@
 // @include        *://www.00ksw.com/html/*/*/*.html
 // @include        *://www.99bxwx.com/b/*/*.html
 // @include        *://www.cnhxfilm.com/book/*/*.html
+// @match          *://www.vipkanshu.vip/shu/*/*.html
+// @match          *://www.81zw.com/book/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/

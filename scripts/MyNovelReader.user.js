@@ -242,6 +242,8 @@
 // @include        *://www.00ksw.com/html/*/*/*.html
 // @include        *://www.99bxwx.com/b/*/*.html
 // @include        *://www.cnhxfilm.com/book/*/*.html
+// @match          *://www.vipkanshu.vip/shu/*/*.html
+// @match          *://www.81zw.com/book/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
@@ -265,7 +267,7 @@
 // @exclude        */Default.html
 // @exclude        */Default.shtml
 
-// @run-at         document-start
+// @run-at         document-body
 // ==/UserScript==
 
 /* This script build by rollup. */
@@ -472,11 +474,23 @@
       return doc;
   }
 
-  function toRE(obj, flag) {
+  const _regexCache = {};
+
+  function toRE(obj, flag = 'igm') {
       if (obj instanceof RegExp) {
           return obj;
-      } else {
-          return new RegExp(obj, (flag || 'ig'));
+      } else if (_regexCache[obj] && _regexCache[obj][flag]) {
+          const re = _regexCache[obj][flag];
+          re.lastIndex = 0;
+          return re
+      } else if (!_regexCache[obj]) {
+          const re = new RegExp(obj, flag);
+          _regexCache[obj] = { [flag]: re };
+          return re
+      } else if (!_regexCache[obj][flag]) {
+          const re = new RegExp(obj, flag);
+          _regexCache[obj][flag] = re;
+          return re
       }
   }
 
@@ -519,6 +533,44 @@
           GM_xmlhttpRequest(options);
       })
   }
+
+  // https://stackoverflow.com/a/4232971
+  // 删除包裹着文本的标签
+  function unwrapTag(doc, tagName) {
+      const tags = doc.getElementsByTagName(tagName);
+
+      while (tags.length) {
+          var parent = tags[0].parentNode;
+          while (tags[0].firstChild) {
+              parent.insertBefore(tags[0].firstChild, tags[0]);
+          }
+          parent.removeChild(tags[0]);
+      }
+      doc.normalize();
+  }
+
+  // https://stackoverflow.com/a/4399718
+  // 获取所有文本节点
+  function getTextNodesIn(node, includeWhitespaceNodes) {
+      var textNodes = [],
+          nonWhitespaceMatcher = /\S/;
+
+      function getTextNodes(node) {
+          if (node.nodeType == 3) {
+              if (includeWhitespaceNodes || nonWhitespaceMatcher.test(node.nodeValue)) {
+                  textNodes.push(node);
+              }
+          } else {
+              for (var i = 0, len = node.childNodes.length; i < len; ++i) {
+                  getTextNodes(node.childNodes[i]);
+              }
+          }
+      }
+
+      getTextNodes(node);
+      return textNodes
+  }
+
 
   // 模板
   $.nano = function(template, data) {
@@ -1528,6 +1580,7 @@
 
     {siteName: "69书吧",
       url: "https?://www\\.69shu\\.com/txt/\\d+/\\d+",
+      contentHandle: false,
       titleSelector: 'h1',
       contentSelector: ".txtnav",
       contentRemove: ".txtinfo.hide720",
@@ -1810,29 +1863,29 @@
     "\\[搜索最新更新尽在[a-z\\.]+\\]": "",
     "<a>手机用户请到m.qidian.com阅读。</a>": "",
     ".{2,4}中文网欢迎广大书友": "",
-    "访问下载txt小说|◎雲來閣免费万本m.yunlaige.com◎": "",
-    "〖∷更新快∷无弹窗∷纯文字∷.*?〗": "",
-    '超快稳定更新小说[,，]': '', "本文由　。。　首发": "",
-    '”小说“小说章节更新最快': '',
+    // "访问下载txt小说|◎雲來閣免费万本m.yunlaige.com◎": "",
+    // "〖∷更新快∷无弹窗∷纯文字∷.*?〗": "",
+    // '超快稳定更新小说[,，]': '', "本文由　。。　首发": "",
+    // '”小说“小说章节更新最快': '',
     '如果觉得好看，请把本站网址推荐给您的朋友吧！': '',
     '本站手机网址：&nbsp;&nbsp;请互相通知向您QQ群【微博/微信】论坛贴吧推荐宣传介绍!': '',
-    "fqXSw\\.com": "", "\\.5ｄｕ|\\.５du５\\.": "",
+    // "fqXSw\\.com": "", "\\.5ｄｕ|\\.５du５\\.": "",
     "\\[\\]": "",
-    "如果您觉得网不错就多多分享本站谢谢各位读者的支持": "",
-    "全文字无广告|\\(看书窝&nbsp;看书窝&nbsp;无弹窗全文阅读\\)": "",
-    "。。+[\\s　]*看最新最全小说": "",
+    // "如果您觉得网不错就多多分享本站谢谢各位读者的支持": "",
+    // "全文字无广告|\\(看书窝&nbsp;看书窝&nbsp;无弹窗全文阅读\\)": "",
+    // "。。+[\\s　]*看最新最全小说": "",
     "水印广告测试": "",
-    "\\(平南文学网\\)": "", "讀蕶蕶尐說網": "",
-    "比奇提示：如何快速搜自己要找的书籍": "", "《百度书名\\+比奇》即可快速直达": "",
-    "~无~错~小~说": "",
+    // "\\(平南文学网\\)": "", "讀蕶蕶尐說網": "",
+    // "比奇提示：如何快速搜自己要找的书籍": "", "《百度书名\\+比奇》即可快速直达": "",
+    // "~无~错~小~说": "",
 
     "\\(一秒记住小说界\\）|\\*一秒记住\\*": "",
-    "uutxt\\.org|3vbook\\.cn|www\\.qbwx\\.com|WWw\\.YaNkuai\\.com|www\\.btzw\\.com|www\\.23uS\\.com": "",
-    "txt53712/": "",
+    // "uutxt\\.org|3vbook\\.cn|www\\.qbwx\\.com|WWw\\.YaNkuai\\.com|www\\.btzw\\.com|www\\.23uS\\.com": "",
+    // "txt53712/": "",
     "\xa0{4,12}": "\xa0\xa0\xa0\xa0\xa0\xa0\xa0",
 
     // === 通用去广告
-    "[wｗＷ]{1,3}[．\\.]２３ｕＳ[．\\.](?:ｃｏＭ|com)": "",
+    // "[wｗＷ]{1,3}[．\\.]２３ｕＳ[．\\.](?:ｃｏＭ|com)": "",
 
     // === 星号屏蔽字还原 ===
     // === 八九 ===
@@ -2091,78 +2144,78 @@
   const replaceAll = [
     // 长文字替换
     // 排序代码：newArr = arr.sort((a, b) => { var diff = a.charCodeAt(1) - b.charCodeAt(1); if (diff == 0) return b.length - a.length; return diff; })
-    '本站域名已经更换为，老域名已经停用，请大家重新收藏，并使用新域名访问。',
-    "\\(跪求订阅、打赏、催更票、月票、鲜花的支持!\\)",
-    "\\(?未完待续请搜索飄天文學，小说更好更新更快!",
-    "\\(跪求订阅、打赏、催更票、月票、鲜花的支持!",
-    "狂沙文学网 www.kuangsha.net",
-    "\\(看小说到网\\)",
+    '本站域名已经更换为.*，老域名(?:已经|即将)停用，请大家重新收藏，并使用新域名访问。',
+    // "\\(跪求订阅、打赏、催更票、月票、鲜花的支持!\\)",
+    // "\\(?未完待续请搜索飄天文學，小说更好更新更快!",
+    // "\\(跪求订阅、打赏、催更票、月票、鲜花的支持!",
+    // "狂沙文学网 www.kuangsha.net",
+    // "\\(看小说到网\\)",
     "\\(未完待续。\\)",
     "\\(本章完\\)",
-    "16977小游戏每天更新好玩的小游戏，等你来发现！",
-    "（800小说网 www.800Book.net 提供Txt免费下载）最新章节全文阅读-..-",
-    "（800小说网 www.800Book.net 提供Txt免费下载）",
-    "\\[800\\]\\[站页面清爽，广告少，",
-    "\\[看本书最新章节请到求书 .\\]",
-    "（\\s*君子聚义堂）",
-    "readx;",
-    "txt电子书下载/",
-    "txt全集下载",
-    "txt小说下载",
-    "\\|优\\|优\\|小\\|说\\|更\\|新\\|最\\|快\\|www.uuxs.cc\\|",
-    "\\|每两个看言情的人当中，就有一个注册过可°乐°小°说°网的账号。",
-    "思ˊ路ˋ客，更新最快的！",
-    "恋上你看书网 630bookla ，最快更新.*",
+    // "16977小游戏每天更新好玩的小游戏，等你来发现！",
+    // "（800小说网 www.800Book.net 提供Txt免费下载）最新章节全文阅读-..-",
+    // "（800小说网 www.800Book.net 提供Txt免费下载）",
+    // "\\[800\\]\\[站页面清爽，广告少，",
+    // "\\[看本书最新章节请到求书 .\\]",
+    // "（\\s*君子聚义堂）",
+    // "readx;",
+    // "txt电子书下载/",
+    // "txt全集下载",
+    // "txt小说下载",
+    // "\\|优\\|优\\|小\\|说\\|更\\|新\\|最\\|快\\|www.uuxs.cc\\|",
+    // "\\|每两个看言情的人当中，就有一个注册过可°乐°小°说°网的账号。",
+    // "思ˊ路ˋ客，更新最快的！",
+    // "恋上你看书网 630bookla ，最快更新.*",
     "，举报后维护人员会在两分钟内校正章节内容，请耐心等待，并刷新页面。",
-    "追书必备",
-    "-优－优－小－说－更－新－最－快-www.ＵＵＸＳ.ＣＣ-",
-    "-优－优－小－说－更－新－最－快x",
-    "来可乐网看小说",
-    "纯文字在线阅读本站域名手机同步阅读请访问",
-    "本文由　　首发",
-    "樂文小说",
-    '最快更新无错小说阅读，请访问 请收藏本站阅读最新小说!',
-    "最新章节全文阅读看书神器\\.yankuai\\.",
-    "最新章节全文阅读（..首发）",
-    "最新章节全文阅读【首发】",
-    "最新章节全文阅读",
-    "看本书最新章节请到800小说网（www.800book.net）",
+    // "追书必备",
+    // "-优－优－小－说－更－新－最－快-www.ＵＵＸＳ.ＣＣ-",
+    // "-优－优－小－说－更－新－最－快x",
+    // "来可乐网看小说",
+    // "纯文字在线阅读本站域名手机同步阅读请访问",
+    // "本文由　　首发",
+    // "樂文小说",
+    // '最快更新无错小说阅读，请访问 请收藏本站阅读最新小说!',
+    // "最新章节全文阅读看书神器\\.yankuai\\.",
+    // "最新章节全文阅读（..首发）",
+    // "最新章节全文阅读【首发】",
+    // "最新章节全文阅读",
+    // "看本书最新章节请到800小说网（www.800book.net）",
     "（本章未完，请翻页）",
-    "手机用户请浏览m.biqugezw.com阅读，更优质的阅读体验。",
-    "手机用户请浏览阅读，更优质的阅读体验。",
-    "阅读，更优质的阅读体验。",
-    "手机最省流量无广告的站点。",
-    "手机看小说哪家强手机阅",
-    "如果你喜欢本站[〖]?一定要记住[】]?(?:网址|地址)哦",
-    "看清爽的小说就到",
-    "请用搜索引擎(?:搜索关键词)?.*?完美破防盗章节，各种小说任你观看",
-    "完美破防盗章节，请用搜索引擎各种小说任你观看",
-    "破防盗章节，请用搜索引擎各种小说任你观看",
-    "(?:搜索引擎)?各种小说任你观看，破防盗章节",
+    // "手机用户请浏览m.biqugezw.com阅读，更优质的阅读体验。",
+    // "手机用户请浏览阅读，更优质的阅读体验。",
+    // "阅读，更优质的阅读体验。",
+    // "手机最省流量无广告的站点。",
+    // "手机看小说哪家强手机阅",
+    // "如果你喜欢本站[〖]?一定要记住[】]?(?:网址|地址)哦",
+    // "看清爽的小说就到",
+    // "请用搜索引擎(?:搜索关键词)?.*?完美破防盗章节，各种小说任你观看",
+    // "完美破防盗章节，请用搜索引擎各种小说任你观看",
+    // "破防盗章节，请用搜索引擎各种小说任你观看",
+    // "(?:搜索引擎)?各种小说任你观看，破防盗章节",
     "章节错误，点此举报\\(免注册\\)",
-    "热门小说最新章节全文阅读.。 更新好快。",
-    "【阅读本书最新章节，请搜索800】",
-    "亲，百度搜索眼&amp;快，大量小说免费看。",
-    "亲，眼&快，大量小说免费看。",
-    '下载免费阅读器!!',
-    '笔趣阁&nbsp;.，最快更新.*最新章节！',
-    '请大家搜索（书迷楼）看最全！更新最快的小说',
-    '更新快无广告。',
-    '【鳳.{1,2}凰.{1,2}小说网 更新快 无弹窗 请搜索f.h.xiao.shuo.c.o.m】',
-    '【可换源APP看书软件：书掌柜APP或直接访问官方网站shuzh.net】',
-    '[●★▲]手机下载APP看书神器.*',
-    "m.?手机最省流量的站点。",
-    'm.?手机最省流量.无广告的站点。',
-    '底部字链推广位',
-    'us最快',
-    'APPapp',
-    '久看中文网首发',
-    '顶点小说 ２３ＵＳ．com更新最快',
+    // "热门小说最新章节全文阅读.。 更新好快。",
+    // "【阅读本书最新章节，请搜索800】",
+    // "亲，百度搜索眼&amp;快，大量小说免费看。",
+    // "亲，眼&快，大量小说免费看。",
+    // '下载免费阅读器!!',
+    // '笔趣阁&nbsp;.，最快更新.*最新章节！',
+    // '请大家搜索（书迷楼）看最全！更新最快的小说',
+    // '更新快无广告。',
+    // '【鳳.{1,2}凰.{1,2}小说网 更新快 无弹窗 请搜索f.h.xiao.shuo.c.o.m】',
+    // '【可换源APP看书软件：书掌柜APP或直接访问官方网站shuzh.net】',
+    // '[●★▲]手机下载APP看书神器.*',
+    // "m.?手机最省流量的站点。",
+    // 'm.?手机最省流量.无广告的站点。',
+    // '底部字链推广位',
+    // 'us最快',
+    // 'APPapp',
+    // '久看中文网首发',
+    // '顶点小说 ２３ＵＳ．com更新最快',
     '这候.*?章汜[。.]?',
 
     // 复杂规则的替换
-    '(看小说到|爱玩爱看就来|就爱上|喜欢)?(\\s|<|>|&| |[+@＠=:;｀`%？》《〈︾-])?[乐樂](\\s|&lt;|&gt;|&amp;|&nbsp;|[+@＠=:;｀`%？》《〈︾-])?[文].*?[说說][网]?[|]?(.*(3w|[ｗωＷw]{1,3}|[Ｍm]).*[ｍＭm])?[}。\\s]?(乐文小说)?',
-    '(本文由|小说)?(\\s| )?((3w|[wＷｗ]{1,3}|[Ｍm]).)?\\s?[lしｌL][ｗωＷw][ｘχＸx][ｓＳs][５5][２2][０0].*[ｍＭm][|\\s]?(首发(哦亲)?)?',
+    // '(看小说到|爱玩爱看就来|就爱上|喜欢)?(\\s|<|>|&| |[+@＠=:;｀`%？》《〈︾-])?[乐樂](\\s|&lt;|&gt;|&amp;|&nbsp;|[+@＠=:;｀`%？》《〈︾-])?[文].*?[说說][网]?[|]?(.*(3w|[ｗωＷw]{1,3}|[Ｍm]).*[ｍＭm])?[}。\\s]?(乐文小说)?',
+    // '(本文由|小说)?(\\s| )?((3w|[wＷｗ]{1,3}|[Ｍm]).)?\\s?[lしｌL][ｗωＷw][ｘχＸx][ｓＳs][５5][２2][０0].*[ｍＭm][|\\s]?(首发(哦亲)?)?',
     '([『【↑△↓＠︾]+[\u4E00-\u9FA5]){2,6}[】|]',
     /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[cｃ][oｏ][mｍ]/g,
 
@@ -2170,26 +2223,28 @@
     '\\P{1,2}[顶頂].{1,3}[点小].*?o?[mw，]',
     '\\P.?长.{1,2}风.{1,2}文.{1,2}学.*?[tx]',
     '\\P无.错.*?[cＣ][oＯ][mＭ]',
-    '[;\\(]顶.{0,2}点.小说',
-    '2长2风2文2学，w￠＄',
-    '》长>风》',
+    // '[;\\(]顶.{0,2}点.小说',
+    // '2长2风2文2学，w￠＄',
+    // '》长>风》',
 
     // 包含 .* 的，可能有多余的替换
-    '看无防盗章节的小说，请用搜索引擎搜索关键词.*',
-    '(?:完美)?破防盗章节，请用搜索引擎搜索关键词.*',
-    '搜索引擎搜索关键词，各种任你观看，破防盗章节',
-    '破防盗完美章节，请用搜索引擎.*各种小说任你观看',
-    '如您已(?:閱讀|阅读)到此章节.*?敬请记住我们新的网址\\s*。',
-    '↗百度搜：.*?直达网址.*?↖',
-    "[:《〈｜~∨∟∑]{1,2}长.{1,2}风.*?et",
-    '\\[限时抢购\\].*',
-    '支持网站发展.逛淘宝买东西就从这里进.*',
+    // '看无防盗章节的小说，请用搜索引擎搜索关键词.*',
+    // '(?:完美)?破防盗章节，请用搜索引擎搜索关键词.*',
+    // '搜索引擎搜索关键词，各种任你观看，破防盗章节',
+    '.*搜索引擎搜索关键词.*',
+    // '破防盗完美章节，请用搜索引擎.*各种小说任你观看',
+    // '如您已(?:閱讀|阅读)到此章节.*?敬请记住我们新的网址\\s*。',
+    '如您已(?:閱讀|阅读)到此章[节節].*?(?:敬请记住我们新的网址|敬請記住我們新的網址).*',
+    // '↗百度搜：.*?直达网址.*?↖',
+    // "[:《〈｜~∨∟∑]{1,2}长.{1,2}风.*?et",
+    // '\\[限时抢购\\].*',
+    // '支持网站发展.逛淘宝买东西就从这里进.*',
     'ps[：:]想听到更多你们的声音，想收到更多你们的建议，现在就搜索微信公众号“qdread”并加关注，给.*?更多支持！',
     '(?:ps[:：])?看《.*?》背后的独家故事.*?告诉我吧！',
     '（?天上掉馅饼的好活动.*?微信公众号！）?',
     '（微信添加.*qdread微信公众号！）',
-    'jiemei如您已阅读到此章节，请移步到.*?\\[ads:本站换新网址啦，速记方法：，.\\]',
-    '先给自己定个小目标：比如收藏笔趣阁.*',
+    // 'jiemei如您已阅读到此章节，请移步到.*?\\[ads:本站换新网址啦，速记方法：，.\\]',
+    // '先给自己定个小目标：比如收藏笔趣阁.*',
     '请记住本书首发域名.*',
     '记住手机版网址.*',
     '.*关注微信公众号.*',
@@ -2198,33 +2253,35 @@
     '笔趣阁.*最快更新.*',
     '最新网址：.*',
     '.*笔下文学更新速度最快.*',
+    '.*下载爱阅(?:小说)?app.*',
+    '为您提供.*最快更新',
 
     // 短文字替换
-    '\\[txt全集下载\\]',
-    '\\[\\s*超多好看小说\\]',
-    '⊙四⊙五⊙中⊙文☆→',
-    '\\[ads:本站换新网址啦，速记方法：.*?\\]',
-    '[》《｜～]无(?:.|&gt;)错(?:.|&gt;)小说',
-    '`无`错`小说`www.``com', '＋无＋错＋小说＋3w＋＋',
-    '\\|优\\|优\\|小\\|说\\|更\\|新\\|最\\|快Ｘ',
-    '▲∴', '8，ww←',
-    /www.23＋?[Ｗw][Ｘx].[Ｃc]om/ig,
-    /热门推荐:、+/g,
-    /h2&gt;/g,
-    '[《〈》>\\+｜～［\\]]无\\1错\\1', '》无>错》',
+    // '\\[txt全集下载\\]',
+    // '\\[\\s*超多好看小说\\]',
+    // '⊙四⊙五⊙中⊙文☆→',
+    // '\\[ads:本站换新网址啦，速记方法：.*?\\]',
+    // '[》《｜～]无(?:.|&gt;)错(?:.|&gt;)小说',
+    // '`无`错`小说`www.``com', '＋无＋错＋小说＋3w＋＋',
+    // '\\|优\\|优\\|小\\|说\\|更\\|新\\|最\\|快Ｘ',
+    // '▲∴', '8，ww←',
+    // /www.23＋?[Ｗw][Ｘx].[Ｃc]om/ig,
+    // /热门推荐:、+/g,
+    // /h2&gt;/g,
+    // '[《〈》>\\+｜～［\\]]无\\1错\\1', '》无>错》',
 
-    '女凤免费小说抢先看', '女凤小说网全文字 无广告',
-    '乐文小说网?', '《乐〈文《小说', '乐文移动网', '頂点小说', '頂點小說',
-    '追小说哪里快去眼快',
-    '\\[书库\\].\\[774\\]\\[buy\\].kuai',
-    'www.938xs.com',
-    '小說，.biquge5200.',
+    // '女凤免费小说抢先看', '女凤小说网全文字 无广告',
+    // '乐文小说网?', '《乐〈文《小说', '乐文移动网', '頂点小说', '頂點小說',
+    // '追小说哪里快去眼快',
+    // '\\[书库\\].\\[774\\]\\[buy\\].kuai',
+    // 'www.938xs.com',
+    // '小說，.biquge5200.',
 
     /'ads_wz_txt;',|百度搜索|无弹窗小说网|更新快无弹窗纯文字|高品质更新|小说章节更新最快|\(百度搜.\)|全文字手打|“”&nbsp;看|无.弹.窗.小.说.网|追书网|〖∷∷无弹窗∷纯文字∷ 〗/g,
 
-    '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗钲鉦鮪歄鎣刬頲櫦磆]',
-    '谷.\\n',
-    '　　谷.',
+    // '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗钲鉦鮪歄鎣刬頲櫦磆]',
+    '^谷.|谷.$',
+    '^[，。？,.?]'
     
   ];
 
@@ -2356,6 +2413,7 @@
       '.articletitle > a',
       '.weizhi a:last',
       '.cover-nav a:last',
+      '.path > .p > a:last',
       '.path a:last',
       '.readNav a:last',
       '.chapter-nav a:last',
@@ -2850,19 +2908,6 @@
               return text
           }
 
-          // https://stackoverflow.com/a/4232971
-          // 删除包裹着文本的标签
-          function unwrapTag(doc, tagName) {
-              const tags = doc.getElementsByTagName(tagName);
-
-              while (tags.length) {
-                  var parent = tags[0].parentNode;
-                  while (tags[0].firstChild) {
-                      parent.insertBefore(tags[0].firstChild, tags[0]);
-                  }
-                  parent.removeChild(tags[0]);
-              }
-          }
 
           // 贴吧的内容处理比较耗时间
           C.group('开始内容处理');
@@ -2871,9 +2916,9 @@
           var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
           // 拼音字、屏蔽字修复
-          if(contentHandle){
-              text = this.replaceHtml(text, Rule.replace);
-          }
+          // if(contentHandle){
+          //     text = this.replaceHtml(text, Rule.replace);
+          // }
 
           /* Turn all double br's into p's */
           text = text.replace(Rule.replaceBrs, '</p>\n<p>');
@@ -2881,13 +2926,13 @@
 
           // GM_setClipboard(text);
 
-          // 规则替换
-          if (info.contentReplace) {
-              text = this.replaceText(text, info.contentReplace);
-          }
-          debugger
-          // 移除文字广告等
-          text = this.replaceText(text, Rule.replaceAll);
+          // // 规则替换
+          // if (info.contentReplace) {
+          //     text = this.replaceText(text, info.contentReplace);
+          // }
+
+          // // 移除文字广告等
+          // text = this.replaceText(text, Rule.replaceAll);
 
           // 去除内容中的标题
           if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
@@ -2910,11 +2955,11 @@
               text = this.convert2tw(text);
           }
 
-          try {
-              text = this.contentCustomReplace(text);
-          } catch(ex) {
-              console.error('自定义替换错误', ex);
-          }
+          // try {
+          //     text = this.contentCustomReplace(text);
+          // } catch(ex) {
+          //     console.error('自定义替换错误', ex);
+          // }
 
           // 采用 DOM 方式进行处理
           var $div = $("<div>").html(text);
@@ -2932,6 +2977,10 @@
           if(info.contentRemove){
               $div.find(info.contentRemove).remove();
           }
+
+          // 净化文本节点内容
+          // 会进行拼音字修复，规则替换，广告净化，自定义替换
+          this.clearContent($div[0], info);
 
           // 给独立的文本加上 p
           var $contents = $div.contents();
@@ -3004,12 +3053,65 @@
           // 删除空白的、单个字符的 p
           text = text.replace(Rule.removeLineRegExp, "");
 
-          text = this.removeDump(text);
+          // text = this.removeDump(text)
 
           C.timeEnd('内容处理');
           C.groupEnd();
 
           return text;
+      },
+      clearContent: function(dom, info) {
+          const textNodes = getTextNodesIn(dom);
+
+          // 获取节点文本并去重
+          // 例如 https://www.biquge.name/html/3/3165/71213641.html
+          const contents = textNodes.map(node => node.data.trim().replace(/\s+/g, ' '));
+          const deDupeConetents = [...new Set(contents)];
+
+          let content;
+
+          // 查重率超过 10% 则使用去重后内容
+          const dupeRate = (contents.length - deDupeConetents.length) / contents.length;
+          if (dupeRate > 0.1) {
+              content = deDupeConetents.join('\n');
+              C.log(`去除了 ${contents.length - deDupeConetents.length} 段重复内容`);
+          } else {
+              content = contents.join('\n');
+          }
+
+          var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+
+          // 拼音字、屏蔽字修复
+          if (contentHandle) {
+              content = this.replaceText(content, Rule.replace);
+          }
+
+          // 删除含网站域名行文本
+          content = content.replace(toRE(`.*${this._curPageHost}.*`), "");
+
+          // 规则替换
+          if (info.contentReplace) {
+              content = this.replaceText(content, info.contentReplace);
+          }
+
+          content = this.replaceText(content, Rule.replaceAll);
+
+          try {
+              content = this.contentCustomReplace(content);
+          } catch(ex) {
+              console.error('自定义替换错误', ex);
+          }
+
+          const finalContents = content.split('\n');
+
+          textNodes.forEach((node, index) => {
+              if (!finalContents[index]) {
+                  node.data = '';
+              } else if (node.data.trim() !== finalContents[index]) {
+                  node.data = finalContents[index];
+              }
+          });
+
       },
       normalizeContent: function(html) {
           html = html.replace(/<\/p><p>/g, '</p>\n<p>');
@@ -3085,8 +3187,7 @@
                   _.each(CHAR_ALIAS, function(value, key) {
                       rule = rule.replace(key, value);
                   });
-                  var regexp = new RegExp(rule, 'ig');
-                  text = text.replace(regexp, '');
+                  text = text.replace(toRE(rule), '');
                   break;
               case _.isArray(rule):
                   rule.forEach(function(r){
@@ -3096,7 +3197,7 @@
               case _.isObject(rule):
                   var key;
                   for(key in rule){
-                      text = text.replace(new RegExp(key, "ig"), rule[key]);
+                      text = text.replace(toRE(key), rule[key]);
                   }
                   break;
           }
@@ -3120,7 +3221,7 @@
           if (!text) return text;
 
           for (var key in Rule.customReplace) {
-              text = text.replace(new RegExp(key, 'ig'), Rule.customReplace[key]);
+              text = text.replace(toRE(key), Rule.customReplace[key]);
           }
           return text;
       },
