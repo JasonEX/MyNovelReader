@@ -66,11 +66,23 @@ export function parseHTML(str) {
     return doc;
 }
 
-export function toRE(obj, flag) {
+const _regexCache = {}
+
+export function toRE(obj, flag = 'igm') {
     if (obj instanceof RegExp) {
         return obj;
-    } else {
-        return new RegExp(obj, (flag || 'ig'));
+    } else if (_regexCache[obj] && _regexCache[obj][flag]) {
+        const re = _regexCache[obj][flag]
+        re.lastIndex = 0
+        return re
+    } else if (!_regexCache[obj]) {
+        const re = new RegExp(obj, flag);
+        _regexCache[obj] = { [flag]: re }
+        return re
+    } else if (!_regexCache[obj][flag]) {
+        const re = new RegExp(obj, flag);
+        _regexCache[obj][flag] = re
+        return re
     }
 }
 
@@ -113,6 +125,44 @@ export function Request(options) {
         GM_xmlhttpRequest(options)
     })
 }
+
+// https://stackoverflow.com/a/4232971
+// 删除包裹着文本的标签
+export function unwrapTag(doc, tagName) {
+    const tags = doc.getElementsByTagName(tagName)
+
+    while (tags.length) {
+        var parent = tags[0].parentNode
+        while (tags[0].firstChild) {
+            parent.insertBefore(tags[0].firstChild, tags[0])
+        }
+        parent.removeChild(tags[0])
+    }
+    doc.normalize()
+}
+
+// https://stackoverflow.com/a/4399718
+// 获取所有文本节点
+export function getTextNodesIn(node, includeWhitespaceNodes) {
+    var textNodes = [],
+        nonWhitespaceMatcher = /\S/
+
+    function getTextNodes(node) {
+        if (node.nodeType == 3) {
+            if (includeWhitespaceNodes || nonWhitespaceMatcher.test(node.nodeValue)) {
+                textNodes.push(node)
+            }
+        } else {
+            for (var i = 0, len = node.childNodes.length; i < len; ++i) {
+                getTextNodes(node.childNodes[i])
+            }
+        }
+    }
+
+    getTextNodes(node)
+    return textNodes
+}
+
 
 // 模板
 $.nano = function(template, data) {

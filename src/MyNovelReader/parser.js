@@ -1,7 +1,7 @@
 import Setting from './Setting'
 import config from './config'
 import Rule, { CHAR_ALIAS } from './rule'
-import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost } from './lib'
+import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost, unwrapTag, getTextNodesIn } from './lib'
 import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
@@ -435,19 +435,6 @@ Parser.prototype = {
             return text
         }
 
-        // https://stackoverflow.com/a/4232971
-        // 删除包裹着文本的标签
-        function unwrapTag(doc, tagName) {
-            const tags = doc.getElementsByTagName(tagName)
-
-            while (tags.length) {
-                var parent = tags[0].parentNode
-                while (tags[0].firstChild) {
-                    parent.insertBefore(tags[0].firstChild, tags[0])
-                }
-                parent.removeChild(tags[0])
-            }
-        }
 
         // 贴吧的内容处理比较耗时间
         C.group('开始内容处理');
@@ -456,9 +443,9 @@ Parser.prototype = {
         var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
         // 拼音字、屏蔽字修复
-        if(contentHandle){
-            text = this.replaceHtml(text, Rule.replace);
-        }
+        // if(contentHandle){
+        //     text = this.replaceHtml(text, Rule.replace);
+        // }
 
         /* Turn all double br's into p's */
         text = text.replace(Rule.replaceBrs, '</p>\n<p>');
@@ -466,13 +453,13 @@ Parser.prototype = {
 
         // GM_setClipboard(text);
 
-        // 规则替换
-        if (info.contentReplace) {
-            text = this.replaceText(text, info.contentReplace);
-        }
+        // // 规则替换
+        // if (info.contentReplace) {
+        //     text = this.replaceText(text, info.contentReplace);
+        // }
 
-        // 移除文字广告等
-        text = this.replaceText(text, Rule.replaceAll);
+        // // 移除文字广告等
+        // text = this.replaceText(text, Rule.replaceAll);
 
         // 去除内容中的标题
         if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
@@ -495,11 +482,11 @@ Parser.prototype = {
             text = this.convert2tw(text);
         }
 
-        try {
-            text = this.contentCustomReplace(text);
-        } catch(ex) {
-            console.error('自定义替换错误', ex);
-        }
+        // try {
+        //     text = this.contentCustomReplace(text);
+        // } catch(ex) {
+        //     console.error('自定义替换错误', ex);
+        // }
 
         // 采用 DOM 方式进行处理
         var $div = $("<div>").html(text);
@@ -517,6 +504,10 @@ Parser.prototype = {
         if(info.contentRemove){
             $div.find(info.contentRemove).remove();
         }
+
+        // 净化文本节点内容
+        // 会进行拼音字修复，规则替换，广告净化，自定义替换
+        this.clearContent($div[0], info);
 
         // 给独立的文本加上 p
         var $contents = $div.contents();
@@ -589,12 +580,65 @@ Parser.prototype = {
         // 删除空白的、单个字符的 p
         text = text.replace(Rule.removeLineRegExp, "");
 
-        text = this.removeDump(text)
+        // text = this.removeDump(text)
 
         C.timeEnd('内容处理');
         C.groupEnd();
 
         return text;
+    },
+    clearContent: function(dom, info) {
+        const textNodes = getTextNodesIn(dom)
+
+        // 获取节点文本并去重
+        // 例如 https://www.biquge.name/html/3/3165/71213641.html
+        const contents = textNodes.map(node => node.data.trim().replace(/\s+/g, ' '))
+        const deDupeConetents = [...new Set(contents)]
+
+        let content;
+
+        // 查重率超过 10% 则使用去重后内容
+        const dupeRate = (contents.length - deDupeConetents.length) / contents.length
+        if (dupeRate > 0.1) {
+            content = deDupeConetents.join('\n')
+            C.log(`去除了 ${contents.length - deDupeConetents.length} 段重复内容`)
+        } else {
+            content = contents.join('\n')
+        }
+
+        var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+
+        // 拼音字、屏蔽字修复
+        if (contentHandle) {
+            content = this.replaceText(content, Rule.replace)
+        }
+
+        // 删除含网站域名行文本
+        content = content.replace(toRE(`.*${this._curPageHost}.*`), "")
+
+        // 规则替换
+        if (info.contentReplace) {
+            content = this.replaceText(content, info.contentReplace)
+        }
+
+        content = this.replaceText(content, Rule.replaceAll)
+
+        try {
+            content = this.contentCustomReplace(content);
+        } catch(ex) {
+            console.error('自定义替换错误', ex);
+        }
+
+        const finalContents = content.split('\n')
+
+        textNodes.forEach((node, index) => {
+            if (!finalContents[index]) {
+                node.data = ''
+            } else if (node.data.trim() !== finalContents[index]) {
+                node.data = finalContents[index]
+            }
+        })
+
     },
     normalizeContent: function(html) {
         html = html.replace(/<\/p><p>/g, '</p>\n<p>')
@@ -670,8 +714,7 @@ Parser.prototype = {
                 _.each(CHAR_ALIAS, function(value, key) {
                     rule = rule.replace(key, value);
                 });
-                var regexp = new RegExp(rule, 'ig');
-                text = text.replace(regexp, '');
+                text = text.replace(toRE(rule), '');
                 break;
             case _.isArray(rule):
                 rule.forEach(function(r){
@@ -681,7 +724,7 @@ Parser.prototype = {
             case _.isObject(rule):
                 var key;
                 for(key in rule){
-                    text = text.replace(new RegExp(key, "ig"), rule[key]);
+                    text = text.replace(toRE(key), rule[key]);
                 }
                 break;
         }
@@ -705,7 +748,7 @@ Parser.prototype = {
         if (!text) return text;
 
         for (var key in Rule.customReplace) {
-            text = text.replace(new RegExp(key, 'ig'), Rule.customReplace[key]);
+            text = text.replace(toRE(key), Rule.customReplace[key]);
         }
         return text;
     },
