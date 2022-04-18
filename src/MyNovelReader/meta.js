@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.5
+// @version        6.5.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -69,6 +69,20 @@
 // @include        *://www.50zw.com/book_*/*.html
 // @include        *://www.xiangcunxiaoshuo.com/shu/*/*.html
 // @include        *://www.wenxue8.org/html/*/*/*.html
+// @match          *://www.bixia.org/book/*/*.html
+// @match          *://www.67book.net/book/*/*.html
+// @match          *://www.50zw.org/book/*/*.html
+// @match          *://www.mijiashe.com/*/*.html
+// @match          *://www.luoqiuzw.com/book/*/*.html
+// @match          *://www.xiaoshuo.cc/*/*.html
+// @match          *://www.tyue.net/*/*.html
+// @match          *://www.biduoxs.com/biquge/*/*.html
+// @match          *://www.aixswx.com/xs/*/*/*.html
+// @match          *://www.babayu.com/kanshu/*.html
+// @match          *://www.wucuoxs.com/*/*.html
+// @match          *://www.ouoou.com/*/*.html
+// @match          *://www.7017k.com/*/*.html
+// @match          *://www.piaotianwenxue.com/book/*/*/*.html
 
 // @include        *://www.xs84.com/*_*/*
 

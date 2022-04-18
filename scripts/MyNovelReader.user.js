@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.5
+// @version        6.5.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -69,6 +69,20 @@
 // @include        *://www.50zw.com/book_*/*.html
 // @include        *://www.xiangcunxiaoshuo.com/shu/*/*.html
 // @include        *://www.wenxue8.org/html/*/*/*.html
+// @match          *://www.bixia.org/book/*/*.html
+// @match          *://www.67book.net/book/*/*.html
+// @match          *://www.50zw.org/book/*/*.html
+// @match          *://www.mijiashe.com/*/*.html
+// @match          *://www.luoqiuzw.com/book/*/*.html
+// @match          *://www.xiaoshuo.cc/*/*.html
+// @match          *://www.tyue.net/*/*.html
+// @match          *://www.biduoxs.com/biquge/*/*.html
+// @match          *://www.aixswx.com/xs/*/*/*.html
+// @match          *://www.babayu.com/kanshu/*.html
+// @match          *://www.wucuoxs.com/*/*.html
+// @match          *://www.ouoou.com/*/*.html
+// @match          *://www.7017k.com/*/*.html
+// @match          *://www.piaotianwenxue.com/book/*/*/*.html
 
 // @include        *://www.xs84.com/*_*/*
 
@@ -2280,7 +2294,7 @@
     /'ads_wz_txt;',|百度搜索|无弹窗小说网|更新快无弹窗纯文字|高品质更新|小说章节更新最快|\(百度搜.\)|全文字手打|“”&nbsp;看|无.弹.窗.小.说.网|追书网|〖∷∷无弹窗∷纯文字∷ 〗/g,
 
     // '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗钲鉦鮪歄鎣刬頲櫦磆]',
-    '^谷.|谷.$',
+    '^谷[\\u4e00-\\u9fa5]{0,1}|谷[\\u4e00-\\u9fa5]{0,1}$',
     '^[，。？,.?]'
     
   ];
@@ -3301,27 +3315,29 @@
               return url;
           }
 
+          var urlElement, isSectionUrl = false;
+
           // 先尝试站点规则
           if (selector) {
               if (_.isFunction(selector)) {
-                  url = selector(this.$doc);
+                  urlElement = selector(this.$doc);
               } else {
-                  url = this.$doc.find(selector);
+                  urlElement = this.$doc.find(selector);
               }
 
-              url = this.checkLinks(url);
+              url = this.checkLinks(urlElement);
           }
-
-          var urlElement;
 
           // 再尝试通用规则
           if (!url) {
               urlElement = this.$doc.find(Rule.nextSelector);
               url = this.checkLinks(urlElement);
+          }
+
+          if (url && urlElement && !_.isString(urlElement)) {
               // 一般下一章按钮文本含页就是多页章节
-              if (url && !this.isSection && urlElement.text().includes('页')) {
-                  C.log('检测到多页章节链接，自动尝试开启多页章节合并为一章模式');
-                  this.info.checkSection = true;
+              if (!this.isSection && urlElement.text().includes('页')) {
+                  isSectionUrl = true;
               }
           }
 
@@ -3332,12 +3348,15 @@
           }
 
           this.nextUrl = url || '';
-          this.isTheEnd = !this.checkNextUrl(url);
-          if(this.isTheEnd){
-              C.log('已到达最后一页');
-              this.theEndColor = config.end_color;
-          }
 
+          if (!isSectionUrl) {
+              this.isTheEnd = !this.checkNextUrl(url);
+              if (this.isTheEnd) {
+                  C.log('已到达最后一页');
+                  this.theEndColor = config.end_color;
+              }
+          }
+          
           return url;
       },
       // 获取上下页及目录页链接
@@ -3350,21 +3369,31 @@
               return url;
           }
 
+          var urlElement;
+
           // 先尝试站点规则
           if (selector) {
               if (_.isFunction(selector)) {
-                  url = selector(this.$doc);
+                  urlElement = selector(this.$doc);
               } else {
-                  url = this.$doc.find(selector);
+                  urlElement = this.$doc.find(selector);
               }
 
-              url = this.checkLinks(url);
+              url = this.checkLinks(urlElement);
           }
 
           // 再尝试通用规则
           if (!url) {
-              url = this.$doc.find(Rule.prevSelector);
-              url = this.checkLinks(url);
+              urlElement = this.$doc.find(Rule.prevSelector);
+              url = this.checkLinks(urlElement);
+          }
+
+          if (url && urlElement && !_.isString(urlElement)) {
+              // 一般上一章按钮文本含页就是多页章节
+              if (url && !this.isSection && urlElement.text().includes('页')) {
+                  C.log('检测到多页章节链接，开启多页章节合并为一章模式');
+                  this.isSection = true;
+              }
           }
 
           if (url) {

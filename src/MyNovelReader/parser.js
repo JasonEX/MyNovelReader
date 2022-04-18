@@ -828,27 +828,29 @@ Parser.prototype = {
             return url;
         }
 
+        var urlElement, isSectionUrl = false;
+
         // 先尝试站点规则
         if (selector) {
             if (_.isFunction(selector)) {
-                url = selector(this.$doc);
+                urlElement = selector(this.$doc);
             } else {
-                url = this.$doc.find(selector);
+                urlElement = this.$doc.find(selector);
             }
 
-            url = this.checkLinks(url);
+            url = this.checkLinks(urlElement);
         }
-
-        var urlElement;
 
         // 再尝试通用规则
         if (!url) {
             urlElement = this.$doc.find(Rule.nextSelector);
             url = this.checkLinks(urlElement);
+        }
+
+        if (url && urlElement && !_.isString(urlElement)) {
             // 一般下一章按钮文本含页就是多页章节
-            if (url && !this.isSection && urlElement.text().includes('页')) {
-                C.log('检测到多页章节链接，自动尝试开启多页章节合并为一章模式')
-                this.info.checkSection = true
+            if (!this.isSection && urlElement.text().includes('页')) {
+                isSectionUrl = true;
             }
         }
 
@@ -859,12 +861,15 @@ Parser.prototype = {
         }
 
         this.nextUrl = url || '';
-        this.isTheEnd = !this.checkNextUrl(url);
-        if(this.isTheEnd){
-            C.log('已到达最后一页')
-            this.theEndColor = config.end_color;
-        }
 
+        if (!isSectionUrl) {
+            this.isTheEnd = !this.checkNextUrl(url)
+            if (this.isTheEnd) {
+                C.log('已到达最后一页')
+                this.theEndColor = config.end_color
+            }
+        }
+        
         return url;
     },
     // 获取上下页及目录页链接
@@ -877,21 +882,31 @@ Parser.prototype = {
             return url;
         }
 
+        var urlElement;
+
         // 先尝试站点规则
         if (selector) {
             if (_.isFunction(selector)) {
-                url = selector(this.$doc);
+                urlElement = selector(this.$doc);
             } else {
-                url = this.$doc.find(selector);
+                urlElement = this.$doc.find(selector);
             }
 
-            url = this.checkLinks(url);
+            url = this.checkLinks(urlElement);
         }
 
         // 再尝试通用规则
         if (!url) {
-            url = this.$doc.find(Rule.prevSelector);
-            url = this.checkLinks(url);
+            urlElement = this.$doc.find(Rule.prevSelector);
+            url = this.checkLinks(urlElement);
+        }
+
+        if (url && urlElement && !_.isString(urlElement)) {
+            // 一般上一章按钮文本含页就是多页章节
+            if (url && !this.isSection && urlElement.text().includes('页')) {
+                C.log('检测到多页章节链接，开启多页章节合并为一章模式')
+                this.isSection = true;
+            }
         }
 
         if (url) {
