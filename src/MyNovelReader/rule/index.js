@@ -2,6 +2,7 @@ import sites from './sites'
 import replace from './replace'
 import replaceAll from './replaceAll'
 import * as oneWordReplace from './oneWrodReplace'
+import { replaceNormalize } from './replaceNormalize'
 
 // Unicode/2000-2FFF：http://zh.wikibooks.org/wiki/Unicode/2000-2FFF
 // Unicode/F000-FFFF：https://zh.wikibooks.org/wiki/Unicode/F000-FFFF
@@ -14,7 +15,7 @@ export var CHAR_ALIAS = {
 // ===== 自动尝试的规则 =====
 var Rule = {
   titleRegExp: /第?\s*[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０〇]{1,6}\s*[章回卷节折篇幕集话話]/i,
-  titleReplace: /^章节目录|^文章正文|^正文|全文免费阅读|最新章节|\(文\)/,
+  titleReplace: /^章节目录|^文章正文|^正文卷?|全文免费阅读|最新章节|\(文\)/,
 
   // nextRegExp: /[上前下后][一]?[页张个篇章节步]/,
   nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
@@ -24,10 +25,10 @@ var Rule = {
       /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
 
       // qidian
-      /BookReader\/LastPageNew\.aspx/i,
-      /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
+      // /BookReader\/LastPageNew\.aspx/i,
+      // /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
       /read\.qidian\.com\/$/i,
-      /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
+      // /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
 
       /book\.zongheng\.com\/readmore/i,
       /www\.shumilou\.com\/to-n-[a-z]+-\d+\.html/i,
@@ -45,8 +46,9 @@ var Rule = {
       "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
       "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
       "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+      "#ChapterContents", "#acontent",
       ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
-      ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con",
+      ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
       "article",
   ],
 
@@ -79,31 +81,39 @@ var Rule = {
     '.bread > a:nth-child(3)',
   ],
   bookTitleReplace: [
-      '全文阅读$', '在线阅读$', '最新章节$',
+      '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
   ],
 
-  contentRemove: "script, iframe, a",          // 内容移除选择器
+  contentRemove: "script, iframe, a, audio",          // 内容移除选择器
   removeLineRegExp: /<p>[　\s。;，！\.∷〖]*<\/p>/g,  // 移除只有一个字符的行
 
   // 以下不常改
   replaceBrs: /(<br[^>]*>[ \n\r\t]*){1,}/gi,    // 替换为<p>
+
+  specialSite: sites,
+  replace, replaceNormalize, replaceAll,
+
+  customRules: [],
+  customReplace: {},
+  parseCustomReplaceRules,
+
 };
 
-Rule.specialSite = sites
+// Rule.specialSite = sites
 
-Rule.replace = replace
+// Rule.replace = replace
 
 oneWordReplace.extendRule(Rule.replace)
 
 // ===== 全局移除，在替换 <br> 为 \n 之后 =====
-Rule.replaceAll = replaceAll
+// Rule.replaceAll = replaceAll
 
 
 // 自定义的
-Rule.customRules = [];
-Rule.customReplace = {};
+// Rule.customRules = [];
+// Rule.customReplace = {};
 
-Rule.parseCustomReplaceRules = function(str) {
+function parseCustomReplaceRules(str) {
   var arr = str.split(/\n/);
   var rules = {};
   _.each(arr, function(b) {
