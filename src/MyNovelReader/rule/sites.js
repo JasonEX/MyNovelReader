@@ -175,7 +175,7 @@ const sites = [
           $doc.find('#six_list, #sendKingTickets').parent().remove();
           $doc.find("div.noveltext").find("div:first, h1").remove();
 
-          $doc.find("div[align=right]").remove()
+          $doc.find("div[align=right], .readsmall").remove()
           
           // 移除VIP章节方块
           var $node = $doc.find('.noveltext');
@@ -1045,9 +1045,6 @@ const sites = [
                 method: "GET",
                 overrideMimeType: "text/html;charset=utf-8",
                 headers: {},
-                onload: function(res){
-                    
-                }
             };
             const res = await Request(reqObj)
             var text = res.responseText;
@@ -1170,7 +1167,38 @@ const sites = [
         url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
         useiframe: true,
 
+    },
 
+    {siteName: '霹雳书坊',
+        url: 'https?://www.pilibook.com/\\d+/\\d+/\\d+.html',
+        exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
+
+        nextSelector: ".novelbutton3 > li:nth-child(4) > a",
+        prevSelector: ".novelbutton3 > li:nth-child(1) > a",
+        indexSelector: ".novelbutton3 > li:nth-child(2) > a",
+
+    },
+
+    {siteName: '飞速中文',
+        url: 'https://(?:www.)?(?:feiszw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
+        exampleUrl: 'https://www.feiszw.com/Html/21975/18399024.html',
+
+        contentRemove: 'p[style], .l',
+        noSection: true,
+
+    },
+
+    {siteName: '搜小说/搜书网/酷笔记',
+        url: 'www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)',
+
+        contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
+        contentPatch($doc) {
+            $doc.find('p').remove()
+        },
+
+        nextSelector: '.pagego > a:nth-child(5)',
+        indexSelector: '.pagego > a:nth-child(3)',
+        prevSelector: '.pagego > a:nth-child(2)',
     },
 
 ];

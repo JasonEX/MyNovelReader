@@ -70,9 +70,10 @@
 
     contentSelector: '', // 章节内容 jQuery 选择器
     checkSection: false, // 是否检查章节存在多页，检测到了会尝试合并为一章
+    noSection: false, // 关闭多页章节自动合并
     contentRemove: '', // 被移除元素的 jQuery 选择器
 
-    useSiteFont: false, // 当站点使用了静态自定义字体（即原网页文字显示正常，但在阅读模式下出现乱码的情况）启用
+    /* 二选一 */ useSiteFont: false, // 当站点使用了静态自定义字体（即原网页文字显示正常，但在阅读模式下出现乱码的情况）启用
     useSiteFont: '', // 字体名（family），多个字体使用逗号分隔，需要在 style 规则中填写 font-face 样式
 
     // 正文内容净化
@@ -87,18 +88,18 @@
     // 内容补丁，内容处理前（preProcessDoc）执行
     contentPatch: function ($doc) {
         // $doc = $(document)
-        // this 是 App
+        // this = App
     },
     // 异步内容补丁，需要执行异步代码时使用
     contentPatchAsync: async function ($doc) {
         // $doc = $(document)
-        // this 是 App
+        // this = App
 
     },
     // 获取内容，返回html
     getContent: async function ($doc) {
         // $doc = $(document)
-        // this 是 Parser
+        // this = Parser
 
         return {
             /* 二选一 */ content: '章节内容html',

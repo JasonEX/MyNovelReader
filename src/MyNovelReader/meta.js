@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.6
+// @version        6.5.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -258,6 +258,26 @@
 // @include        *://www.cnhxfilm.com/book/*/*.html
 // @match          *://www.vipkanshu.vip/shu/*/*.html
 // @match          *://www.81zw.com/book/*/*.html
+// @match          *://www.biqu5200.net/*/*.html
+// @match          *://www.biqusa.com/*/*.html
+// @match          *://www.biququ.com/html/*/*.html
+// @match          *://www.ddxs.com/*/*.html
+// @match          *://www.biqugetv.com/*/*.html
+// @match          *://www.feiszw.com/Html/*/*.html
+// @match          *://www.xn--fiq228cu93a4kh.com/Html/*/*.html
+// @match          *://www.555x.org/read/*/*.html
+// @match          *://www.soxs.cc/*/*.html
+// @match          *://www.soxscc.cc/*/*.html
+// @match          *://www.soxscc.net/*/*.html
+// @match          *://www.soxscc.org/*/*.html
+// @match          *://www.soshuw.com/*/*.html
+// @match          *://www.soshuwu.com/*/*.html
+// @match          *://www.soshuwu.org/*/*.html
+// @match          *://www.kubiji.net/*/*.html
+// @match          *://www.imbg.com/read/*/*.html
+// @match          *://www.linovelib.com/novel/*/*.html
+// @match          *://www.shuquge.com/txt/*/*.html
+// @match          *://www.qimao.com/shuku/*-*/
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
