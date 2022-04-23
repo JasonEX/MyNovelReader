@@ -83,7 +83,7 @@ var App = {
         }
         // Hook addEventListener 以便需要时移除事件监听器
         const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener
-        unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
+        function addEventListener(type, listener, options) {
             _addEventListener.apply(this, arguments)
             App.listenerAndObserver.push(() => {
                 try {
@@ -91,6 +91,8 @@ var App = {
                 } catch (e) {}
             })
         }
+        unsafeWindow.EventTarget.prototype.addEventListener = addEventListener
+        document.addEventListener = addEventListener
         // Hook MutationObserver 以便需要时移除观察器
         const _observe = unsafeWindow.MutationObserver.prototype.observe
         const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect

@@ -5,6 +5,7 @@ import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost, unwrapTag, getTextNo
 import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
+import { toCDB } from './rule/replaceNormalize'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -573,8 +574,8 @@ Parser.prototype = {
         text = text.replace(/<\/p><p>([。])/, "$1");
 
         if(config.paragraphBlank){
-            text = text.replace(/<p>(?:\s|&nbsp;)+/g, "<p>")
-                    .replace(/<p>/g, "<p>　　");
+            text = text.replace(/<p[^>]*>(?:\s|&nbsp;)*/g, "<p>　　")
+                    // .replace(/<p>/g, "<p>　　");
         }
 
         // 删除空白的、单个字符的 p
@@ -622,6 +623,10 @@ Parser.prototype = {
         }
 
         content = this.replaceText(content, Rule.replaceAll)
+        
+        // 内容标准化处理
+        content = this.replaceText(content, Rule.replaceNormalize)
+        content = toCDB(content)
 
         try {
             content = this.contentCustomReplace(content);
@@ -631,13 +636,23 @@ Parser.prototype = {
 
         const finalContents = content.split('\n')
 
-        textNodes.forEach((node, index) => {
-            if (!finalContents[index]) {
-                node.data = ''
-            } else if (node.data.trim() !== finalContents[index]) {
-                node.data = finalContents[index]
-            }
-        })
+        if (finalContents.length <= textNodes.length) {
+            textNodes.forEach((node, index) => {
+                if (!finalContents[index]) {
+                    node.data = ''
+                } else if (node.data.trim() !== finalContents[index]) {
+                    node.data = finalContents[index]
+                }
+            })
+        } else {
+            finalContents.forEach((text, index) => {
+                if (!textNodes[index]) {
+                    $('<p>').text(text).appendTo(dom)
+                } else if (textNodes[index].data.trim() !== text) {
+                    textNodes[index].data = text
+                }
+            })
+        }
 
     },
     normalizeContent: function(html) {
@@ -821,7 +836,8 @@ Parser.prototype = {
     },
     getNextUrl: function(){
         var url = '',
-            selector = this.info.nextSelector || this.info.nextUrl;
+            selector = this.info.nextSelector || this.info.nextUrl,
+            noSection = this.info.noSection;
 
         if (selector === false) {
             this.nextUrl = url;
@@ -847,7 +863,7 @@ Parser.prototype = {
             url = this.checkLinks(urlElement);
         }
 
-        if (url && urlElement && !_.isString(urlElement)) {
+        if (!noSection && url && urlElement && !_.isString(urlElement)) {
             // 一般下一章按钮文本含页就是多页章节
             if (!this.isSection && urlElement.text().includes('页')) {
                 isSectionUrl = true;
@@ -875,7 +891,8 @@ Parser.prototype = {
     // 获取上下页及目录页链接
     getPrevUrl: function(){
         var url = '',
-            selector = this.info.prevSelector || this.info.prevUrl;
+            selector = this.info.prevSelector || this.info.prevUrl,
+            noSection = this.info.noSection;
 
         if (selector === false) {
             this.prevUrl = url;
@@ -901,7 +918,7 @@ Parser.prototype = {
             url = this.checkLinks(urlElement);
         }
 
-        if (url && urlElement && !_.isString(urlElement)) {
+        if (!noSection && url && urlElement && !_.isString(urlElement)) {
             // 一般上一章按钮文本含页就是多页章节
             if (url && !this.isSection && urlElement.text().includes('页')) {
                 C.log('检测到多页章节链接，开启多页章节合并为一章模式')
