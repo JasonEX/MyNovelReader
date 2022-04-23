@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.6
+// @version        6.5.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -258,6 +258,26 @@
 // @include        *://www.cnhxfilm.com/book/*/*.html
 // @match          *://www.vipkanshu.vip/shu/*/*.html
 // @match          *://www.81zw.com/book/*/*.html
+// @match          *://www.biqu5200.net/*/*.html
+// @match          *://www.biqusa.com/*/*.html
+// @match          *://www.biququ.com/html/*/*.html
+// @match          *://www.ddxs.com/*/*.html
+// @match          *://www.biqugetv.com/*/*.html
+// @match          *://www.feiszw.com/Html/*/*.html
+// @match          *://www.xn--fiq228cu93a4kh.com/Html/*/*.html
+// @match          *://www.555x.org/read/*/*.html
+// @match          *://www.soxs.cc/*/*.html
+// @match          *://www.soxscc.cc/*/*.html
+// @match          *://www.soxscc.net/*/*.html
+// @match          *://www.soxscc.org/*/*.html
+// @match          *://www.soshuw.com/*/*.html
+// @match          *://www.soshuwu.com/*/*.html
+// @match          *://www.soshuwu.org/*/*.html
+// @match          *://www.kubiji.net/*/*.html
+// @match          *://www.imbg.com/read/*/*.html
+// @match          *://www.linovelib.com/novel/*/*.html
+// @match          *://www.shuquge.com/txt/*/*.html
+// @match          *://www.qimao.com/shuku/*-*/
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
@@ -839,7 +859,7 @@
             $doc.find('#six_list, #sendKingTickets').parent().remove();
             $doc.find("div.noveltext").find("div:first, h1").remove();
 
-            $doc.find("div[align=right]").remove();
+            $doc.find("div[align=right], .readsmall").remove();
             
             // 移除VIP章节方块
             var $node = $doc.find('.noveltext');
@@ -1709,9 +1729,6 @@
                   method: "GET",
                   overrideMimeType: "text/html;charset=utf-8",
                   headers: {},
-                  onload: function(res){
-                      
-                  }
               };
               const res = await Request(reqObj);
               var text = res.responseText;
@@ -1834,7 +1851,38 @@
           url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
           useiframe: true,
 
+      },
 
+      {siteName: '霹雳书坊',
+          url: 'https?://www.pilibook.com/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
+
+          nextSelector: ".novelbutton3 > li:nth-child(4) > a",
+          prevSelector: ".novelbutton3 > li:nth-child(1) > a",
+          indexSelector: ".novelbutton3 > li:nth-child(2) > a",
+
+      },
+
+      {siteName: '飞速中文',
+          url: 'https://(?:www.)?(?:feiszw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
+          exampleUrl: 'https://www.feiszw.com/Html/21975/18399024.html',
+
+          contentRemove: 'p[style], .l',
+          noSection: true,
+
+      },
+
+      {siteName: '搜小说/搜书网/酷笔记',
+          url: 'www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)',
+
+          contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
+          contentPatch($doc) {
+              $doc.find('p').remove();
+          },
+
+          nextSelector: '.pagego > a:nth-child(5)',
+          indexSelector: '.pagego > a:nth-child(3)',
+          prevSelector: '.pagego > a:nth-child(2)',
       },
 
   ];
@@ -1847,7 +1895,7 @@
     // "\\)|\\]|\\}|）|】|｝":"）",
 
     // 需要？
-    ",": "，",
+    //",\\s*": "，",
     // ":": "：", "\\?":"？",  // 会造成起点的图片无法替换
 
     "\\*|＊": "*",
@@ -1860,7 +1908,7 @@
     "(\\.|\u3001|\u3002)net": ".net",
     "(\\.|\u3001|\u3002)cn": ".cn",
     "[pPｐＰ][sSｓＳ][:：]": "ps:",
-    "。{5,7}": "……", "~{2,50}": "——", "…{3,40}": "……", "－{3,20}": "——",
+    // "。{5,7}": "……", "~{2,50}": "——", "…{3,40}": "……", "－{3,20}": "——",
     //"。(,|，|。)": "。",
     // "？(,|，)": "？",
     //"”(,|，|。)": "”",
@@ -2295,7 +2343,7 @@
 
     // '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗钲鉦鮪歄鎣刬頲櫦磆]',
     '^谷[\\u4e00-\\u9fa5]{0,1}|谷[\\u4e00-\\u9fa5]{0,1}$',
-    '^[，。？,.?]'
+    '^[。？！.?!]'
     
   ];
 
@@ -2358,6 +2406,37 @@
   }
   // test()
 
+  // 正文内容标准化替换
+
+  const replaceNormalize = {
+      ',\\s*': '，',
+      '\\.$': '。',
+      '，$\\s|\\s^，': '，',
+      '，+': '，',
+      '。([^\s”"])': '。\n$1',
+      '。{3,7}': '……',
+      '~{2,50}': '——',
+      '…{3,40}': '……',
+      '－{3,20}': '——',
+  };
+
+  // 不转换 ，？：；（）！
+  const excludeCharCode = new Set([65292, 65311, 65306, 65307, 65288, 65289, 65281]);
+
+  // 全角转半角
+  function toCDB(str) {
+      let tmp = '', charCode;
+      for (let i = 0; i < str.length; i++) {
+          charCode = str.charCodeAt(i);
+          if (charCode > 65248 && charCode < 65375 && !excludeCharCode.has(charCode)) {
+              tmp += String.fromCharCode(charCode - 65248);
+          } else {
+              tmp += String.fromCharCode(charCode);
+          }
+      }
+      return tmp
+  }
+
   // Unicode/2000-2FFF：http://zh.wikibooks.org/wiki/Unicode/2000-2FFF
   // Unicode/F000-FFFF：https://zh.wikibooks.org/wiki/Unicode/F000-FFFF
 
@@ -2369,7 +2448,7 @@
   // ===== 自动尝试的规则 =====
   var Rule = {
     titleRegExp: /第?\s*[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０〇]{1,6}\s*[章回卷节折篇幕集话話]/i,
-    titleReplace: /^章节目录|^文章正文|^正文|全文免费阅读|最新章节|\(文\)/,
+    titleReplace: /^章节目录|^文章正文|^正文卷?|全文免费阅读|最新章节|\(文\)/,
 
     // nextRegExp: /[上前下后][一]?[页张个篇章节步]/,
     nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
@@ -2379,10 +2458,10 @@
         /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
 
         // qidian
-        /BookReader\/LastPageNew\.aspx/i,
-        /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
+        // /BookReader\/LastPageNew\.aspx/i,
+        // /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
         /read\.qidian\.com\/$/i,
-        /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
+        // /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
 
         /book\.zongheng\.com\/readmore/i,
         /www\.shumilou\.com\/to-n-[a-z]+-\d+\.html/i,
@@ -2400,8 +2479,9 @@
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
         "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+        "#ChapterContents", "#acontent",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
-        ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con",
+        ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
         "article",
     ],
 
@@ -2434,31 +2514,39 @@
       '.bread > a:nth-child(3)',
     ],
     bookTitleReplace: [
-        '全文阅读$', '在线阅读$', '最新章节$',
+        '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
     ],
 
-    contentRemove: "script, iframe, a",          // 内容移除选择器
+    contentRemove: "script, iframe, a, audio",          // 内容移除选择器
     removeLineRegExp: /<p>[　\s。;，！\.∷〖]*<\/p>/g,  // 移除只有一个字符的行
 
     // 以下不常改
     replaceBrs: /(<br[^>]*>[ \n\r\t]*){1,}/gi,    // 替换为<p>
+
+    specialSite: sites,
+    replace, replaceNormalize, replaceAll,
+
+    customRules: [],
+    customReplace: {},
+    parseCustomReplaceRules,
+
   };
 
-  Rule.specialSite = sites;
+  // Rule.specialSite = sites
 
-  Rule.replace = replace;
+  // Rule.replace = replace
 
   extendRule(Rule.replace);
 
   // ===== 全局移除，在替换 <br> 为 \n 之后 =====
-  Rule.replaceAll = replaceAll;
+  // Rule.replaceAll = replaceAll
 
 
   // 自定义的
-  Rule.customRules = [];
-  Rule.customReplace = {};
+  // Rule.customRules = [];
+  // Rule.customReplace = {};
 
-  Rule.parseCustomReplaceRules = function(str) {
+  function parseCustomReplaceRules(str) {
     var arr = str.split(/\n/);
     var rules = {};
     _.each(arr, function(b) {
@@ -2470,7 +2558,7 @@
         rules[key] = value;
     });
     return rules;
-  };
+  }
 
   // 内容需要 ajax 的 className
   const READER_AJAX = "reader-ajax";
@@ -3060,8 +3148,8 @@
           text = text.replace(/<\/p><p>([。])/, "$1");
 
           {
-              text = text.replace(/<p>(?:\s|&nbsp;)+/g, "<p>")
-                      .replace(/<p>/g, "<p>　　");
+              text = text.replace(/<p[^>]*>(?:\s|&nbsp;)*/g, "<p>　　");
+                      // .replace(/<p>/g, "<p>　　");
           }
 
           // 删除空白的、单个字符的 p
@@ -3109,6 +3197,10 @@
           }
 
           content = this.replaceText(content, Rule.replaceAll);
+          
+          // 内容标准化处理
+          content = this.replaceText(content, Rule.replaceNormalize);
+          content = toCDB(content);
 
           try {
               content = this.contentCustomReplace(content);
@@ -3118,13 +3210,23 @@
 
           const finalContents = content.split('\n');
 
-          textNodes.forEach((node, index) => {
-              if (!finalContents[index]) {
-                  node.data = '';
-              } else if (node.data.trim() !== finalContents[index]) {
-                  node.data = finalContents[index];
-              }
-          });
+          if (finalContents.length <= textNodes.length) {
+              textNodes.forEach((node, index) => {
+                  if (!finalContents[index]) {
+                      node.data = '';
+                  } else if (node.data.trim() !== finalContents[index]) {
+                      node.data = finalContents[index];
+                  }
+              });
+          } else {
+              finalContents.forEach((text, index) => {
+                  if (!textNodes[index]) {
+                      $('<p>').text(text).appendTo(dom);
+                  } else if (textNodes[index].data.trim() !== text) {
+                      textNodes[index].data = text;
+                  }
+              });
+          }
 
       },
       normalizeContent: function(html) {
@@ -3308,7 +3410,8 @@
       },
       getNextUrl: function(){
           var url = '',
-              selector = this.info.nextSelector || this.info.nextUrl;
+              selector = this.info.nextSelector || this.info.nextUrl,
+              noSection = this.info.noSection;
 
           if (selector === false) {
               this.nextUrl = url;
@@ -3334,7 +3437,7 @@
               url = this.checkLinks(urlElement);
           }
 
-          if (url && urlElement && !_.isString(urlElement)) {
+          if (!noSection && url && urlElement && !_.isString(urlElement)) {
               // 一般下一章按钮文本含页就是多页章节
               if (!this.isSection && urlElement.text().includes('页')) {
                   isSectionUrl = true;
@@ -3362,7 +3465,8 @@
       // 获取上下页及目录页链接
       getPrevUrl: function(){
           var url = '',
-              selector = this.info.prevSelector || this.info.prevUrl;
+              selector = this.info.prevSelector || this.info.prevUrl,
+              noSection = this.info.noSection;
 
           if (selector === false) {
               this.prevUrl = url;
@@ -3388,7 +3492,7 @@
               url = this.checkLinks(urlElement);
           }
 
-          if (url && urlElement && !_.isString(urlElement)) {
+          if (!noSection && url && urlElement && !_.isString(urlElement)) {
               // 一般上一章按钮文本含页就是多页章节
               if (url && !this.isSection && urlElement.text().includes('页')) {
                   C.log('检测到多页章节链接，开启多页章节合并为一章模式');
@@ -4209,14 +4313,16 @@
           };
           // Hook addEventListener 以便需要时移除事件监听器
           const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener;
-          unsafeWindow.EventTarget.prototype.addEventListener = function addEventListener(type, listener, options) {
+          function addEventListener(type, listener, options) {
               _addEventListener.apply(this, arguments);
               App$1.listenerAndObserver.push(() => {
                   try {
                       this.removeEventListener(...arguments);
                   } catch (e) {}
               });
-          };
+          }
+          unsafeWindow.EventTarget.prototype.addEventListener = addEventListener;
+          document.addEventListener = addEventListener;
           // Hook MutationObserver 以便需要时移除观察器
           const _observe = unsafeWindow.MutationObserver.prototype.observe;
           const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect;
