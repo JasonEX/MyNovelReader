@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.7
+// @version        6.5.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -54,6 +54,7 @@
 // @include        *://www.readnovel.com/novel/*.html
 // @include        *://shushan.zhangyue.net/book/*/*/
 // @include        *://weread.qq.com/web/reader/*
+// @match          *://www.qimao.com/shuku/*-*/
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -242,8 +243,7 @@
 // @include        *://xrzww.com/module/novel/read.php*
 // @include        *://www.wanbentxt.com/*/*.html
 // @include        *://www.35xs.co/book/*/*.html
-// include        *://www.gongzicp.com/read-*.html
-// 未完成
+// @include        *://www.gongzicp.com/read-*.html
 // @include        *://www.alfagame.net/chapter_www.html?1*
 // @include        *://www.69shu.com/txt/*/*
 // @include        *://www.duwanjuan.com/html/*/*/*.html
@@ -277,7 +277,10 @@
 // @match          *://www.imbg.com/read/*/*.html
 // @match          *://www.linovelib.com/novel/*/*.html
 // @match          *://www.shuquge.com/txt/*/*.html
-// @match          *://www.qimao.com/shuku/*-*/
+// @match          *://www.uuks.org/b/*/*.html
+
+// NSFW
+// @match          *://book.xbookcn.net/*/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/
@@ -1336,37 +1339,6 @@
       //     contentSelector: '#txt',
       // },
 
-    // ============== 内容需要2次获取的 =========================
-    {siteName: "手打吧",
-        url: /^https?:\/\/shouda8\.com\/\w+\/\d+\.html/,
-        contentReplace: /[w\s\[\/\\\(]*.shouda8.com.*|(\/\/)?[全文字]?首发|手打吧|www.shou.*|\(w\/w\/w.shouda8.c\/o\/m 手、打。吧更新超快\)|小说 阅读网 www.xiaoshuoyd .com/ig,
-        contentPatch: function(fakeStub){
-            var scriptSrc = fakeStub.find('body').html().match(/outputContent\('(.*txt)'\)/)[1];
-            scriptSrc = "http://shouda8.com/ajax.php?f=http://shouda8.com/read" + scriptSrc;
-            fakeStub.find('#content').attr({
-                "class": 'reader-ajax',
-                src: scriptSrc
-            });
-        }
-    },
-    {siteName: "天天中文",
-        url: "^https?://www\\.ttzw\\.com/book/\\d+/\\d+\\.html",
-        titleSelector: "#chapter_title",
-        bookTitleSelector: ".fl.pl20 a:last",
-        contentSelector: "#text_area",
-        contentReplace: /www.ttzw.com|www.c66c.com|手机用户请到阅读。|<p>\s*a<\/p>/ig,
-        contentPatch: function(fakeStub) {
-            var m = fakeStub.find('#text_area script').text().match(/outputTxt\("(.*)"\);/);
-            if (m) {
-                fakeStub.find('#text_area').attr({
-                    class: "reader-ajax",
-                    src: unsafeWindow.getServer() + m[1],
-                    charset: "gbk"
-                });
-            }
-        }
-    },
-
     // ===========================================================
     {siteName: "E品中文网",
         url: "^https?://www\\.epzww\\.com/book/\\d+/\\d+",
@@ -1840,7 +1812,7 @@
           checkSection: true,
           useiframe: true,
           contentSelector: '#DivContentBG > div:nth-child(9)',
-          contentReplace: ['本章未完，请点击下一页继续阅读！',
+          contentReplace: ['…。。\\s本章未完，请点击下一页继续阅读！',
                           '本文来源：123读书网。',
                           '\\*[,，]转载请注明处：123ds.org 。',
                           {'。.*提醒你：看后求收藏123读书网，接着再看好方便。':'。'}]
@@ -1854,12 +1826,24 @@
       },
 
       {siteName: '霹雳书坊',
-          url: 'https?://www.pilibook.com/\\d+/\\d+/\\d+.html',
+          url: 'https?://(?:www|m).pilibook.com/\\d+/\\d+/\\d+.html',
           exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
 
-          nextSelector: ".novelbutton3 > li:nth-child(4) > a",
-          prevSelector: ".novelbutton3 > li:nth-child(1) > a",
-          indexSelector: ".novelbutton3 > li:nth-child(2) > a",
+          nextSelector($doc) {
+              return $doc.find('img[src="https://m.pilibook.com/17mb/style/03.png"]')
+                  .parent()
+                  .attr('href')
+          },
+          prevSelector($doc) {
+              return $doc.find('img[src="https://m.pilibook.com/17mb/style/01.png"]')
+                  .parent()
+                  .attr('href')
+          },
+          indexSelector($doc) {
+              return $doc.find('img[src="https://m.pilibook.com/17mb/style/05.png"]')
+                  .parent()
+                  .attr('href')
+          },
 
       },
 
@@ -1884,6 +1868,17 @@
           indexSelector: '.pagego > a:nth-child(3)',
           prevSelector: '.pagego > a:nth-child(2)',
       },
+
+      {siteName: '中文成人文学网',
+          url:'https?://book.xbookcn.net/\\d+/\\d+/.*.html',
+          exampleUrl: 'https://book.xbookcn.net/2000/03/1_40.html',
+
+          contentSelector: '.post-body',
+          bookTitleSelector: '.post-labels > a',
+          nextSelector: '#Blog1_blog-pager-older-link',
+          indexSelector: '.post-labels > a',
+          prevSelector: '#Blog1_blog-pager-newer-link',
+      }
 
   ];
 
@@ -1919,7 +1914,7 @@
 
     // === 一些特殊的替换 ===
     "\\[+CP.*(http://file.*\\.jpg)\\]+": "<img src='$1'>",
-    "『(.)』": "$1",  // "『色』": "色",
+    // "『(.)』": "$1",  // "『色』": "色",
 
     // === 去广告 ===
     "\\[搜索最新更新尽在[a-z\\.]+\\]": "",
@@ -2413,11 +2408,14 @@
       '\\.$': '。',
       '，$\\s|\\s^，': '，',
       '，+': '，',
-      '。([^\s”"])': '。\n$1',
+      '。([\\u4e00-\\u9fa5])': '。\n$1',
+      '「(.*)」': '“$1”',
+      '『(.)』': '$1', // "『色』": "色",
+      '┅{2,10}': '……',
       '。{3,7}': '……',
       '~{2,50}': '——',
       '…{3,40}': '……',
-      '－{3,20}': '——',
+      '－{3,20}': '——'
   };
 
   // 不转换 ，？：；（）！
@@ -2425,7 +2423,8 @@
 
   // 全角转半角
   function toCDB(str) {
-      let tmp = '', charCode;
+      let tmp = '',
+          charCode;
       for (let i = 0; i < str.length; i++) {
           charCode = str.charCodeAt(i);
           if (charCode > 65248 && charCode < 65375 && !excludeCharCode.has(charCode)) {
@@ -2479,7 +2478,7 @@
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
         "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-        "#ChapterContents", "#acontent",
+        "#ChapterContents", "#acontent", "#chapterinfo",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
         ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
         "article",
@@ -2517,7 +2516,7 @@
         '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
     ],
 
-    contentRemove: "script, iframe, a, audio",          // 内容移除选择器
+    contentRemove: "script, iframe, a, audio, style",          // 内容移除选择器
     removeLineRegExp: /<p>[　\s。;，！\.∷〖]*<\/p>/g,  // 移除只有一个字符的行
 
     // 以下不常改
@@ -2559,9 +2558,6 @@
     });
     return rules;
   }
-
-  // 内容需要 ajax 的 className
-  const READER_AJAX = "reader-ajax";
 
   const autoBookTitleSelector = Rule.bookTitleSelector;
 
@@ -2654,6 +2650,8 @@
 
           await this.preProcessDoc();
 
+          this.parse();
+
           return this;
       },
       preProcessDoc: async function() {
@@ -2662,7 +2660,7 @@
           if (!this.hasContent() && this.info.getContent) {
               C.log('开始 info.getContent');
               data = await this.info.getContent.call(this, this.$doc);
-          } else {
+          } /* else {
               // 特殊处理，例如起点
               var ajaxScript = this.$doc.find('.' + READER_AJAX);
               if (ajaxScript.length > 0) {
@@ -2688,16 +2686,16 @@
                       reqObj.headers['Content-Type'] = 'application/x-www-form-urlencoded';
                   }
 
-                  let res = await Request(reqObj);
+                  let res = await Request(reqObj)
                   var text = res.responseText;
                   text = text.replace(/document.write(ln)?\('/, "")
                           .replace("');", "")
                           .replace(/[\n\r]+/g, '</p><p>');
 
-                  data = { content: text };
+                  data = { content: text }
 
               }
-          }
+          } */
           if (data) {
               var div;
               if (data.content) {
@@ -2709,7 +2707,6 @@
               this.$doc.find('body').prepend(div);
           }
 
-          this.parse();
       },
       parse: function() {
           C.group('开始获取链接');
@@ -3546,7 +3543,7 @@
                   return false
               case url === this.curPageUrl:
                   return false
-              case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl) && !Rule.nextUrlCompare.test(url):
+              case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl.split('?')[0]) && !Rule.nextUrlCompare.test(url.split('?')[0]):
                   return false
               default:
                   return true
@@ -3601,7 +3598,7 @@
               href = href.getAttribute('href');
           }
 
-          if (href.indexOf('http://') === 0) {
+          if (/^https?:\/\//.test(href)) {
               return href;
           }
 
@@ -3609,7 +3606,7 @@
           if (!a) {
               this.a = a = document.createElement('a');
           }
-          a.href = href;
+          a.href = href.trim();
 
           // // 检测 host 是否和 当前页的一致
           // if (a.host != this._curPageHost) {
@@ -3620,7 +3617,7 @@
       },
   };
 
-  var tpl_mainCss = "@font-face {\r\n    font-family: 'FontAwesome';\r\n    src: url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.eot?v=4.7.0');\r\n    src: url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.woff?v=4.7.0') format('woff'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');\r\n    font-weight: normal;\r\n    font-style: normal;\r\n  }\r\n\r\nbody > a { display:none !important; }\r\n.hidden {\r\n    display: none;\r\n}\r\n.quiet-mode {\r\n    display: none;\r\n}\r\nbody {\r\n    background: #F3F2EE;\r\n    color: #1F0909;\r\n    padding: 0px;\r\n    margin: 0px;\r\n    font-family: \"Microsoft YaHei UI\", 微软雅黑, 新宋体, 宋体, arial;\r\n}\r\na { color: #065488; }\r\na:link { text-decoration: none; }\r\n\r\n#mynovelreader-content {\r\n    width: auto;\r\n    max-width: {content_width};\r\n    font-size: {font_size};\r\n    font-family: {font_family};\r\n    line-height: {text_line_height};\r\n    margin-left:auto;\r\n    margin-right:auto;\r\n    padding-bottom: 15px;\r\n}\r\n#mynovelreader-content img{\r\n    max-width: 100%;\r\n}\r\n\r\narticle {\r\n    margin-top: 55px;\r\n    word-wrap: break-word;\r\n}\r\n\r\narticle h1 {\r\n    clear: both;\r\n    line-height: 50px;\r\n    font-size: {title_font_size};\r\n    font-weight: normal;\r\n    margin: 25px -20px;\r\n    padding: 0 20px 10px;\r\n    border-bottom: 1px solid rgba(0,0,0,.25);\r\n    font-weight: normal;\r\n    text-transform: none;\r\n}\r\n\r\narticle li {\r\n    list-style: none;\r\n}\r\n\r\n.chapter-footer-nav {\r\n    text-align:center;\r\n    font-size:0.9em;\r\n    margin:-10px 0px 30px 0px;\r\n}\r\n#loading {\r\n    color: white;\r\n    text-align: center;\r\n    font: 12px \"微软雅黑\", \"宋体\", \"Times New Roman\", \"Verdana\";\r\n    margin-top: 20px;\r\n    margin-left: auto;\r\n    margin-right: auto;\r\n    width: 376px;\r\n    height: 32px;\r\n    line-height: 32px;\r\n    border-radius: 20px;\r\n    border: 1px solid #666;\r\n    background-color: #333;\r\n}\r\n#loading img {\r\n    vertical-align: middle;\r\n}\r\n#loading a {\r\n    color: white;\r\n}\r\n#preferencesBtn{\r\n    position: fixed;\r\n    top: 10px;\r\n    right: 10px;\r\n    z-index: 1597;\r\n}\r\n\r\n#alert {\r\n    position: fixed;\r\n    z-index: 100;\r\n    float: auto;\r\n    width: auto;\r\n    height: auto;\r\n    top: 10px;\r\n    left: 500px;\r\n    background: rgba(215, 240, 253, 0.65);\r\n    color: #2d7091;\r\n    border: 1px solid rgba(45,112,145,0.3);\r\n    border-radius: 4px;\r\n}\r\n#alert p {\r\n    font-size: 15px;\r\n    margin: 6px;\r\n}\r\n\r\n#message {\r\n    position: fixed;\r\n    z-index: 1010;\r\n    width: auto;\r\n    height: auto;\r\n    top: 10px;\r\n    left: 500px;\r\n\r\n    padding: 8px 16px;\r\n    border-radius: 4px;\r\n    box-shadow: 0 2px 8px rgba(0,0,0,.2);\r\n    background: #fff;\r\n    display: inline-block;\r\n    pointer-events: all;\r\n\r\n    font-size: 12px;\r\n}\r\n#message .fa-spinner {\r\n    font-size: 13px;\r\n    margin-right: 4px;\r\n}\r\n#message p {\r\n    margin: 0;\r\n}\r\n\r\nimg.blockImage {clear: both;float: none;display: block;margin-left: auto;margin-right: auto;}\r\n\r\n#menu-bar {\r\n    border: solid rgba(0, 100, 255, .9);\r\n    border-width: 3px 2px 3px 0px;\r\n    position: fixed;\r\n    left: 0px;\r\n    top: 40%;\r\n    height: 100px;\r\n    width: 2px;\r\n    z-index: 199;\r\n    {menu-bar-hidden}\r\n}\r\n#menu-bar {\r\n    top: 0px;\r\n    height: 100%;\r\n    width: 1px;\r\n    background: transparent;\r\n    border: none;\r\n}\r\n#menu {\r\n    position: fixed;\r\n    top: 0;\r\n    bottom: 0;\r\n    left: 0;\r\n    z-index: 100;\r\n    width: 270px;\r\n    max-width: 100%;\r\n    background: #333;\r\n    overflow-y: auto;\r\n}\r\n#menu:after {\r\n    content: \"\";\r\n    display: block;\r\n    position: absolute;\r\n    top: 46px;\r\n    bottom: 0;\r\n    right: 0;\r\n    width: 1px;\r\n    background: rgba(0,0,0,0.6);\r\n    box-shadow: 0 0 5px 2px rgba(0,0,0,0.6);\r\n}\r\n#header{\r\n    color: #777;\r\n    margin-top: 0;\r\n    border-top: 1px solid rgba(0,0,0,0.3);\r\n    background: #404040;\r\n    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);\r\n    text-shadow: 0 1px 0 rgba(0,0,0,0.5);\r\n    padding: 10px 12px;\r\n    text-transform: uppercase;\r\n    font-weight: bold;\r\n    font-size: 20px;\r\n}\r\n#header a {\r\n    color: #777777;\r\n}\r\n#divider {\r\n    position: relative;\r\n    z-index: 300;\r\n    border-top: 1px solid rgba(255,255,255,0.01);\r\n    border-bottom: 1px solid rgba(0,0,0,0.3);\r\n    margin: 0;\r\n    height: 4px;\r\n    background: rgba(0,0,0,0.2);\r\n    box-shadow: 0 1px 0 rgba(255,255,255,0.05), inset 0 1px 3px rgba(0,0,0,0.3);\r\n}\r\n#chapter-list {\r\n    position: relative;\r\n    bottom: 0;\r\n    left: 0;\r\n    right: 0;\r\n    z-index: 200;\r\n    margin: 0;\r\n    padding: 0;\r\n    cursor: pointer;\r\n    list-style: none;\r\n    overflow-y: auto;\r\n}\r\n.chapter {\r\n    list-style: none;\r\n}\r\n.chapter:last-child {\r\n    border-bottom: 1px solid rgba(0,0,0,0.3);\r\n    box-shadow: 0 1px 0 rgba(255,255,255,0.05);\r\n}\r\n.chapter div {\r\n    color: #ccc;\r\n    font-size: 15px;\r\n    padding: 8px 20px;\r\n    border-top: 1px solid rgba(0,0,0,0.3);\r\n    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);\r\n    text-shadow: 0 1px 0 rgba(0,0,0,0.5);\r\n    display: block;\r\n    text-decoration: none;\r\n    text-overflow: ellipsis;\r\n    overflow: hidden;\r\n    white-space: nowrap;\r\n    cursor: pointer;\r\n}\r\n.chapter div:before {\r\n    content: \"\\f105\";\r\n    width: 20px;\r\n    margin-left: -10px;\r\n    float: left;\r\n    font-family: \"FontAwesome\" !important;\r\n    text-align: center;\r\n}\r\n.chapter div:hover {\r\n    background: #404040;\r\n    color: #fff;\r\n    outline: 0;\r\n}\r\n.chapter.active div {\r\n    background: #1a1a1a;\r\n    color: #fff;\r\n    font-size: 16px;\r\n    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);\r\n}\r\n::-webkit-scrollbar {\r\n    height: 9px !important;\r\n    width: 9px !important;\r\n}\r\n::-webkit-scrollbar-thumb {\r\n    background-color: #7D7D7D !important;\r\n    border-radius: 3px !important;\r\n}\r\n::-webkit-scrollbar-track-piece {\r\n    background-color: rgba(0,0,0,.25) !important;\r\n}\r\n";
+  var tpl_mainCss = "@font-face {\r\n    font-family: 'FontAwesome';\r\n    src: url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.eot?v=4.7.0');\r\n    src: url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.woff?v=4.7.0') format('woff'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'), url('https://cdn.bootcss.com/font-awesome/4.7.0/fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');\r\n    font-weight: normal;\r\n    font-style: normal;\r\n  }\r\n\r\nbody > a { display:none !important; }\r\n.hidden {\r\n    display: none;\r\n}\r\n.quiet-mode {\r\n    display: none;\r\n}\r\nbody {\r\n    background: #F3F2EE;\r\n    color: #1F0909;\r\n    padding: 0px;\r\n    margin: 0px;\r\n    font-family: \"Microsoft YaHei UI\", 微软雅黑, 新宋体, 宋体, arial;\r\n}\r\na { color: #065488; }\r\na:link { text-decoration: none; }\r\n\r\n#mynovelreader-content {\r\n    width: auto;\r\n    max-width: {content_width};\r\n    font-size: {font_size};\r\n    font-family: {font_family};\r\n    line-height: {text_line_height};\r\n    margin-left:auto;\r\n    margin-right:auto;\r\n    padding-bottom: 15px;\r\n}\r\n#mynovelreader-content img{\r\n    max-width: 100%;\r\n}\r\n\r\narticle {\r\n    margin-top: 55px;\r\n    word-wrap: break-word;\r\n}\r\n\r\narticle h1 {\r\n    clear: both;\r\n    line-height: 50px;\r\n    font-size: {title_font_size};\r\n    font-weight: normal;\r\n    margin: 25px -20px;\r\n    padding: 0 20px 10px;\r\n    border-bottom: 1px solid rgba(0,0,0,.25);\r\n    font-weight: normal;\r\n    text-transform: none;\r\n}\r\n\r\narticle li {\r\n    list-style: none;\r\n}\r\n\r\n.chapter-footer-nav {\r\n    text-align:center;\r\n    font-size:0.9em;\r\n    margin:-10px 0px 30px 0px;\r\n}\r\n#loading {\r\n    color: white;\r\n    text-align: center;\r\n    font: 12px \"微软雅黑\", \"宋体\", \"Times New Roman\", \"Verdana\";\r\n    margin-top: 20px;\r\n    margin-left: auto;\r\n    margin-right: auto;\r\n    width: 376px;\r\n    height: 32px;\r\n    line-height: 32px;\r\n    border-radius: 20px;\r\n    border: 1px solid #666;\r\n    background-color: #333;\r\n}\r\n#loading img {\r\n    vertical-align: middle;\r\n}\r\n#loading a {\r\n    color: white;\r\n}\r\n#preferencesBtn{\r\n    position: fixed;\r\n    top: 10px;\r\n    right: 10px;\r\n    z-index: 1597;\r\n}\r\n\r\n#alert {\r\n    position: fixed;\r\n    z-index: 100;\r\n    float: auto;\r\n    width: auto;\r\n    height: auto;\r\n    top: 30px;\r\n    left: 50%;\r\n    transform: translateX(-50%);\r\n    background: rgba(215, 240, 253, 0.65);\r\n    color: #2d7091;\r\n    border: 1px solid rgba(45,112,145,0.3);\r\n    border-radius: 4px;\r\n}\r\n#alert p {\r\n    font-size: 15px;\r\n    margin: 6px;\r\n}\r\n\r\n#message {\r\n    position: fixed;\r\n    z-index: 1010;\r\n    width: auto;\r\n    height: auto;\r\n    top: 10px;\r\n    left: 500px;\r\n\r\n    padding: 8px 16px;\r\n    border-radius: 4px;\r\n    box-shadow: 0 2px 8px rgba(0,0,0,.2);\r\n    background: #fff;\r\n    display: inline-block;\r\n    pointer-events: all;\r\n\r\n    font-size: 12px;\r\n}\r\n#message .fa-spinner {\r\n    font-size: 13px;\r\n    margin-right: 4px;\r\n}\r\n#message p {\r\n    margin: 0;\r\n}\r\n\r\nimg.blockImage {clear: both;float: none;display: block;margin-left: auto;margin-right: auto;}\r\n\r\n#menu-bar {\r\n    border: solid rgba(0, 100, 255, .9);\r\n    border-width: 3px 2px 3px 0px;\r\n    position: fixed;\r\n    left: 0px;\r\n    top: 40%;\r\n    height: 100px;\r\n    width: 2px;\r\n    z-index: 199;\r\n    {menu-bar-hidden}\r\n}\r\n#menu-bar {\r\n    top: 0px;\r\n    height: 100%;\r\n    width: 1px;\r\n    background: transparent;\r\n    border: none;\r\n}\r\n#menu {\r\n    position: fixed;\r\n    top: 0;\r\n    bottom: 0;\r\n    left: 0;\r\n    z-index: 100;\r\n    width: 270px;\r\n    max-width: 100%;\r\n    background: #333;\r\n    overflow-y: auto;\r\n}\r\n#menu:after {\r\n    content: \"\";\r\n    display: block;\r\n    position: absolute;\r\n    top: 46px;\r\n    bottom: 0;\r\n    right: 0;\r\n    width: 1px;\r\n    background: rgba(0,0,0,0.6);\r\n    box-shadow: 0 0 5px 2px rgba(0,0,0,0.6);\r\n}\r\n#header{\r\n    color: #777;\r\n    margin-top: 0;\r\n    border-top: 1px solid rgba(0,0,0,0.3);\r\n    background: #404040;\r\n    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);\r\n    text-shadow: 0 1px 0 rgba(0,0,0,0.5);\r\n    padding: 10px 12px;\r\n    text-transform: uppercase;\r\n    font-weight: bold;\r\n    font-size: 20px;\r\n}\r\n#header a {\r\n    color: #777777;\r\n}\r\n#divider {\r\n    position: relative;\r\n    z-index: 300;\r\n    border-top: 1px solid rgba(255,255,255,0.01);\r\n    border-bottom: 1px solid rgba(0,0,0,0.3);\r\n    margin: 0;\r\n    height: 4px;\r\n    background: rgba(0,0,0,0.2);\r\n    box-shadow: 0 1px 0 rgba(255,255,255,0.05), inset 0 1px 3px rgba(0,0,0,0.3);\r\n}\r\n#chapter-list {\r\n    position: relative;\r\n    bottom: 0;\r\n    left: 0;\r\n    right: 0;\r\n    z-index: 200;\r\n    margin: 0;\r\n    padding: 0;\r\n    cursor: pointer;\r\n    list-style: none;\r\n    overflow-y: auto;\r\n}\r\n.chapter {\r\n    list-style: none;\r\n}\r\n.chapter:last-child {\r\n    border-bottom: 1px solid rgba(0,0,0,0.3);\r\n    box-shadow: 0 1px 0 rgba(255,255,255,0.05);\r\n}\r\n.chapter div {\r\n    color: #ccc;\r\n    font-size: 15px;\r\n    padding: 8px 20px;\r\n    border-top: 1px solid rgba(0,0,0,0.3);\r\n    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);\r\n    text-shadow: 0 1px 0 rgba(0,0,0,0.5);\r\n    display: block;\r\n    text-decoration: none;\r\n    text-overflow: ellipsis;\r\n    overflow: hidden;\r\n    white-space: nowrap;\r\n    cursor: pointer;\r\n}\r\n.chapter div:before {\r\n    content: \"\\f105\";\r\n    width: 20px;\r\n    margin-left: -10px;\r\n    float: left;\r\n    font-family: \"FontAwesome\" !important;\r\n    text-align: center;\r\n}\r\n.chapter div:hover {\r\n    background: #404040;\r\n    color: #fff;\r\n    outline: 0;\r\n}\r\n.chapter.active div {\r\n    background: #1a1a1a;\r\n    color: #fff;\r\n    font-size: 16px;\r\n    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);\r\n}\r\n::-webkit-scrollbar {\r\n    height: 9px !important;\r\n    width: 9px !important;\r\n}\r\n::-webkit-scrollbar-thumb {\r\n    background-color: #7D7D7D !important;\r\n    border-radius: 3px !important;\r\n}\r\n::-webkit-scrollbar-track-piece {\r\n    background-color: rgba(0,0,0,.25) !important;\r\n}\r\n";
 
   var tpl_preferencesHTML = "<form id=\"preferences\" name=\"preferences\">\r\n    <div id=\"setting_table1\">\r\n        <span id=\"top-buttons\">\r\n            <input title=\"部分选项需要刷新页面才能生效\" id=\"save_button\" value=\"√ 确认\" type=\"button\">\r\n            <input title=\"取消本次设定，所有选项还原\" id=\"close_button\" value=\"X 取消\" type=\"button\">\r\n        </span>\r\n        <div class=\"form-row\">\r\n            <label>\r\n                界面语言<select id=\"lang\">\r\n                </select>\r\n            </label>\r\n            <label title=\"将小说网页文本转换为繁体。\\n\\n注意：内置的繁简转换表，只收录了简单的单字转换，启用本功能后，如有错误转换的情形，请利用脚本的自订字词取代规则来修正。\\n例如：「千里之外」，会错误转换成「千里之外」，你可以加入规则「千里之外=千里之外」来自行修正。\">\r\n                <input type=\"checkbox\" id=\"enable-cn2tw\" name=\"enable-cn2tw\"/>网页：转繁体\r\n            </label>\r\n            <label id=\"quietMode\" class=\"right\" title=\"隐藏其他，只保留正文，适用于全屏状态下\">\r\n                <input class=\"key\" type=\"button\" id=\"quietModeKey\"/>安静模式\r\n            </label>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label title=\"不影响 booklink.me 的启用\">\r\n                <input type=\"checkbox\" id=\"disable-auto-launch\" name=\"disable-auto-launch\"/>强制手动启用\r\n            </label>\r\n            <label title=\"booklink.me 点击的网站强制启用\">\r\n                <input type=\"checkbox\" id=\"booklink-enable\" name=\"booklink-enable\"/>booklink 自动启用\r\n            </label>\r\n            <label>\r\n                <input type=\"checkbox\" id=\"debug\" name=\"debug\"/>调试模式\r\n            </label>\r\n            <a href=\"https://greasyfork.org/scripts/292-my-novel-reader/feedback\" target=\"_blank\">反馈地址</a>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label title=\"图片章节用夜间模式没法看，这个选项在启动时会自动切换到缺省皮肤\">\r\n                <input type=\"checkbox\" id=\"pic-nightmode-check\" name=\"pic-nightmode-check\"/>\r\n                夜间模式的图片章节检测\r\n            </label>\r\n            <label>\r\n                <input type=\"checkbox\" id=\"copyCurTitle\"/>\r\n                打开目录复制当前标题\r\n            </label>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label title=\"通过快捷键切换\">\r\n                <input type=\"checkbox\" id=\"hide-menu-list\"/>隐藏左侧章节列表\r\n            </label>\r\n            <label>\r\n                <input type=\"checkbox\" id=\"hide-footer-nav\"/>隐藏底部导航栏\r\n            </label>\r\n            <label class=\"right\" title=\"导出之后的所有章节\">\r\n                <input type=\"button\" id=\"saveAsTxt\" value=\"存为 txt（测试）\" />\r\n                <input type=\"button\" id=\"speech\" value=\"朗读\" />\r\n            </label>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label>\r\n                左侧导航栏切换快捷键：\r\n            </label>\r\n            <input class=\"key\" type=\"button\" id=\"setHideMenuListKey\" />\r\n            <label title=\"通过快捷键切换或在 Greasemonkey 用户脚本命令处打开设置窗口\">\r\n                <input type=\"checkbox\" id=\"hide-preferences-button\"/>隐藏设置按钮\r\n            </label>\r\n            <input class=\"key\" type=\"button\" id=\"openPreferencesKey\"/>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label>\r\n                打开朗读快捷键：\r\n            </label>\r\n            <input class=\"key\" type=\"button\" id=\"setOpenSpeechKey\" />\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label>\r\n                距离底部\r\n                <input type=\"textbox\" id=\"remain-height\" name=\"remain-height\" size=\"5\"/>\r\n                px 加载下一页\r\n            </label>\r\n            <label>\r\n                <input type=\"checkbox\" id=\"add-nextpage-to-history\"/>添加下一页到历史记录\r\n            </label>\r\n            <label>\r\n                <input type=\"checkbox\" id=\"enable-dblclick-pause\"/>双击暂停翻页\r\n            </label>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label>\r\n                <select id=\"skin\">\r\n                </select>\r\n            </label>\r\n            <label>\r\n                字体\r\n                <input type=\"textbox\" id=\"font-family\" style=\"min-width:200px;\"/>\r\n            </label>\r\n            <br/><br/>\r\n            <label>\r\n                字体大小\r\n                <input type=\"textbox\" id=\"font-size\" name=\"font-size\" size=\"6\"/>\r\n            </label>\r\n            <label>\r\n                行高\r\n                <input type=\"textbox\" id=\"text_line_height\" size=\"6\"/>\r\n            </label>\r\n            <label>\r\n                行宽\r\n                <input type=\"textbox\" id=\"content_width\" size=\"6\"/>\r\n            </label>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <label title=\"把一大块未分段的内容文本按照句号分段\">\r\n                <input type=\"checkbox\" id=\"split_content\"/>对一坨内容进行强制分段\r\n            </label>\r\n            <label>\r\n                <input type=\"checkbox\" id=\"scroll_animate\"/>章节直达滚动效果\r\n            </label>\r\n        </div>\r\n        <div class=\"form-row\">\r\n            <div class=\"prefs_title\">自定义样式</div>\r\n            <textarea id=\"extra_css\" class=\"prefs_textarea\" placeholder=\"自定义样式\"></textarea>\r\n        </div>\r\n    </div>\r\n    <div id=\"setting_table2\">\r\n        <div class=\"form-row\" title=\"详见脚本代码的 Rule.specialSite\">\r\n            <div class=\"prefs_title\">自定义站点规则</div>\r\n            <textarea id=\"custom_siteinfo\" class=\"prefs_textarea\" placeholder=\"自定义站点规则\" />\r\n        </div>\r\n        <div class=\"form-row\" title=\"一行一个，每行的第一个 = 为分隔符。\\n保存后生效\">\r\n            <div class=\"prefs_title\">自定义替换规则</div>\r\n            <textarea id=\"custom_replace_rules\" class=\"prefs_textarea\" placeholder=\"b[āà]ng=棒\" />\r\n        </div>\r\n    </div>\r\n</form>";
 
@@ -4334,6 +4331,11 @@
                   } catch (e) {}
               });
           };
+          Object.defineProperty(unsafeWindow.Navigator.prototype, 'platform', {
+              get: function platform() {
+                  return ''
+              }
+          });
       },
       loadCustomSetting: function() {
           var customRules;

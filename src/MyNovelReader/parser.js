@@ -79,6 +79,8 @@ Parser.prototype = {
 
         await this.preProcessDoc();
 
+        this.parse();
+
         return this;
     },
     preProcessDoc: async function() {
@@ -87,7 +89,7 @@ Parser.prototype = {
         if (!this.hasContent() && this.info.getContent) {
             C.log('开始 info.getContent')
             data = await this.info.getContent.call(this, this.$doc);
-        } else {
+        } /* else {
             // 特殊处理，例如起点
             var ajaxScript = this.$doc.find('.' + READER_AJAX);
             if (ajaxScript.length > 0) {
@@ -122,7 +124,7 @@ Parser.prototype = {
                 data = { content: text }
 
             }
-        }
+        } */
         if (data) {
             var div;
             if (data.content) {
@@ -134,7 +136,6 @@ Parser.prototype = {
             this.$doc.find('body').prepend(div);
         }
 
-        this.parse();
     },
     parse: function() {
         C.group('开始获取链接');
@@ -972,7 +973,7 @@ Parser.prototype = {
                 return false
             case url === this.curPageUrl:
                 return false
-            case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl) && !Rule.nextUrlCompare.test(url):
+            case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl.split('?')[0]) && !Rule.nextUrlCompare.test(url.split('?')[0]):
                 return false
             default:
                 return true
@@ -1027,7 +1028,7 @@ Parser.prototype = {
             href = href.getAttribute('href');
         }
 
-        if (href.indexOf('http://') === 0) {
+        if (/^https?:\/\//.test(href)) {
             return href;
         }
 
@@ -1035,7 +1036,7 @@ Parser.prototype = {
         if (!a) {
             this.a = a = document.createElement('a');
         }
-        a.href = href;
+        a.href = href.trim();
 
         // // 检测 host 是否和 当前页的一致
         // if (a.host != this._curPageHost) {

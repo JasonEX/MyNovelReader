@@ -46,7 +46,7 @@ var Rule = {
       "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
       "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
       "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-      "#ChapterContents", "#acontent",
+      "#ChapterContents", "#acontent", "#chapterinfo",
       ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
       ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
       "article",
@@ -84,7 +84,7 @@ var Rule = {
       '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
   ],
 
-  contentRemove: "script, iframe, a, audio",          // 内容移除选择器
+  contentRemove: "script, iframe, a, audio, style",          // 内容移除选择器
   removeLineRegExp: /<p>[　\s。;，！\.∷〖]*<\/p>/g,  // 移除只有一个字符的行
 
   // 以下不常改

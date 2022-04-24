@@ -97,6 +97,7 @@
 
     },
     // 获取内容，返回html
+    // 仅当通用规则和站点规则都获取不到内容时才调用
     getContent: async function ($doc) {
         // $doc = $(document)
         // this = Parser

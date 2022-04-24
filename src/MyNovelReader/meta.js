@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.7
+// @version        6.5.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -54,6 +54,7 @@
 // @include        *://www.readnovel.com/novel/*.html
 // @include        *://shushan.zhangyue.net/book/*/*/
 // @include        *://weread.qq.com/web/reader/*
+// @match          *://www.qimao.com/shuku/*-*/
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -242,8 +243,7 @@
 // @include        *://xrzww.com/module/novel/read.php*
 // @include        *://www.wanbentxt.com/*/*.html
 // @include        *://www.35xs.co/book/*/*.html
-// include        *://www.gongzicp.com/read-*.html
-// 未完成
+// @include        *://www.gongzicp.com/read-*.html
 // @include        *://www.alfagame.net/chapter_www.html?1*
 // @include        *://www.69shu.com/txt/*/*
 // @include        *://www.duwanjuan.com/html/*/*/*.html
@@ -277,7 +277,10 @@
 // @match          *://www.imbg.com/read/*/*.html
 // @match          *://www.linovelib.com/novel/*/*.html
 // @match          *://www.shuquge.com/txt/*/*.html
-// @match          *://www.qimao.com/shuku/*-*/
+// @match          *://www.uuks.org/b/*/*.html
+
+// NSFW
+// @match          *://book.xbookcn.net/*/*/*.html
 
 // 移动版
 // @include        *://wap.yc.ireader.com.cn/book/*/*/

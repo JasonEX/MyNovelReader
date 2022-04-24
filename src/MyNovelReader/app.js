@@ -104,6 +104,11 @@ var App = {
                 } catch (e) {}
             })
         }
+        Object.defineProperty(unsafeWindow.Navigator.prototype, 'platform', {
+            get: function platform() {
+                return ''
+            }
+        })
     },
     loadCustomSetting: function() {
         var customRules;

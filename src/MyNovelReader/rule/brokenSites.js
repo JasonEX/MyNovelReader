@@ -1331,5 +1331,35 @@ const brokenSites = [
 
     // }
   },
+    // ============== 内容需要2次获取的 =========================
+//   {siteName: "手打吧",
+//       url: /^https?:\/\/shouda8\.com\/\w+\/\d+\.html/,
+//       contentReplace: /[w\s\[\/\\\(]*.shouda8.com.*|(\/\/)?[全文字]?首发|手打吧|www.shou.*|\(w\/w\/w.shouda8.c\/o\/m 手、打。吧更新超快\)|小说 阅读网 www.xiaoshuoyd .com/ig,
+//       contentPatch: function(fakeStub){
+//           var scriptSrc = fakeStub.find('body').html().match(/outputContent\('(.*txt)'\)/)[1];
+//           scriptSrc = "http://shouda8.com/ajax.php?f=http://shouda8.com/read" + scriptSrc;
+//           fakeStub.find('#content').attr({
+//               "class": 'reader-ajax',
+//               src: scriptSrc
+//           });
+//       }
+//   },
+//   {siteName: "天天中文",
+//       url: "^https?://www\\.ttzw\\.com/book/\\d+/\\d+\\.html",
+//       titleSelector: "#chapter_title",
+//       bookTitleSelector: ".fl.pl20 a:last",
+//       contentSelector: "#text_area",
+//       contentReplace: /www.ttzw.com|www.c66c.com|手机用户请到阅读。|<p>\s*a<\/p>/ig,
+//       contentPatch: function(fakeStub) {
+//           var m = fakeStub.find('#text_area script').text().match(/outputTxt\("(.*)"\);/);
+//           if (m) {
+//               fakeStub.find('#text_area').attr({
+//                   class: "reader-ajax",
+//                   src: unsafeWindow.getServer() + m[1],
+//                   charset: "gbk"
+//               });
+//           }
+//       }
+//   },
 
 ]

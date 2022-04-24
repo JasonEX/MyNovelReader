@@ -652,37 +652,6 @@ const sites = [
     //     contentSelector: '#txt',
     // },
 
-  // ============== 内容需要2次获取的 =========================
-  {siteName: "手打吧",
-      url: /^https?:\/\/shouda8\.com\/\w+\/\d+\.html/,
-      contentReplace: /[w\s\[\/\\\(]*.shouda8.com.*|(\/\/)?[全文字]?首发|手打吧|www.shou.*|\(w\/w\/w.shouda8.c\/o\/m 手、打。吧更新超快\)|小说 阅读网 www.xiaoshuoyd .com/ig,
-      contentPatch: function(fakeStub){
-          var scriptSrc = fakeStub.find('body').html().match(/outputContent\('(.*txt)'\)/)[1];
-          scriptSrc = "http://shouda8.com/ajax.php?f=http://shouda8.com/read" + scriptSrc;
-          fakeStub.find('#content').attr({
-              "class": 'reader-ajax',
-              src: scriptSrc
-          });
-      }
-  },
-  {siteName: "天天中文",
-      url: "^https?://www\\.ttzw\\.com/book/\\d+/\\d+\\.html",
-      titleSelector: "#chapter_title",
-      bookTitleSelector: ".fl.pl20 a:last",
-      contentSelector: "#text_area",
-      contentReplace: /www.ttzw.com|www.c66c.com|手机用户请到阅读。|<p>\s*a<\/p>/ig,
-      contentPatch: function(fakeStub) {
-          var m = fakeStub.find('#text_area script').text().match(/outputTxt\("(.*)"\);/);
-          if (m) {
-              fakeStub.find('#text_area').attr({
-                  class: "reader-ajax",
-                  src: unsafeWindow.getServer() + m[1],
-                  charset: "gbk"
-              });
-          }
-      }
-  },
-
   // ===========================================================
   {siteName: "E品中文网",
       url: "^https?://www\\.epzww\\.com/book/\\d+/\\d+",
@@ -1156,7 +1125,7 @@ const sites = [
         checkSection: true,
         useiframe: true,
         contentSelector: '#DivContentBG > div:nth-child(9)',
-        contentReplace: ['本章未完，请点击下一页继续阅读！',
+        contentReplace: ['…。。\\s本章未完，请点击下一页继续阅读！',
                         '本文来源：123读书网。',
                         '\\*[,，]转载请注明处：123ds.org 。',
                         {'。.*提醒你：看后求收藏123读书网，接着再看好方便。':'。'}]
@@ -1170,12 +1139,24 @@ const sites = [
     },
 
     {siteName: '霹雳书坊',
-        url: 'https?://www.pilibook.com/\\d+/\\d+/\\d+.html',
+        url: 'https?://(?:www|m).pilibook.com/\\d+/\\d+/\\d+.html',
         exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
 
-        nextSelector: ".novelbutton3 > li:nth-child(4) > a",
-        prevSelector: ".novelbutton3 > li:nth-child(1) > a",
-        indexSelector: ".novelbutton3 > li:nth-child(2) > a",
+        nextSelector($doc) {
+            return $doc.find('img[src="https://m.pilibook.com/17mb/style/03.png"]')
+                .parent()
+                .attr('href')
+        },
+        prevSelector($doc) {
+            return $doc.find('img[src="https://m.pilibook.com/17mb/style/01.png"]')
+                .parent()
+                .attr('href')
+        },
+        indexSelector($doc) {
+            return $doc.find('img[src="https://m.pilibook.com/17mb/style/05.png"]')
+                .parent()
+                .attr('href')
+        },
 
     },
 
@@ -1200,6 +1181,17 @@ const sites = [
         indexSelector: '.pagego > a:nth-child(3)',
         prevSelector: '.pagego > a:nth-child(2)',
     },
+
+    {siteName: '中文成人文学网',
+        url:'https?://book.xbookcn.net/\\d+/\\d+/.*.html',
+        exampleUrl: 'https://book.xbookcn.net/2000/03/1_40.html',
+
+        contentSelector: '.post-body',
+        bookTitleSelector: '.post-labels > a',
+        nextSelector: '#Blog1_blog-pager-older-link',
+        indexSelector: '.post-labels > a',
+        prevSelector: '#Blog1_blog-pager-newer-link',
+    }
 
 ];
 
