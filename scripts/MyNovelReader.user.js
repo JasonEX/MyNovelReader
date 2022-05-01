@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.5.8
+// @version        6.5.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -603,7 +603,7 @@
               }
           }
       }
-
+      node.normalize();
       getTextNodes(node);
       return textNodes
   }
@@ -1589,7 +1589,7 @@
       contentHandle: false,
       titleSelector: 'h1',
       contentSelector: ".txtnav",
-      contentRemove: ".txtinfo.hide720",
+      contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad",
       nextSelector: '.page1 a:nth-child(4)',
       prevSelector: '.page1 a:nth-child(1)',
       indexSelector: '.page1 a:nth-child(3)',
@@ -2310,7 +2310,7 @@
     '笔趣阁.*最快更新.*',
     '最新网址：.*',
     '.*笔下文学更新速度最快.*',
-    '.*下载爱阅(?:小说)?app.*',
+    '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
     '为您提供.*最快更新',
 
     // 短文字替换
@@ -2406,10 +2406,12 @@
   const replaceNormalize = {
       ',\\s*': '，',
       '\\.$': '。',
-      '，$\\s|\\s^，': '，',
+      '，$\\s|\\s^，': '，', // 合并每一行以"，"结束的段落
       '，+': '，',
-      '。([\\u4e00-\\u9fa5])': '。\n$1',
-      '「(.*)」': '“$1”',
+      '"(.*?)"': '“$1”',
+      '。([\\u4e00-\\u9fa5])': '。\n$1', // 将一段中的含多个句号的句子每句分为多段
+      '(^.*?[.。])([“].*?[”])': '$1\n$2', // 将一段中的第一句后接对话（引号）句子的第一句话分段
+      '「(.*?)」': '“$1”',
       '『(.)』': '$1', // "『色』": "色",
       '┅{2,10}': '……',
       '。{3,7}': '……',
@@ -2516,7 +2518,7 @@
         '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
     ],
 
-    contentRemove: "script, iframe, a, audio, style",          // 内容移除选择器
+    contentRemove: "script, iframe, a, audio, style, button",          // 内容移除选择器
     removeLineRegExp: /<p>[　\s。;，！\.∷〖]*<\/p>/g,  // 移除只有一个字符的行
 
     // 以下不常改
@@ -3127,7 +3129,7 @@
               $div.find('*').removeAttr('style');
           }
 
-          $div.find('p').removeAttr('class');
+          // $div.find('p').removeAttr('class');
 
           // 图片居中，所有图像？
           // if(info.fixImage){
@@ -3187,6 +3189,7 @@
 
           // 删除含网站域名行文本
           content = content.replace(toRE(`.*${this._curPageHost}.*`), "");
+          C.log(`删除含网站域名行`, toRE(`.*${this._curPageHost}.*`));
 
           // 规则替换
           if (info.contentReplace) {

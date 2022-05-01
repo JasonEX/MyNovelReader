@@ -158,7 +158,7 @@ export function getTextNodesIn(node, includeWhitespaceNodes) {
             }
         }
     }
-
+    node.normalize()
     getTextNodes(node)
     return textNodes
 }

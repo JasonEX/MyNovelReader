@@ -557,7 +557,7 @@ Parser.prototype = {
             $div.find('*').removeAttr('style');
         }
 
-        $div.find('p').removeAttr('class');
+        // $div.find('p').removeAttr('class');
 
         // 图片居中，所有图像？
         // if(info.fixImage){
@@ -617,6 +617,7 @@ Parser.prototype = {
 
         // 删除含网站域名行文本
         content = content.replace(toRE(`.*${this._curPageHost}.*`), "")
+        C.log(`删除含网站域名行`, toRE(`.*${this._curPageHost}.*`))
 
         // 规则替换
         if (info.contentReplace) {
