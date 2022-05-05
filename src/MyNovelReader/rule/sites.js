@@ -64,6 +64,29 @@ const sites = [
         // 移除本章说评论数气泡
         $doc.find('.review-count').remove()
 
+        $doc.find('.content-wrap').contents().unwrap()
+
+        const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2)
+        const style = $doc.find(`#style_${cId}`)
+
+        if (style.length) {
+            this.$content = $doc.find('.read-content.j_readContent')
+                .prepend($(`<style>
+                #j_${cId} p[class^='p'] {
+                    display: flex;
+                    display: -ms-flexbox;
+                    flex-wrap: wrap;
+                    align-items: flex-end;
+                }
+                #j_${cId} p {
+                    line-height: 1.8;
+                    overflow: hidden;
+                    margin: 0.8em 0;
+                }</style>`))
+                .prepend(style)
+                .wrapInner(`<div id="j_${cId}">`)
+        }
+
         // 滚屏的方式无法获取下一页
         if ($doc.find('#j_chapterPrev').length === 0) {
             var $node = $doc.find('div[id^="chapter-"]');
@@ -81,7 +104,17 @@ const sites = [
                 .attr('href', indexUrl)
                 .appendTo($doc.find('body'));
         }
-    }
+    },
+    startLaunch($doc) {
+        if (unsafeWindow.g_data.chapter.vipStatus === 1) { // 是 vip 章节
+            this.useiframe = true;
+            this.mutationSelector = '.read-content.j_readContent'
+            this.mutationChildCount = 0
+        }
+        if (unsafeWindow.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
+            this.useRawContent = true;
+        }
+    },
   },
   {siteName: "创世中文网",
       url: "^https?://(?:chuangshi|yunqi)\\.qq\\.com/|^http://dushu\\.qq\\.com/read.html\\?bid=",
@@ -899,7 +932,7 @@ const sites = [
 
   {siteName: "69书吧",
     url: "https?://www\\.69shu\\.com/txt/\\d+/\\d+",
-    contentHandle: false,
+    // contentHandle: false,
     titleSelector: 'h1',
     contentSelector: ".txtnav",
     contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad",
@@ -1191,7 +1224,27 @@ const sites = [
         nextSelector: '#Blog1_blog-pager-older-link',
         indexSelector: '.post-labels > a',
         prevSelector: '#Blog1_blog-pager-newer-link',
-    }
+    },
+
+    {siteName: '顶点小说',
+        url: 'http://www\\.ddxs\\.com/.*?/\\d+.html',
+        exampleUrl: 'http://www.ddxs.com/yuanzun/1.html',
+
+        contentSelector: '#contents',
+        bookTitleSelector: 'dl > dt > a:last',
+        noSection: true,
+
+    },
+
+    {siteName: '爱好中文网',
+        url: 'https?://www.ah123z.com/\\d+/\\d+/\\d+.html',
+        exampleUrl: 'https://www.ah123z.com/10/10110/6319325.html',
+
+        contentSelector: '#content',
+        bookTitleSelector: '.topmenu a:last',
+        noSection: true,
+
+    },
 
 ];
 

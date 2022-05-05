@@ -6,8 +6,9 @@ const replaceNormalize = {
     '，$\\s|\\s^，': '，', // 合并每一行以"，"结束的段落
     '，+': '，',
     '"(.*?)"': '“$1”',
+    '”“': '”\n“',
     '。([\\u4e00-\\u9fa5])': '。\n$1', // 将一段中的含多个句号的句子每句分为多段
-    '(^.*?[.。])([“].*?[”])': '$1\n$2', // 将一段中的第一句后接对话（引号）句子的第一句话分段
+    '(^.*?[.。])(“.*?”)': '$1\n$2', // 将一段中的第一句后接对话（引号）句子的第一句话分段
     '「(.*?)」': '“$1”',
     '『(.)』': '$1', // "『色』": "色",
     '┅{2,10}': '……',
@@ -29,7 +30,7 @@ function toCDB(str) {
         if (charCode > 65248 && charCode < 65375 && !excludeCharCode.has(charCode)) {
             tmp += String.fromCharCode(charCode - 65248)
         } else {
-            tmp += String.fromCharCode(charCode)
+            tmp += str.charAt(i)
         }
     }
     return tmp

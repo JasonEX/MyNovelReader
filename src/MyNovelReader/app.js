@@ -81,6 +81,7 @@ var App = {
         unsafeWindow.HTMLElement.prototype.focus = function focus() {
             _focus.call(this, { preventScroll: true })
         }
+        unsafeWindow.console.clear = () => {};
         // Hook addEventListener 以便需要时移除事件监听器
         const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener
         function addEventListener(type, listener, options) {
@@ -405,9 +406,9 @@ var App = {
         C.log(`已移除 ${App.listenerAndObserver.length} 个事件监听器和观察器`)
         
         // 清理所有定时器
-        var highestTimeoutId = setTimeout(';')
+        var highestTimeoutId = unsafeWindow.setTimeout(';')
         for (var i = 0; i < highestTimeoutId; i++) {
-            clearTimeout(i)
+            unsafeWindow.clearTimeout(i)
         }
 
         // remove body style

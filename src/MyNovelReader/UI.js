@@ -231,7 +231,7 @@ var UI = {
         UI._loadBlocker();
 
         UI.$prefs = $('<div id="reader_preferences">')
-            .css('cssText', 'position:fixed; top:12%; left:30%; width:500px; z-index:300000;')
+            .css('cssText', 'position:fixed; top:12%; left:50%; transform: translateX(-50%); width:500px; z-index:300000;')
             .append(
                 $('<style>').text(Res.preferencesCSS))
             .append(

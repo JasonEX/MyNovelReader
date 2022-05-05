@@ -71,7 +71,7 @@ Parser.prototype = {
     },
     getAll: async function(){
 
-        C.debug('开始解析页面');
+        C.log('开始解析页面');
 
         this.applyPatch();
 
@@ -299,7 +299,7 @@ Parser.prototype = {
             return '';
         }
 
-        title = $title.remove().text().trim();
+        title = $title.remove().first().text().trim();
 
         if (replace) {
             title = title.replace(toRE(replace), '');
@@ -467,8 +467,8 @@ Parser.prototype = {
         if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
             try {
                 var reg = toReStr(this.chapterTitle).replace(/\s+/g, '\\s*');
-                reg = new RegExp(reg, 'ig');
-                text = text.replace(reg, "");
+                // reg = new RegExp(reg, 'ig');
+                text = text.replace(toRE(reg), "");
                 C.log('去除内容中的标题', reg);
             } catch(e) {
                 console.error(e);
@@ -477,7 +477,7 @@ Parser.prototype = {
 
         if (this.bookTitle) {
             var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）'
-            text = text.replace(new RegExp(regStr, 'ig'), "");
+            text = text.replace(toRE(regStr), "");
         }
 
         if (Setting.cn2tw) {
@@ -610,14 +610,21 @@ Parser.prototype = {
 
         var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
+        C.log(`本章字数：${content.length}`)
+
         // 拼音字、屏蔽字修复
         if (contentHandle) {
             content = this.replaceText(content, Rule.replace)
         }
 
         // 删除含网站域名行文本
-        content = content.replace(toRE(`.*${this._curPageHost}.*`), "")
-        C.log(`删除含网站域名行`, toRE(`.*${this._curPageHost}.*`))
+        const removeText = []
+        const hostRe = toRE(`^.*?${this._curPageHost}.*?$`)
+        content = content.replace(hostRe, match => {
+            removeText.push(match)
+            return ''
+        })  
+        C.log(`删除含网站域名行`, hostRe, removeText)
 
         // 规则替换
         if (info.contentReplace) {

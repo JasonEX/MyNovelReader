@@ -115,14 +115,21 @@
     exclude: '', // 要排除的URL正则
 
     // 每次页面加载完成时调用
-    startLaunch: function ($doc) {},
+    startLaunch: function ($doc) {
+        // this = 该站点规则 Object
+    },
     // 正文内容加载完成时调用
-    startFilter: function ($doc) {},
+    startFilter: function ($doc) {
+        // this = 该站点规则 Object
+    },
     // 阅读界面加载完成时调用
-    fInit: function () {},
+    fInit: function () {
+        // this = 该站点规则 Object
+    },
     // 判断是否Vip章节，如果是则不再继续加载
     isVipChapter: function ($doc) {
         // $doc = $(document)
+        // this = 该站点规则 Object
 
         return true // 如果是Vip章节返回true
     }

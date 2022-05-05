@@ -30,6 +30,7 @@
     "@types/minimist": "^1.2.0",
     "@types/underscore": "^1.11.4",
     "@ywzhaiqi/rollup-plugin-less": "^0.1.1",
+    "benny": "^3.7.1",
     "dayjs": "^1.11.0",
     "minimist": "^1.2.6",
     "node-fetch": "^3.2.3",
