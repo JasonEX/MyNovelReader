@@ -12,6 +12,7 @@ import { isWindows, sleep, Request, DOMContentLoaded } from './lib'
 import downloader from './downloader'
 import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
+import './inject'
 
 var App = {
     isEnabled: false,
@@ -31,9 +32,6 @@ var App = {
     listenerAndObserver: [],
 
     init: async function() {
-        // 注入修改
-        App.injectPolyfill()
-
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
             return;
         }
@@ -74,42 +72,6 @@ var App = {
         } else {
             await UI.addButton();
         }
-    },
-    injectPolyfill: function () {
-        // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
-        const _focus = unsafeWindow.HTMLElement.prototype.focus
-        unsafeWindow.HTMLElement.prototype.focus = function focus() {
-            _focus.call(this, { preventScroll: true })
-        }
-        unsafeWindow.console.clear = () => {};
-        // Hook addEventListener 以便需要时移除事件监听器
-        const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener
-        function addEventListener(type, listener, options) {
-            _addEventListener.apply(this, arguments)
-            App.listenerAndObserver.push(() => {
-                try {
-                    this.removeEventListener(...arguments)
-                } catch (e) {}
-            })
-        }
-        unsafeWindow.EventTarget.prototype.addEventListener = addEventListener
-        document.addEventListener = addEventListener
-        // Hook MutationObserver 以便需要时移除观察器
-        const _observe = unsafeWindow.MutationObserver.prototype.observe
-        const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect
-        unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
-            _observe.apply(this, arguments)
-            App.listenerAndObserver.push(() => {
-                try {
-                    _disconnect.apply(this, arguments)
-                } catch (e) {}
-            })
-        }
-        Object.defineProperty(unsafeWindow.Navigator.prototype, 'platform', {
-            get: function platform() {
-                return ''
-            }
-        })
     },
     loadCustomSetting: function() {
         var customRules;
@@ -275,6 +237,10 @@ var App = {
             await parser.getAll();
             await App.processPage(parser);
         } else {
+            if (!$('.readerbtn').length) {
+                await UI.addButton();
+            }
+            $('.readerbtn').text('无内容')
             console.error("当前页面没有找到内容");
         }
 
@@ -863,12 +829,13 @@ var App = {
             App.iframe = i;
             i.name = 'mynovelreader-iframe';
             i.width = '100%';
-            i.height = '0';
+            i.height = `${unsafeWindow.innerHeight}px`;
             i.frameBorder = "0";
             i.style.cssText = '\
                 margin:0!important;\
                 padding:0!important;\
                 visibility:hidden!important;\
+                display:none!important;\
             ';
             i.src = nextUrl;
             i.addEventListener('load', App.iframeLoaded, false);

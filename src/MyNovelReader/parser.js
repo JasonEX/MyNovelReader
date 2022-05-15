@@ -6,6 +6,7 @@ import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { toCDB } from './rule/replaceNormalize'
+import App from './app'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -38,8 +39,8 @@ Parser.prototype = {
 
     init: function (info, doc, curPageUrl) {
         this.info = info || {};
-        this.doc = doc;
-        this.$doc = $(doc);
+        this.doc = doc.cloneNode(true);
+        this.$doc = $(this.doc);
         this.curPageUrl = curPageUrl || doc.URL;
         this._curPageHost = getUrlHost(this.curPageUrl);  // 当前页的 host，后面用到
 

@@ -66,8 +66,10 @@ const sites = [
 
         $doc.find('.content-wrap').contents().unwrap()
 
+        $doc.find('.read-content.j_readContent style').remove()
+
         const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2)
-        const style = $doc.find(`#style_${cId}`)
+        const style = $doc.find('link[href^=blob]').first().attr('class', 'noRemove')
 
         if (style.length) {
             this.$content = $doc.find('.read-content.j_readContent')
@@ -751,7 +753,7 @@ const sites = [
               ‘UU看书 www.uｕkansｈu．net ’
               UU看书 www.ｕukaｎshu.net
           */
-          /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[nｎ][eｅ][tｔ]/g,
+          /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[nｎ][eｅ][tｔ]\s*/g,
           '[UＵ]*看书[（\\(].*?[）\\)]文字首发。',
           '请记住本书首发域名：。笔趣阁手机版阅读网址：',
           '\\(\\)',

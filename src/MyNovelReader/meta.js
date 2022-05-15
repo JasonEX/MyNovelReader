@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.0
+// @version        6.6.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -285,6 +285,8 @@
 // @match          *://www.ddxs.com/*/*.html
 // @match          *://www.ah123z.com/*/*/*.html
 // @match          *://www.bqxs520.com/*/*.html
+// @match          *://www.bidige.com/book/*/*.html
+// @match          *://www.yushubo.com/read_*.html
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html

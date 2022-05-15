@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.0
+// @version        6.6.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -285,6 +285,8 @@
 // @match          *://www.ddxs.com/*/*.html
 // @match          *://www.ah123z.com/*/*/*.html
 // @match          *://www.bqxs520.com/*/*.html
+// @match          *://www.bidige.com/book/*/*.html
+// @match          *://www.yushubo.com/read_*.html
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html
@@ -760,8 +762,10 @@
 
           $doc.find('.content-wrap').contents().unwrap();
 
+          $doc.find('.read-content.j_readContent style').remove();
+
           const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2);
-          const style = $doc.find(`#style_${cId}`);
+          const style = $doc.find('link[href^=blob]').first().attr('class', 'noRemove');
 
           if (style.length) {
               this.$content = $doc.find('.read-content.j_readContent')
@@ -1445,7 +1449,7 @@
                 ‘UU看书 www.uｕkansｈu．net ’
                 UU看书 www.ｕukaｎshu.net
             */
-            /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[nｎ][eｅ][tｔ]/g,
+            /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[nｎ][eｅ][tｔ]\s*/g,
             '[UＵ]*看书[（\\(].*?[）\\)]文字首发。',
             '请记住本书首发域名：。笔趣阁手机版阅读网址：',
             '\\(\\)',
@@ -2265,6 +2269,11 @@
     'jian杀': '奸杀',
     '火jian弹': '火箭弹',
     'zha弹': '炸弹',
+    'GW员': '公务员',
+    'jun火': '军火',
+    '外jun': '外军',
+    'JDZ瓷器': '景德镇瓷器',
+    'zz正确': '政治正确',
 
     '[AM]国': '美国',
     '[CZ]国': '中国',
@@ -2274,13 +2283,8 @@
     'F国': '法国',
     'D国': '德国',
 
-
-    '勐': '猛', '個': '个', '澹([^泊])': '淡$1',
-    '當': '当', '伱': '你', '麼': '么',
-    '聞': '闻', '處': '处', '動': '动',
-    '間': '间', '趕': '赶',
-
     '迸\\*{2}光': '迸射精光',
+    '十之八\\*' : '十之八九',
     
   };
 
@@ -2362,7 +2366,7 @@
     // '(看小说到|爱玩爱看就来|就爱上|喜欢)?(\\s|<|>|&| |[+@＠=:;｀`%？》《〈︾-])?[乐樂](\\s|&lt;|&gt;|&amp;|&nbsp;|[+@＠=:;｀`%？》《〈︾-])?[文].*?[说說][网]?[|]?(.*(3w|[ｗωＷw]{1,3}|[Ｍm]).*[ｍＭm])?[}。\\s]?(乐文小说)?',
     // '(本文由|小说)?(\\s| )?((3w|[wＷｗ]{1,3}|[Ｍm]).)?\\s?[lしｌL][ｗωＷw][ｘχＸx][ｓＳs][５5][２2][０0].*[ｍＭm][|\\s]?(首发(哦亲)?)?',
     '([『【↑△↓＠︾]+[\u4E00-\u9FA5]){2,6}[】|]',
-    /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[cｃ][oｏ][mｍ]/g,
+    /[ＵｕUu]+看书\s*www.[ＵｕUu]+[kｋ][aａ][nｎ][ｓs][hｈ][ＵｕUu].[cｃ][oｏ][mｍ]\s*/g,
 
     // 包含 \P 的替换
     '\\P{1,2}[顶頂].{1,3}[点小].*?o?[mw，]',
@@ -2703,6 +2707,1664 @@
       return bookTitle
   }
 
+  var tpl_mainHtml = "<div id=\"container\">\r\n    <div id=\"menu-bar\" title=\"点击显示隐藏章节列表\"></div>\r\n    <div id=\"menu\">\r\n        <div id=\"header\" title=\"打开目录\">\r\n            <a href=\"{indexUrl}\" target=\"_blank\">{bookTitle}</a>\r\n        </div>\r\n        <div id=\"divider\"></div>\r\n        <ul id=\"chapter-list\" title=\"左键滚动，中键打开链接（无阅读模式）\">\r\n        </ul>\r\n    </div>\r\n    <div id=\"mynovelreader-content\"></div>\r\n    <div id=\"loading\" style=\"display:none\"></div>\r\n    <div id=\"preferencesBtn\">\r\n        <img style=\"width:16px\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABwklEQVRIibVVzWrCQBAeQk/bdk+bm0aWDQEPHtwVahdavLU9aw6KAQ+SQ86Sa19Aqu0T9NafSw8ttOgr1CewUB9CBL3Yy26x1qRp0A8GhsnO9yUzmxmAhKjX68cAMAeAufK3C875FQAsAWCp/O3CsqyhFlB+Oti2/cAYewrD8FDHarXahWEYUy1gGMbUdd1z/TwMw0PG2JNt2/ex5IyxR02CEJpIKbuEkJGOrRshZCSl7CKEJjrGGHuIFMjlcs9RZElNcWxGEAQHGONxWnKM8TgIgoPYMkkpL9MKqNx4xNX8LyOEvMeSq5uxMZlz3vN9v+D7foFz3os6V61Wz36QNhqNUyHENaV0CACLTUnFYvF6/WVUbJPIglI6FELctFqtMiT59Ha7TdcFVCxJ6XYs0Gw2T1SJBlsq0ZxSOhBC3Hied/QjSTUoqsn9lSb3o879avI61FXbzTUFACiXy7v70Tqdzj7G+COtwJ+jIpPJvKYl12ZZ1kucwJs+iBD6lFJ2TdOMHB2mab7/a1xXKpW9fD5/6zjO3erCcV33PMnCcRwnfuHEYXVlZrPZQWqiKJRKpe8Bt5Ol73leCQBmADBTfiJ8AebTYCRbI3BUAAAAAElFTkSuQmCC\"/>\r\n    </div>\r\n    <div id=\"alert\" style=\"display: none;\">\r\n        <p id=\"App-notice\"></p>\r\n    </div>\r\n\r\n    <div id=\"app\">\r\n\r\n    </div>\r\n</div>";
+
+  let $messageDiv;
+  let _messageTimeId;
+
+  function notice(html, duration, noticeType, onClose) {
+    if (typeof duration === 'undefined')
+        duration = 2000;
+
+    var closeMessage = function() {
+        $messageDiv.remove();
+        $messageDiv = null;
+
+        if (typeof onClose === 'function') {
+            onClose();
+        }
+    };
+
+    if (!$messageDiv) {
+        var iconHtml = '';
+        if (noticeType === 'loading') {
+            iconHtml = '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>';
+        }
+
+        $messageDiv = $('<div id="message" class="noRemove">' + iconHtml + '<span id="content"></span></div>')
+            .appendTo('body');
+
+        if (duration == 0) {
+            $messageDiv.on('click', closeMessage);
+        }
+    }
+
+    $messageDiv.find('#content').html(html);
+
+    if (duration > 0) {
+        clearTimeout(_messageTimeId);
+        _messageTimeId = setTimeout(closeMessage, duration);
+    }
+  }
+
+  function loading(html, duration, onClose) {
+    notice(html, duration, 'loading', onClose);
+  }
+
+  function saveAs(data, filename) {
+    if(!filename) filename = 'console.json';
+
+    if (typeof data == 'object') {
+        data = JSON.stringify(data, undefined, 4);
+    }
+
+    var blob = new Blob([data], { type: 'application/octet-stream' });
+    var blobUrl = window.URL.createObjectURL(blob);
+    var tmpLink = document.createElement('a');
+    tmpLink.href = blobUrl;
+    tmpLink.style.display = 'none';
+    tmpLink.setAttribute('download', filename);
+    tmpLink.setAttribute('target', '_blank');
+    document.body.appendChild(tmpLink);
+
+    tmpLink.click();
+    document.body.removeChild(tmpLink);
+    window.URL.revokeObjectURL(blobUrl);
+  }
+
+  /**
+   * 获取 substring 在 string 所有位置的数组
+   *
+   * @param {string} substring
+   * @param {string} string
+   * @returns {number[]}
+   */
+  function locations(substring, string){
+    var a=[],i=-1;
+    while((i=string.indexOf(substring,i+1)) >= 0) a.push(i);
+    return a;
+  }
+
+  /**
+   * 22000 毫秒 => 00:00:02
+   *
+   * @param {number} distanceMillis
+   * @returns {string}
+   */
+  function formatMillisencod(distanceMillis) {
+    var sec_num = parseInt(Math.abs(distanceMillis) / 1000, 10);
+    var hours = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+    if (hours < 10) {
+      hours = "0" + hours;
+    }
+    if (minutes < 10) {
+      minutes = "0" + minutes;
+    }
+    if (seconds < 10) {
+      seconds = "0" + seconds;
+    }
+    return hours + ':' + minutes + ':' + seconds;
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    })
+  }
+
+  function cnNum2ArabNum(cn){
+    var arab, parts, cnChars = '零一二三四五六七八九';
+
+    if (!cn) {
+        return 0
+    }
+
+    if (cn.indexOf('亿') !== -1){
+        parts = cn.split('亿');
+        return cnNum2ArabNum(parts[0]) * 1e8 + cnNum2ArabNum(parts[1])
+    }
+
+    if (cn.indexOf('万') !== -1){
+        parts = cn.split('万');
+        return cnNum2ArabNum(parts[0]) * 1e4 + cnNum2ArabNum(parts[1])
+    }
+
+    if (cn.indexOf('十') === 0){
+        cn = '一' + cn;
+    }
+
+    arab = cn
+        .replace(/[零一二三四五六七八九]/g, function (a) {
+            return '+' + cnChars.indexOf(a)
+        })
+        .replace(/(十|百|千)/g, function(a, b){
+            return '*' + (
+                b == '十' ? 1e1 :
+                b == '百' ? 1e2 : 1e3
+            )
+        });
+
+    return (new Function('return ' + arab))()
+  }
+
+  function getNumFromChapterTitle(title) {
+    if (!title) return;
+
+    var m = title.match(/第(\d+)章|^(\d+)、/);
+    if (m) {
+      return parseInt(m[1], 10)
+    }
+
+    // 第二十二章
+    m = title.match(/(?:第|^)([一二两三四五六七八九十○零百千万亿\d]+){1,6}章/);
+    if (m) {
+      return cnNum2ArabNum(m[1])
+    }
+
+    // 九十二 休想套路我
+    m = title.match(/^([一二两三四五六七八九十○零百千万亿\d]+){1,6} /);
+    if (m) {
+      return cnNum2ArabNum(m[1])
+    }
+  }
+
+  const chapters = [];
+
+  const fileName = {
+    bookTitle: '',
+    ext: '.txt',
+    start: 0,
+    end: 0,
+
+    setBookTitle(bookTitle) {
+      this.bookTitle = bookTitle;
+    },
+    setStart(chapterTitle) {
+      let num = getNumFromChapterTitle(chapterTitle);
+      if (num) {
+        this.start = num;
+      }
+    },
+    setEnd(chapterTitle) {
+      let num = getNumFromChapterTitle(chapterTitle);
+      if (num) {
+        this.end = num;
+      }
+    },
+
+    toString() {
+      let start = this.start || '';
+      let end = this.end || '';
+      let count = chapters.length;
+
+      return `${this.bookTitle || '未知名称'}(${start} - ${end},共${count}章)${this.ext}`
+    }
+  };
+
+  function toTxt(parser) {
+    var html = $.nano('{chapterTitle}\n\n{contentTxt}', parser);
+    chapters.push(html);
+
+    var msg = '已下载 ' + chapters.length + ' 章，' +
+        (parser.chapterTitle || '');
+
+    loading(msg, 0);
+  }
+  function finish(parser) {
+    var allTxt = chapters.join('\n\n');
+    if (isWindows) {
+        allTxt = allTxt.replace(/\n/g, '\r\n');
+    }
+
+    if (parser) {
+      fileName.setEnd(parser.chapterTitle);
+    }
+
+    saveAs(allTxt, fileName.toString());
+  }
+  async function getOnePage(parser, nextUrl) {
+    var isEnd = false;
+    if (parser) {
+        toTxt(parser);
+        nextUrl = parser.nextUrl;
+        isEnd = parser.isTheEnd;
+    }
+
+    if (!nextUrl || isEnd) {
+        console.log('全部获取完毕');
+        finish(parser);
+        return;
+    }
+
+    if (App$1.site.useiframe) {
+        // App.iframeRequest(nextUrl);
+        return;
+    }
+
+    sleep(config.download_delay)
+
+    (async function() {
+      console.log('[存为txt]正在获取：', nextUrl);
+      const doc = await App$1.httpRequest(nextUrl);
+
+      if (doc) {
+          var par = new Parser(App$1.site, doc, nextUrl);
+          await par.getAll();
+          await getOnePage(par);
+      } else {
+          console.error('超时或连接出错');
+          finish();
+      }
+
+    })();
+  }
+  async function run(cachedParsers=[]) {
+    console.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`);
+
+    cachedParsers.forEach(toTxt);
+
+    var firstParser = cachedParsers[0];
+    fileName.setBookTitle(firstParser.bookTitle);
+    fileName.setStart(firstParser.chapterTitle);
+
+    var lastParser = cachedParsers[cachedParsers.length - 1];
+    await getOnePage(null, lastParser.nextUrl);
+  }
+
+  __$styleInject(".speech {\n  position: fixed;\n  z-index: 100;\n  background-color: white;\n  top: 10px;\n  right: 35px;\n}\n");
+
+  const bus = new Vue();
+
+  // 显示 语音朗读 对话框
+  const SHOW_SPEECH = 'show-speech';
+
+  const APPEND_NEXT_PAGE = 'appended_next_page';
+
+  __$styleInject(".speech .close-btn {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.speech .loader {\n  text-align: center;\n}\n.speech .auto-stop-input {\n  width: 30px;\n}\n.speech .tips {\n  font-size: 0.8em;\n}\n");
+
+  __$styleInject("/*.v-spinner\n{\n    margin: 100px auto;\n    text-align: center;\n}\n*/\n@-webkit-keyframes v-pulseStretchDelay {\n  0%,\n  80% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    -webkit-opacity: 1;\n    opacity: 1;\n  }\n  45% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    -webkit-opacity: 0.7;\n    opacity: 0.7;\n  }\n}\n@keyframes v-pulseStretchDelay {\n  0%,\n  80% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    -webkit-opacity: 1;\n    opacity: 1;\n  }\n  45% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    -webkit-opacity: 0.7;\n    opacity: 0.7;\n  }\n}\n");
+
+  var PulseLoader = {
+  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.loading),expression:"loading"}],staticClass:"v-spinner"},[_c('div',{staticClass:"v-pulse v-pulse1",style:([_vm.spinnerStyle,_vm.spinnerDelay1])}),_c('div',{staticClass:"v-pulse v-pulse2",style:([_vm.spinnerStyle,_vm.spinnerDelay2])}),_c('div',{staticClass:"v-pulse v-pulse3",style:([_vm.spinnerStyle,_vm.spinnerDelay3])})])},
+  staticRenderFns: [],
+
+    name: 'PulseLoader',
+    props: {
+      loading: {
+        type: Boolean,
+        default: true
+      },
+      color: {
+        type: String,
+        default: '#5dc596'
+      },
+      size: {
+        type: String,
+        default: '15px'
+      },
+      margin: {
+        type: String,
+        default: '2px'
+      },
+      radius: {
+        type: String,
+        default: '100%'
+      }
+    },
+    data () {
+      return {
+        spinnerStyle: {
+        	backgroundColor: this.color,
+        	width: this.size,
+          height: this.size,
+        	margin: this.margin,
+        	borderRadius: this.radius,
+          display: 'inline-block',
+          animationName: 'v-pulseStretchDelay',
+          animationDuration: '0.75s',
+          animationIterationCount: 'infinite',
+          animationTimingFunction: 'cubic-bezier(.2,.68,.18,1.08)',
+          animationFillMode: 'both'
+        },
+        spinnerDelay1: {
+          animationDelay: '0.12s'
+        },
+        spinnerDelay2: {
+          animationDelay: '0.24s'
+        },
+        spinnerDelay3: {
+          animationDelay: '0.36s'
+        }
+      }
+    }
+  };
+
+  const STATE = {
+    playing: 1,
+    pausing: 2,
+    stoping: 0,
+  };
+
+  var Speech = {
+  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"speech"},[(_vm.playState == _vm.STATE.playing)?_c('span',[_c('button',{on:{"click":_vm.pause}},[_vm._v("暂停朗读")]),_vm._v(" "),_c('button',{on:{"click":_vm.stop}},[_vm._v("停止朗读")])]):_c('span',[(_vm.playState == _vm.STATE.stoping)?_c('button',{on:{"click":_vm.start}},[_vm._v("开始朗读")]):_vm._e(),_vm._v(" "),(_vm.playState == _vm.STATE.pausing)?_c('button',{on:{"click":_vm.resume}},[_vm._v("继续朗读")]):_vm._e(),_vm._v(" "),(_vm.elapsedTime)?_c('span',[_vm._v("已朗读 "+_vm._s(_vm.formatMillisencod(_vm.elapsedTime)))]):_c('span',{staticClass:"tips"},[_vm._v("Tips: 可从选择文本处开始朗读")]),_vm._v(" "),_c('button',{staticClass:"close-btn",on:{"click":_vm.closeSpeech}},[_vm._v("X")])]),_vm._v(" "),(_vm.playState == _vm.STATE.playing)?_c('div',{staticClass:"loader"},[_c('pulse-loader')],1):_c('div',[_c('div',[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStop),expression:"autoStop"}],attrs:{"type":"radio","value":"time"},domProps:{"checked":_vm._q(_vm.autoStop,"time")},on:{"change":function($event){_vm.autoStop="time";}}}),_vm._v("\n        定时朗读：\n        "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStopTime),expression:"autoStopTime"}],staticClass:"auto-stop-input",attrs:{"type":"text"},domProps:{"value":(_vm.autoStopTime)},on:{"input":function($event){if($event.target.composing){ return; }_vm.autoStopTime=$event.target.value;}}}),_vm._v(" "),_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStopTimeUnit),expression:"autoStopTimeUnit"}],on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.autoStopTimeUnit=$event.target.multiple ? $$selectedVal : $$selectedVal[0];}}},[_c('option',{attrs:{"value":"minute"}},[_vm._v("分钟")]),_vm._v(" "),_c('option',{attrs:{"value":"hour"}},[_vm._v("小时")])]),_vm._v("\n        后停止\n      ")]),_c('br'),_vm._v(" "),_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStop),expression:"autoStop"}],attrs:{"type":"radio","value":"chapter"},domProps:{"checked":_vm._q(_vm.autoStop,"chapter")},on:{"change":function($event){_vm.autoStop="chapter";}}}),_vm._v("\n        定章朗读：\n        "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStopChapter),expression:"autoStopChapter"}],staticClass:"auto-stop-input",attrs:{"type":"text"},domProps:{"value":(_vm.autoStopChapter)},on:{"input":function($event){if($event.target.composing){ return; }_vm.autoStopChapter=$event.target.value;}}}),_vm._v("章后停止\n      ")]),_c('br'),_vm._v(" "),_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStop),expression:"autoStop"}],attrs:{"type":"radio","value":""},domProps:{"checked":_vm._q(_vm.autoStop,"")},on:{"change":function($event){_vm.autoStop="";}}}),_vm._v("一直朗读")])]),_vm._v(" "),_c('div',[_c('label',{attrs:{"for":"speech-dialog-rate"}},[_vm._v("语速")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.rate),expression:"rate"}],attrs:{"type":"range","min":"0.5","max":"3","step":"0.1","id":"speech-dialog-rate"},domProps:{"value":(_vm.rate)},on:{"__r":function($event){_vm.rate=$event.target.value;}}}),_vm._v(" "),_c('span',{staticClass:"rate-value"},[_vm._v(_vm._s(_vm.rate))])]),_vm._v(" "),_c('div',[_c('label',{attrs:{"for":"speech-dialog-pitch"}},[_vm._v("音高")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.pitch),expression:"pitch"}],attrs:{"type":"range","min":"0","max":"2","step":"0.1","id":"speech-dialog-pitch"},domProps:{"value":(_vm.pitch)},on:{"__r":function($event){_vm.pitch=$event.target.value;}}}),_vm._v(" "),_c('span',{staticClass:"pitch-value"},[_vm._v(_vm._s(_vm.pitch))])]),_vm._v(" "),_c('div',[_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.selectedVoice),expression:"selectedVoice"}],staticClass:"voices",on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.selectedVoice=$event.target.multiple ? $$selectedVal : $$selectedVal[0];}}},_vm._l((_vm.voiceList),function(voice,index){return _c('option',{key:index,domProps:{"value":index}},[_vm._v("\n          "+_vm._s(voice.name)+" "+_vm._s(voice.lang)+"\n        ")])}),0)])])])},
+  staticRenderFns: [],
+    name: 'speech',
+    data() {
+      return {
+        text: '',
+        // 播放状态
+        STATE,
+        playState: STATE.stoping,  // 监控朗读的状态
+        isPlaying: false,  // 按钮的状态
+        elapsedTime: 0,
+
+        voiceList: [],
+        selectedVoice: 0,
+        rate: 1,
+        pitch: 1,
+
+        autoStop: '',
+        autoStopTime: 2,  // 2 小时
+        autoStopTimeUnit: 'hour',
+        autoStopChapter: 5,  // 5章
+
+        synth: window.speechSynthesis,
+        utterance: new SpeechSynthesisUtterance(),
+      }
+    },
+    components: {
+      PulseLoader
+    },
+    mounted() {
+      // 载入语音列表
+      this.voiceList = this.synth.getVoices();
+      this.synth.onvoiceschanged = () => {
+        this.voiceList = this.synth.getVoices();
+      };
+
+      this.loadSetting();
+    },
+    beforeDestory() {
+      clearTimeout(this.autoStopTimeId);
+    },
+    methods: {
+      formatMillisencod,
+      closeSpeech() {
+        this.$emit('closeSpeech');
+      },
+      loadSetting() {
+        this.rate = GM_getValue('speech.rate', 1);
+        this.pitch = GM_getValue('speech.pitch', 1);
+        this.selectedVoice = GM_getValue('speech.selectedVoice', 0);
+
+        this.autoStop = GM_getValue('speech.autoStop', '');
+        this.autoStopTime = GM_getValue('speech.autoStopTime', 2);
+        this.autoStopTimeUnit = GM_getValue('speech.autoStopTimeUnit', 'hour');
+        this.autoStopChapter = GM_getValue('speech.autoStopChapter', 5);
+      },
+      saveSetting() {
+        GM_setValue('speech.rate', this.rate);
+        GM_setValue('speech.pitch', this.pitch);
+        GM_setValue('speech.selectedVoice', this.selectedVoice);
+
+        GM_setValue('speech.autoStop', this.autoStop);
+        GM_setValue('speech.autoStopTime', this.autoStopTime);
+        GM_setValue('speech.autoStopTimeUnit', this.autoStopTimeUnit);
+        GM_setValue('speech.autoStopChapter', this.autoStopChapter);
+      },
+      async start() {
+        this.isPlaying = true;
+
+        // 获取当前所在的章节
+        this.speakIndex = App$1.curFocusIndex;
+        this.startSpeakIndex = App$1.curFocusIndex;
+        let toSpeekText = this.getToSpeekText(true);
+
+        bus.$off(APPEND_NEXT_PAGE, this.waitForNext);
+        bus.$on(APPEND_NEXT_PAGE, this.waitForNext);
+
+        // fix 可能的问题：点击开始朗读无效，需要 cancel 才有效
+        window.speechSynthesis.cancel();
+
+        this.speak(toSpeekText, this.checkNext);
+
+        if (this.autoStop == 'time') {
+          clearTimeout(this.autoStopTimeId);
+          this.autoStopTimeId = setTimeout(this.stop, this.getAutoStopMillisecond());
+        }
+
+        // 保存设置
+        this.saveSetting();
+      },
+      getAutoStopMillisecond() {
+        if (this.autoStopTimeUnit == 'minute') {
+          return this.autoStopTime * 60 * 1000
+        } else {
+          return this.autoStopTime * 3600 * 1000
+        }
+      },
+      async checkNext() {
+        if (!this.isPlaying) return
+
+        this.speakIndex += 1;
+        await this.checkAgin();
+      },
+      async checkAgin() {
+        let speakedChapters = this.speakIndex - this.startSpeakIndex;
+        if (this.autoStop == 'chapter' && speakedChapters >= this.autoStopChapter) {
+          this.stop();
+          return
+        }
+
+        // 是否有新章节
+        let nextText = this.getToSpeekText();
+        if (nextText) {
+          this.isFindingNext = false;
+          this.speak(nextText, this.checkNext);
+
+          this.scrollToNext();
+        } else {
+          this.isFindingNext = true;
+          // 加载下一章
+          await App$1.scrollForce();
+        }
+      },
+      async waitForNext() {
+        if (this.isFindingNext && this.isPlaying) {
+          await this.checkAgin();
+        }
+      },
+      scrollToNext() {
+        let elem = App$1.scrollItems.get(this.speakIndex);
+        if (elem) {
+          App$1.scrollToArticle(elem);
+        }
+      },
+      getToSpeekText(fromSelection=false) {
+        let startIndex = this.speakIndex;
+
+        // 这是 jQuery 对象
+        let text = App$1.scrollItems
+          .toArray()
+          .filter((elem, i) => {
+            return i == startIndex
+          })
+          // .map(elem => elem.textContent.slice(0, 10))  // debug
+          .map(elem => elem.textContent)
+          .join('\n');
+
+        if (fromSelection) {
+          let newText = this.getSelectionAfterText(text);
+          if (newText) {
+            return newText
+          }
+        }
+
+        return text
+      },
+      getSelectionAfterText(text) {
+        const selObj = getSelection();
+        const selStr = selObj.toString();
+        let afterText;
+
+        if (!selStr) return
+
+        let indexes = locations(selStr, text);
+        if (indexes.length == 0) {
+          return
+        } else if (indexes.length == 1) {
+          afterText = text.substring(indexes[0]);
+        } else {  // 多个
+          indexes = locations(selObj.anchorNode.data, text);
+          if (indexes.length == 0) return
+          else if (indexes.length == 1) {
+            let start = indexes[0] + selObj.anchorOffset;
+            afterText = text.substring(start);
+          } else {
+            console.error('getSelectionAfterText() 无法判断唯一');
+          }
+        }
+
+        selObj.removeAllRanges();
+        return afterText
+      },
+      speak(text, endFn) {
+        this.utterance = new SpeechSynthesisUtterance(text);
+        this.utterance.voice = this.voiceList[this.selectedVoice];
+        this.utterance.pitch = this.pitch;
+        this.utterance.rate = this.rate;
+
+        this.listenForSpeechEvents(endFn);
+
+        this.synth.speak(this.utterance);
+      },
+      listenForSpeechEvents (endFn) {
+        this.utterance.onstart = () => {
+          this.playState = STATE.playing;
+        };
+        this.utterance.onpause = (event) => {
+          this.playState = STATE.pausing;
+          this.elapsedTime = event.elapsedTime;
+        };
+        this.utterance.onresume = (e) => {
+          this.playState = STATE.playing;
+        };
+        this.utterance.onend = (event) => {
+          this.playState = STATE.stoping;
+          // this.elapsedTime = event.elapsedTime
+          this.elapsedTime = null;
+
+          if (endFn) {
+            endFn();
+          }
+        };
+      },
+      pause() {
+        this.isPlaying = false;
+
+        this.synth.pause();
+      },
+      resume() {
+        this.isPlaying = true;
+
+        this.synth.resume();
+      },
+      stop() {
+        this.isPlaying = false;
+
+        this.synth.cancel();
+
+        clearTimeout(this.autoStopTimeId);
+      }
+    }
+  };
+
+  var App = {
+  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[(_vm.speechDialogVisible)?_c('speech',{staticClass:"speech",on:{"closeSpeech":_vm.hideSpeech}}):_vm._e()],1)},
+  staticRenderFns: [],
+    data() {
+      return {
+        speechDialogVisible: false,
+      }
+    },
+    components: {
+      Speech,
+    },
+    created() {
+      bus.$on(SHOW_SPEECH, this.showSpeech);
+    },
+    beforeDestory() {
+      bus.$off(SHOW_SPEECH, this.hideSpeech);
+    },
+    methods: {
+      showSpeech() {
+        this.speechDialogVisible = true;
+      },
+      hideSpeech() {
+        this.speechDialogVisible = false;
+      }
+    }
+  };
+
+  function runVue() {
+    new Vue({
+      el: '#app',
+      render: h => h(App)
+    });
+  }
+
+  const { HTMLElement, EventTarget, MutationObserver: MutationObserver$1, Navigator, Proxy, Reflect, Object: Object$1 } = unsafeWindow;
+
+  // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
+  const _focus = HTMLElement.prototype.focus;
+  HTMLElement.prototype.focus = function focus() {
+    _focus.call(this, { preventScroll: true });
+  };
+
+  // Hook addEventListener 以便需要时移除事件监听器
+  const _addEventListener = EventTarget.prototype.addEventListener;
+  function addEventListener(type, listener, options) {
+    _addEventListener.apply(this, arguments);
+    App$1.listenerAndObserver.push(() => {
+      try {
+        this.removeEventListener(...arguments);
+      } catch (e) {}
+    });
+  }
+  EventTarget.prototype.addEventListener = addEventListener;
+  document.addEventListener = addEventListener;
+
+  // Hook MutationObserver 以便需要时移除观察器
+  const _observe = MutationObserver$1.prototype.observe;
+  const _disconnect = MutationObserver$1.prototype.disconnect;
+  function observe(target, options) {
+    _observe.apply(this, arguments);
+    App$1.listenerAndObserver.push(() => {
+      try {
+        _disconnect.apply(this, arguments);
+      } catch (e) {}
+    });
+  }
+  MutationObserver$1.prototype.observe = observe;
+
+  Object$1.defineProperty(Navigator.prototype, 'platform', {
+    get: function platform() {
+      return ''
+    }
+  });
+
+  unsafeWindow.console.clear = () => {};
+
+  const proxies = new WeakMap();
+
+  unsafeWindow.Proxy = new Proxy(Proxy, {
+    construct: function (target, argumentsList, newTarget) {
+      const proxy = Reflect.construct(target, argumentsList, newTarget);
+      proxies.set(proxy, argumentsList[0]);
+      return proxy
+    }
+  });
+
+  var App$1 = {
+      isEnabled: false,
+      parsedPages: {},
+      pageNum: 1,
+      paused: false,
+      curPageUrl: location.href,
+      requestUrl: null,
+      iframe: null,
+      remove: [],
+      // 滚动激活相关
+      curFocusElement: null,
+      curFocusIndex: 1,
+      // 站点字体信息
+      siteFontInfo: null,
+      // 事件监听器和观察器数组
+      listenerAndObserver: [],
+
+      init: async function() {
+          if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
+              return;
+          }
+
+          // 手动调用
+          var readx = App$1.launch;
+
+          try {
+              exportFunction(readx, unsafeWindow, {defineAs: "readx"});
+          } catch(ex) {
+              console.error('无法定义 readx 函数');
+          }
+
+
+          App$1.loadCustomSetting();
+          App$1.site = App$1.getCurSiteInfo();
+
+          // 等待 DOMContentLoaded 事件触发
+          await DOMContentLoaded();
+
+          if (App$1.site.startLaunch) {
+              App$1.site.startLaunch($(document));
+          }
+
+          var autoLaunch = App$1.isAutoLaunch();
+
+          if (autoLaunch === -1) {
+              return;
+          } else if (autoLaunch) {
+              if (App$1.site.mutationSelector) { // 特殊的启动：等待js把内容生成完毕
+                  await App$1.addMutationObserve(document);
+              } else if (App$1.site.timeout) { // 延迟启动
+                  await sleep(App$1.site.timeout);
+              }
+              // 等待 Dom 稳定
+              await App$1.DomMutation();
+              await App$1.launch();
+          } else {
+              await UI.addButton();
+          }
+      },
+      loadCustomSetting: function() {
+          var customRules;
+          try {
+              customRules = eval(Setting.customSiteinfo);
+          } catch (e) {
+              console.error('载入自定义站点配置错误', e);
+          }
+
+          if (_.isArray(customRules)) {
+              Rule.customRules = customRules;
+              C.log('载入自定义站点规则成功', customRules);
+          }
+
+          // load custom replace rules
+          Rule.customReplace = Rule.parseCustomReplaceRules(Setting.customReplaceRules);
+
+          C.log('载入自定义替换规则成功', Rule.customReplace);
+      },
+      getCurSiteInfo: function() {
+          var rules = Rule.customRules.concat(Rule.specialSite);
+          var locationHref = location.href;
+
+          var info = _.find(rules, function(x) {
+              return toRE(x.url).test(locationHref);
+          });
+
+          if (!info) {
+              info = {};
+              C.log("没有找到规则，尝试自动模式。");
+          } else {
+              C.log("找到规则：", info);
+          }
+          return info;
+      },
+      isAutoLaunch: function() {
+          var locationHost = location.host,
+              referrer = document.referrer;
+
+          switch (true) {
+              case L_getValue("mynoverlreader_disable_once") == 'true':
+                  L_removeValue("mynoverlreader_disable_once");
+                  return false;
+              // case location.hostname == 'www.fkzww.net' && !document.title.match(/网文快讯/):  // 啃书只自动启用一个地方
+              //     return false;
+              case Setting.booklink_enable && /booklink\.me/.test(referrer):
+                  return true;
+              case locationHost == 'tieba.baidu.com':
+                  var title = $('.core_title_txt').text();
+                  if (title.match(Rule.titleRegExp)) {
+                      return false;
+                  } else {
+                      return -1;
+                  }
+              case Setting.getDisableAutoLaunch():
+                  return false;
+              case GM_getValue("auto_enable"):
+              case config.soduso :
+                  return true;
+              default:
+                  return false;
+          }
+      },
+      addMutationObserve: function(doc) {
+          var shouldAdd = false;
+          var $doc = $(doc);
+
+          var contentSize = $doc.find(App$1.site.contentSelector).size();
+          if (contentSize && !App$1.site.mutationSelector) {
+              shouldAdd = false;
+          } else {
+              var mutationSelector = App$1.site.mutationSelector;
+              var target = $doc.find(mutationSelector)[0];
+              if (target) {
+                  var beforeTargetChilren = target.children.length;
+                  C.log(`target.children.length = ${target.children.length}`, target);
+                  if (App$1.site.mutationChildText) {
+                      if (target.textContent.indexOf(App$1.site.mutationChildText) > -1) {
+                          shouldAdd = true;
+                      }
+                  } else {
+                      var childCount = App$1.site.mutationChildCount;
+                      if (childCount === undefined || target.children.length <= childCount) {
+                          shouldAdd = true;
+                      }
+                  }
+              }
+          }
+
+          if (shouldAdd) {
+              return new Promise(resolve => {
+                  var observer = new MutationObserver(function (mutations) {
+                      target = $doc.find(mutationSelector)[0];
+                      var nodeAdded = target.children.length > beforeTargetChilren;
+
+                      if (nodeAdded) {
+                          observer.disconnect();
+                          resolve();
+                      }
+                  });
+
+                  observer.observe(document, {
+                      childList: true,
+                      subtree: true
+                  });
+
+                  C.log('添加 MutationObserve 成功：', mutationSelector);
+              })
+          }
+      },
+      // 等待 Dom 稳定
+      DomMutation: function() {
+          return new Promise(resolve => {
+              const debounced = _.debounce(() => {
+                  observer.disconnect();
+                  resolve();
+              }, 200);
+              const observer = new MutationObserver(() => debounced());
+              observer.observe(document,{
+                  childList: true,
+                  subtree: true
+              });
+              debounced();
+          })
+      },
+      launch: async function() {
+          // 只解析一次，防止多次重复解析一个页面
+          if (document.body && document.body.getAttribute("name") == "MyNovelReader") {
+              return await App$1.toggle();
+          }
+
+          if (!App$1.site) {
+              App$1.site = App$1.getCurSiteInfo();
+          }
+
+          if (App$1.site.startFilter) {
+              try {
+                  App$1.site.startFilter();
+                  C.log('run startFilter function success');
+              } catch (ex) {
+                  console.error('运行 startFilter function 错误', ex);
+              }
+          }
+
+          // 使用站点字体
+          if (App$1.site.useSiteFont) {
+              if (_.isBoolean(App$1.site.useSiteFont)) {
+                  App$1.siteFontInfo = App$1.getSiteFontInfo();
+              } else if (_.isString(App$1.site.useSiteFont)) {
+                  if (!App$1.site.useSiteFont.trim().endsWith(',')) {
+                      App$1.site.useSiteFont = App$1.site.useSiteFont.trim() + ',';
+                  }
+                  App$1.siteFontInfo = { siteFontFamily: App$1.site.useSiteFont.trim() };
+              }
+          }
+
+          var parser = new Parser(App$1.site, document);
+          var hasContent = !!parser.hasContent();
+          if (hasContent) {
+              document.body.setAttribute("name", "MyNovelReader");
+              App$1.parsedPages[window.location.href] = true;
+              await parser.getAll();
+              await App$1.processPage(parser);
+          } else {
+              if (!$('.readerbtn').length) {
+                  await UI.addButton();
+              }
+              $('.readerbtn').text('无内容');
+              console.error("当前页面没有找到内容");
+          }
+
+          // 初始化, 取消页面限制等
+          if (App$1.site.fInit)
+              App$1.site.fInit();
+      },
+      processPage: async function(parser) {
+          // 对 Document 进行处理
+          document.body.innerHTML = '';
+          App$1.prepDocument();
+          App$1.initDocument(parser);
+
+          runVue();
+
+          // cache vars
+          App$1.$doc = $(document);
+          App$1.$menuBar = App$1.$doc.find("#menu-bar");
+          App$1.$menu = App$1.$doc.find("#menu");
+          App$1.$content = App$1.$doc.find("#mynovelreader-content");
+          App$1.$loading = App$1.$doc.find("#loading");
+          App$1.$preferencesBtn = App$1.$doc.find("#preferencesBtn");
+
+          App$1.$menuHeader = App$1.$menu.find("#chapter-list");
+          App$1.$chapterList = App$1.$menu.find("#chapter-list");
+
+          App$1.indexUrl = parser.indexUrl;
+          App$1.prevUrl = parser.prevUrl; // 第一个上一页
+
+          App$1.oArticles = [];  // 原始的内容，用于替换的无需刷新
+          App$1.parsers = [];
+
+          // 加入上一章的链接
+          if (parser.prevUrl) {
+              $("<li>")
+                  .addClass('chapter')
+                  .append(
+                      $("<div>")
+                      .attr({
+                          "realHref": parser.prevUrl,
+                          "onclick": "return false;"
+                      })
+                      .text("上一章".uiTrans())
+                  )
+                  .prependTo(App$1.$chapterList);
+          }
+
+          // 插入站点样式
+          if (App$1.site.style) {
+              GM_addStyle(App$1.site.style);
+          }
+
+          // 插入站点字体样式
+          if (App$1.site.useSiteFont && App$1.siteFontInfo) {
+              const { external, internal } = App$1.siteFontInfo;
+              if (internal) {
+                  $('<style class="noRemove siteFont">')
+                      .text(internal.map(e => e.cssText).join('\n'))
+                      .appendTo('head');
+              }
+              // 插入外部样式表可能会影响阅读界面样式
+              // if (external) {
+              //     for (const href of external) {
+              //         $('<link class="noRemove siteFont" rel="stylesheet">').attr('href', href).prependTo('head')
+              //     }
+              // }
+          }
+
+          App$1.appendPage(parser, true);
+
+          App$1.registerControls();
+
+          // UI 的初始化
+          UI.init();
+
+          App$1.curFocusElement = $("article:first").get(0); // 初始化当前关注的 element
+          App$1.requestUrl = parser.nextUrl;
+          App$1.isTheEnd = parser.isTheEnd;
+
+          App$1.isEnabled = true;
+          await UI.addButton();
+
+          // // 如果已经把当前焦点链接添加到历史记录，则滚动到顶部
+          // if (Setting.addToHistory) {
+          //     window.scrollTo(0, 0);
+          // }
+
+          // 有些图片网站高度随着图片加载而变长
+          setTimeout(App$1.scroll, 1000);
+
+          App$1.cleanAgain();
+
+          {
+              await App$1.doRequest();
+          }
+      },
+      prepDocument: function() {
+          window.onload = window.onunload = function() {};
+
+          // 破解右键限制
+          var doc = document;
+          var bd = doc.body;
+          bd.onclick = bd.ondblclick = bd.onselectstart = bd.oncopy = bd.onpaste = bd.onkeydown = bd.oncontextmenu = bd.onmousemove = bd.onselectstart = bd.ondragstart = doc.onselectstart = doc.oncopy = doc.onpaste = doc.onkeydown = doc.oncontextmenu = null;
+          doc.onclick = doc.ondblclick = doc.onselectstart = doc.oncontextmenu = doc.onmousedown = doc.onkeydown = function() {
+              return true;
+          };
+
+          doc = document.wrappedJSObject || document;
+          doc.onmouseup = null;
+          doc.onmousedown = null;
+          doc.oncontextmenu = null;
+
+          var arAllElements = document.getElementsByTagName('*');
+          for (var i = arAllElements.length - 1; i >= 0; i--) {
+              var elmOne = arAllElements[i];
+              elmOne = elmOne.wrappedJSObject || elmOne;
+              elmOne.onmouseup = null;
+              elmOne.onmousedown = null;
+          }
+
+          // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
+          try {
+              unsafeWindow.$(unsafeWindow).off();
+              unsafeWindow.$(document).off();
+          } catch (e) {}
+          
+          // 移除所有事件监听器和观察器
+          App$1.listenerAndObserver.forEach(remove => remove());
+          C.log(`已移除 ${App$1.listenerAndObserver.length} 个事件监听器和观察器`);
+          
+          // 清理所有定时器
+          var highestTimeoutId = unsafeWindow.setTimeout(';');
+          for (var i = 0; i < highestTimeoutId; i++) {
+              unsafeWindow.clearTimeout(i);
+          }
+
+          // remove body style
+          $('link[rel="stylesheet"], script').remove();
+          $('body')
+              .removeAttr('style')
+              .removeAttr('bgcolor');
+
+          $('style:not(.noRemove)').filter(function() {
+              var $style = $(this);
+              if($style.text().indexOf('#cVim-link-container') != -1) {  // chrome 的 cVim 扩展
+                  return false;
+              }
+              return true;
+          }).remove();
+
+          // 移除 html 标签中非 head 和 body 的元素
+          $('html').children().filter(function () {
+              let tagName = $(this).prop('tagName').toLowerCase();
+              if (tagName !== 'head' && tagName !== 'body') {
+                  return true
+              }
+              return false
+          }).remove();
+      },
+      initDocument: function(parser) {
+          document.title = parser.docTitle;
+
+          document.body.innerHTML = $.nano(tpl_mainHtml.uiTrans(), parser);
+      },
+      clean: function() {
+          $('body > *:not("#container, .readerbtn, .noRemove, #reader_preferences, #uil_blocker,iframe[name=\'mynovelreader-iframe\']")').remove();
+          $('link[rel="stylesheet"]:not(.noRemove)').remove();
+          $('body, #container').removeAttr('style').removeAttr('class');
+
+          if (unsafeWindow.jQuery && location.host.indexOf('qidian') > 0) {
+              unsafeWindow.jQuery(document).off("selectstart").off("contextmenu");
+          }
+      },
+      cleanAgain: function() {
+          // var host = location.host;
+          // if (!host.match(/qidian\.com|zongheng\.com/)) {  // 只在起点、纵横等网站运行
+          //     return;
+          // }
+
+          // 再次移除其它不相关的，起点，纵横中文有时候有问题
+          setTimeout(App$1.clean, 2000);
+          setTimeout(App$1.clean, 5000);
+          setTimeout(App$1.clean, 8000);
+          // TM 用 addEventListener('load') 有问题
+          window.onload = function() {
+              App$1.clean();
+              setTimeout(App$1.clean, 500);
+          };
+      },
+      toggle: async function() {
+          if (App$1.isEnabled) { // 退出
+              GM_setValue("auto_enable", false);
+              L_setValue("mynoverlreader_disable_once", true);
+
+              location.href = App$1.activeUrl || App$1.curPageUrl;
+          } else {
+              GM_setValue("auto_enable", true);
+              L_removeValue("mynoverlreader_disable_once");
+              App$1.isEnabled = true;
+              await App$1.launch();
+          }
+      },
+      removeListener: function() {
+          C.log("移除各种事件监听");
+          App$1.remove.forEach(function(_remove) {
+              _remove();
+          });
+      },
+      appendPage: function(parser, isFirst) {
+          var chapter = $("article:last");
+          if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
+              var lastText = chapter.find("p:last").remove().text().trimEnd();
+              var newPage = parser.content.replace(/<p>\s+/, "<p>" + lastText);
+
+              chapter
+                  .find(".chapter-footer-nav").remove()
+                  .end()
+                  .append(newPage);
+
+              if (!Setting.hide_footer_nav) {
+                  chapter.append($.nano(UI.tpl_footer_nav, parser));
+              }
+
+          } else {
+              chapter = $("<article>")
+                  .attr("id", "page-" + App$1.pageNum)
+                  .append(
+                      $("<h1>").addClass("title").text(parser.chapterTitle)
+                  )
+                  .append(parser.content)
+                  .appendTo(App$1.$content);
+
+              if (!Setting.hide_footer_nav) {
+                  chapter.append($.nano(UI.tpl_footer_nav, parser));
+              }
+
+              // App.fixImageFloats(chapter.get(0));
+
+              // 添加到章节列表
+              var chapterItem = $("<li>")
+                  .addClass('chapter')
+                  .append(
+                      $("<div>")
+                      .attr({
+                          href: "#page-" + App$1.pageNum,
+                          "realHref": parser.curPageUrl,
+                          onclick: "return false;",
+                          title: parser.chapterTitle
+                      })
+                      .text(parser.chapterTitle)
+                  )
+                  .prependTo(App$1.$chapterList);
+
+              if (isFirst) {
+                  chapterItem.addClass('active');
+              }
+
+              App$1.pageNum += 1;
+              App$1.resetCache();
+          }
+
+          App$1.oArticles.push(chapter[0].outerHTML);
+          App$1.parsers.push(parser);
+
+          bus.$emit(APPEND_NEXT_PAGE);
+      },
+      resetCache: function() {  // 更新缓存变量
+          App$1.menuItems = App$1.$chapterList.find("div");
+          App$1.scrollItems = $("article");
+      },
+      registerControls: function() {
+          // 内容滚动
+          var throttled = _.throttle(App$1.scroll, 200);
+          $(window).scroll(throttled);
+
+          App$1.registerKeys();
+
+          if (Setting.dblclickPause) {
+              App$1.$content.on("dblclick", function() {
+                  App$1.pauseHandler();
+              });
+          }
+
+          // 左侧章节列表
+          App$1.$menuHeader.click(function() {
+              App$1.copyCurTitle();
+          });
+
+          App$1.$menuBar.click(function() {
+              UI.hideMenuList();
+          });
+
+          App$1.$doc.on("mousedown", "#chapter-list div", function(event) {
+              switch (event.which) {
+                  case 1:
+                      var href = $(this).attr("href");
+                      if (href) {
+                          App$1.scrollToArticle($(href));
+                      } else {
+                          location.href = $(this).attr("realHref");
+                      }
+                      break;
+                  case 2: // middle click
+                      L_setValue("mynoverlreader_disable_once", true);
+                      App$1.openUrl($(this).attr("realHref"));
+                      break;
+              }
+          });
+
+          $("#preferencesBtn").click(function(event) {
+              event.preventDefault();
+              UI.preferencesShow();
+          });
+
+          GM_registerMenuCommand("小说阅读脚本设置".uiTrans(), UI.preferencesShow.bind(UI));
+      },
+      registerKeys: function() {
+          key('enter', function(event) {
+              if (UI.$prefs) {
+                  return;
+              }
+
+              App$1.openUrl(App$1.indexUrl, "主页链接没有找到".uiTrans());
+              App$1.copyCurTitle();
+
+              event.stopPropagation();
+              event.preventDefault();
+          });
+
+          key('left', function(event) {
+              var scrollTop = $(window).scrollTop();
+              if (scrollTop === 0) {
+                  location.href = App$1.prevUrl;
+              } else {
+                  var offsetTop = $(App$1.curFocusElement).offset().top;
+                  // 在视野窗口内
+                  if (offsetTop > scrollTop && offsetTop < (scrollTop + $(window).height())) {
+                      App$1.scrollToArticle(App$1.curFocusElement.previousSibling || 0);
+                  } else {
+                      App$1.scrollToArticle(App$1.curFocusElement);
+                  }
+              }
+              return false;
+          });
+
+          key('right', function(event) {
+              if (App$1.getRemain() === 0) {
+                  location.href = App$1.lastRequestUrl || App$1.requestUrl;
+              } else {
+                  App$1.scrollToArticle(App$1.curFocusElement.nextSibling || App$1.$doc.height());
+              }
+
+              event.preventDefault();
+              event.stopPropagation();
+              return false;
+          });
+
+          key('esc', function(){
+              if (UI.$prefs) {
+                  UI.hide();
+                  return false;
+              }
+          });
+
+          key('shift+/', function() {
+              UI.openHelp();
+              return false;
+          });
+
+          key(Setting.quietModeKey, function(){
+              UI.toggleQuietMode();
+              return false;
+          });
+
+          key(Setting.hideMenuListKey, function(){
+              UI.hideMenuList();
+              return false;
+          });
+
+          key(Setting.openPreferencesKey, function(){
+              UI.preferencesShow();
+              return false;
+          });
+
+          key(Setting.openSpeechKey, function() {
+              bus.$emit(SHOW_SPEECH);
+              return false;
+          });
+
+          // PageUp
+          key(',', function() {
+              let { scrollX, scrollY, innerHeight } = window;
+              window.scrollTo(scrollX, scrollY - innerHeight * .9);
+          });
+          // PageDown
+          key('.', function() {
+              let { scrollX, scrollY, innerHeight } = window;
+              window.scrollTo(scrollX, scrollY + innerHeight * .9);
+          });
+      },
+      copyCurTitle: function() {
+          if (Setting.copyCurTitle) {
+              var title = $(App$1.curFocusElement).find(".title").text()
+                  .replace(/第?\S+章/, "").trim();
+
+              GM_setClipboard(title, "text");
+          }
+      },
+      scrollToArticle: function(elem) {
+          var offsetTop;
+          if (typeof elem == "number") {
+              offsetTop = elem;
+          } else {
+              offsetTop = $(elem).offset().top - parseInt($(elem).css("margin-top"), 10);
+          }
+
+          if (Setting.scrollAnimate) {
+              $("html, body").stop().animate({
+                  scrollTop: offsetTop
+              }, 750, "easeOutExpo");
+          } else {
+              $("html, body").stop().scrollTop(offsetTop);
+          }
+      },
+      openUrl: function(url, errorMsg) {
+          if (url) {
+              // ff30 Greasemonkey 会报错：Greasemonkey 访问违规：unsafeWindow 无法调用 GM_openInTab。新建脚本采用按键调用也这样。
+              setTimeout(function() {
+                  GM_openInTab(url, false);
+              }, 0);
+          } else if (errorMsg) {
+              UI.notice(errorMsg);
+          }
+      },
+      pauseHandler: async function() {
+          App$1.paused = !App$1.paused;
+          if (App$1.paused) {
+              UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>暂停</b></span>'.uiTrans());
+              App$1.$loading.html('自动翻页已经<span style="color:red!important;"><b>暂停</b></span>'.uiTrans()).show();
+          } else {
+              UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>启用</b></span>'.uiTrans());
+              await App$1.scroll();
+          }
+      },
+      scroll: async function() {
+          if (!App$1.paused && !App$1.working && App$1.getRemain() < Setting.remain_height) {
+              await App$1.scrollForce();
+          }
+
+          if (App$1.isTheEnd) {
+              App$1.$loading.html("已到达最后一页...".uiTrans()).show();
+          }
+
+          App$1.updateCurFocusElement();
+      },
+      scrollForce: async function() {
+          if (App$1.tmpDoc) {
+              await App$1.loaded(App$1.tmpDoc);
+          } else {
+              await App$1.doRequest();
+          }
+      },
+      updateCurFocusElement: function() { // 滚动激活章节列表
+          // Get container scroll position
+          var fromTop = $(window).scrollTop() + $(window).height() / 2;
+
+          // Get id of current scroll item
+          var cur = App$1.scrollItems.map(function() {
+              if ($(this).offset().top < fromTop)
+                  return this;
+          });
+          // Get the id of the current element
+          App$1.curFocusIndex = cur.length - 1;
+          cur = cur[cur.length - 1];
+          var id = cur ? cur.id : "";
+
+          if (App$1.lastId !== id) {
+              App$1.lastId = id;
+
+              var activeItem = App$1.menuItems.filter("[href=#" + id + "]"),
+                  activeTitle = activeItem.text(),
+                  activeUrl = activeItem.attr("realHref");
+
+              // Set/remove active class
+              App$1.menuItems.parent().removeClass("active");
+              activeItem.parent().addClass("active");
+
+              App$1.curFocusElement = cur;
+              App$1.activeUrl = activeUrl;
+
+              if (Setting.addToHistory) {
+                  var curNum = id.match(/\d+/)[0] - 1;  // 当前是第几个
+                  var curTitle = App$1.parsers[curNum].docTitle;
+                  document.title = curTitle;
+
+                  // 有域名的限制，起点过渡到 vip 章节无法生效
+                  var url = activeUrl.replace('http://read.qidian.com', '');
+                  try {
+                      unsafeWindow.history.pushState(null, curTitle, url);
+                  } catch (e) {
+                      console.error('添加下一页到历史记录失败', e);
+                  }
+              }
+          }
+      },
+      getRemain: function() {
+          var scrollHeight = Math.max(document.documentElement.scrollHeight,
+              document.body.scrollHeight);
+          var remain = scrollHeight - window.innerHeight - window.scrollY;
+          return remain;
+      },
+      doRequest: async function() {
+          App$1.working = true;
+          var nextUrl = App$1.requestUrl;
+          App$1.lastRequestUrl = App$1.requestUrl;
+
+          if (nextUrl && !App$1.isTheEnd && !(nextUrl in App$1.parsedPages)) {
+              App$1.parsedPages[nextUrl] = 0;
+              App$1.curPageUrl = App$1.requestUrl;
+              App$1.requestUrl = null;
+
+              var useiframe = App$1.site.useiframe;
+
+              App$1.$loading
+                  .show()
+                  .html("")
+                  .append($("<img>").attr("src", "data:image/gif;base64,R0lGODlhEAAQAMQAAPf39+/v7+bm5t7e3tbW1s7OzsXFxb29vbW1ta2traWlpZycnJSUlIyMjISEhHt7e3Nzc2tra2NjY1paWlJSUkpKSkJCQjo6OjExMSkpKSEhIRkZGRAQEAgICAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJBQAeACwAAAEADwAOAAAFdaAnet20GAUCceN4LQlyFMRATC3GLEqM1gIc6dFgPDCii6I2YF0eDkinxUkMBBAPBfLItESW2sEjiWS/ItqALJGgRZrNRtvWoDlxFqZdmbY0cVMdbRMWcx54eSMZExQVFhcYGBmBfxWPkZQbfi0dGpIYGiwjIQAh+QQJBQAeACwAAAEADwAOAAAFeKAnep0FLQojceOYQU6DIsdhtVoEywptEBRRZyKBQDKii+JHYGEkxE6LkyAMIB6KRKJpJQuDg2cr8Y7AgjHULCoQ0pUJZWO+uBGeDIVikbYyDgRYHRUVFhcsHhwaGhsYfhuHFxgZGYwbHH4iHBiUlhuYmlMbjZktIQAh+QQFBQAeACwAAAEADwAOAAAFe6Aneh1GQU9UdeOoTVIEOQ2zWG0mSVP0ODYF4iLq7HgaEaaRQCA4HsyOwhp1FgdDxFOZTDYt0cVQSHgo6PCIPOBWKmpRgdDGWCzQ8KUwOHg2FxcYYRwJdBAiGRgZGXkcC3MEjhkalZYTfBMtHRudnhsKcGodHKUcHVUeIQAh+QQJBQAeACwAAAEADwAOAAAFbKAnjp4kURiplmYEQemoTZMpuY/TkBVFVRtRJtJgMDoejaViWT0WiokHc2muMIoEY0pdiRCIgyeDia0OhoJnk8l4PemEh6OprxQFQkS02WiCIhd4HmoiHRx9ImkEA14ciISMBFJeSAQIEBwjIQAh+QQJBQAeACwAAAEADwAOAAAFd6Anel1WTRKFdeO4WRWFStKktdwFU3JNZ6MM5nLZiDQTCCTC4ghXrU7k4bB4NpoMpyXKNBqQa5Y7YiwWHg6WLFK4SWoW95JAMOAbI05xOEhEHWoaFyJ0BgYHWyIcHA4Fj48EBFYtGJKSAwMFFGQdEAgCAgcQih4hACH5BAkFAB4ALAAAAQAPAA4AAAV0oCeKG2ZVFtaNY6dh10lNU8Z2WwbLkyRpI85Gk+GQKr7JqiME3mYSjIe5WbE8GkhkMhVeR48HpLv5ihoOB9l4xTAYYw9nomCLOgzFoiJSEAoIFiIXCwkJC1YVAwMEfwUGBgeBLBMEAouOBxdfHA8HlwgRdiEAIfkECQUAHgAsAAABAA8ADgAABXOgJ4rdpmWZ1o0sZ2YYdlka63XuKVsVVZOuzcrDufQoQxzH1rFMJJiba8jaPCnSjW30lHgGhMJWBIl4D2DLNvOATDwPwSCxHHUgjseFOJAn1B4YDgwND0MTAWAFBgcICgsMUVwDigYICQt7NhwQCGELE1QhACH5BAkFAB4ALAAAAQAPAA4AAAV4oCeOHWdyY+p1JbdpWoam7fZmGYZtYoeZm46Ik7kYhZBBQ6PyWSoZj0FAuKg8mwrF4glQryIKZdL9gicTiVQw4Ko2aYrnwUbMehGJBOPhDAYECVYeGA8PEBNCHhOABgcJCgwNh0wjFQaOCAoLk1EqHBILmg8Vih4hACH5BAkFAB4ALAAAAQAPAA4AAAV6oCd6Hdmd5ThWCee+XCpOwTBteL6lnCAMLVFHQ9SIHgHBgaPyZDKYjcfwszQ9HMwl40kOriKLuDsggD2VtOcwKFibGwrFCiEUEjJSZTLhcgwGBwsYIhkUEhITKRYGCAkKDA0PiBJcKwoKCwwODxETRk0dFA8NDhIYMiEAIfkECQUAHgAsAAABAA8ADgAABXmgJ3rcYwhcN66eJATCsHEpOwXwQGw8rZKDGMIi6vBmokcswWFtNBvVQUdkcTJQj67AGmEyGU+hYOiKMGiP4oC4dDmXS1iCSDR+xYvFovF0FAoLDxgiGxYUFRY/FwsMDQ4PEhOTFH0jFw6QEBKcE5YrHRcTERIUGHghACH5BAkFAB4ALAAAAQAPAA4AAAV4oCd63GMAgfF04zgNQixjrVcJQz4QRLNxI06Bh7CILpkf0CMpGBLL0ebHWhwOl5qno/l5EGCtqAtUmMWeTNfzWCxoNU4maWs0Vq0OBpMBdh4ODxEaIhsXhxkjGRAQEhITExQVFhdRHhoTjo8UFBYbWnoUjhUZLCIhACH5BAkFAB4ALAAAAQAPAA4AAAV5oCd6HIQIgfFw42gZBDEMgjBMbXUYRlHINEFF1FEgEIqLyHKQJToeikLBgI44iskG+mAsMC0RR7NhNRqM8IjMejgcahHbM4E8Mupx2YOJSCZWIxlkUB0TEhIUG2IYg4tyiH8UFRaNGoEeGYgTkxYXGZhEGBWTGI8iIQA7"))
+                  .append("<a href='" + nextUrl + "' title='点击打开下一页链接'>正在载入下一页".uiTrans() + (useiframe ? "(iframe)" : "") + "...</a>");
+              
+              await sleep(App$1.site.nDelay || 0);
+              
+              if (useiframe) {
+                  App$1.iframeRequest(nextUrl); // 不用 await
+              } else {
+  (async () => {
+                      const doc = await App$1.httpRequest(nextUrl);
+                      App$1.httpRequestDone(doc, nextUrl); // 不用 await
+                  })();
+              }
+      
+          }
+      },
+      httpRequest: async function(nextUrl) {
+
+          C.log("获取下一页: " + nextUrl);
+          App$1.parsedPages[nextUrl] += 1;
+
+          const options = {
+              url: nextUrl,
+              method: "GET",
+              overrideMimeType: "text/html;charset=" + document.characterSet,
+              timeout: config.xhr_time,
+          };
+
+          let doc = null;
+          try {
+              const res = await Request(options);
+              doc = parseHTML(res.responseText);
+          } catch (e) {}
+
+          return doc
+      },
+      httpRequestDone: async function(doc, nextUrl) {
+          if (doc) {
+              await App$1.beforeLoad(doc);
+              return;
+          }
+
+          if (App$1.parsedPages[nextUrl] >= 3) {
+              console.error('同一个链接已获取3次', nextUrl);
+              App$1.$loading.html("<a href='" + nextUrl  + "'>无法获取下一页，请手动点击</a>").show();
+              return;
+          }
+
+          // 无内容再次尝试获取
+          console.error('连接超时, 再次获取');
+          doc = await App$1.httpRequest(nextUrl);
+          await App$1.httpRequestDone(doc, nextUrl);
+      },
+      iframeRequest: async function(nextUrl) {
+          C.log("iframeRequest: " + nextUrl);
+          if (!App$1.iframe) {
+              var i = document.createElement('iframe');
+              App$1.iframe = i;
+              i.name = 'mynovelreader-iframe';
+              i.width = '100%';
+              i.height = `${unsafeWindow.innerHeight}px`;
+              i.frameBorder = "0";
+              i.style.cssText = '\
+                margin:0!important;\
+                padding:0!important;\
+                visibility:hidden!important;\
+                display:none!important;\
+            ';
+              i.src = nextUrl;
+              i.addEventListener('load', App$1.iframeLoaded, false);
+              App$1.remove.push(function() {
+                  i.removeEventListener('load', App$1.iframeLoaded, false);
+              });
+              document.body.appendChild(i);
+          } else {
+              App$1.iframe.contentDocument.location.replace(nextUrl);
+          }
+      },
+      iframeLoaded: async function() {
+          var iframe = this;
+          var body = iframe.contentDocument.body;
+
+          if (body && body.firstChild) {
+              var win = iframe.contentWindow;
+              var doc = iframe.contentDocument;
+
+              // 滚动最后
+              win.scrollTo(0, doc.body.scrollHeight);
+
+              if (App$1.site.startLaunch) {
+                  App$1.site.startLaunch($(doc));
+              }
+
+              var mutationSelector = App$1.site.mutationSelector;
+              if (mutationSelector) {
+                  await App$1.addMutationObserve(doc);
+              } else {
+                  var timeout = App$1.site.timeout || 0;
+                  await sleep(timeout);
+              }
+              await App$1.beforeLoad(doc);
+          }
+      },
+      beforeLoad: async function(htmlDoc) {
+          {
+              App$1.tmpDoc = htmlDoc;
+              App$1.working = false;
+              await App$1.scroll();
+
+              // 预读图片
+              var existSRC = {};
+              $(App$1.tmpDoc).find('img').each(function() {
+                  var isrc = $(this).attr('src');
+                  if (!isrc || existSRC[isrc] || isrc.slice(0, 4).toLowerCase().startsWith('data')) {
+                      return;
+                  } else {
+                      existSRC[isrc] = true;
+                  }
+                  var img = document.createElement('img');
+                  img.src = isrc;
+              });
+          }
+      },
+      loaded: async function(doc) {
+          var parser = new Parser(App$1.site, doc, App$1.curPageUrl);
+          await parser.getAll();
+          await App$1.addNextPage(parser);
+          App$1.tmpDoc = null;
+      },
+      addNextPage: async function(parser) {
+          if (parser.content) {
+              App$1.appendPage(parser);
+
+              App$1.$loading.hide();
+              App$1.requestUrl = parser.nextUrl;
+              App$1.isTheEnd = parser.isTheEnd;
+
+              await App$1.afterLoad();
+          } else {
+              App$1.removeListener();
+
+              var msg = (parser.isTheEnd == 'vip') ?
+                  'vip 章节，需付费。' :
+                  '错误：没有找到下一页的内容。';
+              App$1.$loading.html(
+                  '<a href="' + App$1.curPageUrl + '">' + msg + '点此打开下一页。</a>'.uiTrans())
+                  .show();
+          }
+
+          App$1.working = false;
+      },
+      afterLoad: async function() {
+          App$1.tmpDoc = null;
+
+          {
+              await sleep(200);
+              App$1.doRequest();  // 不用 await
+          }
+      },
+      fixImageFloats: function(articleContent) {
+
+          articleContent = articleContent || document;
+
+          var imageWidthThreshold = Math.min(articleContent.offsetWidth, 800) * 0.55,
+              images = articleContent.querySelectorAll('img:not(.blockImage)');
+
+          for (var i = 0, il = images.length; i < il; i += 1) {
+              var image = images[i];
+
+              if (image.offsetWidth > imageWidthThreshold) {
+                  image.className += " blockImage";
+              }
+          }
+      },
+
+      isSaveing: false,
+      saveAsTxt: async function() {
+          if (App$1.site.useiframe) {
+              UI.notice('暂不支持', 3000);
+              return;
+          }
+
+          if (App$1.isSaveing) {
+              alert('正在保存中，请稍后');
+              return;
+          }
+
+          App$1.isSaveing = true;
+
+          await run(App$1.parsers);
+          App$1.isSaveing = false;
+      },
+      getSiteFontInfo: function () {
+          const fonts = { external: [], internal: [], family: [] };
+          const { external, internal, family, siteFontFamily } = fonts;
+
+          // 获取所有的字体名字
+          for (const font of document.fonts) {
+              family.push(font.family);
+          }
+
+          // 获取外部 css 地址和内部 css 样式文本
+          for (const styleSheet of document.styleSheets) {
+              try {
+                  for (const cssRule of styleSheet.cssRules) {
+                      if (cssRule instanceof CSSFontFaceRule) {
+                          const fontFamily = cssRule.style.fontFamily;
+                          const cssText = cssRule.cssText;
+                          if (!internal.find(o => o.fontFamily === fontFamily)) {
+                              internal.push({ fontFamily, cssText });
+                          }
+                      }
+                  }
+              } catch (e) {
+                  external.push(styleSheet.href);
+              }
+          }
+          
+          // 处理成 font-family 样式格式
+          let familyList = [];
+
+          // 内部样式优先
+          internal.forEach(e => {
+              familyList.push(e.fontFamily);
+          });
+
+          family.forEach(e => {
+              if (!familyList.includes(e)) {
+                  familyList.push(e);
+              }
+          });
+          // 含空格字体名补双引号
+          familyList = familyList.map(e => {
+              if (e.includes(' ')) {
+                  return `"${e}"`
+              } else {
+                  return e
+              }
+          });
+
+          fonts.siteFontFamily = familyList.join(',') + ',';
+          
+          return fonts
+      }
+  };
+
   function getElemFontSize(_heading) {
       var fontSize = 0;
       var _heading_style = window.getComputedStyle(_heading, null);
@@ -2734,8 +4396,8 @@
 
       init: function (info, doc, curPageUrl) {
           this.info = info || {};
-          this.doc = doc;
-          this.$doc = $(doc);
+          this.doc = doc.cloneNode(true);
+          this.$doc = $(this.doc);
           this.curPageUrl = curPageUrl || doc.URL;
           this._curPageHost = getUrlHost(this.curPageUrl);  // 当前页的 host，后面用到
 
@@ -3763,1646 +5425,6 @@
         .uiTrans().replace(/\\n/g, '\n'),
 
     preferencesCSS: tpl_preferencesCSS,
-  };
-
-  var tpl_mainHtml = "<div id=\"container\">\r\n    <div id=\"menu-bar\" title=\"点击显示隐藏章节列表\"></div>\r\n    <div id=\"menu\">\r\n        <div id=\"header\" title=\"打开目录\">\r\n            <a href=\"{indexUrl}\" target=\"_blank\">{bookTitle}</a>\r\n        </div>\r\n        <div id=\"divider\"></div>\r\n        <ul id=\"chapter-list\" title=\"左键滚动，中键打开链接（无阅读模式）\">\r\n        </ul>\r\n    </div>\r\n    <div id=\"mynovelreader-content\"></div>\r\n    <div id=\"loading\" style=\"display:none\"></div>\r\n    <div id=\"preferencesBtn\">\r\n        <img style=\"width:16px\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABwklEQVRIibVVzWrCQBAeQk/bdk+bm0aWDQEPHtwVahdavLU9aw6KAQ+SQ86Sa19Aqu0T9NafSw8ttOgr1CewUB9CBL3Yy26x1qRp0A8GhsnO9yUzmxmAhKjX68cAMAeAufK3C875FQAsAWCp/O3CsqyhFlB+Oti2/cAYewrD8FDHarXahWEYUy1gGMbUdd1z/TwMw0PG2JNt2/ex5IyxR02CEJpIKbuEkJGOrRshZCSl7CKEJjrGGHuIFMjlcs9RZElNcWxGEAQHGONxWnKM8TgIgoPYMkkpL9MKqNx4xNX8LyOEvMeSq5uxMZlz3vN9v+D7foFz3os6V61Wz36QNhqNUyHENaV0CACLTUnFYvF6/WVUbJPIglI6FELctFqtMiT59Ha7TdcFVCxJ6XYs0Gw2T1SJBlsq0ZxSOhBC3Hied/QjSTUoqsn9lSb3o879avI61FXbzTUFACiXy7v70Tqdzj7G+COtwJ+jIpPJvKYl12ZZ1kucwJs+iBD6lFJ2TdOMHB2mab7/a1xXKpW9fD5/6zjO3erCcV33PMnCcRwnfuHEYXVlZrPZQWqiKJRKpe8Bt5Ol73leCQBmADBTfiJ8AebTYCRbI3BUAAAAAElFTkSuQmCC\"/>\r\n    </div>\r\n    <div id=\"alert\" style=\"display: none;\">\r\n        <p id=\"App-notice\"></p>\r\n    </div>\r\n\r\n    <div id=\"app\">\r\n\r\n    </div>\r\n</div>";
-
-  let $messageDiv;
-  let _messageTimeId;
-
-  function notice(html, duration, noticeType, onClose) {
-    if (typeof duration === 'undefined')
-        duration = 2000;
-
-    var closeMessage = function() {
-        $messageDiv.remove();
-        $messageDiv = null;
-
-        if (typeof onClose === 'function') {
-            onClose();
-        }
-    };
-
-    if (!$messageDiv) {
-        var iconHtml = '';
-        if (noticeType === 'loading') {
-            iconHtml = '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>';
-        }
-
-        $messageDiv = $('<div id="message" class="noRemove">' + iconHtml + '<span id="content"></span></div>')
-            .appendTo('body');
-
-        if (duration == 0) {
-            $messageDiv.on('click', closeMessage);
-        }
-    }
-
-    $messageDiv.find('#content').html(html);
-
-    if (duration > 0) {
-        clearTimeout(_messageTimeId);
-        _messageTimeId = setTimeout(closeMessage, duration);
-    }
-  }
-
-  function loading(html, duration, onClose) {
-    notice(html, duration, 'loading', onClose);
-  }
-
-  function saveAs(data, filename) {
-    if(!filename) filename = 'console.json';
-
-    if (typeof data == 'object') {
-        data = JSON.stringify(data, undefined, 4);
-    }
-
-    var blob = new Blob([data], { type: 'application/octet-stream' });
-    var blobUrl = window.URL.createObjectURL(blob);
-    var tmpLink = document.createElement('a');
-    tmpLink.href = blobUrl;
-    tmpLink.style.display = 'none';
-    tmpLink.setAttribute('download', filename);
-    tmpLink.setAttribute('target', '_blank');
-    document.body.appendChild(tmpLink);
-
-    tmpLink.click();
-    document.body.removeChild(tmpLink);
-    window.URL.revokeObjectURL(blobUrl);
-  }
-
-  /**
-   * 获取 substring 在 string 所有位置的数组
-   *
-   * @param {string} substring
-   * @param {string} string
-   * @returns {number[]}
-   */
-  function locations(substring, string){
-    var a=[],i=-1;
-    while((i=string.indexOf(substring,i+1)) >= 0) a.push(i);
-    return a;
-  }
-
-  /**
-   * 22000 毫秒 => 00:00:02
-   *
-   * @param {number} distanceMillis
-   * @returns {string}
-   */
-  function formatMillisencod(distanceMillis) {
-    var sec_num = parseInt(Math.abs(distanceMillis) / 1000, 10);
-    var hours = Math.floor(sec_num / 3600);
-    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-    var seconds = sec_num - (hours * 3600) - (minutes * 60);
-    if (hours < 10) {
-      hours = "0" + hours;
-    }
-    if (minutes < 10) {
-      minutes = "0" + minutes;
-    }
-    if (seconds < 10) {
-      seconds = "0" + seconds;
-    }
-    return hours + ':' + minutes + ':' + seconds;
-  }
-
-  function delay(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    })
-  }
-
-  function cnNum2ArabNum(cn){
-    var arab, parts, cnChars = '零一二三四五六七八九';
-
-    if (!cn) {
-        return 0
-    }
-
-    if (cn.indexOf('亿') !== -1){
-        parts = cn.split('亿');
-        return cnNum2ArabNum(parts[0]) * 1e8 + cnNum2ArabNum(parts[1])
-    }
-
-    if (cn.indexOf('万') !== -1){
-        parts = cn.split('万');
-        return cnNum2ArabNum(parts[0]) * 1e4 + cnNum2ArabNum(parts[1])
-    }
-
-    if (cn.indexOf('十') === 0){
-        cn = '一' + cn;
-    }
-
-    arab = cn
-        .replace(/[零一二三四五六七八九]/g, function (a) {
-            return '+' + cnChars.indexOf(a)
-        })
-        .replace(/(十|百|千)/g, function(a, b){
-            return '*' + (
-                b == '十' ? 1e1 :
-                b == '百' ? 1e2 : 1e3
-            )
-        });
-
-    return (new Function('return ' + arab))()
-  }
-
-  function getNumFromChapterTitle(title) {
-    if (!title) return;
-
-    var m = title.match(/第(\d+)章|^(\d+)、/);
-    if (m) {
-      return parseInt(m[1], 10)
-    }
-
-    // 第二十二章
-    m = title.match(/(?:第|^)([一二两三四五六七八九十○零百千万亿\d]+){1,6}章/);
-    if (m) {
-      return cnNum2ArabNum(m[1])
-    }
-
-    // 九十二 休想套路我
-    m = title.match(/^([一二两三四五六七八九十○零百千万亿\d]+){1,6} /);
-    if (m) {
-      return cnNum2ArabNum(m[1])
-    }
-  }
-
-  const chapters = [];
-
-  const fileName = {
-    bookTitle: '',
-    ext: '.txt',
-    start: 0,
-    end: 0,
-
-    setBookTitle(bookTitle) {
-      this.bookTitle = bookTitle;
-    },
-    setStart(chapterTitle) {
-      let num = getNumFromChapterTitle(chapterTitle);
-      if (num) {
-        this.start = num;
-      }
-    },
-    setEnd(chapterTitle) {
-      let num = getNumFromChapterTitle(chapterTitle);
-      if (num) {
-        this.end = num;
-      }
-    },
-
-    toString() {
-      let start = this.start || '';
-      let end = this.end || '';
-      let count = chapters.length;
-
-      return `${this.bookTitle || '未知名称'}(${start} - ${end},共${count}章)${this.ext}`
-    }
-  };
-
-  function toTxt(parser) {
-    var html = $.nano('{chapterTitle}\n\n{contentTxt}', parser);
-    chapters.push(html);
-
-    var msg = '已下载 ' + chapters.length + ' 章，' +
-        (parser.chapterTitle || '');
-
-    loading(msg, 0);
-  }
-  function finish(parser) {
-    var allTxt = chapters.join('\n\n');
-    if (isWindows) {
-        allTxt = allTxt.replace(/\n/g, '\r\n');
-    }
-
-    if (parser) {
-      fileName.setEnd(parser.chapterTitle);
-    }
-
-    saveAs(allTxt, fileName.toString());
-  }
-  async function getOnePage(parser, nextUrl) {
-    var isEnd = false;
-    if (parser) {
-        toTxt(parser);
-        nextUrl = parser.nextUrl;
-        isEnd = parser.isTheEnd;
-    }
-
-    if (!nextUrl || isEnd) {
-        console.log('全部获取完毕');
-        finish(parser);
-        return;
-    }
-
-    if (App$1.site.useiframe) {
-        // App.iframeRequest(nextUrl);
-        return;
-    }
-
-    sleep(config.download_delay)
-
-    (async function() {
-      console.log('[存为txt]正在获取：', nextUrl);
-      const doc = await App$1.httpRequest(nextUrl);
-
-      if (doc) {
-          var par = new Parser(App$1.site, doc, nextUrl);
-          await par.getAll();
-          await getOnePage(par);
-      } else {
-          console.error('超时或连接出错');
-          finish();
-      }
-
-    })();
-  }
-  async function run(cachedParsers=[]) {
-    console.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`);
-
-    cachedParsers.forEach(toTxt);
-
-    var firstParser = cachedParsers[0];
-    fileName.setBookTitle(firstParser.bookTitle);
-    fileName.setStart(firstParser.chapterTitle);
-
-    var lastParser = cachedParsers[cachedParsers.length - 1];
-    await getOnePage(null, lastParser.nextUrl);
-  }
-
-  __$styleInject(".speech {\n  position: fixed;\n  z-index: 100;\n  background-color: white;\n  top: 10px;\n  right: 35px;\n}\n");
-
-  const bus = new Vue();
-
-  // 显示 语音朗读 对话框
-  const SHOW_SPEECH = 'show-speech';
-
-  const APPEND_NEXT_PAGE = 'appended_next_page';
-
-  __$styleInject(".speech .close-btn {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.speech .loader {\n  text-align: center;\n}\n.speech .auto-stop-input {\n  width: 30px;\n}\n.speech .tips {\n  font-size: 0.8em;\n}\n");
-
-  __$styleInject("/*.v-spinner\n{\n    margin: 100px auto;\n    text-align: center;\n}\n*/\n@-webkit-keyframes v-pulseStretchDelay {\n  0%,\n  80% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    -webkit-opacity: 1;\n    opacity: 1;\n  }\n  45% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    -webkit-opacity: 0.7;\n    opacity: 0.7;\n  }\n}\n@keyframes v-pulseStretchDelay {\n  0%,\n  80% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    -webkit-opacity: 1;\n    opacity: 1;\n  }\n  45% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    -webkit-opacity: 0.7;\n    opacity: 0.7;\n  }\n}\n");
-
-  var PulseLoader = {
-  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.loading),expression:"loading"}],staticClass:"v-spinner"},[_c('div',{staticClass:"v-pulse v-pulse1",style:([_vm.spinnerStyle,_vm.spinnerDelay1])}),_c('div',{staticClass:"v-pulse v-pulse2",style:([_vm.spinnerStyle,_vm.spinnerDelay2])}),_c('div',{staticClass:"v-pulse v-pulse3",style:([_vm.spinnerStyle,_vm.spinnerDelay3])})])},
-  staticRenderFns: [],
-
-    name: 'PulseLoader',
-    props: {
-      loading: {
-        type: Boolean,
-        default: true
-      },
-      color: {
-        type: String,
-        default: '#5dc596'
-      },
-      size: {
-        type: String,
-        default: '15px'
-      },
-      margin: {
-        type: String,
-        default: '2px'
-      },
-      radius: {
-        type: String,
-        default: '100%'
-      }
-    },
-    data () {
-      return {
-        spinnerStyle: {
-        	backgroundColor: this.color,
-        	width: this.size,
-          height: this.size,
-        	margin: this.margin,
-        	borderRadius: this.radius,
-          display: 'inline-block',
-          animationName: 'v-pulseStretchDelay',
-          animationDuration: '0.75s',
-          animationIterationCount: 'infinite',
-          animationTimingFunction: 'cubic-bezier(.2,.68,.18,1.08)',
-          animationFillMode: 'both'
-        },
-        spinnerDelay1: {
-          animationDelay: '0.12s'
-        },
-        spinnerDelay2: {
-          animationDelay: '0.24s'
-        },
-        spinnerDelay3: {
-          animationDelay: '0.36s'
-        }
-      }
-    }
-  };
-
-  const STATE = {
-    playing: 1,
-    pausing: 2,
-    stoping: 0,
-  };
-
-  var Speech = {
-  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"speech"},[(_vm.playState == _vm.STATE.playing)?_c('span',[_c('button',{on:{"click":_vm.pause}},[_vm._v("暂停朗读")]),_vm._v(" "),_c('button',{on:{"click":_vm.stop}},[_vm._v("停止朗读")])]):_c('span',[(_vm.playState == _vm.STATE.stoping)?_c('button',{on:{"click":_vm.start}},[_vm._v("开始朗读")]):_vm._e(),_vm._v(" "),(_vm.playState == _vm.STATE.pausing)?_c('button',{on:{"click":_vm.resume}},[_vm._v("继续朗读")]):_vm._e(),_vm._v(" "),(_vm.elapsedTime)?_c('span',[_vm._v("已朗读 "+_vm._s(_vm.formatMillisencod(_vm.elapsedTime)))]):_c('span',{staticClass:"tips"},[_vm._v("Tips: 可从选择文本处开始朗读")]),_vm._v(" "),_c('button',{staticClass:"close-btn",on:{"click":_vm.closeSpeech}},[_vm._v("X")])]),_vm._v(" "),(_vm.playState == _vm.STATE.playing)?_c('div',{staticClass:"loader"},[_c('pulse-loader')],1):_c('div',[_c('div',[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStop),expression:"autoStop"}],attrs:{"type":"radio","value":"time"},domProps:{"checked":_vm._q(_vm.autoStop,"time")},on:{"change":function($event){_vm.autoStop="time";}}}),_vm._v("\n        定时朗读：\n        "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStopTime),expression:"autoStopTime"}],staticClass:"auto-stop-input",attrs:{"type":"text"},domProps:{"value":(_vm.autoStopTime)},on:{"input":function($event){if($event.target.composing){ return; }_vm.autoStopTime=$event.target.value;}}}),_vm._v(" "),_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStopTimeUnit),expression:"autoStopTimeUnit"}],on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.autoStopTimeUnit=$event.target.multiple ? $$selectedVal : $$selectedVal[0];}}},[_c('option',{attrs:{"value":"minute"}},[_vm._v("分钟")]),_vm._v(" "),_c('option',{attrs:{"value":"hour"}},[_vm._v("小时")])]),_vm._v("\n        后停止\n      ")]),_c('br'),_vm._v(" "),_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStop),expression:"autoStop"}],attrs:{"type":"radio","value":"chapter"},domProps:{"checked":_vm._q(_vm.autoStop,"chapter")},on:{"change":function($event){_vm.autoStop="chapter";}}}),_vm._v("\n        定章朗读：\n        "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStopChapter),expression:"autoStopChapter"}],staticClass:"auto-stop-input",attrs:{"type":"text"},domProps:{"value":(_vm.autoStopChapter)},on:{"input":function($event){if($event.target.composing){ return; }_vm.autoStopChapter=$event.target.value;}}}),_vm._v("章后停止\n      ")]),_c('br'),_vm._v(" "),_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.autoStop),expression:"autoStop"}],attrs:{"type":"radio","value":""},domProps:{"checked":_vm._q(_vm.autoStop,"")},on:{"change":function($event){_vm.autoStop="";}}}),_vm._v("一直朗读")])]),_vm._v(" "),_c('div',[_c('label',{attrs:{"for":"speech-dialog-rate"}},[_vm._v("语速")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.rate),expression:"rate"}],attrs:{"type":"range","min":"0.5","max":"3","step":"0.1","id":"speech-dialog-rate"},domProps:{"value":(_vm.rate)},on:{"__r":function($event){_vm.rate=$event.target.value;}}}),_vm._v(" "),_c('span',{staticClass:"rate-value"},[_vm._v(_vm._s(_vm.rate))])]),_vm._v(" "),_c('div',[_c('label',{attrs:{"for":"speech-dialog-pitch"}},[_vm._v("音高")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.pitch),expression:"pitch"}],attrs:{"type":"range","min":"0","max":"2","step":"0.1","id":"speech-dialog-pitch"},domProps:{"value":(_vm.pitch)},on:{"__r":function($event){_vm.pitch=$event.target.value;}}}),_vm._v(" "),_c('span',{staticClass:"pitch-value"},[_vm._v(_vm._s(_vm.pitch))])]),_vm._v(" "),_c('div',[_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.selectedVoice),expression:"selectedVoice"}],staticClass:"voices",on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.selectedVoice=$event.target.multiple ? $$selectedVal : $$selectedVal[0];}}},_vm._l((_vm.voiceList),function(voice,index){return _c('option',{key:index,domProps:{"value":index}},[_vm._v("\n          "+_vm._s(voice.name)+" "+_vm._s(voice.lang)+"\n        ")])}),0)])])])},
-  staticRenderFns: [],
-    name: 'speech',
-    data() {
-      return {
-        text: '',
-        // 播放状态
-        STATE,
-        playState: STATE.stoping,  // 监控朗读的状态
-        isPlaying: false,  // 按钮的状态
-        elapsedTime: 0,
-
-        voiceList: [],
-        selectedVoice: 0,
-        rate: 1,
-        pitch: 1,
-
-        autoStop: '',
-        autoStopTime: 2,  // 2 小时
-        autoStopTimeUnit: 'hour',
-        autoStopChapter: 5,  // 5章
-
-        synth: window.speechSynthesis,
-        utterance: new SpeechSynthesisUtterance(),
-      }
-    },
-    components: {
-      PulseLoader
-    },
-    mounted() {
-      // 载入语音列表
-      this.voiceList = this.synth.getVoices();
-      this.synth.onvoiceschanged = () => {
-        this.voiceList = this.synth.getVoices();
-      };
-
-      this.loadSetting();
-    },
-    beforeDestory() {
-      clearTimeout(this.autoStopTimeId);
-    },
-    methods: {
-      formatMillisencod,
-      closeSpeech() {
-        this.$emit('closeSpeech');
-      },
-      loadSetting() {
-        this.rate = GM_getValue('speech.rate', 1);
-        this.pitch = GM_getValue('speech.pitch', 1);
-        this.selectedVoice = GM_getValue('speech.selectedVoice', 0);
-
-        this.autoStop = GM_getValue('speech.autoStop', '');
-        this.autoStopTime = GM_getValue('speech.autoStopTime', 2);
-        this.autoStopTimeUnit = GM_getValue('speech.autoStopTimeUnit', 'hour');
-        this.autoStopChapter = GM_getValue('speech.autoStopChapter', 5);
-      },
-      saveSetting() {
-        GM_setValue('speech.rate', this.rate);
-        GM_setValue('speech.pitch', this.pitch);
-        GM_setValue('speech.selectedVoice', this.selectedVoice);
-
-        GM_setValue('speech.autoStop', this.autoStop);
-        GM_setValue('speech.autoStopTime', this.autoStopTime);
-        GM_setValue('speech.autoStopTimeUnit', this.autoStopTimeUnit);
-        GM_setValue('speech.autoStopChapter', this.autoStopChapter);
-      },
-      async start() {
-        this.isPlaying = true;
-
-        // 获取当前所在的章节
-        this.speakIndex = App$1.curFocusIndex;
-        this.startSpeakIndex = App$1.curFocusIndex;
-        let toSpeekText = this.getToSpeekText(true);
-
-        bus.$off(APPEND_NEXT_PAGE, this.waitForNext);
-        bus.$on(APPEND_NEXT_PAGE, this.waitForNext);
-
-        // fix 可能的问题：点击开始朗读无效，需要 cancel 才有效
-        window.speechSynthesis.cancel();
-
-        this.speak(toSpeekText, this.checkNext);
-
-        if (this.autoStop == 'time') {
-          clearTimeout(this.autoStopTimeId);
-          this.autoStopTimeId = setTimeout(this.stop, this.getAutoStopMillisecond());
-        }
-
-        // 保存设置
-        this.saveSetting();
-      },
-      getAutoStopMillisecond() {
-        if (this.autoStopTimeUnit == 'minute') {
-          return this.autoStopTime * 60 * 1000
-        } else {
-          return this.autoStopTime * 3600 * 1000
-        }
-      },
-      async checkNext() {
-        if (!this.isPlaying) return
-
-        this.speakIndex += 1;
-        await this.checkAgin();
-      },
-      async checkAgin() {
-        let speakedChapters = this.speakIndex - this.startSpeakIndex;
-        if (this.autoStop == 'chapter' && speakedChapters >= this.autoStopChapter) {
-          this.stop();
-          return
-        }
-
-        // 是否有新章节
-        let nextText = this.getToSpeekText();
-        if (nextText) {
-          this.isFindingNext = false;
-          this.speak(nextText, this.checkNext);
-
-          this.scrollToNext();
-        } else {
-          this.isFindingNext = true;
-          // 加载下一章
-          await App$1.scrollForce();
-        }
-      },
-      async waitForNext() {
-        if (this.isFindingNext && this.isPlaying) {
-          await this.checkAgin();
-        }
-      },
-      scrollToNext() {
-        let elem = App$1.scrollItems.get(this.speakIndex);
-        if (elem) {
-          App$1.scrollToArticle(elem);
-        }
-      },
-      getToSpeekText(fromSelection=false) {
-        let startIndex = this.speakIndex;
-
-        // 这是 jQuery 对象
-        let text = App$1.scrollItems
-          .toArray()
-          .filter((elem, i) => {
-            return i == startIndex
-          })
-          // .map(elem => elem.textContent.slice(0, 10))  // debug
-          .map(elem => elem.textContent)
-          .join('\n');
-
-        if (fromSelection) {
-          let newText = this.getSelectionAfterText(text);
-          if (newText) {
-            return newText
-          }
-        }
-
-        return text
-      },
-      getSelectionAfterText(text) {
-        const selObj = getSelection();
-        const selStr = selObj.toString();
-        let afterText;
-
-        if (!selStr) return
-
-        let indexes = locations(selStr, text);
-        if (indexes.length == 0) {
-          return
-        } else if (indexes.length == 1) {
-          afterText = text.substring(indexes[0]);
-        } else {  // 多个
-          indexes = locations(selObj.anchorNode.data, text);
-          if (indexes.length == 0) return
-          else if (indexes.length == 1) {
-            let start = indexes[0] + selObj.anchorOffset;
-            afterText = text.substring(start);
-          } else {
-            console.error('getSelectionAfterText() 无法判断唯一');
-          }
-        }
-
-        selObj.removeAllRanges();
-        return afterText
-      },
-      speak(text, endFn) {
-        this.utterance = new SpeechSynthesisUtterance(text);
-        this.utterance.voice = this.voiceList[this.selectedVoice];
-        this.utterance.pitch = this.pitch;
-        this.utterance.rate = this.rate;
-
-        this.listenForSpeechEvents(endFn);
-
-        this.synth.speak(this.utterance);
-      },
-      listenForSpeechEvents (endFn) {
-        this.utterance.onstart = () => {
-          this.playState = STATE.playing;
-        };
-        this.utterance.onpause = (event) => {
-          this.playState = STATE.pausing;
-          this.elapsedTime = event.elapsedTime;
-        };
-        this.utterance.onresume = (e) => {
-          this.playState = STATE.playing;
-        };
-        this.utterance.onend = (event) => {
-          this.playState = STATE.stoping;
-          // this.elapsedTime = event.elapsedTime
-          this.elapsedTime = null;
-
-          if (endFn) {
-            endFn();
-          }
-        };
-      },
-      pause() {
-        this.isPlaying = false;
-
-        this.synth.pause();
-      },
-      resume() {
-        this.isPlaying = true;
-
-        this.synth.resume();
-      },
-      stop() {
-        this.isPlaying = false;
-
-        this.synth.cancel();
-
-        clearTimeout(this.autoStopTimeId);
-      }
-    }
-  };
-
-  var App = {
-  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[(_vm.speechDialogVisible)?_c('speech',{staticClass:"speech",on:{"closeSpeech":_vm.hideSpeech}}):_vm._e()],1)},
-  staticRenderFns: [],
-    data() {
-      return {
-        speechDialogVisible: false,
-      }
-    },
-    components: {
-      Speech,
-    },
-    created() {
-      bus.$on(SHOW_SPEECH, this.showSpeech);
-    },
-    beforeDestory() {
-      bus.$off(SHOW_SPEECH, this.hideSpeech);
-    },
-    methods: {
-      showSpeech() {
-        this.speechDialogVisible = true;
-      },
-      hideSpeech() {
-        this.speechDialogVisible = false;
-      }
-    }
-  };
-
-  function runVue() {
-    new Vue({
-      el: '#app',
-      render: h => h(App)
-    });
-  }
-
-  var App$1 = {
-      isEnabled: false,
-      parsedPages: {},
-      pageNum: 1,
-      paused: false,
-      curPageUrl: location.href,
-      requestUrl: null,
-      iframe: null,
-      remove: [],
-      // 滚动激活相关
-      curFocusElement: null,
-      curFocusIndex: 1,
-      // 站点字体信息
-      siteFontInfo: null,
-      // 事件监听器和观察器数组
-      listenerAndObserver: [],
-
-      init: async function() {
-          // 注入修改
-          App$1.injectPolyfill();
-
-          if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
-              return;
-          }
-
-          // 手动调用
-          var readx = App$1.launch;
-
-          try {
-              exportFunction(readx, unsafeWindow, {defineAs: "readx"});
-          } catch(ex) {
-              console.error('无法定义 readx 函数');
-          }
-
-
-          App$1.loadCustomSetting();
-          App$1.site = App$1.getCurSiteInfo();
-
-          // 等待 DOMContentLoaded 事件触发
-          await DOMContentLoaded();
-
-          if (App$1.site.startLaunch) {
-              App$1.site.startLaunch($(document));
-          }
-
-          var autoLaunch = App$1.isAutoLaunch();
-
-          if (autoLaunch === -1) {
-              return;
-          } else if (autoLaunch) {
-              if (App$1.site.mutationSelector) { // 特殊的启动：等待js把内容生成完毕
-                  await App$1.addMutationObserve(document);
-              } else if (App$1.site.timeout) { // 延迟启动
-                  await sleep(App$1.site.timeout);
-              }
-              // 等待 Dom 稳定
-              await App$1.DomMutation();
-              await App$1.launch();
-          } else {
-              await UI.addButton();
-          }
-      },
-      injectPolyfill: function () {
-          // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
-          const _focus = unsafeWindow.HTMLElement.prototype.focus;
-          unsafeWindow.HTMLElement.prototype.focus = function focus() {
-              _focus.call(this, { preventScroll: true });
-          };
-          unsafeWindow.console.clear = () => {};
-          // Hook addEventListener 以便需要时移除事件监听器
-          const _addEventListener = unsafeWindow.EventTarget.prototype.addEventListener;
-          function addEventListener(type, listener, options) {
-              _addEventListener.apply(this, arguments);
-              App$1.listenerAndObserver.push(() => {
-                  try {
-                      this.removeEventListener(...arguments);
-                  } catch (e) {}
-              });
-          }
-          unsafeWindow.EventTarget.prototype.addEventListener = addEventListener;
-          document.addEventListener = addEventListener;
-          // Hook MutationObserver 以便需要时移除观察器
-          const _observe = unsafeWindow.MutationObserver.prototype.observe;
-          const _disconnect = unsafeWindow.MutationObserver.prototype.disconnect;
-          unsafeWindow.MutationObserver.prototype.observe = function observe(target, options) {
-              _observe.apply(this, arguments);
-              App$1.listenerAndObserver.push(() => {
-                  try {
-                      _disconnect.apply(this, arguments);
-                  } catch (e) {}
-              });
-          };
-          Object.defineProperty(unsafeWindow.Navigator.prototype, 'platform', {
-              get: function platform() {
-                  return ''
-              }
-          });
-      },
-      loadCustomSetting: function() {
-          var customRules;
-          try {
-              customRules = eval(Setting.customSiteinfo);
-          } catch (e) {
-              console.error('载入自定义站点配置错误', e);
-          }
-
-          if (_.isArray(customRules)) {
-              Rule.customRules = customRules;
-              C.log('载入自定义站点规则成功', customRules);
-          }
-
-          // load custom replace rules
-          Rule.customReplace = Rule.parseCustomReplaceRules(Setting.customReplaceRules);
-
-          C.log('载入自定义替换规则成功', Rule.customReplace);
-      },
-      getCurSiteInfo: function() {
-          var rules = Rule.customRules.concat(Rule.specialSite);
-          var locationHref = location.href;
-
-          var info = _.find(rules, function(x) {
-              return toRE(x.url).test(locationHref);
-          });
-
-          if (!info) {
-              info = {};
-              C.log("没有找到规则，尝试自动模式。");
-          } else {
-              C.log("找到规则：", info);
-          }
-          return info;
-      },
-      isAutoLaunch: function() {
-          var locationHost = location.host,
-              referrer = document.referrer;
-
-          switch (true) {
-              case L_getValue("mynoverlreader_disable_once") == 'true':
-                  L_removeValue("mynoverlreader_disable_once");
-                  return false;
-              // case location.hostname == 'www.fkzww.net' && !document.title.match(/网文快讯/):  // 啃书只自动启用一个地方
-              //     return false;
-              case Setting.booklink_enable && /booklink\.me/.test(referrer):
-                  return true;
-              case locationHost == 'tieba.baidu.com':
-                  var title = $('.core_title_txt').text();
-                  if (title.match(Rule.titleRegExp)) {
-                      return false;
-                  } else {
-                      return -1;
-                  }
-              case Setting.getDisableAutoLaunch():
-                  return false;
-              case GM_getValue("auto_enable"):
-              case config.soduso :
-                  return true;
-              default:
-                  return false;
-          }
-      },
-      addMutationObserve: function(doc) {
-          var shouldAdd = false;
-          var $doc = $(doc);
-
-          var contentSize = $doc.find(App$1.site.contentSelector).size();
-          if (contentSize && !App$1.site.mutationSelector) {
-              shouldAdd = false;
-          } else {
-              var mutationSelector = App$1.site.mutationSelector;
-              var target = $doc.find(mutationSelector)[0];
-              if (target) {
-                  var beforeTargetChilren = target.children.length;
-                  C.log(`target.children.length = ${target.children.length}`, target);
-                  if (App$1.site.mutationChildText) {
-                      if (target.textContent.indexOf(App$1.site.mutationChildText) > -1) {
-                          shouldAdd = true;
-                      }
-                  } else {
-                      var childCount = App$1.site.mutationChildCount;
-                      if (childCount === undefined || target.children.length <= childCount) {
-                          shouldAdd = true;
-                      }
-                  }
-              }
-          }
-
-          if (shouldAdd) {
-              return new Promise(resolve => {
-                  var observer = new MutationObserver(function (mutations) {
-                      target = $doc.find(mutationSelector)[0];
-                      var nodeAdded = target.children.length > beforeTargetChilren;
-
-                      if (nodeAdded) {
-                          observer.disconnect();
-                          resolve();
-                      }
-                  });
-
-                  observer.observe(document, {
-                      childList: true,
-                      subtree: true
-                  });
-
-                  C.log('添加 MutationObserve 成功：', mutationSelector);
-              })
-          }
-      },
-      // 等待 Dom 稳定
-      DomMutation: function() {
-          return new Promise(resolve => {
-              const debounced = _.debounce(() => {
-                  observer.disconnect();
-                  resolve();
-              }, 200);
-              const observer = new MutationObserver(() => debounced());
-              observer.observe(document,{
-                  childList: true,
-                  subtree: true
-              });
-              debounced();
-          })
-      },
-      launch: async function() {
-          // 只解析一次，防止多次重复解析一个页面
-          if (document.body && document.body.getAttribute("name") == "MyNovelReader") {
-              return await App$1.toggle();
-          }
-
-          if (!App$1.site) {
-              App$1.site = App$1.getCurSiteInfo();
-          }
-
-          if (App$1.site.startFilter) {
-              try {
-                  App$1.site.startFilter();
-                  C.log('run startFilter function success');
-              } catch (ex) {
-                  console.error('运行 startFilter function 错误', ex);
-              }
-          }
-
-          // 使用站点字体
-          if (App$1.site.useSiteFont) {
-              if (_.isBoolean(App$1.site.useSiteFont)) {
-                  App$1.siteFontInfo = App$1.getSiteFontInfo();
-              } else if (_.isString(App$1.site.useSiteFont)) {
-                  if (!App$1.site.useSiteFont.trim().endsWith(',')) {
-                      App$1.site.useSiteFont = App$1.site.useSiteFont.trim() + ',';
-                  }
-                  App$1.siteFontInfo = { siteFontFamily: App$1.site.useSiteFont.trim() };
-              }
-          }
-
-          var parser = new Parser(App$1.site, document);
-          var hasContent = !!parser.hasContent();
-          if (hasContent) {
-              document.body.setAttribute("name", "MyNovelReader");
-              App$1.parsedPages[window.location.href] = true;
-              await parser.getAll();
-              await App$1.processPage(parser);
-          } else {
-              console.error("当前页面没有找到内容");
-          }
-
-          // 初始化, 取消页面限制等
-          if (App$1.site.fInit)
-              App$1.site.fInit();
-      },
-      processPage: async function(parser) {
-          // 对 Document 进行处理
-          document.body.innerHTML = '';
-          App$1.prepDocument();
-          App$1.initDocument(parser);
-
-          runVue();
-
-          // cache vars
-          App$1.$doc = $(document);
-          App$1.$menuBar = App$1.$doc.find("#menu-bar");
-          App$1.$menu = App$1.$doc.find("#menu");
-          App$1.$content = App$1.$doc.find("#mynovelreader-content");
-          App$1.$loading = App$1.$doc.find("#loading");
-          App$1.$preferencesBtn = App$1.$doc.find("#preferencesBtn");
-
-          App$1.$menuHeader = App$1.$menu.find("#chapter-list");
-          App$1.$chapterList = App$1.$menu.find("#chapter-list");
-
-          App$1.indexUrl = parser.indexUrl;
-          App$1.prevUrl = parser.prevUrl; // 第一个上一页
-
-          App$1.oArticles = [];  // 原始的内容，用于替换的无需刷新
-          App$1.parsers = [];
-
-          // 加入上一章的链接
-          if (parser.prevUrl) {
-              $("<li>")
-                  .addClass('chapter')
-                  .append(
-                      $("<div>")
-                      .attr({
-                          "realHref": parser.prevUrl,
-                          "onclick": "return false;"
-                      })
-                      .text("上一章".uiTrans())
-                  )
-                  .prependTo(App$1.$chapterList);
-          }
-
-          // 插入站点样式
-          if (App$1.site.style) {
-              GM_addStyle(App$1.site.style);
-          }
-
-          // 插入站点字体样式
-          if (App$1.site.useSiteFont && App$1.siteFontInfo) {
-              const { external, internal } = App$1.siteFontInfo;
-              if (internal) {
-                  $('<style class="noRemove siteFont">')
-                      .text(internal.map(e => e.cssText).join('\n'))
-                      .appendTo('head');
-              }
-              // 插入外部样式表可能会影响阅读界面样式
-              // if (external) {
-              //     for (const href of external) {
-              //         $('<link class="noRemove siteFont" rel="stylesheet">').attr('href', href).prependTo('head')
-              //     }
-              // }
-          }
-
-          App$1.appendPage(parser, true);
-
-          App$1.registerControls();
-
-          // UI 的初始化
-          UI.init();
-
-          App$1.curFocusElement = $("article:first").get(0); // 初始化当前关注的 element
-          App$1.requestUrl = parser.nextUrl;
-          App$1.isTheEnd = parser.isTheEnd;
-
-          App$1.isEnabled = true;
-          await UI.addButton();
-
-          // // 如果已经把当前焦点链接添加到历史记录，则滚动到顶部
-          // if (Setting.addToHistory) {
-          //     window.scrollTo(0, 0);
-          // }
-
-          // 有些图片网站高度随着图片加载而变长
-          setTimeout(App$1.scroll, 1000);
-
-          App$1.cleanAgain();
-
-          {
-              await App$1.doRequest();
-          }
-      },
-      prepDocument: function() {
-          window.onload = window.onunload = function() {};
-
-          // 破解右键限制
-          var doc = document;
-          var bd = doc.body;
-          bd.onclick = bd.ondblclick = bd.onselectstart = bd.oncopy = bd.onpaste = bd.onkeydown = bd.oncontextmenu = bd.onmousemove = bd.onselectstart = bd.ondragstart = doc.onselectstart = doc.oncopy = doc.onpaste = doc.onkeydown = doc.oncontextmenu = null;
-          doc.onclick = doc.ondblclick = doc.onselectstart = doc.oncontextmenu = doc.onmousedown = doc.onkeydown = function() {
-              return true;
-          };
-
-          doc = document.wrappedJSObject || document;
-          doc.onmouseup = null;
-          doc.onmousedown = null;
-          doc.oncontextmenu = null;
-
-          var arAllElements = document.getElementsByTagName('*');
-          for (var i = arAllElements.length - 1; i >= 0; i--) {
-              var elmOne = arAllElements[i];
-              elmOne = elmOne.wrappedJSObject || elmOne;
-              elmOne.onmouseup = null;
-              elmOne.onmousedown = null;
-          }
-
-          // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
-          try {
-              unsafeWindow.$(unsafeWindow).off();
-              unsafeWindow.$(document).off();
-          } catch (e) {}
-          
-          // 移除所有事件监听器和观察器
-          App$1.listenerAndObserver.forEach(remove => remove());
-          C.log(`已移除 ${App$1.listenerAndObserver.length} 个事件监听器和观察器`);
-          
-          // 清理所有定时器
-          var highestTimeoutId = unsafeWindow.setTimeout(';');
-          for (var i = 0; i < highestTimeoutId; i++) {
-              unsafeWindow.clearTimeout(i);
-          }
-
-          // remove body style
-          $('link[rel="stylesheet"], script').remove();
-          $('body')
-              .removeAttr('style')
-              .removeAttr('bgcolor');
-
-          $('style:not(.noRemove)').filter(function() {
-              var $style = $(this);
-              if($style.text().indexOf('#cVim-link-container') != -1) {  // chrome 的 cVim 扩展
-                  return false;
-              }
-              return true;
-          }).remove();
-
-          // 移除 html 标签中非 head 和 body 的元素
-          $('html').children().filter(function () {
-              let tagName = $(this).prop('tagName').toLowerCase();
-              if (tagName !== 'head' && tagName !== 'body') {
-                  return true
-              }
-              return false
-          }).remove();
-      },
-      initDocument: function(parser) {
-          document.title = parser.docTitle;
-
-          document.body.innerHTML = $.nano(tpl_mainHtml.uiTrans(), parser);
-      },
-      clean: function() {
-          $('body > *:not("#container, .readerbtn, .noRemove, #reader_preferences, #uil_blocker,iframe[name=\'mynovelreader-iframe\']")').remove();
-          $('link[rel="stylesheet"]:not(.noRemove)').remove();
-          $('body, #container').removeAttr('style').removeAttr('class');
-
-          if (unsafeWindow.jQuery && location.host.indexOf('qidian') > 0) {
-              unsafeWindow.jQuery(document).off("selectstart").off("contextmenu");
-          }
-      },
-      cleanAgain: function() {
-          // var host = location.host;
-          // if (!host.match(/qidian\.com|zongheng\.com/)) {  // 只在起点、纵横等网站运行
-          //     return;
-          // }
-
-          // 再次移除其它不相关的，起点，纵横中文有时候有问题
-          setTimeout(App$1.clean, 2000);
-          setTimeout(App$1.clean, 5000);
-          setTimeout(App$1.clean, 8000);
-          // TM 用 addEventListener('load') 有问题
-          window.onload = function() {
-              App$1.clean();
-              setTimeout(App$1.clean, 500);
-          };
-      },
-      toggle: async function() {
-          if (App$1.isEnabled) { // 退出
-              GM_setValue("auto_enable", false);
-              L_setValue("mynoverlreader_disable_once", true);
-
-              location.href = App$1.activeUrl || App$1.curPageUrl;
-          } else {
-              GM_setValue("auto_enable", true);
-              L_removeValue("mynoverlreader_disable_once");
-              App$1.isEnabled = true;
-              await App$1.launch();
-          }
-      },
-      removeListener: function() {
-          C.log("移除各种事件监听");
-          App$1.remove.forEach(function(_remove) {
-              _remove();
-          });
-      },
-      appendPage: function(parser, isFirst) {
-          var chapter = $("article:last");
-          if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
-              var lastText = chapter.find("p:last").remove().text().trimEnd();
-              var newPage = parser.content.replace(/<p>\s+/, "<p>" + lastText);
-
-              chapter
-                  .find(".chapter-footer-nav").remove()
-                  .end()
-                  .append(newPage);
-
-              if (!Setting.hide_footer_nav) {
-                  chapter.append($.nano(UI.tpl_footer_nav, parser));
-              }
-
-          } else {
-              chapter = $("<article>")
-                  .attr("id", "page-" + App$1.pageNum)
-                  .append(
-                      $("<h1>").addClass("title").text(parser.chapterTitle)
-                  )
-                  .append(parser.content)
-                  .appendTo(App$1.$content);
-
-              if (!Setting.hide_footer_nav) {
-                  chapter.append($.nano(UI.tpl_footer_nav, parser));
-              }
-
-              // App.fixImageFloats(chapter.get(0));
-
-              // 添加到章节列表
-              var chapterItem = $("<li>")
-                  .addClass('chapter')
-                  .append(
-                      $("<div>")
-                      .attr({
-                          href: "#page-" + App$1.pageNum,
-                          "realHref": parser.curPageUrl,
-                          onclick: "return false;",
-                          title: parser.chapterTitle
-                      })
-                      .text(parser.chapterTitle)
-                  )
-                  .prependTo(App$1.$chapterList);
-
-              if (isFirst) {
-                  chapterItem.addClass('active');
-              }
-
-              App$1.pageNum += 1;
-              App$1.resetCache();
-          }
-
-          App$1.oArticles.push(chapter[0].outerHTML);
-          App$1.parsers.push(parser);
-
-          bus.$emit(APPEND_NEXT_PAGE);
-      },
-      resetCache: function() {  // 更新缓存变量
-          App$1.menuItems = App$1.$chapterList.find("div");
-          App$1.scrollItems = $("article");
-      },
-      registerControls: function() {
-          // 内容滚动
-          var throttled = _.throttle(App$1.scroll, 200);
-          $(window).scroll(throttled);
-
-          App$1.registerKeys();
-
-          if (Setting.dblclickPause) {
-              App$1.$content.on("dblclick", function() {
-                  App$1.pauseHandler();
-              });
-          }
-
-          // 左侧章节列表
-          App$1.$menuHeader.click(function() {
-              App$1.copyCurTitle();
-          });
-
-          App$1.$menuBar.click(function() {
-              UI.hideMenuList();
-          });
-
-          App$1.$doc.on("mousedown", "#chapter-list div", function(event) {
-              switch (event.which) {
-                  case 1:
-                      var href = $(this).attr("href");
-                      if (href) {
-                          App$1.scrollToArticle($(href));
-                      } else {
-                          location.href = $(this).attr("realHref");
-                      }
-                      break;
-                  case 2: // middle click
-                      L_setValue("mynoverlreader_disable_once", true);
-                      App$1.openUrl($(this).attr("realHref"));
-                      break;
-              }
-          });
-
-          $("#preferencesBtn").click(function(event) {
-              event.preventDefault();
-              UI.preferencesShow();
-          });
-
-          GM_registerMenuCommand("小说阅读脚本设置".uiTrans(), UI.preferencesShow.bind(UI));
-      },
-      registerKeys: function() {
-          key('enter', function(event) {
-              if (UI.$prefs) {
-                  return;
-              }
-
-              App$1.openUrl(App$1.indexUrl, "主页链接没有找到".uiTrans());
-              App$1.copyCurTitle();
-
-              event.stopPropagation();
-              event.preventDefault();
-          });
-
-          key('left', function(event) {
-              var scrollTop = $(window).scrollTop();
-              if (scrollTop === 0) {
-                  location.href = App$1.prevUrl;
-              } else {
-                  var offsetTop = $(App$1.curFocusElement).offset().top;
-                  // 在视野窗口内
-                  if (offsetTop > scrollTop && offsetTop < (scrollTop + $(window).height())) {
-                      App$1.scrollToArticle(App$1.curFocusElement.previousSibling || 0);
-                  } else {
-                      App$1.scrollToArticle(App$1.curFocusElement);
-                  }
-              }
-              return false;
-          });
-
-          key('right', function(event) {
-              if (App$1.getRemain() === 0) {
-                  location.href = App$1.lastRequestUrl || App$1.requestUrl;
-              } else {
-                  App$1.scrollToArticle(App$1.curFocusElement.nextSibling || App$1.$doc.height());
-              }
-
-              event.preventDefault();
-              event.stopPropagation();
-              return false;
-          });
-
-          key('esc', function(){
-              if (UI.$prefs) {
-                  UI.hide();
-                  return false;
-              }
-          });
-
-          key('shift+/', function() {
-              UI.openHelp();
-              return false;
-          });
-
-          key(Setting.quietModeKey, function(){
-              UI.toggleQuietMode();
-              return false;
-          });
-
-          key(Setting.hideMenuListKey, function(){
-              UI.hideMenuList();
-              return false;
-          });
-
-          key(Setting.openPreferencesKey, function(){
-              UI.preferencesShow();
-              return false;
-          });
-
-          key(Setting.openSpeechKey, function() {
-              bus.$emit(SHOW_SPEECH);
-              return false;
-          });
-
-          // PageUp
-          key(',', function() {
-              let { scrollX, scrollY, innerHeight } = window;
-              window.scrollTo(scrollX, scrollY - innerHeight * .9);
-          });
-          // PageDown
-          key('.', function() {
-              let { scrollX, scrollY, innerHeight } = window;
-              window.scrollTo(scrollX, scrollY + innerHeight * .9);
-          });
-      },
-      copyCurTitle: function() {
-          if (Setting.copyCurTitle) {
-              var title = $(App$1.curFocusElement).find(".title").text()
-                  .replace(/第?\S+章/, "").trim();
-
-              GM_setClipboard(title, "text");
-          }
-      },
-      scrollToArticle: function(elem) {
-          var offsetTop;
-          if (typeof elem == "number") {
-              offsetTop = elem;
-          } else {
-              offsetTop = $(elem).offset().top - parseInt($(elem).css("margin-top"), 10);
-          }
-
-          if (Setting.scrollAnimate) {
-              $("html, body").stop().animate({
-                  scrollTop: offsetTop
-              }, 750, "easeOutExpo");
-          } else {
-              $("html, body").stop().scrollTop(offsetTop);
-          }
-      },
-      openUrl: function(url, errorMsg) {
-          if (url) {
-              // ff30 Greasemonkey 会报错：Greasemonkey 访问违规：unsafeWindow 无法调用 GM_openInTab。新建脚本采用按键调用也这样。
-              setTimeout(function() {
-                  GM_openInTab(url, false);
-              }, 0);
-          } else if (errorMsg) {
-              UI.notice(errorMsg);
-          }
-      },
-      pauseHandler: async function() {
-          App$1.paused = !App$1.paused;
-          if (App$1.paused) {
-              UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>暂停</b></span>'.uiTrans());
-              App$1.$loading.html('自动翻页已经<span style="color:red!important;"><b>暂停</b></span>'.uiTrans()).show();
-          } else {
-              UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>启用</b></span>'.uiTrans());
-              await App$1.scroll();
-          }
-      },
-      scroll: async function() {
-          if (!App$1.paused && !App$1.working && App$1.getRemain() < Setting.remain_height) {
-              await App$1.scrollForce();
-          }
-
-          if (App$1.isTheEnd) {
-              App$1.$loading.html("已到达最后一页...".uiTrans()).show();
-          }
-
-          App$1.updateCurFocusElement();
-      },
-      scrollForce: async function() {
-          if (App$1.tmpDoc) {
-              await App$1.loaded(App$1.tmpDoc);
-          } else {
-              await App$1.doRequest();
-          }
-      },
-      updateCurFocusElement: function() { // 滚动激活章节列表
-          // Get container scroll position
-          var fromTop = $(window).scrollTop() + $(window).height() / 2;
-
-          // Get id of current scroll item
-          var cur = App$1.scrollItems.map(function() {
-              if ($(this).offset().top < fromTop)
-                  return this;
-          });
-          // Get the id of the current element
-          App$1.curFocusIndex = cur.length - 1;
-          cur = cur[cur.length - 1];
-          var id = cur ? cur.id : "";
-
-          if (App$1.lastId !== id) {
-              App$1.lastId = id;
-
-              var activeItem = App$1.menuItems.filter("[href=#" + id + "]"),
-                  activeTitle = activeItem.text(),
-                  activeUrl = activeItem.attr("realHref");
-
-              // Set/remove active class
-              App$1.menuItems.parent().removeClass("active");
-              activeItem.parent().addClass("active");
-
-              App$1.curFocusElement = cur;
-              App$1.activeUrl = activeUrl;
-
-              if (Setting.addToHistory) {
-                  var curNum = id.match(/\d+/)[0] - 1;  // 当前是第几个
-                  var curTitle = App$1.parsers[curNum].docTitle;
-                  document.title = curTitle;
-
-                  // 有域名的限制，起点过渡到 vip 章节无法生效
-                  var url = activeUrl.replace('http://read.qidian.com', '');
-                  try {
-                      unsafeWindow.history.pushState(null, curTitle, url);
-                  } catch (e) {
-                      console.error('添加下一页到历史记录失败', e);
-                  }
-              }
-          }
-      },
-      getRemain: function() {
-          var scrollHeight = Math.max(document.documentElement.scrollHeight,
-              document.body.scrollHeight);
-          var remain = scrollHeight - window.innerHeight - window.scrollY;
-          return remain;
-      },
-      doRequest: async function() {
-          App$1.working = true;
-          var nextUrl = App$1.requestUrl;
-          App$1.lastRequestUrl = App$1.requestUrl;
-
-          if (nextUrl && !App$1.isTheEnd && !(nextUrl in App$1.parsedPages)) {
-              App$1.parsedPages[nextUrl] = 0;
-              App$1.curPageUrl = App$1.requestUrl;
-              App$1.requestUrl = null;
-
-              var useiframe = App$1.site.useiframe;
-
-              App$1.$loading
-                  .show()
-                  .html("")
-                  .append($("<img>").attr("src", "data:image/gif;base64,R0lGODlhEAAQAMQAAPf39+/v7+bm5t7e3tbW1s7OzsXFxb29vbW1ta2traWlpZycnJSUlIyMjISEhHt7e3Nzc2tra2NjY1paWlJSUkpKSkJCQjo6OjExMSkpKSEhIRkZGRAQEAgICAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJBQAeACwAAAEADwAOAAAFdaAnet20GAUCceN4LQlyFMRATC3GLEqM1gIc6dFgPDCii6I2YF0eDkinxUkMBBAPBfLItESW2sEjiWS/ItqALJGgRZrNRtvWoDlxFqZdmbY0cVMdbRMWcx54eSMZExQVFhcYGBmBfxWPkZQbfi0dGpIYGiwjIQAh+QQJBQAeACwAAAEADwAOAAAFeKAnep0FLQojceOYQU6DIsdhtVoEywptEBRRZyKBQDKii+JHYGEkxE6LkyAMIB6KRKJpJQuDg2cr8Y7AgjHULCoQ0pUJZWO+uBGeDIVikbYyDgRYHRUVFhcsHhwaGhsYfhuHFxgZGYwbHH4iHBiUlhuYmlMbjZktIQAh+QQFBQAeACwAAAEADwAOAAAFe6Aneh1GQU9UdeOoTVIEOQ2zWG0mSVP0ODYF4iLq7HgaEaaRQCA4HsyOwhp1FgdDxFOZTDYt0cVQSHgo6PCIPOBWKmpRgdDGWCzQ8KUwOHg2FxcYYRwJdBAiGRgZGXkcC3MEjhkalZYTfBMtHRudnhsKcGodHKUcHVUeIQAh+QQJBQAeACwAAAEADwAOAAAFbKAnjp4kURiplmYEQemoTZMpuY/TkBVFVRtRJtJgMDoejaViWT0WiokHc2muMIoEY0pdiRCIgyeDia0OhoJnk8l4PemEh6OprxQFQkS02WiCIhd4HmoiHRx9ImkEA14ciISMBFJeSAQIEBwjIQAh+QQJBQAeACwAAAEADwAOAAAFd6Anel1WTRKFdeO4WRWFStKktdwFU3JNZ6MM5nLZiDQTCCTC4ghXrU7k4bB4NpoMpyXKNBqQa5Y7YiwWHg6WLFK4SWoW95JAMOAbI05xOEhEHWoaFyJ0BgYHWyIcHA4Fj48EBFYtGJKSAwMFFGQdEAgCAgcQih4hACH5BAkFAB4ALAAAAQAPAA4AAAV0oCeKG2ZVFtaNY6dh10lNU8Z2WwbLkyRpI85Gk+GQKr7JqiME3mYSjIe5WbE8GkhkMhVeR48HpLv5ihoOB9l4xTAYYw9nomCLOgzFoiJSEAoIFiIXCwkJC1YVAwMEfwUGBgeBLBMEAouOBxdfHA8HlwgRdiEAIfkECQUAHgAsAAABAA8ADgAABXOgJ4rdpmWZ1o0sZ2YYdlka63XuKVsVVZOuzcrDufQoQxzH1rFMJJiba8jaPCnSjW30lHgGhMJWBIl4D2DLNvOATDwPwSCxHHUgjseFOJAn1B4YDgwND0MTAWAFBgcICgsMUVwDigYICQt7NhwQCGELE1QhACH5BAkFAB4ALAAAAQAPAA4AAAV4oCeOHWdyY+p1JbdpWoam7fZmGYZtYoeZm46Ik7kYhZBBQ6PyWSoZj0FAuKg8mwrF4glQryIKZdL9gicTiVQw4Ko2aYrnwUbMehGJBOPhDAYECVYeGA8PEBNCHhOABgcJCgwNh0wjFQaOCAoLk1EqHBILmg8Vih4hACH5BAkFAB4ALAAAAQAPAA4AAAV6oCd6Hdmd5ThWCee+XCpOwTBteL6lnCAMLVFHQ9SIHgHBgaPyZDKYjcfwszQ9HMwl40kOriKLuDsggD2VtOcwKFibGwrFCiEUEjJSZTLhcgwGBwsYIhkUEhITKRYGCAkKDA0PiBJcKwoKCwwODxETRk0dFA8NDhIYMiEAIfkECQUAHgAsAAABAA8ADgAABXmgJ3rcYwhcN66eJATCsHEpOwXwQGw8rZKDGMIi6vBmokcswWFtNBvVQUdkcTJQj67AGmEyGU+hYOiKMGiP4oC4dDmXS1iCSDR+xYvFovF0FAoLDxgiGxYUFRY/FwsMDQ4PEhOTFH0jFw6QEBKcE5YrHRcTERIUGHghACH5BAkFAB4ALAAAAQAPAA4AAAV4oCd63GMAgfF04zgNQixjrVcJQz4QRLNxI06Bh7CILpkf0CMpGBLL0ebHWhwOl5qno/l5EGCtqAtUmMWeTNfzWCxoNU4maWs0Vq0OBpMBdh4ODxEaIhsXhxkjGRAQEhITExQVFhdRHhoTjo8UFBYbWnoUjhUZLCIhACH5BAkFAB4ALAAAAQAPAA4AAAV5oCd6HIQIgfFw42gZBDEMgjBMbXUYRlHINEFF1FEgEIqLyHKQJToeikLBgI44iskG+mAsMC0RR7NhNRqM8IjMejgcahHbM4E8Mupx2YOJSCZWIxlkUB0TEhIUG2IYg4tyiH8UFRaNGoEeGYgTkxYXGZhEGBWTGI8iIQA7"))
-                  .append("<a href='" + nextUrl + "' title='点击打开下一页链接'>正在载入下一页".uiTrans() + (useiframe ? "(iframe)" : "") + "...</a>");
-              
-              await sleep(App$1.site.nDelay || 0);
-              
-              if (useiframe) {
-                  App$1.iframeRequest(nextUrl); // 不用 await
-              } else {
-  (async () => {
-                      const doc = await App$1.httpRequest(nextUrl);
-                      App$1.httpRequestDone(doc, nextUrl); // 不用 await
-                  })();
-              }
-      
-          }
-      },
-      httpRequest: async function(nextUrl) {
-
-          C.log("获取下一页: " + nextUrl);
-          App$1.parsedPages[nextUrl] += 1;
-
-          const options = {
-              url: nextUrl,
-              method: "GET",
-              overrideMimeType: "text/html;charset=" + document.characterSet,
-              timeout: config.xhr_time,
-          };
-
-          let doc = null;
-          try {
-              const res = await Request(options);
-              doc = parseHTML(res.responseText);
-          } catch (e) {}
-
-          return doc
-      },
-      httpRequestDone: async function(doc, nextUrl) {
-          if (doc) {
-              await App$1.beforeLoad(doc);
-              return;
-          }
-
-          if (App$1.parsedPages[nextUrl] >= 3) {
-              console.error('同一个链接已获取3次', nextUrl);
-              App$1.$loading.html("<a href='" + nextUrl  + "'>无法获取下一页，请手动点击</a>").show();
-              return;
-          }
-
-          // 无内容再次尝试获取
-          console.error('连接超时, 再次获取');
-          doc = await App$1.httpRequest(nextUrl);
-          await App$1.httpRequestDone(doc, nextUrl);
-      },
-      iframeRequest: async function(nextUrl) {
-          C.log("iframeRequest: " + nextUrl);
-          if (!App$1.iframe) {
-              var i = document.createElement('iframe');
-              App$1.iframe = i;
-              i.name = 'mynovelreader-iframe';
-              i.width = '100%';
-              i.height = '0';
-              i.frameBorder = "0";
-              i.style.cssText = '\
-                margin:0!important;\
-                padding:0!important;\
-                visibility:hidden!important;\
-            ';
-              i.src = nextUrl;
-              i.addEventListener('load', App$1.iframeLoaded, false);
-              App$1.remove.push(function() {
-                  i.removeEventListener('load', App$1.iframeLoaded, false);
-              });
-              document.body.appendChild(i);
-          } else {
-              App$1.iframe.contentDocument.location.replace(nextUrl);
-          }
-      },
-      iframeLoaded: async function() {
-          var iframe = this;
-          var body = iframe.contentDocument.body;
-
-          if (body && body.firstChild) {
-              var win = iframe.contentWindow;
-              var doc = iframe.contentDocument;
-
-              // 滚动最后
-              win.scrollTo(0, doc.body.scrollHeight);
-
-              if (App$1.site.startLaunch) {
-                  App$1.site.startLaunch($(doc));
-              }
-
-              var mutationSelector = App$1.site.mutationSelector;
-              if (mutationSelector) {
-                  await App$1.addMutationObserve(doc);
-              } else {
-                  var timeout = App$1.site.timeout || 0;
-                  await sleep(timeout);
-              }
-              await App$1.beforeLoad(doc);
-          }
-      },
-      beforeLoad: async function(htmlDoc) {
-          {
-              App$1.tmpDoc = htmlDoc;
-              App$1.working = false;
-              await App$1.scroll();
-
-              // 预读图片
-              var existSRC = {};
-              $(App$1.tmpDoc).find('img').each(function() {
-                  var isrc = $(this).attr('src');
-                  if (!isrc || existSRC[isrc] || isrc.slice(0, 4).toLowerCase().startsWith('data')) {
-                      return;
-                  } else {
-                      existSRC[isrc] = true;
-                  }
-                  var img = document.createElement('img');
-                  img.src = isrc;
-              });
-          }
-      },
-      loaded: async function(doc) {
-          var parser = new Parser(App$1.site, doc, App$1.curPageUrl);
-          await parser.getAll();
-          await App$1.addNextPage(parser);
-          App$1.tmpDoc = null;
-      },
-      addNextPage: async function(parser) {
-          if (parser.content) {
-              App$1.appendPage(parser);
-
-              App$1.$loading.hide();
-              App$1.requestUrl = parser.nextUrl;
-              App$1.isTheEnd = parser.isTheEnd;
-
-              await App$1.afterLoad();
-          } else {
-              App$1.removeListener();
-
-              var msg = (parser.isTheEnd == 'vip') ?
-                  'vip 章节，需付费。' :
-                  '错误：没有找到下一页的内容。';
-              App$1.$loading.html(
-                  '<a href="' + App$1.curPageUrl + '">' + msg + '点此打开下一页。</a>'.uiTrans())
-                  .show();
-          }
-
-          App$1.working = false;
-      },
-      afterLoad: async function() {
-          App$1.tmpDoc = null;
-
-          {
-              await sleep(200);
-              App$1.doRequest();  // 不用 await
-          }
-      },
-      fixImageFloats: function(articleContent) {
-
-          articleContent = articleContent || document;
-
-          var imageWidthThreshold = Math.min(articleContent.offsetWidth, 800) * 0.55,
-              images = articleContent.querySelectorAll('img:not(.blockImage)');
-
-          for (var i = 0, il = images.length; i < il; i += 1) {
-              var image = images[i];
-
-              if (image.offsetWidth > imageWidthThreshold) {
-                  image.className += " blockImage";
-              }
-          }
-      },
-
-      isSaveing: false,
-      saveAsTxt: async function() {
-          if (App$1.site.useiframe) {
-              UI.notice('暂不支持', 3000);
-              return;
-          }
-
-          if (App$1.isSaveing) {
-              alert('正在保存中，请稍后');
-              return;
-          }
-
-          App$1.isSaveing = true;
-
-          await run(App$1.parsers);
-          App$1.isSaveing = false;
-      },
-      getSiteFontInfo: function () {
-          const fonts = { external: [], internal: [], family: [] };
-          const { external, internal, family, siteFontFamily } = fonts;
-
-          // 获取所有的字体名字
-          for (const font of document.fonts) {
-              family.push(font.family);
-          }
-
-          // 获取外部 css 地址和内部 css 样式文本
-          for (const styleSheet of document.styleSheets) {
-              try {
-                  for (const cssRule of styleSheet.cssRules) {
-                      if (cssRule instanceof CSSFontFaceRule) {
-                          const fontFamily = cssRule.style.fontFamily;
-                          const cssText = cssRule.cssText;
-                          if (!internal.find(o => o.fontFamily === fontFamily)) {
-                              internal.push({ fontFamily, cssText });
-                          }
-                      }
-                  }
-              } catch (e) {
-                  external.push(styleSheet.href);
-              }
-          }
-          
-          // 处理成 font-family 样式格式
-          let familyList = [];
-
-          // 内部样式优先
-          internal.forEach(e => {
-              familyList.push(e.fontFamily);
-          });
-
-          family.forEach(e => {
-              if (!familyList.includes(e)) {
-                  familyList.push(e);
-              }
-          });
-          // 含空格字体名补双引号
-          familyList = familyList.map(e => {
-              if (e.includes(' ')) {
-                  return `"${e}"`
-              } else {
-                  return e
-              }
-          });
-
-          fonts.siteFontFamily = familyList.join(',') + ',';
-          
-          return fonts
-      }
   };
 
   var UI = {

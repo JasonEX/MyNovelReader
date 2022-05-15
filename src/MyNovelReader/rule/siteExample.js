@@ -88,12 +88,12 @@
     // 内容补丁，内容处理前（preProcessDoc）执行
     contentPatch: function ($doc) {
         // $doc = $(document)
-        // this = App
+        // this = Parser
     },
     // 异步内容补丁，需要执行异步代码时使用
     contentPatchAsync: async function ($doc) {
         // $doc = $(document)
-        // this = App
+        // this = Parser
 
     },
     // 获取内容，返回html
@@ -116,10 +116,12 @@
 
     // 每次页面加载完成时调用
     startLaunch: function ($doc) {
+        // $doc = $(document)
         // this = 该站点规则 Object
     },
     // 正文内容加载完成时调用
     startFilter: function ($doc) {
+        // $doc = $(document)
         // this = 该站点规则 Object
     },
     // 阅读界面加载完成时调用

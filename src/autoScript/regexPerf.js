@@ -190,7 +190,7 @@ const re = /a/gim
 const re2 =
   /想要看最新章节内容，请下载爱阅小说app，无广告免费阅读最新章节内容。网站已经不更新最新章节内容，最新章节内容已经在爱阅小说APP更新。/gim
 const re3 = /想要/gim
-const re4 = /^.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?/gim
+const re4 = /.*?(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)/gim
 
 suite(
   '正则性能测试',
@@ -198,9 +198,9 @@ suite(
   // add('re1', () => {
   //   data.replace(re, '')
   // }),
-  // add('re2', () => {
-  //   data.replace(re2, '')
-  // }),
+  add('re2', () => {
+    data.replace(re2, '')
+  }),
   // add('re3', () => {
   //   data.replace(re3, '')
   // }),
