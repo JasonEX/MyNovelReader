@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.1
+// @version        6.6.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -568,7 +568,7 @@
 
   // 等待 DOMContentLoaded 事件触发
   function DOMContentLoaded(){
-      return new Promise(resolve => $(() => resolve()))
+      return new Promise(resolve => $(resolve))
   }
 
   // GM_xmlhttpRequest Promise 版
@@ -811,6 +811,7 @@
           }
           if (unsafeWindow.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
               this.useRawContent = true;
+              this.cloneNode = true;
           }
       },
     },
@@ -3367,6 +3368,62 @@
     }
   });
 
+  // 等待页面上的元素出现
+  function observeElement(
+    doc,
+    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
+  ) {
+    var shouldAdd = false;
+    var $doc = $(doc);
+
+    var contentSize = $doc.find(contentSelector).size();
+
+    if (contentSize && !mutationSelector) {
+      shouldAdd = false;
+    } else {
+      var target = $doc.find(mutationSelector)[0];
+
+      if (target) {
+        var beforeTargetChilren = target.children.length;
+        C.log(`target.children.length = ${target.children.length}`, target);
+
+        if (mutationChildText) {
+          if (target.textContent.indexOf(mutationChildText) > -1) {
+            shouldAdd = true;
+          }
+        } else {
+          if (
+            mutationChildCount === undefined ||
+            target.children.length <= mutationChildCount
+          ) {
+            shouldAdd = true;
+          }
+        }
+      }
+    }
+
+    if (shouldAdd) {
+      return new Promise(resolve => {
+        var observer = new MutationObserver(function () {
+            target = $doc.find(mutationSelector)[0];
+            var nodeAdded = target.children.length > beforeTargetChilren;
+
+            if (nodeAdded) {
+                observer.disconnect();
+                resolve();
+            }
+        });
+
+        observer.observe(document, {
+            childList: true,
+            subtree: true
+        });
+
+        C.log('添加 MutationObserve 成功：', mutationSelector);
+    })
+    }
+  }
+
   var App$1 = {
       isEnabled: false,
       parsedPages: {},
@@ -3415,7 +3472,8 @@
               return;
           } else if (autoLaunch) {
               if (App$1.site.mutationSelector) { // 特殊的启动：等待js把内容生成完毕
-                  await App$1.addMutationObserve(document);
+                  // await App.addMutationObserve(document);
+                  await observeElement(document, App$1.site);
               } else if (App$1.site.timeout) { // 延迟启动
                   await sleep(App$1.site.timeout);
               }
@@ -3541,7 +3599,7 @@
               const debounced = _.debounce(() => {
                   observer.disconnect();
                   resolve();
-              }, 200);
+              }, 100);
               const observer = new MutationObserver(() => debounced());
               observer.observe(document,{
                   childList: true,
@@ -3788,6 +3846,7 @@
               L_setValue("mynoverlreader_disable_once", true);
 
               location.href = App$1.activeUrl || App$1.curPageUrl;
+              location.reload();
           } else {
               GM_setValue("auto_enable", true);
               L_removeValue("mynoverlreader_disable_once");
@@ -4038,7 +4097,11 @@
           }
       },
       scroll: async function() {
+          if (App$1.iframe && !App$1.iframe.style.display && Math.floor(App$1.getRemain() - unsafeWindow.innerHeight) < 0) {
+              window.scrollTo(0, document.body.scrollHeight - window.innerHeight * 2 + 50);
+          }
           if (!App$1.paused && !App$1.working && App$1.getRemain() < Setting.remain_height) {
+              App$1.working = true;
               await App$1.scrollForce();
           }
 
@@ -4185,7 +4248,6 @@
                 margin:0!important;\
                 padding:0!important;\
                 visibility:hidden!important;\
-                display:none!important;\
             ';
               i.src = nextUrl;
               i.addEventListener('load', App$1.iframeLoaded, false);
@@ -4214,7 +4276,8 @@
 
               var mutationSelector = App$1.site.mutationSelector;
               if (mutationSelector) {
-                  await App$1.addMutationObserve(doc);
+                  // await App.addMutationObserve(doc);
+                  await observeElement(doc, App$1.site);
               } else {
                   var timeout = App$1.site.timeout || 0;
                   await sleep(timeout);
@@ -4259,6 +4322,9 @@
               await App$1.afterLoad();
           } else {
               App$1.removeListener();
+              if (App$1.iframe) {
+                  App$1.iframe.style.display = 'none';
+              }
 
               var msg = (parser.isTheEnd == 'vip') ?
                   'vip 章节，需付费。' :
@@ -4396,7 +4462,7 @@
 
       init: function (info, doc, curPageUrl) {
           this.info = info || {};
-          this.doc = doc.cloneNode(true);
+          this.doc = info.cloneNode ? doc.cloneNode(true) : doc;
           this.$doc = $(this.doc);
           this.curPageUrl = curPageUrl || doc.URL;
           this._curPageHost = getUrlHost(this.curPageUrl);  // 当前页的 host，后面用到

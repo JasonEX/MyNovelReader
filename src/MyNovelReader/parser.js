@@ -39,7 +39,7 @@ Parser.prototype = {
 
     init: function (info, doc, curPageUrl) {
         this.info = info || {};
-        this.doc = doc.cloneNode(true);
+        this.doc = info.cloneNode ? doc.cloneNode(true) : doc;
         this.$doc = $(this.doc);
         this.curPageUrl = curPageUrl || doc.URL;
         this._curPageHost = getUrlHost(this.curPageUrl);  // 当前页的 host，后面用到

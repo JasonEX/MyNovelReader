@@ -114,7 +114,7 @@ export function sleep(timeout) {
 
 // 等待 DOMContentLoaded 事件触发
 export function DOMContentLoaded(){
-    return new Promise(resolve => $(() => resolve()))
+    return new Promise(resolve => $(resolve))
 }
 
 // GM_xmlhttpRequest Promise 版

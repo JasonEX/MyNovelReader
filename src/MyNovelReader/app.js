@@ -13,6 +13,7 @@ import downloader from './downloader'
 import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
 import './inject'
+import { observeElement } from './libdom'
 
 var App = {
     isEnabled: false,
@@ -62,7 +63,8 @@ var App = {
             return;
         } else if (autoLaunch) {
             if (App.site.mutationSelector) { // 特殊的启动：等待js把内容生成完毕
-                await App.addMutationObserve(document);
+                // await App.addMutationObserve(document);
+                await observeElement(document, App.site);
             } else if (App.site.timeout) { // 延迟启动
                 await sleep(App.site.timeout)
             }
@@ -189,7 +191,7 @@ var App = {
             const debounced = _.debounce(() => {
                 observer.disconnect()
                 resolve()
-            }, 200)
+            }, 100)
             const observer = new MutationObserver(() => debounced())
             observer.observe(document,{
                 childList: true,
@@ -436,6 +438,7 @@ var App = {
             L_setValue("mynoverlreader_disable_once", true);
 
             location.href = App.activeUrl || App.curPageUrl
+            location.reload()
         } else {
             GM_setValue("auto_enable", true);
             L_removeValue("mynoverlreader_disable_once");
@@ -686,7 +689,11 @@ var App = {
         }
     },
     scroll: async function() {
+        if (App.iframe && !App.iframe.style.display && Math.floor(App.getRemain() - unsafeWindow.innerHeight) < 0) {
+            window.scrollTo(0, document.body.scrollHeight - window.innerHeight * 2 + 50)
+        }
         if (!App.paused && !App.working && App.getRemain() < Setting.remain_height) {
+            App.working = true;
             await App.scrollForce()
         }
 
@@ -835,7 +842,6 @@ var App = {
                 margin:0!important;\
                 padding:0!important;\
                 visibility:hidden!important;\
-                display:none!important;\
             ';
             i.src = nextUrl;
             i.addEventListener('load', App.iframeLoaded, false);
@@ -864,7 +870,8 @@ var App = {
 
             var mutationSelector = App.site.mutationSelector;
             if (mutationSelector) {
-                await App.addMutationObserve(doc);
+                // await App.addMutationObserve(doc);
+                await observeElement(doc, App.site);
             } else {
                 var timeout = App.site.timeout || 0;
                 await sleep(timeout)
@@ -911,6 +918,9 @@ var App = {
             await App.afterLoad();
         } else {
             App.removeListener();
+            if (App.iframe) {
+                App.iframe.style.display = 'none';
+            }
 
             var msg = (parser.isTheEnd == 'vip') ?
                 'vip 章节，需付费。' :

@@ -1,5 +1,5 @@
 import getMiddleStr from '../utils/string'
-import { Request } from '../lib';
+import { C, Request } from '../lib';
 
 // ===== 自定义站点规则 =====
 
@@ -115,6 +115,7 @@ const sites = [
         }
         if (unsafeWindow.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
             this.useRawContent = true;
+            this.cloneNode = true;
         }
     },
   },
