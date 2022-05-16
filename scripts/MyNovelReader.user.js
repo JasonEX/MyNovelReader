@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.2
+// @version        6.6.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -559,11 +559,7 @@
   }
 
   function sleep(timeout) {
-      return new Promise(resolve => {
-          setTimeout(() => {
-              resolve();
-          }, timeout);
-      })
+      return new Promise(resolve => setTimeout(resolve, timeout))
   }
 
   // 等待 DOMContentLoaded 事件触发
@@ -765,7 +761,7 @@
           $doc.find('.read-content.j_readContent style').remove();
 
           const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2);
-          const style = $doc.find('link[href^=blob]').first().attr('class', 'noRemove');
+          const style = $doc.find('link[href^=blob]').attr('class', 'noRemove');
 
           if (style.length) {
               this.$content = $doc.find('.read-content.j_readContent')
@@ -804,12 +800,13 @@
           }
       },
       startLaunch($doc) {
-          if (unsafeWindow.g_data.chapter.vipStatus === 1) { // 是 vip 章节
+          const win = $doc[0].defaultView;
+          if (win.g_data.chapter.vipStatus === 1) { // 是 vip 章节
               this.useiframe = true;
               this.mutationSelector = '.read-content.j_readContent';
               this.mutationChildCount = 0;
           }
-          if (unsafeWindow.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
+          if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
               this.useRawContent = true;
               this.cloneNode = true;
           }
@@ -3424,6 +3421,139 @@
     }
   }
 
+  /** @enum {number} */
+  const RequestStatus = {
+    Idle: 0,
+    Loading: 1,
+    Finish: 2,
+    Fail: 3
+  };
+
+  class XmlRequest {
+    constructor() {
+      this.status = RequestStatus.Idle;
+      this.doc = null;
+      this.errorHandleFunction = () => {};
+    }
+
+    async send(url) {
+      this.status = RequestStatus.Loading;
+      const options = {
+        url,
+        method: 'GET',
+        overrideMimeType: 'text/html;charset=' + document.characterSet,
+        timeout: config.xhr_time
+      };
+
+      try {
+        const res = await Request(options);
+        this.doc = parseHTML(res.responseText);
+        this.status = RequestStatus.Finish;
+      } catch (e) {
+        this.status = RequestStatus.Fail;
+        this.errorHandleFunction();
+        console.error('XmlRequest 请求过程出现异常', e);
+      }
+    }
+
+    getDocument() {
+      this.status = RequestStatus.Idle;
+      return this.doc
+    }
+
+    setErrorHandle(func) {
+      this.errorHandleFunction = func;
+    }
+
+    hide() {}
+    show() {}
+  }
+
+  class IframeRequest {
+    constructor() {
+      this.status = RequestStatus.Idle;
+      this.iframe = createIframe(this.loaded.bind(this));
+      this.doc = null;
+      this.win = null;
+      this.errorHandleFunction = () => {};
+    }
+
+    get display () {
+      return !this.iframe.style.display
+    }
+
+    async send(url) {
+      this.status = RequestStatus.Loading;
+      if (!this.display) {
+        this.show();
+      }
+      this.iframe.setAttribute('src', url);
+    }
+
+    async loaded() {
+      this.doc = this.iframe.contentDocument;
+      this.win = this.iframe.contentWindow;
+
+      if (!this.doc) {
+        this.status = RequestStatus.Fail;
+        this.hide();
+        this.errorHandleFunction();
+        console.error('IframeRequest 请求过程出现异常');
+        return
+      }
+
+      this.win.scrollTo(0, this.doc.body.scrollHeight - this.win.innerHeight * 2);
+
+      if (App$1.site.startLaunch) {
+        App$1.site.startLaunch($(this.doc));
+      }
+
+      if (App$1.site.mutationSelector) {
+        await observeElement(this.doc, App$1.site);
+      } else {
+        const timeout = App$1.site.timeout || 0;
+        if (timeout) {
+          await sleep(timeout);
+        }
+      }
+      this.hide();
+      this.status = RequestStatus.Finish;
+    }
+
+    getDocument() {
+      this.status = RequestStatus.Idle;
+      return this.doc
+    }
+
+    setErrorHandle(func) {
+      this.errorHandleFunction = func;
+    }
+
+    hide() {
+      this.iframe.style.display = 'none';
+    }
+
+    show() {
+      this.iframe.style.display = '';
+    }
+  }
+
+  function createIframe(onload) {
+    const iframe = document.createElement('iframe');
+    iframe.name = 'mynovelreader-iframe';
+    iframe.style.cssText = `
+    width:100%;
+    height:${unsafeWindow.innerHeight}px;
+    border:0!important;
+    margin:0!important;
+    padding:0!important;
+    visibility:hidden!important;
+  `;
+    document.body.appendChild(iframe);
+    iframe.onload = onload;
+    return iframe
+  }
+
   var App$1 = {
       isEnabled: false,
       parsedPages: {},
@@ -3440,6 +3570,8 @@
       siteFontInfo: null,
       // 事件监听器和观察器数组
       listenerAndObserver: [],
+      /**@type {XmlRequest | IframeRequest} */
+      request: null,
 
       init: async function() {
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
@@ -3738,6 +3870,9 @@
           //     window.scrollTo(0, 0);
           // }
 
+          // 初始化 request
+          App$1.initRequest();
+
           // 有些图片网站高度随着图片加载而变长
           setTimeout(App$1.scroll, 1000);
 
@@ -3746,6 +3881,10 @@
           {
               await App$1.doRequest();
           }
+      },
+      initRequest: function() {
+          App$1.request = App$1.site.useiframe ? new IframeRequest() : new XmlRequest();
+          App$1.request.setErrorHandle(App$1.scrollForce);
       },
       prepDocument: function() {
           window.onload = window.onunload = function() {};
@@ -4097,11 +4236,10 @@
           }
       },
       scroll: async function() {
-          if (App$1.iframe && !App$1.iframe.style.display && Math.floor(App$1.getRemain() - unsafeWindow.innerHeight) < 0) {
+          if (App$1.request.display && Math.floor(App$1.getRemain() - unsafeWindow.innerHeight) < 0) {
               window.scrollTo(0, document.body.scrollHeight - window.innerHeight * 2 + 50);
           }
           if (!App$1.paused && !App$1.working && App$1.getRemain() < Setting.remain_height) {
-              App$1.working = true;
               await App$1.scrollForce();
           }
 
@@ -4112,10 +4250,22 @@
           App$1.updateCurFocusElement();
       },
       scrollForce: async function() {
-          if (App$1.tmpDoc) {
-              await App$1.loaded(App$1.tmpDoc);
-          } else {
-              await App$1.doRequest();
+          // if (App.tmpDoc) {
+          //     await App.loaded(App.tmpDoc);
+          // } else {
+          //     await App.doRequest();
+          // }
+          switch (App$1.request.status) {
+              case RequestStatus.Idle:
+                  await App$1.doRequest();
+                  break;
+              case RequestStatus.Finish:
+                  await App$1.loaded(App$1.request.getDocument());
+                  break;
+              case RequestStatus.Fail:
+                  const nextUrl = App$1.curPageUrl;
+                  App$1.$loading.html("<a href='" + nextUrl + "'>无法获取下一页，请手动点击</a>").show();
+                  break;
           }
       },
       updateCurFocusElement: function() { // 滚动激活章节列表
@@ -4168,7 +4318,7 @@
           return remain;
       },
       doRequest: async function() {
-          App$1.working = true;
+          // App.working = true;
           var nextUrl = App$1.requestUrl;
           App$1.lastRequestUrl = App$1.requestUrl;
 
@@ -4187,15 +4337,20 @@
               
               await sleep(App$1.site.nDelay || 0);
               
-              if (useiframe) {
-                  App$1.iframeRequest(nextUrl); // 不用 await
-              } else {
-  (async () => {
-                      const doc = await App$1.httpRequest(nextUrl);
-                      App$1.httpRequestDone(doc, nextUrl); // 不用 await
-                  })();
-              }
+              // if (useiframe) {
+              //     App.iframeRequest(nextUrl); // 不用 await
+              // } else {
+              //     ;(async () => {
+              //         const doc = await App.httpRequest(nextUrl)
+              //         App.httpRequestDone(doc, nextUrl) // 不用 await
+              //     })()
+              // }
+              C.log('获取下一页', nextUrl);
+              App$1.request.send(nextUrl);
       
+          } else {
+              App$1.request.hide();
+              // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
           }
       },
       httpRequest: async function(nextUrl) {
@@ -4322,9 +4477,6 @@
               await App$1.afterLoad();
           } else {
               App$1.removeListener();
-              if (App$1.iframe) {
-                  App$1.iframe.style.display = 'none';
-              }
 
               var msg = (parser.isTheEnd == 'vip') ?
                   'vip 章节，需付费。' :

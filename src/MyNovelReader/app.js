@@ -14,6 +14,7 @@ import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
 import './inject'
 import { observeElement } from './libdom'
+import { XmlRequest, IframeRequest, RequestStatus } from './request'
 
 var App = {
     isEnabled: false,
@@ -31,6 +32,8 @@ var App = {
     siteFontInfo: null,
     // 事件监听器和观察器数组
     listenerAndObserver: [],
+    /**@type {XmlRequest | IframeRequest} */
+    request: null,
 
     init: async function() {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
@@ -330,6 +333,9 @@ var App = {
         //     window.scrollTo(0, 0);
         // }
 
+        // 初始化 request
+        App.initRequest()
+
         // 有些图片网站高度随着图片加载而变长
         setTimeout(App.scroll, 1000);
 
@@ -338,6 +344,10 @@ var App = {
         if (config.PRELOADER) {
             await App.doRequest();
         }
+    },
+    initRequest: function() {
+        App.request = App.site.useiframe ? new IframeRequest() : new XmlRequest()
+        App.request.setErrorHandle(App.scrollForce)
     },
     prepDocument: function() {
         window.onload = window.onunload = function() {};
@@ -689,11 +699,10 @@ var App = {
         }
     },
     scroll: async function() {
-        if (App.iframe && !App.iframe.style.display && Math.floor(App.getRemain() - unsafeWindow.innerHeight) < 0) {
+        if (App.request.display && Math.floor(App.getRemain() - unsafeWindow.innerHeight) < 0) {
             window.scrollTo(0, document.body.scrollHeight - window.innerHeight * 2 + 50)
         }
         if (!App.paused && !App.working && App.getRemain() < Setting.remain_height) {
-            App.working = true;
             await App.scrollForce()
         }
 
@@ -704,10 +713,24 @@ var App = {
         App.updateCurFocusElement();
     },
     scrollForce: async function() {
-        if (App.tmpDoc) {
-            await App.loaded(App.tmpDoc);
-        } else {
-            await App.doRequest();
+        // if (App.tmpDoc) {
+        //     await App.loaded(App.tmpDoc);
+        // } else {
+        //     await App.doRequest();
+        // }
+        switch (App.request.status) {
+            case RequestStatus.Idle:
+                await App.doRequest();
+                break;
+            case RequestStatus.Finish:
+                await App.loaded(App.request.getDocument());
+                break;
+            case RequestStatus.Fail:
+                const nextUrl = App.curPageUrl
+                App.$loading.html("<a href='" + nextUrl + "'>无法获取下一页，请手动点击</a>").show();
+                break;
+            default:
+                break;
         }
     },
     updateCurFocusElement: function() { // 滚动激活章节列表
@@ -760,7 +783,7 @@ var App = {
         return remain;
     },
     doRequest: async function() {
-        App.working = true;
+        // App.working = true;
         var nextUrl = App.requestUrl;
         App.lastRequestUrl = App.requestUrl;
 
@@ -779,16 +802,19 @@ var App = {
             
             await sleep(App.site.nDelay || 0)
             
-            if (useiframe) {
-                App.iframeRequest(nextUrl); // 不用 await
-            } else {
-                ;(async () => {
-                    const doc = await App.httpRequest(nextUrl)
-                    App.httpRequestDone(doc, nextUrl) // 不用 await
-                })()
-            }
+            // if (useiframe) {
+            //     App.iframeRequest(nextUrl); // 不用 await
+            // } else {
+            //     ;(async () => {
+            //         const doc = await App.httpRequest(nextUrl)
+            //         App.httpRequestDone(doc, nextUrl) // 不用 await
+            //     })()
+            // }
+            C.log('获取下一页', nextUrl)
+            App.request.send(nextUrl)
     
         } else {
+            App.request.hide()
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
         }
     },
@@ -918,9 +944,6 @@ var App = {
             await App.afterLoad();
         } else {
             App.removeListener();
-            if (App.iframe) {
-                App.iframe.style.display = 'none';
-            }
 
             var msg = (parser.isTheEnd == 'vip') ?
                 'vip 章节，需付费。' :

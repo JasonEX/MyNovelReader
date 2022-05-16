@@ -69,7 +69,7 @@ const sites = [
         $doc.find('.read-content.j_readContent style').remove()
 
         const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2)
-        const style = $doc.find('link[href^=blob]').first().attr('class', 'noRemove')
+        const style = $doc.find('link[href^=blob]').attr('class', 'noRemove')
 
         if (style.length) {
             this.$content = $doc.find('.read-content.j_readContent')
@@ -108,12 +108,13 @@ const sites = [
         }
     },
     startLaunch($doc) {
-        if (unsafeWindow.g_data.chapter.vipStatus === 1) { // 是 vip 章节
+        const win = $doc[0].defaultView
+        if (win.g_data.chapter.vipStatus === 1) { // 是 vip 章节
             this.useiframe = true;
             this.mutationSelector = '.read-content.j_readContent'
             this.mutationChildCount = 0
         }
-        if (unsafeWindow.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
+        if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
             this.useRawContent = true;
             this.cloneNode = true;
         }

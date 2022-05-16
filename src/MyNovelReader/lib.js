@@ -105,11 +105,7 @@ export function getUrlHost(url) {
 }
 
 export function sleep(timeout) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve()
-        }, timeout)
-    })
+    return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
 // 等待 DOMContentLoaded 事件触发
