@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.3
+// @version        6.6.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3429,15 +3429,31 @@
     Fail: 3
   };
 
-  class XmlRequest {
+  class BaseRequest {
     constructor() {
+      this.errorHandle = () => {};
+      this.finishHnadle = () => {};
+    }
+
+    setErrorHandle(func) {
+      this.errorHandle = func;
+    }
+
+    setFinishHandle(func) {
+      this.finishHnadle = func;
+    }
+  }
+
+  class XmlRequest extends BaseRequest {
+    constructor() {
+      super();
       this.status = RequestStatus.Idle;
       this.doc = null;
-      this.errorHandleFunction = () => {};
     }
 
     async send(url) {
       this.status = RequestStatus.Loading;
+      this.doc = null;
       const options = {
         url,
         method: 'GET',
@@ -3445,14 +3461,29 @@
         timeout: config.xhr_time
       };
 
-      try {
-        const res = await Request(options);
-        this.doc = parseHTML(res.responseText);
-        this.status = RequestStatus.Finish;
-      } catch (e) {
+      let retry = 3;
+      let error = null;
+
+      while (retry--) {
+        try {
+          const res = await Request(options);
+          this.doc = parseHTML(res.responseText);
+          this.status = RequestStatus.Finish;
+          this.finishHnadle();
+          break
+        } catch (e) {
+          error = e;
+          console.error(
+            `XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`,
+            error
+          );
+        }
+      }
+
+      if (!this.doc) {
         this.status = RequestStatus.Fail;
-        this.errorHandleFunction();
-        console.error('XmlRequest 请求过程出现异常', e);
+        this.errorHandle();
+        console.error('XmlRequest 请求失败', error);
       }
     }
 
@@ -3461,29 +3492,27 @@
       return this.doc
     }
 
-    setErrorHandle(func) {
-      this.errorHandleFunction = func;
-    }
-
     hide() {}
     show() {}
   }
 
-  class IframeRequest {
+  class IframeRequest extends BaseRequest {
     constructor() {
+      super();
       this.status = RequestStatus.Idle;
       this.iframe = createIframe(this.loaded.bind(this));
       this.doc = null;
       this.win = null;
-      this.errorHandleFunction = () => {};
     }
 
-    get display () {
+    get display() {
       return !this.iframe.style.display
     }
 
     async send(url) {
       this.status = RequestStatus.Loading;
+      this.doc = this.win = null;
+      
       if (!this.display) {
         this.show();
       }
@@ -3497,7 +3526,7 @@
       if (!this.doc) {
         this.status = RequestStatus.Fail;
         this.hide();
-        this.errorHandleFunction();
+        this.errorHandle();
         console.error('IframeRequest 请求过程出现异常');
         return
       }
@@ -3518,15 +3547,12 @@
       }
       this.hide();
       this.status = RequestStatus.Finish;
+      this.finishHnadle();
     }
 
     getDocument() {
       this.status = RequestStatus.Idle;
       return this.doc
-    }
-
-    setErrorHandle(func) {
-      this.errorHandleFunction = func;
     }
 
     hide() {
@@ -3885,6 +3911,7 @@
       initRequest: function() {
           App$1.request = App$1.site.useiframe ? new IframeRequest() : new XmlRequest();
           App$1.request.setErrorHandle(App$1.scrollForce);
+          App$1.request.setFinishHandle(App$1.scroll);
       },
       prepDocument: function() {
           window.onload = window.onunload = function() {};

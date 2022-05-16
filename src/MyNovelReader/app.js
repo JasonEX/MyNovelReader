@@ -348,6 +348,7 @@ var App = {
     initRequest: function() {
         App.request = App.site.useiframe ? new IframeRequest() : new XmlRequest()
         App.request.setErrorHandle(App.scrollForce)
+        App.request.setFinishHandle(App.scroll)
     },
     prepDocument: function() {
         window.onload = window.onunload = function() {};

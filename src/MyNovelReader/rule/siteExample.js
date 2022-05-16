@@ -85,7 +85,7 @@
     contentHandle: false, // 是否对内容进行特殊处理，诸如拼音字修复等，诸如起点等网站可禁用，可提高处理性能
     useRawContent: false, // 使用原始内容，即完全关闭 handleContentText 内容处理函数，自定义替换规则也会被关闭，可提高处理性能
 
-    cloneNode:false, // 克隆文档后再进行处理，可以隔离处理过程中对文档的影响，注意有些元素无法克隆
+    cloneNode: false, // 克隆文档后再进行处理，可以隔离处理过程中对文档的影响，注意有些元素无法克隆
 
     // 内容补丁，内容处理前（preProcessDoc）执行
     contentPatch: function ($doc) {

@@ -11,15 +11,31 @@ export const RequestStatus = {
   Fail: 3
 }
 
-export class XmlRequest {
+class BaseRequest {
   constructor() {
+    this.errorHandle = () => {}
+    this.finishHnadle = () => {}
+  }
+
+  setErrorHandle(func) {
+    this.errorHandle = func
+  }
+
+  setFinishHandle(func) {
+    this.finishHnadle = func
+  }
+}
+
+export class XmlRequest extends BaseRequest {
+  constructor() {
+    super()
     this.status = RequestStatus.Idle
     this.doc = null
-    this.errorHandleFunction = () => {}
   }
 
   async send(url) {
     this.status = RequestStatus.Loading
+    this.doc = null
     const options = {
       url,
       method: 'GET',
@@ -27,14 +43,29 @@ export class XmlRequest {
       timeout: config.xhr_time
     }
 
-    try {
-      const res = await Request(options)
-      this.doc = parseHTML(res.responseText)
-      this.status = RequestStatus.Finish
-    } catch (e) {
+    let retry = 3
+    let error = null
+
+    while (retry--) {
+      try {
+        const res = await Request(options)
+        this.doc = parseHTML(res.responseText)
+        this.status = RequestStatus.Finish
+        this.finishHnadle()
+        break
+      } catch (e) {
+        error = e
+        console.error(
+          `XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`,
+          error
+        )
+      }
+    }
+
+    if (!this.doc) {
       this.status = RequestStatus.Fail
-      this.errorHandleFunction()
-      console.error('XmlRequest 请求过程出现异常', e)
+      this.errorHandle()
+      console.error('XmlRequest 请求失败', error)
     }
   }
 
@@ -43,29 +74,27 @@ export class XmlRequest {
     return this.doc
   }
 
-  setErrorHandle(func) {
-    this.errorHandleFunction = func
-  }
-
   hide() {}
   show() {}
 }
 
-export class IframeRequest {
+export class IframeRequest extends BaseRequest {
   constructor() {
+    super()
     this.status = RequestStatus.Idle
     this.iframe = createIframe(this.loaded.bind(this))
     this.doc = null
     this.win = null
-    this.errorHandleFunction = () => {}
   }
 
-  get display () {
+  get display() {
     return !this.iframe.style.display
   }
 
   async send(url) {
     this.status = RequestStatus.Loading
+    this.doc = this.win = null
+    
     if (!this.display) {
       this.show()
     }
@@ -79,7 +108,7 @@ export class IframeRequest {
     if (!this.doc) {
       this.status = RequestStatus.Fail
       this.hide()
-      this.errorHandleFunction()
+      this.errorHandle()
       console.error('IframeRequest 请求过程出现异常')
       return
     }
@@ -100,15 +129,12 @@ export class IframeRequest {
     }
     this.hide()
     this.status = RequestStatus.Finish
+    this.finishHnadle()
   }
 
   getDocument() {
     this.status = RequestStatus.Idle
     return this.doc
-  }
-
-  setErrorHandle(func) {
-    this.errorHandleFunction = func
   }
 
   hide() {
