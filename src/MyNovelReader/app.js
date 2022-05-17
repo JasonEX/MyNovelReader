@@ -46,7 +46,7 @@ var App = {
         try {
             exportFunction(readx, unsafeWindow, {defineAs: "readx"});
         } catch(ex) {
-            console.error('无法定义 readx 函数');
+            C.error('无法定义 readx 函数');
         }
 
 
@@ -83,7 +83,7 @@ var App = {
         try {
             customRules = eval(Setting.customSiteinfo);
         } catch (e) {
-            console.error('载入自定义站点配置错误', e);
+            C.error('载入自定义站点配置错误', e);
         }
 
         if (_.isArray(customRules)) {
@@ -218,7 +218,7 @@ var App = {
                 App.site.startFilter();
                 C.log('run startFilter function success');
             } catch (ex) {
-                console.error('运行 startFilter function 错误', ex);
+                C.error('运行 startFilter function 错误', ex);
             }
         }
 
@@ -246,7 +246,7 @@ var App = {
                 await UI.addButton();
             }
             $('.readerbtn').text('无内容')
-            console.error("当前页面没有找到内容");
+            C.error("当前页面没有找到内容");
         }
 
         // 初始化, 取消页面限制等
@@ -772,7 +772,7 @@ var App = {
                 try {
                     unsafeWindow.history.pushState(null, curTitle, url);
                 } catch (e) {
-                    console.error('添加下一页到历史记录失败', e);
+                    C.error('添加下一页到历史记录失败', e);
                 }
             }
         }
@@ -846,13 +846,13 @@ var App = {
         }
 
         if (App.parsedPages[nextUrl] >= 3) {
-            console.error('同一个链接已获取3次', nextUrl)
+            C.error('同一个链接已获取3次', nextUrl)
             App.$loading.html("<a href='" + nextUrl  + "'>无法获取下一页，请手动点击</a>").show();
             return;
         }
 
         // 无内容再次尝试获取
-        console.error('连接超时, 再次获取');
+        C.error('连接超时, 再次获取');
         doc = await App.httpRequest(nextUrl)
         await App.httpRequestDone(doc, nextUrl)
     },

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.4
+// @version        6.6.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2931,7 +2931,7 @@
     }
 
     if (!nextUrl || isEnd) {
-        console.log('全部获取完毕');
+        C.log('全部获取完毕');
         finish(parser);
         return;
     }
@@ -2944,7 +2944,7 @@
     sleep(config.download_delay)
 
     (async function() {
-      console.log('[存为txt]正在获取：', nextUrl);
+      C.log('[存为txt]正在获取：', nextUrl);
       const doc = await App$1.httpRequest(nextUrl);
 
       if (doc) {
@@ -2952,14 +2952,14 @@
           await par.getAll();
           await getOnePage(par);
       } else {
-          console.error('超时或连接出错');
+          C.error('超时或连接出错');
           finish();
       }
 
     })();
   }
   async function run(cachedParsers=[]) {
-    console.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`);
+    C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`);
 
     cachedParsers.forEach(toTxt);
 
@@ -3473,7 +3473,7 @@
           break
         } catch (e) {
           error = e;
-          console.error(
+          C.error(
             `XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`,
             error
           );
@@ -3483,7 +3483,7 @@
       if (!this.doc) {
         this.status = RequestStatus.Fail;
         this.errorHandle();
-        console.error('XmlRequest 请求失败', error);
+        C.error('XmlRequest 请求失败', error);
       }
     }
 
@@ -3527,7 +3527,7 @@
         this.status = RequestStatus.Fail;
         this.hide();
         this.errorHandle();
-        console.error('IframeRequest 请求过程出现异常');
+        C.error('IframeRequest 请求过程出现异常');
         return
       }
 
@@ -3610,7 +3610,7 @@
           try {
               exportFunction(readx, unsafeWindow, {defineAs: "readx"});
           } catch(ex) {
-              console.error('无法定义 readx 函数');
+              C.error('无法定义 readx 函数');
           }
 
 
@@ -3647,7 +3647,7 @@
           try {
               customRules = eval(Setting.customSiteinfo);
           } catch (e) {
-              console.error('载入自定义站点配置错误', e);
+              C.error('载入自定义站点配置错误', e);
           }
 
           if (_.isArray(customRules)) {
@@ -3781,7 +3781,7 @@
                   App$1.site.startFilter();
                   C.log('run startFilter function success');
               } catch (ex) {
-                  console.error('运行 startFilter function 错误', ex);
+                  C.error('运行 startFilter function 错误', ex);
               }
           }
 
@@ -3809,7 +3809,7 @@
                   await UI.addButton();
               }
               $('.readerbtn').text('无内容');
-              console.error("当前页面没有找到内容");
+              C.error("当前页面没有找到内容");
           }
 
           // 初始化, 取消页面限制等
@@ -4333,7 +4333,7 @@
                   try {
                       unsafeWindow.history.pushState(null, curTitle, url);
                   } catch (e) {
-                      console.error('添加下一页到历史记录失败', e);
+                      C.error('添加下一页到历史记录失败', e);
                   }
               }
           }
@@ -4407,13 +4407,13 @@
           }
 
           if (App$1.parsedPages[nextUrl] >= 3) {
-              console.error('同一个链接已获取3次', nextUrl);
+              C.error('同一个链接已获取3次', nextUrl);
               App$1.$loading.html("<a href='" + nextUrl  + "'>无法获取下一页，请手动点击</a>").show();
               return;
           }
 
           // 无内容再次尝试获取
-          console.error('连接超时, 再次获取');
+          C.error('连接超时, 再次获取');
           doc = await App$1.httpRequest(nextUrl);
           await App$1.httpRequestDone(doc, nextUrl);
       },
@@ -5025,7 +5025,7 @@
 
           if (!this.$content || this.$content.size() <= 0) {
               // callback(this);
-              console.error('没有找到内容', this.$doc);
+              C.error('没有找到内容', this.$doc);
               return;
           }
 
@@ -5073,7 +5073,7 @@
                   text = text.replace(toRE(reg), "");
                   C.log('去除内容中的标题', reg);
               } catch(e) {
-                  console.error(e);
+                  C.error(e);
               }
           }
 
@@ -5242,7 +5242,7 @@
           try {
               content = this.contentCustomReplace(content);
           } catch(ex) {
-              console.error('自定义替换错误', ex);
+              C.error('自定义替换错误', ex);
           }
 
           const finalContents = content.split('\n');

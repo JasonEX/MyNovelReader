@@ -55,7 +55,7 @@ export class XmlRequest extends BaseRequest {
         break
       } catch (e) {
         error = e
-        console.error(
+        C.error(
           `XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`,
           error
         )
@@ -65,7 +65,7 @@ export class XmlRequest extends BaseRequest {
     if (!this.doc) {
       this.status = RequestStatus.Fail
       this.errorHandle()
-      console.error('XmlRequest 请求失败', error)
+      C.error('XmlRequest 请求失败', error)
     }
   }
 
@@ -109,7 +109,7 @@ export class IframeRequest extends BaseRequest {
       this.status = RequestStatus.Fail
       this.hide()
       this.errorHandle()
-      console.error('IframeRequest 请求过程出现异常')
+      C.error('IframeRequest 请求过程出现异常')
       return
     }
 

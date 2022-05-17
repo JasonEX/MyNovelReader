@@ -4,7 +4,7 @@ import { loading } from './components/message'
 import App from './app'
 import {saveAs, isWindows} from './utils'
 import getNumFromChapterTitle from './utils/getNumFromChapterTitle'
-import { sleep } from './lib'
+import { sleep, C } from './lib'
 
 const chapters = [];
 
@@ -71,7 +71,7 @@ async function getOnePage(parser, nextUrl) {
   }
 
   if (!nextUrl || isEnd) {
-      console.log('全部获取完毕');
+      C.log('全部获取完毕');
       finish(parser);
       return;
   }
@@ -84,7 +84,7 @@ async function getOnePage(parser, nextUrl) {
   sleep(config.download_delay)
 
   (async function() {
-    console.log('[存为txt]正在获取：', nextUrl)
+    C.log('[存为txt]正在获取：', nextUrl)
     const doc = await App.httpRequest(nextUrl);
 
     if (doc) {
@@ -92,7 +92,7 @@ async function getOnePage(parser, nextUrl) {
         await par.getAll()
         await getOnePage(par)
     } else {
-        console.error('超时或连接出错');
+        C.error('超时或连接出错');
         finish();
     }
 
@@ -100,7 +100,7 @@ async function getOnePage(parser, nextUrl) {
 };
 
 async function run(cachedParsers=[]) {
-  console.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`)
+  C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`)
 
   cachedParsers.forEach(toTxt);
 

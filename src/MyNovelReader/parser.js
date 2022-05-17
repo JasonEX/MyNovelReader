@@ -424,7 +424,7 @@ Parser.prototype = {
 
         if (!this.$content || this.$content.size() <= 0) {
             // callback(this);
-            console.error('没有找到内容', this.$doc);
+            C.error('没有找到内容', this.$doc);
             return;
         }
 
@@ -472,7 +472,7 @@ Parser.prototype = {
                 text = text.replace(toRE(reg), "");
                 C.log('去除内容中的标题', reg);
             } catch(e) {
-                console.error(e);
+                C.error(e);
             }
         }
 
@@ -641,7 +641,7 @@ Parser.prototype = {
         try {
             content = this.contentCustomReplace(content);
         } catch(ex) {
-            console.error('自定义替换错误', ex);
+            C.error('自定义替换错误', ex);
         }
 
         const finalContents = content.split('\n')
