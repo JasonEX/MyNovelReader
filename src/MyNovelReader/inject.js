@@ -1,6 +1,17 @@
-import App from './app'
+import { C } from './lib'
 
-const { HTMLElement, EventTarget, MutationObserver, Navigator, Proxy, Reflect, Object } = unsafeWindow
+const {
+  HTMLElement,
+  EventTarget,
+  MutationObserver,
+  Navigator,
+  Proxy,
+  Reflect,
+  Object,
+  setTimeout,
+  clearTimeout,
+  console
+} = unsafeWindow
 
 // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
 const _focus = HTMLElement.prototype.focus
@@ -8,11 +19,12 @@ HTMLElement.prototype.focus = function focus() {
   _focus.call(this, { preventScroll: true })
 }
 
-// Hook addEventListener 以便需要时移除事件监听器
+const clenaupEventArray = []
+
 const _addEventListener = EventTarget.prototype.addEventListener
 function addEventListener(type, listener, options) {
   _addEventListener.apply(this, arguments)
-  App.listenerAndObserver.push(() => {
+  clenaupEventArray.push(() => {
     try {
       this.removeEventListener(...arguments)
     } catch (e) {}
@@ -21,12 +33,11 @@ function addEventListener(type, listener, options) {
 EventTarget.prototype.addEventListener = addEventListener
 document.addEventListener = addEventListener
 
-// Hook MutationObserver 以便需要时移除观察器
 const _observe = MutationObserver.prototype.observe
 const _disconnect = MutationObserver.prototype.disconnect
 function observe(target, options) {
   _observe.apply(this, arguments)
-  App.listenerAndObserver.push(() => {
+  clenaupEventArray.push(() => {
     try {
       _disconnect.apply(this, arguments)
     } catch (e) {}
@@ -34,13 +45,34 @@ function observe(target, options) {
 }
 MutationObserver.prototype.observe = observe
 
+export function cleanupEvents(iframe) {
+  let func
+  const length = clenaupEventArray.length
+  while ((func = clenaupEventArray.pop())) func()
+  C.log(`${iframe ? '[iframe] ' : ''}已移除 ${length} 个事件监听器和观察器`)
+
+  var highestTimeoutId = setTimeout(';')
+  for (var i = 0; i < highestTimeoutId; i++) {
+    clearTimeout(i)
+  }
+
+  try {
+    unsafeWindow.$(unsafeWindow).off()
+    unsafeWindow.$(document).off()
+  } catch (e) {}
+}
+
+if (window.name === 'mynovelreader-iframe') {
+  unsafeWindow.$cleanupEvents = cleanupEvents
+}
+
 Object.defineProperty(Navigator.prototype, 'platform', {
   get: function platform() {
     return ''
   }
 })
 
-unsafeWindow.console.clear = () => {}
+console.clear = () => {}
 
 const proxies = new WeakMap()
 

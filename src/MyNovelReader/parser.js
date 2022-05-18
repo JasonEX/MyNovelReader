@@ -6,7 +6,6 @@ import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { toCDB } from './rule/replaceNormalize'
-import App from './app'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -47,6 +46,11 @@ Parser.prototype = {
         // 设置初始值
         this.isTheEnd = false;
         this.isSection = false;
+
+        if (doc.defaultView && doc.defaultView.$cleanupEvents) {
+            doc.defaultView.$cleanupEvents(true);
+        }
+        
     },
     applyPatch: function(){
         var contentPatch = this.info.contentPatch;

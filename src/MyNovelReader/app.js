@@ -15,6 +15,7 @@ import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
 import './inject'
 import { observeElement } from './libdom'
 import { XmlRequest, IframeRequest, RequestStatus } from './request'
+import { cleanupEvents } from './inject'
 
 var App = {
     isEnabled: false,
@@ -30,8 +31,6 @@ var App = {
     curFocusIndex: 1,
     // 站点字体信息
     siteFontInfo: null,
-    // 事件监听器和观察器数组
-    listenerAndObserver: [],
     /**@type {XmlRequest | IframeRequest} */
     request: null,
 
@@ -234,6 +233,8 @@ var App = {
             }
         }
 
+        cleanupEvents()
+
         var parser = new Parser(App.site, document);
         var hasContent = !!parser.hasContent();
         if (hasContent) {
@@ -374,21 +375,6 @@ var App = {
             elmOne.onmousedown = null;
         }
 
-        // 正确的移除所有的事件绑定，需要调用绑定事件的jQuery
-        try {
-            unsafeWindow.$(unsafeWindow).off()
-            unsafeWindow.$(document).off()
-        } catch (e) {}
-        
-        // 移除所有事件监听器和观察器
-        App.listenerAndObserver.forEach(remove => remove());
-        C.log(`已移除 ${App.listenerAndObserver.length} 个事件监听器和观察器`)
-        
-        // 清理所有定时器
-        var highestTimeoutId = unsafeWindow.setTimeout(';')
-        for (var i = 0; i < highestTimeoutId; i++) {
-            unsafeWindow.clearTimeout(i)
-        }
 
         // remove body style
         $('link[rel="stylesheet"], script').remove();
