@@ -38,7 +38,7 @@ Parser.prototype = {
 
     init: function (info, doc, curPageUrl) {
         this.info = info || {};
-        this.doc = info.cloneNode ? doc.cloneNode(true) : doc;
+        this.doc = (info.cloneNode && doc.defaultView) ? doc.cloneNode(true) : doc
         this.$doc = $(this.doc);
         this.curPageUrl = curPageUrl || doc.URL;
         this._curPageHost = getUrlHost(this.curPageUrl);  // 当前页的 host，后面用到
@@ -501,10 +501,9 @@ Parser.prototype = {
         // 尝试删除正文中的章节标题
         $div.find('h1, h2, h3').remove()
 
-        if (this.info.useSiteFont) {
-            // 删除 i 标签，通常用于自定义字体设置
-            unwrapTag($div[0], 'i')
-        }
+        // 删除带默认样式的标签
+        const styledTags = ['i', 'b', 'em', 'strong']        
+        styledTags.forEach(name => unwrapTag($div[0], name))
 
         // contentRemove
         $div.find(Rule.contentRemove).remove();
