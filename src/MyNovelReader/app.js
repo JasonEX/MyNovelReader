@@ -243,9 +243,9 @@ var App = {
             await parser.getAll();
             await App.processPage(parser);
         } else {
-            if (!$('.readerbtn').length) {
-                await UI.addButton();
-            }
+            App.isEnabled = true
+            $('.readerbtn').remove()
+            await UI.addButton();
             $('.readerbtn').text('无内容')
             C.error("当前页面没有找到内容");
         }
