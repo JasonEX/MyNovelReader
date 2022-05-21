@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.6.9
+// @version        6.7.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -4597,6 +4597,8 @@
     Fail: 3
   };
 
+  const iframeHeight = unsafeWindow.innerHeight;
+
   class BaseRequest {
     constructor() {
       this.errorHandle = () => {};
@@ -4737,7 +4739,7 @@
     iframe.name = 'mynovelreader-iframe';
     iframe.style.cssText = `
     width:100%;
-    height:${unsafeWindow.innerHeight}px;
+    height:${iframeHeight}px;
     border:0!important;
     margin:0!important;
     padding:0!important;
@@ -5416,8 +5418,8 @@
           }
       },
       scroll: async function() {
-          if (App$1.request.display && Math.floor(App$1.getRemain() - unsafeWindow.innerHeight) < 0) {
-              window.scrollTo(0, document.body.scrollHeight - window.innerHeight * 2 + 50);
+          if (App$1.request.display && Math.floor(App$1.getRemain() - iframeHeight) < 0) {
+              window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 50);
           }
           if (!App$1.paused && !App$1.working && App$1.getRemain() < Setting.remain_height) {
               await App$1.scrollForce();
@@ -5922,6 +5924,7 @@
                 font: 12px/1.5 "微软雅黑","宋体",Arial;\
                 cursor: pointer;\
                 box-sizing: content-box;\
+                letter-spacing: normal;\
             }\
         ');
 

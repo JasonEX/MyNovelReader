@@ -14,7 +14,7 @@ import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
 import './inject'
 import { observeElement } from './libdom'
-import { XmlRequest, IframeRequest, RequestStatus } from './request'
+import { XmlRequest, IframeRequest, RequestStatus, iframeHeight } from './request'
 import { cleanupEvents } from './inject'
 
 var App = {
@@ -686,8 +686,8 @@ var App = {
         }
     },
     scroll: async function() {
-        if (App.request.display && Math.floor(App.getRemain() - unsafeWindow.innerHeight) < 0) {
-            window.scrollTo(0, document.body.scrollHeight - window.innerHeight * 2 + 50)
+        if (App.request.display && Math.floor(App.getRemain() - iframeHeight) < 0) {
+            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 50)
         }
         if (!App.paused && !App.working && App.getRemain() < Setting.remain_height) {
             await App.scrollForce()

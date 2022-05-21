@@ -168,6 +168,7 @@ var UI = {
                 font: 12px/1.5 "微软雅黑","宋体",Arial;\
                 cursor: pointer;\
                 box-sizing: content-box;\
+                letter-spacing: normal;\
             }\
         ');
 

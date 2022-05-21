@@ -11,6 +11,8 @@ export const RequestStatus = {
   Fail: 3
 }
 
+export const iframeHeight = unsafeWindow.innerHeight
+
 class BaseRequest {
   constructor() {
     this.errorHandle = () => {}
@@ -151,7 +153,7 @@ function createIframe(onload) {
   iframe.name = 'mynovelreader-iframe'
   iframe.style.cssText = `
     width:100%;
-    height:${unsafeWindow.innerHeight}px;
+    height:${iframeHeight}px;
     border:0!important;
     margin:0!important;
     padding:0!important;
