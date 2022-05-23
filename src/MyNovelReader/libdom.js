@@ -37,21 +37,30 @@ export function observeElement(
   if (shouldAdd) {
     return new Promise(resolve => {
       var observer = new MutationObserver(function () {
-          target = $doc.find(mutationSelector)[0]
-          var nodeAdded = target.children.length > beforeTargetChilren
+        target = $doc.find(mutationSelector)[0]
+        var nodeAdded = target.children.length > beforeTargetChilren
 
-          if (nodeAdded) {
-              observer.disconnect()
-              resolve()
-          }
+        if (nodeAdded) {
+          observer.disconnect()
+          resolve()
+        }
       })
 
       observer.observe(document, {
-          childList: true,
-          subtree: true
+        childList: true,
+        subtree: true
       })
 
       C.log('添加 MutationObserve 成功：', mutationSelector)
-  })
+    })
+  }
+}
+
+// 将非p标签段落转换为p标签段落
+export function toParagraphNode(node) {
+  if (node.tagName && node.tagName !== 'P') {
+    const p = document.createElement('p')
+    node.childNodes.forEach(node => p.appendChild(node))
+    node.replaceWith(p)
   }
 }

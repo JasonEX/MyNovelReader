@@ -6,6 +6,7 @@ import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { toCDB } from './rule/replaceNormalize'
+import { toParagraphNode } from './libdom'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -502,7 +503,7 @@ Parser.prototype = {
         $div.find('h1, h2, h3').remove()
 
         // 删除带默认样式的标签
-        const styledTags = ['i', 'b', 'em', 'strong']        
+        const styledTags = ['i', 'b', 'em', 'strong']
         styledTags.forEach(name => unwrapTag($div[0], name))
 
         // contentRemove
@@ -648,6 +649,10 @@ Parser.prototype = {
         }
 
         const finalContents = content.split('\n')
+
+        textNodes
+            .filter(node => node.parentNode !== dom)
+            .forEach(node => toParagraphNode(node.parentNode))
 
         if (finalContents.length <= textNodes.length) {
             textNodes.forEach((node, index) => {

@@ -759,7 +759,8 @@ const sites = [
           '[UＵ]*看书[（\\(].*?[）\\)]文字首发。',
           '请记住本书首发域名：。笔趣阁手机版阅读网址：',
         //   '\\(\\)',
-      ]
+      ],
+      contentRemove: '.ad_content'
   },
   {siteName: "天涯武库",
       url: /wx\.ty2016\.com\/.+\.html$/,

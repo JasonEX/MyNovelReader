@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.7.0
+// @version        6.7.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1451,7 +1451,8 @@
             '[UＵ]*看书[（\\(].*?[）\\)]文字首发。',
             '请记住本书首发域名：。笔趣阁手机版阅读网址：',
           //   '\\(\\)',
-        ]
+        ],
+        contentRemove: '.ad_content'
     },
     {siteName: "天涯武库",
         url: /wx\.ty2016\.com\/.+\.html$/,
@@ -2288,6 +2289,8 @@
     
   };
 
+  const r = String.raw;
+
   const replaceAll = [
     // 长文字替换
     // 排序代码：newArr = arr.sort((a, b) => { var diff = a.charCodeAt(1) - b.charCodeAt(1); if (diff == 0) return b.length - a.length; return diff; })
@@ -2375,6 +2378,10 @@
     '亲,点击进去,给个好评呗,分数越高更新越快,据说给新打满分的最后都找到了漂亮的老婆哦!',
     '猫扑中文',
     '点击下载本站APP,海量小说，免费畅读！',
+    ', 报送后维护人员会在两分钟内校正章节内容,请耐心等待。',
+    '举报后请耐心等待,并刷新页面。',
+    r`try\{mad1\('gad2'\);\} catch\(ex\)\{\}`,
+    '：。：',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -2416,11 +2423,12 @@
     '记住手机版网址.*',
     // '.*关注微信公众号.*',
     '天才一秒记住本站地址：.*?最快更新！无广告！',
+    '先定个小目标，比如1秒记住：.*',
     '(?:天才)?一秒记住.*',
     '(?:天才)?1秒记住.*',
     '本章未完.*',
     '笔趣阁.*最快更新.*',
-    '最新网址：.*?\\s',
+    '最新网址：.*?[ \\xa0\\u3000]',
     '最新网址：.*',
     '^先定个小目标，比如1秒记住： .*',
     '^热门推荐：.*',
@@ -2439,6 +2447,8 @@
     '(?:8\\)|a)更多精彩小说，欢迎访问.*',
     '▲手机下载app看书神器，百度搜关键词：.*?或直接访问官方网站.*?▲',
     '手机用户看.*?请浏览.*?，更优质的用户体验。',
+    '，最快更新.*?最新章节！',
+    '推荐.*?大神.*?新书:.*',
 
     // '.*笔下文学更新速度最快.*',
     // '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
@@ -2453,10 +2463,12 @@
     '^正文$',
     '.杂.志.虫.',
     '^作者：.*?分类：.*',
-    '^@@\\?\s*',
+    '^@@\\?\\s*',
     '\\)(?: 下载免费阅读器)?!!$',
     '^txt下载地址：.*',
+    '^.*手机版阅读网址：.*',
     '^手机阅读：.*',
+    '/txt/\\d+/',
 
     // 爱阅小说app广告
     '想要看最新章节内容，请下载爱阅小说app，无广告免费阅读最新章节内容。网站已经不更新最新章节内容，最新章节内容已经在爱阅小说APP更新。',
@@ -2489,6 +2501,15 @@
     '推荐一个app，媲美旧版追书神器，可换源书籍全的.*?！',
     'mimiread',
     '咪咪阅读app',
+
+    // 悠阅书城app广告
+    '【?(?:悠阅书城|悠閱書城).*',
+    // '【悠阅书城APP，免费看小说全网无广告，IOS需海外苹果ID下载】',
+    // '【悠閱書城一個免費看書的換源APP軟體，安卓手機需下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
+    // '【悠阅书城的換源app軟體，安卓手機需google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
+    // '【悠閱書城一個免費看書的換源APP軟體，安卓手機需Google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
+    // '【悠阅书城uc书盟的換源app軟體，安卓手機需下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
+    // '【悠阅书城小说的換源app軟體，安卓手機需google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
 
     // 删除组合字符
     // https://en.wikipedia.org/wiki/Combining_character
@@ -2525,13 +2546,14 @@
     
     // '谷[婸秇鯪鐰愱瞻桮袁狲梋荬瑏鐲惗钲鉦鮪歄鎣刬頲櫦磆]',
     // '^谷[\\u4e00-\\u9fa5]{0,1}|谷[\\u4e00-\\u9fa5]{0,1}$',
+    '谷.</span>',
 
     // 低优先级替换
-    '\\(?https?://.*',
+    '^.*\\(?https?://.*',
     '\\(\\)',
     '\\[\\]',
     '【】',
-    '^[。？！.?!`]'
+    '^[。？！.?!`|…]'
     
   ];
 
@@ -2612,7 +2634,8 @@
       '。{3,7}': '……',
       '~{2,50}': '——',
       '…{3,40}': '……',
-      '－{3,20}': '——'
+      '－{3,20}': '——',
+      '·{3,10}': '……'
   };
 
   // 不转换 ，？：；（）！
@@ -2773,6 +2796,71 @@
       C.log('autoGetBookTitle', bookTitle);
 
       return bookTitle
+  }
+
+  // 等待页面上的元素出现
+  function observeElement(
+    doc,
+    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
+  ) {
+    var shouldAdd = false;
+    var $doc = $(doc);
+
+    var contentSize = $doc.find(contentSelector).size();
+
+    if (contentSize && !mutationSelector) {
+      shouldAdd = false;
+    } else {
+      var target = $doc.find(mutationSelector)[0];
+
+      if (target) {
+        var beforeTargetChilren = target.children.length;
+        C.log(`target.children.length = ${target.children.length}`, target);
+
+        if (mutationChildText) {
+          if (target.textContent.indexOf(mutationChildText) > -1) {
+            shouldAdd = true;
+          }
+        } else {
+          if (
+            mutationChildCount === undefined ||
+            target.children.length <= mutationChildCount
+          ) {
+            shouldAdd = true;
+          }
+        }
+      }
+    }
+
+    if (shouldAdd) {
+      return new Promise(resolve => {
+        var observer = new MutationObserver(function () {
+          target = $doc.find(mutationSelector)[0];
+          var nodeAdded = target.children.length > beforeTargetChilren;
+
+          if (nodeAdded) {
+            observer.disconnect();
+            resolve();
+          }
+        });
+
+        observer.observe(document, {
+          childList: true,
+          subtree: true
+        });
+
+        C.log('添加 MutationObserve 成功：', mutationSelector);
+      })
+    }
+  }
+
+  // 将非p标签段落转换为p标签段落
+  function toParagraphNode(node) {
+    if (node.tagName && node.tagName !== 'P') {
+      const p = document.createElement('p');
+      node.childNodes.forEach(node => p.appendChild(node));
+      node.replaceWith(p);
+    }
   }
 
   function getElemFontSize(_heading) {
@@ -3269,7 +3357,7 @@
           $div.find('h1, h2, h3').remove();
 
           // 删除带默认样式的标签
-          const styledTags = ['i', 'b', 'em', 'strong'];        
+          const styledTags = ['i', 'b', 'em', 'strong'];
           styledTags.forEach(name => unwrapTag($div[0], name));
 
           // contentRemove
@@ -3415,6 +3503,10 @@
           }
 
           const finalContents = content.split('\n');
+
+          textNodes
+              .filter(node => node.parentNode !== dom)
+              .forEach(node => toParagraphNode(node.parentNode));
 
           if (finalContents.length <= textNodes.length) {
               textNodes.forEach((node, index) => {
@@ -4532,62 +4624,6 @@
       return proxy
     }
   });
-
-  // 等待页面上的元素出现
-  function observeElement(
-    doc,
-    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
-  ) {
-    var shouldAdd = false;
-    var $doc = $(doc);
-
-    var contentSize = $doc.find(contentSelector).size();
-
-    if (contentSize && !mutationSelector) {
-      shouldAdd = false;
-    } else {
-      var target = $doc.find(mutationSelector)[0];
-
-      if (target) {
-        var beforeTargetChilren = target.children.length;
-        C.log(`target.children.length = ${target.children.length}`, target);
-
-        if (mutationChildText) {
-          if (target.textContent.indexOf(mutationChildText) > -1) {
-            shouldAdd = true;
-          }
-        } else {
-          if (
-            mutationChildCount === undefined ||
-            target.children.length <= mutationChildCount
-          ) {
-            shouldAdd = true;
-          }
-        }
-      }
-    }
-
-    if (shouldAdd) {
-      return new Promise(resolve => {
-        var observer = new MutationObserver(function () {
-            target = $doc.find(mutationSelector)[0];
-            var nodeAdded = target.children.length > beforeTargetChilren;
-
-            if (nodeAdded) {
-                observer.disconnect();
-                resolve();
-            }
-        });
-
-        observer.observe(document, {
-            childList: true,
-            subtree: true
-        });
-
-        C.log('添加 MutationObserve 成功：', mutationSelector);
-    })
-    }
-  }
 
   /** @enum {number} */
   const RequestStatus = {
