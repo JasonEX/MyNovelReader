@@ -691,14 +691,14 @@ var App = {
         }
     },
     scroll: async function() {
+        const loadingBarHeight = 54
         if (App.request.display && Math.floor(App.getRemain() - iframeHeight) < 0) {
-            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 50)
+            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + loadingBarHeight)
         }
-        debugger
         if (
             !App.paused &&
             !App.working &&
-            App.getRemain() <
+            App.getRemain() - loadingBarHeight <
             (App.request.display
                 ? Setting.remain_height + iframeHeight
                 : Setting.remain_height)

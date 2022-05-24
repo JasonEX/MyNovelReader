@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.7.4
+// @version        6.7.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2391,6 +2391,7 @@
     '举报后请耐心等待,并刷新页面。',
     r`try\{mad1\('gad2'\);\} catch\(ex\)\{\}`,
     '：。：',
+    '『加入书签，方便阅读』',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -4790,6 +4791,7 @@
     margin:0!important;
     padding:0!important;
     visibility:hidden!important;
+    display:none;
   `;
     document.body.appendChild(iframe);
     iframe.onload = onload;
@@ -5469,14 +5471,14 @@
           }
       },
       scroll: async function() {
+          const loadingBarHeight = 54;
           if (App$1.request.display && Math.floor(App$1.getRemain() - iframeHeight) < 0) {
-              window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 50);
+              window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + loadingBarHeight);
           }
-          debugger
           if (
               !App$1.paused &&
               !App$1.working &&
-              App$1.getRemain() <
+              App$1.getRemain() - loadingBarHeight <
               (App$1.request.display
                   ? Setting.remain_height + iframeHeight
                   : Setting.remain_height)

@@ -158,6 +158,7 @@ function createIframe(onload) {
     margin:0!important;
     padding:0!important;
     visibility:hidden!important;
+    display:none;
   `
   document.body.appendChild(iframe)
   iframe.onload = onload
