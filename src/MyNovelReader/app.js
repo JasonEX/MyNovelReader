@@ -691,17 +691,13 @@ var App = {
         }
     },
     scroll: async function() {
-        const loadingBarHeight = 51
         if (App.request.display && Math.floor(App.getRemain() - iframeHeight) < 0) {
-            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + loadingBarHeight)
+            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 51)
         }
         if (
             !App.paused &&
             !App.working &&
-            App.getRemain() <
-            (App.request.display
-                ? Setting.remain_height + iframeHeight
-                : Setting.remain_height)
+            App.getRemain() < Setting.remain_height
         ) {
             await App.scrollForce()
         }
