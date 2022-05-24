@@ -70,8 +70,10 @@ var App = {
             } else if (App.site.timeout) { // 延迟启动
                 await sleep(App.site.timeout)
             }
-            // 等待 Dom 稳定
-            await App.DomMutation();
+            if (!App.site.fastboot) {
+                // 等待 Dom 稳定
+                await App.DomMutation();
+            }
             await App.launch()
         } else {
             await UI.addButton();
@@ -131,8 +133,11 @@ var App = {
                 } else {
                     return -1;
                 }
-            case Setting.getDisableAutoLaunch():
-                return false;
+            case Setting.launchMode === 'manual':
+                return false
+            // case Setting.getDisableAutoLaunch():
+            //     return false;
+            case Setting.launchMode === 'auto':
             case GM_getValue("auto_enable"):
             case config.soduso && /www\.sodu\.so/.test(referrer):
                 return true;

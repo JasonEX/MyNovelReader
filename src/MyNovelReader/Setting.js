@@ -12,12 +12,12 @@ var getBooleanConfig = function(configName, defaultValue) {
 };
 
 var Setting = {
-    getDisableAutoLaunch: function() {  // 强制手动启用模式
-        return getBooleanConfig("disable_auto_launch", false);
-    },
-    setDisableAutoLaunch: function(bool) {
-        GM_setValue("disable_auto_launch", bool);
-    },
+    // getDisableAutoLaunch: function() {  // 强制手动启用模式
+    //     return getBooleanConfig("disable_auto_launch", false);
+    // },
+    // setDisableAutoLaunch: function(bool) {
+    //     GM_setValue("disable_auto_launch", bool);
+    // },
 
     // 按键调用会遇到问题： Greasemonkey 访问违规：unsafeWindow 无法调用 GM_getValue
     // 故改成这种形式
@@ -255,6 +255,13 @@ var Setting = {
     set scrollAnimate(bool) {
         GM_setValue('scrollAnimate', bool);
     },
+
+    get launchMode() {
+        return GM_getValue('launchMode', 'memory');
+    },
+    set launchMode(value) {
+        GM_setValue('launchMode', value);
+    }
 };
 
 export default Setting

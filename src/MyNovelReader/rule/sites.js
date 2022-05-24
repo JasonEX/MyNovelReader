@@ -51,6 +51,7 @@ const sites = [
     contentSelector: '.read-content.j_readContent',
     contentHandle: false,
     contentRemove: '',
+    fastboot: true,
     contentReplace: [
         '手机用户请到m.qidian.com阅读。',
         '起点中文网www.qidian.com欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在起点原创！.*'

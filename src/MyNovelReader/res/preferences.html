@@ -17,9 +17,21 @@
             </label>
         </div>
         <div class="form-row">
-            <label title="不影响 booklink.me 的启用">
+            <fieldset id="launch-mode">
+                <legend title="不影响 booklink.me 的启用" style="cursor: default;">启动模式</legend>
+                <input type="radio" id="launch-mode-memory" name="launch-mode" value="memory">
+                <label for="launch-mode-memory">记忆</label>
+                <input type="radio" id="launch-mode-auto" name="launch-mode" value="auto">
+                <label for="launch-mode-auto">自动</label>
+                <input type="radio" id="launch-mode-manual" name="launch-mode" value="manual">
+                <label for="launch-mode-manual">手动</label>
+            </fieldset>
+        </div> 
+        <div class="form-row">
+            
+            <!-- <label title="不影响 booklink.me 的启用">
                 <input type="checkbox" id="disable-auto-launch" name="disable-auto-launch"/>强制手动启用
-            </label>
+            </label> -->
             <label title="booklink.me 点击的网站强制启用">
                 <input type="checkbox" id="booklink-enable" name="booklink-enable"/>booklink 自动启用
             </label>
