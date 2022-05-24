@@ -694,7 +694,15 @@ var App = {
         if (App.request.display && Math.floor(App.getRemain() - iframeHeight) < 0) {
             window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 50)
         }
-        if (!App.paused && !App.working && App.getRemain() < Setting.remain_height) {
+        debugger
+        if (
+            !App.paused &&
+            !App.working &&
+            App.getRemain() <
+            (App.request.display
+                ? Setting.remain_height + iframeHeight
+                : Setting.remain_height)
+        ) {
             await App.scrollForce()
         }
 
