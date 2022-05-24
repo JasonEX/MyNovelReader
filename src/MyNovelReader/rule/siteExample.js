@@ -115,7 +115,7 @@
     nDelay: 0, // 下一章加载延迟时间，单位ms
     style: '', // 自定义站点样式， CSS 样式
     exclude: '', // 要排除的URL正则
-    fastboot: false, // 快速启动，不等待 DOM 完成变化
+    fastboot: false, // 快速启动，不等待 DOM 变化完成
 
     // 每次页面加载完成时调用
     startLaunch: function ($doc) {

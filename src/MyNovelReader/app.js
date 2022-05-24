@@ -347,7 +347,7 @@ var App = {
 
         App.cleanAgain();
 
-        if (config.PRELOADER) {
+        if (Setting.preloadNextPage) {
             await App.doRequest();
         }
     },
@@ -950,7 +950,7 @@ var App = {
     afterLoad: async function() {
         App.tmpDoc = null;
 
-        if (config.PRELOADER) {
+        if (Setting.preloadNextPage) {
             await sleep(200)
             App.doRequest();  // 不用 await
         }

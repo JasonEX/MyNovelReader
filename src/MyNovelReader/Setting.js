@@ -261,6 +261,13 @@ var Setting = {
     },
     set launchMode(value) {
         GM_setValue('launchMode', value);
+    },
+
+    get preloadNextPage() {
+        return GM_getValue('preloadNextPage', true);
+    },
+    set preloadNextPage(bool) {
+        GM_setValue('preloadNextPage', bool);
     }
 };
 

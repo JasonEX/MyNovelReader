@@ -283,6 +283,8 @@ var UI = {
         $form.find("#custom_siteinfo").get(0).value = Setting.customSiteinfo;
         UI._rules = $form.find("#custom_replace_rules").get(0).value = Setting.customReplaceRules;
 
+        $form.find('#preload-next-page').get(0).checked = Setting.preloadNextPage
+
         // 启动模式
         switch (Setting.launchMode) {
             case 'memory':
@@ -473,6 +475,8 @@ var UI = {
         Setting.extra_css = css;
 
         Setting.customSiteinfo = $form.find("#custom_siteinfo").get(0).value;
+
+        Setting.preloadNextPage = $form.find("#preload-next-page").get(0).checked;
 
         // 启动模式
         $form.find('#launch-mode input').each(function () {
