@@ -13,8 +13,6 @@ const {
   console
 } = unsafeWindow
 
-history.scrollRestoration = 'manual'
-
 // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
 const _focus = HTMLElement.prototype.focus
 HTMLElement.prototype.focus = function focus() {

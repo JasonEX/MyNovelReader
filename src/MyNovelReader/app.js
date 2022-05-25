@@ -339,6 +339,7 @@ var App = {
         //     window.scrollTo(0, 0);
         // }
 
+        history.scrollRestoration = 'manual'
         window.scrollTo(0, 0)
 
         // 初始化 request
