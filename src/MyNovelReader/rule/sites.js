@@ -671,10 +671,11 @@ const sites = [
   {siteName: '长佩文学网',
     exampleUrl: 'https://www.gongzicp.com/read-246381.html',
     url: '^https?://www\\.gongzicp\\.com/read-\\d+\\.html',
-    bookTitleSelector: '.cp-read-novel',
+    bookTitleSelector: '.novel',
     useiframe: true,
-        timeout: 500,
-    contentSelector: '#cpReadContent',
+    contentSelector: '.content',
+    mutationSelector: '.novel',
+    mutationChildCount: 2,
     contentReplace: [
         '来源长佩文学网（https://www.gongzicp.com）',
     ]

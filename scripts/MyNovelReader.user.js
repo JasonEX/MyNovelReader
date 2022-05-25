@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.7.7
+// @version        6.7.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1369,10 +1369,11 @@
     {siteName: '长佩文学网',
       exampleUrl: 'https://www.gongzicp.com/read-246381.html',
       url: '^https?://www\\.gongzicp\\.com/read-\\d+\\.html',
-      bookTitleSelector: '.cp-read-novel',
+      bookTitleSelector: '.novel',
       useiframe: true,
-          timeout: 500,
-      contentSelector: '#cpReadContent',
+      contentSelector: '.content',
+      mutationSelector: '.novel',
+      mutationChildCount: 2,
       contentReplace: [
           '来源长佩文学网（https://www.gongzicp.com）',
       ]
@@ -2459,6 +2460,7 @@
     '手机用户看.*?请浏览.*?，更优质的用户体验。',
     '，最快更新.*?最新章节！',
     '推荐.*?大神.*?新书:.*',
+    '^.*欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在.*',
 
     // '.*笔下文学更新速度最快.*',
     // '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
@@ -2506,14 +2508,17 @@
     '推荐下，我最近在用的看书app，【.*?】书源多，书籍全，更新快！',
     '推荐下，【.*?】真心不错，值得书友都装个，安卓苹果手机都支持！',
     '求助下，【.*?】可以像偷菜一样的偷书票了，快来偷好友的书票投给我的书吧。',
-    '【认识十年的老书友给我推荐的追书pp，咪咪阅读！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
+    '【认识十年的老书友给我推荐的追书app，咪咪阅读！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
     '书友们之前用的小书亭\\s*已经挂了，现在基本上都在用.*?。',
     '推荐一个app，媲美旧版追书神器，可换源书籍全的.*?！',
+    '【告知书友，时代在变化，免费站点难以长存，手机app多书源站点切换看书大势所趋，站长给你推荐的这个咪咪阅读app，听书音色多、换源、找书都好使！】',
+    '【告知苹果书友，以后能免费稳定看书的网站、app只会更少，站长推荐赶快安装一个专为苹果书友打造的听书，换源，找书都很棒的咪咪阅读，解决书荒不迷路！】',
+    '【告知安卓书友，越来越多免费站点将会关闭失效，安卓app鱼目混珠，找一个安全稳定看书的app非常有必要，站长强烈推荐咪咪阅读，听书、换源、找书超好使！】',
     'mimiread',
     '咪咪阅读app',
 
     // 悠阅书城app广告
-    '【?(?:悠阅书城|悠閱書城).*',
+    '^【?(?:悠阅书城|悠閱書城).*',
     // '【悠阅书城APP，免费看小说全网无广告，IOS需海外苹果ID下载】',
     // '【悠閱書城一個免費看書的換源APP軟體，安卓手機需下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
     // '【悠阅书城的換源app軟體，安卓手機需google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
@@ -5589,9 +5594,6 @@
               C.log('获取下一页', nextUrl);
               App$1.request.send(nextUrl);
       
-          } else {
-              App$1.request.hide();
-              // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
           }
       },
       httpRequest: async function(nextUrl) {

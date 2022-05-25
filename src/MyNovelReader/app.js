@@ -812,7 +812,6 @@ var App = {
             App.request.send(nextUrl)
     
         } else {
-            App.request.hide()
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
         }
     },
