@@ -438,7 +438,6 @@ var App = {
     },
     toggle: async function() {
         if (App.isEnabled) { // 退出
-            window.scrollTo(0, 0)
             GM_setValue("auto_enable", false);
             L_setValue("mynoverlreader_disable_once", true);
 
