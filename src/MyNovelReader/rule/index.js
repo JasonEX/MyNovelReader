@@ -72,6 +72,7 @@ var Rule = {
     '.layout-tit > a:last',
     '.ymdz > a:last',
     '.articletitle > a',
+    '.chepnav > a:last',
     '.weizhi a:last',
     '.cover-nav a:last',
     '.path > .p > a:last',

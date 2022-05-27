@@ -7,6 +7,7 @@ import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { toCDB } from './rule/replaceNormalize'
 import { toParagraphNode } from './libdom'
+import { chineseConversion } from './chineseConvert'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -269,11 +270,15 @@ Parser.prototype = {
                 bookTitle + ' - ' + chapterTitle :
                 docTitle;
 
-        if (Setting.cn2tw) {
-            bookTitle = this.convert2tw(bookTitle);
-            chapterTitle = this.convert2tw(chapterTitle);
-            docTitle = this.convert2tw(docTitle);
-        }
+        // if (Setting.cn2tw) {
+        //     bookTitle = this.convert2tw(bookTitle);
+        //     chapterTitle = this.convert2tw(chapterTitle);
+        //     docTitle = this.convert2tw(docTitle);
+        // }
+
+        bookTitle = chineseConversion(bookTitle);
+        chapterTitle = chineseConversion(chapterTitle);
+        docTitle = chineseConversion(docTitle);
 
         this.bookTitle = (bookTitle || '目录').trim();
         this.chapterTitle = chapterTitle;
@@ -486,9 +491,10 @@ Parser.prototype = {
             text = text.replace(toRE(regStr), "");
         }
 
-        if (Setting.cn2tw) {
-            text = this.convert2tw(text);
-        }
+        // if (Setting.cn2tw) {
+        //     text = this.convert2tw(text);
+        // }
+        text = chineseConversion(text)
 
         // try {
         //     text = this.contentCustomReplace(text);

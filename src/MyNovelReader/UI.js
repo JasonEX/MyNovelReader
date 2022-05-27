@@ -257,7 +257,7 @@ var UI = {
         var $form = $("#preferences");
 
         // checkbox
-        $form.find("#enable-cn2tw").get(0).checked = Setting.cn2tw;
+        // $form.find("#enable-cn2tw").get(0).checked = Setting.cn2tw;
         // $form.find("#disable-auto-launch").get(0).checked = Setting.getDisableAutoLaunch();
         $form.find("#booklink-enable").get(0).checked = Setting.booklink_enable;
         $form.find("#debug").get(0).checked = Setting.debug;
@@ -286,19 +286,10 @@ var UI = {
         $form.find('#preload-next-page').get(0).checked = Setting.preloadNextPage
 
         // 启动模式
-        switch (Setting.launchMode) {
-            case 'memory':
-                $form.find('#launch-mode-memory').get(0).checked = true
-                break;
-            case 'auto':
-                $form.find('#launch-mode-auto').get(0).checked = true
-                break;
-            case 'manual':
-                $form.find('#launch-mode-manual').get(0).checked = true
-                break;
-            default:
-                break;
-        }
+        $form.find(`#launch-mode-${Setting.launchMode}`).get(0).checked = true
+
+        // 繁简转换
+        $form.find(`#chinese-conversion-${Setting.chineseConversion}`).get(0).checked = true
 
         // 界面语言
         var $lang = $form.find("#lang");
@@ -440,7 +431,7 @@ var UI = {
 
         // Setting.setDisableAutoLaunch($form.find("#disable-auto-launch").get(0).checked);
 
-        Setting.cn2tw = $form.find("#enable-cn2tw").get(0).checked;
+        // Setting.cn2tw = $form.find("#enable-cn2tw").get(0).checked;
         Setting.booklink_enable = $form.find("#booklink-enable").get(0).checked;
         Setting.isQuietMode = $form.find("#quietMode").get(0).checked;
         Setting.debug = $form.find("#debug").get(0).checked;
@@ -482,6 +473,13 @@ var UI = {
         $form.find('#launch-mode input').each(function () {
             if (this.checked) {
                 Setting.launchMode = this.value
+            }
+        })
+
+        // 繁简转换
+        $form.find('#chinese-conversion input').each(function () {
+            if (this.checked) {
+                Setting.chineseConversion = this.value
             }
         })
 

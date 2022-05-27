@@ -27,16 +27,16 @@ var Setting = {
         GM_setValue("copyCurTitle", !!bool);
     },
 
-    get cn2tw() {
-        if (_.isUndefined(this._cn2tw)) {
-            this._cn2tw = getBooleanConfig('cn2tw', this.lang === 'zh-TW' ? true : false);
-        }
-        return this._cn2tw;
-    },
-    set cn2tw(bool) {
-        GM_setValue('cn2tw', bool);
-        this._cn2tw = bool;
-    },
+    // get cn2tw() {
+    //     if (_.isUndefined(this._cn2tw)) {
+    //         this._cn2tw = getBooleanConfig('cn2tw', this.lang === 'zh-TW' ? true : false);
+    //     }
+    //     return this._cn2tw;
+    // },
+    // set cn2tw(bool) {
+    //     GM_setValue('cn2tw', bool);
+    //     this._cn2tw = bool;
+    // },
 
     get booklink_enable() {  // booklink.me 跳转的自动启动
         return getBooleanConfig("booklink_enable", true);
@@ -268,6 +268,13 @@ var Setting = {
     },
     set preloadNextPage(bool) {
         GM_setValue('preloadNextPage', bool);
+    },
+
+    get chineseConversion() {
+        return GM_getValue('chineseConversion', this.lang === 'zh-TW' ? 'to-tw' : 'disable');
+    },
+    set chineseConversion(value) {
+        GM_setValue('chineseConversion', value);
     }
 };
 

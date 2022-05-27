@@ -1,5 +1,5 @@
 import getMiddleStr from '../utils/string'
-import { C, Request } from '../lib';
+import { C, Request, toRE } from '../lib';
 
 // ===== 自定义站点规则 =====
 
@@ -1252,6 +1252,48 @@ const sites = [
         noSection: true,
 
     },
+
+    {siteName: '铅笔小说',
+        url: 'https?://www.23qb.com/book/\\d+/\\d+(?:_\\d+)?.html',
+        exampleUrl: 'https://www.23qb.com/book/187203/70954846.html',
+
+        contentPatch($doc) {
+            const re = toRE("\\{url_previous:'(.*?)',url_next:'(.*?)',url_index:'(.*?)',\\}")
+            const ReadParams = $doc.find('script:contains(ReadParams)').text()
+            const [_, url_previous, url_next, url_index] = re.exec(ReadParams)
+            let previousName = $doc.find('#readbg > p > a:nth-child(1)').text()
+            switch (previousName) {
+                case '<-':
+                    previousName = '上一页'
+                    break;
+                case '<<':
+                    previousName = '上一章'
+                    break;
+                default:
+                    break;
+            }
+            let nextName = $doc.find('#readbg > p > a:nth-child(5)').text()
+            switch (nextName) {
+                case '->':
+                    nextName = '下一页'
+                    break;
+                case '>>':
+                    nextName = '下一章'
+                    break;
+                default:
+                    break;
+            }
+            const body = $doc.find('body')
+
+            $doc.find('p:contains(（继续下一页）)').remove()
+
+            $('<a>').attr('href', url_previous).text(previousName).appendTo(body)
+            $('<a>').attr('href', url_next).text(nextName).appendTo(body)
+            $('<a>').attr('href', url_index).text('目录').appendTo(body)
+
+        },
+        contentReplace: ['铅笔小说 23qb.com']
+    }
 
 ];
 
