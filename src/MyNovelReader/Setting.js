@@ -275,7 +275,14 @@ var Setting = {
     },
     set chineseConversion(value) {
         GM_setValue('chineseConversion', value);
-    }
+    },
+
+    get contentNormalize() {
+        return GM_getValue('contentNormalize', true);
+    },
+    set contentNormalize(bool) {
+        GM_setValue('contentNormalize', bool);
+    },
 };
 
 export default Setting

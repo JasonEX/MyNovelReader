@@ -291,6 +291,8 @@ var UI = {
         // 繁简转换
         $form.find(`#chinese-conversion-${Setting.chineseConversion}`).get(0).checked = true
 
+        $form.find('#enable-content-normalize').get(0).checked = Setting.contentNormalize
+
         // 界面语言
         var $lang = $form.find("#lang");
         $("<option>").text("zh-CN").appendTo($lang);
@@ -482,6 +484,8 @@ var UI = {
                 Setting.chineseConversion = this.value
             }
         })
+
+        Setting.contentNormalize = $form.find('#enable-content-normalize').get(0).checked
 
         // 自定义替换规则直接生效
         var rules = $form.find("#custom_replace_rules").get(0).value;

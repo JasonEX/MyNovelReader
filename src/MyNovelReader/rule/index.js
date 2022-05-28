@@ -2,7 +2,6 @@ import sites from './sites'
 import replace from './replace'
 import replaceAll from './replaceAll'
 import * as oneWordReplace from './oneWrodReplace'
-import { replaceNormalize } from './replaceNormalize'
 
 // Unicode/2000-2FFF：http://zh.wikibooks.org/wiki/Unicode/2000-2FFF
 // Unicode/F000-FFFF：https://zh.wikibooks.org/wiki/Unicode/F000-FFFF
@@ -92,7 +91,7 @@ var Rule = {
   replaceBrs: /(<br[^>]*>[ \n\r\t]*){1,}/gi,    // 替换为<p>
 
   specialSite: sites,
-  replace, replaceNormalize, replaceAll,
+  replace, replaceAll,
 
   customRules: [],
   customReplace: {},

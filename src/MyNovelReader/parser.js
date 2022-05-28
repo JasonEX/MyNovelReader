@@ -5,7 +5,7 @@ import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost, unwrapTag, getTextNo
 import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
-import { toCDB } from './rule/replaceNormalize'
+import { replaceNormalize, toCDB } from './rule/replaceNormalize'
 import { toParagraphNode } from './libdom'
 import { chineseConversion } from './chineseConvert'
 
@@ -646,8 +646,10 @@ Parser.prototype = {
         content = this.replaceText(content, Rule.replaceAll)
         
         // 内容标准化处理
-        content = this.replaceText(content, Rule.replaceNormalize)
-        content = toCDB(content)
+        if (Setting.contentNormalize) {
+            content = replaceNormalize(content)
+            content = toCDB(content)
+        }
 
         try {
             content = this.contentCustomReplace(content);
