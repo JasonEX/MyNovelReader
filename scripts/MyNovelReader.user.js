@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.8.5
+// @version        6.8.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1949,6 +1949,7 @@
           contentSelector: '#content',
           bookTitleSelector: '.topmenu a:last',
           noSection: true,
+          useSiteFont: true,
 
       },
 
@@ -2697,14 +2698,15 @@
 
   const replaceNormalize = {
       ',\\s*': '，',
-      '\\.$': '。',
+      '\\.\\s*$': '。',
+      '([。！？”])\\s*$': '$1',
       '，$\\s|\\s^，': '，', // 合并每一行以"，"结束的段落
       '，+': '，',
       '"(.*?)"': '“$1”',
       '”“': '”\n“',
       '([。！？])([\\u4e00-\\u9fa5“])': '$1\n$2', // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
       '(^.*?[.。])(“.*?”)': '$1\n$2', // 将一段中的第一句后接对话（引号）句子的第一句话分段
-      '”([\\u4e00-\\u9fa5“])': '”\n$1', // 将一段中的右引号后面的内容分为一段
+      '([。！？])”([\\u4e00-\\u9fa5“])': '$1”\n$2', // 将一段中的右引号后面的内容分为一段
       '「(.*?)」': '“$1”',
       '『(.)』': '$1', // "『色』": "色",
       '!': '！',

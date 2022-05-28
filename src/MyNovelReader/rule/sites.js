@@ -1250,6 +1250,7 @@ const sites = [
         contentSelector: '#content',
         bookTitleSelector: '.topmenu a:last',
         noSection: true,
+        useSiteFont: true,
 
     },
 
