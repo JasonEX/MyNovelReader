@@ -445,6 +445,8 @@ Parser.prototype = {
 
         if (info.useRawContent) {
             C.log('内容处理已被自定义站点规则 useRawContent 关闭')
+            // 繁简转换
+            text = chineseConversion(text)
             return text
         }
 
@@ -494,7 +496,6 @@ Parser.prototype = {
         // if (Setting.cn2tw) {
         //     text = this.convert2tw(text);
         // }
-        text = chineseConversion(text)
 
         // try {
         //     text = this.contentCustomReplace(text);
@@ -653,6 +654,9 @@ Parser.prototype = {
         } catch(ex) {
             C.error('自定义替换错误', ex);
         }
+
+        // 繁简转换
+        content = chineseConversion(content)
 
         const finalContents = content.split('\n')
 

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.8.4
+// @version        6.8.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -293,6 +293,7 @@
 // @match          *://www.cxbz958.com/*/*.html
 // @match          *://www.51kanshu.cc/book/*/*.html
 // @match          *://www.mibaoge.com/*/*.html
+// @match          *://www.asxs.com/view/*/*.html
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html
@@ -1987,6 +1988,14 @@
 
           },
           contentReplace: ['铅笔小说 23qb.com']
+      },
+
+      {siteName: '爱尚小说',
+          url: 'https://www.asxs.com/view/\\d+/\\d+.html',
+          exampleUrl: 'https://www.asxs.com/view/174811/2330811.html',
+
+          noSection: true
+
       }
 
   ];
@@ -3399,6 +3408,8 @@
 
           if (info.useRawContent) {
               C.log('内容处理已被自定义站点规则 useRawContent 关闭');
+              // 繁简转换
+              text = chineseConversion(text);
               return text
           }
 
@@ -3448,7 +3459,6 @@
           // if (Setting.cn2tw) {
           //     text = this.convert2tw(text);
           // }
-          text = chineseConversion(text);
 
           // try {
           //     text = this.contentCustomReplace(text);
@@ -3607,6 +3617,9 @@
           } catch(ex) {
               C.error('自定义替换错误', ex);
           }
+
+          // 繁简转换
+          content = chineseConversion(content);
 
           const finalContents = content.split('\n');
 

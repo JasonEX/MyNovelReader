@@ -1293,6 +1293,14 @@ const sites = [
 
         },
         contentReplace: ['铅笔小说 23qb.com']
+    },
+
+    {siteName: '爱尚小说',
+        url: 'https://www.asxs.com/view/\\d+/\\d+.html',
+        exampleUrl: 'https://www.asxs.com/view/174811/2330811.html',
+
+        noSection: true
+
     }
 
 ];
