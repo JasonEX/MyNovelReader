@@ -31,13 +31,25 @@
                 <label for="launch-mode-manual">手动</label>
             </fieldset>
             <fieldset id="chinese-conversion" style="width: 195px; display: inline-block;">
-                <legend title="不影响 booklink.me 的启用" style="cursor: default;">繁简转换</legend>
+                <legend style="cursor: default;">繁简转换</legend>
                 <input type="radio" id="chinese-conversion-disable" name="chinese-conversion" value="disable">
                 <label for="chinese-conversion-disable">关闭</label>
                 <input type="radio" id="chinese-conversion-to-cn" name="chinese-conversion" value="to-cn">
                 <label for="chinese-conversion-to-cn">简体</label>
                 <input type="radio" id="chinese-conversion-to-tw" name="chinese-conversion" value="to-tw">
                 <label for="chinese-conversion-to-tw">繁体</label>
+            </fieldset>
+        </div>
+        <div class="form-row">
+            <fieldset id="content-normalize">
+                <legend style="cursor: default;">
+                    <label title="包含自动分段/合并、标点符号替换等功能">
+                        <input type="checkbox" id="enable-content-normalize" name="content-normalize"/>内容标准化
+                    </label>
+                </legend>
+                <label>
+                    <input type="checkbox" name="content-normalize" id="merge-qoutes-content">合并双引号中的多行内容
+                </label>
             </fieldset>
         </div>
         <div class="form-row">
@@ -49,9 +61,6 @@
             </label> -->
             <label title="booklink.me 点击的网站强制启用">
                 <input type="checkbox" id="booklink-enable" name="booklink-enable"/>booklink 自动启用
-            </label>
-            <label title="包含自动分段/合并、标点符号替换等功能">
-                <input type="checkbox" id="enable-content-normalize" name="enable-content-normalize"/>内容标准化
             </label>
         </div>
         <div class="form-row">

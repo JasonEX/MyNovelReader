@@ -1,5 +1,5 @@
 //------------------- 辅助函数 ----------------------------------------
-import Setting from './Setting'
+// import Setting from './Setting'
 
 export { isFirefox, isChrome, isWindows } from '../common/utils/detect'
 

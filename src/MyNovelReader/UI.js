@@ -292,6 +292,7 @@ var UI = {
         $form.find(`#chinese-conversion-${Setting.chineseConversion}`).get(0).checked = true
 
         $form.find('#enable-content-normalize').get(0).checked = Setting.contentNormalize
+        $form.find('#merge-qoutes-content').get(0).checked = Setting.mergeQoutesContent
 
         // 界面语言
         var $lang = $form.find("#lang");
@@ -461,6 +462,8 @@ var UI = {
         UI.hideMenuList(Setting.menu_list_hiddden);
 
         Setting.hide_footer_nav = $form.find("#hide-footer-nav").get(0).checked;
+        UI.hideFooterNavStyle(Setting.hide_footer_nav);
+
         Setting.hide_preferences_button = $form.find("#hide-preferences-button").get(0).checked;
 
         var css = $form.find("#extra_css").get(0).value;
@@ -486,6 +489,7 @@ var UI = {
         })
 
         Setting.contentNormalize = $form.find('#enable-content-normalize').get(0).checked
+        Setting.mergeQoutesContent = $form.find('#merge-qoutes-content').get(0).checked
 
         // 自定义替换规则直接生效
         var rules = $form.find("#custom_replace_rules").get(0).value;

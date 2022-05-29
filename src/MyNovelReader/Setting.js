@@ -1,6 +1,6 @@
 import { toggleConsole } from './lib'
 import config from './config'
-import UI from './UI'
+// import UI from './UI'
 
 var getBooleanConfig = function(configName, defaultValue) {
     var config = GM_getValue(configName);
@@ -11,7 +11,7 @@ var getBooleanConfig = function(configName, defaultValue) {
     return config;
 };
 
-var Setting = {
+const Setting = {
     // getDisableAutoLaunch: function() {  // 强制手动启用模式
     //     return getBooleanConfig("disable_auto_launch", false);
     // },
@@ -168,7 +168,6 @@ var Setting = {
     },
     set hide_footer_nav(bool) {
         GM_setValue("hide_footer_nav", bool);
-        UI.hideFooterNavStyle(bool);
     },
 
     get hide_preferences_button() {
@@ -277,11 +276,19 @@ var Setting = {
         GM_setValue('chineseConversion', value);
     },
 
+    // 内容标准化
     get contentNormalize() {
         return GM_getValue('contentNormalize', true);
     },
     set contentNormalize(bool) {
         GM_setValue('contentNormalize', bool);
+    },
+    // 合并双引号中的多行内容
+    get mergeQoutesContent() {
+        return GM_getValue('mergeQoutesContent', false);
+    },
+    set mergeQoutesContent(bool) {
+        GM_setValue('mergeQoutesContent', bool);
     },
 };
 
