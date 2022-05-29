@@ -1302,6 +1302,29 @@ const sites = [
 
         noSection: true
 
+    },
+
+    {siteName: 'legado-webui',
+        url: 'http://localhost:5000/bookshelf/\\d+/\\d+/',
+        githubRepo: 'https://github.com/letterk/legado-webui',
+
+        contentPatch($doc) {
+            const js = $doc.find('script:contains(saveMark)').text()
+            const hostIP = document.cookie.replace(
+                /(?:(?:^|.*;\s*)hostip\s*\=\s*([^;]*).*$)|^.*$/,
+                '$1'
+            )
+            const body = getMiddleStr(js, 'var str = "', '";').replace(/&#39;|&#34;/gi, '"')
+            fetch(`http://${hostIP}/saveBookProgress`, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body
+            })
+        }
+
     }
 
 ];

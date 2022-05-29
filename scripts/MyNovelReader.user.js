@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.8.8
+// @version        6.8.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2288,6 +2288,29 @@
           exampleUrl: 'https://www.asxs.com/view/174811/2330811.html',
 
           noSection: true
+
+      },
+
+      {siteName: 'legado-webui',
+          url: 'http://localhost:5000/bookshelf/\\d+/\\d+/',
+          githubRepo: 'https://github.com/letterk/legado-webui',
+
+          contentPatch($doc) {
+              const js = $doc.find('script:contains(saveMark)').text();
+              const hostIP = document.cookie.replace(
+                  /(?:(?:^|.*;\s*)hostip\s*\=\s*([^;]*).*$)|^.*$/,
+                  '$1'
+              );
+              const body = getMiddleStr(js, 'var str = "', '";').replace(/&#39;|&#34;/gi, '"');
+              fetch(`http://${hostIP}/saveBookProgress`, {
+                  method: 'POST',
+                  mode: 'no-cors',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body
+              });
+          }
 
       }
 
