@@ -79,6 +79,7 @@ var Rule = {
     '.readNav a:last',
     '.chapter-nav a:last',
     '.bread > a:nth-child(3)',
+    '.bread a:last',
   ],
   bookTitleReplace: [
       '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',

@@ -3,7 +3,7 @@
 import { toRE } from '../lib'
 import Setting from '../Setting'
 
-function generateNormalizeMap(params) {
+function generateNormalizeMap() {
   return [
     ['[,，]\\s*|\\s^，', '，'], // 合并每一行以"，"结束的段落
     ['\\. *$', '。'],

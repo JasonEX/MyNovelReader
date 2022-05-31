@@ -155,10 +155,10 @@ var UI = {
                 right: 10px;\
                 bottom: 10px;\
                 z-index: 2247483648;\
-                padding: 20px 5px;\
+                padding: 20px 5px!important;\
                 width: 50px;\
                 height: 20px;\
-                line-height: 20px;\
+                line-height: 20px!important;\
                 text-align: center;\
                 border: 1px solid;\
                 border-color: #888;\

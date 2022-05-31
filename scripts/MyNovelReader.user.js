@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.8.9
+// @version        6.9.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -294,6 +294,7 @@
 // @match          *://www.51kanshu.cc/book/*/*.html
 // @match          *://www.mibaoge.com/*/*.html
 // @match          *://www.asxs.com/view/*/*.html
+// @match          *://www.xinshuw.cc/*/*.html
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html
@@ -3085,6 +3086,7 @@
       '.readNav a:last',
       '.chapter-nav a:last',
       '.bread > a:nth-child(3)',
+      '.bread a:last',
     ],
     bookTitleReplace: [
         '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
@@ -3156,7 +3158,7 @@
 
   // 正文内容标准化替换
 
-  function generateNormalizeMap(params) {
+  function generateNormalizeMap() {
     return [
       ['[,，]\\s*|\\s^，', '，'], // 合并每一行以"，"结束的段落
       ['\\. *$', '。'],
@@ -4558,10 +4560,10 @@
                 right: 10px;\
                 bottom: 10px;\
                 z-index: 2247483648;\
-                padding: 20px 5px;\
+                padding: 20px 5px!important;\
                 width: 50px;\
                 height: 20px;\
-                line-height: 20px;\
+                line-height: 20px!important;\
                 text-align: center;\
                 border: 1px solid;\
                 border-color: #888;\
@@ -6042,6 +6044,7 @@
               $('.readerbtn').remove();
               await UI.addButton();
               $('.readerbtn').text('无内容');
+              sleep(3000).then(App$1.toggle);
               C.error("当前页面没有找到内容");
           }
 
