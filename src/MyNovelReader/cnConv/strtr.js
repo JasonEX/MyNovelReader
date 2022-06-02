@@ -18,11 +18,10 @@ export function strtr(str, from, to) {
 
   if (typeof from === 'object') {
     fromObject = from
+    fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
+      (a, b) => b - a
+    )
   }
-
-  fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
-    (a, b) => b - a
-  )
 
   // Walk through subject and replace chars when needed
   lenStr = str.length

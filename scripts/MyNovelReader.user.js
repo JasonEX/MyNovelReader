@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.3
+// @version        6.9.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3344,11 +3344,10 @@
 
     if (typeof from === 'object') {
       fromObject = from;
+      fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
+        (a, b) => b - a
+      );
     }
-
-    fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
-      (a, b) => b - a
-    );
 
     // Walk through subject and replace chars when needed
     lenStr = str.length;
