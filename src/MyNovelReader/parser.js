@@ -7,7 +7,7 @@ import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { replaceNormalize, toCDB } from './rule/replaceNormalize'
 import { toParagraphNode } from './libdom'
-import { chineseConversion } from './chineseConvert'
+import { chineseConversion } from './cnConv'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -651,14 +651,14 @@ Parser.prototype = {
             content = toCDB(content)
         }
 
+        // 繁简转换
+        content = chineseConversion(content)
+
         try {
             content = this.contentCustomReplace(content);
         } catch(ex) {
             C.error('自定义替换错误', ex);
         }
-
-        // 繁简转换
-        content = chineseConversion(content)
 
         const finalContents = content.split('\n')
 
