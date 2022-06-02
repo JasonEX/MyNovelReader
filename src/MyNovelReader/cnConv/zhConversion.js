@@ -20947,4 +20947,5 @@ const $zh2CN = {
 };
 
 export const tw2cnTable = { ...$zh2CN, ...$zh2Hans };
-export const cn2twTable = { ...$zh2TW, ...$zh2HK, ...$zh2Hant };
+export const cn2twTable = { ...$zh2TW, ...$zh2Hant };
+export const cn2hkTable = { ...$zh2HK, ...$zh2Hant };
