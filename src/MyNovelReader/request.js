@@ -1,7 +1,7 @@
 import config from './config'
 import { Request, parseHTML, sleep, C } from './lib'
-import App from './app'
 import { observeElement } from './libdom'
+import Setting from './Setting'
 
 /** @enum {number} */
 export const RequestStatus = {
@@ -14,9 +14,10 @@ export const RequestStatus = {
 export const iframeHeight = unsafeWindow.innerHeight
 
 class BaseRequest {
-  constructor() {
+  constructor(siteInfo) {
     this.errorHandle = () => {}
     this.finishHnadle = () => {}
+    this.siteInfo = siteInfo
   }
 
   setErrorHandle(func) {
@@ -29,8 +30,8 @@ class BaseRequest {
 }
 
 export class XmlRequest extends BaseRequest {
-  constructor() {
-    super()
+  constructor(siteInfo) {
+    super(siteInfo)
     this.status = RequestStatus.Idle
     this.doc = null
   }
@@ -81,8 +82,8 @@ export class XmlRequest extends BaseRequest {
 }
 
 export class IframeRequest extends BaseRequest {
-  constructor() {
-    super()
+  constructor(siteInfo) {
+    super(siteInfo)
     this.status = RequestStatus.Idle
     this.iframe = createIframe(this.loaded.bind(this))
     this.doc = null
@@ -117,14 +118,14 @@ export class IframeRequest extends BaseRequest {
 
     this.win.scrollTo(0, this.doc.body.scrollHeight - this.win.innerHeight * 2)
 
-    if (App.site.startLaunch) {
-      App.site.startLaunch($(this.doc))
+    if (this.siteInfo.startLaunch) {
+      this.siteInfo.startLaunch($(this.doc))
     }
 
-    if (App.site.mutationSelector) {
-      await observeElement(this.doc, App.site)
+    if (this.siteInfo.mutationSelector) {
+      await observeElement(this.doc, this.siteInfo)
     } else {
-      const timeout = App.site.timeout || 0
+      const timeout = this.siteInfo.timeout || 0
       if (timeout) {
         await sleep(timeout)
       }
@@ -160,6 +161,7 @@ function createIframe(onload) {
     visibility:hidden!important;
     display:none;
   `
+  iframe.referrerPolicy = Setting.preloadNextPage ? 'no-referrer' : ''
   document.body.appendChild(iframe)
   iframe.onload = onload
   return iframe

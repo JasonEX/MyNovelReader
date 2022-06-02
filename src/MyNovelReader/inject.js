@@ -22,28 +22,32 @@ HTMLElement.prototype.focus = function focus() {
 const clenaupEventArray = []
 
 const _addEventListener = EventTarget.prototype.addEventListener
-function addEventListener(type, listener, options) {
-  _addEventListener.apply(this, arguments)
-  clenaupEventArray.push(() => {
-    try {
-      this.removeEventListener(...arguments)
-    } catch (e) {}
-  })
-}
-EventTarget.prototype.addEventListener = addEventListener
-document.addEventListener = addEventListener
+const addEventListenerProxy = new Proxy(_addEventListener, {
+  apply(target, thisArg, argumentsList) {
+    Reflect.apply(target, thisArg, argumentsList)
+    clenaupEventArray.push(() => {
+      try {
+        thisArg.removeEventListener(...argumentsList)
+      } catch (e) {}
+    })
+  }
+})
+EventTarget.prototype.addEventListener = addEventListenerProxy
+document.addEventListener = addEventListenerProxy
 
 const _observe = MutationObserver.prototype.observe
 const _disconnect = MutationObserver.prototype.disconnect
-function observe(target, options) {
-  _observe.apply(this, arguments)
-  clenaupEventArray.push(() => {
-    try {
-      _disconnect.apply(this, arguments)
-    } catch (e) {}
-  })
-}
-MutationObserver.prototype.observe = observe
+const observeProxy = new Proxy(_observe, {
+  apply(target, thisArg, argumentsList) {
+    Reflect.apply(target, thisArg, argumentsList)
+    clenaupEventArray.push(() => {
+      try {
+        _disconnect.apply(thisArg, argumentsList)
+      } catch (e) {}
+    })
+  }
+})
+MutationObserver.prototype.observe = observeProxy
 
 export function cleanupEvents(iframe) {
   let func

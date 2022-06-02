@@ -1,5 +1,5 @@
 import Setting from './Setting'
-import config from './config'
+// import config from './config'
 import Parser from './parser'
 import Rule from './rule'
 import { toggleConsole, L_setValue, isChrome } from './lib'

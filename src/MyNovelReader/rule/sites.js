@@ -1210,7 +1210,7 @@ const sites = [
     },
 
     {siteName: '搜小说/搜书网/酷笔记',
-        url: 'www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)',
+        url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
 
         contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
         contentPatch($doc) {
@@ -1323,6 +1323,31 @@ const sites = [
                 },
                 body
             })
+        }
+
+    },
+
+    {siteName: '有度中文网',
+        url: 'https://www.yodu.org/book/\\d+/\\d+.html',
+
+        contentPatch($doc) {
+            const re = toRE("\\{t\\d+_0:'(.*?)',t\\d+_1:'(.*?)',t\\d+_index:'(.*?)',\\}")
+            const ReadParams = $doc.find('script:contains(fuck)').text()
+            const [_, url_previous, url_next, url_index] = re.exec(ReadParams)
+
+            let previousName = $doc.find('#readbg > p > a:nth-child(1)').text()
+            let nextName = $doc.find('#readbg > p > a:nth-child(5)').text()
+            previousName = previousName === '<--' ? '上一页' : '上一章'
+            nextName = nextName === '-->' ? '下一页' : '下一章'
+
+            const body = $doc.find('body')
+
+            $doc.find('a:contains(目录)').remove()
+            $doc.find('p:contains(（本章未完）)').remove()
+
+            $('<a>').attr('href', url_previous).text(previousName).appendTo(body)
+            $('<a>').attr('href', url_next).text(nextName).appendTo(body)
+            $('<a>').attr('href', url_index).text('目录').appendTo(body)
         }
 
     }

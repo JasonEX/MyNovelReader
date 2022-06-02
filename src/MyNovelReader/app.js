@@ -356,9 +356,9 @@ var App = {
         }
     },
     initRequest: function() {
-        App.request = App.site.useiframe ? new IframeRequest() : new XmlRequest()
-        App.request.setErrorHandle(App.scrollForce)
-        App.request.setFinishHandle(App.scroll)
+        App.request = App.site.useiframe ? new IframeRequest(App.site) : new XmlRequest(App.site)
+        App.request.setErrorHandle(App.scrollForce.bind(App))
+        App.request.setFinishHandle(() => App.scroll())
     },
     prepDocument: function() {
         window.onload = window.onunload = function() {};

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.0
+// @version        6.9.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -295,6 +295,7 @@
 // @match          *://www.mibaoge.com/*/*.html
 // @match          *://www.asxs.com/view/*/*.html
 // @match          *://www.xinshuw.cc/*/*.html
+// @match          *://www.yodu.org/book/*/*.html
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html
@@ -2202,7 +2203,7 @@
       },
 
       {siteName: '搜小说/搜书网/酷笔记',
-          url: 'www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)',
+          url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
 
           contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
           contentPatch($doc) {
@@ -2311,6 +2312,31 @@
                   },
                   body
               });
+          }
+
+      },
+
+      {siteName: '有度中文网',
+          url: 'https://www.yodu.org/book/\\d+/\\d+.html',
+
+          contentPatch($doc) {
+              const re = toRE("\\{t\\d+_0:'(.*?)',t\\d+_1:'(.*?)',t\\d+_index:'(.*?)',\\}");
+              const ReadParams = $doc.find('script:contains(fuck)').text();
+              const [_, url_previous, url_next, url_index] = re.exec(ReadParams);
+
+              let previousName = $doc.find('#readbg > p > a:nth-child(1)').text();
+              let nextName = $doc.find('#readbg > p > a:nth-child(5)').text();
+              previousName = previousName === '<--' ? '上一页' : '上一章';
+              nextName = nextName === '-->' ? '下一页' : '下一章';
+
+              const body = $doc.find('body');
+
+              $doc.find('a:contains(目录)').remove();
+              $doc.find('p:contains(（本章未完）)').remove();
+
+              $('<a>').attr('href', url_previous).text(previousName).appendTo(body);
+              $('<a>').attr('href', url_next).text(nextName).appendTo(body);
+              $('<a>').attr('href', url_index).text('目录').appendTo(body);
           }
 
       }
@@ -2648,6 +2674,7 @@
     'WJ特战': '武警特战',
     '\\*{2}手': '兽交手',
     '[÷➗]生CH': '畜生策划',
+    '答桉': '答案',
 
     '[AM霉]国': '美国',
     '[CZ]国': '中国',
@@ -2659,6 +2686,8 @@
 
     '迸\\*{2}光': '迸射精光',
     '十之八\\*' : '十之八九',
+    '关键\\*{3}': '关键性交流',
+    '\\*{3}主播': '性视频主播',
 
     '\\.asxs\\.': '起点',
     
@@ -5586,28 +5615,32 @@
   const clenaupEventArray = [];
 
   const _addEventListener = EventTarget.prototype.addEventListener;
-  function addEventListener(type, listener, options) {
-    _addEventListener.apply(this, arguments);
-    clenaupEventArray.push(() => {
-      try {
-        this.removeEventListener(...arguments);
-      } catch (e) {}
-    });
-  }
-  EventTarget.prototype.addEventListener = addEventListener;
-  document.addEventListener = addEventListener;
+  const addEventListenerProxy = new Proxy(_addEventListener, {
+    apply(target, thisArg, argumentsList) {
+      Reflect$1.apply(target, thisArg, argumentsList);
+      clenaupEventArray.push(() => {
+        try {
+          thisArg.removeEventListener(...argumentsList);
+        } catch (e) {}
+      });
+    }
+  });
+  EventTarget.prototype.addEventListener = addEventListenerProxy;
+  document.addEventListener = addEventListenerProxy;
 
   const _observe = MutationObserver$1.prototype.observe;
   const _disconnect = MutationObserver$1.prototype.disconnect;
-  function observe(target, options) {
-    _observe.apply(this, arguments);
-    clenaupEventArray.push(() => {
-      try {
-        _disconnect.apply(this, arguments);
-      } catch (e) {}
-    });
-  }
-  MutationObserver$1.prototype.observe = observe;
+  const observeProxy = new Proxy(_observe, {
+    apply(target, thisArg, argumentsList) {
+      Reflect$1.apply(target, thisArg, argumentsList);
+      clenaupEventArray.push(() => {
+        try {
+          _disconnect.apply(thisArg, argumentsList);
+        } catch (e) {}
+      });
+    }
+  });
+  MutationObserver$1.prototype.observe = observeProxy;
 
   function cleanupEvents(iframe) {
     let func;
@@ -5659,9 +5692,10 @@
   const iframeHeight = unsafeWindow.innerHeight;
 
   class BaseRequest {
-    constructor() {
+    constructor(siteInfo) {
       this.errorHandle = () => {};
       this.finishHnadle = () => {};
+      this.siteInfo = siteInfo;
     }
 
     setErrorHandle(func) {
@@ -5674,8 +5708,8 @@
   }
 
   class XmlRequest extends BaseRequest {
-    constructor() {
-      super();
+    constructor(siteInfo) {
+      super(siteInfo);
       this.status = RequestStatus.Idle;
       this.doc = null;
     }
@@ -5726,8 +5760,8 @@
   }
 
   class IframeRequest extends BaseRequest {
-    constructor() {
-      super();
+    constructor(siteInfo) {
+      super(siteInfo);
       this.status = RequestStatus.Idle;
       this.iframe = createIframe(this.loaded.bind(this));
       this.doc = null;
@@ -5762,14 +5796,14 @@
 
       this.win.scrollTo(0, this.doc.body.scrollHeight - this.win.innerHeight * 2);
 
-      if (App$1.site.startLaunch) {
-        App$1.site.startLaunch($(this.doc));
+      if (this.siteInfo.startLaunch) {
+        this.siteInfo.startLaunch($(this.doc));
       }
 
-      if (App$1.site.mutationSelector) {
-        await observeElement(this.doc, App$1.site);
+      if (this.siteInfo.mutationSelector) {
+        await observeElement(this.doc, this.siteInfo);
       } else {
-        const timeout = App$1.site.timeout || 0;
+        const timeout = this.siteInfo.timeout || 0;
         if (timeout) {
           await sleep(timeout);
         }
@@ -5805,6 +5839,7 @@
     visibility:hidden!important;
     display:none;
   `;
+    iframe.referrerPolicy = Setting.preloadNextPage ? 'no-referrer' : '';
     document.body.appendChild(iframe);
     iframe.onload = onload;
     return iframe
@@ -6148,9 +6183,9 @@
           }
       },
       initRequest: function() {
-          App$1.request = App$1.site.useiframe ? new IframeRequest() : new XmlRequest();
-          App$1.request.setErrorHandle(App$1.scrollForce);
-          App$1.request.setFinishHandle(App$1.scroll);
+          App$1.request = App$1.site.useiframe ? new IframeRequest(App$1.site) : new XmlRequest(App$1.site);
+          App$1.request.setErrorHandle(App$1.scrollForce.bind(App$1));
+          App$1.request.setFinishHandle(() => App$1.scroll());
       },
       prepDocument: function() {
           window.onload = window.onunload = function() {};
