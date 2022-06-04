@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.4
+// @version        6.9.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1207,7 +1207,8 @@
             $doc.find("div.noveltext").find("div:first, h1").remove();
 
             $doc.find("div[align=right], .readsmall").remove();
-            
+            $doc.find("script").remove();
+
             // 移除VIP章节方块
             var $node = $doc.find('.noveltext');
             if ($node.attr("class").split(/\s+/).length === 2) {
@@ -3834,8 +3835,6 @@
 
           if (info.useRawContent) {
               C.log('内容处理已被自定义站点规则 useRawContent 关闭');
-              // 繁简转换
-              text = chineseConversion(text);
               return text
           }
 

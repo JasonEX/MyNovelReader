@@ -445,8 +445,6 @@ Parser.prototype = {
 
         if (info.useRawContent) {
             C.log('内容处理已被自定义站点规则 useRawContent 关闭')
-            // 繁简转换
-            text = chineseConversion(text)
             return text
         }
 

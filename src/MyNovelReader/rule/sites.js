@@ -214,7 +214,8 @@ const sites = [
           $doc.find("div.noveltext").find("div:first, h1").remove();
 
           $doc.find("div[align=right], .readsmall").remove()
-          
+          $doc.find("script").remove()
+
           // 移除VIP章节方块
           var $node = $doc.find('.noveltext');
           if ($node.attr("class").split(/\s+/).length === 2) {
