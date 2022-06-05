@@ -67,6 +67,8 @@
     mutationChildText: '', // 判断文本，该节点如果含有该文本则认为需要等待内容生成
 
     useiframe: false, // 使用 iframe 加载完整网页，如果章节内容是动态加载的需要开启
+    // 设置 iframe 的 sandbox 属性，详见 https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/iframe#attr-sandbox
+    iframeSandbox: undefined,
 
     contentSelector: '', // 章节内容 jQuery 选择器
     checkSection: false, // 是否检查章节存在多页，检测到了会尝试合并为一章

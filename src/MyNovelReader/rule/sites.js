@@ -207,6 +207,10 @@ const sites = [
       contentSelector: '.noveltext',
       contentHandle: false,
       contentRemove: 'font[color], hr',
+      useiframe: true,
+      mutationSelector: 'div[id^=content]',
+      mutationChildCount: 0,
+      iframeSandbox: 'allow-same-origin allow-scripts',
       contentPatchAsync: async function ($doc) {
           // 移除 h2 的标题
           $doc.find('div:has(>h2)').remove();

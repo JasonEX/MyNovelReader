@@ -475,16 +475,16 @@ Parser.prototype = {
         // text = this.replaceText(text, Rule.replaceAll);
 
         // 去除内容中的标题
-        if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
-            try {
-                var reg = toReStr(this.chapterTitle).replace(/\s+/g, '\\s*');
-                // reg = new RegExp(reg, 'ig');
-                text = text.replace(toRE(reg), "");
-                C.log('去除内容中的标题', reg);
-            } catch(e) {
-                C.error(e);
-            }
-        }
+        // if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
+        //     try {
+        //         var reg = toReStr(this.chapterTitle).replace(/\s+/g, '\\s*');
+        //         // reg = new RegExp(reg, 'ig');
+        //         text = text.replace(toRE(reg), "");
+        //         C.log('去除内容中的标题', reg);
+        //     } catch(e) {
+        //         C.error(e);
+        //     }
+        // }
 
         if (this.bookTitle) {
             var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）'
@@ -607,6 +607,17 @@ Parser.prototype = {
         const contents = textNodes.map(node => node.data.trim().replace(/\s+/g, ' '))
         const deDupeConetents = [...new Set(contents)]
 
+        // 去除内容中的标题
+        if (this.chapterTitle && contents.length) {
+            try {
+                var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*')
+                contents[0] = contents[0].replace(toRE(reg), '')
+                C.log('去除内容中的标题', reg)
+            } catch (e) {
+                C.error(e)
+            }
+        }
+
         let content;
 
         // 查重率超过 10% 则使用去重后内容
@@ -661,8 +672,8 @@ Parser.prototype = {
         const finalContents = content.split('\n')
 
         textNodes
-            .filter(node => node.parentNode !== dom)
-            .forEach(node => toParagraphNode(node.parentNode))
+            .filter(node => node.parentNode.childNodes.length > 1)
+            .forEach(toParagraphNode)
 
         if (finalContents.length <= textNodes.length) {
             textNodes.forEach((node, index) => {

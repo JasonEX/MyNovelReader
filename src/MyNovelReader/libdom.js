@@ -58,9 +58,7 @@ export function observeElement(
 
 // 将非p标签段落转换为p标签段落
 export function toParagraphNode(node) {
-  if (node.tagName && node.tagName !== 'P') {
-    const p = document.createElement('p')
-    node.childNodes.forEach(node => p.appendChild(node))
-    node.replaceWith(p)
-  }
+  const p = document.createElement('p')
+  p.appendChild(node.cloneNode())
+  node.replaceWith(p)
 }

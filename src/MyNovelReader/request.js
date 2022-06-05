@@ -58,10 +58,7 @@ export class XmlRequest extends BaseRequest {
         break
       } catch (e) {
         error = e
-        C.error(
-          `XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`,
-          error
-        )
+        C.error(`XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`, error)
       }
     }
 
@@ -85,7 +82,7 @@ export class IframeRequest extends BaseRequest {
   constructor(siteInfo) {
     super(siteInfo)
     this.status = RequestStatus.Idle
-    this.iframe = createIframe(this.loaded.bind(this))
+    this.iframe = createIframe(this.loaded.bind(this), siteInfo)
     this.doc = null
     this.win = null
   }
@@ -97,7 +94,7 @@ export class IframeRequest extends BaseRequest {
   async send(url) {
     this.status = RequestStatus.Loading
     this.doc = this.win = null
-    
+
     if (!this.display) {
       this.show()
     }
@@ -149,7 +146,7 @@ export class IframeRequest extends BaseRequest {
   }
 }
 
-function createIframe(onload) {
+function createIframe(onload, { iframeSandbox }) {
   const iframe = document.createElement('iframe')
   iframe.name = 'mynovelreader-iframe'
   iframe.style.cssText = `
@@ -161,7 +158,12 @@ function createIframe(onload) {
     visibility:hidden!important;
     display:none;
   `
-  iframe.referrerPolicy = Setting.preloadNextPage ? 'no-referrer' : ''
+  if (Setting.preloadNextPage) {
+    iframe.referrerPolicy = 'no-referrer'
+  }
+  if (!_.isUndefined(iframeSandbox)) {
+    iframe.sandbox = iframeSandbox
+  }
   document.body.appendChild(iframe)
   iframe.onload = onload
   return iframe

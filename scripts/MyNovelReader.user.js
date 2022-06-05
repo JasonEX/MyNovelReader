@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.7
+// @version        6.9.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1238,6 +1238,10 @@
         contentSelector: '.noveltext',
         contentHandle: false,
         contentRemove: 'font[color], hr',
+        useiframe: true,
+        mutationSelector: 'div[id^=content]',
+        mutationChildCount: 0,
+        iframeSandbox: 'allow-same-origin allow-scripts',
         contentPatchAsync: async function ($doc) {
             // 移除 h2 的标题
             $doc.find('div:has(>h2)').remove();
@@ -3461,11 +3465,9 @@
 
   // 将非p标签段落转换为p标签段落
   function toParagraphNode(node) {
-    if (node.tagName && node.tagName !== 'P') {
-      const p = document.createElement('p');
-      node.childNodes.forEach(node => p.appendChild(node));
-      node.replaceWith(p);
-    }
+    const p = document.createElement('p');
+    p.appendChild(node.cloneNode());
+    node.replaceWith(p);
   }
 
   // 代码来自 https://github.com/hirak/phpjs
@@ -4008,16 +4010,16 @@
           // text = this.replaceText(text, Rule.replaceAll);
 
           // 去除内容中的标题
-          if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
-              try {
-                  var reg = toReStr(this.chapterTitle).replace(/\s+/g, '\\s*');
-                  // reg = new RegExp(reg, 'ig');
-                  text = text.replace(toRE(reg), "");
-                  C.log('去除内容中的标题', reg);
-              } catch(e) {
-                  C.error(e);
-              }
-          }
+          // if(this.chapterTitle && Rule.titleRegExp.test(this.chapterTitle)){
+          //     try {
+          //         var reg = toReStr(this.chapterTitle).replace(/\s+/g, '\\s*');
+          //         // reg = new RegExp(reg, 'ig');
+          //         text = text.replace(toRE(reg), "");
+          //         C.log('去除内容中的标题', reg);
+          //     } catch(e) {
+          //         C.error(e);
+          //     }
+          // }
 
           if (this.bookTitle) {
               var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）';
@@ -4140,6 +4142,17 @@
           const contents = textNodes.map(node => node.data.trim().replace(/\s+/g, ' '));
           const deDupeConetents = [...new Set(contents)];
 
+          // 去除内容中的标题
+          if (this.chapterTitle && contents.length) {
+              try {
+                  var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*');
+                  contents[0] = contents[0].replace(toRE(reg), '');
+                  C.log('去除内容中的标题', reg);
+              } catch (e) {
+                  C.error(e);
+              }
+          }
+
           let content;
 
           // 查重率超过 10% 则使用去重后内容
@@ -4194,8 +4207,8 @@
           const finalContents = content.split('\n');
 
           textNodes
-              .filter(node => node.parentNode !== dom)
-              .forEach(node => toParagraphNode(node.parentNode));
+              .filter(node => node.parentNode.childNodes.length > 1)
+              .forEach(toParagraphNode);
 
           if (finalContents.length <= textNodes.length) {
               textNodes.forEach((node, index) => {
@@ -5922,10 +5935,7 @@
           break
         } catch (e) {
           error = e;
-          C.error(
-            `XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`,
-            error
-          );
+          C.error(`XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`, error);
         }
       }
 
@@ -5949,7 +5959,7 @@
     constructor(siteInfo) {
       super(siteInfo);
       this.status = RequestStatus.Idle;
-      this.iframe = createIframe(this.loaded.bind(this));
+      this.iframe = createIframe(this.loaded.bind(this), siteInfo);
       this.doc = null;
       this.win = null;
     }
@@ -5961,7 +5971,7 @@
     async send(url) {
       this.status = RequestStatus.Loading;
       this.doc = this.win = null;
-      
+
       if (!this.display) {
         this.show();
       }
@@ -6013,7 +6023,7 @@
     }
   }
 
-  function createIframe(onload) {
+  function createIframe(onload, { iframeSandbox }) {
     const iframe = document.createElement('iframe');
     iframe.name = 'mynovelreader-iframe';
     iframe.style.cssText = `
@@ -6025,7 +6035,12 @@
     visibility:hidden!important;
     display:none;
   `;
-    iframe.referrerPolicy = Setting.preloadNextPage ? 'no-referrer' : '';
+    if (Setting.preloadNextPage) {
+      iframe.referrerPolicy = 'no-referrer';
+    }
+    if (!_.isUndefined(iframeSandbox)) {
+      iframe.sandbox = iframeSandbox;
+    }
     document.body.appendChild(iframe);
     iframe.onload = onload;
     return iframe
