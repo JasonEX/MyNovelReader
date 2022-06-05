@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.6
+// @version        6.9.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -40,7 +40,7 @@
 // @include        *://chuangshi.qq.com/*bk/*/*-r-*.html*
 // @include        *://yunqi.qq.com/*bk/*/*.html
 // @include        *://dushu.qq.com/read.html?bid=*
-// @include        *://www.jjwxc.net/onebook.php?novelid=*
+// @include        *://www.jjwxc.net/onebook.php?novelid=*&chapterid=*
 // @include        *://my.jjwxc.net/onebook_vip.php?novelid=*&chapterid=*
 // @include        *://book.zongheng.com/chapter/*/*.html
 // @include        *://www.xxsy.net/chapter/*.html
@@ -329,6 +329,8 @@
 // @match          *://www.01xs.com/xiaoshuo/*/*.html
 // @match          *://www.biquge.name/html/*/*/*.html
 // @match          *://www.yawenba.net/book/*/*.html
+// @match          *://www.aiyueshuxiang.com/html/*/*.html
+// @match          *://www.zhenhunxiaoshuo.com/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2469,6 +2471,18 @@
 
       },
 
+      {siteName: '镇魂',
+          url: 'https://www.zhenhunxiaoshuo.com/\\d+.html',
+          exampleUrl: 'https://www.zhenhunxiaoshuo.com/1.html',
+
+          contentSelector: '.article-content',
+          bookTitleSelector: 'a[rel~=category]',
+          indexUrl: 'a[rel~=category]',
+          nextUrl: 'a[rel=next]',
+          prevUrl: 'a[rel=prev]',
+
+      },
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -2819,7 +2833,7 @@
 
     '\\.asxs\\.': '起点',
 
-    '伱': '你', '勐': '猛',
+    '伱': '你', '勐': '猛', '澹': '淡',
     
   };
 

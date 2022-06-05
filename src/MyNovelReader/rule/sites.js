@@ -1444,6 +1444,18 @@ const sites = [
 
     },
 
+    {siteName: '镇魂',
+        url: 'https://www.zhenhunxiaoshuo.com/\\d+.html',
+        exampleUrl: 'https://www.zhenhunxiaoshuo.com/1.html',
+
+        contentSelector: '.article-content',
+        bookTitleSelector: 'a[rel~=category]',
+        indexUrl: 'a[rel~=category]',
+        nextUrl: 'a[rel=next]',
+        prevUrl: 'a[rel=prev]',
+
+    },
+
 ];
 
 export default sites
