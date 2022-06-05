@@ -671,9 +671,11 @@ Parser.prototype = {
 
         const finalContents = content.split('\n')
 
-        textNodes
-            .filter(node => node.parentNode.childNodes.length > 1)
-            .forEach(toParagraphNode)
+        for (let i = 0; i < textNodes.length; i++) {
+            if (textNodes[i].parentNode.childNodes.length > 1) {
+                textNodes[i] = toParagraphNode(textNodes[i])
+            }
+        }
 
         if (finalContents.length <= textNodes.length) {
             textNodes.forEach((node, index) => {
