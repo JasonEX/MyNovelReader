@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.5
+// @version        6.9.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -296,6 +296,42 @@
 // @match          *://www.asxs.com/view/*/*.html
 // @match          *://www.xinshuw.cc/*/*.html
 // @match          *://www.yodu.org/book/*/*.html
+// @match          *://www.fantuantanshu.com/*/*.html
+// @match          *://www.tsxsw.net/html/*/*/*.html
+// @match          *://www.xiaoshuting.org/book/*/*.html
+// @match          *://www.xiaoshuting.la/*/*/*.html
+// @match          *://www.xiaoshuting.cc/xiaoshuo/*/*/*.html
+// @match          *://www.xiaoshuting.info/read/*/*/*.html
+// @match          *://www.xiaoshutingapp.com/html/*/*.html
+// @match          *://www.fantuankanshu.com/html/*/*/*.html
+// @match          *://www.loubiqu.net/html/*/*.html
+// @match          *://www.1200ksw.net/html/*/*/*.html
+// @match          *://www.ranwena.net/files/article/*/*/*.html
+// @match          *://www.biququ.info/html/*/*.html
+// @match          *://www.fqxsw.org/html/*/*.html
+// @match          *://www.fanqianxs.com/html/*/*.html
+// @match          *://www.cxzww.com/read/*/*/*.html
+// @match          *://www.mdwenxue.com/book/*/*/*.html
+// @match          *://www.yyxs.la/html/*/*/*.html
+// @match          *://www.slkslk.com/*/*/*/*.html
+// @match          *://www.siluke.com/*/*/*/*.html
+// @match          *://www.bqgxsydw.com/html/*/*/*.html
+// @match          *://www.lingdiankanshu.com/html/*/*/*.html
+// @match          *://tongyuwx.com/html/*/*/*.html
+// @match          *://www.beqege.cc/*/*.html
+// @match          *://www.yqxsw.org/html/*/*/*.html
+// @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
+// @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
+// @match          *://www.156n.net/html/*/*/*.html
+// @match          *://www.ahzww.org/*/*/*.html
+// @match          *://www.31xs.org/*/*/*.html
+// @match          *://www.31xs.net/*/*/*.html
+// @match          *://www.01xs.com/xiaoshuo/*/*.html
+// @match          *://www.biquge.name/html/*/*/*.html
+// @match          *://www.yawenba.net/book/*/*.html
+
+// legado-webui
+// @match          *://localhost:5000/bookshelf/*/*/
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html
@@ -2340,7 +2376,98 @@
               $('<a>').attr('href', url_index).text('目录').appendTo(body);
           }
 
-      }
+      },
+
+      {siteName: '小书亭',
+          url: 'http://www.xiaoshuting.la/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.xiaoshuting.la/4/4325/72082213.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '小书亭',
+          url: 'http://www.xiaoshutingapp.com/html/\\d+/\\d+.html',
+          exampleUrl: 'http://www.xiaoshutingapp.com/html/11341/151211.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '饭团看书',
+          url: 'http://www.fantuankanshu.com/html/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.fantuankanshu.com/html/6/6286/83813065.html',
+
+          noSection: true
+
+      },
+
+      {siteName: 'E品中文',
+          url: 'http://www.epzw.com/html/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.epzw.com/html/92/92675/1.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '爱好中文网',
+          url: 'http://www.ahzww.org/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.ahzww.org/10/10922/254841.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '第一小说',
+          url: 'https://www.01xs.com/xiaoshuo/\\d+/\\d+.html',
+          exampleUrl: 'https://www.01xs.com/xiaoshuo/120924/1.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '思路客',
+          url: 'http://www.slkslk.com/\\d+/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.slkslk.com/0/8/8342/139031.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '思路客',
+          url: 'http://www.siluke.com/\\d+/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.siluke.com/0/112/112444/1874061.html',
+
+          noSection: true
+
+      },
+
+      {siteName: '小书亭',
+          url: 'http://www.xiaoshuting.cc/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.xiaoshuting.cc/xiaoshuo/4/4469/62562.html',
+
+          contentSelector: '.Text',
+          bookTitleSelector: '.summary a'
+
+      },
+
+      {siteName: '2k小说网',
+          url: 'http://www.2kxiaoshuo.com/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.2kxiaoshuo.com/xiaoshuo/18/18207/254891.html',
+
+          contentSelector: '.Text',
+          bookTitleSelector: '.summary a'
+
+      },
+
+      {siteName: '2k小说网',
+          url: 'http://www.2kxs.la/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'http://www.2kxs.la/xiaoshuo/11/11245/202411.html',
+
+          contentSelector: '.Text',
+          bookTitleSelector: '.summary a'
+
+      },
 
   ];
 
@@ -2691,6 +2818,8 @@
     '\\*{3}主播': '性视频主播',
 
     '\\.asxs\\.': '起点',
+
+    '伱': '你', '勐': '猛',
     
   };
 

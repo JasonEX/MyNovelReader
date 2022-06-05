@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        6.9.5
+// @version        6.9.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -296,6 +296,42 @@
 // @match          *://www.asxs.com/view/*/*.html
 // @match          *://www.xinshuw.cc/*/*.html
 // @match          *://www.yodu.org/book/*/*.html
+// @match          *://www.fantuantanshu.com/*/*.html
+// @match          *://www.tsxsw.net/html/*/*/*.html
+// @match          *://www.xiaoshuting.org/book/*/*.html
+// @match          *://www.xiaoshuting.la/*/*/*.html
+// @match          *://www.xiaoshuting.cc/xiaoshuo/*/*/*.html
+// @match          *://www.xiaoshuting.info/read/*/*/*.html
+// @match          *://www.xiaoshutingapp.com/html/*/*.html
+// @match          *://www.fantuankanshu.com/html/*/*/*.html
+// @match          *://www.loubiqu.net/html/*/*.html
+// @match          *://www.1200ksw.net/html/*/*/*.html
+// @match          *://www.ranwena.net/files/article/*/*/*.html
+// @match          *://www.biququ.info/html/*/*.html
+// @match          *://www.fqxsw.org/html/*/*.html
+// @match          *://www.fanqianxs.com/html/*/*.html
+// @match          *://www.cxzww.com/read/*/*/*.html
+// @match          *://www.mdwenxue.com/book/*/*/*.html
+// @match          *://www.yyxs.la/html/*/*/*.html
+// @match          *://www.slkslk.com/*/*/*/*.html
+// @match          *://www.siluke.com/*/*/*/*.html
+// @match          *://www.bqgxsydw.com/html/*/*/*.html
+// @match          *://www.lingdiankanshu.com/html/*/*/*.html
+// @match          *://tongyuwx.com/html/*/*/*.html
+// @match          *://www.beqege.cc/*/*.html
+// @match          *://www.yqxsw.org/html/*/*/*.html
+// @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
+// @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
+// @match          *://www.156n.net/html/*/*/*.html
+// @match          *://www.ahzww.org/*/*/*.html
+// @match          *://www.31xs.org/*/*/*.html
+// @match          *://www.31xs.net/*/*/*.html
+// @match          *://www.01xs.com/xiaoshuo/*/*.html
+// @match          *://www.biquge.name/html/*/*/*.html
+// @match          *://www.yawenba.net/book/*/*.html
+
+// legado-webui
+// @match          *://localhost:5000/bookshelf/*/*/
 
 // NSFW
 // @match          *://book.xbookcn.net/*/*/*.html
