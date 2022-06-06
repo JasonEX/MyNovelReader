@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.0
+// @version        7.0.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -4213,12 +4213,6 @@
 
           const finalContents = content.split('\n');
 
-          for (let i = 0; i < textNodes.length; i++) {
-              if (textNodes[i].parentNode.childNodes.length > 1) {
-                  textNodes[i] = toParagraphNode(textNodes[i]);
-              }
-          }
-
           if (finalContents.length <= textNodes.length) {
               textNodes.forEach((node, index) => {
                   if (!finalContents[index]) {
@@ -4235,6 +4229,12 @@
                       textNodes[index].data = text;
                   }
               });
+          }
+
+          for (let i = 0; i < textNodes.length; i++) {
+              if (textNodes[i].parentNode.childNodes.length > 1) {
+                  textNodes[i] = toParagraphNode(textNodes[i]);
+              }
           }
 
       },

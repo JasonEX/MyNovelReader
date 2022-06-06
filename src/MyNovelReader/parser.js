@@ -671,12 +671,6 @@ Parser.prototype = {
 
         const finalContents = content.split('\n')
 
-        for (let i = 0; i < textNodes.length; i++) {
-            if (textNodes[i].parentNode.childNodes.length > 1) {
-                textNodes[i] = toParagraphNode(textNodes[i])
-            }
-        }
-
         if (finalContents.length <= textNodes.length) {
             textNodes.forEach((node, index) => {
                 if (!finalContents[index]) {
@@ -693,6 +687,12 @@ Parser.prototype = {
                     textNodes[index].data = text
                 }
             })
+        }
+
+        for (let i = 0; i < textNodes.length; i++) {
+            if (textNodes[i].parentNode.childNodes.length > 1) {
+                textNodes[i] = toParagraphNode(textNodes[i])
+            }
         }
 
     },
