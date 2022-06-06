@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.1
+// @version        7.0.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -6055,6 +6055,24 @@
     return iframe
   }
 
+  function mousedownEventTest() {
+    let clicked;
+    const $div = $('<div>')
+      .on('mousedown', () => (clicked = true))
+      .appendTo('body');
+    $div[0].dispatchEvent(new MouseEvent('mousedown'));
+    $div.remove();
+    if (!clicked) {
+      C.error(
+        'mousedown 事件测试失败，请检查浏览器是否有扩展或脚本（尤其是右键/复制限制解除类）与小说阅读脚本冲突！'
+      );
+    }
+  }
+
+  function envCheckInit() {
+    mousedownEventTest();
+  }
+
   var App$1 = {
       isEnabled: false,
       parsedPages: {},
@@ -6076,6 +6094,9 @@
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
               return;
           }
+
+          // 浏览器环境自检
+          envCheckInit();
 
           // 手动调用
           var readx = App$1.launch;

@@ -16,6 +16,7 @@ import './inject'
 import { observeElement } from './libdom'
 import { XmlRequest, IframeRequest, RequestStatus, iframeHeight } from './request'
 import { cleanupEvents } from './inject'
+import { envCheckInit } from './envCheck'
 
 var App = {
     isEnabled: false,
@@ -38,6 +39,9 @@ var App = {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
             return;
         }
+
+        // 浏览器环境自检
+        envCheckInit()
 
         // 手动调用
         var readx = App.launch
