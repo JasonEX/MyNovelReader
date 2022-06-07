@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.2
+// @version        7.0.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -525,6 +525,7 @@
               log: nullFn,
               debug: nullFn,
               error: unsafeWindow.console.error,
+              warn: unsafeWindow.console.warn,
               group: nullFn,
               groupCollapsed: nullFn,
               groupEnd: nullFn,
@@ -6069,8 +6070,30 @@
     }
   }
 
+  function minFontSizeTest() {
+    const $div = $('<div>')
+      .text('阅读模式')
+      .css('font-size', '12px')
+      .appendTo('body');
+    const fontSize = +getComputedStyle($div[0]).fontSize.slice(0, -2);
+    $div.remove();
+    if (fontSize > 12) {
+      C.warn('浏览器最小字号超过 12px ，会导致阅读模式按钮文字显示位置异常！');
+    }
+  }
+
+  function logLevelTest() {
+    toggleConsole(true);
+    C.log('这是一条测试日志信息。');
+    C.warn('这是一条测试警告信息。');
+    C.error('这是一条测试错误信息。');
+    toggleConsole(Setting.debug);
+  }
+
   function envCheckInit() {
+    logLevelTest();
     mousedownEventTest();
+    minFontSizeTest();
   }
 
   var App$1 = {

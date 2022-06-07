@@ -24,6 +24,7 @@ export function toggleConsole(debug) {
             log: nullFn,
             debug: nullFn,
             error: unsafeWindow.console.error,
+            warn: unsafeWindow.console.warn,
             group: nullFn,
             groupCollapsed: nullFn,
             groupEnd: nullFn,
