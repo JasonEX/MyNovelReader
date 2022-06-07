@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.3
+// @version        7.0.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2715,7 +2715,7 @@
     "shàng\\s*mén":"上门", "上jiang":"上将", "she(门|术|手|程|击)":"射$1", "sudu":"速度", "shú\\s*nǚ":"熟女", "shuijue":"睡觉", "shide":"是的", "sh[iì]ji[eè]":"世界", "sh[ií]ji[aā]n":"时间", "sh[ií]h[oò]u":"时候", "sh[ií]me":"什么", "si人":"私人", "shi女":"侍女", "shi身":"失身", "sh[ūu]j[ìi]":"书记", "shu女":"熟女", "shu[　\\s]?xiong":"酥胸", "(?:上|shang)chuang":"上床", "shǒu\\s*jī":"手机", "呻y[íi]n":"呻吟", "sh[ēe]ngzh[íi]":"生殖", "深gu":"深谷", "双xiu":"双修", "生r[ìi]":"生日", "si盐":"私盐", "shi卫":"侍卫", "si下":"私下", "sao扰":"骚扰", "ｓｈｕａｎｇ\\s*ｆｅｎｇ":"双峰", "shǎo\\s*fù":"少妇", "shì\\s*pín":"视频", "shè\\s*xiàng":"摄像",
     "t[uū]r[áa]n":"突然", "tiaojiao":"调教", "tí\\s*gòng":"提供", "偷qing":"偷情", "推dao":"推倒", "脱guang":"脱光", "t[èe]bi[ée]":"特别", "t[ōo]nggu[òo]":"通过", "同ju":"同居", "tian来tian去":"舔来舔去",
     "w[ēe]ixi[ée]":"威胁", "wèizh[ìi]":"位置", "wei员":"委员", "w[èe]nti":"问题", "wèi\\s*dào\\s*":"味道", "wú\\s*nài":"无奈", "wǔ\\s*qì":"武器",  "weilai":"未来",
-    "xiu长":"修长", "亵du":"亵渎", "xing福":"幸福", "xìng\\s*yùn":"幸运", "小bo":"小波", "小niū":"小妞", "xiong([^a-z])":"胸$1", "小tui":"小腿", "xiang港":"香港", "xiàohuà":"笑话", "xiāo\\s*shòu":"销售", "xiàn\\'zhì":"限制", "xiàn\\s*jīn":"现金", "xiāng\\s*zǐ":"箱子", "xiōng\\s*dì":"兄弟", "选zé":"选择", "xìn\\s*hào":"信号", "xìng\\s*gǎn":"性感", "xiǎo\\s*jiě":"小姐", "xìn\\s*hào":"信号", "xià\\s*zhù":"下注",
+    "xiu长":"修长", "亵du":"亵渎", "xing福":"幸福", "xìng\\s*yùn":"幸运", "小bo\\b":"小波", "小niū":"小妞", "xiong([^a-z])":"胸$1", "小tui":"小腿", "xiang港":"香港", "xiàohuà":"笑话", "xiāo\\s*shòu":"销售", "xiàn\\'zhì":"限制", "xiàn\\s*jīn":"现金", "xiāng\\s*zǐ":"箱子", "xiōng\\s*dì":"兄弟", "选zé":"选择", "xìn\\s*hào":"信号", "xìng\\s*gǎn":"性感", "xiǎo\\s*jiě":"小姐", "xìn\\s*hào":"信号", "xià\\s*zhù":"下注",
     "yì\\s*wài\\s*":"意外", "yin(冷|暗|谋|险|沉|沟|癸派|后)":"阴$1", "y[iī]y[àa]ng":"一样", "y[īi]di[ǎa]n":"一点", "yī\\s*zhèn":"一阵", "y[ǐi]j[īi]ng":"已经", "疑huo":"疑惑", "yí\\s*huò":"疑惑", "影mi":"影迷", "yin荡":"淫荡", "yin贼":"淫贼", "阳w[ěe]i":"阳痿", "yao头":"摇头", "yaotou":"摇头", "摇tou":"摇头", "yezhan":"野战", "you饵":"诱饵", "(?:you|诱)(?:惑|huo)":"诱惑", "you导":"诱导", "引you":"引诱", "you人":"诱人", "youshi":"有事", "you\\s*xiu":"优秀", "御yòng":"御用", "旖ni":"旖旎", "yu念":"欲念", "you敌深入":"诱敌深入", "影she":"影射", "牙qian":"牙签", "一yè情":"一夜情", "yīng\\s*yǔ":"英语",
     "z[iì]j[iǐ]":"自己", "z[ìi](?:\\s|<br/?>|&nbsp;)*y[oó]u":"自由", "zh[iī]d?[àa]u?o":"知道", "zixin":"自信", "zhì'fú":"制服", "zhì\\s*fú":"制服", "zha药":"炸药", "zhan有":"占有", "zhào\\s*piàn":"照片", "zhè\\s*gè":"这个", "政f[ǔu]|zheng府":"政府", "zh[èe]ng\\s{0,2}f[uǔ]":"政府", "zong理":"总理", "zh[ōo]ngy[āa]ng":"中央", "中yang":"中央", "zu[oǒ]\\s*y[oò]u":"左右", "zhǔ\\s*dòng":"主动", "zh[oō]uw[ée]i":"周围", "zhōu\\s*nián":"周年", "中nan海":"中南海", "中j委":"中纪委", "中zu部":"中组部", "政zhi局":"政治局", "(昨|一|时|余)(?:<br/?>|&nbsp;|\\s)*ì":"$1日", "照she":"照射", "zhǔn\\s*bèi\\s*":"准备", "zhu义":"主义",
 
@@ -2804,6 +2804,7 @@
     '牛1b': '牛b', '微1博': '微博', '内1衣': '内衣',
 
     '虫\\*{2}流': '虫族交流', '合成\\*{2}流': '合成兽交流',
+    '虫\\*{2}战': '虫族交战',
     '东XZ': '东西藏', '东躲XZ': '东躲西藏',
     '幸苦': '辛苦', '就就给': '就交给', 
     'DU犯': '毒贩', '网络招piao': '网络招嫖', 
@@ -2842,6 +2843,7 @@
     '\\*{3}主播': '性视频主播',
 
     '\\.asxs\\.': '起点',
+    '\\b(?:boos|boso)\\b': 'BOSS',
 
     '伱': '你', '勐': '猛', '澹': '淡',
     
@@ -2936,7 +2938,7 @@
     '亲,点击进去,给个好评呗,分数越高更新越快,据说给新打满分的最后都找到了漂亮的老婆哦!',
     '猫扑中文',
     '点击下载本站APP,海量小说，免费畅读！',
-    ', 报送后维护人员会在两分钟内校正章节内容,请耐心等待。',
+    ', 报送后维护人员会在两分钟内校正章节内容,请耐心等待。?',
     '举报后请耐心等待,并刷新页面。',
     r`try\{mad1\('gad2'\);\} catch\(ex\)\{\}`,
     '：。：',
@@ -2944,6 +2946,10 @@
     r`本章节内容更新中\.\.\.`,
     '【本站首发，最快更新】',
     r`chaptererror\(\);`,
+    'xqqxs[八8]\\.$',
+    '韆釺哾$',
+    '亲，本章已完，祝您阅读愉快！\\^0\\^',
+    '亲，本章未完，还有下一页哦\\^0\\^',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -3026,7 +3032,6 @@
     '《.*?》无错章节将持续在.*?更新.站内无任何广告.还请大家收藏和推荐.*?！.*?$',
     '注：如你看到本章节内容是防盗错误内容、本书断更等问题请登录后→→',
     '手机站全新改版升级地址：.*?，数据和书签与电脑站同步，无广告清新阅读！',
-    '亲，本章已完，祝您阅读愉快！\\^0\\^',
     '第.*?章.*?免费阅读[.。]?',
     'Copyright.*?联系我们：.*',
     '^正文$',
@@ -3472,10 +3477,8 @@
   // 将非p标签段落转换为p标签段落
   function toParagraphNode(node) {
     const p = document.createElement('p');
-    const cloneTextNode = node.cloneNode();
-    p.appendChild(cloneTextNode);
     node.replaceWith(p);
-    return cloneTextNode
+    p.appendChild(node);
   }
 
   // 代码来自 https://github.com/hirak/phpjs
@@ -4232,11 +4235,9 @@
               });
           }
 
-          for (let i = 0; i < textNodes.length; i++) {
-              if (textNodes[i].parentNode.childNodes.length > 1) {
-                  textNodes[i] = toParagraphNode(textNodes[i]);
-              }
-          }
+          textNodes
+              .filter(node => node.parentNode.childNodes.length > 1)
+              .forEach(toParagraphNode);
 
       },
       normalizeContent: function(html) {
@@ -6078,7 +6079,7 @@
     const fontSize = +getComputedStyle($div[0]).fontSize.slice(0, -2);
     $div.remove();
     if (fontSize > 12) {
-      C.warn('浏览器最小字号超过 12px ，会导致阅读模式按钮文字显示位置异常！');
+      C.warn('浏览器最小字号超过 12px ，将会导致阅读模式按钮文字显示位置异常！');
     }
   }
 

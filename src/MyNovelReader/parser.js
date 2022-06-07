@@ -689,11 +689,9 @@ Parser.prototype = {
             })
         }
 
-        for (let i = 0; i < textNodes.length; i++) {
-            if (textNodes[i].parentNode.childNodes.length > 1) {
-                textNodes[i] = toParagraphNode(textNodes[i])
-            }
-        }
+        textNodes
+            .filter(node => node.parentNode.childNodes.length > 1)
+            .forEach(toParagraphNode)
 
     },
     normalizeContent: function(html) {

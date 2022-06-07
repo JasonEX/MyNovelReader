@@ -59,8 +59,6 @@ export function observeElement(
 // 将非p标签段落转换为p标签段落
 export function toParagraphNode(node) {
   const p = document.createElement('p')
-  const cloneTextNode = node.cloneNode()
-  p.appendChild(cloneTextNode)
   node.replaceWith(p)
-  return cloneTextNode
+  p.appendChild(node)
 }

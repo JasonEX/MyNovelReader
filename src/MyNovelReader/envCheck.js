@@ -23,7 +23,7 @@ function minFontSizeTest() {
   const fontSize = +getComputedStyle($div[0]).fontSize.slice(0, -2)
   $div.remove()
   if (fontSize > 12) {
-    C.warn('浏览器最小字号超过 12px ，会导致阅读模式按钮文字显示位置异常！')
+    C.warn('浏览器最小字号超过 12px ，将会导致阅读模式按钮文字显示位置异常！')
   }
 }
 
