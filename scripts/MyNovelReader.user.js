@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.4
+// @version        7.0.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2828,6 +2828,7 @@
     '\\*{2}手': '兽交手',
     '[÷➗]生CH': '畜生策划',
     '答桉': '答案',
+    '方桉': '方案',
 
     '[AM霉]国': '美国',
     '[CZ]国': '中国',
@@ -3474,13 +3475,6 @@
     }
   }
 
-  // 将非p标签段落转换为p标签段落
-  function toParagraphNode(node) {
-    const p = document.createElement('p');
-    node.replaceWith(p);
-    p.appendChild(node);
-  }
-
   // 代码来自 https://github.com/hirak/phpjs
   // 有修改
 
@@ -4068,16 +4062,16 @@
           this.clearContent($div[0], info);
 
           // 给独立的文本加上 p
-          var $contents = $div.contents();
-          if ($contents.length === 1) {   // 可能里面还包裹着一个 div
-              $contents = $contents.contents();
-          }
-          $contents.filter(function() {
-              return this.nodeType == 3 &&
-                  this.textContent != '\n' &&
-                  (!this.nextElementSibling || this.nextElementSibling.nodeName != 'A') &&
-                  (!this.previousElementSibling || this.previousElementSibling.nodeName != 'A');
-          }).wrap('<p>');
+          // var $contents = $div.contents();
+          // if ($contents.length === 1) {   // 可能里面还包裹着一个 div
+          //     $contents = $contents.contents()
+          // }
+          // $contents.filter(function() {
+          //     return this.nodeType == 3 &&
+          //         this.textContent != '\n' &&
+          //         (!this.nextElementSibling || this.nextElementSibling.nodeName != 'A') &&
+          //         (!this.previousElementSibling || this.previousElementSibling.nodeName != 'A');
+          // }).wrap('<p>');
 
           // 删除无效的 p，排除对大块文本的判断
           $div.find('p, h1').filter(function() {
@@ -4108,7 +4102,7 @@
           }
 
           if(contentHandle){
-              $div.filter('br').remove();
+              $div.find('br').remove();
 
               $div.find('*').removeAttr('style');
           }
@@ -4226,18 +4220,20 @@
                   }
               });
           } else {
+              const parentNode = $(textNodes[parseInt(textNodes.length / 2)]).closest('div');
               finalContents.forEach((text, index) => {
-                  if (!textNodes[index]) {
-                      $('<p>').text(text).appendTo(dom);
+                  if (_.isUndefined(textNodes[index])) {
+                      $('<p>').text(text).appendTo(parentNode);
                   } else if (textNodes[index].data.trim() !== text) {
                       textNodes[index].data = text;
                   }
               });
           }
 
+          // 给独立的文本节点包裹一个p标签
           textNodes
               .filter(node => node.parentNode.childNodes.length > 1)
-              .forEach(toParagraphNode);
+              .forEach(node => $(node).wrap('<p>'));
 
       },
       normalizeContent: function(html) {

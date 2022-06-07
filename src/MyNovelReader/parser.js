@@ -522,16 +522,16 @@ Parser.prototype = {
         this.clearContent($div[0], info);
 
         // 给独立的文本加上 p
-        var $contents = $div.contents();
-        if ($contents.length === 1) {   // 可能里面还包裹着一个 div
-            $contents = $contents.contents()
-        }
-        $contents.filter(function() {
-            return this.nodeType == 3 &&
-                this.textContent != '\n' &&
-                (!this.nextElementSibling || this.nextElementSibling.nodeName != 'A') &&
-                (!this.previousElementSibling || this.previousElementSibling.nodeName != 'A');
-        }).wrap('<p>');
+        // var $contents = $div.contents();
+        // if ($contents.length === 1) {   // 可能里面还包裹着一个 div
+        //     $contents = $contents.contents()
+        // }
+        // $contents.filter(function() {
+        //     return this.nodeType == 3 &&
+        //         this.textContent != '\n' &&
+        //         (!this.nextElementSibling || this.nextElementSibling.nodeName != 'A') &&
+        //         (!this.previousElementSibling || this.previousElementSibling.nodeName != 'A');
+        // }).wrap('<p>');
 
         // 删除无效的 p，排除对大块文本的判断
         $div.find('p, h1').filter(function() {
@@ -562,7 +562,7 @@ Parser.prototype = {
         }
 
         if(contentHandle){
-            $div.filter('br').remove();
+            $div.find('br').remove();
 
             $div.find('*').removeAttr('style');
         }
@@ -680,18 +680,20 @@ Parser.prototype = {
                 }
             })
         } else {
+            const parentNode = $(textNodes[parseInt(textNodes.length / 2)]).closest('div')
             finalContents.forEach((text, index) => {
-                if (!textNodes[index]) {
-                    $('<p>').text(text).appendTo(dom)
+                if (_.isUndefined(textNodes[index])) {
+                    $('<p>').text(text).appendTo(parentNode)
                 } else if (textNodes[index].data.trim() !== text) {
                     textNodes[index].data = text
                 }
             })
         }
 
+        // 给独立的文本节点包裹一个p标签
         textNodes
             .filter(node => node.parentNode.childNodes.length > 1)
-            .forEach(toParagraphNode)
+            .forEach(node => $(node).wrap('<p>'))
 
     },
     normalizeContent: function(html) {

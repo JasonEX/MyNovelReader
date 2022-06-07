@@ -56,9 +56,3 @@ export function observeElement(
   }
 }
 
-// 将非p标签段落转换为p标签段落
-export function toParagraphNode(node) {
-  const p = document.createElement('p')
-  node.replaceWith(p)
-  p.appendChild(node)
-}
