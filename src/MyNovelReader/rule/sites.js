@@ -1185,7 +1185,7 @@ const sites = [
     {siteName: 'YY文轩',
         url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
         useiframe: true,
-
+        contentSelector: '#ad'
     },
 
     {siteName: '霹雳书坊',

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.6
+// @version        7.0.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -332,6 +332,7 @@
 // @match          *://www.aiyueshuxiang.com/html/*/*.html
 // @match          *://www.zhenhunxiaoshuo.com/*.html
 // @match          *://www.360xs.com/mulu/*/*-*.html
+// @match          *://www.yywenxuan.com/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2218,7 +2219,7 @@
       {siteName: 'YY文轩',
           url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
           useiframe: true,
-
+          contentSelector: '#ad'
       },
 
       {siteName: '霹雳书坊',
@@ -3680,15 +3681,6 @@
           }
 
           if (!$content || !$content.length) {
-              // 移除不可见元素，仅使用 iframe 加载时可用
-              if (this.info.useiframe) {
-                  const hiddenElements = this.$doc.find('div').filter(':hidden');
-                  if (hiddenElements) {
-                      C.log('发现隐藏元素：', hiddenElements);
-                      hiddenElements.remove();
-                  }
-              }
-              
               // 按照顺序选取
               var selectors = Rule.contentSelectors;
               for(var i = 0, l = selectors.length; i < l; i++){
@@ -3792,7 +3784,12 @@
           }
 
           if (_.isFunction(selectorOrArray)) {
-              return selectorOrArray(this.$doc)
+              title = selectorOrArray(this.$doc);
+              if (!title) {
+                  C.error('无法找到标题', selectorOrArray, this.doc);
+                  return ''
+              }
+              return title
           }
 
           var selector,

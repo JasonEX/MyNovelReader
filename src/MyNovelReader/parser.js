@@ -182,15 +182,6 @@ Parser.prototype = {
         }
 
         if (!$content || !$content.length) {
-            // 移除不可见元素，仅使用 iframe 加载时可用
-            if (this.info.useiframe) {
-                const hiddenElements = this.$doc.find('div').filter(':hidden')
-                if (hiddenElements) {
-                    C.log('发现隐藏元素：', hiddenElements)
-                    hiddenElements.remove()
-                }
-            }
-            
             // 按照顺序选取
             var selectors = Rule.contentSelectors;
             for(var i = 0, l = selectors.length; i < l; i++){
@@ -294,7 +285,12 @@ Parser.prototype = {
         }
 
         if (_.isFunction(selectorOrArray)) {
-            return selectorOrArray(this.$doc)
+            title = selectorOrArray(this.$doc)
+            if (!title) {
+                C.error('无法找到标题', selectorOrArray, this.doc)
+                return ''
+            }
+            return title
         }
 
         var selector,

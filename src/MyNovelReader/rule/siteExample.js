@@ -30,11 +30,15 @@
     chapterTitleReplace: '', // 章节标题净化正则
 
     // 书籍标题
-    /* 二选一 */ bookTitleSelector: '', // 书籍标题 jQuery 选择器
+    /* 三选一 */ bookTitleSelector: '', // 书籍标题 jQuery 选择器
     bookTitleSelector: [
         'selector', // 书籍标题 jQuery 选择器
         'clearRegex' // 书籍标题净化正则
     ],
+    bookTitleSelector: function ($doc) {
+        // $doc = $(document)
+        return '' // 返回章节标题
+    },
     bookTitleReplace: '', // 书籍标题净化正则
 
     // 如果没有 titleReg 和 bookTitleSelector 规则
