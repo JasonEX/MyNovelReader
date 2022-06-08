@@ -6,7 +6,6 @@ import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { replaceNormalize, toCDB } from './rule/replaceNormalize'
-import { toParagraphNode } from './libdom'
 import { chineseConversion } from './cnConv'
 
 function getElemFontSize(_heading) {
@@ -292,6 +291,10 @@ Parser.prototype = {
         var title = '';
         if (!selectorOrArray) {
             return '';
+        }
+
+        if (_.isFunction(selectorOrArray)) {
+            return selectorOrArray(this.$doc)
         }
 
         var selector,

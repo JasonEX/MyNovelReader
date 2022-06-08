@@ -45,7 +45,7 @@ var Rule = {
       "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
       "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
       "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-      "#ChapterContents", "#acontent", "#chapterinfo",
+      "#ChapterContents", "#acontent", "#chapterinfo", "#read_content",
       ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
       ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
       "article",

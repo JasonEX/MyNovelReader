@@ -18,11 +18,15 @@
 
     // 如果有 titleSelector 则覆盖从 titleReg 中获取的 * 章节标题 *
 
-    /* 二选一 */ titleSelector: '', // 章节标题 jQuery 选择器
+    /* 三选一 */ titleSelector: '', // 章节标题 jQuery 选择器
     titleSelector: [
         'selector', // 章节标题 jQuery 选择器
         'clearRegex' // 章节标题净化正则
     ],
+    titleSelector: function ($doc) {
+        // $doc = $(document)
+        return '' // 返回章节标题
+    },
     chapterTitleReplace: '', // 章节标题净化正则
 
     // 书籍标题

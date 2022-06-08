@@ -1465,6 +1465,17 @@ const sites = [
 
     },
 
+    {siteName: '360小说网',
+        url: 'https://www.360xs.com/mulu/\\d+/\\d+-\\d+.html',
+        exampleUrl: 'https://www.360xs.com/mulu/215/215007-100695232.html',
+
+        titleSelector($doc) {
+            return $doc.find('#read_title h1').contents()[0].data.split(' 章节目录 ')[1]
+        },
+        noSection: true
+
+    }
+
 ];
 
 export default sites

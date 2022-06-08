@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.5
+// @version        7.0.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -331,6 +331,7 @@
 // @match          *://www.yawenba.net/book/*/*.html
 // @match          *://www.aiyueshuxiang.com/html/*/*.html
 // @match          *://www.zhenhunxiaoshuo.com/*.html
+// @match          *://www.360xs.com/mulu/*/*-*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2493,6 +2494,17 @@
 
       },
 
+      {siteName: '360小说网',
+          url: 'https://www.360xs.com/mulu/\\d+/\\d+-\\d+.html',
+          exampleUrl: 'https://www.360xs.com/mulu/215/215007-100695232.html',
+
+          titleSelector($doc) {
+              return $doc.find('#read_title h1').contents()[0].data.split(' 章节目录 ')[1]
+          },
+          noSection: true
+
+      }
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -3241,7 +3253,7 @@
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
         "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-        "#ChapterContents", "#acontent", "#chapterinfo",
+        "#ChapterContents", "#acontent", "#chapterinfo", "#read_content",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
         ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
         "article",
@@ -3417,62 +3429,6 @@
       text = text.replace(toRE(key), value);
     }
     return text
-  }
-
-  // 等待页面上的元素出现
-  function observeElement(
-    doc,
-    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
-  ) {
-    var shouldAdd = false;
-    var $doc = $(doc);
-
-    var contentSize = $doc.find(contentSelector).size();
-
-    if (contentSize && !mutationSelector) {
-      shouldAdd = false;
-    } else {
-      var target = $doc.find(mutationSelector)[0];
-
-      if (target) {
-        var beforeTargetChilren = target.children.length;
-        C.log(`target.children.length = ${target.children.length}`, target);
-
-        if (mutationChildText) {
-          if (target.textContent.indexOf(mutationChildText) > -1) {
-            shouldAdd = true;
-          }
-        } else {
-          if (
-            mutationChildCount === undefined ||
-            target.children.length <= mutationChildCount
-          ) {
-            shouldAdd = true;
-          }
-        }
-      }
-    }
-
-    if (shouldAdd) {
-      return new Promise(resolve => {
-        var observer = new MutationObserver(function () {
-          target = $doc.find(mutationSelector)[0];
-          var nodeAdded = target.children.length > beforeTargetChilren;
-
-          if (nodeAdded) {
-            observer.disconnect();
-            resolve();
-          }
-        });
-
-        observer.observe(document, {
-          childList: true,
-          subtree: true
-        });
-
-        C.log('添加 MutationObserve 成功：', mutationSelector);
-      })
-    }
   }
 
   // 代码来自 https://github.com/hirak/phpjs
@@ -3833,6 +3789,10 @@
           var title = '';
           if (!selectorOrArray) {
               return '';
+          }
+
+          if (_.isFunction(selectorOrArray)) {
+              return selectorOrArray(this.$doc)
           }
 
           var selector,
@@ -5886,6 +5846,62 @@
       return proxy
     }
   });
+
+  // 等待页面上的元素出现
+  function observeElement(
+    doc,
+    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
+  ) {
+    var shouldAdd = false;
+    var $doc = $(doc);
+
+    var contentSize = $doc.find(contentSelector).size();
+
+    if (contentSize && !mutationSelector) {
+      shouldAdd = false;
+    } else {
+      var target = $doc.find(mutationSelector)[0];
+
+      if (target) {
+        var beforeTargetChilren = target.children.length;
+        C.log(`target.children.length = ${target.children.length}`, target);
+
+        if (mutationChildText) {
+          if (target.textContent.indexOf(mutationChildText) > -1) {
+            shouldAdd = true;
+          }
+        } else {
+          if (
+            mutationChildCount === undefined ||
+            target.children.length <= mutationChildCount
+          ) {
+            shouldAdd = true;
+          }
+        }
+      }
+    }
+
+    if (shouldAdd) {
+      return new Promise(resolve => {
+        var observer = new MutationObserver(function () {
+          target = $doc.find(mutationSelector)[0];
+          var nodeAdded = target.children.length > beforeTargetChilren;
+
+          if (nodeAdded) {
+            observer.disconnect();
+            resolve();
+          }
+        });
+
+        observer.observe(document, {
+          childList: true,
+          subtree: true
+        });
+
+        C.log('添加 MutationObserve 成功：', mutationSelector);
+      })
+    }
+  }
 
   /** @enum {number} */
   const RequestStatus = {
