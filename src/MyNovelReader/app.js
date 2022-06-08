@@ -242,11 +242,10 @@ var App = {
             }
         }
 
-        cleanupEvents()
-
         var parser = new Parser(App.site, document);
         var hasContent = !!parser.hasContent();
         if (hasContent) {
+            cleanupEvents()
             document.body.setAttribute("name", "MyNovelReader");
             App.parsedPages[window.location.href] = true;
             await parser.getAll();

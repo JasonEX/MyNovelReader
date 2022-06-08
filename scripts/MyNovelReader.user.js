@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.7
+// @version        7.0.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -6329,11 +6329,10 @@
               }
           }
 
-          cleanupEvents();
-
           var parser = new Parser(App$1.site, document);
           var hasContent = !!parser.hasContent();
           if (hasContent) {
+              cleanupEvents();
               document.body.setAttribute("name", "MyNovelReader");
               App$1.parsedPages[window.location.href] = true;
               await parser.getAll();
