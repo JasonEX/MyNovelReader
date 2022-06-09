@@ -490,6 +490,9 @@ Parser.prototype = {
             text = text.replace(toRE(regStr), "");
         }
 
+        // 移除 html 注释
+        text = text.replace(toRE('<!--[\\s\\S]*?-->'), '')
+
         // if (Setting.cn2tw) {
         //     text = this.convert2tw(text);
         // }

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.9
+// @version        7.1.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3368,7 +3368,7 @@
       ['”“', '”\n“'], // 将一段中的相邻的对话分段
       [
         // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
-        '([。！？])([\\u4e00-\\u9fa5“])',
+        '([。！？])([\\u4e00-\\u9fa5“，]{20,})',
         '$1\n$2'
       ],
       [
@@ -3985,6 +3985,9 @@
               var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）';
               text = text.replace(toRE(regStr), "");
           }
+
+          // 移除 html 注释
+          text = text.replace(toRE('<!--[\\s\\S]*?-->'), '');
 
           // if (Setting.cn2tw) {
           //     text = this.convert2tw(text);
