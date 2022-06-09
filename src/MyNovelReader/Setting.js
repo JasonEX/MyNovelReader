@@ -255,7 +255,7 @@ const Setting = {
         GM_setValue('scrollAnimate', bool);
     },
 
-    get launchMode() {
+    get launchMode() { // 记忆 memory 自动 auto 手动 manual
         return GM_getValue('launchMode', 'memory');
     },
     set launchMode(value) {

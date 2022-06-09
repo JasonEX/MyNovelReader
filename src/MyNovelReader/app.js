@@ -255,7 +255,6 @@ var App = {
             $('.readerbtn').remove()
             await UI.addButton();
             $('.readerbtn').text('无内容')
-            sleep(3000).then(App.toggle)
             C.error("当前页面没有找到内容");
         }
 

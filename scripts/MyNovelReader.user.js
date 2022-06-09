@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.0.8
+// @version        7.0.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -988,7 +988,7 @@
           GM_setValue('scrollAnimate', bool);
       },
 
-      get launchMode() {
+      get launchMode() { // 记忆 memory 自动 auto 手动 manual
           return GM_getValue('launchMode', 'memory');
       },
       set launchMode(value) {
@@ -2840,8 +2840,6 @@
     'WJ特战': '武警特战',
     '\\*{2}手': '兽交手',
     '[÷➗]生CH': '畜生策划',
-    '答桉': '答案',
-    '方桉': '方案',
 
     '[AM霉]国': '美国',
     '[CZ]国': '中国',
@@ -2859,7 +2857,7 @@
     '\\.asxs\\.': '起点',
     '\\b(?:boos|boso)\\b': 'BOSS',
 
-    '伱': '你', '勐': '猛', '澹': '淡',
+    '伱': '你', '勐': '猛', '澹': '淡', '桉': '案',
     
   };
 
@@ -6342,7 +6340,6 @@
               $('.readerbtn').remove();
               await UI.addButton();
               $('.readerbtn').text('无内容');
-              sleep(3000).then(App$1.toggle);
               C.error("当前页面没有找到内容");
           }
 
