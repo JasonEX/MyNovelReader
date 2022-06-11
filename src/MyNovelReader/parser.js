@@ -5,7 +5,7 @@ import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost, unwrapTag, getTextNo
 import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
-import { replaceNormalize, toCDB } from './rule/replaceNormalize'
+import { getNormalizeMap, replaceNormalize, toCDB } from './rule/replaceNormalize'
 import { chineseConversion } from './cnConv'
 
 function getElemFontSize(_heading) {
@@ -658,7 +658,7 @@ Parser.prototype = {
         
         // 内容标准化处理
         if (Setting.contentNormalize) {
-            content = replaceNormalize(content)
+            content = this.replaceText(content, getNormalizeMap())
             content = toCDB(content)
         }
 

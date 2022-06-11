@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.1.1
+// @version        7.1.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3365,7 +3365,12 @@
 
   // 正文内容标准化替换
 
+  let replaceNormalizeMap = null;
+
   function getNormalizeMap() {
+    if (replaceNormalizeMap) {
+      return replaceNormalizeMap
+    }
     const rule = {
       '[,，]\\s*|\\s^，': '，', // 合并每一行以"，"结束的段落
       '\\. *$': '。',
@@ -3390,10 +3395,9 @@
       '[~－]{3,50}': '——'
     };
     Object.keys(rule).forEach(key => !rule[key] && delete rule[key]);
+    replaceNormalizeMap = rule;
     return rule
   }
-
-  let replaceNormalizeMap = null;
 
   // 不转换 ，？：；（）！
   const excludeCharCode = new Set([
@@ -3417,14 +3421,6 @@
       }
     }
     return tmp
-  }
-
-  function replaceNormalize(text) {
-    if (!replaceNormalizeMap) replaceNormalizeMap = getNormalizeMap();
-    for (const [key, value] of Object.entries(replaceNormalizeMap)) {
-      text = text.replace(toRE(key), value);
-    }
-    return text
   }
 
   // 代码来自 https://github.com/hirak/phpjs
@@ -4151,7 +4147,7 @@
           
           // 内容标准化处理
           if (Setting.contentNormalize) {
-              content = replaceNormalize(content);
+              content = this.replaceText(content, getNormalizeMap());
               content = toCDB(content);
           }
 

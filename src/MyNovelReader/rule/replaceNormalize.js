@@ -3,7 +3,12 @@
 import { toRE } from '../lib'
 import Setting from '../Setting'
 
+let replaceNormalizeMap = null
+
 function getNormalizeMap() {
+  if (replaceNormalizeMap) {
+    return replaceNormalizeMap
+  }
   const rule = {
     '[,，]\\s*|\\s^，': '，', // 合并每一行以"，"结束的段落
     '\\. *$': '。',
@@ -28,10 +33,9 @@ function getNormalizeMap() {
     '[~－]{3,50}': '——'
   }
   Object.keys(rule).forEach(key => !rule[key] && delete rule[key])
+  replaceNormalizeMap = rule
   return rule
 }
-
-let replaceNormalizeMap = null
 
 // 不转换 ，？：；（）！
 const excludeCharCode = new Set([
@@ -57,12 +61,4 @@ function toCDB(str) {
   return tmp
 }
 
-function replaceNormalize(text) {
-  if (!replaceNormalizeMap) replaceNormalizeMap = getNormalizeMap()
-  for (const [key, value] of Object.entries(replaceNormalizeMap)) {
-    text = text.replace(toRE(key), value)
-  }
-  return text
-}
-
-export { replaceNormalize, toCDB }
+export { getNormalizeMap, toCDB }
