@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.1.0
+// @version        7.1.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -333,6 +333,8 @@
 // @match          *://www.zhenhunxiaoshuo.com/*.html
 // @match          *://www.360xs.com/mulu/*/*-*.html
 // @match          *://www.yywenxuan.com/*/*.html
+// @match          *://www.waptxt.com/*/*.html
+// @match          *://www.5xw.net/*/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1448,17 +1450,22 @@
         }
     },
     {siteName: "塔读文学",
-        url: "^https?://www\\.tadu\\.com/book/\\d+/\\d+/",
-        bookTitleSelector: '.book-name_ a:first',
-        nDelay: 2000,  // 延迟2秒加载下一页
+        url: "^https?://www\\.tadu\\.com/book/\\d+/\\d+/?",
+        bookTitleSelector: '.chapter_details > span',
+        bookTitleReplace: '书名：',
+        titleSelector: 'h4',
+        useiframe: true,
+      //   nDelay: 2000,  // 延迟2秒加载下一页
         contentSelector: "#partContent",
-        contentPatch: function(fakeStub){
-            var m = fakeStub.find("body").html().match(/\.html\(unescape\("(.*)"\)/);
-            if(m){
-                var unescapeContent = m[1];
-                fakeStub.find("#partContent").html(unescape(unescapeContent));
-            }
-        }
+        mutationSelector: "#partContent",
+        mutationChildCount: 0,
+      //   contentPatch: function(fakeStub){
+      //       var m = fakeStub.find("body").html().match(/\.html\(unescape\("(.*)"\)/);
+      //       if(m){
+      //           var unescapeContent = m[1];
+      //           fakeStub.find("#partContent").html(unescape(unescapeContent));
+      //       }
+      //   }
     },
     {siteName: "顶点小说",
         url: "^https?://www\\.(?:23us|x23us|23wx|xs222)\\.(?:com|cc)/html/\\d+/\\d+/\\d+\\.html$",
@@ -3358,42 +3365,32 @@
 
   // 正文内容标准化替换
 
-  function generateNormalizeMap() {
-    return [
-      ['[,，]\\s*|\\s^，', '，'], // 合并每一行以"，"结束的段落
-      ['\\. *$', '。'],
-      ['([。！？”]) +', '$1'],
-      ['，+', '，'],
-      ['"(.*?)"', '“$1”'],
-      ['”“', '”\n“'], // 将一段中的相邻的对话分段
-      [
-        // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
-        '([。！？])([\\u4e00-\\u9fa5“，]{20,})',
-        '$1\n$2'
-      ],
-      [
-        // 将一段中的第一句后接对话（引号）句子的第一句话分段
-        '(^.*?[.。])(“.*?”)',
-        '$1\n$2'
-      ],
-      [
-        // 将一段中的右引号后面的内容分为一段
-        '([。！？])”([\\u4e00-\\u9fa5“])',
-        '$1”\n$2'
-      ],
-      Setting.mergeQoutesContent
-        ? [
-            // 将引号内的内容合并为一行
-            '“([\\s\\S]*?)”',
-            match => match.replaceAll('\n', '')
-          ]
+  function getNormalizeMap() {
+    const rule = {
+      '[,，]\\s*|\\s^，': '，', // 合并每一行以"，"结束的段落
+      '\\. *$': '。',
+      '([。！？”]) +': '$1',
+      '，+': '，',
+      '"(.*?)"': '“$1”',
+      '”“': '”\n“', // 将一段中的相邻的对话分段
+      // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
+      '([。！？])([\\u4e00-\\u9fa5“，]{20,})': '$1\n$2',
+      // 将一段中的第一句后接对话（引号）句子的第一句话分段
+      '(^.*?[.。])(“.*?”)': '$1\n$2',
+      // 将一段中的右引号后面的内容分为一段
+      '([。！？])”([\\u4e00-\\u9fa5“])': '$1”\n$2',
+      '“([\\s\\S]*?)”': Setting.mergeQoutesContent
+        ? match => match.replace(toRE('\n'), '')
         : undefined,
-      ['「(.*?)」', '“$1”'],
-      ['『(.)』', '$1'],
-      ['!', '！'],
-      ['[┅。…·]{3,20}', '……'],
-      ['[~－]{3,50}', '——']
-    ].filter(row => !!row)
+      '「(.*?)」': '“$1”',
+      '『(.)』': '$1',
+      '!': '！',
+      ':': '：',
+      '[┅。…·]{3,20}': '……',
+      '[~－]{3,50}': '——'
+    };
+    Object.keys(rule).forEach(key => !rule[key] && delete rule[key]);
+    return rule
   }
 
   let replaceNormalizeMap = null;
@@ -3423,8 +3420,8 @@
   }
 
   function replaceNormalize(text) {
-    if (!replaceNormalizeMap) replaceNormalizeMap = generateNormalizeMap();
-    for (const [key, value] of replaceNormalizeMap) {
+    if (!replaceNormalizeMap) replaceNormalizeMap = getNormalizeMap();
+    for (const [key, value] of Object.entries(replaceNormalizeMap)) {
       text = text.replace(toRE(key), value);
     }
     return text

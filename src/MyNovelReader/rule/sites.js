@@ -414,17 +414,22 @@ const sites = [
       }
   },
   {siteName: "塔读文学",
-      url: "^https?://www\\.tadu\\.com/book/\\d+/\\d+/",
-      bookTitleSelector: '.book-name_ a:first',
-      nDelay: 2000,  // 延迟2秒加载下一页
+      url: "^https?://www\\.tadu\\.com/book/\\d+/\\d+/?",
+      bookTitleSelector: '.chapter_details > span',
+      bookTitleReplace: '书名：',
+      titleSelector: 'h4',
+      useiframe: true,
+    //   nDelay: 2000,  // 延迟2秒加载下一页
       contentSelector: "#partContent",
-      contentPatch: function(fakeStub){
-          var m = fakeStub.find("body").html().match(/\.html\(unescape\("(.*)"\)/);
-          if(m){
-              var unescapeContent = m[1];
-              fakeStub.find("#partContent").html(unescape(unescapeContent));
-          }
-      }
+      mutationSelector: "#partContent",
+      mutationChildCount: 0,
+    //   contentPatch: function(fakeStub){
+    //       var m = fakeStub.find("body").html().match(/\.html\(unescape\("(.*)"\)/);
+    //       if(m){
+    //           var unescapeContent = m[1];
+    //           fakeStub.find("#partContent").html(unescape(unescapeContent));
+    //       }
+    //   }
   },
   {siteName: "顶点小说",
       url: "^https?://www\\.(?:23us|x23us|23wx|xs222)\\.(?:com|cc)/html/\\d+/\\d+/\\d+\\.html$",

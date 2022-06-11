@@ -3,42 +3,32 @@
 import { toRE } from '../lib'
 import Setting from '../Setting'
 
-function generateNormalizeMap() {
-  return [
-    ['[,，]\\s*|\\s^，', '，'], // 合并每一行以"，"结束的段落
-    ['\\. *$', '。'],
-    ['([。！？”]) +', '$1'],
-    ['，+', '，'],
-    ['"(.*?)"', '“$1”'],
-    ['”“', '”\n“'], // 将一段中的相邻的对话分段
-    [
-      // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
-      '([。！？])([\\u4e00-\\u9fa5“，]{20,})',
-      '$1\n$2'
-    ],
-    [
-      // 将一段中的第一句后接对话（引号）句子的第一句话分段
-      '(^.*?[.。])(“.*?”)',
-      '$1\n$2'
-    ],
-    [
-      // 将一段中的右引号后面的内容分为一段
-      '([。！？])”([\\u4e00-\\u9fa5“])',
-      '$1”\n$2'
-    ],
-    Setting.mergeQoutesContent
-      ? [
-          // 将引号内的内容合并为一行
-          '“([\\s\\S]*?)”',
-          match => match.replaceAll('\n', '')
-        ]
+function getNormalizeMap() {
+  const rule = {
+    '[,，]\\s*|\\s^，': '，', // 合并每一行以"，"结束的段落
+    '\\. *$': '。',
+    '([。！？”]) +': '$1',
+    '，+': '，',
+    '"(.*?)"': '“$1”',
+    '”“': '”\n“', // 将一段中的相邻的对话分段
+    // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
+    '([。！？])([\\u4e00-\\u9fa5“，]{20,})': '$1\n$2',
+    // 将一段中的第一句后接对话（引号）句子的第一句话分段
+    '(^.*?[.。])(“.*?”)': '$1\n$2',
+    // 将一段中的右引号后面的内容分为一段
+    '([。！？])”([\\u4e00-\\u9fa5“])': '$1”\n$2',
+    '“([\\s\\S]*?)”': Setting.mergeQoutesContent
+      ? match => match.replace(toRE('\n'), '')
       : undefined,
-    ['「(.*?)」', '“$1”'],
-    ['『(.)』', '$1'],
-    ['!', '！'],
-    ['[┅。…·]{3,20}', '……'],
-    ['[~－]{3,50}', '——']
-  ].filter(row => !!row)
+    '「(.*?)」': '“$1”',
+    '『(.)』': '$1',
+    '!': '！',
+    ':': '：',
+    '[┅。…·]{3,20}': '……',
+    '[~－]{3,50}': '——'
+  }
+  Object.keys(rule).forEach(key => !rule[key] && delete rule[key])
+  return rule
 }
 
 let replaceNormalizeMap = null
@@ -68,8 +58,8 @@ function toCDB(str) {
 }
 
 function replaceNormalize(text) {
-  if (!replaceNormalizeMap) replaceNormalizeMap = generateNormalizeMap()
-  for (const [key, value] of replaceNormalizeMap) {
+  if (!replaceNormalizeMap) replaceNormalizeMap = getNormalizeMap()
+  for (const [key, value] of Object.entries(replaceNormalizeMap)) {
     text = text.replace(toRE(key), value)
   }
   return text
