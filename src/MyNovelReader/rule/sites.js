@@ -1480,7 +1480,7 @@ const sites = [
         noSection: true
 
     },
-  
+
     {siteName: '顶点小说',
         url: 'https://www.23tr.com/book/\\d+/\\d+.html',
         exampleUrl: 'https://www.23tr.com/book/313476/49823231.html',
