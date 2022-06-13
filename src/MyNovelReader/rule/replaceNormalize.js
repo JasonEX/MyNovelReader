@@ -29,7 +29,7 @@ function getNormalizeMap() {
     '『(.)』': '$1',
     '!': '！',
     ':': '：',
-    '[┅。…·]{3,20}': '……',
+    '[┅。…·.]{3,20}': '……',
     '[~－]{3,50}': '——'
   }
   Object.keys(rule).forEach(key => !rule[key] && delete rule[key])

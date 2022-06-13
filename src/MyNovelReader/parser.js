@@ -5,7 +5,7 @@ import { C, toRE, toReStr, wildcardToRegExpStr, getUrlHost, unwrapTag, getTextNo
 import { READER_AJAX } from './consts'
 import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
-import { getNormalizeMap, replaceNormalize, toCDB } from './rule/replaceNormalize'
+import { getNormalizeMap, toCDB } from './rule/replaceNormalize'
 import { chineseConversion } from './cnConv'
 
 function getElemFontSize(_heading) {
@@ -602,7 +602,24 @@ Parser.prototype = {
         return text;
     },
     clearContent: function(dom, info) {
-        const textNodes = getTextNodesIn(dom)
+        const textNodes = getTextNodesIn(dom).filter(node => {
+            // 不处理内嵌图片的文本节点
+            if (
+                node.previousSibling &&
+                (node.previousSibling.nodeName === 'IMG' ||
+                node.previousSibling.nodeName === 'SPAN')
+            ) {
+                return false
+            }
+            if (
+                node.nextSibling &&
+                (node.nextSibling.nodeName === 'IMG' ||
+                node.nextSibling.nodeName === 'SPAN')
+            ) {
+                return false
+            }
+            return true
+        })
 
         // 获取节点文本并去重
         // 例如 https://www.biquge.name/html/3/3165/71213641.html
@@ -694,7 +711,12 @@ Parser.prototype = {
 
         // 给独立的文本节点包裹一个p标签
         textNodes
-            .filter(node => node.parentNode.childNodes.length > 1)
+            .filter(node => {
+                if (node.parentNode.nodeName === 'P') {
+                    return false
+                }
+                return node.parentNode.childNodes.length > 1
+            })
             .forEach(node => $(node).wrap('<p>'))
 
     },

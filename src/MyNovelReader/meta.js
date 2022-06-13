@@ -335,6 +335,7 @@
 // @match          *://www.yywenxuan.com/*/*.html
 // @match          *://www.waptxt.com/*/*.html
 // @match          *://www.5xw.net/*/*/*.html
+// @match          *://www.23tr.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

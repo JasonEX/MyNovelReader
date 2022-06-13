@@ -335,6 +335,7 @@
 // @match          *://www.yywenxuan.com/*/*.html
 // @match          *://www.waptxt.com/*/*.html
 // @match          *://www.5xw.net/*/*/*.html
+// @match          *://www.23tr.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2511,6 +2512,15 @@
           },
           noSection: true
 
+      },
+    
+      {siteName: '顶点小说',
+          url: 'https://www.23tr.com/book/\\d+/\\d+.html',
+          exampleUrl: 'https://www.23tr.com/book/313476/49823231.html',
+
+          titleSelector: '.atitle',
+          bookTitleSelector: '.linkleft > a:nth-child(3)',
+
       }
 
   ];
@@ -2969,6 +2979,9 @@
     '韆釺哾$',
     '亲，本章已完，祝您阅读愉快！\\^0\\^',
     '亲，本章未完，还有下一页哦\\^0\\^',
+    '感謝大家熱情支持，大家在(?:起點)?訂閱的同時，別忘了在微信、qq、微博、抖音和快手等渠道上幫探花宣傳，再次感謝了',
+    '感谢大家热情支持，大家在(?:起点)?订阅的同时，别忘了在微信、qq、微博、抖音和快手等渠道上帮探花宣传，再次感谢了',
+    '頂點小說網首發|顶点小说网首发',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -3259,7 +3272,7 @@
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
         "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-        "#ChapterContents", "#acontent", "#chapterinfo", "#read_content",
+        "#ChapterContents", "#acontent", "#chapterinfo", "#read_content", "#chapter-content",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
         ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
         "article",
@@ -3289,6 +3302,7 @@
       '.weizhi a:last',
       '.cover-nav a:last',
       '.path > .p > a:last',
+      '.headlink > .linkleft > a:last',
       '.path a:last',
       '.readNav a:last',
       '.chapter-nav a:last',
@@ -3391,7 +3405,7 @@
       '『(.)』': '$1',
       '!': '！',
       ':': '：',
-      '[┅。…·]{3,20}': '……',
+      '[┅。…·.]{3,20}': '……',
       '[~－]{3,50}': '——'
     };
     Object.keys(rule).forEach(key => !rule[key] && delete rule[key]);
@@ -4091,7 +4105,24 @@
           return text;
       },
       clearContent: function(dom, info) {
-          const textNodes = getTextNodesIn(dom);
+          const textNodes = getTextNodesIn(dom).filter(node => {
+              // 不处理内嵌图片的文本节点
+              if (
+                  node.previousSibling &&
+                  (node.previousSibling.nodeName === 'IMG' ||
+                  node.previousSibling.nodeName === 'SPAN')
+              ) {
+                  return false
+              }
+              if (
+                  node.nextSibling &&
+                  (node.nextSibling.nodeName === 'IMG' ||
+                  node.nextSibling.nodeName === 'SPAN')
+              ) {
+                  return false
+              }
+              return true
+          });
 
           // 获取节点文本并去重
           // 例如 https://www.biquge.name/html/3/3165/71213641.html
@@ -4183,7 +4214,12 @@
 
           // 给独立的文本节点包裹一个p标签
           textNodes
-              .filter(node => node.parentNode.childNodes.length > 1)
+              .filter(node => {
+                  if (node.parentNode.nodeName === 'P') {
+                      return false
+                  }
+                  return node.parentNode.childNodes.length > 1
+              })
               .forEach(node => $(node).wrap('<p>'));
 
       },
