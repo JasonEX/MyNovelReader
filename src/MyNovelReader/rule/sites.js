@@ -1487,6 +1487,7 @@ const sites = [
 
         titleSelector: '.atitle',
         bookTitleSelector: '.linkleft > a:nth-child(3)',
+        contentReplace: ['^【重要提醒】$'],
 
     }
 
