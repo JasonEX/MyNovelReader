@@ -8,6 +8,7 @@ import { string } from 'rollup-plugin-string'
 import vue from 'rollup-plugin-vue2'
 import less from '@ywzhaiqi/rollup-plugin-less'
 import myFixMetadata from './rollup-plugin-fix-userscript-metadata'
+import compress from './rollup-plugin-compress'
 
 // config
 const indexFiles = ['index.js', 'index.user.js', 'index.ts', 'index.user.ts']
@@ -110,6 +111,7 @@ let config = {
   
   plugins: [
     myFixMetadata(),
+    compress({ targets: ['src/MyNovelReader/cnConv/zhConversion.js'] }),
     resolve(),
     commonjs(),
     vue(),

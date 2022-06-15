@@ -1,6 +1,6 @@
 import Setting from '../Setting'
 import { strtr } from './strtr'
-import { cn2twTable, tw2cnTable } from './zhConversion.min'
+import { cn2twTable, tw2cnTable } from './zhConversion'
 
 export function chineseConversion(text) {
   switch (Setting.chineseConversion) {
