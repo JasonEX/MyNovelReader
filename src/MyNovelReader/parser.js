@@ -485,10 +485,10 @@ Parser.prototype = {
         //     }
         // }
 
-        if (this.bookTitle) {
-            var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）'
-            text = text.replace(toRE(regStr), "");
-        }
+        // if (this.bookTitle) {
+        //     var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）'
+        //     text = text.replace(toRE(regStr), "");
+        // }
 
         // 移除 html 注释
         text = text.replace(toRE('<!--[\\s\\S]*?-->'), '')

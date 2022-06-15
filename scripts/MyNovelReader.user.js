@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.1.7
+// @version        7.1.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -977,7 +977,7 @@
 
       get split_content() {
           if (_.isUndefined(this._split_content)) {
-              this._split_content = GM_getValue('split_content', true);
+              this._split_content = GM_getValue('split_content', false);
           }
           return this._split_content;
       },
@@ -3444,6 +3444,8 @@
   // 代码来自 https://github.com/hirak/phpjs
   // 有修改
 
+  const fromLengthCache = new Map();
+
   function strtr(str, from, to) {
     var i = 0,
       j = 0,
@@ -3452,18 +3454,20 @@
       fromTypeStr = '',
       toTypeStr = '',
       istr = '',
-      fromLengthArray = [],
+      fromLengthArray,
       matchTo,
-      fromObject,
       fromLength;
     var ret = '';
     var match = false;
 
-    if (typeof from === 'object') {
-      fromObject = from;
-      fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
-        (a, b) => b - a
-      );
+    if (_.isObject(from)) {
+      fromLengthArray = fromLengthCache.get(from);
+      if (!fromLengthArray) {
+        fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
+          (a, b) => b - a
+        );
+        fromLengthCache.set(from, fromLengthArray);
+      }
     }
 
     // Walk through subject and replace chars when needed
@@ -3484,8 +3488,8 @@
         }
       } else {
         for (fromLength of fromLengthArray) {
-          if (fromObject[str.substr(i, fromLength)]) {
-            matchTo = fromObject[str.substr(i, fromLength)];
+          if (from[str.substr(i, fromLength)]) {
+            matchTo = from[str.substr(i, fromLength)];
             match = true;
             // Fast forward
             i += fromLength - 1;
@@ -3992,10 +3996,10 @@
           //     }
           // }
 
-          if (this.bookTitle) {
-              var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）';
-              text = text.replace(toRE(regStr), "");
-          }
+          // if (this.bookTitle) {
+          //     var regStr = '（' + toReStr(this.bookTitle) + '\\d*章）'
+          //     text = text.replace(toRE(regStr), "");
+          // }
 
           // 移除 html 注释
           text = text.replace(toRE('<!--[\\s\\S]*?-->'), '');

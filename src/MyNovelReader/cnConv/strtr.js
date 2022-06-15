@@ -1,6 +1,8 @@
 // 代码来自 https://github.com/hirak/phpjs
 // 有修改
 
+const fromLengthCache = new Map()
+
 export function strtr(str, from, to) {
   var i = 0,
     j = 0,
@@ -9,18 +11,20 @@ export function strtr(str, from, to) {
     fromTypeStr = '',
     toTypeStr = '',
     istr = '',
-    fromLengthArray = [],
+    fromLengthArray,
     matchTo,
-    fromObject,
     fromLength
   var ret = ''
   var match = false
 
-  if (typeof from === 'object') {
-    fromObject = from
-    fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
-      (a, b) => b - a
-    )
+  if (_.isObject(from)) {
+    fromLengthArray = fromLengthCache.get(from)
+    if (!fromLengthArray) {
+      fromLengthArray = [...new Set(Object.keys(from).map(s => s.length))].sort(
+        (a, b) => b - a
+      )
+      fromLengthCache.set(from, fromLengthArray)
+    }
   }
 
   // Walk through subject and replace chars when needed
@@ -41,8 +45,8 @@ export function strtr(str, from, to) {
       }
     } else {
       for (fromLength of fromLengthArray) {
-        if (fromObject[str.substr(i, fromLength)]) {
-          matchTo = fromObject[str.substr(i, fromLength)]
+        if (from[str.substr(i, fromLength)]) {
+          matchTo = from[str.substr(i, fromLength)]
           match = true
           // Fast forward
           i += fromLength - 1

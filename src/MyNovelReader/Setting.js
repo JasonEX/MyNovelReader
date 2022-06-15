@@ -239,7 +239,7 @@ const Setting = {
 
     get split_content() {
         if (_.isUndefined(this._split_content)) {
-            this._split_content = GM_getValue('split_content', true);
+            this._split_content = GM_getValue('split_content', false);
         }
         return this._split_content;
     },
