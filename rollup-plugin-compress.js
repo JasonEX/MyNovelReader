@@ -1,18 +1,18 @@
 import { minify } from 'terser'
-import { resolve } from 'path'
+import { createFilter } from '@rollup/pluginutils'
 
-export default function compress(options = {}) {
-  const { targets } = options
+export default function compress(opts = {}) {
+  const filter = createFilter(opts.targets)
+  const minifyOpts = {
+    mangle: false,
+    compress: { defaults: false }
+  }
+
   return {
     name: 'compress',
     async transform(code, id) {
-      for (const target of targets) {
-        if (id === resolve(target)) {
-          return await minify(code, {
-            mangle: false,
-            compress: { defaults: false }
-          })
-        }
+      if (filter(id)) {
+        return await minify(code, minifyOpts)
       }
     }
   }
