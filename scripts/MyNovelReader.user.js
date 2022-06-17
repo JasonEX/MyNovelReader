@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.2.0
+// @version        7.2.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3399,7 +3399,7 @@
       // 将一段中的第一句后接对话（引号）句子的第一句话分段
       '(^.*?[.。])(“.*?”)': '$1\n$2',
       // 将一段中的右引号后面的内容分为一段
-      '([。！？])”([\\u4e00-\\u9fa5“])': '$1”\n$2',
+      '([。！？])”([\\u4e00-\\u9fa5“]{20,})': '$1”\n$2',
       '“([\\s\\S]*?)”': Setting.mergeQoutesContent
         ? match => match.replace(toRE('\n'), '')
         : undefined,
@@ -4119,7 +4119,7 @@
           return text;
       },
       clearContent: function(dom, info) {
-          const textNodes = getTextNodesIn(dom).filter(node => {
+          const textNodes = getTextNodesIn(dom, true).filter(node => {
               // 不处理内嵌图片的文本节点
               if (
                   node.previousSibling &&

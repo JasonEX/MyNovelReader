@@ -610,7 +610,7 @@ Parser.prototype = {
         return text;
     },
     clearContent: function(dom, info) {
-        const textNodes = getTextNodesIn(dom).filter(node => {
+        const textNodes = getTextNodesIn(dom, true).filter(node => {
             // 不处理内嵌图片的文本节点
             if (
                 node.previousSibling &&
