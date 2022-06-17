@@ -544,7 +544,7 @@ Parser.prototype = {
         // }).wrap('<p>');
 
         // 删除无效的 p，排除对大块文本的判断
-        $div.find('p, h1').filter(function() {
+        $div.find('p, h1, div').filter(function() {
             var $this = $(this);
             if ($this.find('img').size())  // 排除有图片的
                 return false;
@@ -572,7 +572,7 @@ Parser.prototype = {
         }
 
         if(contentHandle){
-            $div.find('br').remove();
+            // $div.find('br').remove();
 
             $div.find('*').removeAttr('style');
         }
@@ -722,6 +722,8 @@ Parser.prototype = {
                 return node.parentNode.childNodes.length > 1
             })
             .forEach(node => $(node).wrap('<p>'))
+        
+        $(dom).find('br').remove()
 
         const finalContents = content.split('\n')
 

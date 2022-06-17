@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.2.3
+// @version        7.2.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -4053,7 +4053,7 @@
           // }).wrap('<p>');
 
           // 删除无效的 p，排除对大块文本的判断
-          $div.find('p, h1').filter(function() {
+          $div.find('p, h1, div').filter(function() {
               var $this = $(this);
               if ($this.find('img').size())  // 排除有图片的
                   return false;
@@ -4081,7 +4081,7 @@
           }
 
           if(contentHandle){
-              $div.find('br').remove();
+              // $div.find('br').remove();
 
               $div.find('*').removeAttr('style');
           }
@@ -4231,6 +4231,8 @@
                   return node.parentNode.childNodes.length > 1
               })
               .forEach(node => $(node).wrap('<p>'));
+          
+          $(dom).find('br').remove();
 
           const finalContents = content.split('\n');
 
