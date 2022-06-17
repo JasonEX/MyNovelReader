@@ -626,6 +626,9 @@ Parser.prototype = {
             ) {
                 return false
             }
+            if (node.data === '\n') {
+                return false
+            }
             return true
         })
 
@@ -633,17 +636,6 @@ Parser.prototype = {
         // 例如 https://www.biquge.name/html/3/3165/71213641.html
         const contents = textNodes.map(node => node.data.trim().replace(/\s+/g, ' '))
         const deDupeConetents = [...new Set(contents)]
-
-        // 去除内容中的标题
-        if (this.chapterTitle && contents.length) {
-            try {
-                var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*')
-                contents[0] = contents[0].replace(toRE(reg), '')
-                C.log('去除内容中的标题', reg)
-            } catch (e) {
-                C.error(e)
-            }
-        }
 
         let content;
 
@@ -659,6 +651,17 @@ Parser.prototype = {
         var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
         C.log(`本章字数：${content.length}`)
+
+        // 去除内容中的标题
+        if (this.chapterTitle) {
+            try {
+                var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*')
+                content = content.replace(toRE(`^${reg}$`), '')
+                C.log('去除内容中的标题', reg)
+            } catch (e) {
+                C.error(e)
+            }
+        }
 
         // 拼音字、屏蔽字修复
         if (contentHandle) {
