@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.1.8
+// @version        7.1.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -137,11 +137,7 @@
 // @include        *://www.xstxt.com/*/*/
 // @include        *://www.zzzcn.com/3z*/*/
 // @include        *://www.zzzcn.com/modules/article/App.php*
-// @include        *://xs321.net/*/*/
 // @include        *://read.guanhuaju.com/files/article/html/*/*/*.html
-// @include        *://5ycn.com/*/*/*.html
-// @include        *://*zbzw.com/*/*.html
-// @include        *://www.aiqis.com/*/*.html
 // @include        *://www.5kwx.com/book/*/*/*.html
 // @include        *://www.chinaisbn.com/*/*/*.html
 // @include        *://www.caihongwenxue.com/Html/Book/*/*/*.html
@@ -188,7 +184,6 @@
 // @include        *://www.67shu.com/*/*/*.html
 // @include        *://www.wangshu.la/books/*/*/*.html
 // @include        *://www.ymoxuan.com/book/*/*/*.html
-// @include        *://www.67shu.com/*/*/*.html
 // @include        *://www.bookxuan.com/*/*.html
 // @include        *://www.wutuxs.com/html/*/*/*.html
 // @include        *://www.23qb.com/book/*/*.html
@@ -255,7 +250,6 @@
 // @include        *://www.zhaishuyuan.org/book/*/*.html
 // @include        *://www.00ksw.com/html/*/*/*.html
 // @include        *://www.99bxwx.com/b/*/*.html
-// @include        *://www.cnhxfilm.com/book/*/*.html
 // @match          *://www.vipkanshu.vip/shu/*/*.html
 // @match          *://www.81zw.com/book/*/*.html
 // @match          *://www.biqu5200.net/*/*.html
@@ -338,6 +332,10 @@
 // @match          *://www.23tr.com/book/*/*.html
 // @match          *://www.gdbzkz.com/*/*.html
 // @match          *://www.qb5.tw/book_*/*.html
+// @match          *://www.5ycn.com/*/*/*.html
+// @match          *://www.dldtxt.com/xs/*/*.html
+// @match          *://www.67shu.net/book/*/*.html
+// @match          *://www.ibiquge.net/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -3948,14 +3946,14 @@
               return;
           }
 
-          this.content = this.handleContentText(this.$content.html(), this.info);
+          this.content = this.handleContentText(this.$content[0], this.info);
       },
-      handleContentText: function(text, info){
-          if(!text) return null;
+      handleContentText: function(node, info){
+          if(!node) return null;
 
           if (info.useRawContent) {
               C.log('内容处理已被自定义站点规则 useRawContent 关闭');
-              return text
+              return node.outerHTML
           }
 
 
@@ -3971,8 +3969,8 @@
           // }
 
           /* Turn all double br's into p's */
-          text = text.replace(Rule.replaceBrs, '</p>\n<p>');
-          text = text.replace(/<\/p><p>/g, "</p>\n<p>");
+          // text = text.replace(Rule.replaceBrs, '</p>\n<p>');
+          // text = text.replace(/<\/p><p>/g, "</p>\n<p>");
 
           // GM_setClipboard(text);
 
@@ -4002,7 +4000,7 @@
           // }
 
           // 移除 html 注释
-          text = text.replace(toRE('<!--[\\s\\S]*?-->'), '');
+          // text = text.replace(toRE('<!--[\\s\\S]*?-->'), '')
 
           // if (Setting.cn2tw) {
           //     text = this.convert2tw(text);
@@ -4015,7 +4013,15 @@
           // }
 
           // 采用 DOM 方式进行处理
-          var $div = $("<div>").html(text);
+          // var $div = $("<div>").html(node);
+          var $div = $(node.cloneNode(true));
+
+          // 移除 html 注释
+          const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT);
+
+          while (treeWalker.nextNode()) {
+              treeWalker.currentNode.remove();
+          }
 
           // 尝试删除正文中的章节标题
           $div.find('h1, h2, h3').remove();
@@ -4089,7 +4095,7 @@
           //     });
           // }
 
-          text = $div.html();
+          let text = $div.html();
 
           // 修复第一行可能是空的情况
           text = text.replace(/(?:\s|&nbsp;)+<p>/, "<p>");
@@ -4199,6 +4205,30 @@
               C.error('自定义替换错误', ex);
           }
 
+          // 给独立的文本节点包裹一个p标签
+          textNodes
+              .filter(node => {
+                  if (node.parentNode.nodeName === 'P') {
+                      return false
+                  }
+                  if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+                      if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+                          node.nextSibling.remove();
+                      }
+                      node.previousSibling.remove();
+                      return true
+                  }
+                  if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+                      if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+                          node.previousSibling.remove();
+                      }
+                      node.nextSibling.remove();
+                      return true
+                  }
+                  return node.parentNode.childNodes.length > 1
+              })
+              .forEach(node => $(node).wrap('<p>'));
+
           const finalContents = content.split('\n');
 
           if (finalContents.length <= textNodes.length) {
@@ -4210,25 +4240,26 @@
                   }
               });
           } else {
-              const parentNode = $(textNodes[parseInt(textNodes.length / 2)]).closest('div');
+              const centerTextNode = textNodes[parseInt(textNodes.length / 2)];
+              const parentNode = $(centerTextNode).closest('div');
+              const nodeAncestors = $(centerTextNode, parentNode).parents().slice(1);
               finalContents.forEach((text, index) => {
                   if (_.isUndefined(textNodes[index])) {
                       $('<p>').text(text).appendTo(parentNode);
                   } else if (textNodes[index].data.trim() !== text) {
-                      textNodes[index].data = text;
+                      const textNodeAncestors = $(textNodes[index], parentNode).parents().slice(1);
+                      if (
+                          nodeAncestors.not(textNodeAncestors).length === 0 &&
+                          textNodes[index].parentNode.nodeName === 'P'
+                      ) {
+                          textNodes[index].data = text;
+                      } else {
+                          textNodes[index].remove();
+                          $('<p>').text(text).appendTo(parentNode);
+                      }
                   }
               });
           }
-
-          // 给独立的文本节点包裹一个p标签
-          textNodes
-              .filter(node => {
-                  if (node.parentNode.nodeName === 'P') {
-                      return false
-                  }
-                  return node.parentNode.childNodes.length > 1
-              })
-              .forEach(node => $(node).wrap('<p>'));
 
       },
       normalizeContent: function(html) {
@@ -6645,7 +6676,7 @@
       },
       resetCache: function() {  // 更新缓存变量
           App$1.menuItems = App$1.$chapterList.find("div");
-          App$1.scrollItems = $("article");
+          App$1.scrollItems = $("article[id^=page-]");
       },
       registerControls: function() {
           // 内容滚动

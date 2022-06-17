@@ -437,14 +437,14 @@ Parser.prototype = {
             return;
         }
 
-        this.content = this.handleContentText(this.$content.html(), this.info);
+        this.content = this.handleContentText(this.$content[0], this.info);
     },
-    handleContentText: function(text, info){
-        if(!text) return null;
+    handleContentText: function(node, info){
+        if(!node) return null;
 
         if (info.useRawContent) {
             C.log('内容处理已被自定义站点规则 useRawContent 关闭')
-            return text
+            return node.outerHTML
         }
 
 
@@ -460,8 +460,8 @@ Parser.prototype = {
         // }
 
         /* Turn all double br's into p's */
-        text = text.replace(Rule.replaceBrs, '</p>\n<p>');
-        text = text.replace(/<\/p><p>/g, "</p>\n<p>");
+        // text = text.replace(Rule.replaceBrs, '</p>\n<p>');
+        // text = text.replace(/<\/p><p>/g, "</p>\n<p>");
 
         // GM_setClipboard(text);
 
@@ -491,7 +491,7 @@ Parser.prototype = {
         // }
 
         // 移除 html 注释
-        text = text.replace(toRE('<!--[\\s\\S]*?-->'), '')
+        // text = text.replace(toRE('<!--[\\s\\S]*?-->'), '')
 
         // if (Setting.cn2tw) {
         //     text = this.convert2tw(text);
@@ -504,7 +504,15 @@ Parser.prototype = {
         // }
 
         // 采用 DOM 方式进行处理
-        var $div = $("<div>").html(text);
+        // var $div = $("<div>").html(node);
+        var $div = $(node.cloneNode(true))
+
+        // 移除 html 注释
+        const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT)
+
+        while (treeWalker.nextNode()) {
+            treeWalker.currentNode.remove()
+        }
 
         // 尝试删除正文中的章节标题
         $div.find('h1, h2, h3').remove()
@@ -578,7 +586,7 @@ Parser.prototype = {
         //     });
         // }
 
-        text = $div.html();
+        let text = $div.html();
 
         // 修复第一行可能是空的情况
         text = text.replace(/(?:\s|&nbsp;)+<p>/, "<p>");
@@ -688,6 +696,30 @@ Parser.prototype = {
             C.error('自定义替换错误', ex);
         }
 
+        // 给独立的文本节点包裹一个p标签
+        textNodes
+            .filter(node => {
+                if (node.parentNode.nodeName === 'P') {
+                    return false
+                }
+                if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+                    if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+                        node.nextSibling.remove()
+                    }
+                    node.previousSibling.remove()
+                    return true
+                }
+                if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+                    if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+                        node.previousSibling.remove()
+                    }
+                    node.nextSibling.remove()
+                    return true
+                }
+                return node.parentNode.childNodes.length > 1
+            })
+            .forEach(node => $(node).wrap('<p>'))
+
         const finalContents = content.split('\n')
 
         if (finalContents.length <= textNodes.length) {
@@ -699,25 +731,26 @@ Parser.prototype = {
                 }
             })
         } else {
-            const parentNode = $(textNodes[parseInt(textNodes.length / 2)]).closest('div')
+            const centerTextNode = textNodes[parseInt(textNodes.length / 2)]
+            const parentNode = $(centerTextNode).closest('div')
+            const nodeAncestors = $(centerTextNode, parentNode).parents().slice(1)
             finalContents.forEach((text, index) => {
                 if (_.isUndefined(textNodes[index])) {
                     $('<p>').text(text).appendTo(parentNode)
                 } else if (textNodes[index].data.trim() !== text) {
-                    textNodes[index].data = text
+                    const textNodeAncestors = $(textNodes[index], parentNode).parents().slice(1)
+                    if (
+                        nodeAncestors.not(textNodeAncestors).length === 0 &&
+                        textNodes[index].parentNode.nodeName === 'P'
+                    ) {
+                        textNodes[index].data = text
+                    } else {
+                        textNodes[index].remove()
+                        $('<p>').text(text).appendTo(parentNode)
+                    }
                 }
             })
         }
-
-        // 给独立的文本节点包裹一个p标签
-        textNodes
-            .filter(node => {
-                if (node.parentNode.nodeName === 'P') {
-                    return false
-                }
-                return node.parentNode.childNodes.length > 1
-            })
-            .forEach(node => $(node).wrap('<p>'))
 
     },
     normalizeContent: function(html) {

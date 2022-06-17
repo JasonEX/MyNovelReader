@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.1.8
+// @version        7.1.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -137,11 +137,7 @@
 // @include        *://www.xstxt.com/*/*/
 // @include        *://www.zzzcn.com/3z*/*/
 // @include        *://www.zzzcn.com/modules/article/App.php*
-// @include        *://xs321.net/*/*/
 // @include        *://read.guanhuaju.com/files/article/html/*/*/*.html
-// @include        *://5ycn.com/*/*/*.html
-// @include        *://*zbzw.com/*/*.html
-// @include        *://www.aiqis.com/*/*.html
 // @include        *://www.5kwx.com/book/*/*/*.html
 // @include        *://www.chinaisbn.com/*/*/*.html
 // @include        *://www.caihongwenxue.com/Html/Book/*/*/*.html
@@ -188,7 +184,6 @@
 // @include        *://www.67shu.com/*/*/*.html
 // @include        *://www.wangshu.la/books/*/*/*.html
 // @include        *://www.ymoxuan.com/book/*/*/*.html
-// @include        *://www.67shu.com/*/*/*.html
 // @include        *://www.bookxuan.com/*/*.html
 // @include        *://www.wutuxs.com/html/*/*/*.html
 // @include        *://www.23qb.com/book/*/*.html
@@ -255,7 +250,6 @@
 // @include        *://www.zhaishuyuan.org/book/*/*.html
 // @include        *://www.00ksw.com/html/*/*/*.html
 // @include        *://www.99bxwx.com/b/*/*.html
-// @include        *://www.cnhxfilm.com/book/*/*.html
 // @match          *://www.vipkanshu.vip/shu/*/*.html
 // @match          *://www.81zw.com/book/*/*.html
 // @match          *://www.biqu5200.net/*/*.html
@@ -338,6 +332,10 @@
 // @match          *://www.23tr.com/book/*/*.html
 // @match          *://www.gdbzkz.com/*/*.html
 // @match          *://www.qb5.tw/book_*/*.html
+// @match          *://www.5ycn.com/*/*/*.html
+// @match          *://www.dldtxt.com/xs/*/*.html
+// @match          *://www.67shu.net/book/*/*.html
+// @match          *://www.ibiquge.net/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

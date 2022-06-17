@@ -520,7 +520,7 @@ var App = {
     },
     resetCache: function() {  // 更新缓存变量
         App.menuItems = App.$chapterList.find("div");
-        App.scrollItems = $("article");
+        App.scrollItems = $("article[id^=page-]");
     },
     registerControls: function() {
         // 内容滚动
