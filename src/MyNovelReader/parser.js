@@ -750,6 +750,7 @@ Parser.prototype = {
                     }
                 }
             })
+            $(centerTextNode).parent().siblings().not('p').remove()
         }
 
     },
