@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.2.2
+// @version        7.2.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -4246,23 +4246,25 @@
               const centerTextNode = textNodes[parseInt(textNodes.length / 2)];
               const parentNode = $(centerTextNode).closest('div');
               const nodeAncestors = $(centerTextNode, parentNode).parents().slice(1);
+              let appended = false; // 是否手动添加过p标签
               finalContents.forEach((text, index) => {
                   if (_.isUndefined(textNodes[index])) {
                       $('<p>').text(text).appendTo(parentNode);
                   } else if (textNodes[index].data.trim() !== text) {
                       const textNodeAncestors = $(textNodes[index], parentNode).parents().slice(1);
                       if (
+                          !appended &&
                           nodeAncestors.not(textNodeAncestors).length === 0 &&
                           textNodes[index].parentNode.nodeName === 'P'
                       ) {
                           textNodes[index].data = text;
                       } else {
+                          appended = true;
                           textNodes[index].remove();
                           $('<p>').text(text).appendTo(parentNode);
                       }
                   }
               });
-              $(centerTextNode).parent().siblings().not('p').remove();
           }
 
       },
