@@ -7,6 +7,7 @@ import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { getNormalizeMap, toCDB } from './rule/replaceNormalize'
 import { chineseConversion } from './cnConv'
+import { htmlFmt } from './Fmt'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -437,7 +438,7 @@ Parser.prototype = {
             return;
         }
 
-        this.content = this.handleContentText(this.$content[0], this.info);
+        this.content = this.handleContentText2(this.$content[0], this.info);
     },
     handleContentText: function(node, info){
         if(!node) return null;
@@ -699,6 +700,14 @@ Parser.prototype = {
             C.error('自定义替换错误', ex);
         }
 
+        // dom.innerHTML = content
+        //     .split('\n')
+        //     .filter(t => !!t)
+        //     .map(t => `<p>${t}</p>`)
+        //     .join('\n')
+        
+        // return
+
         // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
         textNodes
             .filter(node => {
@@ -760,6 +769,119 @@ Parser.prototype = {
                 }
             })
         }
+
+    },
+    handleContentText2(node, info) {
+        if(!node) return null;
+
+        if (info.useRawContent) {
+            C.log('内容处理已被自定义站点规则 useRawContent 关闭')
+            return node.outerHTML
+        }
+
+        C.group('开始内容处理');
+        C.time('内容处理');
+
+        var $div = $(node.cloneNode(true))
+
+        // 尝试删除正文中的章节标题
+        $div.find('h1, h2, h3').remove()
+
+        // contentRemove
+        $div.find(Rule.contentRemove).remove();
+        if(info.contentRemove){
+            $div.find(info.contentRemove).remove();
+        }
+
+        // 模拟渲染文本节点
+        getTextNodesIn($div[0], true)
+            .filter(n => n.data !== '\n')
+            .forEach(n => (n.data = n.data.trim().replace(/\s+/g, ' ')))
+
+        // 格式化 HTML
+        let content = htmlFmt($div[0].outerHTML)
+
+        C.groupCollapsed('文本内容')
+        C.log(content)
+        C.groupEnd()
+
+        // 去重
+        const contents = content.split('\n')
+        const deDupeConetents = [...new Set(contents)]
+
+        // 查重率超过 10% 则使用去重后内容
+        const dupeRate = (contents.length - deDupeConetents.length) / contents.length
+        if (dupeRate > 0.1) {
+            content = deDupeConetents.join('\n')
+            C.log(`去除了 ${contents.length - deDupeConetents.length} 段重复内容`)
+        }
+
+        var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+
+        C.log(`本章字数：${content.length}`)
+
+        // 去除内容中的标题
+        if (this.chapterTitle) {
+            try {
+                var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*')
+                content = content.replace(toRE(`^${reg}$`), '')
+                C.log('去除内容中的标题', reg)
+            } catch (e) {
+                C.error(e)
+            }
+        }
+
+        // 拼音字、屏蔽字修复
+        if (contentHandle) {
+            content = this.replaceText(content, Rule.replace)
+        }
+
+        // 删除含网站域名行文本
+        const removeText = []
+        const hostRe = toRE(`^.*?${this._curPageHost}.*?$`)
+        content = content.replace(hostRe, match => {
+            removeText.push(match)
+            return ''
+        })  
+        C.log(`删除含网站域名行`, hostRe, removeText)
+
+        // 规则替换
+        if (info.contentReplace) {
+            content = this.replaceText(content, info.contentReplace)
+        }
+
+        // 广告过滤
+        content = this.replaceText(content, Rule.replaceAll)
+        
+        // 内容标准化处理
+        if (Setting.contentNormalize) {
+            content = this.replaceText(content, getNormalizeMap())
+            content = toCDB(content)
+        }
+
+        // 繁简转换
+        content = chineseConversion(content)
+
+        // 自定义替换
+        try {
+            content = this.contentCustomReplace(content);
+        } catch(ex) {
+            C.error('自定义替换错误', ex);
+        }
+        
+        // 渲染 HTML
+        let contentHTML = content
+            .split('\n')
+            .filter(t => !!t)
+            .map(t => `<p>　　${t}</p>`)
+            .join('\n')
+
+        contentHTML = `<div>${contentHTML}</div>`
+
+        C.timeEnd('内容处理');
+        C.groupEnd();
+
+        return contentHTML
 
     },
     normalizeContent: function(html) {
