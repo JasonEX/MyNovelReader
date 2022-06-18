@@ -699,7 +699,7 @@ Parser.prototype = {
             C.error('自定义替换错误', ex);
         }
 
-        // 给独立的文本节点包裹一个p标签
+        // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
         textNodes
             .filter(node => {
                 if (node.parentNode.nodeName === 'P') {
@@ -726,7 +726,8 @@ Parser.prototype = {
         $(dom).find('br').remove()
 
         const finalContents = content.split('\n')
-
+        
+        // 将内容写回到文本节点中
         if (finalContents.length <= textNodes.length) {
             textNodes.forEach((node, index) => {
                 if (!finalContents[index]) {

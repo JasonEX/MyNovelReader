@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.2.4
+// @version        7.2.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2867,6 +2867,8 @@
     'F国': '法国',
     'D国': '德国',
 
+    'Z传': '中传', 'Z戏': '中戏', 'Y美': '央美', 'B影': '北影',
+
     '迸\\*{2}光': '迸射精光',
     '十之八\\*' : '十之八九',
     '关键\\*{3}': '关键性交流',
@@ -2983,6 +2985,7 @@
     '感謝大家熱情支持，大家在(?:起點)?訂閱的同時，別忘了在微信、qq、微博、抖音和快手等渠道上幫探花宣傳，再次感謝了',
     '感谢大家热情支持，大家在(?:起点)?订阅的同时，别忘了在微信、qq、微博、抖音和快手等渠道上帮探花宣传，再次感谢了',
     '頂點小說網首發|顶点小说网首发',
+    '',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -4208,7 +4211,7 @@
               C.error('自定义替换错误', ex);
           }
 
-          // 给独立的文本节点包裹一个p标签
+          // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
           textNodes
               .filter(node => {
                   if (node.parentNode.nodeName === 'P') {
@@ -4235,7 +4238,8 @@
           $(dom).find('br').remove();
 
           const finalContents = content.split('\n');
-
+          
+          // 将内容写回到文本节点中
           if (finalContents.length <= textNodes.length) {
               textNodes.forEach((node, index) => {
                   if (!finalContents[index]) {
