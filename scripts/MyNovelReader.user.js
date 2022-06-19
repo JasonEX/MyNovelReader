@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.0
+// @version        7.3.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -4400,12 +4400,6 @@
           // 广告过滤
           content = this.replaceText(content, Rule.replaceAll);
           
-          // 内容标准化处理
-          if (Setting.contentNormalize) {
-              content = this.replaceText(content, getNormalizeMap());
-              content = toCDB(content);
-          }
-
           // 繁简转换
           content = chineseConversion(content);
 
@@ -4414,6 +4408,12 @@
               content = this.contentCustomReplace(content);
           } catch(ex) {
               C.error('自定义替换错误', ex);
+          }
+
+          // 内容标准化处理
+          if (Setting.contentNormalize) {
+              content = this.replaceText(content, getNormalizeMap());
+              content = toCDB(content);
           }
           
           // 渲染 HTML

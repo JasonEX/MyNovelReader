@@ -853,12 +853,6 @@ Parser.prototype = {
         // 广告过滤
         content = this.replaceText(content, Rule.replaceAll)
         
-        // 内容标准化处理
-        if (Setting.contentNormalize) {
-            content = this.replaceText(content, getNormalizeMap())
-            content = toCDB(content)
-        }
-
         // 繁简转换
         content = chineseConversion(content)
 
@@ -867,6 +861,12 @@ Parser.prototype = {
             content = this.contentCustomReplace(content);
         } catch(ex) {
             C.error('自定义替换错误', ex);
+        }
+
+        // 内容标准化处理
+        if (Setting.contentNormalize) {
+            content = this.replaceText(content, getNormalizeMap())
+            content = toCDB(content)
         }
         
         // 渲染 HTML
