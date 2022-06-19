@@ -119,11 +119,11 @@ const Setting = {
         GM_setValue("text_line_height", val);
     },
 
-    get text_section_height(){
-        return GM_getValue("text_section_height") || "0.8em";
+    get paragraph_height(){
+        return GM_getValue("paragraph_height") || "1em";
     },
-    set text_section_height(val){
-        GM_setValue("text_section_height", val);
+    set paragraph_height(val){
+        GM_setValue("paragraph_height", val);
     },
 
     get content_width() {  // 内容宽度

@@ -819,7 +819,7 @@ var App = {
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
         }
     },
-    httpRequest: async function(nextUrl) {
+    httpRequest: async function(nextUrl) { // 已弃用
 
         C.log("获取下一页: " + nextUrl);
         App.parsedPages[nextUrl] += 1;
@@ -839,7 +839,7 @@ var App = {
 
         return doc
     },
-    httpRequestDone: async function(doc, nextUrl) {
+    httpRequestDone: async function(doc, nextUrl) { // 已弃用
         if (doc) {
             await App.beforeLoad(doc);
             return;
@@ -856,7 +856,7 @@ var App = {
         doc = await App.httpRequest(nextUrl)
         await App.httpRequestDone(doc, nextUrl)
     },
-    iframeRequest: async function(nextUrl) {
+    iframeRequest: async function(nextUrl) { // 已弃用
         C.log("iframeRequest: " + nextUrl);
         if (!App.iframe) {
             var i = document.createElement('iframe');
@@ -880,7 +880,7 @@ var App = {
             App.iframe.contentDocument.location.replace(nextUrl);
         }
     },
-    iframeLoaded: async function() {
+    iframeLoaded: async function() { // 已弃用
         var iframe = this;
         var body = iframe.contentDocument.body;
 
@@ -906,7 +906,7 @@ var App = {
             await App.beforeLoad(doc);
         }
     },
-    beforeLoad: async function(htmlDoc) {
+    beforeLoad: async function(htmlDoc) { // 已弃用
         if (config.PRELOADER) {
             App.tmpDoc = htmlDoc;
             App.working = false;

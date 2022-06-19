@@ -440,7 +440,7 @@ Parser.prototype = {
 
         this.content = this.handleContentText2(this.$content[0], this.info);
     },
-    handleContentText: function(node, info){
+    handleContentText: function(node, info){ // 已弃用
         if(!node) return null;
 
         if (info.useRawContent) {
@@ -610,7 +610,7 @@ Parser.prototype = {
 
         return text;
     },
-    clearContent: function(dom, info) {
+    clearContent: function(dom, info) { // 已弃用
         const textNodes = getTextNodesIn(dom, true).filter(node => {
             // 不处理内嵌图片的文本节点
             if (

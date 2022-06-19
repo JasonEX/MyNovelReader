@@ -38,14 +38,13 @@ a:link { text-decoration: none; }
     max-width: 100%;
 }
 
-#mynovelreader-content p {
-    margin-top: {text_section_height};
-    margin-bottom: {text_section_height};
-}
-
 article {
     margin-top: 55px;
     word-wrap: break-word;
+}
+
+article p {
+    margin: {paragraph_height} 0;
 }
 
 article h1 {
