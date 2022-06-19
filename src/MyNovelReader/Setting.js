@@ -119,6 +119,13 @@ const Setting = {
         GM_setValue("text_line_height", val);
     },
 
+    get text_section_height(){
+        return GM_getValue("text_section_height") || "0.8em";
+    },
+    set text_section_height(val){
+        GM_setValue("text_section_height", val);
+    },
+
     get content_width() {  // 内容宽度
         return GM_getValue("content_width") || "800px";
     },

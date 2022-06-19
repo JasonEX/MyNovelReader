@@ -34,6 +34,7 @@ var UI = {
         UI.$menu = $('#menu');
         UI.$menuBar = $('#menu-bar');
         UI.$content = $('#mynovelreader-content');
+        UI.$text = $('#mynovelreader-content p');
         UI.$preferencesBtn = $('#preferencesBtn');
 
         // 初始化是否隐藏
@@ -57,6 +58,7 @@ var UI = {
                 .replace("{title_font_size}", UI.calcTitleFontSize(Setting.font_size))
                 .replace("{content_width}", Setting.content_width)
                 .replace("{text_line_height}", Setting.text_line_height)
+                .replace("{text_section_height}", Setting.text_section_height)
                 .replace("{menu-bar-hidden}", Setting.menu_bar_hidden ? "display:none;" : "");
 
         if(UI.$mainStyle){
@@ -275,6 +277,7 @@ var UI = {
         $form.find("#font-size").get(0).value = Setting.font_size;
         $form.find("#content_width").get(0).value = Setting.content_width;
         $form.find("#text_line_height").get(0).value = Setting.text_line_height;
+        $form.find("#text_section_height").get(0).value = Setting.text_section_height;
         $form.find("#split_content").get(0).checked = Setting.split_content;
         $form.find("#scroll_animate").get(0).checked = Setting.scrollAnimate;
 
@@ -333,6 +336,10 @@ var UI = {
                     break;
                 case "text_line_height":
                     UI.$content.css("line-height", this.value);
+                    break;
+                case "text_section_height":
+                    UI.$text.css("margin-top", this.value);
+                    UI.$text.css("margin-bottom", this.value);
                     break;
                 default:
                     break;
@@ -453,6 +460,7 @@ var UI = {
 
         Setting.font_size = $form.find("#font-size").get(0).value;
         Setting.text_line_height = $form.find("#text_line_height").get(0).value;
+        Setting.text_section_height = $form.find("#text_section_height").get(0).value;
         Setting.content_width = $form.find("#content_width").get(0).value;
         Setting.remain_height = $form.find("#remain-height").get(0).value;
         Setting.split_content = $form.find("#split_content").get(0).checked;
