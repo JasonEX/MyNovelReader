@@ -23,7 +23,7 @@ function getNormalizeMap() {
     // 将一段中的第一句后接对话（引号）句子的第一句话分段
     '(^.*?[.。])(“.*?”)': '$1\n$2',
     // 将一段中的右引号后面的内容分为一段
-    '([。！？])”([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
+    '([。！？])”(?!.*?，“)([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
     '“([\\s\\S]*?)”': Setting.mergeQoutesContent
       ? match => match.replace(toRE('\n'), '')
       : undefined,

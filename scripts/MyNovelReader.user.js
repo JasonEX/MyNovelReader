@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.1
+// @version        7.3.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -337,6 +337,7 @@
 // @match          *://www.67shu.net/book/*/*.html
 // @match          *://www.ibiquge.net/*/*.html
 // @match          *://www.xiashu9.com/book/*/*.html
+// @match          *://zerifeisheng.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2881,6 +2882,7 @@
     '十之八\\*' : '十之八九',
     '关键\\*{3}': '关键性交流',
     '\\*{3}主播': '性视频主播',
+    '奶\\*{2}上': '奶奶头上',
 
     '\\.asxs\\.': '起点',
     '\\b(?:boos|boso)\\b': 'BOSS',
@@ -3412,7 +3414,7 @@
       // 将一段中的第一句后接对话（引号）句子的第一句话分段
       '(^.*?[.。])(“.*?”)': '$1\n$2',
       // 将一段中的右引号后面的内容分为一段
-      '([。！？])”([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
+      '([。！？])”(?!.*?，“)([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
       '“([\\s\\S]*?)”': Setting.mergeQoutesContent
         ? match => match.replace(toRE('\n'), '')
         : undefined,
