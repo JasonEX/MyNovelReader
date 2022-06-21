@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.2
+// @version        7.3.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -338,6 +338,10 @@
 // @match          *://www.ibiquge.net/*/*.html
 // @match          *://www.xiashu9.com/book/*/*.html
 // @match          *://zerifeisheng.com/book/*/*.html
+// @match          *://quanxiaoshuo.com/*/*/
+// @match          *://www.xbbshuwu.com/*/*.html
+// @match          *://www.xygyhd.org/book/*/*.html
+// @match          *://www.23xstxt.com/book/*/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2531,7 +2535,15 @@
           bookTitleSelector: '.linkleft > a:nth-child(3)',
           contentReplace: ['^【重要提醒】$'],
 
-      }
+      },
+
+      {siteName: '52小说网 ',
+          url: 'http://www.5ixsw.net/html/\\d+/\\d+/.*?.html',
+          exampleUrl: 'http://www.5ixsw.net/html/100/100075/4.html',
+
+          checkSection: true,
+
+      },
 
   ];
 
@@ -3046,6 +3058,7 @@
     '最新网址：.*',
     '^先定个小目标，比如1秒记住： .*',
     '^热门推荐：.*',
+    '^猜您喜欢：.*',
     '^更新最快.*',
     '^.*请你先收藏此页吧，方便等下阅读咯……',
     '^.*更新中……努力更新中…….*',
@@ -3070,6 +3083,7 @@
     '为了方便下次阅读，你可以在?点击下方的"收藏"记录本次（.*?）阅读记录，下次打开书架即可看到！',
     '(?:喜欢《.*?》)请向你的朋友（QQ、博客、微信等方式）推荐本书，谢谢您的支持！！',
     '^.*手机阅读地址.*',
+    '小说.*?首发，欢迎读者登录.*?最新章节。',
 
     // '.*笔下文学更新速度最快.*',
     // '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
@@ -3414,7 +3428,7 @@
       // 将一段中的第一句后接对话（引号）句子的第一句话分段
       '(^.*?[.。])(“.*?”)': '$1\n$2',
       // 将一段中的右引号后面的内容分为一段
-      '([。！？])”(?!.*?，“)([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
+      '([。！？])”(?![\\u4e00-\\u9fa5，]+，“)([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
       '“([\\s\\S]*?)”': Setting.mergeQoutesContent
         ? match => match.replace(toRE('\n'), '')
         : undefined,
@@ -4332,6 +4346,13 @@
           C.time('内容处理');
 
           var $div = $(node.cloneNode(true));
+
+          // 移除 html 注释
+          const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT);
+
+          while (treeWalker.nextNode()) {
+              treeWalker.currentNode.remove();
+          }
 
           // 尝试删除正文中的章节标题
           $div.find('h1, h2, h3').remove();

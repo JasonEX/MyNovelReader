@@ -7,7 +7,7 @@ import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { getNormalizeMap, toCDB } from './rule/replaceNormalize'
 import { chineseConversion } from './cnConv'
-import { htmlFmt } from './Fmt'
+import { htmlFmt } from './fmt'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -783,6 +783,13 @@ Parser.prototype = {
         C.time('内容处理');
 
         var $div = $(node.cloneNode(true))
+
+        // 移除 html 注释
+        const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT)
+
+        while (treeWalker.nextNode()) {
+            treeWalker.currentNode.remove()
+        }
 
         // 尝试删除正文中的章节标题
         $div.find('h1, h2, h3').remove()

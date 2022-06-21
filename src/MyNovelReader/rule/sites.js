@@ -1489,7 +1489,15 @@ const sites = [
         bookTitleSelector: '.linkleft > a:nth-child(3)',
         contentReplace: ['^【重要提醒】$'],
 
-    }
+    },
+
+    {siteName: '52小说网 ',
+        url: 'http://www.5ixsw.net/html/\\d+/\\d+/.*?.html',
+        exampleUrl: 'http://www.5ixsw.net/html/100/100075/4.html',
+
+        checkSection: true,
+
+    },
 
 ];
 
