@@ -1188,7 +1188,7 @@ const sites = [
     },
 
     {siteName: 'YY文轩',
-        url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
+        url: 'https?://www\\.yywenxuan\\.com/\\d+/.*?\\.html',
         useiframe: true,
         contentSelector: '#ad'
     },
@@ -1224,18 +1224,18 @@ const sites = [
 
     },
 
-    {siteName: '搜小说/搜书网/酷笔记',
-        url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
+    // {siteName: '搜小说/搜书网/酷笔记',
+    //     url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
 
-        contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
-        contentPatch($doc) {
-            $doc.find('p').remove()
-        },
+    //     contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
+    //     contentPatch($doc) {
+    //         $doc.find('p').remove()
+    //     },
 
-        nextSelector: '.pagego > a:nth-child(5)',
-        indexSelector: '.pagego > a:nth-child(3)',
-        prevSelector: '.pagego > a:nth-child(2)',
-    },
+    //     nextSelector: '.pagego > a:nth-child(5)',
+    //     indexSelector: '.pagego > a:nth-child(3)',
+    //     prevSelector: '.pagego > a:nth-child(2)',
+    // },
 
     {siteName: '中文成人文学网',
         url:'https?://book.xbookcn.net/\\d+/\\d+/.*.html',
@@ -1496,6 +1496,14 @@ const sites = [
         exampleUrl: 'http://www.5ixsw.net/html/100/100075/4.html',
 
         checkSection: true,
+
+    },
+
+    {siteName: '笔趣阁',
+        url: 'https://www.biqiudu.com/novel/\\d+/\\d+.html',
+        exampleUrl: 'https://www.biqiudu.com/novel/41797/15459802.html',
+
+        contentReplace: ['ｈttpｓ://m\\.biqiudu\\.com笔趣阁', '笔趣阁网址ｍ．biqiudu。com']
 
     },
 

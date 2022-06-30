@@ -13,7 +13,7 @@ import downloader from './downloader'
 import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
 import './inject'
-import { observeElement } from './libdom'
+import { domMutation, observeElement } from './libdom'
 import { XmlRequest, IframeRequest, RequestStatus, iframeHeight } from './request'
 import { cleanupEvents } from './inject'
 import { envCheckInit } from './envCheck'
@@ -75,11 +75,11 @@ var App = {
                 await sleep(App.site.timeout)
             }
             if (!App.site.fastboot) {
-                // 等待 Dom 稳定
-                await App.DomMutation();
+                await domMutation();
             }
             await App.launch()
         } else {
+            await domMutation();
             await UI.addButton();
         }
     },
@@ -195,21 +195,6 @@ var App = {
                 C.log('添加 MutationObserve 成功：', mutationSelector)
             })
         }
-    },
-    // 等待 Dom 稳定
-    DomMutation: function() {
-        return new Promise(resolve => {
-            const debounced = _.debounce(() => {
-                observer.disconnect()
-                resolve()
-            }, 100)
-            const observer = new MutationObserver(() => debounced())
-            observer.observe(document,{
-                childList: true,
-                subtree: true
-            })
-            debounced()
-        })
     },
     launch: async function() {
         // 只解析一次，防止多次重复解析一个页面

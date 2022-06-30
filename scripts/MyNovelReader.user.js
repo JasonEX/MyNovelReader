@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.3
+// @version        7.3.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -342,6 +342,9 @@
 // @match          *://www.xbbshuwu.com/*/*.html
 // @match          *://www.xygyhd.org/book/*/*.html
 // @match          *://www.23xstxt.com/book/*/*/*.html
+// @match          *://www.biqiudu.com/novel/*/*.html
+// @match          *://www.shubaow.net/*/*.html
+// @match          *://www.qingdou.la/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2238,7 +2241,7 @@
       },
 
       {siteName: 'YY文轩',
-          url: 'https?://www\\.yywenxuan\\.com/\\d+/\\d+\\.html',
+          url: 'https?://www\\.yywenxuan\\.com/\\d+/.*?\\.html',
           useiframe: true,
           contentSelector: '#ad'
       },
@@ -2274,18 +2277,18 @@
 
       },
 
-      {siteName: '搜小说/搜书网/酷笔记',
-          url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
+      // {siteName: '搜小说/搜书网/酷笔记',
+      //     url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
 
-          contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
-          contentPatch($doc) {
-              $doc.find('p').remove();
-          },
+      //     contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
+      //     contentPatch($doc) {
+      //         $doc.find('p').remove()
+      //     },
 
-          nextSelector: '.pagego > a:nth-child(5)',
-          indexSelector: '.pagego > a:nth-child(3)',
-          prevSelector: '.pagego > a:nth-child(2)',
-      },
+      //     nextSelector: '.pagego > a:nth-child(5)',
+      //     indexSelector: '.pagego > a:nth-child(3)',
+      //     prevSelector: '.pagego > a:nth-child(2)',
+      // },
 
       {siteName: '中文成人文学网',
           url:'https?://book.xbookcn.net/\\d+/\\d+/.*.html',
@@ -2545,6 +2548,14 @@
 
       },
 
+      {siteName: '笔趣阁',
+          url: 'https://www.biqiudu.com/novel/\\d+/\\d+.html',
+          exampleUrl: 'https://www.biqiudu.com/novel/41797/15459802.html',
+
+          contentReplace: ['ｈttpｓ://m\\.biqiudu\\.com笔趣阁', '笔趣阁网址ｍ．biqiudu。com']
+
+      },
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -2558,16 +2569,16 @@
     //",\\s*": "，",
     // ":": "：", "\\?":"？",  // 会造成起点的图片无法替换
 
-    "\\*|＊": "*",
-    "[wWｗＷ]{3}": "www",
-    "w{3}(\u3001|\u3002)": "www.",
-    "[cCｃＣ][oOｏＯ][mMｍＭ]": "com",
-    "[nNｎＮ][eｅEＥ][tｔTＴ]": "net",
-    "[cCｃＣ][nNｎＮ]": "cn",
-    "(\\.|\u3001|\u3002)com": ".com",
-    "(\\.|\u3001|\u3002)net": ".net",
+    // "\\*|＊": "*",
+    // "[wWｗＷ]{3}": "www",
+    // "w{3}(\u3001|\u3002)": "www.",
+    // "[cCｃＣ][oOｏＯ][mMｍＭ]": "com",
+    // "[nNｎＮ][eｅEＥ][tｔTＴ]": "net",
+    // "[cCｃＣ][nNｎＮ]": "cn",
+    // "(\\.|\u3001|\u3002)com": ".com",
+    // "(\\.|\u3001|\u3002)net": ".net",
     // "(\\.|\u3001|\u3002)cn": ".cn",
-    "[pPｐＰ][sSｓＳ][:：]": "ps:",
+    // "[pPｐＰ][sSｓＳ][:：]": "ps:",
     // "。{5,7}": "……", "~{2,50}": "——", "…{3,40}": "……", "－{3,20}": "——",
     //"。(,|，|。)": "。",
     // "？(,|，)": "？",
@@ -2895,6 +2906,7 @@
     '关键\\*{3}': '关键性交流',
     '\\*{3}主播': '性视频主播',
     '奶\\*{2}上': '奶奶头上',
+    '狭\\*{2}仄': '狭窄逼仄',
 
     '\\.asxs\\.': '起点',
     '\\b(?:boos|boso)\\b': 'BOSS',
@@ -3547,30 +3559,127 @@
     }
   }
 
-  const r$1 = String.raw;
+  // 等待页面上的元素出现
+  function observeElement(
+    doc,
+    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
+  ) {
+    var shouldAdd = false;
+    var $doc = $(doc);
 
+    var contentSize = $doc.find(contentSelector).size();
+
+    if (contentSize && !mutationSelector) {
+      shouldAdd = false;
+    } else {
+      var target = $doc.find(mutationSelector)[0];
+
+      if (target) {
+        var beforeTargetChilren = target.children.length;
+        C.log(`target.children.length = ${target.children.length}`, target);
+
+        if (mutationChildText) {
+          if (target.textContent.indexOf(mutationChildText) > -1) {
+            shouldAdd = true;
+          }
+        } else {
+          if (
+            mutationChildCount === undefined ||
+            target.children.length <= mutationChildCount
+          ) {
+            shouldAdd = true;
+          }
+        }
+      }
+    }
+
+    if (shouldAdd) {
+      return new Promise(resolve => {
+        var observer = new MutationObserver(function () {
+          target = $doc.find(mutationSelector)[0];
+          var nodeAdded = target.children.length > beforeTargetChilren;
+
+          if (nodeAdded) {
+            observer.disconnect();
+            resolve();
+          }
+        });
+
+        observer.observe(document, {
+          childList: true,
+          subtree: true
+        });
+
+        C.log('添加 MutationObserve 成功：', mutationSelector);
+      })
+    }
+  }
+
+  // 等待 DOM 稳定
+  function domMutation() {
+    return new Promise(resolve => {
+      const fn = _.debounce(() => {
+        observer.disconnect();
+        resolve();
+      }, 100);
+      const observer = new MutationObserver(fn);
+      observer.observe(document, {
+        childList: true,
+        subtree: true
+      });
+      fn();
+    })
+  }
+
+  const r$1 = String.raw;
   const spaceRegex = toRE(r$1`&nbsp;|&ensp;|&emsp;`),
     noPrintRegex = toRE(r$1`&thinsp;|&zwnj;|&zwj;`),
     wrapHtmlRegex = toRE(r$1`</?(?:div|p|br|hr|h\d|article|dd|dl)[^>]*>`),
-    commentRegex = toRE(r$1`<!--[^>]*-->`),
     indent1Regex = toRE(r$1`\s*\n+\s*`),
     indent2Regex = toRE(r$1`^[\n\s]+`),
     lastRegex = toRE(r$1`[\n\s]+$`),
     otherHtmlRegex = toRE(r$1`</?[a-zA-Z]+(?=[ >])[^<>]*>`);
 
   function htmlFmt(text, otherRegex = otherHtmlRegex) {
-    text = text.replace(toRE('\ufeff'), '');
-    text = text.replace(toRE('\u200b'), '');
+    text = text.replace(toRE('\ufeff|\u200b'), '');
     text = text.replace(spaceRegex, ' ');
     text = text.replace(noPrintRegex, '');
     text = text.replace(wrapHtmlRegex, '\n');
-    text = text.replace(commentRegex, '');
     text = text.replace(otherRegex, '');
     text = text.replace(indent1Regex, '\n');
     text = text.replace(indent2Regex, '');
     text = text.replace(lastRegex, '');
 
     return text
+  }
+
+  /**
+   * 清除 HTML 代码，保留格式
+   * @param {Document} doc
+   * @returns {string}
+   */
+  function cleanHTML(doc) {
+    const treeWalker = document.createTreeWalker(doc, NodeFilter.SHOW_COMMENT);
+    while (treeWalker.nextNode()) {
+      treeWalker.currentNode.remove();
+    }
+
+    // 模拟渲染文本节点
+    getTextNodesIn(doc, true)
+      .filter(n => n.data !== '\n')
+      .forEach(n => (n.data = n.data.trim().replace(/\s+/g, ' ')));
+
+    return htmlFmt(doc.outerHTML)
+  }
+
+  function renderHTML(text) {
+    text = text
+      .split('\n')
+      .filter(t => !!t)
+      .map(t => `<p>　　${t}</p>`)
+      .join('\n');
+
+    return `<div>${text}</div>`
   }
 
   function getElemFontSize(_heading) {
@@ -4347,13 +4456,6 @@
 
           var $div = $(node.cloneNode(true));
 
-          // 移除 html 注释
-          const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT);
-
-          while (treeWalker.nextNode()) {
-              treeWalker.currentNode.remove();
-          }
-
           // 尝试删除正文中的章节标题
           $div.find('h1, h2, h3').remove();
 
@@ -4363,13 +4465,7 @@
               $div.find(info.contentRemove).remove();
           }
 
-          // 模拟渲染文本节点
-          getTextNodesIn($div[0], true)
-              .filter(n => n.data !== '\n')
-              .forEach(n => (n.data = n.data.trim().replace(/\s+/g, ' ')));
-
-          // 格式化 HTML
-          let content = htmlFmt($div[0].outerHTML);
+          let content = cleanHTML($div[0]);
 
           C.groupCollapsed('文本内容');
           C.log(content);
@@ -4438,15 +4534,8 @@
               content = this.replaceText(content, getNormalizeMap());
               content = toCDB(content);
           }
-          
-          // 渲染 HTML
-          let contentHTML = content
-              .split('\n')
-              .filter(t => !!t)
-              .map(t => `<p>　　${t}</p>`)
-              .join('\n');
 
-          contentHTML = `<div>${contentHTML}</div>`;
+          const contentHTML = renderHTML(content);
 
           C.timeEnd('内容处理');
           C.groupEnd();
@@ -6111,62 +6200,6 @@
     }
   });
 
-  // 等待页面上的元素出现
-  function observeElement(
-    doc,
-    { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
-  ) {
-    var shouldAdd = false;
-    var $doc = $(doc);
-
-    var contentSize = $doc.find(contentSelector).size();
-
-    if (contentSize && !mutationSelector) {
-      shouldAdd = false;
-    } else {
-      var target = $doc.find(mutationSelector)[0];
-
-      if (target) {
-        var beforeTargetChilren = target.children.length;
-        C.log(`target.children.length = ${target.children.length}`, target);
-
-        if (mutationChildText) {
-          if (target.textContent.indexOf(mutationChildText) > -1) {
-            shouldAdd = true;
-          }
-        } else {
-          if (
-            mutationChildCount === undefined ||
-            target.children.length <= mutationChildCount
-          ) {
-            shouldAdd = true;
-          }
-        }
-      }
-    }
-
-    if (shouldAdd) {
-      return new Promise(resolve => {
-        var observer = new MutationObserver(function () {
-          target = $doc.find(mutationSelector)[0];
-          var nodeAdded = target.children.length > beforeTargetChilren;
-
-          if (nodeAdded) {
-            observer.disconnect();
-            resolve();
-          }
-        });
-
-        observer.observe(document, {
-          childList: true,
-          subtree: true
-        });
-
-        C.log('添加 MutationObserve 成功：', mutationSelector);
-      })
-    }
-  }
-
   /** @enum {number} */
   const RequestStatus = {
     Idle: 0,
@@ -6430,11 +6463,11 @@
                   await sleep(App$1.site.timeout);
               }
               if (!App$1.site.fastboot) {
-                  // 等待 Dom 稳定
-                  await App$1.DomMutation();
+                  await domMutation();
               }
               await App$1.launch();
           } else {
+              await domMutation();
               await UI.addButton();
           }
       },
@@ -6549,21 +6582,6 @@
                   C.log('添加 MutationObserve 成功：', mutationSelector);
               })
           }
-      },
-      // 等待 Dom 稳定
-      DomMutation: function() {
-          return new Promise(resolve => {
-              const debounced = _.debounce(() => {
-                  observer.disconnect();
-                  resolve();
-              }, 100);
-              const observer = new MutationObserver(() => debounced());
-              observer.observe(document,{
-                  childList: true,
-                  subtree: true
-              });
-              debounced();
-          })
       },
       launch: async function() {
           // 只解析一次，防止多次重复解析一个页面

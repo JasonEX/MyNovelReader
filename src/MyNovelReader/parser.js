@@ -7,7 +7,7 @@ import autoGetBookTitle from './parser/autoGetBookTitle'
 import { Request } from './lib'
 import { getNormalizeMap, toCDB } from './rule/replaceNormalize'
 import { chineseConversion } from './cnConv'
-import { htmlFmt } from './fmt'
+import { cleanHTML, renderHTML } from './libdom'
 
 function getElemFontSize(_heading) {
     var fontSize = 0;
@@ -784,13 +784,6 @@ Parser.prototype = {
 
         var $div = $(node.cloneNode(true))
 
-        // 移除 html 注释
-        const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT)
-
-        while (treeWalker.nextNode()) {
-            treeWalker.currentNode.remove()
-        }
-
         // 尝试删除正文中的章节标题
         $div.find('h1, h2, h3').remove()
 
@@ -800,13 +793,7 @@ Parser.prototype = {
             $div.find(info.contentRemove).remove();
         }
 
-        // 模拟渲染文本节点
-        getTextNodesIn($div[0], true)
-            .filter(n => n.data !== '\n')
-            .forEach(n => (n.data = n.data.trim().replace(/\s+/g, ' ')))
-
-        // 格式化 HTML
-        let content = htmlFmt($div[0].outerHTML)
+        let content = cleanHTML($div[0])
 
         C.groupCollapsed('文本内容')
         C.log(content)
@@ -875,15 +862,8 @@ Parser.prototype = {
             content = this.replaceText(content, getNormalizeMap())
             content = toCDB(content)
         }
-        
-        // 渲染 HTML
-        let contentHTML = content
-            .split('\n')
-            .filter(t => !!t)
-            .map(t => `<p>　　${t}</p>`)
-            .join('\n')
 
-        contentHTML = `<div>${contentHTML}</div>`
+        const contentHTML = renderHTML(content)
 
         C.timeEnd('内容处理');
         C.groupEnd();

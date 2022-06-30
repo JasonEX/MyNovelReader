@@ -1,4 +1,5 @@
-import { C } from './lib'
+import { C, getTextNodesIn } from './lib'
+import { toRE } from './lib'
 
 // 等待页面上的元素出现
 export function observeElement(
@@ -56,3 +57,69 @@ export function observeElement(
   }
 }
 
+// 等待 DOM 稳定
+export function domMutation() {
+  return new Promise(resolve => {
+    const fn = _.debounce(() => {
+      observer.disconnect()
+      resolve()
+    }, 100)
+    const observer = new MutationObserver(fn)
+    observer.observe(document, {
+      childList: true,
+      subtree: true
+    })
+    fn()
+  })
+}
+
+const r = String.raw
+const spaceRegex = toRE(r`&nbsp;|&ensp;|&emsp;`),
+  noPrintRegex = toRE(r`&thinsp;|&zwnj;|&zwj;`),
+  wrapHtmlRegex = toRE(r`</?(?:div|p|br|hr|h\d|article|dd|dl)[^>]*>`),
+  indent1Regex = toRE(r`\s*\n+\s*`),
+  indent2Regex = toRE(r`^[\n\s]+`),
+  lastRegex = toRE(r`[\n\s]+$`),
+  otherHtmlRegex = toRE(r`</?[a-zA-Z]+(?=[ >])[^<>]*>`)
+
+export function htmlFmt(text, otherRegex = otherHtmlRegex) {
+  text = text.replace(toRE('\ufeff|\u200b'), '')
+  text = text.replace(spaceRegex, ' ')
+  text = text.replace(noPrintRegex, '')
+  text = text.replace(wrapHtmlRegex, '\n')
+  text = text.replace(otherRegex, '')
+  text = text.replace(indent1Regex, '\n')
+  text = text.replace(indent2Regex, '')
+  text = text.replace(lastRegex, '')
+
+  return text
+}
+
+/**
+ * 清除 HTML 代码，保留格式
+ * @param {Document} doc
+ * @returns {string}
+ */
+export function cleanHTML(doc) {
+  const treeWalker = document.createTreeWalker(doc, NodeFilter.SHOW_COMMENT)
+  while (treeWalker.nextNode()) {
+    treeWalker.currentNode.remove()
+  }
+
+  // 模拟渲染文本节点
+  getTextNodesIn(doc, true)
+    .filter(n => n.data !== '\n')
+    .forEach(n => (n.data = n.data.trim().replace(/\s+/g, ' ')))
+
+  return htmlFmt(doc.outerHTML)
+}
+
+export function renderHTML(text) {
+  text = text
+    .split('\n')
+    .filter(t => !!t)
+    .map(t => `<p>　　${t}</p>`)
+    .join('\n')
+
+  return `<div>${text}</div>`
+}
