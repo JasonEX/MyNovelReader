@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.5
+// @version        7.3.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3092,7 +3092,7 @@
     '^.*欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在.*',
     '^恋上你看书网.*',
     '(?:您可以在百度里搜索)?“.*?”查找最新章节！',
-    '“.*?\\(.*?\\)”',
+    // '“.*?\\(.*?\\)”',
     '为了方便下次阅读，你可以在?点击下方的"收藏"记录本次（.*?）阅读记录，下次打开书架即可看到！',
     '(?:喜欢《.*?》)请向你的朋友（QQ、博客、微信等方式）推荐本书，谢谢您的支持！！',
     '^.*手机阅读地址.*',
@@ -4498,6 +4498,10 @@
               }
           }
 
+          // C.groupCollapsed('文本内容 - replace')
+          // C.log(content)
+          // C.groupEnd()
+
           // 拼音字、屏蔽字修复
           if (contentHandle) {
               content = this.replaceText(content, Rule.replace);
@@ -4512,13 +4516,25 @@
           });  
           C.log(`删除含网站域名行`, hostRe, removeText);
 
+          // C.groupCollapsed('文本内容 - contentReplace')
+          // C.log(content)
+          // C.groupEnd()
+
           // 规则替换
           if (info.contentReplace) {
               content = this.replaceText(content, info.contentReplace);
           }
 
+          // C.groupCollapsed('文本内容 - replaceAll')
+          // C.log(content)
+          // C.groupEnd()
+
           // 广告过滤
           content = this.replaceText(content, Rule.replaceAll);
+
+          // C.groupCollapsed('文本内容 - end')
+          // C.log(content)
+          // C.groupEnd()
           
           // 繁简转换
           content = chineseConversion(content);

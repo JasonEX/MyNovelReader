@@ -825,6 +825,10 @@ Parser.prototype = {
             }
         }
 
+        // C.groupCollapsed('文本内容 - replace')
+        // C.log(content)
+        // C.groupEnd()
+
         // 拼音字、屏蔽字修复
         if (contentHandle) {
             content = this.replaceText(content, Rule.replace)
@@ -839,13 +843,25 @@ Parser.prototype = {
         })  
         C.log(`删除含网站域名行`, hostRe, removeText)
 
+        // C.groupCollapsed('文本内容 - contentReplace')
+        // C.log(content)
+        // C.groupEnd()
+
         // 规则替换
         if (info.contentReplace) {
             content = this.replaceText(content, info.contentReplace)
         }
 
+        // C.groupCollapsed('文本内容 - replaceAll')
+        // C.log(content)
+        // C.groupEnd()
+
         // 广告过滤
         content = this.replaceText(content, Rule.replaceAll)
+
+        // C.groupCollapsed('文本内容 - end')
+        // C.log(content)
+        // C.groupEnd()
         
         // 繁简转换
         content = chineseConversion(content)
