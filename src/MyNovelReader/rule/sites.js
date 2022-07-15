@@ -1250,7 +1250,7 @@ const sites = [
     },
 
     {siteName: '顶点小说',
-        url: 'http://www\\.ddxs\\.com/.*?/\\d+.html',
+        url: 'https?://www\\.ddxs\\.com/.*?/\\d+.html',
         exampleUrl: 'http://www.ddxs.com/yuanzun/1.html',
 
         contentSelector: '#contents',

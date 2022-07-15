@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.6
+// @version        7.3.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2303,7 +2303,7 @@
       },
 
       {siteName: '顶点小说',
-          url: 'http://www\\.ddxs\\.com/.*?/\\d+.html',
+          url: 'https?://www\\.ddxs\\.com/.*?/\\d+.html',
           exampleUrl: 'http://www.ddxs.com/yuanzun/1.html',
 
           contentSelector: '#contents',
@@ -2912,7 +2912,7 @@
     '\\.asxs\\.': '起点',
     '\\b(?:boos|boso)\\b': 'BOSS',
 
-    '伱': '你', '勐': '猛', '澹': '淡', '桉': '案',
+    '伱': '你', '勐': '猛', '澹': '淡', '桉': '案', '莪': '我',
     
   };
 
@@ -2921,6 +2921,7 @@
   const replaceAll = [
     // 长文字替换
     // 排序代码：newArr = arr.sort((a, b) => { var diff = a.charCodeAt(1) - b.charCodeAt(1); if (diff == 0) return b.length - a.length; return diff; })
+    '(?=<!--)([\\s\\S]*?)-->',
     '本站域名已经更换为.*，老域名(?:已经|即将)停用，请大家重新收藏，并使用新域名访问。',
     // "\\(跪求订阅、打赏、催更票、月票、鲜花的支持!\\)",
     // "\\(?未完待续请搜索飄天文學，小说更好更新更快!",
