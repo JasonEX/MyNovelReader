@@ -1508,6 +1508,25 @@ const sites = [
 
     },
 
+    {siteName: '八一中文',
+        url: 'https?://www.8181zw.com/book/\\d+/\\d+(?:_\\d+)?.html',
+        exampleUrl: 'https://www.8181zw.com/book/383529/2047155.html',
+
+        checkSection: true,
+        handleContentText ($content, info) {
+            const $html = $(this.handleContentText2($content, info))
+            const className = `content-${new Date().getTime()}`
+            $html.addClass(className)
+            const style = this.$doc.find('style').filter(function () {
+                return $(this).text().indexOf("@font-face") > -1
+            })
+            style.text(style.text().replace("content", className))
+            $html.prepend(style)
+            return $html[0].outerHTML
+        }
+
+    },
+
 ];
 
 export default sites

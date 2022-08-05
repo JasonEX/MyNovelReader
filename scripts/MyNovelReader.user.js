@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.7
+// @version        7.3.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2557,6 +2557,25 @@
 
       },
 
+      {siteName: '八一中文',
+          url: 'https?://www.8181zw.com/book/\\d+/\\d+(?:_\\d+)?.html',
+          exampleUrl: 'https://www.8181zw.com/book/383529/2047155.html',
+
+          checkSection: true,
+          handleContentText ($content, info) {
+              const $html = $(this.handleContentText2($content, info));
+              const className = `content-${new Date().getTime()}`;
+              $html.addClass(className);
+              const style = this.$doc.find('style').filter(function () {
+                  return $(this).text().indexOf("@font-face") > -1
+              });
+              style.text(style.text().replace("content", className));
+              $html.prepend(style);
+              return $html[0].outerHTML
+          }
+
+      },
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -2891,6 +2910,7 @@
     'WJ特战': '武警特战',
     '\\*{2}手': '兽交手',
     '[÷➗]生CH': '畜生策划',
+    '野\\*{2}战': '野兽交战',
 
     '[AM霉]国': '美国',
     '[CZ]国': '中国',
@@ -3007,6 +3027,7 @@
     '猫扑中文',
     '点击下载本站APP,海量小说，免费畅读！',
     ', 报送后维护人员会在两分钟内校正章节内容,请耐心等待。?',
+    ',刷新后小编会在两分钟内校正章节内容,请稍后再试。',
     '举报后请耐心等待,并刷新页面。',
     r`try\{mad1\('gad2'\);\} catch\(ex\)\{\}`,
     '：。：',
@@ -3153,6 +3174,7 @@
     'mimiread',
     '咪咪阅读app',
     '【.*咪咪阅读.* 】',
+    '小书亭(?:app)?',
 
     // 悠阅书城app广告
     '^【?(?:悠阅书城|悠閱書城).*',
@@ -3172,6 +3194,14 @@
     '本.章.未.完.，.登.錄.「.起.點.讀.書.」.和.書.友.一.起.讀.正.版.原.文.！.新.用.戶.立.享.7.天.免.費.暢.讀.，.快.來.試.試.吧.！.(?:（.新.設.備.新.賬.號.可.享.）.)?',
     '总是一个人静悄悄地(?:看小说)?(?:, |，)没有人一起讨论很无趣？快来.?起.点.?读书，和书友们一起畅所欲言',
     '總是一個人靜悄悄地(?:看小說)?(?:, |，)沒有人一起討論很無趣？快來.?起.點.?讀書，和書友們一起暢所欲言',
+
+    // 小说站点名字/域名
+    '(?:吞噬|ABC|无错)小说网',
+    '(?:好看的言情|番茄|2k)小说',
+    '(?:23shu8*com|biquge.name)',
+    '(?:八壹|八一|零点|315|畅想)中文网',
+    '记住网址(?:m.ｘｂｅｑｕｇｅ．com|m.ｘｂｅｑｕｇｅ．ｃｏｍ)',
+    '(?:紫笔文学|饭团看书|百盟书|燃文|零点看书网|小说阅读网|思路客|雅文库|搜读)',
 
 
     // 短文字替换
@@ -4112,7 +4142,12 @@
               return;
           }
 
-          this.content = this.handleContentText2(this.$content[0], this.info);
+          if (_.isFunction(this.info.handleContentText)) {
+              this.content = this.info.handleContentText.call(this, this.$content[0], this.info);
+          } else {
+              this.content = this.handleContentText2(this.$content[0], this.info);
+          }
+
       },
       handleContentText: function(node, info){ // 已弃用
           if(!node) return null;

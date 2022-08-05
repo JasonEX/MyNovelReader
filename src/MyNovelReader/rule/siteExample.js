@@ -120,6 +120,13 @@
         }
     },
 
+    // 内容处理函数
+    // 用于增加额外的内容处理逻辑
+    handleContentText ($content, info) {
+        const $html = $(this.handleContentText2($content, info))
+        return $html[0].outerHTML // 返回HTML文本
+    },
+
     // ===== 其他 =====
 
     nDelay: 0, // 下一章加载延迟时间，单位ms

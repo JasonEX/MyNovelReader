@@ -438,7 +438,12 @@ Parser.prototype = {
             return;
         }
 
-        this.content = this.handleContentText2(this.$content[0], this.info);
+        if (_.isFunction(this.info.handleContentText)) {
+            this.content = this.info.handleContentText.call(this, this.$content[0], this.info)
+        } else {
+            this.content = this.handleContentText2(this.$content[0], this.info);
+        }
+
     },
     handleContentText: function(node, info){ // 已弃用
         if(!node) return null;
