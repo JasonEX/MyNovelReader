@@ -10,9 +10,9 @@ function getNormalizeMap() {
     return replaceNormalizeMap
   }
   const rule = {
+    '[,，]\\s*': '，', // 合并每一行以"，"结束的段落和去除"，"后的空格
     '\\s^，': '，', // 合并每一行以"，"开头的段落
     '\\s^”': '”', // 合并每一行以右引号开头的段落
-    '[,，]\\s+': '，', // 合并每一行以"，"结束的段落和去除"，"后的空格
     '\\. *$': '。',
     '([。！？”]) +': '$1',
     '，+': '，',
@@ -23,7 +23,8 @@ function getNormalizeMap() {
     // 将一段中的第一句后接对话（引号）句子的第一句话分段
     '(^.*?[.。])(“.*?”)': '$1\n$2',
     // 将一段中的右引号后面的内容分为一段
-    '([。！？])”(?![\\u4e00-\\u9fa5，]+，“)([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
+    '([。！？])”(?![\\u4e00-\\u9fa5，]+，“)([\\u4e00-\\u9fa5“，]{20,})':
+      '$1”\n$2',
     '“([\\s\\S]*?)”': Setting.mergeQoutesContent
       ? match => match.replace(toRE('\n'), '')
       : undefined,
@@ -63,4 +64,22 @@ function toCDB(str) {
   return tmp
 }
 
-export { getNormalizeMap, toCDB }
+const includeCharCode = new Set([44, 63, 58, 59, 40, 41, 33])
+
+// 半角转全角
+// 只转换，？：；（）！
+function toDBC(str) {
+  let tmp = '',
+    charCode
+  for (let i = 0; i < str.length; i++) {
+    charCode = str.charCodeAt(i)
+    if (includeCharCode.has(charCode)) {
+      tmp += String.fromCharCode(charCode + 65248)
+    } else {
+      tmp += str.charAt(i)
+    }
+  }
+  return tmp
+}
+
+export { getNormalizeMap, toCDB, toDBC }

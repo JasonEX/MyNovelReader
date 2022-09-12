@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.8
+// @version        7.3.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2928,6 +2928,9 @@
     '\\*{3}主播': '性视频主播',
     '奶\\*{2}上': '奶奶头上',
     '狭\\*{2}仄': '狭窄逼仄',
+    '(男|女)\\*{3}玩家': '$1性游戏玩家',
+    '(switc)\\*{3}': 'Switch游戏',
+    '注\\*{2}神': '注射精神',
 
     '\\.asxs\\.': '起点',
     '\\b(?:boos|boso)\\b': 'BOSS',
@@ -3043,6 +3046,8 @@
     '感谢大家热情支持，大家在(?:起点)?订阅的同时，别忘了在微信、qq、微博、抖音和快手等渠道上帮探花宣传，再次感谢了',
     '頂點小說網首發|顶点小说网首发',
     '|',
+    '章节报错',
+    '有梯子的书友加电报书友圈@shuyouquan看最新章节。?',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -3119,6 +3124,7 @@
     '(?:喜欢《.*?》)请向你的朋友（QQ、博客、微信等方式）推荐本书，谢谢您的支持！！',
     '^.*手机阅读地址.*',
     '小说.*?首发，欢迎读者登录.*?最新章节。',
+    '^.*为你提供最快的.*?更新，.*',
 
     // '.*笔下文学更新速度最快.*',
     // '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
@@ -3459,9 +3465,9 @@
       return replaceNormalizeMap
     }
     const rule = {
+      '[,，]\\s*': '，', // 合并每一行以"，"结束的段落和去除"，"后的空格
       '\\s^，': '，', // 合并每一行以"，"开头的段落
       '\\s^”': '”', // 合并每一行以右引号开头的段落
-      '[,，]\\s+': '，', // 合并每一行以"，"结束的段落和去除"，"后的空格
       '\\. *$': '。',
       '([。！？”]) +': '$1',
       '，+': '，',
@@ -3472,7 +3478,8 @@
       // 将一段中的第一句后接对话（引号）句子的第一句话分段
       '(^.*?[.。])(“.*?”)': '$1\n$2',
       // 将一段中的右引号后面的内容分为一段
-      '([。！？])”(?![\\u4e00-\\u9fa5，]+，“)([\\u4e00-\\u9fa5“，]{20,})': '$1”\n$2',
+      '([。！？])”(?![\\u4e00-\\u9fa5，]+，“)([\\u4e00-\\u9fa5“，]{20,})':
+        '$1”\n$2',
       '“([\\s\\S]*?)”': Setting.mergeQoutesContent
         ? match => match.replace(toRE('\n'), '')
         : undefined,
@@ -3505,6 +3512,24 @@
         !excludeCharCode.has(charCode)
       ) {
         tmp += String.fromCharCode(charCode - 65248);
+      } else {
+        tmp += str.charAt(i);
+      }
+    }
+    return tmp
+  }
+
+  const includeCharCode = new Set([44, 63, 58, 59, 40, 41, 33]);
+
+  // 半角转全角
+  // 只转换，？：；（）！
+  function toDBC(str) {
+    let tmp = '',
+      charCode;
+    for (let i = 0; i < str.length; i++) {
+      charCode = str.charCodeAt(i);
+      if (includeCharCode.has(charCode)) {
+        tmp += String.fromCharCode(charCode + 65248);
       } else {
         tmp += str.charAt(i);
       }
@@ -4584,8 +4609,8 @@
 
           // 内容标准化处理
           if (Setting.contentNormalize) {
+              content = toDBC(toCDB(content));
               content = this.replaceText(content, getNormalizeMap());
-              content = toCDB(content);
           }
 
           const contentHTML = renderHTML(content);
