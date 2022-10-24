@@ -533,6 +533,11 @@ Parser.prototype = {
             $div.find(info.contentRemove).remove();
         }
 
+        var $contents = $div.children();
+        if ($contents.length === 1) {   // 可能里面还包裹着一个 div
+            $contents.children().unwrap()
+        }
+
         // 净化文本节点内容
         // 会进行拼音字修复，规则替换，广告净化，自定义替换
         this.clearContent($div[0], info);
@@ -616,6 +621,23 @@ Parser.prototype = {
         return text;
     },
     clearContent: function(dom, info) { // 已弃用
+        // 将br，转换为p段落
+        let elements = []
+        let brCount = 0
+        $(dom).contents().each(function (index, element) {
+            if (element.nodeName === "BR") {
+                brCount++
+                $(element).remove()
+            } else {
+                elements.push(element)
+            }
+            if (brCount === 2) {
+                brCount = 0
+                $(elements).wrapAll("<p>")
+                elements = []
+            }
+        })
+
         const textNodes = getTextNodesIn(dom, true).filter(node => {
             // 不处理内嵌图片的文本节点
             if (
@@ -714,30 +736,30 @@ Parser.prototype = {
         // return
 
         // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
-        textNodes
-            .filter(node => {
-                if (node.parentNode.nodeName === 'P') {
-                    return false
-                }
-                if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
-                    if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
-                        node.nextSibling.remove()
-                    }
-                    node.previousSibling.remove()
-                    return true
-                }
-                if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
-                    if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
-                        node.previousSibling.remove()
-                    }
-                    node.nextSibling.remove()
-                    return true
-                }
-                return node.parentNode.childNodes.length > 1
-            })
-            .forEach(node => $(node).wrap('<p>'))
+        // textNodes
+        //     .filter(node => {
+        //         if (node.parentNode.nodeName === 'P') {
+        //             return false
+        //         }
+        //         if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+        //             if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+        //                 node.nextSibling.remove()
+        //             }
+        //             node.previousSibling.remove()
+        //             return true
+        //         }
+        //         if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+        //             if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+        //                 node.previousSibling.remove()
+        //             }
+        //             node.nextSibling.remove()
+        //             return true
+        //         }
+        //         return node.parentNode.childNodes.length > 1
+        //     })
+        //     .forEach(node => $(node).wrap('<p>'))
         
-        $(dom).find('br').remove()
+        // $(dom).find('br').remove()
 
         const finalContents = content.split('\n')
         

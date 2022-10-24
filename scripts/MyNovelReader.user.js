@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.3.9
+// @version        7.4.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -84,6 +84,13 @@
 // @match          *://www.ouoou.com/*/*.html
 // @match          *://www.7017k.com/*/*.html
 // @match          *://www.piaotianwenxue.com/book/*/*/*.html
+// @match          *://www.txtshuku.org/so/*/*.html
+// @match          *://www.wcxsw.org/*/*.html
+// @match          *://www.babayu.tv/kanshu/*.html
+// @match          *://www.min-yuan.com/book/*/*.html
+// @match          *://www.tatajk.net/book/*/*.html
+// @match          *://www.147xs.org/book/*/*.html
+// @match          *://www.biqugeso.org/biquge_*/*.html
 
 // @include        *://www.xs84.com/*_*/*
 
@@ -345,6 +352,8 @@
 // @match          *://www.biqiudu.com/novel/*/*.html
 // @match          *://www.shubaow.net/*/*.html
 // @match          *://www.qingdou.la/*/*.html
+// @match          *://www.jhssd.com/*/*.html
+// @match          *://www.kanshu5.net/*/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2576,6 +2585,58 @@
 
       },
 
+      {siteName: '精华书阁',
+          url: 'https?://www.jhssd.com/\\d+/.*?.html',
+          exampleUrl: 'https://www.jhssd.com/172/652.html',
+
+          contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',
+          contentReplace: [
+              // '温馨提示:为防止/内容/获取不/全和文/字乱序，请勿使用浏览器(A/p/p)阅.读.模.式。',
+              // '温馨告知：为防止\\内容\\获取不全和文字\\乱序，请勿使用浏览器(A\\p\\p)阅\\读\\模\\式。',
+              // '提示:如果内*容获取*不全和文字*乱*序，请退出浏览器(A*p*p)阅/读/模/式。',
+              // '告示：如果.内容获.取.不全和文.字乱序，请退出浏览器(A.p.p)阅-读-模-式。',
+              '^.*阅.读.模.式.*$',
+              String.raw`\(本章未完，请点击下一页继续阅读\)`
+          ],
+          contentRemove: '.txtinfos, .textinfo, .infotext, .infostet',
+          handleContentText ($content, info) {
+              const $html = $('<div>').html(this.handleContentText($content, info));
+              const style = this.$doc.find('style').filter(function () {
+                  return $(this).text().indexOf("@font-face") > -1
+              });
+              $html.prepend(style);
+              const contentReplace = [
+                  '无../错../更../新`.j`.h`.s`.s`.d`.c`.o`.m',
+                  'j._/h._/s._/s._/d._/.._/c._/o._/m',
+                  '精../华../书../阁../无../错../首../发~~',
+                  '首../发../更../新`.精`.华`.书`.阁',
+                  '精../华../书../阁../首../发../更../新~~',
+                  {'「': '“', '」': '”'}
+              ];
+              return this.replaceText($html[0].outerHTML, contentReplace)
+          }
+
+      },
+
+      {siteName: '看书啦',
+          url: 'https?://www.kanshu5.net/\\d+/\\d+/\\d+.html',
+
+          contentReplace: [
+              'wΑΡ.ＫāйsΗυ伍.net',
+              'ΚáИδんǔ5.ζá',
+              'kΑnShú伍.ξà',
+              'wΑΡ.KāйsΗυ伍.Lα',
+              'wǎp.kāΝsHμ⑤.ξA',
+              'wΑΡ.KāйsΗυ伍.net',
+              'ΚáИδんǔ5.net',
+              'wǎp.kāΝsＨμ⑤.net',
+              'wwＷ.ＫaИδＨＵ五.net',
+              'ωωw.ΚＡЙδhυ㈤.net',
+              'kΑnＳhú伍.ξà',          
+          ]
+
+      }
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -2911,6 +2972,8 @@
     '\\*{2}手': '兽交手',
     '[÷➗]生CH': '畜生策划',
     '野\\*{2}战': '野兽交战',
+    '妖\\*{2}锋': '妖兽交锋',
+    'CTM的': '操他妈的',
 
     '[AM霉]国': '美国',
     '[CZ]国': '中国',
@@ -3048,6 +3111,9 @@
     '|',
     '章节报错',
     '有梯子的书友加电报书友圈@shuyouquan看最新章节。?',
+    '\\+ 加入书签 \\+',
+    '看《.*?》最快更新请浏览器输入-.*?-到精华书阁进行查看',
+    '有的人死了，但没有完全死……',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -3124,7 +3190,9 @@
     '(?:喜欢《.*?》)请向你的朋友（QQ、博客、微信等方式）推荐本书，谢谢您的支持！！',
     '^.*手机阅读地址.*',
     '小说.*?首发，欢迎读者登录.*?最新章节。',
+    '为您提供大神.*?最快更新，为了您下次还能查看到本书的最快更新，请务必保存好书签！',
     '^.*为你提供最快的.*?更新，.*',
+    '^.*最新章节 请关注\\(\\)',
 
     // '.*笔下文学更新速度最快.*',
     // '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
@@ -3146,13 +3214,19 @@
     '/txt/\\d+/',
 
     // 爱阅小说app广告
-    '想要看最新章节内容，请下载爱阅小说app，无广告免费阅读最新章节内容。网站已经不更新最新章节内容，最新章节内容已经在爱阅小说APP更新。',
-    '特大好消息,退出转码页面,下载爱阅小说app后，全部小说免广告看，还能优先看最新章节。活动推广期间，用户还可以免费领取礼包100块钱话费。',
+    '特大好消息,退出转码页面,下载爱阅小说app后，全部小说免广告看，还能优先看最新章节。',
+    '想要看最新章节内容，请下载爱阅小说app，无广告免费阅读最新章节内容。',
+    '网站已经不更新最新章节内容，最新章节内容已经在爱阅小说APP更新。',
+    '网站已经不更新最新章节内容，已经爱阅小说APP更新最新章节内容。',
+    '活动推广期间，用户还可以免费领取礼包100块钱话费。',
+    '下载爱阅小说app，阅读最新章节内容无广告免费',
     '下载爱阅app阅读完整内容，无广告无弹窗。',
     '看最新内容，请下载爱阅小说app阅读最新章节。',
     '网页版章节内容慢，请下载爱阅小说app阅读最新内容。?',
     '领取红包，请下载爱阅app免费看最新内容。',
     '网站即将关闭，下载爱阅app免费看最新内容。?',
+    '网站即将关闭，下载爱阅app为您提供大神.*?的.*',
+    '网站即将关闭，下载爱阅app为您提供大神小说免费阅读的.*',
     '请退出转码页面，请下载爱阅小说app 阅读最新章节。',
     '下载app爱阅小说免费看最新内容',
     '爱阅小说app',
@@ -3203,7 +3277,7 @@
 
     // 小说站点名字/域名
     '(?:吞噬|ABC|无错)小说网',
-    '(?:好看的言情|番茄|2k)小说',
+    '(?:好看的言情|番茄|2k|YY)小说',
     '(?:23shu8*com|biquge.name)',
     '(?:八壹|八一|零点|315|畅想)中文网',
     '记住网址(?:m.ｘｂｅｑｕｇｅ．com|m.ｘｂｅｑｕｇｅ．ｃｏｍ)',
@@ -3371,6 +3445,7 @@
       '.bookNav > a:last',
       '.srcbox > a:last',
       '.con_top > a:last',
+      '.con_top > .nr_s1 > a:last',
       '.location > a:last',
       '.nav > a:last',
       '.DivCurrentPos > a:last',
@@ -3474,7 +3549,7 @@
       '"(.*?)"': '“$1”',
       '”“': '”\n“', // 将一段中的相邻的对话分段
       // 将一段中的含多个句号、感叹号、问号的句子每句分为多段
-      '([。！？])([\\u4e00-\\u9fa5“，]{20,})': '$1\n$2',
+      '([。！？])([\\u4e00-\\u9fa5“][\\u4e00-\\u9fa5“，]{20,})': '$1\n$2',
       // 将一段中的第一句后接对话（引号）句子的第一句话分段
       '(^.*?[.。])(“.*?”)': '$1\n$2',
       // 将一段中的右引号后面的内容分为一段
@@ -4262,6 +4337,11 @@
               $div.find(info.contentRemove).remove();
           }
 
+          var $contents = $div.children();
+          if ($contents.length === 1) {   // 可能里面还包裹着一个 div
+              $contents.children().unwrap();
+          }
+
           // 净化文本节点内容
           // 会进行拼音字修复，规则替换，广告净化，自定义替换
           this.clearContent($div[0], info);
@@ -4345,6 +4425,23 @@
           return text;
       },
       clearContent: function(dom, info) { // 已弃用
+          // 将br，转换为p段落
+          let elements = [];
+          let brCount = 0;
+          $(dom).contents().each(function (index, element) {
+              if (element.nodeName === "BR") {
+                  brCount++;
+                  $(element).remove();
+              } else {
+                  elements.push(element);
+              }
+              if (brCount === 2) {
+                  brCount = 0;
+                  $(elements).wrapAll("<p>");
+                  elements = [];
+              }
+          });
+
           const textNodes = getTextNodesIn(dom, true).filter(node => {
               // 不处理内嵌图片的文本节点
               if (
@@ -4443,30 +4540,30 @@
           // return
 
           // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
-          textNodes
-              .filter(node => {
-                  if (node.parentNode.nodeName === 'P') {
-                      return false
-                  }
-                  if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
-                      if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
-                          node.nextSibling.remove();
-                      }
-                      node.previousSibling.remove();
-                      return true
-                  }
-                  if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
-                      if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
-                          node.previousSibling.remove();
-                      }
-                      node.nextSibling.remove();
-                      return true
-                  }
-                  return node.parentNode.childNodes.length > 1
-              })
-              .forEach(node => $(node).wrap('<p>'));
+          // textNodes
+          //     .filter(node => {
+          //         if (node.parentNode.nodeName === 'P') {
+          //             return false
+          //         }
+          //         if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+          //             if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+          //                 node.nextSibling.remove()
+          //             }
+          //             node.previousSibling.remove()
+          //             return true
+          //         }
+          //         if (node.nextSibling && node.nextSibling.nodeName === 'BR') {
+          //             if (node.previousSibling && node.previousSibling.nodeName === 'BR') {
+          //                 node.previousSibling.remove()
+          //             }
+          //             node.nextSibling.remove()
+          //             return true
+          //         }
+          //         return node.parentNode.childNodes.length > 1
+          //     })
+          //     .forEach(node => $(node).wrap('<p>'))
           
-          $(dom).find('br').remove();
+          // $(dom).find('br').remove()
 
           const finalContents = content.split('\n');
           

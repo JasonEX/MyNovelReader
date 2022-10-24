@@ -65,6 +65,7 @@ var Rule = {
     '.bookNav > a:last',
     '.srcbox > a:last',
     '.con_top > a:last',
+    '.con_top > .nr_s1 > a:last',
     '.location > a:last',
     '.nav > a:last',
     '.DivCurrentPos > a:last',

@@ -1527,6 +1527,58 @@ const sites = [
 
     },
 
+    {siteName: '精华书阁',
+        url: 'https?://www.jhssd.com/\\d+/.*?.html',
+        exampleUrl: 'https://www.jhssd.com/172/652.html',
+
+        contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',
+        contentReplace: [
+            // '温馨提示:为防止/内容/获取不/全和文/字乱序，请勿使用浏览器(A/p/p)阅.读.模.式。',
+            // '温馨告知：为防止\\内容\\获取不全和文字\\乱序，请勿使用浏览器(A\\p\\p)阅\\读\\模\\式。',
+            // '提示:如果内*容获取*不全和文字*乱*序，请退出浏览器(A*p*p)阅/读/模/式。',
+            // '告示：如果.内容获.取.不全和文.字乱序，请退出浏览器(A.p.p)阅-读-模-式。',
+            '^.*阅.读.模.式.*$',
+            String.raw`\(本章未完，请点击下一页继续阅读\)`
+        ],
+        contentRemove: '.txtinfos, .textinfo, .infotext, .infostet',
+        handleContentText ($content, info) {
+            const $html = $('<div>').html(this.handleContentText($content, info))
+            const style = this.$doc.find('style').filter(function () {
+                return $(this).text().indexOf("@font-face") > -1
+            })
+            $html.prepend(style)
+            const contentReplace = [
+                '无../错../更../新`.j`.h`.s`.s`.d`.c`.o`.m',
+                'j._/h._/s._/s._/d._/.._/c._/o._/m',
+                '精../华../书../阁../无../错../首../发~~',
+                '首../发../更../新`.精`.华`.书`.阁',
+                '精../华../书../阁../首../发../更../新~~',
+                {'「': '“', '」': '”'}
+            ]
+            return this.replaceText($html[0].outerHTML, contentReplace)
+        }
+
+    },
+
+    {siteName: '看书啦',
+        url: 'https?://www.kanshu5.net/\\d+/\\d+/\\d+.html',
+
+        contentReplace: [
+            'wΑΡ.ＫāйsΗυ伍.net',
+            'ΚáИδんǔ5.ζá',
+            'kΑnShú伍.ξà',
+            'wΑΡ.KāйsΗυ伍.Lα',
+            'wǎp.kāΝsHμ⑤.ξA',
+            'wΑΡ.KāйsΗυ伍.net',
+            'ΚáИδんǔ5.net',
+            'wǎp.kāΝsＨμ⑤.net',
+            'wwＷ.ＫaИδＨＵ五.net',
+            'ωωw.ΚＡЙδhυ㈤.net',
+            'kΑnＳhú伍.ξà',          
+        ]
+
+    }
+
 ];
 
 export default sites
