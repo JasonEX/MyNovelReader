@@ -16,7 +16,7 @@ export const iframeHeight = unsafeWindow.innerHeight
 class BaseRequest {
   constructor(siteInfo) {
     this.errorHandle = () => {}
-    this.finishHnadle = () => {}
+    this.finishHandle = () => {}
     this.siteInfo = siteInfo
   }
 
@@ -25,7 +25,7 @@ class BaseRequest {
   }
 
   setFinishHandle(func) {
-    this.finishHnadle = func
+    this.finishHandle = func
   }
 }
 
@@ -54,7 +54,7 @@ export class XmlRequest extends BaseRequest {
         const res = await Request(options)
         this.doc = parseHTML(res.responseText)
         this.status = RequestStatus.Finish
-        this.finishHnadle()
+        this.finishHandle()
         break
       } catch (e) {
         error = e
@@ -129,7 +129,7 @@ export class IframeRequest extends BaseRequest {
     }
     this.hide()
     this.status = RequestStatus.Finish
-    this.finishHnadle()
+    this.finishHandle()
   }
 
   getDocument() {

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.0
+// @version        7.4.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -354,6 +354,9 @@
 // @match          *://www.qingdou.la/*/*.html
 // @match          *://www.jhssd.com/*/*.html
 // @match          *://www.kanshu5.net/*/*/*.html
+// @match          *://wap.jhssd.com/*/*.html
+// @match          *://www.15zw.net/xs/*/*/*.html
+// @match          *://www.mayiwxw.com/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1065,6 +1068,9 @@
 
   // ===== 自定义站点规则 =====
 
+  /**@typedef { import("../../typings/MyNovelReader").SiteConfigs } SiteConfigs */
+
+  /**@type {SiteConfigs} */
   const sites = [
     // 详细版规则示例。注：该网站已无法访问。
     {siteName: "泡书吧",                                               // 站点名字... (可选)
@@ -2596,25 +2602,27 @@
               // '提示:如果内*容获取*不全和文字*乱*序，请退出浏览器(A*p*p)阅/读/模/式。',
               // '告示：如果.内容获.取.不全和文.字乱序，请退出浏览器(A.p.p)阅-读-模-式。',
               '^.*阅.读.模.式.*$',
-              String.raw`\(本章未完，请点击下一页继续阅读\)`
+              String.raw`\(本章未完，请点击下一页继续阅读\)`,
+              '^.*?提醒您：看完记得收藏【精华书阁】w w w.jhssd.com，下次我更新您才方便继续阅读哦，期待精彩继续！您也可以用手机版: wap.jhssd.com，随时随地都可以畅阅无阻....'
           ],
           contentRemove: '.txtinfos, .textinfo, .infotext, .infostet',
-          handleContentText ($content, info) {
-              const $html = $('<div>').html(this.handleContentText($content, info));
-              const style = this.$doc.find('style').filter(function () {
-                  return $(this).text().indexOf("@font-face") > -1
-              });
-              $html.prepend(style);
-              const contentReplace = [
-                  '无../错../更../新`.j`.h`.s`.s`.d`.c`.o`.m',
-                  'j._/h._/s._/s._/d._/.._/c._/o._/m',
-                  '精../华../书../阁../无../错../首../发~~',
-                  '首../发../更../新`.精`.华`.书`.阁',
-                  '精../华../书../阁../首../发../更../新~~',
-                  {'「': '“', '」': '”'}
-              ];
-              return this.replaceText($html[0].outerHTML, contentReplace)
-          }
+          // handleContentText ($content, info) {
+          //     const $html = $('<div>').html(this.handleContentText($content, info))
+          //     const style = this.$doc.find('style').filter(function () {
+          //         return $(this).text().indexOf("@font-face") > -1
+          //     })
+          //     $html.prepend(style)
+          //     const contentReplace = [
+          //         '无../错../更../新`.j`.h`.s`.s`.d`.c`.o`.m',
+          //         'j._/h._/s._/s._/d._/.._/c._/o._/m',
+          //         '精../华../书../阁../无../错../首../发~~',
+          //         '首../发../更../新`.精`.华`.书`.阁',
+          //         '精../华../书../阁../首../发../更../新~~',
+          //         '@精华书阁首发',
+          //         {'「': '“', '」': '”'}
+          //     ]
+          //     return this.replaceText($html[0].outerHTML, contentReplace)
+          // }
 
       },
 
@@ -2635,7 +2643,40 @@
               'kΑnＳhú伍.ξà',          
           ]
 
-      }
+      },
+
+      {siteName: '一五文学',
+          url: 'https?://www.15zw.net/xs/\\d+/\\d+/.*?.html',
+
+          contentSelector: '.word_in',
+          checkSection: true,
+          prevSelector: '.hjiyj6j',
+          titleSelector: '.mt10',
+          nextUrl($doc) {
+              const script = $doc.find("script:contains(lidetkld)").text();
+              var asdiekert = script.match(/var asdiekert = '(.*?)';/)[1];
+              var asdfaert = script.match(/var asdfaert = '(.*?)';/)[1];
+              var asdfaegd = script.match(/var asdfaegd = '(.*?)';/)[1];
+              var xlsw = script.match(/var xlsw = '(.*?)';/)[1];
+              var xadtp = script.match(/var xadtp = '(.*?)';/)[1];
+              var asdfaetd;
+              if (xlsw != "1515") {
+                  if (xadtp != "0") {
+                      asdfaetd = asdfaert + asdfaegd + "_" + xadtp + ".html";
+                  } else {
+                      asdfaetd = asdfaert + xlsw + ".html";
+                  }
+              } else {
+                  if (xadtp == "0") {
+                      asdfaetd = window.location.protocol + "//" + window.location.host + asdiekert;
+                  } else {
+                      asdfaetd = asdfaert + asdfaegd + "_" + xadtp + ".html";
+                  }
+              }
+              return asdfaetd
+          }
+
+      },
 
   ];
 
@@ -2974,6 +3015,7 @@
     '野\\*{2}战': '野兽交战',
     '妖\\*{2}锋': '妖兽交锋',
     'CTM的': '操他妈的',
+    '云N': '云南',
 
     '[AM霉]国': '美国',
     '[CZ]国': '中国',
@@ -3158,7 +3200,7 @@
     '先定个小目标，比如1秒记住：.*',
     '(?:天才)?一秒记住.*',
     '(?:天才)?1秒记住.*',
-    '本章未完.*',
+    '\\(?本章未完.*',
     '笔趣阁.*最快更新.*',
     '最新网址：.*?[ \\xa0\\u3000]',
     '最新网址：.*',
@@ -3191,6 +3233,7 @@
     '^.*手机阅读地址.*',
     '小说.*?首发，欢迎读者登录.*?最新章节。',
     '为您提供大神.*?最快更新，为了您下次还能查看到本书的最快更新，请务必保存好书签！',
+    '为您提供.*?大神的《.*?》最快更新，为了您下次还能查看到本书的最新章节，请务必保存好书签！',
     '^.*为你提供最快的.*?更新，.*',
     '^.*最新章节 请关注\\(\\)',
 
@@ -3264,6 +3307,12 @@
     // '【悠閱書城一個免費看書的換源APP軟體，安卓手機需Google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
     // '【悠阅书城uc书盟的換源app軟體，安卓手機需下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
     // '【悠阅书城小说的換源app軟體，安卓手機需google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
+
+    // 野果阅读app广告
+    '【推荐下，野果阅读追书真的好用，这里下载.*?大家去快可以试试吧。】',
+    '【讲真，最近一直用野果阅读看书追更，换源切换，朗读音色多，安卓苹果均可。】',
+    '【认识十年的老书友给我推荐的追书app，野果阅读！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
+    // '【话说，目前朗读听书最好用的app，野果阅读，.yeguoyuedu安装最新版。】',
 
     // 删除组合字符
     // https://en.wikipedia.org/wiki/Combining_character
@@ -4091,7 +4140,11 @@
           }
 
           if (_.isFunction(selectorOrArray)) {
-              title = selectorOrArray(this.$doc);
+              try {
+                  title = selectorOrArray(this.$doc);
+              } catch (e) {
+                  C.error("执行获取标题函数规则出错", e);
+              }
               if (!title) {
                   C.error('无法找到标题', selectorOrArray, this.doc);
                   return ''
@@ -4243,7 +4296,12 @@
           }
 
           if (_.isFunction(this.info.handleContentText)) {
-              this.content = this.info.handleContentText.call(this, this.$content[0], this.info);
+              try {
+                  this.content = this.info.handleContentText.call(this, this.$content[0], this.info);
+              } catch (e) {
+                  this.content = this.handleContentText2(this.$content[0], this.info);
+                  C.error("执行内容处理函数规则出错，使用默认函数处理", e);
+              }
           } else {
               this.content = this.handleContentText2(this.$content[0], this.info);
           }
@@ -4866,7 +4924,11 @@
 
           // 先尝试站点规则
           if (selector && _.isFunction(selector)) {
-              url = selector(this.$doc);
+              try {
+                  url = selector(this.$doc);
+              } catch (e) {
+                  C.error("执行获取目录链接函数规则出错", e);
+              }
           } else if(this.info.indexSelector){
               url = this.$doc.find(this.info.indexSelector);
           }
@@ -4912,7 +4974,11 @@
           // 先尝试站点规则
           if (selector) {
               if (_.isFunction(selector)) {
-                  urlElement = selector(this.$doc);
+                  try {
+                      urlElement = selector(this.$doc);
+                  } catch (e) {
+                      C.error("执行获取下一页链接函数规则出错", e);
+                  }
               } else {
                   urlElement = this.$doc.find(selector);
               }
@@ -4927,7 +4993,9 @@
           }
 
           if (!noSection && url && urlElement && !_.isString(urlElement)) {
-              // 一般下一章按钮文本含页就是多页章节
+              // 一般第一页下一章按钮文本含页就是多页章节
+              // 判断是否分页章节在获取上一页链接函数中处理
+              // 这里如果是分页章节则跳过下一页地址的检查
               if (!this.isSection && urlElement.text().includes('页')) {
                   isSectionUrl = true;
               }
@@ -4967,7 +5035,11 @@
           // 先尝试站点规则
           if (selector) {
               if (_.isFunction(selector)) {
-                  urlElement = selector(this.$doc);
+                  try {
+                      urlElement = selector(this.$doc);
+                  } catch (e) {
+                      C.error("执行获取上一页链接函数规则出错", e);
+                  }
               } else {
                   urlElement = this.$doc.find(selector);
               }
@@ -4982,7 +5054,9 @@
           }
 
           if (!noSection && url && urlElement && !_.isString(urlElement)) {
-              // 一般上一章按钮文本含页就是多页章节
+              // 一般第二页的上一章按钮文本含页就是多页章节
+              // 这里如果判断成功则是第二页之后的内容
+              // 设置 isSection 为 true 就可以将第二页之后的内容合并到第一页里面
               if (url && !this.isSection && urlElement.text().includes('页')) {
                   C.log('检测到多页章节链接，开启多页章节合并为一章模式');
                   this.isSection = true;
@@ -5001,6 +5075,7 @@
       checkNextUrl: function(url){
           const sectionUrlRegex = /\/\d+[_-]\d+\.html$/;
           if (url && this.info.checkSection) {
+              // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
               if (!sectionUrlRegex.test(this.curPageUrl) &&
                   !sectionUrlRegex.test(this.prevUrl)) {
                   this.isSection = false;
@@ -5008,12 +5083,6 @@
                   this.isSection = true;
               } else {
                   this.isSection = false;
-              }
-
-              if (this.isSection && url == this.indexUrl) {
-                  return false
-              } else {
-                  return true
               }
           }
 
@@ -5035,7 +5104,8 @@
                   return false
               case url === this.curPageUrl:
                   return false
-              case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl.split('?')[0]) && !Rule.nextUrlCompare.test(url.split('?')[0]):
+              // 分页章节不能比较、第一章的上一页如果是目录页，也不能比较
+              case !this.isSection && this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl.split('?')[0]) && !Rule.nextUrlCompare.test(url.split('?')[0]):
                   return false
               default:
                   return true
@@ -6388,7 +6458,7 @@
   class BaseRequest {
     constructor(siteInfo) {
       this.errorHandle = () => {};
-      this.finishHnadle = () => {};
+      this.finishHandle = () => {};
       this.siteInfo = siteInfo;
     }
 
@@ -6397,7 +6467,7 @@
     }
 
     setFinishHandle(func) {
-      this.finishHnadle = func;
+      this.finishHandle = func;
     }
   }
 
@@ -6426,7 +6496,7 @@
           const res = await Request(options);
           this.doc = parseHTML(res.responseText);
           this.status = RequestStatus.Finish;
-          this.finishHnadle();
+          this.finishHandle();
           break
         } catch (e) {
           error = e;
@@ -6501,7 +6571,7 @@
       }
       this.hide();
       this.status = RequestStatus.Finish;
-      this.finishHnadle();
+      this.finishHandle();
     }
 
     getDocument() {

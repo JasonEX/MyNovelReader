@@ -3,6 +3,9 @@ import { C, Request, toRE } from '../lib';
 
 // ===== 自定义站点规则 =====
 
+/**@typedef { import("../../typings/MyNovelReader").SiteConfigs } SiteConfigs */
+
+/**@type {SiteConfigs} */
 const sites = [
   // 详细版规则示例。注：该网站已无法访问。
   {siteName: "泡书吧",                                               // 站点名字... (可选)
@@ -1538,25 +1541,27 @@ const sites = [
             // '提示:如果内*容获取*不全和文字*乱*序，请退出浏览器(A*p*p)阅/读/模/式。',
             // '告示：如果.内容获.取.不全和文.字乱序，请退出浏览器(A.p.p)阅-读-模-式。',
             '^.*阅.读.模.式.*$',
-            String.raw`\(本章未完，请点击下一页继续阅读\)`
+            String.raw`\(本章未完，请点击下一页继续阅读\)`,
+            '^.*?提醒您：看完记得收藏【精华书阁】w w w.jhssd.com，下次我更新您才方便继续阅读哦，期待精彩继续！您也可以用手机版: wap.jhssd.com，随时随地都可以畅阅无阻....'
         ],
         contentRemove: '.txtinfos, .textinfo, .infotext, .infostet',
-        handleContentText ($content, info) {
-            const $html = $('<div>').html(this.handleContentText($content, info))
-            const style = this.$doc.find('style').filter(function () {
-                return $(this).text().indexOf("@font-face") > -1
-            })
-            $html.prepend(style)
-            const contentReplace = [
-                '无../错../更../新`.j`.h`.s`.s`.d`.c`.o`.m',
-                'j._/h._/s._/s._/d._/.._/c._/o._/m',
-                '精../华../书../阁../无../错../首../发~~',
-                '首../发../更../新`.精`.华`.书`.阁',
-                '精../华../书../阁../首../发../更../新~~',
-                {'「': '“', '」': '”'}
-            ]
-            return this.replaceText($html[0].outerHTML, contentReplace)
-        }
+        // handleContentText ($content, info) {
+        //     const $html = $('<div>').html(this.handleContentText($content, info))
+        //     const style = this.$doc.find('style').filter(function () {
+        //         return $(this).text().indexOf("@font-face") > -1
+        //     })
+        //     $html.prepend(style)
+        //     const contentReplace = [
+        //         '无../错../更../新`.j`.h`.s`.s`.d`.c`.o`.m',
+        //         'j._/h._/s._/s._/d._/.._/c._/o._/m',
+        //         '精../华../书../阁../无../错../首../发~~',
+        //         '首../发../更../新`.精`.华`.书`.阁',
+        //         '精../华../书../阁../首../发../更../新~~',
+        //         '@精华书阁首发',
+        //         {'「': '“', '」': '”'}
+        //     ]
+        //     return this.replaceText($html[0].outerHTML, contentReplace)
+        // }
 
     },
 
@@ -1577,7 +1582,40 @@ const sites = [
             'kΑnＳhú伍.ξà',          
         ]
 
-    }
+    },
+
+    {siteName: '一五文学',
+        url: 'https?://www.15zw.net/xs/\\d+/\\d+/.*?.html',
+
+        contentSelector: '.word_in',
+        checkSection: true,
+        prevSelector: '.hjiyj6j',
+        titleSelector: '.mt10',
+        nextUrl($doc) {
+            const script = $doc.find("script:contains(lidetkld)").text()
+            var asdiekert = script.match(/var asdiekert = '(.*?)';/)[1];
+            var asdfaert = script.match(/var asdfaert = '(.*?)';/)[1];
+            var asdfaegd = script.match(/var asdfaegd = '(.*?)';/)[1];
+            var xlsw = script.match(/var xlsw = '(.*?)';/)[1];
+            var xadtp = script.match(/var xadtp = '(.*?)';/)[1];
+            var asdfaetd
+            if (xlsw != "1515") {
+                if (xadtp != "0") {
+                    asdfaetd = asdfaert + asdfaegd + "_" + xadtp + ".html"
+                } else {
+                    asdfaetd = asdfaert + xlsw + ".html"
+                }
+            } else {
+                if (xadtp == "0") {
+                    asdfaetd = window.location.protocol + "//" + window.location.host + asdiekert
+                } else {
+                    asdfaetd = asdfaert + asdfaegd + "_" + xadtp + ".html"
+                }
+            }
+            return asdfaetd
+        }
+
+    },
 
 ];
 

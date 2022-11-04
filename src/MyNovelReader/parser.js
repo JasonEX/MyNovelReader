@@ -286,7 +286,11 @@ Parser.prototype = {
         }
 
         if (_.isFunction(selectorOrArray)) {
-            title = selectorOrArray(this.$doc)
+            try {
+                title = selectorOrArray(this.$doc)
+            } catch (e) {
+                C.error("执行获取标题函数规则出错", e)
+            }
             if (!title) {
                 C.error('无法找到标题', selectorOrArray, this.doc)
                 return ''
@@ -439,7 +443,12 @@ Parser.prototype = {
         }
 
         if (_.isFunction(this.info.handleContentText)) {
-            this.content = this.info.handleContentText.call(this, this.$content[0], this.info)
+            try {
+                this.content = this.info.handleContentText.call(this, this.$content[0], this.info)
+            } catch (e) {
+                this.content = this.handleContentText2(this.$content[0], this.info);
+                C.error("执行内容处理函数规则出错，使用默认函数处理", e)
+            }
         } else {
             this.content = this.handleContentText2(this.$content[0], this.info);
         }
@@ -1062,7 +1071,11 @@ Parser.prototype = {
 
         // 先尝试站点规则
         if (selector && _.isFunction(selector)) {
-            url = selector(this.$doc);
+            try {
+                url = selector(this.$doc);
+            } catch (e) {
+                C.error("执行获取目录链接函数规则出错", e)
+            }
         } else if(this.info.indexSelector){
             url = this.$doc.find(this.info.indexSelector);
         }
@@ -1108,7 +1121,11 @@ Parser.prototype = {
         // 先尝试站点规则
         if (selector) {
             if (_.isFunction(selector)) {
-                urlElement = selector(this.$doc);
+                try {
+                    urlElement = selector(this.$doc);
+                } catch (e) {
+                    C.error("执行获取下一页链接函数规则出错", e)
+                }
             } else {
                 urlElement = this.$doc.find(selector);
             }
@@ -1123,7 +1140,9 @@ Parser.prototype = {
         }
 
         if (!noSection && url && urlElement && !_.isString(urlElement)) {
-            // 一般下一章按钮文本含页就是多页章节
+            // 一般第一页下一章按钮文本含页就是多页章节
+            // 判断是否分页章节在获取上一页链接函数中处理
+            // 这里如果是分页章节则跳过下一页地址的检查
             if (!this.isSection && urlElement.text().includes('页')) {
                 isSectionUrl = true;
             }
@@ -1163,7 +1182,11 @@ Parser.prototype = {
         // 先尝试站点规则
         if (selector) {
             if (_.isFunction(selector)) {
-                urlElement = selector(this.$doc);
+                try {
+                    urlElement = selector(this.$doc);
+                } catch (e) {
+                    C.error("执行获取上一页链接函数规则出错", e)
+                }
             } else {
                 urlElement = this.$doc.find(selector);
             }
@@ -1178,7 +1201,9 @@ Parser.prototype = {
         }
 
         if (!noSection && url && urlElement && !_.isString(urlElement)) {
-            // 一般上一章按钮文本含页就是多页章节
+            // 一般第二页的上一章按钮文本含页就是多页章节
+            // 这里如果判断成功则是第二页之后的内容
+            // 设置 isSection 为 true 就可以将第二页之后的内容合并到第一页里面
             if (url && !this.isSection && urlElement.text().includes('页')) {
                 C.log('检测到多页章节链接，开启多页章节合并为一章模式')
                 this.isSection = true;
@@ -1197,6 +1222,7 @@ Parser.prototype = {
     checkNextUrl: function(url){
         const sectionUrlRegex = /\/\d+[_-]\d+\.html$/
         if (url && this.info.checkSection) {
+            // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
             if (!sectionUrlRegex.test(this.curPageUrl) &&
                 !sectionUrlRegex.test(this.prevUrl)) {
                 this.isSection = false;
@@ -1204,12 +1230,6 @@ Parser.prototype = {
                 this.isSection = true;
             } else {
                 this.isSection = false;
-            }
-
-            if (this.isSection && url == this.indexUrl) {
-                return false
-            } else {
-                return true
             }
         }
 
@@ -1231,7 +1251,8 @@ Parser.prototype = {
                 return false
             case url === this.curPageUrl:
                 return false
-            case this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl.split('?')[0]) && !Rule.nextUrlCompare.test(url.split('?')[0]):
+            // 分页章节不能比较、第一章的上一页如果是目录页，也不能比较
+            case !this.isSection && this.prevUrl !== this.indexUrl && Rule.nextUrlCompare.test(this.prevUrl.split('?')[0]) && !Rule.nextUrlCompare.test(url.split('?')[0]):
                 return false
             default:
                 return true
