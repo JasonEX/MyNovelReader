@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.1
+// @version        7.4.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -357,6 +357,7 @@
 // @match          *://wap.jhssd.com/*/*.html
 // @match          *://www.15zw.net/xs/*/*/*.html
 // @match          *://www.mayiwxw.com/*/*.html
+// @match          *://www.2ksk.com/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2592,7 +2593,7 @@
       },
 
       {siteName: '精华书阁',
-          url: 'https?://www.jhssd.com/\\d+/.*?.html',
+          url: 'https?://(?:www.)?(?:2ksk|jhssd).com/\\d+/.*?.html',
           exampleUrl: 'https://www.jhssd.com/172/652.html',
 
           contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',
@@ -2603,9 +2604,14 @@
               // '告示：如果.内容获.取.不全和文.字乱序，请退出浏览器(A.p.p)阅-读-模-式。',
               '^.*阅.读.模.式.*$',
               String.raw`\(本章未完，请点击下一页继续阅读\)`,
-              '^.*?提醒您：看完记得收藏【精华书阁】w w w.jhssd.com，下次我更新您才方便继续阅读哦，期待精彩继续！您也可以用手机版: wap.jhssd.com，随时随地都可以畅阅无阻....'
+              '^.*?提醒您：看完记得收藏【精华书阁】w w w.jhssd.com，下次我更新您才方便继续阅读哦，期待精彩继续！您也可以用手机版: wap.jhssd.com，随时随地都可以畅阅无阻....',
+              '【讲真，最近一直用@精华书阁@看书追更，换源切换，朗读音色多，.安卓苹果均可。】',
+              '【认识十年的老书友给我推荐的追书，@精华书阁@！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载\\.?】',
+              '【推荐下，@精华书阁@追书真的好用，大家去快可以试试吧。】',
+              '^…\\.',
+              { '「': '“', '」': '”' }
           ],
-          contentRemove: '.txtinfos, .textinfo, .infotext, .infostet',
+          // contentRemove: '.txtinfos, .textinfo, .infotext, .infostet',
           // handleContentText ($content, info) {
           //     const $html = $('<div>').html(this.handleContentText($content, info))
           //     const style = this.$doc.find('style').filter(function () {
@@ -3310,7 +3316,7 @@
 
     // 野果阅读app广告
     '【推荐下，野果阅读追书真的好用，这里下载.*?大家去快可以试试吧。】',
-    '【讲真，最近一直用野果阅读看书追更，换源切换，朗读音色多，安卓苹果均可。】',
+    '【讲真，最近一直用野果阅读看书追更，换源切换，朗读音色多，.*?安卓苹果均可。】',
     '【认识十年的老书友给我推荐的追书app，野果阅读！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
     // '【话说，目前朗读听书最好用的app，野果阅读，.yeguoyuedu安装最新版。】',
 
@@ -3830,6 +3836,8 @@
     text = text.replace(indent1Regex, '\n');
     text = text.replace(indent2Regex, '');
     text = text.replace(lastRegex, '');
+    // Unescape HTML entities
+    text = parseHTML(text).documentElement.textContent;
 
     return text
   }
@@ -6540,7 +6548,7 @@
       if (!this.display) {
         this.show();
       }
-      this.iframe.setAttribute('src', url);
+      this.iframe.setAttribute('src', url + '#mynovelreader');
     }
 
     async loaded() {
@@ -6671,6 +6679,23 @@
       init: async function() {
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
               return;
+          }
+
+          if (location.href.indexOf('#mynovelreader') > -1) {
+              history.replaceState({}, '', location.href.replace('#mynovelreader', ''));
+              return
+          }
+
+          let parent = window.parent;
+          let nestCount = 0;
+
+          while (parent !== window.top) {
+              nestCount++;
+              parent = parent.parent;
+          }
+
+          if (nestCount > 2) {
+              return
           }
 
           // 浏览器环境自检

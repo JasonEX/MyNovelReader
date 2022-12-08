@@ -1,4 +1,4 @@
-import { C, getTextNodesIn } from './lib'
+import { C, getTextNodesIn, parseHTML } from './lib'
 import { toRE } from './lib'
 
 // 等待页面上的元素出现
@@ -91,6 +91,8 @@ export function htmlFmt(text, otherRegex = otherHtmlRegex) {
   text = text.replace(indent1Regex, '\n')
   text = text.replace(indent2Regex, '')
   text = text.replace(lastRegex, '')
+  // Unescape HTML entities
+  text = parseHTML(text).documentElement.textContent
 
   return text
 }

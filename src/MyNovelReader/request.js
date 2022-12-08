@@ -98,7 +98,7 @@ export class IframeRequest extends BaseRequest {
     if (!this.display) {
       this.show()
     }
-    this.iframe.setAttribute('src', url)
+    this.iframe.setAttribute('src', url + '#mynovelreader')
   }
 
   async loaded() {

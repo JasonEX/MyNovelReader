@@ -40,6 +40,23 @@ var App = {
             return;
         }
 
+        if (location.href.indexOf('#mynovelreader') > -1) {
+            history.replaceState({}, '', location.href.replace('#mynovelreader', ''))
+            return
+        }
+
+        let parent = window.parent
+        let nestCount = 0
+
+        while (parent !== window.top) {
+            nestCount++
+            parent = parent.parent
+        }
+
+        if (nestCount > 2) {
+            return
+        }
+
         // 浏览器环境自检
         envCheckInit()
 
