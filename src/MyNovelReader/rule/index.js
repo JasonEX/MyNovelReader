@@ -73,6 +73,7 @@ var Rule = {
     '.ymdz > a:last',
     '.articletitle > a',
     '.chepnav > a:last',
+    '.bread_crumbs a:last',
     '.weizhi a:last',
     '.cover-nav a:last',
     '.path > .p > a:last',

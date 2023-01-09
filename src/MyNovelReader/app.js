@@ -45,7 +45,7 @@ var App = {
             return
         }
 
-        let parent = window.parent
+        let parent = window
         let nestCount = 0
 
         while (parent !== window.top) {
@@ -54,6 +54,7 @@ var App = {
         }
 
         if (nestCount > 2) {
+            C.error('窗口的嵌套层级过深。')
             return
         }
 

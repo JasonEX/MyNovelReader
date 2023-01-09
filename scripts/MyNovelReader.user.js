@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.2
+// @version        7.4.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -358,6 +358,10 @@
 // @match          *://www.15zw.net/xs/*/*/*.html
 // @match          *://www.mayiwxw.com/*/*.html
 // @match          *://www.2ksk.com/*/*.html
+// @match          *://jhssd.com/*/*.html
+// @match          *://www.bg3.co/novel/pagea/*.html
+// @match          *://www.630shu.net/shu/*/*.html
+// @match          *://www.lacebridal.net/chapter/*/*
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2684,6 +2688,21 @@
 
       },
 
+      {siteName: '天天看小说',
+          url: 'https?://(?:www|cn|tw).bg3.co/novel/pagea/.*?.html',
+          exampleUrl: 'https://www.bg3.co/novel/pagea/lingjingxingzhe-maibaoxiaolangjun_1.html',
+
+          nextSelector($doc) {
+              if ($doc.find(".novel_end").length) {
+                  return null
+              }
+              return $doc.find('.next_page_links > a:first').attr("href")
+          },
+          indexSelector: '.bread_crumbs a:last',
+          prevSelector: '.prev_page > a:first'
+
+      }
+
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -3281,20 +3300,22 @@
     '爱阅小说app',
 
     // 咪咪阅读app广告
+    // 野果阅读app广告
+    // 换源app广告
     // '广个告，【\\咪\\咪\\阅读\\app\\mimiread\\】真心不错，值得装个，毕竟可以缓存看书，离线朗读！'
     // '插播一个app:完美复刻追书神器旧版本可换源的APP——咪咪阅读mimiread。'
     '广个告，【.*?】真心不错，值得装个，(?:毕竟可以缓存看书，离线朗读|竟然安卓苹果手机都支持|毕竟书源多，书籍全，更新快)！',
     '^(?:广个告|插一句)，我最近在用的小说app，【.*?】安卓苹果手机都支持！',
     '插播一个app: ?完美复刻追书神器旧版本可换源的APP.*?。',
-    '【?推荐下，咪咪阅读追书真的好用，这里下载.*大家去快可以试试吧。】?',
+    '【?推荐下，.*?追书真的好用，这里下载.*大家去快可以试试吧。】?',
     '【?话说，目前朗读听书最好用的.*?安装最新版。】?',
-    '【讲真，最近一直用咪咪阅读看书追更，换源切换，朗读音色多， 安卓苹果均可。】',
+    '【讲真，最近一直用.*?看书追更，换源切换，朗读音色多，.*?安卓苹果均可。】',
     '插一句，【.*?】真心不错，值得装个，毕竟书源多，书籍全，快！',
     '插一句，我最近在用的(?:追|看)书.*?(?:缓存看书，离线朗读|书源多，书籍全，更新快)！',
     '推荐下，我最近在用的看书app，【.*?】书源多，书籍全，更新快！',
     '推荐下，【.*?】真心不错，值得书友都装个，安卓苹果手机都支持！',
     '求助下，【.*?】可以像偷菜一样的偷书票了，快来偷好友的书票投给我的书吧。',
-    '【认识十年的老书友给我推荐的追书app，咪咪阅读！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
+    '【认识十年的老书友给我推荐的追书app，.*?！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
     '书友们之前用的小书亭\\s*已经挂了，现在基本上都在用.*?。',
     '推荐一个app，媲美旧版追书神器，可换源书籍全的.*?！',
     '【告知书友，时代在变化，免费站点难以长存，手机app多书源站点切换看书大势所趋，站长给你推荐的这个咪咪阅读app，听书音色多、换源、找书都好使！】',
@@ -3302,7 +3323,9 @@
     '【告知安卓书友，越来越多免费站点将会关闭失效，安卓app鱼目混珠，找一个安全稳定看书的app非常有必要，站长强烈推荐咪咪阅读，听书、换源、找书超好使！】',
     'mimiread',
     '咪咪阅读app',
-    '【.*咪咪阅读.* 】',
+    '【.*?咪咪阅读.*?】',
+    '【.*?野果阅读.*?】',
+    '【.*?换源app.*?】',
     '小书亭(?:app)?',
 
     // 悠阅书城app广告
@@ -3313,12 +3336,6 @@
     // '【悠閱書城一個免費看書的換源APP軟體，安卓手機需Google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
     // '【悠阅书城uc书盟的換源app軟體，安卓手機需下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
     // '【悠阅书城小说的換源app軟體，安卓手機需google 下載安裝，蘋果手機需登陸非中國大陸賬戶下載安裝】',
-
-    // 野果阅读app广告
-    '【推荐下，野果阅读追书真的好用，这里下载.*?大家去快可以试试吧。】',
-    '【讲真，最近一直用野果阅读看书追更，换源切换，朗读音色多，.*?安卓苹果均可。】',
-    '【认识十年的老书友给我推荐的追书app，野果阅读！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载.*?】',
-    // '【话说，目前朗读听书最好用的app，野果阅读，.yeguoyuedu安装最新版。】',
 
     // 删除组合字符
     // https://en.wikipedia.org/wiki/Combining_character
@@ -3508,6 +3525,7 @@
       '.ymdz > a:last',
       '.articletitle > a',
       '.chepnav > a:last',
+      '.bread_crumbs a:last',
       '.weizhi a:last',
       '.cover-nav a:last',
       '.path > .p > a:last',
@@ -6623,7 +6641,7 @@
     let clicked;
     const $div = $('<div>')
       .on('mousedown', () => (clicked = true))
-      .appendTo('body');
+      .appendTo('html');
     $div[0].dispatchEvent(new MouseEvent('mousedown'));
     $div.remove();
     if (!clicked) {
@@ -6637,7 +6655,7 @@
     const $div = $('<div>')
       .text('阅读模式')
       .css('font-size', '12px')
-      .appendTo('body');
+      .appendTo('html');
     const fontSize = +getComputedStyle($div[0]).fontSize.slice(0, -2);
     $div.remove();
     if (fontSize > 12) {
@@ -6686,7 +6704,7 @@
               return
           }
 
-          let parent = window.parent;
+          let parent = window;
           let nestCount = 0;
 
           while (parent !== window.top) {
@@ -6695,6 +6713,7 @@
           }
 
           if (nestCount > 2) {
+              C.error('窗口的嵌套层级过深。');
               return
           }
 

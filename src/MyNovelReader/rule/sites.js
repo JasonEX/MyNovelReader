@@ -1622,6 +1622,21 @@ const sites = [
 
     },
 
+    {siteName: '天天看小说',
+        url: 'https?://(?:www|cn|tw).bg3.co/novel/pagea/.*?.html',
+        exampleUrl: 'https://www.bg3.co/novel/pagea/lingjingxingzhe-maibaoxiaolangjun_1.html',
+
+        nextSelector($doc) {
+            if ($doc.find(".novel_end").length) {
+                return null
+            }
+            return $doc.find('.next_page_links > a:first').attr("href")
+        },
+        indexSelector: '.bread_crumbs a:last',
+        prevSelector: '.prev_page > a:first'
+
+    }
+
 ];
 
 export default sites

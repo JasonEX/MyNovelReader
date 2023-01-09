@@ -5,7 +5,7 @@ function mousedownEventTest() {
   let clicked
   const $div = $('<div>')
     .on('mousedown', () => (clicked = true))
-    .appendTo('body')
+    .appendTo('html')
   $div[0].dispatchEvent(new MouseEvent('mousedown'))
   $div.remove()
   if (!clicked) {
@@ -19,7 +19,7 @@ function minFontSizeTest() {
   const $div = $('<div>')
     .text('阅读模式')
     .css('font-size', '12px')
-    .appendTo('body')
+    .appendTo('html')
   const fontSize = +getComputedStyle($div[0]).fontSize.slice(0, -2)
   $div.remove()
   if (fontSize > 12) {
