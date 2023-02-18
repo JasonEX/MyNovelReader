@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.3
+// @version        7.4.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -362,6 +362,7 @@
 // @match          *://www.bg3.co/novel/pagea/*.html
 // @match          *://www.630shu.net/shu/*/*.html
 // @match          *://www.lacebridal.net/chapter/*/*
+// @match          *://www.xbyuan.com/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2597,7 +2598,7 @@
       },
 
       {siteName: '精华书阁',
-          url: 'https?://(?:www.)?(?:2ksk|jhssd).com/\\d+/.*?.html',
+          url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan).com/\\d+/.*?.html',
           exampleUrl: 'https://www.jhssd.com/172/652.html',
 
           contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',
@@ -2699,7 +2700,24 @@
               return $doc.find('.next_page_links > a:first').attr("href")
           },
           indexSelector: '.bread_crumbs a:last',
-          prevSelector: '.prev_page > a:first'
+          prevSelector: '.prev_page > a:first',
+          contentReplace: [
+              /*
+              www¸t tkan¸Сo 
+              щшш◆ t t k a n◆ C 〇
+              щшш◆ttκǎ n◆C○
+              WWW⊕ тTk án⊕ ￠O
+              Wшw ●ttκǎ n ●Сo
+              шшш¸Tтkan¸C〇
+              шшш. t tkan. c ○
+              ωωω• ttκan• c○
+              шωш¸ т tκa n¸ CΟ
+              www＿тtkan＿℃O
+              ¸ тt kǎn¸ C〇
+              wWW¤ тt kдn¤ ￠O
+              */
+              "[wWщшω]{0,3} ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?(?:[tTтⓣ] ?){2}[kKκКⓚ] ?[aAǎáдāΛⓐ] ?[nNⓝ] ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?[cCС￠℃] ?[oO〇○Ο] ?"
+          ]
 
       }
 
@@ -3261,6 +3279,7 @@
     '为您提供.*?大神的《.*?》最快更新，为了您下次还能查看到本书的最新章节，请务必保存好书签！',
     '^.*为你提供最快的.*?更新，.*',
     '^.*最新章节 请关注\\(\\)',
+    '^.*老域名(?:\\(.*?\\))?被墙，请您牢记本站最新域名(?:\\(.*?\\))?',
 
     // '.*笔下文学更新速度最快.*',
     // '.*(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)?',
@@ -3347,6 +3366,9 @@
     '总是一个人静悄悄地(?:看小说)?(?:, |，)没有人一起讨论很无趣？快来.?起.点.?读书，和书友们一起畅所欲言',
     '總是一個人靜悄悄地(?:看小說)?(?:, |，)沒有人一起討論很無趣？快來.?起.點.?讀書，和書友們一起暢所欲言',
 
+    '\\(未完待续。如果您喜欢这部作品，欢迎您来起点（.*?）投推荐票、月票，您的支持，就是我最大的动力。手机用户请到.*?阅读。\\)',
+    '\\[bookid=\\d+,bookname=.*?\\]',
+    
     // 小说站点名字/域名
     '(?:吞噬|ABC|无错)小说网',
     '(?:好看的言情|番茄|2k|YY)小说',
@@ -3617,6 +3639,7 @@
       '\\s^，': '，', // 合并每一行以"，"开头的段落
       '\\s^”': '”', // 合并每一行以右引号开头的段落
       '\\. *$': '。',
+      '\\.([”"])': '。$1',
       '([。！？”]) +': '$1',
       '，+': '，',
       '"(.*?)"': '“$1”',

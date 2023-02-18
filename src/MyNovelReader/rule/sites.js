@@ -1531,7 +1531,7 @@ const sites = [
     },
 
     {siteName: '精华书阁',
-        url: 'https?://(?:www.)?(?:2ksk|jhssd).com/\\d+/.*?.html',
+        url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan).com/\\d+/.*?.html',
         exampleUrl: 'https://www.jhssd.com/172/652.html',
 
         contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',
@@ -1633,7 +1633,24 @@ const sites = [
             return $doc.find('.next_page_links > a:first').attr("href")
         },
         indexSelector: '.bread_crumbs a:last',
-        prevSelector: '.prev_page > a:first'
+        prevSelector: '.prev_page > a:first',
+        contentReplace: [
+            /*
+            www¸t tkan¸Сo 
+            щшш◆ t t k a n◆ C 〇
+            щшш◆ttκǎ n◆C○
+            WWW⊕ тTk án⊕ ￠O
+            Wшw ●ttκǎ n ●Сo
+            шшш¸Tтkan¸C〇
+            шшш. t tkan. c ○
+            ωωω• ttκan• c○
+            шωш¸ т tκa n¸ CΟ
+            www＿тtkan＿℃O
+            ¸ тt kǎn¸ C〇
+            wWW¤ тt kдn¤ ￠O
+            */
+            "[wWщшω]{0,3} ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?(?:[tTтⓣ] ?){2}[kKκКⓚ] ?[aAǎáдāΛⓐ] ?[nNⓝ] ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?[cCС￠℃] ?[oO〇○Ο] ?"
+        ]
 
     }
 
