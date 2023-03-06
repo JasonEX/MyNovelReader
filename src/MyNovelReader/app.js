@@ -25,6 +25,7 @@ var App = {
     paused: false,
     curPageUrl: location.href,
     requestUrl: null,
+    lastRequestUrl: null,
     iframe: null,
     remove: [],
     // 滚动激活相关
@@ -34,6 +35,8 @@ var App = {
     siteFontInfo: null,
     /**@type {XmlRequest | IframeRequest} */
     request: null,
+    // 站点规则
+    site: null,
 
     init: async function() {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
@@ -75,7 +78,9 @@ var App = {
         App.site = App.getCurSiteInfo();
 
         // 等待 DOMContentLoaded 事件触发
-        await DOMContentLoaded()
+        if (!App.site.fastboot && !Setting.fastboot) {
+            await DOMContentLoaded()
+        }
 
         if (App.site.startLaunch) {
             App.site.startLaunch($(document));
@@ -92,7 +97,7 @@ var App = {
             } else if (App.site.timeout) { // 延迟启动
                 await sleep(App.site.timeout)
             }
-            if (!App.site.fastboot) {
+            if (!App.site.fastboot && !Setting.fastboot) {
                 await domMutation();
             }
             await App.launch()
@@ -790,6 +795,7 @@ var App = {
     doRequest: async function() {
         // App.working = true;
         var nextUrl = App.requestUrl;
+        const referer = App.lastRequestUrl || App.curPageUrl
         App.lastRequestUrl = App.requestUrl;
 
         if (nextUrl && !App.isTheEnd && !(nextUrl in App.parsedPages)) {
@@ -816,7 +822,7 @@ var App = {
             //     })()
             // }
             C.log('获取下一页', nextUrl)
-            App.request.send(nextUrl)
+            App.request.send(nextUrl, referer)
     
         } else {
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();

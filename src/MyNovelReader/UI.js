@@ -293,8 +293,12 @@ var UI = {
         // 繁简转换
         $form.find(`#chinese-conversion-${Setting.chineseConversion}`).get(0).checked = true
 
+        // 内容标准化
         $form.find('#enable-content-normalize').get(0).checked = Setting.contentNormalize
         $form.find('#merge-qoutes-content').get(0).checked = Setting.mergeQoutesContent
+
+        // 快速启动
+        $form.find('#fastboot').get(0).checked = Setting.fastboot
 
         // 界面语言
         var $lang = $form.find("#lang");
@@ -494,8 +498,12 @@ var UI = {
             }
         })
 
+        // 内容标准化
         Setting.contentNormalize = $form.find('#enable-content-normalize').get(0).checked
         Setting.mergeQoutesContent = $form.find('#merge-qoutes-content').get(0).checked
+
+        // 快速启动
+        Setting.fastboot = $form.find('#fastboot').get(0).checked
 
         // 自定义替换规则直接生效
         var rules = $form.find("#custom_replace_rules").get(0).value;

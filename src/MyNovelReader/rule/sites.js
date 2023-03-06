@@ -1546,6 +1546,8 @@ const sites = [
             '【讲真，最近一直用@精华书阁@看书追更，换源切换，朗读音色多，.安卓苹果均可。】',
             '【认识十年的老书友给我推荐的追书，@精华书阁@！真特么好用，开车、睡前都靠这个朗读听书打发时间，这里可以下载\\.?】',
             '【推荐下，@精华书阁@追书真的好用，大家去快可以试试吧。】',
+            '【新章节更新迟缓的问题，在能精华书阁的上终于有了解决之道，这里下载精华书阁.精华书阁，同时查看本书在多个站点的最新章节。】',
+            '【.*?精华书阁.*?】',
             '^…\\.',
             { '「': '“', '」': '”' }
         ],
@@ -1651,6 +1653,25 @@ const sites = [
             */
             "[wWщшω]{0,3} ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?(?:[tTтⓣ] ?){2}[kKκКⓚ] ?[aAǎáдāΛⓐ] ?[nNⓝ] ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?[cCС￠℃] ?[oO〇○Ο] ?"
         ]
+
+    },
+
+    {siteName: "mjj小说",
+        url: "https://mjjxs.net/chapter/\\d+/\\d+.html",
+        exampleUrl: "https://mjjxs.net/chapter/61559303/1.html?4299",
+
+        contentSelector: ".content",
+        contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*"],
+
+        chapterTitleReplace: "《.*?》 - "
+
+    },
+
+    {siteName: "无防盗小说网",
+        url: "https://wufangdao\\.com/html/\\d+/\\d+/\\d+\\.html",
+        exampleUrl: "https://wufangdao.com/html/17/17078/455411.html",
+
+        noSection: true
 
     }
 

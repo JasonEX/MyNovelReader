@@ -14,9 +14,11 @@ export const RequestStatus = {
 export const iframeHeight = unsafeWindow.innerHeight
 
 class BaseRequest {
+  /**@param { import("../typings/MyNovelReader").SiteConfig } siteInfo */
   constructor(siteInfo) {
     this.errorHandle = () => {}
     this.finishHandle = () => {}
+    // 站点规则
     this.siteInfo = siteInfo
   }
 
@@ -36,14 +38,15 @@ export class XmlRequest extends BaseRequest {
     this.doc = null
   }
 
-  async send(url) {
+  async send(url, referer) {
     this.status = RequestStatus.Loading
     this.doc = null
     const options = {
       url,
       method: 'GET',
       overrideMimeType: 'text/html;charset=' + document.characterSet,
-      timeout: config.xhr_time
+      timeout: config.xhr_time,
+      headers: { Referer: referer }
     }
 
     let retry = 3

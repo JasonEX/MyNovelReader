@@ -290,6 +290,7 @@ const Setting = {
     set contentNormalize(bool) {
         GM_setValue('contentNormalize', bool);
     },
+
     // 合并双引号中的多行内容
     get mergeQoutesContent() {
         return GM_getValue('mergeQoutesContent', false);
@@ -297,6 +298,14 @@ const Setting = {
     set mergeQoutesContent(bool) {
         GM_setValue('mergeQoutesContent', bool);
     },
+
+    // 快速启动
+    get fastboot() {
+        return GM_getValue('fastboot', false)
+    },
+    set fastboot(bool) {
+        GM_setValue('fastboot', bool);
+    }
 };
 
 export default Setting

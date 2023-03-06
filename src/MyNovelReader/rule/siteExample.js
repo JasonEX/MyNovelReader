@@ -27,7 +27,8 @@
         // $doc = $(document)
         return '' // 返回章节标题
     },
-    chapterTitleReplace: '', // 章节标题净化正则
+    /* 二选一 */ chapterTitleReplace: '', // 章节标题净化正则
+    chapterTitleReplace: / /,
 
     // 书籍标题
     /* 三选一 */ bookTitleSelector: '', // 书籍标题 jQuery 选择器

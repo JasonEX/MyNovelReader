@@ -39,6 +39,7 @@ Parser.prototype = {
     },
 
     init: function (info, doc, curPageUrl) {
+        // 站点规则
         this.info = info || {};
         this.doc = (info.cloneNode && doc.defaultView) ? doc.cloneNode(true) : doc
         this.$doc = $(this.doc);
@@ -160,7 +161,7 @@ Parser.prototype = {
 
     hasContent: function() {
         if (this.$content) {
-            return this.$content > 0;
+            return this.$content.size() > 0;
         }
 
         var $content;
