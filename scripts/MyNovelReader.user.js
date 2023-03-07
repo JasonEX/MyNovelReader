@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.5
+// @version        7.4.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1137,7 +1137,7 @@
       contentSelector: '.read-content.j_readContent',
       contentHandle: false,
       contentRemove: '',
-      fastboot: true,
+      // fastboot: true,
       contentReplace: [
           '手机用户请到m.qidian.com阅读。',
           '起点中文网www.qidian.com欢迎广大书友光临阅读，最新、最快、最火的连载作品尽在起点原创！.*'
@@ -6810,7 +6810,11 @@
           }
 
           if (App$1.site.startLaunch) {
-              App$1.site.startLaunch($(document));
+              try {
+                  App$1.site.startLaunch($(document));
+              } catch (e) {
+                  C.error("执行startLaunch函数出错", e);
+              }
           }
 
           var autoLaunch = App$1.isAutoLaunch();

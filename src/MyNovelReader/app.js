@@ -83,7 +83,11 @@ var App = {
         }
 
         if (App.site.startLaunch) {
-            App.site.startLaunch($(document));
+            try {
+                App.site.startLaunch($(document));
+            } catch (e) {
+                C.error("执行startLaunch函数出错", e)
+            }
         }
 
         var autoLaunch = App.isAutoLaunch();
