@@ -75,6 +75,7 @@ var Rule = {
     '.chepnav > a:last',
     '.bread_crumbs a:last',
     '.weizhi a:last',
+    '.breadcrumbs a:last',
     '.cover-nav a:last',
     '.path > .p > a:last',
     '.headlink > .linkleft > a:last',

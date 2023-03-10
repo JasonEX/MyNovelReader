@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.6
+// @version        7.4.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2752,7 +2752,26 @@
 
           noSection: true
 
-      }
+      },
+
+      {siteName: "ESJ",
+          url: "^https?://www\\.esjzone\\.(?:me|cc)/forum/\\d+/\\d+\\.html",
+          exampleUrl: "https://www.esjzone.cc/forum/1677032544/162585.html",
+
+          titleSelector: "h2",
+          contentSelector: ".mt-3.forum-content",
+          indexSelector: ".view-all.btn-outline-secondary.btn",
+          prevSelector: ".btn-prev.btn-sm.btn-outline-secondary.btn",
+          nextSelector: ".btn-next.btn-sm.btn-outline-secondary.btn",
+      },
+
+      {siteName: "真白萌",
+          url: "^https?://masiro\\.me/admin/novelReading*",
+
+          contentSelector: ".nvl-content.box-body",
+          prevSelector: "a:contains('上一话')",
+          nextSelector: "a:contains('下一话')",
+      },
 
   ];
 
@@ -3582,6 +3601,7 @@
       '.chepnav > a:last',
       '.bread_crumbs a:last',
       '.weizhi a:last',
+      '.breadcrumbs a:last',
       '.cover-nav a:last',
       '.path > .p > a:last',
       '.headlink > .linkleft > a:last',
