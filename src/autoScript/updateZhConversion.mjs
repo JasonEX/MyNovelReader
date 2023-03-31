@@ -269,7 +269,7 @@ async function main() {
         .replaceAll("[", "{").replaceAll("]", "}")
         .replace(/'(.*?)' => '(.*?)'/g, "'$1': '$2'")
         for (const [key, value] of Object.entries(exclude)) {
-            source = source.replaceAll(`'${key}': '${value}',\r\n`, '')
+            source = source.replaceAll(`'${key}': '${value}',\n`, '')
         }
         source = `// 转换表来自 https://phabricator.wikimedia.org/source/mediawiki/browse/master/includes/languages/data/ZhConversion.php
 
