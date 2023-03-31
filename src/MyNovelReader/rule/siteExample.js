@@ -9,7 +9,7 @@
     // 正文页 URL 正则（必填）
     /* 二选一 */ url: '',
     url: / /,
-    exampleUrl: '',// 章节正文URL示例
+    exampleUrl: '',// 章节正文 URL 示例
 
     // ===== 获取书名、章节名 =====
 
@@ -48,24 +48,24 @@
     bookTitleReplace: { key: 'value' }, // key 是正则文本， value 是用于被替换为的内容
     bookTitleReplace: ['', / /, { key: 'value' }], // 多种形式混合，可嵌套数组
 
-    // ===== 获取书籍上一章、下一章、目录页的URL =====
+    // ===== 获取书籍上一章、下一章、目录页的 URL =====
 
     /* 二选一 */ prevSelector /* 或 prevUrl */: '', // 上一章链接 jQuery 选择器
     prevSelector /* 或 prevUrl */: function ($doc) {
         // $doc = $(document)
-        return '' // 返回URL
+        return '' // 返回 URL
     },
 
     /* 二选一 */ nextSelector /* 或 nextUrl */: '', // 下一章链接 jQuery 选择器
     nextSelector /* 或 nextUrl */: function ($doc) {
         // $doc = $(document)
-        return '' // 返回URL
+        return '' // 返回 URL
     },
 
     /* 二选一 */ indexSelector /* 或 indexUrl */: '', // 目录页链接 jQuery 选择器
     indexSelector /* 或 indexUrl */: function ($doc) {
         // $doc = $(document)
-        return '' // 返回URL
+        return '' // 返回 URL
     },
 
     // ===== 获取内容 =====
@@ -97,6 +97,7 @@
     useRawContent: false, // 使用原始内容，即完全关闭 handleContentText 内容处理函数，自定义替换规则也会被关闭，可提高处理性能
 
     cloneNode: false, // 克隆文档后再进行处理，可以隔离处理过程中对文档的影响，注意有些元素无法克隆
+    withReferer: false, // 发送请求时是否带 Referer 协议头
 
     // 内容补丁，内容处理前（preProcessDoc）执行
     contentPatch: function ($doc) {
@@ -130,7 +131,7 @@
 
     // ===== 其他 =====
 
-    nDelay: 0, // 下一章加载延迟时间，单位ms
+    nDelay: 0, // 下一章加载延迟时间，单位 ms
     style: '', // 自定义站点样式， CSS 样式
     exclude: '', // 要排除的URL正则
     fastboot: false, // 快速启动，不等待 DOM 变化完成
@@ -154,6 +155,6 @@
         // $doc = $(document)
         // this = 该站点规则 Object
 
-        return true // 如果是Vip章节返回true
+        return true // 如果是Vip章节返回 true
     }
 })

@@ -1663,7 +1663,10 @@ const sites = [
         contentSelector: ".content",
         contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*"],
 
-        chapterTitleReplace: "《.*?》 - "
+        chapterTitleReplace: "《.*?》 - ",
+
+        useiframe: true,
+        withReferer: true
 
     },
 
@@ -1692,6 +1695,16 @@ const sites = [
         contentSelector: ".nvl-content.box-body",
         prevSelector: "a:contains('上一话')",
         nextSelector: "a:contains('下一话')",
+    },
+
+    {siteName: "独步小说网",
+        url: "https?://www.dubuxiaoshuo.com/book/.*?/.*?\\.html",
+        exampleUrl: "https://www.dubuxiaoshuo.com/book/p1693/565590.html",
+
+        contentSelector: "#cont-body",
+        prevSelector: ".col-md-6.text-center a:first",
+        nextSelector: ".col-md-6.text-center a:last"
+
     },
 
 ];

@@ -14,14 +14,14 @@
       "type": "node",
       "request": "launch",
       "name": "rollup debug",
-      "program": "${workspaceRoot}/node_modules/rollup/bin/rollup",
+      "program": "${workspaceRoot}/node_modules/rollup/dist/bin/rollup",
       "args": [
         "-c",
-        "../build/rollup.config.js",
+        "rollup.config.js",
         "--myinput",
-        "MyNovelReader"
+        "src/MyNovelReader"
       ],
-      "cwd": "${workspaceRoot}/src",
+      "cwd": "${workspaceRoot}",
       "stopOnEntry": true
     }
   ]

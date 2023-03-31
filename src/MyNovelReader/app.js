@@ -826,7 +826,11 @@ var App = {
             //     })()
             // }
             C.log('获取下一页', nextUrl)
-            App.request.send(nextUrl, referer)
+            if (App.site.withReferer) {
+                App.request.send(nextUrl, referer)
+            } else {
+                App.request.send(nextUrl)
+            }
     
         } else {
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();

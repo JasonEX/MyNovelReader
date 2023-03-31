@@ -31,6 +31,7 @@ export interface SiteConfig {
   contentHandle?: boolean
   useRawContent?: boolean
   cloneNode?: boolean
+  withReferer?: boolean
   contentPatch?: ($doc: JQuery<Document>) => void
   contentPatchAsync?: ($doc: JQuery<Document>) => Promise<void>
   getContent?: ($doc: JQuery<Document>) => Promise<{ content?: string; html?: string }>

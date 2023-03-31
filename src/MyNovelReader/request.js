@@ -46,7 +46,10 @@ export class XmlRequest extends BaseRequest {
       method: 'GET',
       overrideMimeType: 'text/html;charset=' + document.characterSet,
       timeout: config.xhr_time,
-      headers: { Referer: referer }
+    }
+
+    if (referer) {
+      options.headers = { Referer: referer }
     }
 
     let retry = 3
@@ -149,7 +152,7 @@ export class IframeRequest extends BaseRequest {
   }
 }
 
-function createIframe(onload, { iframeSandbox }) {
+function createIframe(onload, { iframeSandbox, withReferer }) {
   const iframe = document.createElement('iframe')
   iframe.name = 'mynovelreader-iframe'
   iframe.style.cssText = `
@@ -161,7 +164,7 @@ function createIframe(onload, { iframeSandbox }) {
     visibility:hidden!important;
     display:none;
   `
-  if (Setting.preloadNextPage) {
+  if (Setting.preloadNextPage && !withReferer) {
     iframe.referrerPolicy = 'no-referrer'
   }
   if (!_.isUndefined(iframeSandbox)) {
