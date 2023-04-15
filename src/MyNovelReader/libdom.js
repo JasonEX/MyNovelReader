@@ -119,9 +119,16 @@ export function cleanHTML(doc) {
 export function renderHTML(text) {
   text = text
     .split('\n')
-    .filter(t => !!t)
-    .map(t => `<p>　　${t}</p>`)
+    .filter(t => !!t.trim())
+    .map(t => `<p>　　${escapeHtml(t)}</p>`)
     .join('\n')
 
-  return `<div>${text}</div>`
+  return `<div class="content">${text}</div>`
+}
+
+// https://stackoverflow.com/a/22706073
+const p = document.createElement("p")
+function escapeHtml(text) {
+  p.textContent = text
+  return p.innerHTML
 }

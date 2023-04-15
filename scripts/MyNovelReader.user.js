@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.4.9
+// @version        7.5.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -61,60 +61,40 @@
 // @include        *://booklink.me/*
 
 // booklink.me
-// @include        *://www.shumil.co/*/*.html
 // @include        *://www.dudukan.net/html/*/*/*.html
 // @include        *://www.tadu.com/book/*/*/
 // @exclude        *://www.tadu.com/book/*/toc/
 // @include        *://www.du00.com/read/*/*/*.html
-// @include        *://www.23zw.com/olread/*/*/*.html
 // @include        *://www.50zw.com/book_*/*.html
-// @include        *://www.xiangcunxiaoshuo.com/shu/*/*.html
 // @include        *://www.wenxue8.org/html/*/*/*.html
 // @match          *://www.bixia.org/book/*/*.html
 // @match          *://www.67book.net/book/*/*.html
 // @match          *://www.50zw.org/book/*/*.html
-// @match          *://www.mijiashe.com/*/*.html
 // @match          *://www.luoqiuzw.com/book/*/*.html
 // @match          *://www.xiaoshuo.cc/*/*.html
 // @match          *://www.tyue.net/*/*.html
 // @match          *://www.biduoxs.com/biquge/*/*.html
 // @match          *://www.aixswx.com/xs/*/*/*.html
-// @match          *://www.babayu.com/kanshu/*.html
 // @match          *://www.wucuoxs.com/*/*.html
-// @match          *://www.ouoou.com/*/*.html
 // @match          *://www.7017k.com/*/*.html
 // @match          *://www.piaotianwenxue.com/book/*/*/*.html
 // @match          *://www.txtshuku.org/so/*/*.html
 // @match          *://www.wcxsw.org/*/*.html
-// @match          *://www.babayu.tv/kanshu/*.html
 // @match          *://www.min-yuan.com/book/*/*.html
 // @match          *://www.tatajk.net/book/*/*.html
 // @match          *://www.147xs.org/book/*/*.html
 // @match          *://www.biqugeso.org/biquge_*/*.html
 
-// @include        *://www.xs84.com/*_*/*
-
-//www.verydu.net
-//         http://www.yawen8.com/*/*/*.html
 
 // 其它网站
 // @include        *://book.sfacg.com/Novel/*/*/*/
-// @include        *://www.shuhaha.com/Html/Book/*/*/*.html
 // @include        *://www.ttzw.com/book/*/*.html
 // @include        *://www.uukanshu.com/*/*/*.html
 // @include        *://www.uukanshu.net/*/*/*.html
-// @include        *://www.shenmaxiaoshuo.com/ml-*-*/
-// @include        *://www.doulaidu.com/*/*/*.html
-// @include        *://www.wtcxs.com/files/article/html/*/*/*.html
 // @include        *://book.kanunu.org/*/*/*.html
 // @include        *://www.kanunu8.com/book*/*.html
-// @include        *://www.nuoqiu.com/static/*/*.html
-// @include        *://www.17yue.com/*/*/*.html
 // @include        *://www.epzww.com/book/*/*
 // @include        *://www.23us.cc/html/*/*/*.html
-// @include        *://www.59shuku.com/xiaoshuo/*/*.htm
-// @include        *://www.16kbook.org/Html/Book/*/*/*.shtml
-// @include        *://www.1kanshu.com/files/article/html/*/*/*.html
 // @include        *://www.biqudu.com/*/*.html
 // @include        *://www.biquge.la/book/*/*.html
 // @include        *://www.biquge.tv/*/*.html
@@ -124,174 +104,71 @@
 // @include        *://www.biqubao.com/book/*/*.html
 // @include        *://www.biquwu.cc/biquge/*/*.html
 // @include        *://www.qududu.com/book/*/*/*.html
-// @include        *://www.123du.cc/dudu-*/*/*.html
-// @include        *://www.xiaoyanwenxue.com/files/article/html/*/*/*.html
-// @include        *://www.dajiadu.net/files/article/html/*/*/*.html
-// @include        *://www.dushuge.net/html/*/*/*.html
 // @include        *://www.moneyren.com/book/*/*/*.shtml
-// @include        *://www.bookba.net/Html/Book/*/*/*.html
 // @include        *://www.moksos.com/*/*/*.html
-// @include        *://www.dawenxue.net/html/*/*/*.html
-// @include        *://www.yanmoxuan.org/book/*/*/*.html
 // @include        *://www.69zw.com/xiaoshuo/*/*/*.html
-// @include        *://www.bxwx.org/b/*/*/*.html
-// @include        *://www.bxzw.org/*/*/*/*.shtml
-// @include        *://www.dyzww.com/cn/*/*/*.html
-// @include        *://www.epzw.com/files/article/html/*/*/*.html
 // @include        *://b.faloo.com/p/*/*.html
 // @include        *://b.faloo.com/*_*.html
-// @include        *://www.3dllc.com/html/*/*/*.html
 // @include        *://www.xstxt.com/*/*/
-// @include        *://www.zzzcn.com/3z*/*/
-// @include        *://www.zzzcn.com/modules/article/App.php*
-// @include        *://read.guanhuaju.com/files/article/html/*/*/*.html
-// @include        *://www.5kwx.com/book/*/*/*.html
-// @include        *://www.chinaisbn.com/*/*/*.html
-// @include        *://www.caihongwenxue.com/Html/Book/*/*/*.html
-// @include        *://www.woaixiaoshuo.com/xiaoshuo/*/*/*.html
-// @include        *://www.ty2016.com/book/*/*.html
-// @include        *://wx.ty2016.com/*/*/*.html
 // @include        *://www.my285.com/*/*/*/*.htm
-// @include        *://www.5858xs.com/html/*/*/*.html
-// @include        *://book.58xs.com/html/*/*/*.html
 // @include        *://www.hjwzw.com/Book/Read/*,*
 // @include        *://www.hjwzw.com/Book/Read/*_*
-// @include        *://www.365essay.com/*/*.htm
-// @include        *://www.gengxin8.com/read/*/*.html
-// @include        *://www.wuruo.com/files/article/html/*/*/*.html
-// @include        *://*.8shuw.net/book/*/*.html
-// @include        *://www.pashuw.com/BookReader/*/*.html
-// @include        *://www.qqxs.cc/xs/*/*/*.html
 // @include        *://www.69shu.com/txt/*/*
-// @include        *://www.e8zw.com/book/*/*/*.html
-// @include        *://www.yfzww.com/books/*/*/*.htm
 // @include        *://www.77nt.com/*/*.html
-// @include        *://www.quanbenba.com/yuedu/*/*/*.html
-// @include        *://www.sto.cc/book-*-*.html
-// @include        *://www.151xs.com/wuxiazuoxiong/*/chapter/*/
 // @include        *://www.33yq.com/read/*/*/*.shtml
-// @include        *://www.50zw.co/book_*/*.html
 // @include        *://www.bqg5200.com/xiaoshuo/*/*/*.html
 // @include        *://www.biquge5200.cc/*/*.html
-// @include        *://www.50zw.la/book_*/*.html
-// @include        *://www.54tushu.com/book_library/chaptershow/theId/*.html
-// @include        *://www.snwx8.com/book/*/*/*.html
 // @include        *://read.qidian.com/chapter/*
 // @include        *://www.ptwxz.com/html/*/*/*.html
-// @include        *://www.dhzw.org/book/*/*/*.html
 // @include        *://www.miaobige.com/*/*/*.html
-// @include        *://www.52dsm.com/chapter/*/*.html
-// @include        *://www.banfusheng.com/chapter/*/*.html
 // @include        *://www.shuhai.com/read/*/*.html
-// @include        *://www.hbooker.com/chapter/*
-// @include        *://www.paomov.com/*/*/*.html
-// @include        *://www.moyuanwenxue.com/xiaoshuo/*/*/*.htm
-// @include        *://www.mywenxue.com/xiaoshuo/*/*/*.htm
-// @include        *://www.yueduyue.com/*/*.html
-// @include        *://www.67shu.com/*/*/*.html
-// @include        *://www.wangshu.la/books/*/*/*.html
-// @include        *://www.ymoxuan.com/book/*/*/*.html
-// @include        *://www.bookxuan.com/*/*.html
-// @include        *://www.wutuxs.com/html/*/*/*.html
 // @include        *://www.23qb.com/book/*/*.html
-// @include        *://www.niepo.net/html/*/*/*.html
-// @include        *://www.booktxt.net/*/*.html
-// @include        *://www.booktxt.com/*/*.html
-// @include        *://www.lewenxiaoshuo.com/books/*/*.html
-// @include        *://www.heihei66.com/*/*/*.html
-// @include        *://www.111bz.net/*/*.html
-// @include        *://www.biqukan.com/*_*/*.html
-// @include        *://www.4xiaoshuo.com/*/*/*.html
-// @include        *://www.woquge.com/*/*.html
 // @include        *://www.lucifer-club.com/chapter-*-*.html
-// @include        *://www.011bz.com/*/*.html
 // @include        *://www.quanben.io/*/*/*.html
 // @include        *://www.b5200.org/*/*.html
 // @include        *://www.b5200.net/*/*.html
-// @include        *://www.cangqionglongqi.com/*/*.html
-// @include        https://xhhread.com/read/read*.jhtml?chapterid=*
 // @include        *://novel.tingroom.com/*/*/*.html
-// @include        *://www.liewen.cc/b/*/*/*.html
-// @include        *://www.pbtxt.com/*/*.html
-// @include        *://www.dingdiann.com/*/*.html
-// @include        *://www.mytxt.cc/read/*/*.html
-// @include        *://yd.baidu.com/view/*?cn=*
-// @include        *://www.88dus.com/xiaoshuo/*/*/*.html
-// @include        *://m.yushuwu.com/novel/*/*.html
-// @include        *://www.sbkk88.com/*/*/*.html
 // @include        *://www.ciweimao.com/chapter/*
-// @include        *://www.xinshubao.net/*/*/*.html
-// @include        *://www.okdd.net/html/*/*/*.shtml
 // @include        *://www.aixs.org/xs/*/*/*.html
-// @include        *://www.kayege.com/book/*/*.html
 // @include        *://m.zwduxs.com/*_*/*.html
 // @include        *://www.23us.la/html/*/*/*.html
 // @include        *://www.shuyaya.cc/read/*/*.html
-// @include        *://www.58xs.tw/html/*/*/*.html
-// @include        *://www.xbiquge.cc/book/*/*.html
-// @include        *://www.pengchang-cn.com/*/*/*.html
 // @include        *://www.69shu.la/69shu/*/*/*.html
-// @include        *://www.biqux.com/*/*.html
-// @include        *://houweidong.com/*.html
-// @include        *://book.janpn.com/book/*/*/*.html
 // @include        *://www.xs52.com/xiaoshuo/*/*/*.html
-// @include        *://www.luoxia.com/hch/*.htm
-// @include        *://www.juhezw.com/read/*/*.html
 // @include        *://www.ranwen.la/files/article/*/*/*.html
-// @include        *://www.zhaishuyuan.com/chapter/*/*
-// @include        *://www.ciymao.com/chapter/*/*.html
 // @include        *://www.3xs.cc/*/*.html
 // @include        *://www.nuanyuehanxing.com/*/*/*.html
-// @include        *://xrzww.com/module/novel/read.php*
-// @include        *://www.wanbentxt.com/*/*.html
-// @include        *://www.35xs.co/book/*/*.html
 // @include        *://www.gongzicp.com/read-*.html
-// @include        *://www.alfagame.net/chapter_www.html?1*
-// @include        *://www.69shu.com/txt/*/*
 // @include        *://www.duwanjuan.com/html/*/*/*.html
-// @include        *://www.imiaobige.com/read/*/*.html
-// @include        *://www.ixs.la/*/*.html
 // @include        *://www.xs321.net/book/*/*/*.html
 // @include        *://www.hetushu.com/book/*/*.html
-// @include        *://v1.45zw.com/book/*/*.html
 // @include        *://www.zhaishuyuan.org/book/*/*.html
 // @include        *://www.00ksw.com/html/*/*/*.html
 // @include        *://www.99bxwx.com/b/*/*.html
-// @match          *://www.vipkanshu.vip/shu/*/*.html
 // @match          *://www.81zw.com/book/*/*.html
 // @match          *://www.biqu5200.net/*/*.html
 // @match          *://www.biqusa.com/*/*.html
 // @match          *://www.biququ.com/html/*/*.html
 // @match          *://www.ddxs.com/*/*.html
 // @match          *://www.biqugetv.com/*/*.html
-// @match          *://www.feiszw.com/Html/*/*.html
+// @match          *://www.feiazw.com/Html/*/*.html
 // @match          *://www.xn--fiq228cu93a4kh.com/Html/*/*.html
 // @match          *://www.555x.org/read/*/*.html
-// @match          *://www.soxs.cc/*/*.html
-// @match          *://www.soxscc.cc/*/*.html
 // @match          *://www.soxscc.net/*/*.html
-// @match          *://www.soxscc.org/*/*.html
-// @match          *://www.soshuw.com/*/*.html
-// @match          *://www.soshuwu.com/*/*.html
-// @match          *://www.soshuwu.org/*/*.html
 // @match          *://www.kubiji.net/*/*.html
-// @match          *://www.imbg.com/read/*/*.html
 // @match          *://www.linovelib.com/novel/*/*.html
-// @match          *://www.shuquge.com/txt/*/*.html
 // @match          *://www.uuks.org/b/*/*.html
 // @match          *://www.230book.net/book/*/*.html
 // @match          *://www.exiaoshuo.com/*/*/
 // @match          *://www.877zw.com/*/*.html
 // @match          *://www.zhuixsw.com/*/*.html
 // @match          *://www.ddxs.com/*/*.html
-// @match          *://www.ah123z.com/*/*/*.html
 // @match          *://www.bqxs520.com/*/*.html
 // @match          *://www.bidige.com/book/*/*.html
 // @match          *://www.yushubo.com/read_*.html
 // @match          *://www.bqwxg8.com/wenzhang/*/*/*.html
 // @match          *://www.zpxsw.com/*/*.html
 // @match          *://www.xbiqukan.com/book/*/*.html
-// @match          *://www.cxbz958.com/*/*.html
 // @match          *://www.51kanshu.cc/book/*/*.html
 // @match          *://www.mibaoge.com/*/*.html
 // @match          *://www.asxs.com/view/*/*.html
@@ -318,7 +195,6 @@
 // @match          *://www.siluke.com/*/*/*/*.html
 // @match          *://www.bqgxsydw.com/html/*/*/*.html
 // @match          *://www.lingdiankanshu.com/html/*/*/*.html
-// @match          *://tongyuwx.com/html/*/*/*.html
 // @match          *://www.beqege.cc/*/*.html
 // @match          *://www.yqxsw.org/html/*/*/*.html
 // @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
@@ -352,29 +228,38 @@
 // @match          *://www.biqiudu.com/novel/*/*.html
 // @match          *://www.shubaow.net/*/*.html
 // @match          *://www.qingdou.la/*/*.html
-// @match          *://www.jhssd.com/*/*.html
 // @match          *://www.kanshu5.net/*/*/*.html
-// @match          *://wap.jhssd.com/*/*.html
 // @match          *://www.15zw.net/xs/*/*/*.html
 // @match          *://www.mayiwxw.com/*/*.html
-// @match          *://www.2ksk.com/*/*.html
-// @match          *://jhssd.com/*/*.html
 // @match          *://www.bg3.co/novel/pagea/*.html
+// @match          *://cn.bg3.co/novel/pagea/*.html
+// @match          *://tw.bg3.co/novel/pagea/*.html
 // @match          *://www.630shu.net/shu/*/*.html
 // @match          *://www.lacebridal.net/chapter/*/*
 // @match          *://www.xbyuan.com/*/*.html
 // @match          *://mjjxs.net/chapter/*/*
 // @match          *://mjjxs.com/chapter/*/*
 // @match          *://wufangdao.com/html/*/*/*.html
+// @match          *://www.jinghuashuge.cc/id/*/*.html
+// @match          *://www.qbiqus.com/*/*.html
+// @match          *://www.123duw.com/dudu-*/*/*.html
+// @match          *://www.17yue.com/*/*.html
+// @match          *://www.nuoqiu.com/*/*.html
+// @match          *://www.dldxs.cc/xs/*/*.html
+// @match          *://www.yawen8.com/*/*/*.html
+// @match          *://www.bookxuan.org/book/*/*/*.html
+// @match          *://www.shenmaxiaoshuo.com/book/*/*.html
+// @match          *://www.dldxs.cc/xs/*/*.html
+// @match          *://www.16kbook.org/book/*/*.html
+// @match          *://www.1kanshu.com/html/*/*.html
+// @match          *://www.dawenxue.net/*/*.html
+// @match          *://www.tbxsww.com/html/*/*/*.html
+// @match          *://www.33yq.org/read/*/*.shtml
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
 
-// NSFW
-// @match          *://book.xbookcn.net/*/*/*.html
-
 // 移动版
-// @include        *://wap.yc.ireader.com.cn/book/*/*/
 // @include        *://m.jjwxc.net/book2/*/*
 // @include        *://m.jjwxc.com/book2/*/*
 // @include        *://wap.jjwxc.net/book2/*/*
@@ -1374,130 +1259,11 @@
         contentRemove: "#sofa_post, .d_author, .share_btn_wrapper, .core_reply, .j_user_sign",
         style: ".clear { border-top:1px solid #cccccc; margin-bottom: 50px; visibility: visible !important;}",  // 显示楼层的分割线
     },
-    {siteName: "天涯书库",
-        url: /www\.ty2016\.com\/.+\.html$/,
-        titleSelector: "h1",
-        bookTitleSelector: ".crumb a[href='./']",
-
-        indexSelector: "td a[href='./']",
-
-        contentSelector: "#main",
-        contentRemove: '.crumb, table',
-        contentHandle: false,
-    },
-    {siteName: "书迷楼",
-        url: /^https?:\/\/www\.shumil\.(?:co|us|com)\/.*html$/,
-        titleReg: /(.*) (.*?) 书迷楼/,
-        titlePos: 1,
-        contentSelector: "#content",
-        contentRemove: 'a, center',
-        contentReplace: [
-            'div lign="ener"&gt;|.*更多章节请到网址隆重推荐去除广告全文字小说阅读器',
-            '起点中文网www.qidian.com欢迎广大书.*',
-            '书迷楼最快更新.*',
-            '更新最快最稳定',
-            '\\(\\.\\)R?U',
-            {'<p>\\?\\?': '<p>'},
-            '\\(www.\\)',
-            '章节更新最快',
-            '-乐-读-小-说--乐读x-',
-            '《乐》《读》小说.乐读.Com',
-            '纯文字在线阅读本站域名手机同步阅读请访问',
-            '-优－优－小－说－更－新－最－快-www.uuxs.cc-',
-            '\\(本章免费\\)',
-            '请大家搜索（书迷楼）看最全！更新最快的小说',
-            '书迷楼www.shumilou.co',
-            'shumil.com',
-            '书迷楼 （）',
-            '书迷楼',
-        ],
-        fixImage: true,
-        contentPatch: function(fakeStub){
-            fakeStub.find("#content").find("div.title:last")
-                .appendTo(fakeStub.find('body'));
-            fakeStub.find("#content").find("div.title, p > b, div[style]").remove();
-        }
-    },
     {siteName: "17k小说网",
         url: /^https?:\/\/\S+\.17k\.com\/chapter\/\S+\/\d+\.html$/,
         titleReg: /(.*?)-(.*?)-.*/,
         contentSelector: "#chapterContent",
-        contentRemove: ".chapter_update_time, h1, .qrcode, #authorSpenk, .like_box, #hotRecommend, .ct0416, .recent_read, #miniVoteBox",
-        contentReplace: [
-            '本书首发来自17K小说网，第一时间看正版内容！'
-        ],
-        contentPatchAsync: function($doc, callback) {
-            if (unsafeWindow.console.clear) {
-                unsafeWindow.console.clear = null;
-            }
-
-            function waitFor(condition, callback, timeout, timeoutFn) {timeout = timeout || 30 * 1000;timeoutFn = timeoutFn || function() {};var startTime = Date.now();var timeId = setInterval(function() {    if (condition()) {        callback();        clearInterval(timeId);    } else if ((Date.now() - startTime) > timeout) {        timeoutFn();        clearInterval(timeId);    }}, 500);}
-
-            var Q = unsafeWindow.Q;
-
-            // 计算上一章节下一章节
-            function calPages() {
-                var json = Q.bookBigData.json;
-                var bookId = Q.bookid;
-
-                for (var i=0, c; c = json.list[i]; i++) {
-                    if (c == Q.chapterid) {
-                        var prevChapter = (0 === i ? null : json.list[i - 1]);
-                        var nextChapter = (i + 1 < json.list.length ? json.list[i + 1] : null);
-
-                        if (nextChapter) {
-                            var nextUrl = '/chapter/' + bookId + '/' + nextChapter + '.html';
-                            $doc.find('a:contains(下一章)')
-                                .attr('href', nextUrl);
-
-                            Q.chapterid = nextChapter;
-                        }
-                        if (prevChapter) {
-                            var prevUrl = '/chapter/' + bookId + '/' + prevChapter + '.html';
-                            $doc.find('a:contains(上一章)')
-                                .attr('href', prevUrl);
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-            if (!Q.bookBigData.json) {
-                waitFor(function() {
-                    return !!Q.bookBigData.json;
-                }, function() {
-                    calPages();
-                    callback();
-                });
-            } else {
-                calPages();
-                callback();
-            }
-        }
-    },
-    {siteName: "侠客中文网",
-        url: /^https?:\/\/www\.xkzw\.org\/\w+\/\d+\.html/,
-        contentSelector: ".readmain_inner .cont",
-        contentPatch: function(fakeStub){
-            fakeStub.find('title').html(fakeStub.find('.readmain_inner h2').text());
-        }
-    },
-    {siteName: "ChinaUnix.net",
-        url: /^https?:\/\/bbs\.chinaunix\.net\/thread-.*\.html/,
-        contentSelector: ".t_f:first"
-    },
-    {siteName: "123du 小说",
-        url: /^https?:\/\/www\.123du\.(?:net|cc)\//,
-        titleReg: "(.*)-(.*) 百家乐",
-        titlePos: 1,
-        contentSelector: "#content, #contents",
-        contentReplace: "一秒记住.www.*|小说最新更新，来123读书www.123du.net",
-        contentRemove: "a",
-        contentPatch: function(fakeStub){
-            var content = fakeStub.find("#DivContentBG").html().match(/第\d*页([\s\S]*)一秒记住/)[1];
-            $('<div id="content"/>').html(content).appendTo(fakeStub.find('body'));
-        }
+        contentRemove: ".chapter_update_time, h1, .qrcode, #authorSpenk, .like_box, #hotRecommend, .ct0416, .recent_read, #miniVoteBox, .copy",
     },
     {siteName: "塔读文学",
         url: "^https?://www\\.tadu\\.com/book/\\d+/\\d+/?",
@@ -1519,6 +1285,7 @@
     },
     {siteName: "顶点小说",
         url: "^https?://www\\.(?:23us|x23us|23wx|xs222)\\.(?:com|cc)/html/\\d+/\\d+/\\d+\\.html$",
+        exampleUrl: "https://www.23us.cc/html/378/378125/3929174.html",
         bookTitleSelector: '.crumbs > div > a:last, #amain > dl > dt > a:last',
         indexSelector: "#footlink a:contains('返回目录')",
         prevSelector: "#footlink a:contains('上一页')",
@@ -1542,118 +1309,12 @@
             fakeStub.find('title').html(realtitle);
         }
     },
-    {siteName: '23中文',
-        url: '^https?://www\\.23zw\\.(com|me)/.*\\.html',
-        contentSelector: '#chapter_content',
-        contentRemove: 'h1',
-        contentReplace: [
-            '的朋友，你可以即可第一时间找到本站哦。',
-            '手机看小说哪家强\\?手机阅读网',
-            '，最快更新.*?最新章节！',
-            '看.*?最新章节到长风文学',
-            '本文由首发',
-            '章节更新最快',
-            '顶点小说.23us.。',
-            '\\(顶点小说\\)',
-            '看最新最全',
-            'R1152',
-            '\\.n√et',
-            '中文网',
-            '更新最快',
-            '&amp;aaaa',
-            '更多精彩小说请访问',
-        ]
-    },
-    {siteName: "3Z中文网",
-        url: "^https?://www\\.zzzcn\\.com\\/(3z\\d+/\\d+\\/|modules\\/article\\/App\\.php\\?aid=\\d+&cid=\\d+){1}$",
-        // titleReg: "(.*?)-(.*)TXT下载",
-        contentSelector: "#content3zcn",
-        indexSelector: "a:contains('返回目录')",
-        prevSelector: "a:contains('上 一 页')",
-        nextSelector: "a:contains('下 一 页'), a:contains('返回书架')",
-        contentReplace: [
-            /[{(][a-z\/.]+(?:首发文字|更新超快)[})]/ig,
-            "手机小说站点（wap.zzzcn.com）",
-            "一秒记住.*为您提供精彩小说阅读。",
-        ],
-        contentPatch: function(fakeStub){
-            fakeStub.find("a:contains('返回书架')").html("下 一 页").attr("href", fakeStub.find("a:contains('返回目录')").attr("href"));
-            fakeStub.find("#content3zcn").find(".titlePos, font.tips, a").remove();
-        }
-    },
-    {siteName: "书哈哈小说网",
-        url: "^https?://(?:read|www)\\.shuhaha\\.com/Html/Book/\\d+/\\d+/\\d+\\.html",
-        titleSelector: "#htmltimu",
-        bookTitleSelector: [".srcbox > a:nth-child(2)", /目录$/],
-        contentSelector: "#BookText",
-        contentRemove: 'a[href*="www.shuhaha.com"]',
-        contentReplace: [
-            '‘‘', '’’',
-            '（\\.shuh&amp;n）',
-            /<p[^>]*>(&nbsp;){4}网<\/p>/gi
-        ]
-    },
     {siteName: "SF 轻小说",
         url: '^https?://book.sfacg.com/Novel/\\d+/\\d+/\\d+/',
+        exampleUrl: 'https://book.sfacg.com/Novel/601991/795722/7137683/',
         titleReg: '(.*?)-(.*?)-.*',
         contentSelector: '#ChapterBody',
     },
-    {siteName: "武林中文网",
-        url: '^https?://www\\.50zw\\.(com|co|la)/book_\\d+/\\d+\\.html',
-        bookTitleSelector: '.srcbox > a:last',
-        contentReplace: [
-            '更新最快【】',
-            '&lt;/dd&gt;',
-            '&lt;center&gt; &lt;fon color=red&gt;',
-            '一秒记住【武林中文网.*',
-            '武林中文网 www.*',
-        ]
-    },
-    {siteName: "乡村小说网",
-        url: '^https?://www\\.xiangcunxiaoshuo\\.com/shu/\\d+/\\d+\\.html',
-        // bookTitleSelector: '.read_m > .list',
-        titleReg: '(.*?)_(.*?)_.*_.*',
-        contentSelector: '.yd_text2',
-        contentReplace: [
-            '[ｗＷw]+．２３ｕＳ．(?:ｃｏＭ|com)',
-            '乡&amp;村&amp;.*?\\.co[mＭ]',
-        ]
-    },
-    {siteName: "小说巴士",
-        url: "^https?://www\\.xs84\\.com/\\d+_\\d+/",
-        bookTitleSelector: ".con_top a:last",
-        contentReplace: [
-            "§推荐一个无广告的小说站.*? §",
-            "☆本站最快更新.*?☆",
-            "纯文字在线阅读.*?</br>",
-            "www.X S 8 4.com",
-            "《》 www.obr />",
-            "。。 w.2.obr",
-            "\\[w w w.x s.*?.c o m 小说.*?\\]",
-            "╂上.*?╂",
-            "\\*\\*顶\\*\\*点.{0,3}小说",
-            "___小.说.巴.士 www.xS84.com___",
-        ],
-        contentPatch: function() {
-            $('<script>')
-                .text('clearInterval(show);')
-                .appendTo('body')
-                .remove();
-        }
-    },
-    {siteName: "热门小说网",
-        url: '^https?://www.remenxs.com/du_\\d+/\\d+/',
-        bookTitleSelector: 'section.readhead > div.read_t > div.lf > a:nth-child(2)',
-        nextSelector: '.pagego > font:contains("下一章") + a',
-        prevSelector: '.pagego > font:contains("上一章") + a',
-        contentSelector: ".yd_text2",
-        contentRemove: '.adrs, .con_w, a',
-        contentReplace: [
-            '您可以在百度里搜索“.*',
-            '为了方便下次阅读，你可以点击下方的.*'
-        ]
-    },
-    
 
     // === 内容补丁
   //   {siteName: "给力文学小说阅读网",
@@ -1711,6 +1372,7 @@
     // 2页合并一章
     {siteName: "读零零（有问题，只显示一半内容）",
         url: "https?://www\\.du00\\.(?:com|cc)/read/\\d+/\\d+/[\\d_]+\\.html",
+        exampleUrl: 'https://du00.com/Read/0/1/17.html',
         titleReg: "(.*?)(?:第\\d+段)?,(.*) - 读零零小说网",
         titlePos: 1,
         // prevSelector: "#footlink a:first",
@@ -1730,23 +1392,6 @@
             "www\\.DU00\\.com",
         ],
         checkSection: true
-    },
-    {siteName: "78小说网",
-        url: "^https?://www\\.78xs\\.com/article/\\d+/\\d+/\\d+.shtml$",
-        contentHandle: false,
-        titleReg: "(.*?) (?:正文 )?(.*) 78小说网",
-        indexSelector: "a:contains('目 录')",
-        prevSelector: "a:contains('上一章')",
-        nextSelector: "a:contains('下一章')",
-        contentSelector: "#content",
-        useiframe: true,
-        contentReplace: [
-            "//.*?78xs.*?//",
-            "\\(全文字小说更新最快\\)",
-        ],
-        contentPatch: function(fakeStub){
-            fakeStub.find('p.title').empty();                      // 去掉内容中带的章节标题
-        }
     },
     // ================== 采用 iframe 并存在 mutationSelector 的 ====================
     {siteName: '全本小说网',
@@ -1781,25 +1426,17 @@
           '来源长佩文学网（https://www.gongzicp.com）',
       ]
     },
-    // 未完成
-      // {siteName: '阿拉法小说网',
-      //     exampleUrl: 'https://www.alfagame.net/chapter_www.html?1#mybookid=80&bookid=902&chapterid=856587',
-      //     url: '^https://www\\.alfagame\\.net/chapter_www\\.html\\?1#mybookid=\\d+&bookid=\\d+&chapterid=\\d+',
-      //     bookTitleSelector: '.chapter-nav > p > a:last()',
-      //     useiframe: true,
-      //     mutationSelector: "#txt",  // 内容生成监视器
-      //         mutationChildCount: 0,
-      //     contentSelector: '#txt',
-      // },
 
     // ===========================================================
     {siteName: "E品中文网",
         url: "^https?://www\\.epzww\\.com/book/\\d+/\\d+",
+        exampleUrl: 'http://www.epzww.com/book/0/1/4.html',
         titleReg: "(.*?),(.*?),",
         contentSelector: "#showcontent",
     },
     {siteName: "飘天文学",
         url: "^https?://www\\.ptwxz\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
+        exampleUrl: 'https://www.ptwxz.com/html/12/12450/8654958.html',
         // titleReg: "(.*)最新章节,(.*),飘天文学",
         bookTitleSelector: '#content > h1 > a',
         contentSelector: "#content",
@@ -1813,34 +1450,18 @@
             '天才壹秒記住，為您提供精彩閱讀。.*'
         ],
     },
-    {siteName: "一起阅",
-        url: "^https?://www\\.17yue\\.com/\\w+/\\d+/\\d+\\.html",
-        useiframe: true,
-    },
-    {siteName: "诺秋网",
-        url: "^https?://www\\.nuoqiu\\.com/static/\\d+/\\d+\\.html",
-        titleReg: "(.*) (.*) 诺秋网",
-        titlePos: 1,
-        useiframe: true,
-        contentReplace: "┏━━━━━━━━━━━━━━━━━━━━━━━━━┓[\\s\\S]+诺秋网文字更新最快……】@！！"
-    },
     {siteName: "努努书坊",
         url: "^https?://(?:book\\.kanunu\\.org|www\\.kanunu8\\.com)/.*/\\d+\\.html",
+        exampleUrl: 'https://www.kanunu8.com/book3/7748/170164.html',
         titleReg: /(.*) - (.*) - 小说在线阅读 - .* - 努努书坊/,
         titlePos: 1,
         contentSelector: "table:eq(4) p",
         indexSelector: "a[href^='./']",
-    },
-    {siteName: "都来读小说网",
-        url: /^https?:\/\/www\.doulaidu\.com\/[^\/]+\/\d+\/\d+\.html/,
-        useiframe: true,
-        contentReplace: [
-            /www．.+．(?:com|net)/ig,
-            /都来读小说网首发|www\.[a-z0-9]+\.(?:org|com)/ig,
-        ]
+        noSection: true,
     },
     {siteName: "UU看书",
         url: "^https?://www\\.uukanshu\\.(?:com|net)/.*/\\d+/\\d+.html",
+        exampleUrl: 'https://www.uukanshu.com/b/174835/10801.html',
         contentReplace: [
             /* 替换以下
                 ＵU看书 www.uukanｓhｕ.net
@@ -1866,18 +1487,9 @@
         ],
         contentRemove: '.ad_content'
     },
-    {siteName: "天涯武库",
-        url: /wx\.ty2016\.com\/.+\.html$/,
-        bookTitleSelector: "td[width='800'][height='25']>a[href='./']",
-        titleSelector: "strong>font",
-        indexSelector: "td a[href='./']",
-        nextSelector: "td[width='28%'] a",
-
-        contentSelector: "td[width='760'] p",
-        contentHandle: false,
-    },
     {siteName: "黄金屋中文网",
         url: /www\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,
+        exampleUrl: 'https://tw.hjwzw.com/Book/Read/1889,577987',
         titleSelector: "h1",
         indexSelector: "td a[href='./']",
         contentSelector: "#AllySite+div",
@@ -1885,42 +1497,6 @@
         contentReplace: [
             "请记住本站域名:"
         ]
-    },
-    {siteName: "更新吧",
-        url: "^https?://www\\.gengxin8\\.com/read/\\d+/\\d+.html$",
-        bookTitleSelector: '.left a:last',
-        contentSelector: "#chaptertxt",
-        useiframe: true,
-    },
-    {siteName: "闪文书库",
-        url: "^https?://read\\.shanwen\\.com/html/\\d+/\\d+/\\d+\\.html",
-        titleSelector: '.newstitle',
-        contentRemove: '#titlebottom',
-        contentReplace: [
-            '闪文网址中的.*?注册会员</a>'
-        ]
-    },
-    {siteName: "去读读",
-        url: "^https?://www\\.qududu\\.net/book/\\d+/\\d+/\\d+\\.html",
-        contentSelector: "#kui-page-read-txt",
-    },
-    {siteName: "我文阁小说网",
-        url: "^https?://www\\.mytxt\\.cc/read/\\d+/\\d+\\.html",
-        titleReg: '(.*?)_(.*?)_',
-        contentSelector: 'div[class^="detail_con_"]',
-        contentRemove: 'p[style="font-size:11.3px;"]',
-    },
-    {siteName: "百度阅读",
-        url: "^https://yd\\.baidu\\.com/view/.*?\\?cn=.*",
-        titleSelector: '.catHead > p',
-        bookTitleSelector: '.catHead > h1',
-        contentSelector: ".r_c",
-        contentPatch: function($doc) {
-          // 移除书名中不需要的
-          var $bookTitle = $doc.find('.catHead > h1');
-          $bookTitle.find('a').remove();
-          $bookTitle.text($bookTitle.text().replace('> ', ''));
-        }
     },
 
     // ===== 特殊的获取下一页链接
@@ -1941,29 +1517,19 @@
   //   },
     {siteName: '书海小说',
        url: '^https?://www\\.shuhai\\.com/read/\\d+/\\d+\\.html',
-       bookTitleSelector: '.path2 a:nth-of-type(3)',
-       titleSelector: '.read_top h1',
-       prevSelector: '.read .read_dwn p a:nth-of-type(1)',
-       indexSelector: '.read .read_dwn p a:nth-of-type(2)',
-       nextSelector: '.read .read_dwn p a:nth-of-type(3)',
-       contentSelector: '.read .txt',
-    },
-    {siteName: '书轩网',
-        url: '^https?://www.bookxuan.com/\\d+_\\d+/\\d+.html',
-        bookTitleSelector: '.con_top a:last',
-        contentReplace: [
-            { '&amp;quot;': '"', },
-            'getreadset;',
-            '&lt;div class="divimage"&gt;&lt;img src="',
-        ],
-        contentPatch: function($doc) {
-            $doc.find('#content[title="书，轩，网"]').remove();
-        }
-    },
-    {siteName: '大家读书院',
-        url: '^https?://www.dajiadu.net/files/article/html/\\d+/\\d+/\\d+.html',
-        contentSelector: '#content, #content1',
-        contentRemove: '.copy',
+       exampleUrl: 'http://www.shuhai.com/read/110773/1.html',
+       contentRemove: '.chaper-info',
+       bookTitleSelector: '.tip > a:last',
+       titleSelector: '.chapter-name',
+       withReferer: true,
+       prevSelector($doc) {
+          return $doc.find("#pre").attr("data-url")
+       },
+       indexSelector: '.tip > a:last',
+       nextSelector($doc) {
+          return $doc.find("#next").attr("data-url")
+       },
+       contentSelector: '.chapter-item',
     },
     {siteName: "露西弗俱乐部",
       exampleUrl: 'https://www.lucifer-club.com/chapter-83716-1.html',
@@ -1997,6 +1563,7 @@
     },
     {siteName: '笔趣阁 nuanyuehanxing',
       url: '^https?://www\\.nuanyuehanxing\\.com/\\w+/\\d+/\\d+\\.html',
+      exampleUrl: 'https://www.nuanyuehanxing.com/shu/56388575/111040667.html',
       bookTitleSelector: '.bookname',
       timeout: 500,
       useiframe: true,
@@ -2025,20 +1592,6 @@
       }
     },
 
-    // 移动版
-    {siteName: "掌阅手机网",
-        url: "https?://wap\\.yc\\.ireader\\.com\\.cn/book/\\d+/\\d+/",
-        titleReg: "(.*?),.*?作品 - 掌阅小说网",
-        titlePos: 0,
-        titleSelector: "h4",
-        contentSelector: "div.text",
-        isVipChapter: function ($doc) {
-            if ($doc.find('.vipzj').length) {
-                return true;
-            }
-        }
-    },
-
     {siteName: "69书吧",
       url: "https?://www\\.69shu\\.com/txt/\\d+/\\d+",
       // contentHandle: false,
@@ -2052,6 +1605,7 @@
 
     {siteName: "读万卷",
       url: "https?://www\\.duwanjuan\\.com/html/\\d+/\\d+/\\d+\\.html",
+      exampleUrl: 'http://www.duwanjuan.com/html/995/995791/105890775.html',
       titleSelector: 'h1',
       contentSelector: "#acontent",
       contentRemove: ".tishi",
@@ -2063,6 +1617,7 @@
 
     {siteName: "书山中文网",
       url: "https?://shushan\\.zhangyue\\.net/book/\\d+/\\d+/",
+      exampleUrl: 'https://shushan.zhangyue.net/book/105835/15038074/',
       contentSelector: ".art_con",
       nextSelector: '.next-cha',
       prevSelector: '.last-cha',
@@ -2242,40 +1797,23 @@
 
       {siteName: '小说321',
           url: 'https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+(_\\d+)?.html',
+          exampleUrl: 'http://www.xs321.net/book/671/671539/1.html',
           useSiteFont: true,
           checkSection: true,
           contentReplace: ['.*www\\.xs321\\.net.*',
-                          '本章未完，请点击下一页继续阅读！']
-      },
-
-      {siteName: '45中文',
-          url: 'https?://v1\\.45zw\\.com/book/\\d+/\\d+(_\\d+)?.html',
-          useSiteFont: true,
-          checkSection: true,
-          contentSelector: '#booktxt',
-          contentRemove: 'div',
-
+                          '本章未完，请点击下一页继续阅读！',
+                          '^.*?提示您：看后求收藏（小说321xs321.net），接着再看更方便。', '.*xs321.net.*']
       },
 
       {siteName: '斋书院',
           url: 'https?://www\\.zhaishuyuan\\.org/book/\\d+/\\d+(_\\d+)?.html',
+          exampleUrl: 'https://www.zhaishuyuan.org/book/4985/4553175.html',
           checkSection: true,
-      },
-
-      {siteName: '123读',
-          url: 'https?://www\\.123ds\\.org/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
-          checkSection: true,
-          useiframe: true,
-          contentSelector: '#DivContentBG > div:nth-child(9)',
-          contentReplace: ['…。。\\s本章未完，请点击下一页继续阅读！',
-                          '本文来源：123读书网。',
-                          '\\*[,，]转载请注明处：123ds.org 。',
-                          {'。.*提醒你：看后求收藏123读书网，接着再看好方便。':'。'}]
-
       },
 
       {siteName: 'YY文轩',
           url: 'https?://www\\.yywenxuan\\.com/\\d+/.*?\\.html',
+          exampleUrl: 'http://www.yywenxuan.com/523903/13063045.html',
           useiframe: true,
           contentSelector: '#ad'
       },
@@ -2303,36 +1841,12 @@
       },
 
       {siteName: '飞速中文',
-          url: 'https://(?:www.)?(?:feiszw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
-          exampleUrl: 'https://www.feiszw.com/Html/21975/18399024.html',
+          url: 'https://(?:www.)?(?:feiazw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
+          exampleUrl: 'https://www.feiazw.com/Html/21975/18399024.html',
 
           contentRemove: 'p[style], .l',
           noSection: true,
 
-      },
-
-      // {siteName: '搜小说/搜书网/酷笔记',
-      //     url: 'https?://www.(?:so(?:xs)?(?:cc)?(?:shuw)?w?|kubiji).(?:cc|com|net|org)/.*?/\\d+.html',
-
-      //     contentReplace: ['您可以在百度里搜索.*查找最新章节！'],
-      //     contentPatch($doc) {
-      //         $doc.find('p').remove()
-      //     },
-
-      //     nextSelector: '.pagego > a:nth-child(5)',
-      //     indexSelector: '.pagego > a:nth-child(3)',
-      //     prevSelector: '.pagego > a:nth-child(2)',
-      // },
-
-      {siteName: '中文成人文学网',
-          url:'https?://book.xbookcn.net/\\d+/\\d+/.*.html',
-          exampleUrl: 'https://book.xbookcn.net/2000/03/1_40.html',
-
-          contentSelector: '.post-body',
-          bookTitleSelector: '.post-labels > a',
-          nextSelector: '#Blog1_blog-pager-older-link',
-          indexSelector: '.post-labels > a',
-          prevSelector: '#Blog1_blog-pager-newer-link',
       },
 
       {siteName: '顶点小说',
@@ -2342,17 +1856,6 @@
           contentSelector: '#contents',
           bookTitleSelector: 'dl > dt > a:last',
           noSection: true,
-
-      },
-
-      {siteName: '爱好中文网',
-          url: 'https?://www.ah123z.com/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'https://www.ah123z.com/10/10110/6319325.html',
-
-          contentSelector: '#content',
-          bookTitleSelector: '.topmenu a:last',
-          noSection: true,
-          useSiteFont: true,
 
       },
 
@@ -2427,6 +1930,9 @@
 
       {siteName: '有度中文网',
           url: 'https://www.yodu.org/book/\\d+/\\d+.html',
+          exampleUrl: 'https://www.yodu.org/book/11542/1472213.html',
+          useSiteFont: true,
+          // style: '@font-face{font-family:read;font-display:block;src:url(/en/common/read.ttf);}#mynovelreader-content{font-family: "read" !important;}',
 
           contentPatch($doc) {
               const re = toRE("\\{t\\d+_0:'(.*?)',t\\d+_1:'(.*?)',t\\d+_index:'(.*?)',\\}");
@@ -2730,7 +2236,7 @@
               ¸ тt kǎn¸ C〇
               wWW¤ тt kдn¤ ￠O
               */
-              "[wWщшω]{0,3} ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?(?:[tTтⓣ] ?){2}[kKκКⓚ] ?[aAǎáдāΛⓐ] ?[nNⓝ] ?[¸◆⊕●.•＿¤☢⊙▲✿★▪] ?[cCС￠℃] ?[oO〇○Ο] ?"
+              "[wWщшω]{0,3} ?[¸◆⊕●.•＿¤☢⊙▲✿★▪]? ?(?:[tTтⓣ] ?){2}[kKκКⓚ] ?[aAǎáдāΛⓐ] ?[nNⓝ] ?[¸◆⊕●.•＿¤☢⊙▲✿★▪]? ?[cCС￠℃] ?[oO〇○Ο] ?"
           ]
 
       },
@@ -2740,7 +2246,10 @@
           exampleUrl: "https://mjjxs.net/chapter/61559303/1.html?4299",
 
           contentSelector: ".content",
-          contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*"],
+          contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*", 
+          "\\[ 百万网络书库,已开启防爬虫,只支持浏览器阅读,如果显示不正常,请浏览器访问 mjjxs.com \\]", 
+          "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 啥书都能找到 \\]"
+      ],
 
           chapterTitleReplace: "《.*?》 - ",
 
@@ -2784,6 +2293,33 @@
           prevSelector: ".col-md-6.text-center a:first",
           nextSelector: ".col-md-6.text-center a:last"
 
+      },
+
+      {siteName: '123读',
+          url: 'https?://www\\.123duw\\.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+          checkSection: true,
+          contentSelector: '#content',
+          nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
+          contentReplace: ['…。。\\s本章未完，请点击下一页继续阅读！', '^"$']
+
+      },
+
+      {siteName: '阿拉法小说网',
+          url: 'https?://www.alafaxs.com/du/\\d+/\\d+.html',
+          exampleUrl: 'https://www.alafaxs.com/du/80/856585.html',
+          bookTitleSelector: '.chapter-nav > p:first > a:last()',
+          useiframe: true,
+          mutationSelector: "#txt",
+          mutationChildCount: 0,
+          contentSelector: '#txt',
+      },
+
+      {siteName: "梦远书城",
+          url: /www\.my285\.com(?:\/\w+){3,5}\/\d+\.htm$/,
+          useiframe: true,
+          noSection: true,
+          titleSelector: ".t50",
+          contentSelector: "table tr:nth-child(4) > td",
       },
 
   ];
@@ -3971,11 +3507,18 @@
   function renderHTML(text) {
     text = text
       .split('\n')
-      .filter(t => !!t)
-      .map(t => `<p>　　${t}</p>`)
+      .filter(t => !!t.trim())
+      .map(t => `<p>　　${escapeHtml(t)}</p>`)
       .join('\n');
 
-    return `<div>${text}</div>`
+    return `<div class="content">${text}</div>`
+  }
+
+  // https://stackoverflow.com/a/22706073
+  const p = document.createElement("p");
+  function escapeHtml(text) {
+    p.textContent = text;
+    return p.innerHTML
   }
 
   function getElemFontSize(_heading) {
