@@ -68,30 +68,30 @@ const sites = [
         // 移除本章说评论数气泡
         $doc.find('.review-count').remove()
 
-        $doc.find('.content-wrap').contents().unwrap()
+        // $doc.find('.content-wrap').contents().unwrap()
 
-        $doc.find('.read-content.j_readContent style').remove()
+        // $doc.find('.read-content.j_readContent style').remove()
 
-        const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2)
-        const style = $doc.find('link[href^=blob]').attr('class', 'noRemove')
+        // const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2)
+        // const style = $doc.find('link[href^=blob]').attr('class', 'noRemove')
 
-        if (style.length) {
-            this.$content = $doc.find('.read-content.j_readContent')
-                .prepend($(`<style>
-                #j_${cId} p[class^='p'] {
-                    display: flex;
-                    display: -ms-flexbox;
-                    flex-wrap: wrap;
-                    align-items: flex-end;
-                }
-                #j_${cId} p {
-                    line-height: 1.8;
-                    overflow: hidden;
-                    margin: 0.8em 0;
-                }</style>`))
-                .prepend(style)
-                .wrapInner(`<div id="j_${cId}">`)
-        }
+        // if (style.length) {
+        //     this.$content = $doc.find('.read-content.j_readContent')
+        //         .prepend($(`<style>
+        //         #j_${cId} p[class^='p'] {
+        //             display: flex;
+        //             display: -ms-flexbox;
+        //             flex-wrap: wrap;
+        //             align-items: flex-end;
+        //         }
+        //         #j_${cId} p {
+        //             line-height: 1.8;
+        //             overflow: hidden;
+        //             margin: 0.8em 0;
+        //         }</style>`))
+        //         .prepend(style)
+        //         .wrapInner(`<div id="j_${cId}">`)
+        // }
 
         // 滚屏的方式无法获取下一页
         if ($doc.find('#j_chapterPrev').length === 0) {
@@ -119,8 +119,11 @@ const sites = [
             this.mutationChildCount = 0
         }
         if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
-            this.useRawContent = true;
-            this.cloneNode = true;
+            // 不支持
+            this.contentSelector = "" 
+            this.isVipChapter = () => true
+            // this.useRawContent = true;
+            // this.cloneNode = true;
         }
     },
   },
@@ -1284,7 +1287,8 @@ const sites = [
         contentSelector: ".content",
         contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*", 
         "\\[ 百万网络书库,已开启防爬虫,只支持浏览器阅读,如果显示不正常,请浏览器访问 mjjxs.com \\]", 
-        "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 啥书都能找到 \\]"
+        "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 啥书都能找到 \\]",
+        "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 你要的书几乎都有 \\]"
     ],
 
         chapterTitleReplace: "《.*?》 - ",
@@ -1357,6 +1361,25 @@ const sites = [
         titleSelector: ".t50",
         contentSelector: "table tr:nth-child(4) > td",
     },
+
+    {siteName: "飞翔鸟中文网",
+        url: "https?://www\\.fxnzw\\.com/fxnread/\\d+_\\d+.html",
+        bookTitleSelector: "#breadCrumb a:nth-child(2)",
+        contentSelector: "#content > div[style]:last",
+
+    },
+
+    {siteName: "三优小说网",
+        url: "https?://www\\.(?:3uxiaoshuo|zrfsxs)\\.com/xiaoshuo/\\d+/\\d+.html",
+        titleReg: "(.*?)-(.*?)-",
+        titlePos: 1,
+        contentSelector: ".con",
+        contentReplace: [
+            '^必.?应.?搜.?索.?:.?三.?优.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。', 
+            '^必.?应.?搜.?索.?:.?择.?日.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。'
+        ]
+
+    }
 
 ];
 

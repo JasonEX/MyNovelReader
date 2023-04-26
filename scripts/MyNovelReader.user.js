@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.0
+// @version        7.5.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -255,6 +255,8 @@
 // @match          *://www.dawenxue.net/*/*.html
 // @match          *://www.tbxsww.com/html/*/*/*.html
 // @match          *://www.33yq.org/read/*/*.shtml
+// @match          *://www.3uxiaoshuo.com/xiaoshuo/*/*.html
+// @match          *://www.zrfsxs.com/xiaoshuo/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1036,30 +1038,30 @@
           // 移除本章说评论数气泡
           $doc.find('.review-count').remove();
 
-          $doc.find('.content-wrap').contents().unwrap();
+          // $doc.find('.content-wrap').contents().unwrap()
 
-          $doc.find('.read-content.j_readContent style').remove();
+          // $doc.find('.read-content.j_readContent style').remove()
 
-          const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2);
-          const style = $doc.find('link[href^=blob]').attr('class', 'noRemove');
+          // const cId = $doc.find('.read-content.j_readContent').attr('id').slice(2)
+          // const style = $doc.find('link[href^=blob]').attr('class', 'noRemove')
 
-          if (style.length) {
-              this.$content = $doc.find('.read-content.j_readContent')
-                  .prepend($(`<style>
-                #j_${cId} p[class^='p'] {
-                    display: flex;
-                    display: -ms-flexbox;
-                    flex-wrap: wrap;
-                    align-items: flex-end;
-                }
-                #j_${cId} p {
-                    line-height: 1.8;
-                    overflow: hidden;
-                    margin: 0.8em 0;
-                }</style>`))
-                  .prepend(style)
-                  .wrapInner(`<div id="j_${cId}">`);
-          }
+          // if (style.length) {
+          //     this.$content = $doc.find('.read-content.j_readContent')
+          //         .prepend($(`<style>
+          //         #j_${cId} p[class^='p'] {
+          //             display: flex;
+          //             display: -ms-flexbox;
+          //             flex-wrap: wrap;
+          //             align-items: flex-end;
+          //         }
+          //         #j_${cId} p {
+          //             line-height: 1.8;
+          //             overflow: hidden;
+          //             margin: 0.8em 0;
+          //         }</style>`))
+          //         .prepend(style)
+          //         .wrapInner(`<div id="j_${cId}">`)
+          // }
 
           // 滚屏的方式无法获取下一页
           if ($doc.find('#j_chapterPrev').length === 0) {
@@ -1087,8 +1089,11 @@
               this.mutationChildCount = 0;
           }
           if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
-              this.useRawContent = true;
-              this.cloneNode = true;
+              // 不支持
+              this.contentSelector = ""; 
+              this.isVipChapter = () => true;
+              // this.useRawContent = true;
+              // this.cloneNode = true;
           }
       },
     },
@@ -2248,7 +2253,8 @@
           contentSelector: ".content",
           contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*", 
           "\\[ 百万网络书库,已开启防爬虫,只支持浏览器阅读,如果显示不正常,请浏览器访问 mjjxs.com \\]", 
-          "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 啥书都能找到 \\]"
+          "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 啥书都能找到 \\]",
+          "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 你要的书几乎都有 \\]"
       ],
 
           chapterTitleReplace: "《.*?》 - ",
@@ -2321,6 +2327,25 @@
           titleSelector: ".t50",
           contentSelector: "table tr:nth-child(4) > td",
       },
+
+      {siteName: "飞翔鸟中文网",
+          url: "https?://www\\.fxnzw\\.com/fxnread/\\d+_\\d+.html",
+          bookTitleSelector: "#breadCrumb a:nth-child(2)",
+          contentSelector: "#content > div[style]:last",
+
+      },
+
+      {siteName: "三优小说网",
+          url: "https?://www\\.(?:3uxiaoshuo|zrfsxs)\\.com/xiaoshuo/\\d+/\\d+.html",
+          titleReg: "(.*?)-(.*?)-",
+          titlePos: 1,
+          contentSelector: ".con",
+          contentReplace: [
+              '^必.?应.?搜.?索.?:.?三.?优.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。', 
+              '^必.?应.?搜.?索.?:.?择.?日.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。'
+          ]
+
+      }
 
   ];
 
@@ -2676,10 +2701,11 @@
     '关键\\*{3}': '关键性交流',
     '\\*{3}主播': '性视频主播',
     '奶\\*{2}上': '奶奶头上',
-    '狭\\*{2}仄': '狭窄逼仄',
+    '狭\\*{2}仄': '狭小逼仄', // 狭窄逼仄
     '(男|女)\\*{3}玩家': '$1性游戏玩家',
     '(switc)\\*{3}': 'Switch游戏',
     '注\\*{2}神': '注射精神',
+    '瞎\\*{2}掰扯': '瞎鸡巴掰扯',
 
     '\\.asxs\\.': '起点',
     '\\b(?:boos|boso)\\b': 'BOSS',
@@ -2762,7 +2788,7 @@
     // '久看中文网首发',
     // '顶点小说 ２３ＵＳ．com更新最快',
     '7017k',
-    '没有弹窗,更新及时 !',
+    '(?:请记住:.*?)?没有弹窗,更新及时 !',
     '如果你还没注册会员就先注册个会员吧，使用书架书签更方便哦。',
     '内容更新后，请重新刷新页面，即可获取最新更新！',
     '如果此章是作者求票之类废话的，请跳过继续看下一章',
@@ -3014,6 +3040,7 @@
     '\\(\\)',
     '\\[\\]',
     '【】',
+    '《》',
     '^[。？！.?!`|]',
     '^[…()]$'
     
