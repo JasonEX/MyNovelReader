@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.1
+// @version        7.5.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2704,6 +2704,7 @@
     '狭\\*{2}仄': '狭小逼仄', // 狭窄逼仄
     '(男|女)\\*{3}玩家': '$1性游戏玩家',
     '(switc)\\*{3}': 'Switch游戏',
+    'flas\\*{3}': 'Flash游戏',
     '注\\*{2}神': '注射精神',
     '瞎\\*{2}掰扯': '瞎鸡巴掰扯',
 
@@ -6807,7 +6808,7 @@
       appendPage: function(parser, isFirst) {
           var chapter = $("article:last");
           if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
-              var lastText = chapter.find("p:last").remove().text().trimEnd();
+              var lastText = chapter.find("p:last").remove().text().trimRight();
               var newPage = parser.content.replace(/<p>\s+/, "<p>" + lastText);
 
               chapter

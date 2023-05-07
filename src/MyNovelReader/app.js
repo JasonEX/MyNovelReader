@@ -475,7 +475,7 @@ var App = {
     appendPage: function(parser, isFirst) {
         var chapter = $("article:last");
         if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
-            var lastText = chapter.find("p:last").remove().text().trimEnd();
+            var lastText = chapter.find("p:last").remove().text().trimRight();
             var newPage = parser.content.replace(/<p>\s+/, "<p>" + lastText);
 
             chapter
