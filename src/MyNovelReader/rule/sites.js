@@ -38,7 +38,7 @@ const sites = [
       }
   },
   {siteName: '起点新版-阅文',
-    url: '^https?://(?:read|vipreader)\\.qidian\\.com/chapter/.*',
+    url: '^https?://(?:read|vipreader|www)\\.qidian\\.com/chapter/.*',
     exclude: ' /lastpage/',
     bookTitleSelector: '#bookImg',
     titleSelector: 'h3.j_chapterName',

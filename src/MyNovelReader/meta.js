@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.2
+// @version        7.5.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -55,6 +55,7 @@
 // @include        *://shushan.zhangyue.net/book/*/*/
 // @include        *://weread.qq.com/web/reader/*
 // @match          *://www.qimao.com/shuku/*-*/
+// @match          *://www.qidian.com/chapter/*/*
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -257,6 +258,7 @@
 // @match          *://www.33yq.org/read/*/*.shtml
 // @match          *://www.3uxiaoshuo.com/xiaoshuo/*/*.html
 // @match          *://www.zrfsxs.com/xiaoshuo/*/*.html
+// @match          *://www.p2wt.com/htm/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

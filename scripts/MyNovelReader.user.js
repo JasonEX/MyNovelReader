@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.2
+// @version        7.5.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -55,6 +55,7 @@
 // @include        *://shushan.zhangyue.net/book/*/*/
 // @include        *://weread.qq.com/web/reader/*
 // @match          *://www.qimao.com/shuku/*-*/
+// @match          *://www.qidian.com/chapter/*/*
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -257,6 +258,7 @@
 // @match          *://www.33yq.org/read/*/*.shtml
 // @match          *://www.3uxiaoshuo.com/xiaoshuo/*/*.html
 // @match          *://www.zrfsxs.com/xiaoshuo/*/*.html
+// @match          *://www.p2wt.com/htm/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1008,7 +1010,7 @@
         }
     },
     {siteName: '起点新版-阅文',
-      url: '^https?://(?:read|vipreader)\\.qidian\\.com/chapter/.*',
+      url: '^https?://(?:read|vipreader|www)\\.qidian\\.com/chapter/.*',
       exclude: ' /lastpage/',
       bookTitleSelector: '#bookImg',
       titleSelector: 'h3.j_chapterName',
@@ -2827,6 +2829,9 @@
     '\\+ 加入书签 \\+',
     '看《.*?》最快更新请浏览器输入-.*?-到精华书阁进行查看',
     '有的人死了，但没有完全死……',
+    '【书友福利】看书即可得现金or点币，还有iPhone12、Switch等你抽！关注vx公众号【书友大本营】可领！',
+    '关注公众号：书粉基地，关注即送现金、点币！',
+    '【看书领红包】关注公..众号【看文基地】，看书抽最高888现金红包！',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
