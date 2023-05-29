@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.3
+// @version        7.5.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -259,6 +259,9 @@
 // @match          *://www.3uxiaoshuo.com/xiaoshuo/*/*.html
 // @match          *://www.zrfsxs.com/xiaoshuo/*/*.html
 // @match          *://www.p2wt.com/htm/*/*.html
+// @match          *://www.31xs.com/*/*/*.html
+// @match          *://www.70sw.net/read/*/*/*.html
+// @match          *://www.qisxs.com/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1010,7 +1013,7 @@
         }
     },
     {siteName: '起点新版-阅文',
-      url: '^https?://(?:read|vipreader|www)\\.qidian\\.com/chapter/.*',
+      url: '^https?://(?:read|vipreader)\\.qidian\\.com/chapter/.*',
       exclude: ' /lastpage/',
       bookTitleSelector: '#bookImg',
       titleSelector: 'h3.j_chapterName',
@@ -1065,16 +1068,27 @@
           //         .wrapInner(`<div id="j_${cId}">`)
           // }
 
+          const { vipStatus } = g_data.data.chapterInfo;
+          const { nextVipStatus } = g_data.data.chapterInfo.extra;
+
+          if (vipStatus === 0 && nextVipStatus === 1) {
+              this.info.useiframe = true;
+              this.info.mutationSelector = '.read-content.j_readContent';
+              this.info.mutationChildCount = 0;
+          }
+
           // 滚屏的方式无法获取下一页
           if ($doc.find('#j_chapterPrev').length === 0) {
               var $node = $doc.find('div[id^="chapter-"]');
+              const prevUrl = $node.attr('data-purl').replace("www", "read");
+              const nextUrl = $node.attr('data-nurl').replace("www", "read");
               // 加上一页链接
               $('<div id="j_chapterPrev">')
-                  .attr('href', $node.attr('data-purl'))
+                  .attr('href', prevUrl)
                   .appendTo($doc.find('body'));
               // 加下一页链接
               $('<div id="j_chapterNext">')
-                  .attr('href', $node.attr('data-nurl'))
+                  .attr('href', nextUrl)
                   .appendTo($doc.find('body'));
               // 目录
               var indexUrl = $('#bookImg').attr('href') + '#Catalog';
@@ -1099,6 +1113,63 @@
           }
       },
     },
+      {siteName: "起点新版-20230517",
+          url: "^https?://www\\.qidian\\.com/chapter/.*",
+
+          bookTitleSelector: "#r-breadcrumbs > a:last",
+          titleSelector: "h1.text-1.3em",
+
+          prevSelector: '.prev_chapter',
+          nextSelector: '.next_chapter',
+          indexSelector: '#r-breadcrumbs > a:last',
+
+
+          contentSelector: '.content',
+          contentHandle: false,
+
+          contentPatch($doc) {
+              $doc.find('.review').remove();
+
+              const json = $doc.find('#vite-plugin-ssr_pageContext').text();
+              const { pageContext } = JSON.parse(json);
+              const { next, prev, vipStatus } = pageContext.pageProps.pageData.chapterInfo;
+              const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra;
+              if (vipStatus === 0 && nextVipStatus === 1) {
+                  this.info.useiframe = true;
+              }
+              const { bookId } = pageContext.pageProps.pageData.bookInfo;
+
+              // 滚动翻页
+              if ($doc.find('.nav-btn-group > a').length < 3) {
+                  const $body = $doc.find("body");
+                  const chapterUrl = `/chapter/${bookId}/`;
+                  $('<div class="next_chapter">')
+                      .attr("href", chapterUrl + next.toString())
+                      .appendTo($body);
+                  $('<div class="prev_chapter">')
+                      .attr("href", chapterUrl + prev.toString())
+                      .appendTo($body);
+              }
+          },
+
+          startLaunch($doc) {
+              const json = $doc.find('#vite-plugin-ssr_pageContext').text();
+              const { pageContext } = JSON.parse(json);
+              const { chapterInfo } = pageContext.pageProps.pageData;
+
+              if (chapterInfo.vipStatus === 1) { // 是 vip 章节
+                  this.useiframe = true;
+                  this.mutationSelector = '.content';
+                  this.mutationChildCount = 0;
+              }
+              if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
+                  // 不支持
+                  this.isVipChapter = () => true;
+              }
+          },
+
+      },
+
     {siteName: "创世中文网",
         url: "^https?://(?:chuangshi|yunqi)\\.qq\\.com/|^http://dushu\\.qq\\.com/read.html\\?bid=",
         bookTitleSelector: '.bookNav > a:last()',
@@ -2346,6 +2417,15 @@
               '^必.?应.?搜.?索.?:.?三.?优.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。', 
               '^必.?应.?搜.?索.?:.?择.?日.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。'
           ]
+
+      },
+
+      {siteName: "奇书网",
+          url: "https://www.qisxs.com/.*?/\\d+.html",
+          exampleUrl: "https://www.qisxs.com/shenhaiyujin/7570735.html",
+
+          bookTitleSelector: ".info a",
+          contentSelector: ".box_box"
 
       }
 
@@ -6173,7 +6253,7 @@
     }
   }
 
-  class XmlRequest extends BaseRequest {
+  class HttpRequest extends BaseRequest {
     constructor(siteInfo) {
       super(siteInfo);
       this.status = RequestStatus.Idle;
@@ -6230,16 +6310,19 @@
     constructor(siteInfo) {
       super(siteInfo);
       this.status = RequestStatus.Idle;
-      this.iframe = createIframe(this.loaded.bind(this), siteInfo);
+      this.iframe = null;
       this.doc = null;
       this.win = null;
     }
 
     get display() {
-      return !this.iframe.style.display
+      return this.iframe && !this.iframe.style.display
     }
 
     async send(url) {
+      if (!this.iframe) {
+        this.iframe = createIframe(this.loaded.bind(this), this.siteInfo);
+      }
       this.status = RequestStatus.Loading;
       this.doc = this.win = null;
 
@@ -6372,8 +6455,12 @@
       curFocusIndex: 1,
       // 站点字体信息
       siteFontInfo: null,
-      /**@type {XmlRequest | IframeRequest} */
+      /**@type { HttpRequest | IframeRequest } */
       request: null,
+      /**@type { HttpRequest } */
+      httpRequest: null,
+      /**@type { IframeRequest } */
+      iframeRequest: null,
       // 站点规则
       site: null,
 
@@ -6708,9 +6795,16 @@
           }
       },
       initRequest: function() {
-          App$1.request = App$1.site.useiframe ? new IframeRequest(App$1.site) : new XmlRequest(App$1.site);
-          App$1.request.setErrorHandle(App$1.scrollForce.bind(App$1));
-          App$1.request.setFinishHandle(() => App$1.scroll());
+          App$1.httpRequest = new HttpRequest(App$1.site);
+          App$1.iframeRequest = new IframeRequest(App$1.site);
+
+          App$1.request = App$1.site.useiframe ? App$1.iframeRequest : App$1.httpRequest;
+
+          App$1.httpRequest.setErrorHandle(() => App$1.scrollForce());
+          App$1.httpRequest.setFinishHandle(() => App$1.scroll());
+
+          App$1.iframeRequest.setErrorHandle(() => App$1.scrollForce());
+          App$1.iframeRequest.setFinishHandle(() => App$1.scroll());
       },
       prepDocument: function() {
           window.onload = window.onunload = function() {};
@@ -7050,11 +7144,8 @@
           if (App$1.request.display && Math.floor(App$1.getRemain() - iframeHeight) < 0) {
               window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 51);
           }
-          if (
-              !App$1.paused &&
-              !App$1.working &&
-              App$1.getRemain() < Setting.remain_height
-          ) {
+
+          if (!App$1.paused && App$1.getRemain() < Setting.remain_height) {
               await App$1.scrollForce();
           }
 
@@ -7065,11 +7156,6 @@
           App$1.updateCurFocusElement();
       },
       scrollForce: async function() {
-          // if (App.tmpDoc) {
-          //     await App.loaded(App.tmpDoc);
-          // } else {
-          //     await App.doRequest();
-          // }
           switch (App$1.request.status) {
               case RequestStatus.Idle:
                   await App$1.doRequest();
@@ -7133,13 +7219,12 @@
           return remain;
       },
       doRequest: async function() {
-          // App.working = true;
           var nextUrl = App$1.requestUrl;
           const referer = App$1.lastRequestUrl || App$1.curPageUrl;
           App$1.lastRequestUrl = App$1.requestUrl;
 
           if (nextUrl && !App$1.isTheEnd && !(nextUrl in App$1.parsedPages)) {
-              App$1.parsedPages[nextUrl] = 0;
+              // App.parsedPages[nextUrl] = 0;
               App$1.curPageUrl = App$1.requestUrl;
               App$1.requestUrl = null;
 
@@ -7152,15 +7237,13 @@
                   .append("<a href='" + nextUrl + "' title='点击打开下一页链接'>正在载入下一页".uiTrans() + (useiframe ? "(iframe)" : "") + "...</a>");
 
               await sleep(App$1.site.nDelay || 0);
+
+              if (useiframe) {
+                  App$1.request = App$1.iframeRequest;
+              } else {
+                  App$1.request = App$1.httpRequest;
+              }
               
-              // if (useiframe) {
-              //     App.iframeRequest(nextUrl); // 不用 await
-              // } else {
-              //     ;(async () => {
-              //         const doc = await App.httpRequest(nextUrl)
-              //         App.httpRequestDone(doc, nextUrl) // 不用 await
-              //     })()
-              // }
               C.log('获取下一页', nextUrl);
               if (App$1.site.withReferer) {
                   App$1.request.send(nextUrl, referer);
@@ -7170,103 +7253,10 @@
       
           }
       },
-      httpRequest: async function(nextUrl) { // 已弃用
-
-          C.log("获取下一页: " + nextUrl);
-          App$1.parsedPages[nextUrl] += 1;
-
-          const options = {
-              url: nextUrl,
-              method: "GET",
-              overrideMimeType: "text/html;charset=" + document.characterSet,
-              timeout: config.xhr_time,
-          };
-
-          let doc = null;
-          try {
-              const res = await Request(options);
-              doc = parseHTML(res.responseText);
-          } catch (e) {}
-
-          return doc
-      },
-      httpRequestDone: async function(doc, nextUrl) { // 已弃用
-          if (doc) {
-              await App$1.beforeLoad(doc);
-              return;
-          }
-
-          if (App$1.parsedPages[nextUrl] >= 3) {
-              C.error('同一个链接已获取3次', nextUrl);
-              App$1.$loading.html("<a href='" + nextUrl  + "'>无法获取下一页，请手动点击</a>").show();
-              return;
-          }
-
-          // 无内容再次尝试获取
-          C.error('连接超时, 再次获取');
-          doc = await App$1.httpRequest(nextUrl);
-          await App$1.httpRequestDone(doc, nextUrl);
-      },
-      iframeRequest: async function(nextUrl) { // 已弃用
-          C.log("iframeRequest: " + nextUrl);
-          if (!App$1.iframe) {
-              var i = document.createElement('iframe');
-              App$1.iframe = i;
-              i.name = 'mynovelreader-iframe';
-              i.width = '100%';
-              i.height = `${unsafeWindow.innerHeight}px`;
-              i.frameBorder = "0";
-              i.style.cssText = '\
-                margin:0!important;\
-                padding:0!important;\
-                visibility:hidden!important;\
-            ';
-              i.src = nextUrl;
-              i.addEventListener('load', App$1.iframeLoaded, false);
-              App$1.remove.push(function() {
-                  i.removeEventListener('load', App$1.iframeLoaded, false);
-              });
-              document.body.appendChild(i);
-          } else {
-              App$1.iframe.contentDocument.location.replace(nextUrl);
-          }
-      },
-      iframeLoaded: async function() { // 已弃用
-          var iframe = this;
-          var body = iframe.contentDocument.body;
-
-          if (body && body.firstChild) {
-              var win = iframe.contentWindow;
-              var doc = iframe.contentDocument;
-
-              // 滚动最后
-              win.scrollTo(0, doc.body.scrollHeight);
-
-              if (App$1.site.startLaunch) {
-                  App$1.site.startLaunch($(doc));
-              }
-
-              var mutationSelector = App$1.site.mutationSelector;
-              if (mutationSelector) {
-                  // await App.addMutationObserve(doc);
-                  await observeElement(doc, App$1.site);
-              } else {
-                  var timeout = App$1.site.timeout || 0;
-                  await sleep(timeout);
-              }
-              await App$1.beforeLoad(doc);
-          }
-      },
-      beforeLoad: async function(htmlDoc) { // 已弃用
-          {
-              await App$1.loaded(htmlDoc);
-          }
-      },
       loaded: async function(doc) {
           var parser = new Parser(App$1.site, doc, App$1.curPageUrl);
           await parser.getAll();
           await App$1.addNextPage(parser);
-          App$1.tmpDoc = null;
       },
       addNextPage: async function(parser) {
           if (parser.content) {
@@ -7288,10 +7278,8 @@
                   .show();
           }
 
-          App$1.working = false;
       },
       afterLoad: async function() {
-          App$1.tmpDoc = null;
 
           if (Setting.preloadNextPage) {
               await sleep(200);

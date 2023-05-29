@@ -14,7 +14,7 @@ import { runVue } from './app/index'
 import bus, { APPEND_NEXT_PAGE, SHOW_SPEECH } from './app/bus'
 import './inject'
 import { domMutation, observeElement } from './libdom'
-import { XmlRequest, IframeRequest, RequestStatus, iframeHeight } from './request'
+import { HttpRequest, IframeRequest, RequestStatus, iframeHeight } from './request'
 import { cleanupEvents } from './inject'
 import { envCheckInit } from './envCheck'
 
@@ -33,8 +33,12 @@ var App = {
     curFocusIndex: 1,
     // 站点字体信息
     siteFontInfo: null,
-    /**@type {XmlRequest | IframeRequest} */
+    /**@type { HttpRequest | IframeRequest } */
     request: null,
+    /**@type { HttpRequest } */
+    httpRequest: null,
+    /**@type { IframeRequest } */
+    iframeRequest: null,
     // 站点规则
     site: null,
 
@@ -370,9 +374,16 @@ var App = {
         }
     },
     initRequest: function() {
-        App.request = App.site.useiframe ? new IframeRequest(App.site) : new XmlRequest(App.site)
-        App.request.setErrorHandle(App.scrollForce.bind(App))
-        App.request.setFinishHandle(() => App.scroll())
+        App.httpRequest = new HttpRequest(App.site)
+        App.iframeRequest = new IframeRequest(App.site)
+
+        App.request = App.site.useiframe ? App.iframeRequest : App.httpRequest
+
+        App.httpRequest.setErrorHandle(() => App.scrollForce())
+        App.httpRequest.setFinishHandle(() => App.scroll())
+
+        App.iframeRequest.setErrorHandle(() => App.scrollForce())
+        App.iframeRequest.setFinishHandle(() => App.scroll())
     },
     prepDocument: function() {
         window.onload = window.onunload = function() {};
@@ -712,11 +723,8 @@ var App = {
         if (App.request.display && Math.floor(App.getRemain() - iframeHeight) < 0) {
             window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 51)
         }
-        if (
-            !App.paused &&
-            !App.working &&
-            App.getRemain() < Setting.remain_height
-        ) {
+
+        if (!App.paused && App.getRemain() < Setting.remain_height) {
             await App.scrollForce()
         }
 
@@ -727,11 +735,6 @@ var App = {
         App.updateCurFocusElement();
     },
     scrollForce: async function() {
-        // if (App.tmpDoc) {
-        //     await App.loaded(App.tmpDoc);
-        // } else {
-        //     await App.doRequest();
-        // }
         switch (App.request.status) {
             case RequestStatus.Idle:
                 await App.doRequest();
@@ -797,13 +800,12 @@ var App = {
         return remain;
     },
     doRequest: async function() {
-        // App.working = true;
         var nextUrl = App.requestUrl;
         const referer = App.lastRequestUrl || App.curPageUrl
         App.lastRequestUrl = App.requestUrl;
 
         if (nextUrl && !App.isTheEnd && !(nextUrl in App.parsedPages)) {
-            App.parsedPages[nextUrl] = 0;
+            // App.parsedPages[nextUrl] = 0;
             App.curPageUrl = App.requestUrl;
             App.requestUrl = null;
 
@@ -816,15 +818,13 @@ var App = {
                 .append("<a href='" + nextUrl + "' title='点击打开下一页链接'>正在载入下一页".uiTrans() + (useiframe ? "(iframe)" : "") + "...</a>");
 
             await sleep(App.site.nDelay || 0)
+
+            if (useiframe) {
+                App.request = App.iframeRequest
+            } else {
+                App.request = App.httpRequest
+            }
             
-            // if (useiframe) {
-            //     App.iframeRequest(nextUrl); // 不用 await
-            // } else {
-            //     ;(async () => {
-            //         const doc = await App.httpRequest(nextUrl)
-            //         App.httpRequestDone(doc, nextUrl) // 不用 await
-            //     })()
-            // }
             C.log('获取下一页', nextUrl)
             if (App.site.withReferer) {
                 App.request.send(nextUrl, referer)
@@ -836,120 +836,10 @@ var App = {
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
         }
     },
-    httpRequest: async function(nextUrl) { // 已弃用
-
-        C.log("获取下一页: " + nextUrl);
-        App.parsedPages[nextUrl] += 1;
-
-        const options = {
-            url: nextUrl,
-            method: "GET",
-            overrideMimeType: "text/html;charset=" + document.characterSet,
-            timeout: config.xhr_time,
-        }
-
-        let doc = null
-        try {
-            const res = await Request(options)
-            doc = parseHTML(res.responseText)
-        } catch (e) {}
-
-        return doc
-    },
-    httpRequestDone: async function(doc, nextUrl) { // 已弃用
-        if (doc) {
-            await App.beforeLoad(doc);
-            return;
-        }
-
-        if (App.parsedPages[nextUrl] >= 3) {
-            C.error('同一个链接已获取3次', nextUrl)
-            App.$loading.html("<a href='" + nextUrl  + "'>无法获取下一页，请手动点击</a>").show();
-            return;
-        }
-
-        // 无内容再次尝试获取
-        C.error('连接超时, 再次获取');
-        doc = await App.httpRequest(nextUrl)
-        await App.httpRequestDone(doc, nextUrl)
-    },
-    iframeRequest: async function(nextUrl) { // 已弃用
-        C.log("iframeRequest: " + nextUrl);
-        if (!App.iframe) {
-            var i = document.createElement('iframe');
-            App.iframe = i;
-            i.name = 'mynovelreader-iframe';
-            i.width = '100%';
-            i.height = `${unsafeWindow.innerHeight}px`;
-            i.frameBorder = "0";
-            i.style.cssText = '\
-                margin:0!important;\
-                padding:0!important;\
-                visibility:hidden!important;\
-            ';
-            i.src = nextUrl;
-            i.addEventListener('load', App.iframeLoaded, false);
-            App.remove.push(function() {
-                i.removeEventListener('load', App.iframeLoaded, false);
-            });
-            document.body.appendChild(i);
-        } else {
-            App.iframe.contentDocument.location.replace(nextUrl);
-        }
-    },
-    iframeLoaded: async function() { // 已弃用
-        var iframe = this;
-        var body = iframe.contentDocument.body;
-
-        if (body && body.firstChild) {
-            var win = iframe.contentWindow
-            var doc = iframe.contentDocument;
-
-            // 滚动最后
-            win.scrollTo(0, doc.body.scrollHeight)
-
-            if (App.site.startLaunch) {
-                App.site.startLaunch($(doc));
-            }
-
-            var mutationSelector = App.site.mutationSelector;
-            if (mutationSelector) {
-                // await App.addMutationObserve(doc);
-                await observeElement(doc, App.site);
-            } else {
-                var timeout = App.site.timeout || 0;
-                await sleep(timeout)
-            }
-            await App.beforeLoad(doc);
-        }
-    },
-    beforeLoad: async function(htmlDoc) { // 已弃用
-        if (config.PRELOADER) {
-            App.tmpDoc = htmlDoc;
-            App.working = false;
-            await App.scroll();
-
-            // 预读图片
-            var existSRC = {};
-            $(App.tmpDoc).find('img').each(function() {
-                var isrc = $(this).attr('src');
-                if (!isrc || existSRC[isrc] || isrc.slice(0, 4).toLowerCase().startsWith('data')) {
-                    return;
-                } else {
-                    existSRC[isrc] = true;
-                }
-                var img = document.createElement('img');
-                img.src = isrc;
-            });
-        } else {
-            await App.loaded(htmlDoc);
-        }
-    },
     loaded: async function(doc) {
         var parser = new Parser(App.site, doc, App.curPageUrl);
         await parser.getAll();
         await App.addNextPage(parser);
-        App.tmpDoc = null;
     },
     addNextPage: async function(parser) {
         if (parser.content) {
@@ -971,10 +861,8 @@ var App = {
                 .show();
         }
 
-        App.working = false;
     },
     afterLoad: async function() {
-        App.tmpDoc = null;
 
         if (Setting.preloadNextPage) {
             await sleep(200)

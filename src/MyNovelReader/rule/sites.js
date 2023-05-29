@@ -38,7 +38,7 @@ const sites = [
       }
   },
   {siteName: '起点新版-阅文',
-    url: '^https?://(?:read|vipreader|www)\\.qidian\\.com/chapter/.*',
+    url: '^https?://(?:read|vipreader)\\.qidian\\.com/chapter/.*',
     exclude: ' /lastpage/',
     bookTitleSelector: '#bookImg',
     titleSelector: 'h3.j_chapterName',
@@ -93,16 +93,27 @@ const sites = [
         //         .wrapInner(`<div id="j_${cId}">`)
         // }
 
+        const { vipStatus } = g_data.data.chapterInfo
+        const { nextVipStatus } = g_data.data.chapterInfo.extra
+
+        if (vipStatus === 0 && nextVipStatus === 1) {
+            this.info.useiframe = true;
+            this.info.mutationSelector = '.read-content.j_readContent'
+            this.info.mutationChildCount = 0
+        }
+
         // 滚屏的方式无法获取下一页
         if ($doc.find('#j_chapterPrev').length === 0) {
             var $node = $doc.find('div[id^="chapter-"]');
+            const prevUrl = $node.attr('data-purl').replace("www", "read")
+            const nextUrl = $node.attr('data-nurl').replace("www", "read")
             // 加上一页链接
             $('<div id="j_chapterPrev">')
-                .attr('href', $node.attr('data-purl'))
+                .attr('href', prevUrl)
                 .appendTo($doc.find('body'));
             // 加下一页链接
             $('<div id="j_chapterNext">')
-                .attr('href', $node.attr('data-nurl'))
+                .attr('href', nextUrl)
                 .appendTo($doc.find('body'));
             // 目录
             var indexUrl = $('#bookImg').attr('href') + '#Catalog';
@@ -127,6 +138,63 @@ const sites = [
         }
     },
   },
+    {siteName: "起点新版-20230517",
+        url: "^https?://www\\.qidian\\.com/chapter/.*",
+
+        bookTitleSelector: "#r-breadcrumbs > a:last",
+        titleSelector: "h1.text-1.3em",
+
+        prevSelector: '.prev_chapter',
+        nextSelector: '.next_chapter',
+        indexSelector: '#r-breadcrumbs > a:last',
+
+
+        contentSelector: '.content',
+        contentHandle: false,
+
+        contentPatch($doc) {
+            $doc.find('.review').remove()
+
+            const json = $doc.find('#vite-plugin-ssr_pageContext').text()
+            const { pageContext } = JSON.parse(json)
+            const { next, prev, vipStatus } = pageContext.pageProps.pageData.chapterInfo
+            const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra
+            if (vipStatus === 0 && nextVipStatus === 1) {
+                this.info.useiframe = true;
+            }
+            const { bookId } = pageContext.pageProps.pageData.bookInfo
+
+            // 滚动翻页
+            if ($doc.find('.nav-btn-group > a').length < 3) {
+                const $body = $doc.find("body")
+                const chapterUrl = `/chapter/${bookId}/`
+                $('<div class="next_chapter">')
+                    .attr("href", chapterUrl + next.toString())
+                    .appendTo($body)
+                $('<div class="prev_chapter">')
+                    .attr("href", chapterUrl + prev.toString())
+                    .appendTo($body)
+            }
+        },
+
+        startLaunch($doc) {
+            const json = $doc.find('#vite-plugin-ssr_pageContext').text()
+            const { pageContext } = JSON.parse(json)
+            const { chapterInfo } = pageContext.pageProps.pageData
+
+            if (chapterInfo.vipStatus === 1) { // 是 vip 章节
+                this.useiframe = true;
+                this.mutationSelector = '.content'
+                this.mutationChildCount = 0
+            }
+            if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
+                // 不支持
+                this.isVipChapter = () => true
+            }
+        },
+
+    },
+
   {siteName: "创世中文网",
       url: "^https?://(?:chuangshi|yunqi)\\.qq\\.com/|^http://dushu\\.qq\\.com/read.html\\?bid=",
       bookTitleSelector: '.bookNav > a:last()',
@@ -1378,6 +1446,15 @@ const sites = [
             '^必.?应.?搜.?索.?:.?三.?优.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。', 
             '^必.?应.?搜.?索.?:.?择.?日.?小.?说.?网.?,.?最.?快.?更.?新.?,.?无.?弹.?窗。'
         ]
+
+    },
+
+    {siteName: "奇书网",
+        url: "https://www.qisxs.com/.*?/\\d+.html",
+        exampleUrl: "https://www.qisxs.com/shenhaiyujin/7570735.html",
+
+        bookTitleSelector: ".info a",
+        contentSelector: ".box_box"
 
     }
 

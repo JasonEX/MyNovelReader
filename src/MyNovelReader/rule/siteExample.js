@@ -136,12 +136,12 @@
     exclude: '', // 要排除的URL正则
     fastboot: false, // 快速启动，不等待 DOM 变化完成
 
-    // 每次页面加载完成时调用
+    // 每次页面加载完成时调用，使用 iframe 请求完成时也会调用
     startLaunch: function ($doc) {
         // $doc = $(document)
         // this = 该站点规则 Object
     },
-    // 正文内容加载完成时调用
+    // 进入阅读模式时调用
     startFilter: function ($doc) {
         // $doc = $(document)
         // this = 该站点规则 Object

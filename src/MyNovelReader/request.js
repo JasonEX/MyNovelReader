@@ -31,7 +31,7 @@ class BaseRequest {
   }
 }
 
-export class XmlRequest extends BaseRequest {
+export class HttpRequest extends BaseRequest {
   constructor(siteInfo) {
     super(siteInfo)
     this.status = RequestStatus.Idle
@@ -88,16 +88,19 @@ export class IframeRequest extends BaseRequest {
   constructor(siteInfo) {
     super(siteInfo)
     this.status = RequestStatus.Idle
-    this.iframe = createIframe(this.loaded.bind(this), siteInfo)
+    this.iframe = null
     this.doc = null
     this.win = null
   }
 
   get display() {
-    return !this.iframe.style.display
+    return this.iframe && !this.iframe.style.display
   }
 
   async send(url) {
+    if (!this.iframe) {
+      this.iframe = createIframe(this.loaded.bind(this), this.siteInfo)
+    }
     this.status = RequestStatus.Loading
     this.doc = this.win = null
 
