@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.4
+// @version        7.5.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1126,6 +1126,15 @@
 
           contentSelector: '.content',
           contentHandle: false,
+
+          isVipChapter($doc) {
+              const json = $doc.find('#vite-plugin-ssr_pageContext').text();
+              const { pageContext } = JSON.parse(json);
+              const { vipStatus, isBuy } = pageContext.pageProps.pageData.chapterInfo;
+              if (vipStatus && !isBuy) {
+                  return true
+              }
+          },
 
           contentPatch($doc) {
               $doc.find('.review').remove();
