@@ -30,7 +30,7 @@ function Parser(){
 Parser.prototype = {
     constructor: Parser,
     get contentTxt() {  // callback 才有用
-        var text = $('<div>').html(this.content).text().trim();
+        var text = $('<div>').html(this.content).text().trimRight();
 
         // 解决第二个段落和第一个锻炼合在一起的问题
         text = text.replace(/([^\n])　　/, '$1\n　　');

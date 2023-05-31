@@ -888,10 +888,10 @@ var App = {
 
     isSaveing: false,
     saveAsTxt: async function() {
-        if (App.site.useiframe) {
-            UI.notice('暂不支持', 3000);
-            return;
-        }
+        // if (App.site.useiframe) {
+        //     UI.notice('暂不支持', 3000);
+        //     return;
+        // }
 
         if (App.isSaveing) {
             alert('正在保存中，请稍后');

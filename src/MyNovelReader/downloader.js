@@ -8,6 +8,8 @@ import { sleep, C } from './lib'
 
 const chapters = [];
 
+let lastRequestUrl = ""
+
 const fileName = {
   bookTitle: '',
   ext: '.txt',
@@ -64,7 +66,7 @@ function finish(parser) {
 
 async function getOnePage(parser, nextUrl) {
   var isEnd = false;
-  if (parser) {
+  if (parser && parser.content) {
       toTxt(parser);
       nextUrl = parser.nextUrl;
       isEnd = parser.isTheEnd;
@@ -76,31 +78,44 @@ async function getOnePage(parser, nextUrl) {
       return;
   }
 
-  if (App.site.useiframe) {
-      // App.iframeRequest(nextUrl);
-      return;
-  }
-
   sleep(config.download_delay)
 
-  (async function() {
-    C.log('[存为txt]正在获取：', nextUrl)
-    const doc = await App.httpRequest(nextUrl);
-
-    if (doc) {
-        var par = new Parser(App.site, doc, nextUrl);
-        await par.getAll()
-        await getOnePage(par)
-    } else {
-        C.error('超时或连接出错');
-        finish();
-    }
-
-  })()
+  getNextPage(nextUrl)
 };
+
+async function getNextPage(nextUrl) {
+  C.log('[存为txt]正在获取：', nextUrl)
+
+  const referer = lastRequestUrl || location.href
+  lastRequestUrl = nextUrl
+  let request, doc
+
+  if (App.site.useiframe) {
+    request = App.iframeRequest
+  } else {
+    request = App.httpRequest
+  }
+
+  if (App.site.withReferer) {
+    doc = await request.send(nextUrl, referer);
+  } else {
+    doc = await request.send(nextUrl);
+  }
+
+  if (doc) {
+      var par = new Parser(App.site, doc, nextUrl);
+      await par.getAll()
+      await getOnePage(par)
+  } else {
+      C.error('超时或连接出错');
+      finish();
+  }
+}
 
 async function run(cachedParsers=[]) {
   C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`)
+  
+  lastRequestUrl = ""
 
   cachedParsers.forEach(toTxt);
 

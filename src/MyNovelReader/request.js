@@ -45,7 +45,7 @@ export class HttpRequest extends BaseRequest {
       url,
       method: 'GET',
       overrideMimeType: 'text/html;charset=' + document.characterSet,
-      timeout: config.xhr_time,
+      timeout: config.xhr_time
     }
 
     if (referer) {
@@ -64,15 +64,17 @@ export class HttpRequest extends BaseRequest {
         break
       } catch (e) {
         error = e
-        C.error(`XmlRequest 请求过程出现异常，第 ${3 - retry} 次请求`, error)
+        C.error(`HttpRequest 请求过程出现异常，第 ${3 - retry} 次请求`, error)
       }
     }
 
     if (!this.doc) {
       this.status = RequestStatus.Fail
       this.errorHandle()
-      C.error('XmlRequest 请求失败', error)
+      C.error('HttpRequest 请求失败', error)
     }
+
+    return this.doc
   }
 
   getDocument() {
@@ -108,6 +110,7 @@ export class IframeRequest extends BaseRequest {
       this.show()
     }
     this.iframe.setAttribute('src', url + '#mynovelreader')
+    return new Promise(resolve => (this.resolve = resolve))
   }
 
   async loaded() {
@@ -139,6 +142,7 @@ export class IframeRequest extends BaseRequest {
     this.hide()
     this.status = RequestStatus.Finish
     this.finishHandle()
+    this.resolve(this.doc)
   }
 
   getDocument() {
