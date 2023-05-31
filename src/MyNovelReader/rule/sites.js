@@ -52,7 +52,7 @@ const sites = [
     // },
 
     contentSelector: '.read-content.j_readContent',
-    contentHandle: false,
+    // contentHandle: false,
     contentRemove: '',
     // fastboot: true,
     contentReplace: [
@@ -139,10 +139,10 @@ const sites = [
     },
   },
     {siteName: "起点新版-20230517",
-        url: "^https?://www\\.qidian\\.com/chapter/.*",
+        url: "^https?://(www|m)\\.qidian\\.com/chapter/.*",
 
         bookTitleSelector: "#r-breadcrumbs > a:last",
-        titleSelector: "h1.text-1.3em",
+        titleSelector: "h1.text-1\\.3em",
 
         prevSelector: '.prev_chapter',
         nextSelector: '.next_chapter',
@@ -150,7 +150,7 @@ const sites = [
 
 
         contentSelector: '.content',
-        contentHandle: false,
+        // contentHandle: false,
 
         isVipChapter($doc) {
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()

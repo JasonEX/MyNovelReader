@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.6
+// @version        7.5.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -56,6 +56,7 @@
 // @include        *://weread.qq.com/web/reader/*
 // @match          *://www.qimao.com/shuku/*-*/
 // @match          *://www.qidian.com/chapter/*/*
+// @match          *://m.qidian.com/chapter/*/*
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -1027,7 +1028,7 @@
       // },
 
       contentSelector: '.read-content.j_readContent',
-      contentHandle: false,
+      // contentHandle: false,
       contentRemove: '',
       // fastboot: true,
       contentReplace: [
@@ -1114,10 +1115,10 @@
       },
     },
       {siteName: "起点新版-20230517",
-          url: "^https?://www\\.qidian\\.com/chapter/.*",
+          url: "^https?://(www|m)\\.qidian\\.com/chapter/.*",
 
           bookTitleSelector: "#r-breadcrumbs > a:last",
-          titleSelector: "h1.text-1.3em",
+          titleSelector: "h1.text-1\\.3em",
 
           prevSelector: '.prev_chapter',
           nextSelector: '.next_chapter',
@@ -1125,7 +1126,7 @@
 
 
           contentSelector: '.content',
-          contentHandle: false,
+          // contentHandle: false,
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
@@ -6371,6 +6372,7 @@
         return
       }
 
+      this.win.dispatchEvent(new WheelEvent('mousewheel', { deltaY: -100 }));
       this.win.scrollTo(0, this.doc.body.scrollHeight - this.win.innerHeight * 2);
 
       if (this.siteInfo.startLaunch) {

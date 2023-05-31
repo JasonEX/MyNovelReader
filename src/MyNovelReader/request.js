@@ -125,6 +125,7 @@ export class IframeRequest extends BaseRequest {
       return
     }
 
+    this.win.dispatchEvent(new WheelEvent('mousewheel', { deltaY: -100 }))
     this.win.scrollTo(0, this.doc.body.scrollHeight - this.win.innerHeight * 2)
 
     if (this.siteInfo.startLaunch) {
