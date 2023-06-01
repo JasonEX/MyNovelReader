@@ -1,5 +1,6 @@
 import getMiddleStr from '../utils/string'
 import { C, Request, toRE } from '../lib';
+import { replaceJjwxcCharacter } from '../utils/jjwxcFontDecode';
 
 // ===== 自定义站点规则 =====
 
@@ -287,11 +288,12 @@ const sites = [
       titleSelector: '#chapter_list > option:first',
       // bookTitleSelector: 'h1 .bigtext',
       indexSelector: ".noveltitle > h1 > a",
-      contentSelector: '.noveltext',
+      contentSelector: '.novelbody',
       contentHandle: false,
       contentRemove: 'font[color], hr',
       contentPatchAsync: async function ($doc) {
           // 移除 h2 的标题
+          $doc.find('div:has(>#yrt3)').remove();
           $doc.find('div:has(>h2)').remove();
           $doc.find('#six_list, #sendKingTickets').parent().remove();
           $doc.find("div.noveltext").find("div:first, h1").remove();

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.7
+// @version        7.5.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -29,10 +29,11 @@
 // @require        https://cdn.staticfile.org/crypto-js/4.1.1/crypto-js.min.js
 // @ require        https://greasyfork.org/scripts/2672-meihua-cn2tw/code/Meihua_cn2tw.js?version=7375
 // 晋江文学城防盗字体对照表
-// @require        https://greasyfork.org/scripts/425673-%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81/code/%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81.js?version=987740
+// @ require        https://greasyfork.org/scripts/425673-%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81/code/%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81.js?version=987740
 
 // @connect        *
 // @connect        *://*.qidian.com/
+// @connect        bgme.bid
 
 // @include        *://vipreader.qidian.com/chapter/*/*
 // @include        *://www.qdmm.com/BookReader/*,*.aspx
@@ -977,6 +978,58 @@
       }
   }
 
+  // https://greasyfork.org/scripts/425673-%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81/code/%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81.js?version=987740
+
+  async function replaceJjwxcCharacter(fontName, inputText) {
+    let outputText = inputText;
+    const jjwxcFontTable = await getJjwxcFontTable(fontName);
+    if (jjwxcFontTable) {
+      for (const jjwxcCharacter of Object.keys(jjwxcFontTable)) {
+        const normalCharacter = jjwxcFontTable[jjwxcCharacter];
+        outputText = outputText.replaceAll(jjwxcCharacter, normalCharacter);
+      }
+      outputText = outputText.replaceAll('\u200c', '');
+    }
+    return outputText
+  }
+
+  async function getJjwxcFontTable(fontName) {
+    return await fetchRemoteFont(fontName)
+  }
+
+  async function fetchRemoteFont(fontName) {
+    const url = `https://jjwxc.bgme.bid/${fontName}.json`;
+    const options = { url, method: 'GET' };
+    let retry = 3;
+    let resp;
+
+    C.info(`[jjwxc-font]开始请求远程字体对照表 ${fontName}`);
+
+    while (retry--) {
+      try {
+        resp = await Request(options);
+        break
+      } catch (e) {
+        await sleep(3000);
+        C.error(e);
+      }
+    }
+
+    if (!resp || resp.status !== 200) {
+      C.info(`[jjwxc-font]远程字体对照表 ${fontName} 下载失败`);
+      return
+    }
+
+    try {
+      const table = JSON.parse(resp.responseText);
+      C.info(`[jjwxc-font]远程字体对照表 ${fontName} 下载成功`);
+      return table
+    } catch (error) {
+      C.error(error);
+      C.info(`[jjwxc-font]远程字体对照表 ${fontName} 下载失败`);
+    }
+  }
+
   // ===== 自定义站点规则 =====
 
   /**@typedef { import("../../typings/MyNovelReader").SiteConfigs } SiteConfigs */
@@ -1263,11 +1316,12 @@
         titleSelector: '#chapter_list > option:first',
         // bookTitleSelector: 'h1 .bigtext',
         indexSelector: ".noveltitle > h1 > a",
-        contentSelector: '.noveltext',
+        contentSelector: '.novelbody',
         contentHandle: false,
         contentRemove: 'font[color], hr',
         contentPatchAsync: async function ($doc) {
             // 移除 h2 的标题
+            $doc.find('div:has(>#yrt3)').remove();
             $doc.find('div:has(>h2)').remove();
             $doc.find('#six_list, #sendKingTickets').parent().remove();
             $doc.find("div.noveltext").find("div:first, h1").remove();
