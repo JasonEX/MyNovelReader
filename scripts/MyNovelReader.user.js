@@ -264,6 +264,7 @@
 // @match          *://www.31xs.com/*/*/*.html
 // @match          *://www.70sw.net/read/*/*/*.html
 // @match          *://www.qisxs.com/*/*.html
+// @match          *://www.611zw.com/books/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2491,8 +2492,15 @@
           bookTitleSelector: ".info a",
           contentSelector: ".box_box"
 
-      }
+      },
+      {
+          siteName: "611中文",
+          url: "https://www.611zw.com/books/\\d+/\\d+(_)?\\d+.html",
+          exampleUrl: "https://www.611zw.com/books/175956/57627355.html",
 
+          titleSelector: ".reader-main h1.title",
+          contentReplace: ["(www.)?611zw.com"]
+      }
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
