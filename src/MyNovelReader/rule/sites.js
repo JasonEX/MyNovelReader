@@ -1467,8 +1467,15 @@ const sites = [
         bookTitleSelector: ".info a",
         contentSelector: ".box_box"
 
-    }
+    },
+    {
+        siteName: "611中文",
+        url: "https://www.611zw.com/books/\\d+/\\d+(_)?\\d+.html",
+        exampleUrl: "https://www.611zw.com/books/175956/57627355.html",
 
+        titleSelector: ".reader-main h1.title",
+        contentReplace: ["(www.)?611zw.com"]
+    }
 ];
 
 export default sites
