@@ -265,6 +265,7 @@
 // @match          *://www.70sw.net/read/*/*/*.html
 // @match          *://www.qisxs.com/*/*.html
 // @match          *://www.611zw.com/books/*/*.html
+// @match          *://www.bifengzw.com/read/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2500,6 +2501,14 @@
 
           titleSelector: ".reader-main h1.title",
           contentReplace: ["(www.)?611zw.com"]
+      },
+      {
+          siteName: "东流小说",
+          url: "https://www.bifengzw.com/read/.*/\\d+(_)?\\d+.html",
+          exampleUrl: "https://www.bifengzw.com/read/AgVVAApc/1644315500.html",
+
+          titleSelector: "h1",
+          contentSelector: ".content"
       }
   ];
 

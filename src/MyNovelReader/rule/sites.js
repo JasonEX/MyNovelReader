@@ -1475,6 +1475,14 @@ const sites = [
 
         titleSelector: ".reader-main h1.title",
         contentReplace: ["(www.)?611zw.com"]
+    },
+    {
+        siteName: "东流小说",
+        url: "https://www.bifengzw.com/read/.*/\\d+(_)?\\d+.html",
+        exampleUrl: "https://www.bifengzw.com/read/AgVVAApc/1644315500.html",
+
+        titleSelector: "h1",
+        contentSelector: ".content"
     }
 ];
 
