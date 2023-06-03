@@ -6,9 +6,12 @@
 
 # 安装
 
+## 821938089 上游版本
 [Github][install_github]
-
 [jsDelivr][install_jsdelivr]
+
+## 本版本
+[Github][install_github_JasonEX]
 
 # 原作者主页
 
@@ -21,4 +24,5 @@
 [ywzhaiqi_userscripts]: http://userscripts.org/users/138842/scripts
 [install_github]: https://github.com/821938089/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
+[install_github_JasonEX]: https://github.com/JasonEX/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [siteExample]: /src/MyNovelReader/rule/siteExample.js
