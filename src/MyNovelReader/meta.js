@@ -262,6 +262,7 @@
 // @match          *://www.70sw.net/read/*/*/*.html
 // @match          *://www.qisxs.com/*/*.html
 // @match          *://www.611zw.com/books/*/*.html
+// @match          *://www.bifengzw.com/read/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
