@@ -28,7 +28,7 @@ const addEventListenerProxy = new Proxy(_addEventListener, {
     clenaupEventArray.push(() => {
       try {
         thisArg.removeEventListener(...argumentsList)
-      } catch (e) {}
+      } catch (e) { }
     })
   }
 })
@@ -43,7 +43,7 @@ const observeProxy = new Proxy(_observe, {
     clenaupEventArray.push(() => {
       try {
         _disconnect.apply(thisArg, argumentsList)
-      } catch (e) {}
+      } catch (e) { }
     })
   }
 })
@@ -63,7 +63,7 @@ export function cleanupEvents(iframe) {
   try {
     unsafeWindow.$(unsafeWindow).off()
     unsafeWindow.$(document).off()
-  } catch (e) {}
+  } catch (e) { }
 }
 
 if (window.name === 'mynovelreader-iframe') {
@@ -76,7 +76,7 @@ Object.defineProperty(Navigator.prototype, 'platform', {
   }
 })
 
-console.clear = () => {}
+console.clear = () => { }
 
 const proxies = new WeakMap()
 
@@ -102,6 +102,6 @@ export function setPropertyReadOnly(obj, prop, target) {
     get() {
       return value
     },
-    set() {}
+    set() { }
   })
 }

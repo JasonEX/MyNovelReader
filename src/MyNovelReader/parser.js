@@ -17,13 +17,13 @@ function getElemFontSize(_heading) {
         try {
             var str = _heading_style.getPropertyValue("font-size") || 0;
             fontSize = parseInt(str, 10)
-        } catch(e) { }
+        } catch (e) { }
     }
 
     return fontSize
 }
 
-function Parser(){
+function Parser() {
     this.init.apply(this, arguments);
 }
 
@@ -53,11 +53,11 @@ Parser.prototype = {
         if (doc.defaultView && doc.defaultView.$cleanupEvents) {
             doc.defaultView.$cleanupEvents(true);
         }
-        
+
     },
-    applyPatch: function(){
+    applyPatch: function () {
         var contentPatch = this.info.contentPatch;
-        if(contentPatch){
+        if (contentPatch) {
             try {
                 contentPatch.call(this, this.$doc);
                 C.log("Apply Content Patch Success.");
@@ -66,9 +66,9 @@ Parser.prototype = {
             }
         }
     },
-    applyAsyncPatch: async function() {
+    applyAsyncPatch: async function () {
         var contentPatch = this.info.contentPatchAsync;
-        if(contentPatch){
+        if (contentPatch) {
             try {
                 await contentPatch.call(this, this.$doc);
                 C.log("Apply Content Patch[Async] Success.");
@@ -77,7 +77,7 @@ Parser.prototype = {
             }
         }
     },
-    getAll: async function(){
+    getAll: async function () {
 
         C.log('开始解析页面');
 
@@ -91,7 +91,7 @@ Parser.prototype = {
 
         return this;
     },
-    preProcessDoc: async function() {
+    preProcessDoc: async function () {
         let data
 
         if (!this.hasContent() && this.info.getContent) {
@@ -145,7 +145,7 @@ Parser.prototype = {
         }
 
     },
-    parse: function() {
+    parse: function () {
         C.group('开始获取链接');
         this.getPrevUrl();
         this.getIndexUrl();
@@ -159,7 +159,7 @@ Parser.prototype = {
         this.getContent();
     },
 
-    hasContent: function() {
+    hasContent: function () {
         if (this.$content) {
             return this.$content.size() > 0;
         }
@@ -179,16 +179,16 @@ Parser.prototype = {
             }
         }
 
-        if(this.info.contentSelector){
+        if (this.info.contentSelector) {
             $content = this.$doc.find(this.info.contentSelector);
         }
 
         if (!$content || !$content.length) {
             // 按照顺序选取
             var selectors = Rule.contentSelectors;
-            for(var i = 0, l = selectors.length; i < l; i++){
+            for (var i = 0, l = selectors.length; i < l; i++) {
                 $content = this.$doc.find(selectors[i]);
-                if($content.length){
+                if ($content.length) {
                     C.log("自动查找内容选择器: " + selectors[i]);
                     break;
                 }
@@ -201,17 +201,17 @@ Parser.prototype = {
         return $content.size() > 0;
     },
     // 获取书名和章节标题
-    getTitles: function(){
+    getTitles: function () {
         var info = this.info,
             chapterTitle,
             bookTitle,
             docTitle = this.$doc.find("title").text();
 
         // 获取章节标题
-        if (info.titleReg){
+        if (info.titleReg) {
             var matches = docTitle.match(toRE(info.titleReg, 'i'));
-            if(matches && matches.length >= 2){
-                var titlePos = ( info.titlePos || 0 ) + 1;
+            if (matches && matches.length >= 2) {
+                var titlePos = (info.titlePos || 0) + 1;
                 var chapterPos = (titlePos == 1) ? 2 : 1;
 
                 bookTitle = matches[titlePos];
@@ -227,7 +227,7 @@ Parser.prototype = {
             chapterTitle = tmpChapterTitle
         }
 
-        if(!chapterTitle){
+        if (!chapterTitle) {
             chapterTitle = this.autoGetChapterTitle(this.doc);
         }
         if (info.chapterTitleReplace) {
@@ -248,9 +248,9 @@ Parser.prototype = {
 
         // 标题间增加一个空格，不准确，已注释
         chapterTitle = chapterTitle
-                .replace(Rule.titleReplace, "")
-                .trim();
-                // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
+            .replace(Rule.titleReplace, "")
+            .trim();
+        // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
 
         if (chapterTitle.startsWith(bookTitle)) {
             chapterTitle = chapterTitle.replace(bookTitle, '').trim();
@@ -259,8 +259,8 @@ Parser.prototype = {
         bookTitle = bookTitle.replace(/(?:最新章节|章节目录)$/, '');
 
         docTitle = bookTitle ?
-                bookTitle + ' - ' + chapterTitle :
-                docTitle;
+            bookTitle + ' - ' + chapterTitle :
+            docTitle;
 
         // if (Setting.cn2tw) {
         //     bookTitle = this.convert2tw(bookTitle);
@@ -280,7 +280,7 @@ Parser.prototype = {
         C.log("Chapter Title: " + this.chapterTitle);
         C.log("Document Title: " + this.docTitle);
     },
-    getTitleFromRule: function(selectorOrArray) {
+    getTitleFromRule: function (selectorOrArray) {
         var title = '';
         if (!selectorOrArray) {
             return '';
@@ -335,12 +335,12 @@ Parser.prototype = {
             $doc = $(document),
             _document_title = document.title || $doc.find("title").text(),
             _search_document_title = ' ' + _document_title.replace(/\s+/gi, ' ') + ' '
-        ;
+            ;
 
         var _headings = $doc.find(_main_selector);
         // 加上 second selector 并去除包含的
-        $doc.find(_second_selector).each(function(){
-            if($(this).find(_main_selector).length === 0){
+        $doc.find(_second_selector).each(function () {
+            if ($(this).find(_main_selector).length === 0) {
                 _headings.push(this);
             }
         });
@@ -350,7 +350,7 @@ Parser.prototype = {
 
         C.groupCollapsed('自动查找章节标题');
 
-        $(_headings).each(function(){
+        $(_headings).each(function () {
             var _heading = this,
                 _heading_text = _heading.textContent.trim();
 
@@ -366,7 +366,7 @@ Parser.prototype = {
                 score = 10 / nodeNum,
                 _heading_words = _heading_text.replace(/\s+/g, " ").split(" "),
                 _matched_words = ""
-            ;
+                ;
 
             C.log("初始得分：" + score);
 
@@ -391,7 +391,7 @@ Parser.prototype = {
             C.log("跟页面标题比较后得分：" + score);
 
             var _font_size_add_score = getElemFontSize(_heading) * 1.5;
-            score +=  _font_size_add_score;
+            score += _font_size_add_score;
 
             C.log("计算大小后得分：" + score);
 
@@ -432,7 +432,7 @@ Parser.prototype = {
     },
 
     // 获取和处理内容
-    getContent: function(){
+    getContent: function () {
         var self = this;
 
         this.hasContent();
@@ -455,8 +455,8 @@ Parser.prototype = {
         }
 
     },
-    handleContentText: function(node, info){ // 已弃用
-        if(!node) return null;
+    handleContentText: function (node, info) { // 已弃用
+        if (!node) return null;
 
         if (info.useRawContent) {
             C.log('内容处理已被自定义站点规则 useRawContent 关闭')
@@ -468,7 +468,7 @@ Parser.prototype = {
         C.group('开始内容处理');
         C.time('内容处理');
 
-        var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+        var contentHandle = (typeof (info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
         // 拼音字、屏蔽字修复
         // if(contentHandle){
@@ -539,7 +539,7 @@ Parser.prototype = {
 
         // contentRemove
         $div.find(Rule.contentRemove).remove();
-        if(info.contentRemove){
+        if (info.contentRemove) {
             $div.find(info.contentRemove).remove();
         }
 
@@ -565,15 +565,15 @@ Parser.prototype = {
         // }).wrap('<p>');
 
         // 删除无效的 p，排除对大块文本的判断
-        $div.find('p, h1, div').filter(function() {
+        $div.find('p, h1, div').filter(function () {
             var $this = $(this);
             if ($this.find('img').size())  // 排除有图片的
                 return false;
 
             // 有效文本（排除注释、换行符、空白）个数为 0
-            return $this.contents().filter(function() {
+            return $this.contents().filter(function () {
                 return this.nodeType != 8 &&
-                        !this.textContent.match(/^\s*$/);
+                    !this.textContent.match(/^\s*$/);
             }).size() == 0;
         }).remove();
 
@@ -581,7 +581,7 @@ Parser.prototype = {
         if (Setting.split_content) {
             var $p = $div.find('p'),
                 $newP;
-            if ($p.length == 0 ) {
+            if ($p.length == 0) {
                 $newP = $div;
             } else if ($p.length == 1) {
                 $newP = $p;
@@ -592,7 +592,7 @@ Parser.prototype = {
             }
         }
 
-        if(contentHandle){
+        if (contentHandle) {
             // $div.find('br').remove();
 
             $div.find('*').removeAttr('style');
@@ -615,9 +615,9 @@ Parser.prototype = {
         // 修复当行就一个字符的
         text = text.replace(/<\/p><p>([。])/, "$1");
 
-        if(config.paragraphBlank){
+        if (config.paragraphBlank) {
             text = text.replace(/<p[^>]*>(?:\s|&nbsp;)*/g, "<p>　　")
-                    // .replace(/<p>/g, "<p>　　");
+            // .replace(/<p>/g, "<p>　　");
         }
 
         // 删除空白的、单个字符的 p
@@ -630,7 +630,7 @@ Parser.prototype = {
 
         return text;
     },
-    clearContent: function(dom, info) { // 已弃用
+    clearContent: function (dom, info) { // 已弃用
         // 将br，转换为p段落
         let elements = []
         let brCount = 0
@@ -653,14 +653,14 @@ Parser.prototype = {
             if (
                 node.previousSibling &&
                 (node.previousSibling.nodeName === 'IMG' ||
-                node.previousSibling.nodeName === 'SPAN')
+                    node.previousSibling.nodeName === 'SPAN')
             ) {
                 return false
             }
             if (
                 node.nextSibling &&
                 (node.nextSibling.nodeName === 'IMG' ||
-                node.nextSibling.nodeName === 'SPAN')
+                    node.nextSibling.nodeName === 'SPAN')
             ) {
                 return false
             }
@@ -686,7 +686,7 @@ Parser.prototype = {
             content = contents.join('\n')
         }
 
-        var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+        var contentHandle = (typeof (info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
         C.log(`本章字数：${content.length}`)
 
@@ -712,7 +712,7 @@ Parser.prototype = {
         content = content.replace(hostRe, match => {
             removeText.push(match)
             return ''
-        })  
+        })
         C.log(`删除含网站域名行`, hostRe, removeText)
 
         // 规则替换
@@ -721,7 +721,7 @@ Parser.prototype = {
         }
 
         content = this.replaceText(content, Rule.replaceAll)
-        
+
         // 内容标准化处理
         if (Setting.contentNormalize) {
             content = this.replaceText(content, getNormalizeMap())
@@ -733,7 +733,7 @@ Parser.prototype = {
 
         try {
             content = this.contentCustomReplace(content);
-        } catch(ex) {
+        } catch (ex) {
             C.error('自定义替换错误', ex);
         }
 
@@ -742,7 +742,7 @@ Parser.prototype = {
         //     .filter(t => !!t)
         //     .map(t => `<p>${t}</p>`)
         //     .join('\n')
-        
+
         // return
 
         // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
@@ -768,11 +768,11 @@ Parser.prototype = {
         //         return node.parentNode.childNodes.length > 1
         //     })
         //     .forEach(node => $(node).wrap('<p>'))
-        
+
         // $(dom).find('br').remove()
 
         const finalContents = content.split('\n')
-        
+
         // 将内容写回到文本节点中
         if (finalContents.length <= textNodes.length) {
             textNodes.forEach((node, index) => {
@@ -809,7 +809,7 @@ Parser.prototype = {
 
     },
     handleContentText2(node, info) {
-        if(!node) return null;
+        if (!node) return null;
 
         if (info.useRawContent) {
             C.log('内容处理已被自定义站点规则 useRawContent 关闭')
@@ -826,7 +826,7 @@ Parser.prototype = {
 
         // contentRemove
         $div.find(Rule.contentRemove).remove();
-        if(info.contentRemove){
+        if (info.contentRemove) {
             $div.find(info.contentRemove).remove();
         }
 
@@ -847,7 +847,7 @@ Parser.prototype = {
             C.log(`去除了 ${contents.length - deDupeConetents.length} 段重复内容`)
         }
 
-        var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+        var contentHandle = (typeof (info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
         C.log(`本章字数：${content.length}`)
 
@@ -877,7 +877,7 @@ Parser.prototype = {
         content = content.replace(hostRe, match => {
             removeText.push(match)
             return ''
-        })  
+        })
         C.log(`删除含网站域名行`, hostRe, removeText)
 
         // C.groupCollapsed('文本内容 - contentReplace')
@@ -899,14 +899,14 @@ Parser.prototype = {
         // C.groupCollapsed('文本内容 - end')
         // C.log(content)
         // C.groupEnd()
-        
+
         // 繁简转换
         content = chineseConversion(content)
 
         // 自定义替换
         try {
             content = this.contentCustomReplace(content);
-        } catch(ex) {
+        } catch (ex) {
             C.error('自定义替换错误', ex);
         }
 
@@ -924,7 +924,7 @@ Parser.prototype = {
         return contentHTML
 
     },
-    normalizeContent: function(html) {
+    normalizeContent: function (html) {
         html = html.replace(/<\/p><p>/g, '</p>\n<p>')
 
         return html;
@@ -936,7 +936,7 @@ Parser.prototype = {
      * @param  {string} html 内容
      * @return {string}      处理后的内容
      */
-    removeDump: function(html) {
+    removeDump: function (html) {
         html = this.normalizeContent(html)
         var newContent = html
 
@@ -958,7 +958,7 @@ Parser.prototype = {
 
         return newContent;
     },
-    replaceHtml: function(text, replaceRule) {  // replaceRule 给“自定义替换规则直接生效”用
+    replaceHtml: function (text, replaceRule) {  // replaceRule 给“自定义替换规则直接生效”用
         if (!replaceRule) {
             replaceRule = Rule.replace;
         }
@@ -966,7 +966,7 @@ Parser.prototype = {
         // 先提取出 img
         var imgs = {};
         var i = 0;
-        text = text.replace(/<(img|a)[^>]*>/g, function(img){
+        text = text.replace(/<(img|a)[^>]*>/g, function (img) {
             imgs[i] = img;
             return "{" + (i++) + "}";
         });
@@ -987,27 +987,27 @@ Parser.prototype = {
         }
         return text;
     },
-    replaceText: function(text, rule){
+    replaceText: function (text, rule) {
         var self = this;
-        switch(true) {
+        switch (true) {
             case _.isRegExp(rule):
                 text = text.replace(rule, '');
                 break;
             case _.isString(rule):
                 // 还原简写
-                _.each(CHAR_ALIAS, function(value, key) {
+                _.each(CHAR_ALIAS, function (value, key) {
                     rule = rule.replace(key, value);
                 });
                 text = text.replace(toRE(rule), '');
                 break;
             case _.isArray(rule):
-                rule.forEach(function(r){
+                rule.forEach(function (r) {
                     text = self.replaceText(text, r);
                 });
                 break;
             case _.isObject(rule):
                 var key;
-                for(key in rule){
+                for (key in rule) {
                     text = text.replace(toRE(key), rule[key]);
                 }
                 break;
@@ -1045,7 +1045,7 @@ Parser.prototype = {
             lines = [],
             charCotainer = [];
 
-        text.split('').forEach(function(c) {
+        text.split('').forEach(function (c) {
             charCotainer.push(c);
 
             if (c == '“') {
@@ -1061,7 +1061,7 @@ Parser.prototype = {
         return lines;
     },
 
-    getIndexUrl: function(){
+    getIndexUrl: function () {
         var url = '',
             selector = this.info.indexSelector || this.info.indexUrl;
 
@@ -1077,7 +1077,7 @@ Parser.prototype = {
             } catch (e) {
                 C.error("执行获取目录链接函数规则出错", e)
             }
-        } else if(this.info.indexSelector){
+        } else if (this.info.indexSelector) {
             url = this.$doc.find(this.info.indexSelector);
         }
 
@@ -1086,16 +1086,16 @@ Parser.prototype = {
             var selectors = Rule.indexSelectors;
             var _indexLink;
             // 按照顺序选取目录链接
-            for(var i = 0, l = selectors.length; i < l; i++){
+            for (var i = 0, l = selectors.length; i < l; i++) {
                 _indexLink = this.$doc.find(selectors[i]);
-                if(_indexLink.length > 0){
+                if (_indexLink.length > 0) {
                     url = _indexLink;
                     break;
                 }
             }
         }
 
-        if(url){
+        if (url) {
             url = this.checkLinks(url);
             C.log("找到目录链接: " + url);
         }
@@ -1107,7 +1107,7 @@ Parser.prototype = {
         this.indexUrl = url;
         return url;
     },
-    getNextUrl: function(){
+    getNextUrl: function () {
         var url = '',
             selector = this.info.nextSelector || this.info.nextUrl,
             noSection = this.info.noSection;
@@ -1164,11 +1164,11 @@ Parser.prototype = {
                 this.theEndColor = config.end_color
             }
         }
-        
+
         return url;
     },
     // 获取上下页及目录页链接
-    getPrevUrl: function(){
+    getPrevUrl: function () {
         var url = '',
             selector = this.info.prevSelector || this.info.prevUrl,
             noSection = this.info.noSection;
@@ -1220,7 +1220,7 @@ Parser.prototype = {
         this.prevUrl = url || '';
         return url;
     },
-    checkNextUrl: function(url){
+    checkNextUrl: function (url) {
         const sectionUrlRegex = /\/\d+[_-]\d+\.html$/
         if (url && this.info.checkSection) {
             // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
@@ -1239,12 +1239,12 @@ Parser.prototype = {
         if (!toRE(includeUrl).test(url))
             return false;
 
-        switch(true){
+        switch (true) {
             case url === '':
                 return false
             case this.info.exclude && toRE(this.info.exclude).test(url):
                 return false
-            case Rule.nextUrlIgnore.some(function(re) { return toRE(re).test(url) }):
+            case Rule.nextUrlIgnore.some(function (re) { return toRE(re).test(url) }):
                 return false
             case url === this.indexUrl:
                 return false
@@ -1259,12 +1259,12 @@ Parser.prototype = {
                 return true
         }
     },
-    getIncludeUrl: function() {
+    getIncludeUrl: function () {
         var includeUrl = this.info.url;
 
         if (!includeUrl && typeof GM_info !== 'undefined') {
             var locationHref = location.href;
-            GM_info.script.includes.some(function(includeStr) {
+            GM_info.script.includes.some(function (includeStr) {
                 var iUrl = wildcardToRegExpStr(includeStr);
                 if (toRE(iUrl).test(locationHref)) {
                     includeUrl = iUrl;
@@ -1276,7 +1276,7 @@ Parser.prototype = {
         this.info.includeUrl = includeUrl;
         return includeUrl;
     },
-    checkLinks: function(links){
+    checkLinks: function (links) {
         var self = this;
         var url = '';
 
@@ -1286,9 +1286,9 @@ Parser.prototype = {
             return this.getFullHref(links);
         }
 
-        links && links.each(function(){
+        links && links.each(function () {
             url = $(this).attr("href");
-            if(!url || url.indexOf("#") === 0 || url.indexOf("javascript:") === 0)
+            if (!url || url.indexOf("#") === 0 || url.indexOf("javascript:") === 0)
                 return;
 
             url = self.getFullHref(this);
@@ -1297,12 +1297,12 @@ Parser.prototype = {
 
         return url;
     },
-    getLinkUrl: function(linkOrUrl) {
+    getLinkUrl: function (linkOrUrl) {
         // if (linkOrUrl && )
         return linkOrUrl;
     },
-    getFullHref: function(href) {
-        if(!href) return '';
+    getFullHref: function (href) {
+        if (!href) return '';
 
         if (!_.isString(href)) {
             href = href.getAttribute('href');

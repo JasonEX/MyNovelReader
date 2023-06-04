@@ -10,7 +10,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const metaFilePath = path.join(__dirname,'../MyNovelReader/meta.js')
+const metaFilePath = path.join(__dirname, '../MyNovelReader/meta.js')
 
 let metaString = fs.readFileSync(metaFilePath).toString()
 
@@ -35,7 +35,7 @@ function escapeRegex(string) {
     return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-async function checkTask(sitesCopy){
+async function checkTask(sitesCopy) {
     const brokenSites = []
     while (sitesCopy.length) {
         const siteURL = sitesCopy.shift()
@@ -78,7 +78,7 @@ async function main() {
     for (const siteURL of brokenSites) {
         metaString = metaString.replace(RegExp(`.*${escapeRegex(siteURL)}.*\r\n`, 'g'), '')
     }
-    
+
     console.log(brokenSites)
 
     fs.writeFileSync(metaFilePath, metaString)

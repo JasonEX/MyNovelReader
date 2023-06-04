@@ -22,7 +22,7 @@ var uiTrans = {
     "booklink 自动启用": "booklink 自動啟用",
     "Enter 键打开目录": "Enter 鍵開啟目錄",
     "隐藏左侧章节列表": "隱藏左側章節列表",
-    "小说阅读脚本设置":"小說閱讀腳本設定",
+    "小说阅读脚本设置": "小說閱讀腳本設定",
     "已到达最后一页": "已到達最後一頁",
     "正在载入下一页": "正在載入下一頁",
     "通过快捷键切换": "通過熱鍵切換",
@@ -73,13 +73,13 @@ var uiTrans = {
     "目录": "目錄"
 };
 
-if(!String.prototype.uiTrans){
+if (!String.prototype.uiTrans) {
     Object.defineProperty(String.prototype, 'uiTrans', {
-        value: function(){
+        value: function () {
             var _this = this.valueOf(), key, regexp;
-            if(config.lang !== 'zh-TW') return _this;
+            if (config.lang !== 'zh-TW') return _this;
 
-            if(uiTrans.hasOwnProperty(_this)) return uiTrans[_this];
+            if (uiTrans.hasOwnProperty(_this)) return uiTrans[_this];
 
             for (key in uiTrans) {
                 regexp = new RegExp(key, 'g');

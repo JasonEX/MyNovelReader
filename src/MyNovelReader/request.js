@@ -16,8 +16,8 @@ export const iframeHeight = unsafeWindow.innerHeight
 class BaseRequest {
   /**@param { import("../typings/MyNovelReader").SiteConfig } siteInfo */
   constructor(siteInfo) {
-    this.errorHandle = () => {}
-    this.finishHandle = () => {}
+    this.errorHandle = () => { }
+    this.finishHandle = () => { }
     // 站点规则
     this.siteInfo = siteInfo
   }
@@ -82,8 +82,8 @@ export class HttpRequest extends BaseRequest {
     return this.doc
   }
 
-  hide() {}
-  show() {}
+  hide() { }
+  show() { }
 }
 
 export class IframeRequest extends BaseRequest {

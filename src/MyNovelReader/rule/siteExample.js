@@ -3,7 +3,7 @@
 // 注意：除了 url 选项，其他的都是可选的
 // 最好填一下siteName、exampleUrl，便于处理
 
-;({
+; ({
     // 站点名
     siteName: '',
     // 正文页 URL 正则（必填）
@@ -124,7 +124,7 @@
 
     // 内容处理函数
     // 用于增加额外的内容处理逻辑
-    handleContentText ($content, info) {
+    handleContentText($content, info) {
         const $html = $(this.handleContentText2($content, info))
         return $html[0].outerHTML // 返回HTML文本
     },

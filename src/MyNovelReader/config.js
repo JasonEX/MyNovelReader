@@ -1,4 +1,3 @@
-
 // 其它设置
 const config = {
   lang: 'zh-CN',

@@ -33,19 +33,19 @@
         <label><input type="radio" v-model="autoStop" value="" />一直朗读</label>
       </div>
       <div>
-          <label for="speech-dialog-rate">语速</label>
-          <input type="range" min="0.5" max="3" step="0.1" id="speech-dialog-rate" v-model="rate" />
-          <span class="rate-value">{{rate}}</span>
+        <label for="speech-dialog-rate">语速</label>
+        <input type="range" min="0.5" max="3" step="0.1" id="speech-dialog-rate" v-model="rate" />
+        <span class="rate-value">{{ rate }}</span>
       </div>
       <div>
-          <label for="speech-dialog-pitch">音高</label>
-          <input type="range" min="0" max="2" step="0.1" id="speech-dialog-pitch" v-model="pitch" />
-          <span class="pitch-value">{{pitch}}</span>
+        <label for="speech-dialog-pitch">音高</label>
+        <input type="range" min="0" max="2" step="0.1" id="speech-dialog-pitch" v-model="pitch" />
+        <span class="pitch-value">{{ pitch }}</span>
       </div>
       <div>
         <select class="voices" v-model="selectedVoice">
           <option v-for="(voice, index) in voiceList" :value="index" :key="index">
-            {{voice.name}} {{voice.lang}}
+            {{ voice.name }} {{ voice.lang }}
           </option>
         </select>
       </div>
@@ -198,7 +198,7 @@ export default {
         oldApp.scrollToArticle(elem)
       }
     },
-    getToSpeekText(fromSelection=false) {
+    getToSpeekText(fromSelection = false) {
       let startIndex = this.speakIndex
 
       // 这是 jQuery 对象
@@ -256,7 +256,7 @@ export default {
 
       this.synth.speak(this.utterance);
     },
-    listenForSpeechEvents (endFn) {
+    listenForSpeechEvents(endFn) {
       this.utterance.onstart = () => {
         this.playState = STATE.playing
       }

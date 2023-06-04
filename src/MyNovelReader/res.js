@@ -6,7 +6,7 @@ var Res = {
   CSS_MAIN: tpl_mainCss,
 
   preferencesHTML: tpl_preferencesHTML
-      .uiTrans().replace(/\\n/g, '\n'),
+    .uiTrans().replace(/\\n/g, '\n'),
 
   preferencesCSS: tpl_preferencesCSS,
 };

@@ -1,4 +1,3 @@
-
 import cnNum2ArabNum from './cnNum2ArabNum'
 
 function getNumFromChapterTitle(title) {

@@ -21,7 +21,7 @@ var UI = {
     // 站点字体
     siteFontFamily: '',
 
-    init: function(){
+    init: function () {
         UI.refreshMainStyle();
 
         UI.refreshSkinStyle(Setting.skin_name, true);
@@ -37,7 +37,7 @@ var UI = {
         UI.$preferencesBtn = $('#preferencesBtn');
 
         // 初始化是否隐藏
-        if(Setting.hide_footer_nav){
+        if (Setting.hide_footer_nav) {
             UI.hideFooterNavStyle(true);
         }
 
@@ -45,22 +45,22 @@ var UI = {
         UI.hideMenuList(Setting.menu_list_hiddden);  // 初始化章节列表是否隐藏
         UI.hidePreferencesButton(Setting.hide_preferences_button);  // 初始化设置按钮是否隐藏
     },
-    refreshMainStyle: function(){
+    refreshMainStyle: function () {
         // 添加站点字体到样式中
         if (App.site.useSiteFont && App.siteFontInfo) {
             UI.siteFontFamily = App.siteFontInfo.siteFontFamily
         }
 
         var mainCss = Res.CSS_MAIN
-                .replace("{font_family}", UI.siteFontFamily + Setting.font_family)
-                .replace("{font_size}", UI.calcContentFontSize(Setting.font_size))
-                .replace("{title_font_size}", UI.calcTitleFontSize(Setting.font_size))
-                .replace("{content_width}", Setting.content_width)
-                .replace("{text_line_height}", Setting.text_line_height)
-                .replace("{paragraph_height}", Setting.paragraph_height)
-                .replace("{menu-bar-hidden}", Setting.menu_bar_hidden ? "display:none;" : "");
+            .replace("{font_family}", UI.siteFontFamily + Setting.font_family)
+            .replace("{font_size}", UI.calcContentFontSize(Setting.font_size))
+            .replace("{title_font_size}", UI.calcTitleFontSize(Setting.font_size))
+            .replace("{content_width}", Setting.content_width)
+            .replace("{text_line_height}", Setting.text_line_height)
+            .replace("{paragraph_height}", Setting.paragraph_height)
+            .replace("{menu-bar-hidden}", Setting.menu_bar_hidden ? "display:none;" : "");
 
-        if(UI.$mainStyle){
+        if (UI.$mainStyle) {
             UI.$mainStyle.text(mainCss);
             return;
         }
@@ -69,10 +69,10 @@ var UI = {
             .text(mainCss)
             .appendTo('head');
     },
-    hideFooterNavStyle: function(hidden){
+    hideFooterNavStyle: function (hidden) {
         var navStyle = $("#footer_nav_css");
-        if(hidden) {
-            if(navStyle.length === 0) {
+        if (hidden) {
+            if (navStyle.length === 0) {
                 $('<style>')
                     .attr("id", "footer_nav_css")
                     .text(".chapter-footer-nav { display: none; }")
@@ -82,39 +82,39 @@ var UI = {
             navStyle.remove();
         }
     },
-    hideMenuList: function(hidden){
-        if(typeof(hidden) === "undefined"){
+    hideMenuList: function (hidden) {
+        if (typeof (hidden) === "undefined") {
             hidden = !UI.menu_list_hiddden;
         }
 
-        if(hidden){
+        if (hidden) {
             UI.$menu.addClass('hidden');
             UI.$content.css("margin-left", "");
-        }else{
+        } else {
             UI.$menu.removeClass('hidden');
             UI.$content.css("margin-left", "320px");
         }
         UI.menu_list_hiddden = hidden;
     },
-    hidePreferencesButton: function(hidden) {
+    hidePreferencesButton: function (hidden) {
         hidden = _.isUndefined(hidden) ? Setting.hide_preferences_button : hidden;
 
         UI.$preferencesBtn.toggle(!hidden);
     },
-    hideMenuBar: function(hidden) {
+    hideMenuBar: function (hidden) {
         hidden = _.isUndefined(hidden) ? Setting.menu_bar_hidden : hidden;
 
         UI.$menuBar.toggle(!hidden);
     },
-    refreshSkinStyle: function(skin_name, isFirst){
+    refreshSkinStyle: function (skin_name, isFirst) {
         var $style = $("#skin_style");
-        if($style.length === 0){
+        if ($style.length === 0) {
             $style = $('<style id="skin_style">').appendTo('head');
         }
 
         // 图片章节夜间模式会变的无法看
         if (isFirst && skin_name.indexOf('夜间'.uiTrans()) != -1 && Setting.picNightModeCheck) {
-            setTimeout(function(){
+            setTimeout(function () {
                 var img = $('#mynovelreader-content img')[0];
                 // console.log(img.width, img.height)
                 if (img && img.width > 500 && img.height > 1000) {
@@ -126,15 +126,15 @@ var UI = {
 
         $style.text(UI.skins[skin_name]);
     },
-    refreshExtraStyle: function(css){
+    refreshExtraStyle: function (css) {
         var style = $("#extra_style");
-        if(style.length === 0){
+        if (style.length === 0) {
             style = $('<style id="extra_style">').appendTo('head');
         }
 
         style.text(css);
     },
-    toggleQuietMode: function() {
+    toggleQuietMode: function () {
         this._isQuietMode = !this._isQuietMode;
         var selector = '#menu-bar, #menu, #preferencesBtn, .readerbtn';
 
@@ -149,7 +149,7 @@ var UI = {
             $(selector).removeClass("quiet-mode");
         }
     },
-    addButton: async function(){
+    addButton: async function () {
         GM_addStyle('\
             .readerbtn {\
                 position: fixed;\
@@ -176,10 +176,10 @@ var UI = {
         $("<div>")
             .addClass("readerbtn")
             .html(App.isEnabled ? "退出".uiTrans() : "阅读模式".uiTrans())
-            .mousedown(async function(event){
-                if(event.which == 1){
+            .mousedown(async function (event) {
+                if (event.which == 1) {
                     await App.toggle();
-                }else if(event.which == 2){
+                } else if (event.which == 2) {
                     event.preventDefault();
                     L_setValue("mynoverlreader_disable_once", true);
 
@@ -189,9 +189,9 @@ var UI = {
             })
             .appendTo('body');
     },
-    calcContentFontSize: function(fontSizeStr) {
+    calcContentFontSize: function (fontSizeStr) {
         var m = fontSizeStr.match(/([\d\.]+)(px|r?em|pt)/);
-        if(m) {
+        if (m) {
             var size = m[1],
                 type = m[2];
             return parseFloat(size, 10) + type;
@@ -204,9 +204,9 @@ var UI = {
 
         return "";
     },
-    calcTitleFontSize: function(fontSizeStr){
+    calcTitleFontSize: function (fontSizeStr) {
         var m = fontSizeStr.match(/([\d\.]+)(px|r?em|pt)/);
-        if(m) {
+        if (m) {
             var size = m[1],
                 type = m[2];
             return parseFloat(size, 10) * 1.8 + type;
@@ -219,14 +219,14 @@ var UI = {
 
         return "";
     },
-    fixMobile: function(){  // 自适应网页设计
+    fixMobile: function () {  // 自适应网页设计
         var meta = document.createElement("meta");
         meta.setAttribute("name", "viewport");
         meta.setAttribute("content", "width=device-width, initial-scale=1");
         document.head.appendChild(meta);
     },
-    preferencesShow: function(event){
-        if($("#reader_preferences").length){
+    preferencesShow: function (event) {
+        if ($("#reader_preferences").length) {
             return;
         }
 
@@ -242,19 +242,19 @@ var UI = {
 
         UI.preferencesLoadHandler();
     },
-    _loadBlocker: function() {
+    _loadBlocker: function () {
         UI.$blocker = $('<div>').attr({
             id: 'uil_blocker',
             style: 'position:fixed;top:0px;left:0px;right:0px;bottom:0px;background-color:#000;opacity:0.5;z-index:100000;'
         }).appendTo('body');
     },
-    hide: function(){
-        if(UI.$prefs) UI.$prefs.remove();
-        if(UI.$blocker) UI.$blocker.remove();
+    hide: function () {
+        if (UI.$prefs) UI.$prefs.remove();
+        if (UI.$blocker) UI.$blocker.remove();
         UI.$prefs = null;
         UI.$blocker = null;
     },
-    preferencesLoadHandler: function(){
+    preferencesLoadHandler: function () {
         var $form = $("#preferences");
 
         // checkbox
@@ -304,29 +304,29 @@ var UI = {
         var $lang = $form.find("#lang");
         $("<option>").text("zh-CN").appendTo($lang);
         $("<option>").text("zh-TW").appendTo($lang);
-        $lang.val(Setting.lang).change(function(){
+        $lang.val(Setting.lang).change(function () {
             var key = $(this).find("option:selected").text();
             Setting.lang = key;
         });
 
         // 皮肤
         var $skin = $form.find("#skin");
-        for(var key in UI.skins){
+        for (var key in UI.skins) {
             $("<option>").text(key).appendTo($skin);
         }
-        $skin.val(Setting.skin_name).change(function(){
+        $skin.val(Setting.skin_name).change(function () {
             var key = $(this).find("option:selected").text();
             UI.refreshSkinStyle(key);
             Setting.skin_name = key;
         });
 
         // 字体大小等预览
-        var preview = _.debounce(function(){
-            switch(this.id){
+        var preview = _.debounce(function () {
+            switch (this.id) {
                 case "font-size":
                     var contentFontSize = UI.calcContentFontSize(this.value);
                     var titleFontSize = UI.calcTitleFontSize(this.value);
-                    if(titleFontSize) {
+                    if (titleFontSize) {
                         UI.$content.css("font-size", contentFontSize);
                         UI.$content.find("h1").css("font-size", titleFontSize);
                     }
@@ -356,17 +356,17 @@ var UI = {
         $form.find("#setOpenSpeechKey").get(0).value = Setting.openSpeechKey;
 
         // 点击事件
-        $form.on('click', 'input:checkbox, input:button', function(event){
+        $form.on('click', 'input:checkbox, input:button', function (event) {
             UI.preferencesClickHandler(event.target); // 不用 await
         });
     },
-    cleanPreview: function() {
+    cleanPreview: function () {
         UI.$content.find("h1").css("font-size", "");
 
         // 恢复初始设置（有误操作）
         // UI.$content.removeAttr('style');
     },
-    preferencesClickHandler: async function(target){
+    preferencesClickHandler: async function (target) {
         var key;
         switch (target.id) {
             case 'close_button':
@@ -433,12 +433,12 @@ var UI = {
                 break;
         }
     },
-    preferencesCloseHandler: function(){
+    preferencesCloseHandler: function () {
         UI.cleanPreview();
 
         UI.hide();
     },
-    preferencesSaveHandler: function(){
+    preferencesSaveHandler: function () {
         var $form = $("#preferences");
 
         // Setting.setDisableAutoLaunch($form.find("#disable-auto-launch").get(0).checked);
@@ -530,10 +530,10 @@ var UI = {
 
         UI.hide();
     },
-    openHelp: function() {
+    openHelp: function () {
 
     },
-    notice: function (htmlText, ms){
+    notice: function (htmlText, ms) {
         var $noticeDiv = $("#alert");
         if (!ms) {
             ms = 1666;
@@ -543,7 +543,7 @@ var UI = {
         $noticeDiv.find("p").html(htmlText);
         $noticeDiv.fadeIn("fast");
 
-        UI.noticeDivto = setTimeout(function(){
+        UI.noticeDivto = setTimeout(function () {
             $noticeDiv.fadeOut(500);
         }, ms);
 
@@ -579,4 +579,3 @@ UI.skins["绿色亮字".uiTrans()] = "body, #menu, #header, .chapter.active div 
 UI.skins["图书双层".uiTrans()] = `body { color: #black; background: #ECE8D7 url('https://s3.bmp.ovh/imgs/2022/01/c08287428c0e16e2.png') repeat; } #mynovelreader-content{ letter-spacing: 1.3px; background: #E8E6DA url('https://s3.bmp.ovh/imgs/2022/01/71f45b2d4773b393.png') repeat; padding-left: 4rem ;padding-right: 4rem ; border-style:solid; border-width:1px;border-width:1px; border-color:rgba(211,211,211,0.25); }`;
 
 export default UI
-

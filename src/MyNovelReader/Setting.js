@@ -2,9 +2,9 @@ import { toggleConsole } from './lib'
 import config from './config'
 // import UI from './UI'
 
-var getBooleanConfig = function(configName, defaultValue) {
+var getBooleanConfig = function (configName, defaultValue) {
     var config = GM_getValue(configName);
-    if(config === undefined) {
+    if (config === undefined) {
         GM_setValue(configName, defaultValue);
         config = defaultValue;
     }
@@ -76,7 +76,7 @@ const Setting = {
     },
 
     get remain_height() {  // 距离底部多少高度（px）开始加载下一页
-        if(_.isUndefined(this._remain_height)){
+        if (_.isUndefined(this._remain_height)) {
             this._remain_height = parseInt(GM_getValue("remain_height"), 10) || 400;
         }
         return this._remain_height;
@@ -112,17 +112,17 @@ const Setting = {
         GM_setValue("font_size", val);
     },
 
-    get text_line_height(){
+    get text_line_height() {
         return GM_getValue("text_line_height") || "2em";
     },
-    set text_line_height(val){
+    set text_line_height(val) {
         GM_setValue("text_line_height", val);
     },
 
-    get paragraph_height(){
+    get paragraph_height() {
         return GM_getValue("paragraph_height") || "1em";
     },
-    set paragraph_height(val){
+    set paragraph_height(val) {
         GM_setValue("paragraph_height", val);
     },
 

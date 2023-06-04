@@ -2,7 +2,7 @@ import config from './config'
 import Parser from './parser'
 import { loading } from './components/message'
 import App from './app'
-import {saveAs, isWindows} from './utils'
+import { saveAs, isWindows } from './utils'
 import getNumFromChapterTitle from './utils/getNumFromChapterTitle'
 import { sleep, C } from './lib'
 
@@ -46,7 +46,7 @@ function toTxt(parser) {
   chapters.push(html);
 
   var msg = '已下载 ' + chapters.length + ' 章，' +
-      (parser.chapterTitle || '')
+    (parser.chapterTitle || '')
 
   loading(msg, 0);
 };
@@ -54,7 +54,7 @@ function toTxt(parser) {
 function finish(parser) {
   var allTxt = chapters.join('\n\n');
   if (isWindows) {
-      allTxt = allTxt.replace(/\n/g, '\r\n');
+    allTxt = allTxt.replace(/\n/g, '\r\n');
   }
 
   if (parser) {
@@ -67,15 +67,15 @@ function finish(parser) {
 async function getOnePage(parser, nextUrl) {
   var isEnd = false;
   if (parser && parser.content) {
-      toTxt(parser);
-      nextUrl = parser.nextUrl;
-      isEnd = parser.isTheEnd;
+    toTxt(parser);
+    nextUrl = parser.nextUrl;
+    isEnd = parser.isTheEnd;
   }
 
   if (!nextUrl || isEnd) {
-      C.log('全部获取完毕');
-      finish(parser);
-      return;
+    C.log('全部获取完毕');
+    finish(parser);
+    return;
   }
 
   sleep(config.download_delay)
@@ -103,18 +103,18 @@ async function getNextPage(nextUrl) {
   }
 
   if (doc) {
-      var par = new Parser(App.site, doc, nextUrl);
-      await par.getAll()
-      await getOnePage(par)
+    var par = new Parser(App.site, doc, nextUrl);
+    await par.getAll()
+    await getOnePage(par)
   } else {
-      C.error('超时或连接出错');
-      finish();
+    C.error('超时或连接出错');
+    finish();
   }
 }
 
-async function run(cachedParsers=[]) {
+async function run(cachedParsers = []) {
   C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`)
-  
+
   lastRequestUrl = ""
 
   cachedParsers.forEach(toTxt);

@@ -42,7 +42,7 @@ var App = {
     // 站点规则
     site: null,
 
-    init: async function() {
+    init: async function () {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
             return;
         }
@@ -72,8 +72,8 @@ var App = {
         var readx = App.launch
 
         try {
-            exportFunction(readx, unsafeWindow, {defineAs: "readx"});
-        } catch(ex) {
+            exportFunction(readx, unsafeWindow, { defineAs: "readx" });
+        } catch (ex) {
             C.error('无法定义 readx 函数');
         }
 
@@ -114,7 +114,7 @@ var App = {
             await UI.addButton();
         }
     },
-    loadCustomSetting: function() {
+    loadCustomSetting: function () {
         var customRules;
         try {
             customRules = eval(Setting.customSiteinfo);
@@ -132,11 +132,11 @@ var App = {
 
         C.log('载入自定义替换规则成功', Rule.customReplace);
     },
-    getCurSiteInfo: function() {
+    getCurSiteInfo: function () {
         var rules = Rule.customRules.concat(Rule.specialSite);
         var locationHref = location.href;
 
-        var info = _.find(rules, function(x) {
+        var info = _.find(rules, function (x) {
             return toRE(x.url).test(locationHref);
         });
 
@@ -148,7 +148,7 @@ var App = {
         }
         return info;
     },
-    isAutoLaunch: function() {
+    isAutoLaunch: function () {
         var locationHref = window.location.href,
             locationHost = location.host,
             referrer = document.referrer;
@@ -180,7 +180,7 @@ var App = {
                 return false;
         }
     },
-    addMutationObserve: function(doc) {
+    addMutationObserve: function (doc) {
         var shouldAdd = false;
         var $doc = $(doc);
 
@@ -227,7 +227,7 @@ var App = {
             })
         }
     },
-    launch: async function() {
+    launch: async function () {
         // 只解析一次，防止多次重复解析一个页面
         if (document.body && document.body.getAttribute("name") == "MyNovelReader") {
             return await App.toggle();
@@ -278,7 +278,7 @@ var App = {
         if (App.site.fInit)
             App.site.fInit();
     },
-    processPage: async function(parser) {
+    processPage: async function (parser) {
         // 对 Document 进行处理
         document.body.innerHTML = '';
         App.prepDocument();
@@ -309,11 +309,11 @@ var App = {
                 .addClass('chapter')
                 .append(
                     $("<div>")
-                    .attr({
-                        "realHref": parser.prevUrl,
-                        "onclick": "return false;"
-                    })
-                    .text("上一章".uiTrans())
+                        .attr({
+                            "realHref": parser.prevUrl,
+                            "onclick": "return false;"
+                        })
+                        .text("上一章".uiTrans())
                 )
                 .prependTo(App.$chapterList);
         }
@@ -373,7 +373,7 @@ var App = {
             await App.doRequest();
         }
     },
-    initRequest: function() {
+    initRequest: function () {
         App.httpRequest = new HttpRequest(App.site)
         App.iframeRequest = new IframeRequest(App.site)
 
@@ -385,14 +385,14 @@ var App = {
         App.iframeRequest.setErrorHandle(() => App.scrollForce())
         App.iframeRequest.setFinishHandle(() => App.scroll())
     },
-    prepDocument: function() {
-        window.onload = window.onunload = function() {};
+    prepDocument: function () {
+        window.onload = window.onunload = function () { };
 
         // 破解右键限制
         var doc = document;
         var bd = doc.body;
         bd.onclick = bd.ondblclick = bd.onselectstart = bd.oncopy = bd.onpaste = bd.onkeydown = bd.oncontextmenu = bd.onmousemove = bd.onselectstart = bd.ondragstart = doc.onselectstart = doc.oncopy = doc.onpaste = doc.onkeydown = doc.oncontextmenu = null;
-        doc.onclick = doc.ondblclick = doc.onselectstart = doc.oncontextmenu = doc.onmousedown = doc.onkeydown = function() {
+        doc.onclick = doc.ondblclick = doc.onselectstart = doc.oncontextmenu = doc.onmousedown = doc.onkeydown = function () {
             return true;
         };
 
@@ -416,9 +416,9 @@ var App = {
             .removeAttr('style')
             .removeAttr('bgcolor');
 
-        $('style:not(.noRemove)').filter(function() {
+        $('style:not(.noRemove)').filter(function () {
             var $style = $(this);
-            if($style.text().indexOf('#cVim-link-container') != -1) {  // chrome 的 cVim 扩展
+            if ($style.text().indexOf('#cVim-link-container') != -1) {  // chrome 的 cVim 扩展
                 return false;
             }
             return true;
@@ -433,12 +433,12 @@ var App = {
             return false
         }).remove()
     },
-    initDocument: function(parser) {
+    initDocument: function (parser) {
         document.title = parser.docTitle;
 
         document.body.innerHTML = $.nano(tpl_mainHtml.uiTrans(), parser);
     },
-    clean: function() {
+    clean: function () {
         $('body > *:not("#container, .readerbtn, .noRemove, #reader_preferences, #uil_blocker,iframe[name=\'mynovelreader-iframe\']")').remove();
         $('link[rel="stylesheet"]:not(.noRemove)').remove();
         $('body, #container').removeAttr('style').removeAttr('class');
@@ -447,7 +447,7 @@ var App = {
             unsafeWindow.jQuery(document).off("selectstart").off("contextmenu");
         }
     },
-    cleanAgain: function() {
+    cleanAgain: function () {
         // var host = location.host;
         // if (!host.match(/qidian\.com|zongheng\.com/)) {  // 只在起点、纵横等网站运行
         //     return;
@@ -458,12 +458,12 @@ var App = {
         setTimeout(App.clean, 5000);
         setTimeout(App.clean, 8000);
         // TM 用 addEventListener('load') 有问题
-        window.onload = function() {
+        window.onload = function () {
             App.clean();
             setTimeout(App.clean, 500);
         };
     },
-    toggle: async function() {
+    toggle: async function () {
         if (App.isEnabled) { // 退出
             GM_setValue("auto_enable", false);
             L_setValue("mynoverlreader_disable_once", true);
@@ -477,13 +477,13 @@ var App = {
             await App.launch();
         }
     },
-    removeListener: function() {
+    removeListener: function () {
         C.log("移除各种事件监听");
-        App.remove.forEach(function(_remove) {
+        App.remove.forEach(function (_remove) {
             _remove();
         });
     },
-    appendPage: function(parser, isFirst) {
+    appendPage: function (parser, isFirst) {
         var chapter = $("article:last");
         if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
             var lastText = chapter.find("p:last").remove().text().trimRight();
@@ -518,13 +518,13 @@ var App = {
                 .addClass('chapter')
                 .append(
                     $("<div>")
-                    .attr({
-                        href: "#page-" + App.pageNum,
-                        "realHref": parser.curPageUrl,
-                        onclick: "return false;",
-                        title: parser.chapterTitle
-                    })
-                    .text(parser.chapterTitle)
+                        .attr({
+                            href: "#page-" + App.pageNum,
+                            "realHref": parser.curPageUrl,
+                            onclick: "return false;",
+                            title: parser.chapterTitle
+                        })
+                        .text(parser.chapterTitle)
                 )
                 .prependTo(App.$chapterList);
 
@@ -541,11 +541,11 @@ var App = {
 
         bus.$emit(APPEND_NEXT_PAGE)
     },
-    resetCache: function() {  // 更新缓存变量
+    resetCache: function () {  // 更新缓存变量
         App.menuItems = App.$chapterList.find("div");
         App.scrollItems = $("article[id^=page-]");
     },
-    registerControls: function() {
+    registerControls: function () {
         // 内容滚动
         var throttled = _.throttle(App.scroll, 200);
         $(window).scroll(throttled);
@@ -553,21 +553,21 @@ var App = {
         App.registerKeys();
 
         if (Setting.dblclickPause) {
-            App.$content.on("dblclick", function() {
+            App.$content.on("dblclick", function () {
                 App.pauseHandler();
             });
         }
 
         // 左侧章节列表
-        App.$menuHeader.click(function() {
+        App.$menuHeader.click(function () {
             App.copyCurTitle();
         });
 
-        App.$menuBar.click(function() {
+        App.$menuBar.click(function () {
             UI.hideMenuList();
         });
 
-        App.$doc.on("mousedown", "#chapter-list div", function(event) {
+        App.$doc.on("mousedown", "#chapter-list div", function (event) {
             switch (event.which) {
                 case 1:
                     var href = $(this).attr("href");
@@ -584,15 +584,15 @@ var App = {
             }
         });
 
-        $("#preferencesBtn").click(function(event) {
+        $("#preferencesBtn").click(function (event) {
             event.preventDefault();
             UI.preferencesShow();
         });
 
         GM_registerMenuCommand("小说阅读脚本设置".uiTrans(), UI.preferencesShow.bind(UI));
     },
-    registerKeys: function() {
-        key('enter', function(event) {
+    registerKeys: function () {
+        key('enter', function (event) {
             if (UI.$prefs) {
                 return;
             }
@@ -604,7 +604,7 @@ var App = {
             event.preventDefault();
         });
 
-        key('left', function(event) {
+        key('left', function (event) {
             var scrollTop = $(window).scrollTop();
             if (scrollTop === 0) {
                 location.href = App.prevUrl;
@@ -620,7 +620,7 @@ var App = {
             return false;
         });
 
-        key('right', function(event) {
+        key('right', function (event) {
             if (App.getRemain() === 0) {
                 location.href = App.lastRequestUrl || App.requestUrl;
             } else {
@@ -632,50 +632,50 @@ var App = {
             return false;
         });
 
-        key('esc', function(){
+        key('esc', function () {
             if (UI.$prefs) {
                 UI.hide();
                 return false;
             }
         });
 
-        key('shift+/', function() {
+        key('shift+/', function () {
             UI.openHelp();
             return false;
         });
 
-        key(Setting.quietModeKey, function(){
+        key(Setting.quietModeKey, function () {
             UI.toggleQuietMode();
             return false;
         });
 
-        key(Setting.hideMenuListKey, function(){
+        key(Setting.hideMenuListKey, function () {
             UI.hideMenuList();
             return false;
         });
 
-        key(Setting.openPreferencesKey, function(){
+        key(Setting.openPreferencesKey, function () {
             UI.preferencesShow();
             return false;
         });
 
-        key(Setting.openSpeechKey, function() {
+        key(Setting.openSpeechKey, function () {
             bus.$emit(SHOW_SPEECH)
             return false;
         });
 
         // PageUp
-        key(',', function() {
+        key(',', function () {
             let { scrollX, scrollY, innerHeight } = window
             window.scrollTo(scrollX, scrollY - innerHeight * .9)
         });
         // PageDown
-        key('.', function() {
+        key('.', function () {
             let { scrollX, scrollY, innerHeight } = window
             window.scrollTo(scrollX, scrollY + innerHeight * .9)
         });
     },
-    copyCurTitle: function() {
+    copyCurTitle: function () {
         if (Setting.copyCurTitle) {
             var title = $(App.curFocusElement).find(".title").text()
                 .replace(/第?\S+章/, "").trim();
@@ -683,7 +683,7 @@ var App = {
             GM_setClipboard(title, "text");
         }
     },
-    scrollToArticle: function(elem) {
+    scrollToArticle: function (elem) {
         var offsetTop;
         if (typeof elem == "number") {
             offsetTop = elem;
@@ -699,17 +699,17 @@ var App = {
             $("html, body").stop().scrollTop(offsetTop);
         }
     },
-    openUrl: function(url, errorMsg) {
+    openUrl: function (url, errorMsg) {
         if (url) {
             // ff30 Greasemonkey 会报错：Greasemonkey 访问违规：unsafeWindow 无法调用 GM_openInTab。新建脚本采用按键调用也这样。
-            setTimeout(function() {
+            setTimeout(function () {
                 GM_openInTab(url, false);
             }, 0);
         } else if (errorMsg) {
             UI.notice(errorMsg);
         }
     },
-    pauseHandler: async function() {
+    pauseHandler: async function () {
         App.paused = !App.paused;
         if (App.paused) {
             UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>暂停</b></span>'.uiTrans());
@@ -719,9 +719,9 @@ var App = {
             await App.scroll();
         }
     },
-    scroll: async function() {
+    scroll: async function () {
         if (App.request.display && Math.floor(App.getRemain() - iframeHeight) < 0) {
-            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 51)
+            window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight + 51)
         }
 
         if (!App.paused && App.getRemain() < Setting.remain_height) {
@@ -734,7 +734,7 @@ var App = {
 
         App.updateCurFocusElement();
     },
-    scrollForce: async function() {
+    scrollForce: async function () {
         switch (App.request.status) {
             case RequestStatus.Idle:
                 await App.doRequest();
@@ -750,12 +750,12 @@ var App = {
                 break;
         }
     },
-    updateCurFocusElement: function() { // 滚动激活章节列表
+    updateCurFocusElement: function () { // 滚动激活章节列表
         // Get container scroll position
         var fromTop = $(window).scrollTop() + $(window).height() / 2;
 
         // Get id of current scroll item
-        var cur = App.scrollItems.map(function() {
+        var cur = App.scrollItems.map(function () {
             if ($(this).offset().top < fromTop)
                 return this;
         });
@@ -793,13 +793,13 @@ var App = {
             }
         }
     },
-    getRemain: function() {
+    getRemain: function () {
         var scrollHeight = Math.max(document.documentElement.scrollHeight,
             document.body.scrollHeight);
         var remain = scrollHeight - window.innerHeight - window.scrollY;
         return remain;
     },
-    doRequest: async function() {
+    doRequest: async function () {
         var nextUrl = App.requestUrl;
         const referer = App.lastRequestUrl || App.curPageUrl
         App.lastRequestUrl = App.requestUrl;
@@ -824,24 +824,24 @@ var App = {
             } else {
                 App.request = App.httpRequest
             }
-            
+
             C.log('获取下一页', nextUrl)
             if (App.site.withReferer) {
                 App.request.send(nextUrl, referer)
             } else {
                 App.request.send(nextUrl)
             }
-    
+
         } else {
             // App.$loading.html("<a href='" + App.curPageUrl  + "'>无法使用阅读模式，请手动点击下一页</a>").show();
         }
     },
-    loaded: async function(doc) {
+    loaded: async function (doc) {
         var parser = new Parser(App.site, doc, App.curPageUrl);
         await parser.getAll();
         await App.addNextPage(parser);
     },
-    addNextPage: async function(parser) {
+    addNextPage: async function (parser) {
         if (parser.content) {
             App.appendPage(parser);
 
@@ -862,14 +862,14 @@ var App = {
         }
 
     },
-    afterLoad: async function() {
+    afterLoad: async function () {
 
         if (Setting.preloadNextPage) {
             await sleep(200)
             App.doRequest();  // 不用 await
         }
     },
-    fixImageFloats: function(articleContent) {
+    fixImageFloats: function (articleContent) {
         if (!config.fixImageFloats) return;
 
         articleContent = articleContent || document;
@@ -887,7 +887,7 @@ var App = {
     },
 
     isSaveing: false,
-    saveAsTxt: async function() {
+    saveAsTxt: async function () {
         // if (App.site.useiframe) {
         //     UI.notice('暂不支持', 3000);
         //     return;
@@ -928,7 +928,7 @@ var App = {
                 external.push(styleSheet.href)
             }
         }
-        
+
         // 处理成 font-family 样式格式
         let familyList = []
 
@@ -952,7 +952,7 @@ var App = {
         })
 
         fonts.siteFontFamily = familyList.join(',') + ','
-        
+
         return fonts
     }
 };

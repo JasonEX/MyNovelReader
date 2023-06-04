@@ -21,34 +21,34 @@ var Rule = {
   prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
   // 忽略的下一页链接，匹配 href
   nextUrlIgnore: [
-      /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
+    /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
 
-      // qidian
-      // /BookReader\/LastPageNew\.aspx/i,
-      // /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
-      /read\.qidian\.com\/$/i,
-      // /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
+    // qidian
+    // /BookReader\/LastPageNew\.aspx/i,
+    // /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
+    /read\.qidian\.com\/$/i,
+    // /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
 
-      /book\.zongheng\.com\/readmore/i,
-      /www\.shumilou\.com\/to-n-[a-z]+-\d+\.html/i,
-      /\/0\.html$/i,
+    /book\.zongheng\.com\/readmore/i,
+    /www\.shumilou\.com\/to-n-[a-z]+-\d+\.html/i,
+    /\/0\.html$/i,
   ],
   nextUrlCompare: /\/\d+(_\d+)?\.html?$|\/wcxs-\d+-\d+\/$|chapter-\d+\.html$|\/\d+_\d+\/$|\/\d+\/\d+$/i,  // 忽略的下一页链接（特殊），跟上一页比较
 
   // 按顺序匹配，匹配到则停止。econtains 完全相等
   indexSelectors: ["a[href='index.html']", "a:contains('返回书目')", "a:contains('章节目录')", "a:contains('章节列表')",
-      "a:econtains('最新章节')", "a:contains('回目录')","a:contains('回书目')", "a:contains('目 录')", "a:contains('目录')"],
+    "a:econtains('最新章节')", "a:contains('回目录')", "a:contains('回书目')", "a:contains('目 录')", "a:contains('目录')"],
 
   contentSelectors: ["#pagecontent", "#contentbox", "#bmsy_content", "#bookpartinfo", "#htmlContent",
-      "#text_area", "#chapter_content", "#chapterContent", "#chaptercontent", "#partbody", "#BookContent", "#read-content",
-      "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
-      "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
-      "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-      "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-      "#ChapterContents", "#acontent", "#chapterinfo", "#read_content", "#chapter-content",
-      ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
-      ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
-      "article",
+    "#text_area", "#chapter_content", "#chapterContent", "#chaptercontent", "#partbody", "#BookContent", "#read-content",
+    "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
+    "#TextContent", "#txtContent", "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
+    "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content",
+    "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+    "#ChapterContents", "#acontent", "#chapterinfo", "#read_content", "#chapter-content",
+    ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
+    ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
+    "article",
   ],
 
   // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -86,7 +86,7 @@ var Rule = {
     '.bread a:last',
   ],
   bookTitleReplace: [
-      '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
+    '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
   ],
 
   contentRemove: "script, iframe, a, audio, style, button",          // 内容移除选择器
@@ -121,13 +121,13 @@ oneWordReplace.extendRule(Rule.replace)
 function parseCustomReplaceRules(str) {
   var arr = str.split(/\n/);
   var rules = {};
-  _.each(arr, function(b) {
-      var pos = b.indexOf('=');
-      if (pos === -1) return;
+  _.each(arr, function (b) {
+    var pos = b.indexOf('=');
+    if (pos === -1) return;
 
-      var key = b.substring(0, pos),
-          value = b.substring(pos + 1, b.length);
-      rules[key] = value;
+    var key = b.substring(0, pos),
+      value = b.substring(pos + 1, b.length);
+    rules[key] = value;
   });
   return rules;
 };

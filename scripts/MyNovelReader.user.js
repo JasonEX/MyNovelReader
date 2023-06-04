@@ -350,7 +350,7 @@
       "booklink 自动启用": "booklink 自動啟用",
       "Enter 键打开目录": "Enter 鍵開啟目錄",
       "隐藏左侧章节列表": "隱藏左側章節列表",
-      "小说阅读脚本设置":"小說閱讀腳本設定",
+      "小说阅读脚本设置": "小說閱讀腳本設定",
       "已到达最后一页": "已到達最後一頁",
       "正在载入下一页": "正在載入下一頁",
       "通过快捷键切换": "通過熱鍵切換",
@@ -401,13 +401,13 @@
       "目录": "目錄"
   };
 
-  if(!String.prototype.uiTrans){
+  if (!String.prototype.uiTrans) {
       Object.defineProperty(String.prototype, 'uiTrans', {
-          value: function(){
+          value: function () {
               var _this = this.valueOf(), key, regexp;
-              if(config.lang !== 'zh-TW') return _this;
+              if (config.lang !== 'zh-TW') return _this;
 
-              if(uiTrans.hasOwnProperty(_this)) return uiTrans[_this];
+              if (uiTrans.hasOwnProperty(_this)) return uiTrans[_this];
 
               for (key in uiTrans) {
                   regexp = new RegExp(key, 'g');
@@ -432,13 +432,13 @@
 
   //------------------- 辅助函数 ----------------------------------------
 
-  var nullFn = function() {};
+  var nullFn = function () { };
 
   // @require https://greasyfork.org/scripts/2599-gm-2-port-function-override-helper/code/GM%202%20port%20-%20Function%20Override%20Helper.js?version=184155
   // Check if is GM 2.x
   if (typeof window.exportFunction == 'undefined') {
       // For GM 1.x backward compatibility, should work.
-      window.exportFunction = (function(foo, scope, defAs) {
+      window.exportFunction = (function (foo, scope, defAs) {
           scope[defAs.defineAs] = foo;
       }).bind(unsafeWindow);
   }
@@ -447,7 +447,7 @@
 
   function toggleConsole(debug) {
       if (debug) {
-          C = {...unsafeWindow.console};
+          C = { ...unsafeWindow.console };
       } else {
           C = {
               log: nullFn,
@@ -466,19 +466,19 @@
   function L_getValue(key) { // 个别用户禁用本地存储会报错
       try {
           return localStorage.getItem(key);
-      } catch (e) {}
+      } catch (e) { }
   }
 
   function L_setValue(key, value) {
       try {
           localStorage.setItem(key, value);
-      } catch (e) {}
+      } catch (e) { }
   }
 
   function L_removeValue(key) {
       try {
           localStorage.removeItem(key);
-      } catch (e) {}
+      } catch (e) { }
   }
 
 
@@ -487,7 +487,7 @@
       try {
           // firefox and chrome 30+，Opera 12 会报错
           doc = new DOMParser().parseFromString(str, "text/html");
-      } catch (ex) {}
+      } catch (ex) { }
 
       if (!doc) {
           doc = document.implementation.createHTMLDocument("");
@@ -522,7 +522,7 @@
 
   function wildcardToRegExpStr(urlstr) {
       if (urlstr.source) return urlstr.source;
-      var reg = urlstr.replace(/[()\[\]{}|+.,^$?\\]/g, "\\$&").replace(/\*+/g, function(str){
+      var reg = urlstr.replace(/[()\[\]{}|+.,^$?\\]/g, "\\$&").replace(/\*+/g, function (str) {
           return str === "*" ? ".*" : "[^/]*";
       });
       return "^" + reg + "$";
@@ -539,7 +539,7 @@
   }
 
   // 等待 DOMContentLoaded 事件触发
-  function DOMContentLoaded(){
+  function DOMContentLoaded() {
       return new Promise(resolve => $(resolve))
   }
 
@@ -591,19 +591,19 @@
 
 
   // 模板
-  $.nano = function(template, data) {
-      return template.replace(/\{([\w\.]*)\}/g, function(str, key) {
+  $.nano = function (template, data) {
+      return template.replace(/\{([\w\.]*)\}/g, function (str, key) {
           var keys = key.split("."),
               v = data[keys.shift()];
           try {
               for (var i = 0, l = keys.length; i < l; i++) v = v[keys[i]];
-          } catch (e) {}
+          } catch (e) { }
           return (typeof v !== "undefined" && v !== null) ? v : "";
       });
   };
 
   // jQuery text 完全匹配. e.g. a:econtains('最新章节')
-  $.expr[":"].econtains = function(obj, index, meta, stack) {
+  $.expr[":"].econtains = function (obj, index, meta, stack) {
       return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() == meta[3].toLowerCase();
   };
 
@@ -621,25 +621,25 @@
           while (node = results.iterateNext()) {
               nodes.push(node);
           }
-      } catch (ex) {}
+      } catch (ex) { }
 
       return nodes;
   }
 
   if (typeof String.prototype.startsWith != 'function') {
-      String.prototype.startsWith = function(str) {
+      String.prototype.startsWith = function (str) {
           return this.slice(0, str.length) == str;
       };
   }
 
   if (typeof String.prototype.endsWith != 'function') {
-      String.prototype.endsWith = function(str) {
+      String.prototype.endsWith = function (str) {
           return this.slice(-str.length) == str;
       };
   }
 
   if (!String.prototype.includes) {
-      String.prototype.includes = function(search, start) {
+      String.prototype.includes = function (search, start) {
           if (typeof start !== 'number') {
               start = 0;
           }
@@ -655,15 +655,15 @@
   /*
    * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
    */
-  jQuery.easing.jswing=jQuery.easing.swing,jQuery.extend(jQuery.easing,{def:"easeOutQuad",swing:function(a,b,c,d,e){return jQuery.easing[jQuery.easing.def](a,b,c,d,e)},easeInQuad:function(a,b,c,d,e){return d*(b/=e)*b+c},easeOutQuad:function(a,b,c,d,e){return -d*(b/=e)*(b-2)+c},easeInOutQuad:function(a,b,c,d,e){return (b/=e/2)<1?d/2*b*b+c:-d/2*(--b*(b-2)-1)+c},easeInCubic:function(a,b,c,d,e){return d*(b/=e)*b*b+c},easeOutCubic:function(a,b,c,d,e){return d*((b=b/e-1)*b*b+1)+c},easeInOutCubic:function(a,b,c,d,e){return (b/=e/2)<1?d/2*b*b*b+c:d/2*((b-=2)*b*b+2)+c},easeInQuart:function(a,b,c,d,e){return d*(b/=e)*b*b*b+c},easeOutQuart:function(a,b,c,d,e){return -d*((b=b/e-1)*b*b*b-1)+c},easeInOutQuart:function(a,b,c,d,e){return (b/=e/2)<1?d/2*b*b*b*b+c:-d/2*((b-=2)*b*b*b-2)+c},easeInQuint:function(a,b,c,d,e){return d*(b/=e)*b*b*b*b+c},easeOutQuint:function(a,b,c,d,e){return d*((b=b/e-1)*b*b*b*b+1)+c},easeInOutQuint:function(a,b,c,d,e){return (b/=e/2)<1?d/2*b*b*b*b*b+c:d/2*((b-=2)*b*b*b*b+2)+c},easeInSine:function(a,b,c,d,e){return -d*Math.cos(b/e*(Math.PI/2))+d+c},easeOutSine:function(a,b,c,d,e){return d*Math.sin(b/e*(Math.PI/2))+c},easeInOutSine:function(a,b,c,d,e){return -d/2*(Math.cos(Math.PI*b/e)-1)+c},easeInExpo:function(a,b,c,d,e){return 0==b?c:d*Math.pow(2,10*(b/e-1))+c},easeOutExpo:function(a,b,c,d,e){return b==e?c+d:d*(-Math.pow(2,-10*b/e)+1)+c},easeInOutExpo:function(a,b,c,d,e){return 0==b?c:b==e?c+d:(b/=e/2)<1?d/2*Math.pow(2,10*(b-1))+c:d/2*(-Math.pow(2,-10*--b)+2)+c},easeInCirc:function(a,b,c,d,e){return -d*(Math.sqrt(1-(b/=e)*b)-1)+c},easeOutCirc:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c},easeInOutCirc:function(a,b,c,d,e){return (b/=e/2)<1?-d/2*(Math.sqrt(1-b*b)-1)+c:d/2*(Math.sqrt(1-(b-=2)*b)+1)+c},easeInElastic:function(a,b,c,d,e){var f=1.70158,g=0,h=d;return 0==b?c:1==(b/=e)?c+d:(g||(g=.3*e),h<Math.abs(d)?(h=d,f=g/4):f=g/(2*Math.PI)*Math.asin(d/h),-(h*Math.pow(2,10*(b-=1))*Math.sin((b*e-f)*2*Math.PI/g))+c)},easeOutElastic:function(a,b,c,d,e){var f=1.70158,g=0,h=d;return 0==b?c:1==(b/=e)?c+d:(g||(g=.3*e),h<Math.abs(d)?(h=d,f=g/4):f=g/(2*Math.PI)*Math.asin(d/h),h*Math.pow(2,-10*b)*Math.sin((b*e-f)*2*Math.PI/g)+d+c)},easeInOutElastic:function(a,b,c,d,e){var f=1.70158,g=0,h=d;return 0==b?c:2==(b/=e/2)?c+d:(g||(g=e*.3*1.5),h<Math.abs(d)?(h=d,f=g/4):f=g/(2*Math.PI)*Math.asin(d/h),1>b?-.5*h*Math.pow(2,10*(b-=1))*Math.sin((b*e-f)*2*Math.PI/g)+c:.5*h*Math.pow(2,-10*(b-=1))*Math.sin((b*e-f)*2*Math.PI/g)+d+c)},easeInBack:function(a,b,c,d,e,f){return void 0==f&&(f=1.70158),d*(b/=e)*b*((f+1)*b-f)+c},easeOutBack:function(a,b,c,d,e,f){return void 0==f&&(f=1.70158),d*((b=b/e-1)*b*((f+1)*b+f)+1)+c},easeInOutBack:function(a,b,c,d,e,f){return void 0==f&&(f=1.70158),(b/=e/2)<1?d/2*b*b*(((f*=1.525)+1)*b-f)+c:d/2*((b-=2)*b*(((f*=1.525)+1)*b+f)+2)+c},easeInBounce:function(a,b,c,d,e){return d-jQuery.easing.easeOutBounce(a,e-b,0,d,e)+c},easeOutBounce:function(a,b,c,d,e){return (b/=e)<1/2.75?d*7.5625*b*b+c:2/2.75>b?d*(7.5625*(b-=1.5/2.75)*b+.75)+c:2.5/2.75>b?d*(7.5625*(b-=2.25/2.75)*b+.9375)+c:d*(7.5625*(b-=2.625/2.75)*b+.984375)+c},easeInOutBounce:function(a,b,c,d,e){return e/2>b?.5*jQuery.easing.easeInBounce(a,2*b,0,d,e)+c:.5*jQuery.easing.easeOutBounce(a,2*b-e,0,d,e)+.5*d+c}});
+  jQuery.easing.jswing = jQuery.easing.swing, jQuery.extend(jQuery.easing, { def: "easeOutQuad", swing: function (a, b, c, d, e) { return jQuery.easing[jQuery.easing.def](a, b, c, d, e) }, easeInQuad: function (a, b, c, d, e) { return d * (b /= e) * b + c }, easeOutQuad: function (a, b, c, d, e) { return -d * (b /= e) * (b - 2) + c }, easeInOutQuad: function (a, b, c, d, e) { return (b /= e / 2) < 1 ? d / 2 * b * b + c : -d / 2 * (--b * (b - 2) - 1) + c }, easeInCubic: function (a, b, c, d, e) { return d * (b /= e) * b * b + c }, easeOutCubic: function (a, b, c, d, e) { return d * ((b = b / e - 1) * b * b + 1) + c }, easeInOutCubic: function (a, b, c, d, e) { return (b /= e / 2) < 1 ? d / 2 * b * b * b + c : d / 2 * ((b -= 2) * b * b + 2) + c }, easeInQuart: function (a, b, c, d, e) { return d * (b /= e) * b * b * b + c }, easeOutQuart: function (a, b, c, d, e) { return -d * ((b = b / e - 1) * b * b * b - 1) + c }, easeInOutQuart: function (a, b, c, d, e) { return (b /= e / 2) < 1 ? d / 2 * b * b * b * b + c : -d / 2 * ((b -= 2) * b * b * b - 2) + c }, easeInQuint: function (a, b, c, d, e) { return d * (b /= e) * b * b * b * b + c }, easeOutQuint: function (a, b, c, d, e) { return d * ((b = b / e - 1) * b * b * b * b + 1) + c }, easeInOutQuint: function (a, b, c, d, e) { return (b /= e / 2) < 1 ? d / 2 * b * b * b * b * b + c : d / 2 * ((b -= 2) * b * b * b * b + 2) + c }, easeInSine: function (a, b, c, d, e) { return -d * Math.cos(b / e * (Math.PI / 2)) + d + c }, easeOutSine: function (a, b, c, d, e) { return d * Math.sin(b / e * (Math.PI / 2)) + c }, easeInOutSine: function (a, b, c, d, e) { return -d / 2 * (Math.cos(Math.PI * b / e) - 1) + c }, easeInExpo: function (a, b, c, d, e) { return 0 == b ? c : d * Math.pow(2, 10 * (b / e - 1)) + c }, easeOutExpo: function (a, b, c, d, e) { return b == e ? c + d : d * (-Math.pow(2, -10 * b / e) + 1) + c }, easeInOutExpo: function (a, b, c, d, e) { return 0 == b ? c : b == e ? c + d : (b /= e / 2) < 1 ? d / 2 * Math.pow(2, 10 * (b - 1)) + c : d / 2 * (-Math.pow(2, -10 * --b) + 2) + c }, easeInCirc: function (a, b, c, d, e) { return -d * (Math.sqrt(1 - (b /= e) * b) - 1) + c }, easeOutCirc: function (a, b, c, d, e) { return d * Math.sqrt(1 - (b = b / e - 1) * b) + c }, easeInOutCirc: function (a, b, c, d, e) { return (b /= e / 2) < 1 ? -d / 2 * (Math.sqrt(1 - b * b) - 1) + c : d / 2 * (Math.sqrt(1 - (b -= 2) * b) + 1) + c }, easeInElastic: function (a, b, c, d, e) { var f = 1.70158, g = 0, h = d; return 0 == b ? c : 1 == (b /= e) ? c + d : (g || (g = .3 * e), h < Math.abs(d) ? (h = d, f = g / 4) : f = g / (2 * Math.PI) * Math.asin(d / h), -(h * Math.pow(2, 10 * (b -= 1)) * Math.sin((b * e - f) * 2 * Math.PI / g)) + c) }, easeOutElastic: function (a, b, c, d, e) { var f = 1.70158, g = 0, h = d; return 0 == b ? c : 1 == (b /= e) ? c + d : (g || (g = .3 * e), h < Math.abs(d) ? (h = d, f = g / 4) : f = g / (2 * Math.PI) * Math.asin(d / h), h * Math.pow(2, -10 * b) * Math.sin((b * e - f) * 2 * Math.PI / g) + d + c) }, easeInOutElastic: function (a, b, c, d, e) { var f = 1.70158, g = 0, h = d; return 0 == b ? c : 2 == (b /= e / 2) ? c + d : (g || (g = e * .3 * 1.5), h < Math.abs(d) ? (h = d, f = g / 4) : f = g / (2 * Math.PI) * Math.asin(d / h), 1 > b ? -.5 * h * Math.pow(2, 10 * (b -= 1)) * Math.sin((b * e - f) * 2 * Math.PI / g) + c : .5 * h * Math.pow(2, -10 * (b -= 1)) * Math.sin((b * e - f) * 2 * Math.PI / g) + d + c) }, easeInBack: function (a, b, c, d, e, f) { return void 0 == f && (f = 1.70158), d * (b /= e) * b * ((f + 1) * b - f) + c }, easeOutBack: function (a, b, c, d, e, f) { return void 0 == f && (f = 1.70158), d * ((b = b / e - 1) * b * ((f + 1) * b + f) + 1) + c }, easeInOutBack: function (a, b, c, d, e, f) { return void 0 == f && (f = 1.70158), (b /= e / 2) < 1 ? d / 2 * b * b * (((f *= 1.525) + 1) * b - f) + c : d / 2 * ((b -= 2) * b * (((f *= 1.525) + 1) * b + f) + 2) + c }, easeInBounce: function (a, b, c, d, e) { return d - jQuery.easing.easeOutBounce(a, e - b, 0, d, e) + c }, easeOutBounce: function (a, b, c, d, e) { return (b /= e) < 1 / 2.75 ? d * 7.5625 * b * b + c : 2 / 2.75 > b ? d * (7.5625 * (b -= 1.5 / 2.75) * b + .75) + c : 2.5 / 2.75 > b ? d * (7.5625 * (b -= 2.25 / 2.75) * b + .9375) + c : d * (7.5625 * (b -= 2.625 / 2.75) * b + .984375) + c }, easeInOutBounce: function (a, b, c, d, e) { return e / 2 > b ? .5 * jQuery.easing.easeInBounce(a, 2 * b, 0, d, e) + c : .5 * jQuery.easing.easeOutBounce(a, 2 * b - e, 0, d, e) + .5 * d + c } });
 
   /* jshint ignore: end */
 
   // import UI from './UI'
 
-  var getBooleanConfig = function(configName, defaultValue) {
+  var getBooleanConfig = function (configName, defaultValue) {
       var config = GM_getValue(configName);
-      if(config === undefined) {
+      if (config === undefined) {
           GM_setValue(configName, defaultValue);
           config = defaultValue;
       }
@@ -735,7 +735,7 @@
       },
 
       get remain_height() {  // 距离底部多少高度（px）开始加载下一页
-          if(_.isUndefined(this._remain_height)){
+          if (_.isUndefined(this._remain_height)) {
               this._remain_height = parseInt(GM_getValue("remain_height"), 10) || 400;
           }
           return this._remain_height;
@@ -771,17 +771,17 @@
           GM_setValue("font_size", val);
       },
 
-      get text_line_height(){
+      get text_line_height() {
           return GM_getValue("text_line_height") || "2em";
       },
-      set text_line_height(val){
+      set text_line_height(val) {
           GM_setValue("text_line_height", val);
       },
 
-      get paragraph_height(){
+      get paragraph_height() {
           return GM_getValue("paragraph_height") || "1em";
       },
-      set paragraph_height(val){
+      set paragraph_height(val) {
           GM_setValue("paragraph_height", val);
       },
 
@@ -3216,48 +3216,48 @@
 
   // 单字替换，可能会误替换，所以需要特殊处理
   var oneWordReplace = {
-    "b[āà]ng":"棒","bào":"爆","bà":"吧","bī":"逼","bō":"波", "biàn":"便",
-    "cāo":"操", "cǎo":"草", "cào":"操", "chāng":"娼", "chang":"娼", "cháo":"潮", "chā":"插", "chéng":"成", "chōu":"抽", "chuáng":"床", "chún":"唇", "chūn":"春", "cuō":"搓", "cū":"粗",
-    "dǎng":"党", "dàng":"荡", "dāo":"刀", "dòng":"洞", "diao":"屌", "diǎn":"点",
-    "fǎ":"法", "féi":"肥", "fù":"妇",
-    "guān":"官",
-    "hán":"含", "hóu":"喉", "hòu":"后", "h(u)?ā":"花", "huá":"华", "huì":"会", "huò":"惑", "hùn":"混", "hún":"魂",
-    "jiǔ":"九", "j[īi]ng":"精", "jìn":"禁", "jǐng":"警", "jiāng":"江", "jiān":"奸", "jiāo":"交", "jūn":"军", "jū":"拘", "jú":"局", "jī":"激", "激ān":"奸",
-    "kù":"裤", "kàn":"看",
-    "[1l]àng":"浪", "liáo":"撩", "liú":"流", "lì":"莉", "liè":"烈", "[1l]uàn":"乱", "lún":"伦", "luǒ":"裸", "lòu":"露", "[l1]ù":"露", "lǜ":"绿", "liàn":"练",
-    "mǎi":"买", "mài":"卖", "máo":"毛", "mā":"妈", "méng":"蒙", "mén":"门", "miè":"灭", "mí":"迷", "mì":"蜜", "mō":"摸", "miàn":"面",
-    "nǎi":"奶", "nèn":"嫩", "niào":"尿", "niē":"捏", "nòng":"弄", "nǚ":"女",
-    "pào":"炮", "piàn":"片", "pò":"破",
-    "qi[āa]ng":"枪", "qíng":"情", "qīn":"亲", "qiú":"求", "quán":"全", "qù":"去",
-    "rén":"人", "r[ìi]":"日", "rǔ":"乳",
+    "b[āà]ng": "棒", "bào": "爆", "bà": "吧", "bī": "逼", "bō": "波", "biàn": "便",
+    "cāo": "操", "cǎo": "草", "cào": "操", "chāng": "娼", "chang": "娼", "cháo": "潮", "chā": "插", "chéng": "成", "chōu": "抽", "chuáng": "床", "chún": "唇", "chūn": "春", "cuō": "搓", "cū": "粗",
+    "dǎng": "党", "dàng": "荡", "dāo": "刀", "dòng": "洞", "diao": "屌", "diǎn": "点",
+    "fǎ": "法", "féi": "肥", "fù": "妇",
+    "guān": "官",
+    "hán": "含", "hóu": "喉", "hòu": "后", "h(u)?ā": "花", "huá": "华", "huì": "会", "huò": "惑", "hùn": "混", "hún": "魂",
+    "jiǔ": "九", "j[īi]ng": "精", "jìn": "禁", "jǐng": "警", "jiāng": "江", "jiān": "奸", "jiāo": "交", "jūn": "军", "jū": "拘", "jú": "局", "jī": "激", "激ān": "奸",
+    "kù": "裤", "kàn": "看",
+    "[1l]àng": "浪", "liáo": "撩", "liú": "流", "lì": "莉", "liè": "烈", "[1l]uàn": "乱", "lún": "伦", "luǒ": "裸", "lòu": "露", "[l1]ù": "露", "lǜ": "绿", "liàn": "练",
+    "mǎi": "买", "mài": "卖", "máo": "毛", "mā": "妈", "méng": "蒙", "mén": "门", "miè": "灭", "mí": "迷", "mì": "蜜", "mō": "摸", "miàn": "面",
+    "nǎi": "奶", "nèn": "嫩", "niào": "尿", "niē": "捏", "nòng": "弄", "nǚ": "女",
+    "pào": "炮", "piàn": "片", "pò": "破",
+    "qi[āa]ng": "枪", "qíng": "情", "qīn": "亲", "qiú": "求", "quán": "全", "qù": "去",
+    "rén": "人", "r[ìi]": "日", "rǔ": "乳",
 
     // s
-    "sǎ":"洒", "sāo":"骚", "sǎo":"骚", "sè":"色", "se":"色", "shā":"杀",
-    "shēn":"身", "shēn":"呻",   // 2个重复的，误替换且是单字怎么办
-    "shén":"神", "shè":"射", "shǐ":"屎", "shì":"侍", "sǐ":"死", "sī":"私", "shǔn":"吮", "sǔn":"吮", "sū":"酥", "shào":"绍",
+    "sǎ": "洒", "sāo": "骚", "sǎo": "骚", "sè": "色", "se": "色", "shā": "杀",
+    "shēn": "身", "shēn": "呻",   // 2个重复的，误替换且是单字怎么办
+    "shén": "神", "shè": "射", "shǐ": "屎", "shì": "侍", "sǐ": "死", "sī": "私", "shǔn": "吮", "sǔn": "吮", "sū": "酥", "shào": "绍",
 
-    "tān":"贪", "tiǎn":"舔", "t[ǐi]ng":"挺", "tǐ":"体", "tǒng":"捅", "tōu":"偷", "tou":"偷", "tuǐ":"腿", "tūn":"吞", "tún":"臀", "tiáo":"调", "tài":"态", "tào":"套",
-    "wēn":"温", "wěn":"吻",
-    "xiǎo":"小", "xiào":"笑", "xìng":"性", "xing":"性", "xiōng":"胸", "xī":"吸", "xí":"习", "xì":"系", "xìn":"信", "xué":"穴", "xuè":"穴", "xùe":"穴",  "xuan":"宣", "xiàng":"象",
-    "yāng":"央", "yàn":"艳", "yīn":"阴", "yào":"药", "yé":"爷", "yòu":"诱", "zàng":"脏", "y[ùu]":"欲", "yín":"淫", "yì":"意", "yà":"讶",
-    "zhēn":"针", "zēn":"针", "zhà":"炸", "zhèng":"政", "zǒu":"走", "zuì":"罪", "zuò":"做", "zhōng":"中",
+    "tān": "贪", "tiǎn": "舔", "t[ǐi]ng": "挺", "tǐ": "体", "tǒng": "捅", "tōu": "偷", "tou": "偷", "tuǐ": "腿", "tūn": "吞", "tún": "臀", "tiáo": "调", "tài": "态", "tào": "套",
+    "wēn": "温", "wěn": "吻",
+    "xiǎo": "小", "xiào": "笑", "xìng": "性", "xing": "性", "xiōng": "胸", "xī": "吸", "xí": "习", "xì": "系", "xìn": "信", "xué": "穴", "xuè": "穴", "xùe": "穴", "xuan": "宣", "xiàng": "象",
+    "yāng": "央", "yàn": "艳", "yīn": "阴", "yào": "药", "yé": "爷", "yòu": "诱", "zàng": "脏", "y[ùu]": "欲", "yín": "淫", "yì": "意", "yà": "讶",
+    "zhēn": "针", "zēn": "针", "zhà": "炸", "zhèng": "政", "zǒu": "走", "zuì": "罪", "zuò": "做", "zhōng": "中",
   };
 
   var replaceFix = {
     // ===误替换还原===
-    "碧欲":"碧玉", "美欲":"美玉","欲石":"玉石","惜欲":"惜玉","宝欲":"宝玉",
-    "品性":"品行", "德性":"德行",
-    "波ok":"book", "波SS":"BOSS",
+    "碧欲": "碧玉", "美欲": "美玉", "欲石": "玉石", "惜欲": "惜玉", "宝欲": "宝玉",
+    "品性": "品行", "德性": "德行",
+    "波ok": "book", "波SS": "BOSS",
 
     // ===其他修正===
-    "弥俩":"你俩",
-    "妳":"你",
+    "弥俩": "你俩",
+    "妳": "你",
     // "圞|垩|卝|龘":"",
-    "大6":"大陆",
+    "大6": "大陆",
   };
 
   function extendRule(replaceRule) {
-    _.each(oneWordReplace, function(value, key) {
+    _.each(oneWordReplace, function (value, key) {
       // 这个替换会把 yùn 替换为 yù
       // replace['\\b' + key + '(?:\\b|\\s*)'] = value;
 
@@ -3289,34 +3289,34 @@
     prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
     // 忽略的下一页链接，匹配 href
     nextUrlIgnore: [
-        /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
+      /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
 
-        // qidian
-        // /BookReader\/LastPageNew\.aspx/i,
-        // /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
-        /read\.qidian\.com\/$/i,
-        // /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
+      // qidian
+      // /BookReader\/LastPageNew\.aspx/i,
+      // /read\.qidian\.com\/BookReader\/\d+,0\.aspx$/i,
+      /read\.qidian\.com\/$/i,
+      // /free\.qidian\.com\/Free\/ShowBook\.aspx\?bookid=/i,
 
-        /book\.zongheng\.com\/readmore/i,
-        /www\.shumilou\.com\/to-n-[a-z]+-\d+\.html/i,
-        /\/0\.html$/i,
+      /book\.zongheng\.com\/readmore/i,
+      /www\.shumilou\.com\/to-n-[a-z]+-\d+\.html/i,
+      /\/0\.html$/i,
     ],
     nextUrlCompare: /\/\d+(_\d+)?\.html?$|\/wcxs-\d+-\d+\/$|chapter-\d+\.html$|\/\d+_\d+\/$|\/\d+\/\d+$/i,  // 忽略的下一页链接（特殊），跟上一页比较
 
     // 按顺序匹配，匹配到则停止。econtains 完全相等
     indexSelectors: ["a[href='index.html']", "a:contains('返回书目')", "a:contains('章节目录')", "a:contains('章节列表')",
-        "a:econtains('最新章节')", "a:contains('回目录')","a:contains('回书目')", "a:contains('目 录')", "a:contains('目录')"],
+      "a:econtains('最新章节')", "a:contains('回目录')", "a:contains('回书目')", "a:contains('目 录')", "a:contains('目录')"],
 
     contentSelectors: ["#pagecontent", "#contentbox", "#bmsy_content", "#bookpartinfo", "#htmlContent",
-        "#text_area", "#chapter_content", "#chapterContent", "#chaptercontent", "#partbody", "#BookContent", "#read-content",
-        "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
-        "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
-        "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-        "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
-        "#ChapterContents", "#acontent", "#chapterinfo", "#read_content", "#chapter-content",
-        ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
-        ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
-        "article",
+      "#text_area", "#chapter_content", "#chapterContent", "#chaptercontent", "#partbody", "#BookContent", "#read-content",
+      "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
+      "#TextContent", "#txtContent", "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
+      "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content",
+      "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+      "#ChapterContents", "#acontent", "#chapterinfo", "#read_content", "#chapter-content",
+      ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
+      ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
+      "article",
     ],
 
     // 尝试查找书名。顶部章节导航的最后一个链接可能是书名。
@@ -3354,7 +3354,7 @@
       '.bread a:last',
     ],
     bookTitleReplace: [
-        '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
+      '全文阅读$', '在线阅读$', '最新章节$', '^正文卷',
     ],
 
     contentRemove: "script, iframe, a, audio, style, button",          // 内容移除选择器
@@ -3389,13 +3389,13 @@
   function parseCustomReplaceRules(str) {
     var arr = str.split(/\n/);
     var rules = {};
-    _.each(arr, function(b) {
-        var pos = b.indexOf('=');
-        if (pos === -1) return;
+    _.each(arr, function (b) {
+      var pos = b.indexOf('=');
+      if (pos === -1) return;
 
-        var key = b.substring(0, pos),
-            value = b.substring(pos + 1, b.length);
-        rules[key] = value;
+      var key = b.substring(0, pos),
+        value = b.substring(pos + 1, b.length);
+      rules[key] = value;
     });
     return rules;
   }
@@ -3722,13 +3722,13 @@
           try {
               var str = _heading_style.getPropertyValue("font-size") || 0;
               fontSize = parseInt(str, 10);
-          } catch(e) { }
+          } catch (e) { }
       }
 
       return fontSize
   }
 
-  function Parser(){
+  function Parser() {
       this.init.apply(this, arguments);
   }
 
@@ -3758,11 +3758,11 @@
           if (doc.defaultView && doc.defaultView.$cleanupEvents) {
               doc.defaultView.$cleanupEvents(true);
           }
-          
+
       },
-      applyPatch: function(){
+      applyPatch: function () {
           var contentPatch = this.info.contentPatch;
-          if(contentPatch){
+          if (contentPatch) {
               try {
                   contentPatch.call(this, this.$doc);
                   C.log("Apply Content Patch Success.");
@@ -3771,9 +3771,9 @@
               }
           }
       },
-      applyAsyncPatch: async function() {
+      applyAsyncPatch: async function () {
           var contentPatch = this.info.contentPatchAsync;
-          if(contentPatch){
+          if (contentPatch) {
               try {
                   await contentPatch.call(this, this.$doc);
                   C.log("Apply Content Patch[Async] Success.");
@@ -3782,7 +3782,7 @@
               }
           }
       },
-      getAll: async function(){
+      getAll: async function () {
 
           C.log('开始解析页面');
 
@@ -3796,7 +3796,7 @@
 
           return this;
       },
-      preProcessDoc: async function() {
+      preProcessDoc: async function () {
           let data;
 
           if (!this.hasContent() && this.info.getContent) {
@@ -3850,7 +3850,7 @@
           }
 
       },
-      parse: function() {
+      parse: function () {
           C.group('开始获取链接');
           this.getPrevUrl();
           this.getIndexUrl();
@@ -3864,7 +3864,7 @@
           this.getContent();
       },
 
-      hasContent: function() {
+      hasContent: function () {
           if (this.$content) {
               return this.$content.size() > 0;
           }
@@ -3884,16 +3884,16 @@
               }
           }
 
-          if(this.info.contentSelector){
+          if (this.info.contentSelector) {
               $content = this.$doc.find(this.info.contentSelector);
           }
 
           if (!$content || !$content.length) {
               // 按照顺序选取
               var selectors = Rule.contentSelectors;
-              for(var i = 0, l = selectors.length; i < l; i++){
+              for (var i = 0, l = selectors.length; i < l; i++) {
                   $content = this.$doc.find(selectors[i]);
-                  if($content.length){
+                  if ($content.length) {
                       C.log("自动查找内容选择器: " + selectors[i]);
                       break;
                   }
@@ -3906,17 +3906,17 @@
           return $content.size() > 0;
       },
       // 获取书名和章节标题
-      getTitles: function(){
+      getTitles: function () {
           var info = this.info,
               chapterTitle,
               bookTitle,
               docTitle = this.$doc.find("title").text();
 
           // 获取章节标题
-          if (info.titleReg){
+          if (info.titleReg) {
               var matches = docTitle.match(toRE(info.titleReg, 'i'));
-              if(matches && matches.length >= 2){
-                  var titlePos = ( info.titlePos || 0 ) + 1;
+              if (matches && matches.length >= 2) {
+                  var titlePos = (info.titlePos || 0) + 1;
                   var chapterPos = (titlePos == 1) ? 2 : 1;
 
                   bookTitle = matches[titlePos];
@@ -3932,7 +3932,7 @@
               chapterTitle = tmpChapterTitle;
           }
 
-          if(!chapterTitle){
+          if (!chapterTitle) {
               chapterTitle = this.autoGetChapterTitle(this.doc);
           }
           if (info.chapterTitleReplace) {
@@ -3953,9 +3953,9 @@
 
           // 标题间增加一个空格，不准确，已注释
           chapterTitle = chapterTitle
-                  .replace(Rule.titleReplace, "")
-                  .trim();
-                  // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
+              .replace(Rule.titleReplace, "")
+              .trim();
+          // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
 
           if (chapterTitle.startsWith(bookTitle)) {
               chapterTitle = chapterTitle.replace(bookTitle, '').trim();
@@ -3964,8 +3964,8 @@
           bookTitle = bookTitle.replace(/(?:最新章节|章节目录)$/, '');
 
           docTitle = bookTitle ?
-                  bookTitle + ' - ' + chapterTitle :
-                  docTitle;
+              bookTitle + ' - ' + chapterTitle :
+              docTitle;
 
           // if (Setting.cn2tw) {
           //     bookTitle = this.convert2tw(bookTitle);
@@ -3985,7 +3985,7 @@
           C.log("Chapter Title: " + this.chapterTitle);
           C.log("Document Title: " + this.docTitle);
       },
-      getTitleFromRule: function(selectorOrArray) {
+      getTitleFromRule: function (selectorOrArray) {
           var title = '';
           if (!selectorOrArray) {
               return '';
@@ -4040,12 +4040,12 @@
               $doc = $(document),
               _document_title = document.title || $doc.find("title").text(),
               _search_document_title = ' ' + _document_title.replace(/\s+/gi, ' ') + ' '
-          ;
+              ;
 
           var _headings = $doc.find(_main_selector);
           // 加上 second selector 并去除包含的
-          $doc.find(_second_selector).each(function(){
-              if($(this).find(_main_selector).length === 0){
+          $doc.find(_second_selector).each(function () {
+              if ($(this).find(_main_selector).length === 0) {
                   _headings.push(this);
               }
           });
@@ -4055,7 +4055,7 @@
 
           C.groupCollapsed('自动查找章节标题');
 
-          $(_headings).each(function(){
+          $(_headings).each(function () {
               var _heading = this,
                   _heading_text = _heading.textContent.trim();
 
@@ -4071,7 +4071,7 @@
                   score = 10 / nodeNum,
                   _heading_words = _heading_text.replace(/\s+/g, " ").split(" "),
                   _matched_words = ""
-              ;
+                  ;
 
               C.log("初始得分：" + score);
 
@@ -4096,7 +4096,7 @@
               C.log("跟页面标题比较后得分：" + score);
 
               var _font_size_add_score = getElemFontSize(_heading) * 1.5;
-              score +=  _font_size_add_score;
+              score += _font_size_add_score;
 
               C.log("计算大小后得分：" + score);
 
@@ -4137,7 +4137,7 @@
       },
 
       // 获取和处理内容
-      getContent: function(){
+      getContent: function () {
 
           this.hasContent();
 
@@ -4159,8 +4159,8 @@
           }
 
       },
-      handleContentText: function(node, info){ // 已弃用
-          if(!node) return null;
+      handleContentText: function (node, info) { // 已弃用
+          if (!node) return null;
 
           if (info.useRawContent) {
               C.log('内容处理已被自定义站点规则 useRawContent 关闭');
@@ -4172,7 +4172,7 @@
           C.group('开始内容处理');
           C.time('内容处理');
 
-          var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+          var contentHandle = (typeof (info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
           // 拼音字、屏蔽字修复
           // if(contentHandle){
@@ -4243,7 +4243,7 @@
 
           // contentRemove
           $div.find(Rule.contentRemove).remove();
-          if(info.contentRemove){
+          if (info.contentRemove) {
               $div.find(info.contentRemove).remove();
           }
 
@@ -4269,15 +4269,15 @@
           // }).wrap('<p>');
 
           // 删除无效的 p，排除对大块文本的判断
-          $div.find('p, h1, div').filter(function() {
+          $div.find('p, h1, div').filter(function () {
               var $this = $(this);
               if ($this.find('img').size())  // 排除有图片的
                   return false;
 
               // 有效文本（排除注释、换行符、空白）个数为 0
-              return $this.contents().filter(function() {
+              return $this.contents().filter(function () {
                   return this.nodeType != 8 &&
-                          !this.textContent.match(/^\s*$/);
+                      !this.textContent.match(/^\s*$/);
               }).size() == 0;
           }).remove();
 
@@ -4285,7 +4285,7 @@
           if (Setting.split_content) {
               var $p = $div.find('p'),
                   $newP;
-              if ($p.length == 0 ) {
+              if ($p.length == 0) {
                   $newP = $div;
               } else if ($p.length == 1) {
                   $newP = $p;
@@ -4296,7 +4296,7 @@
               }
           }
 
-          if(contentHandle){
+          if (contentHandle) {
               // $div.find('br').remove();
 
               $div.find('*').removeAttr('style');
@@ -4321,7 +4321,7 @@
 
           {
               text = text.replace(/<p[^>]*>(?:\s|&nbsp;)*/g, "<p>　　");
-                      // .replace(/<p>/g, "<p>　　");
+              // .replace(/<p>/g, "<p>　　");
           }
 
           // 删除空白的、单个字符的 p
@@ -4334,7 +4334,7 @@
 
           return text;
       },
-      clearContent: function(dom, info) { // 已弃用
+      clearContent: function (dom, info) { // 已弃用
           // 将br，转换为p段落
           let elements = [];
           let brCount = 0;
@@ -4357,14 +4357,14 @@
               if (
                   node.previousSibling &&
                   (node.previousSibling.nodeName === 'IMG' ||
-                  node.previousSibling.nodeName === 'SPAN')
+                      node.previousSibling.nodeName === 'SPAN')
               ) {
                   return false
               }
               if (
                   node.nextSibling &&
                   (node.nextSibling.nodeName === 'IMG' ||
-                  node.nextSibling.nodeName === 'SPAN')
+                      node.nextSibling.nodeName === 'SPAN')
               ) {
                   return false
               }
@@ -4390,7 +4390,7 @@
               content = contents.join('\n');
           }
 
-          var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+          var contentHandle = (typeof (info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
           C.log(`本章字数：${content.length}`);
 
@@ -4416,7 +4416,7 @@
           content = content.replace(hostRe, match => {
               removeText.push(match);
               return ''
-          });  
+          });
           C.log(`删除含网站域名行`, hostRe, removeText);
 
           // 规则替换
@@ -4425,7 +4425,7 @@
           }
 
           content = this.replaceText(content, Rule.replaceAll);
-          
+
           // 内容标准化处理
           if (Setting.contentNormalize) {
               content = this.replaceText(content, getNormalizeMap());
@@ -4437,7 +4437,7 @@
 
           try {
               content = this.contentCustomReplace(content);
-          } catch(ex) {
+          } catch (ex) {
               C.error('自定义替换错误', ex);
           }
 
@@ -4446,7 +4446,7 @@
           //     .filter(t => !!t)
           //     .map(t => `<p>${t}</p>`)
           //     .join('\n')
-          
+
           // return
 
           // 给独立的文本节点包裹一个p标签，同时去掉它们之间的 br
@@ -4472,11 +4472,11 @@
           //         return node.parentNode.childNodes.length > 1
           //     })
           //     .forEach(node => $(node).wrap('<p>'))
-          
+
           // $(dom).find('br').remove()
 
           const finalContents = content.split('\n');
-          
+
           // 将内容写回到文本节点中
           if (finalContents.length <= textNodes.length) {
               textNodes.forEach((node, index) => {
@@ -4513,7 +4513,7 @@
 
       },
       handleContentText2(node, info) {
-          if(!node) return null;
+          if (!node) return null;
 
           if (info.useRawContent) {
               C.log('内容处理已被自定义站点规则 useRawContent 关闭');
@@ -4530,7 +4530,7 @@
 
           // contentRemove
           $div.find(Rule.contentRemove).remove();
-          if(info.contentRemove){
+          if (info.contentRemove) {
               $div.find(info.contentRemove).remove();
           }
 
@@ -4551,7 +4551,7 @@
               C.log(`去除了 ${contents.length - deDupeConetents.length} 段重复内容`);
           }
 
-          var contentHandle = (typeof(info.contentHandle) == 'undefined') ? true : info.contentHandle;
+          var contentHandle = (typeof (info.contentHandle) == 'undefined') ? true : info.contentHandle;
 
           C.log(`本章字数：${content.length}`);
 
@@ -4581,7 +4581,7 @@
           content = content.replace(hostRe, match => {
               removeText.push(match);
               return ''
-          });  
+          });
           C.log(`删除含网站域名行`, hostRe, removeText);
 
           // C.groupCollapsed('文本内容 - contentReplace')
@@ -4603,14 +4603,14 @@
           // C.groupCollapsed('文本内容 - end')
           // C.log(content)
           // C.groupEnd()
-          
+
           // 繁简转换
           content = chineseConversion(content);
 
           // 自定义替换
           try {
               content = this.contentCustomReplace(content);
-          } catch(ex) {
+          } catch (ex) {
               C.error('自定义替换错误', ex);
           }
 
@@ -4628,7 +4628,7 @@
           return contentHTML
 
       },
-      normalizeContent: function(html) {
+      normalizeContent: function (html) {
           html = html.replace(/<\/p><p>/g, '</p>\n<p>');
 
           return html;
@@ -4640,7 +4640,7 @@
        * @param  {string} html 内容
        * @return {string}      处理后的内容
        */
-      removeDump: function(html) {
+      removeDump: function (html) {
           html = this.normalizeContent(html);
           var newContent = html;
 
@@ -4662,7 +4662,7 @@
 
           return newContent;
       },
-      replaceHtml: function(text, replaceRule) {  // replaceRule 给“自定义替换规则直接生效”用
+      replaceHtml: function (text, replaceRule) {  // replaceRule 给“自定义替换规则直接生效”用
           if (!replaceRule) {
               replaceRule = Rule.replace;
           }
@@ -4670,7 +4670,7 @@
           // 先提取出 img
           var imgs = {};
           var i = 0;
-          text = text.replace(/<(img|a)[^>]*>/g, function(img){
+          text = text.replace(/<(img|a)[^>]*>/g, function (img) {
               imgs[i] = img;
               return "{" + (i++) + "}";
           });
@@ -4691,27 +4691,27 @@
           }
           return text;
       },
-      replaceText: function(text, rule){
+      replaceText: function (text, rule) {
           var self = this;
-          switch(true) {
+          switch (true) {
               case _.isRegExp(rule):
                   text = text.replace(rule, '');
                   break;
               case _.isString(rule):
                   // 还原简写
-                  _.each(CHAR_ALIAS, function(value, key) {
+                  _.each(CHAR_ALIAS, function (value, key) {
                       rule = rule.replace(key, value);
                   });
                   text = text.replace(toRE(rule), '');
                   break;
               case _.isArray(rule):
-                  rule.forEach(function(r){
+                  rule.forEach(function (r) {
                       text = self.replaceText(text, r);
                   });
                   break;
               case _.isObject(rule):
                   var key;
-                  for(key in rule){
+                  for (key in rule) {
                       text = text.replace(toRE(key), rule[key]);
                   }
                   break;
@@ -4749,7 +4749,7 @@
               lines = [],
               charCotainer = [];
 
-          text.split('').forEach(function(c) {
+          text.split('').forEach(function (c) {
               charCotainer.push(c);
 
               if (c == '“') {
@@ -4765,7 +4765,7 @@
           return lines;
       },
 
-      getIndexUrl: function(){
+      getIndexUrl: function () {
           var url = '',
               selector = this.info.indexSelector || this.info.indexUrl;
 
@@ -4781,7 +4781,7 @@
               } catch (e) {
                   C.error("执行获取目录链接函数规则出错", e);
               }
-          } else if(this.info.indexSelector){
+          } else if (this.info.indexSelector) {
               url = this.$doc.find(this.info.indexSelector);
           }
 
@@ -4790,16 +4790,16 @@
               var selectors = Rule.indexSelectors;
               var _indexLink;
               // 按照顺序选取目录链接
-              for(var i = 0, l = selectors.length; i < l; i++){
+              for (var i = 0, l = selectors.length; i < l; i++) {
                   _indexLink = this.$doc.find(selectors[i]);
-                  if(_indexLink.length > 0){
+                  if (_indexLink.length > 0) {
                       url = _indexLink;
                       break;
                   }
               }
           }
 
-          if(url){
+          if (url) {
               url = this.checkLinks(url);
               C.log("找到目录链接: " + url);
           }
@@ -4811,7 +4811,7 @@
           this.indexUrl = url;
           return url;
       },
-      getNextUrl: function(){
+      getNextUrl: function () {
           var url = '',
               selector = this.info.nextSelector || this.info.nextUrl,
               noSection = this.info.noSection;
@@ -4868,11 +4868,11 @@
                   this.theEndColor = config.end_color;
               }
           }
-          
+
           return url;
       },
       // 获取上下页及目录页链接
-      getPrevUrl: function(){
+      getPrevUrl: function () {
           var url = '',
               selector = this.info.prevSelector || this.info.prevUrl,
               noSection = this.info.noSection;
@@ -4924,7 +4924,7 @@
           this.prevUrl = url || '';
           return url;
       },
-      checkNextUrl: function(url){
+      checkNextUrl: function (url) {
           const sectionUrlRegex = /\/\d+[_-]\d+\.html$/;
           if (url && this.info.checkSection) {
               // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
@@ -4943,12 +4943,12 @@
           if (!toRE(includeUrl).test(url))
               return false;
 
-          switch(true){
+          switch (true) {
               case url === '':
                   return false
               case this.info.exclude && toRE(this.info.exclude).test(url):
                   return false
-              case Rule.nextUrlIgnore.some(function(re) { return toRE(re).test(url) }):
+              case Rule.nextUrlIgnore.some(function (re) { return toRE(re).test(url) }):
                   return false
               case url === this.indexUrl:
                   return false
@@ -4963,12 +4963,12 @@
                   return true
           }
       },
-      getIncludeUrl: function() {
+      getIncludeUrl: function () {
           var includeUrl = this.info.url;
 
           if (!includeUrl && typeof GM_info !== 'undefined') {
               var locationHref = location.href;
-              GM_info.script.includes.some(function(includeStr) {
+              GM_info.script.includes.some(function (includeStr) {
                   var iUrl = wildcardToRegExpStr(includeStr);
                   if (toRE(iUrl).test(locationHref)) {
                       includeUrl = iUrl;
@@ -4980,7 +4980,7 @@
           this.info.includeUrl = includeUrl;
           return includeUrl;
       },
-      checkLinks: function(links){
+      checkLinks: function (links) {
           var self = this;
           var url = '';
 
@@ -4990,9 +4990,9 @@
               return this.getFullHref(links);
           }
 
-          links && links.each(function(){
+          links && links.each(function () {
               url = $(this).attr("href");
-              if(!url || url.indexOf("#") === 0 || url.indexOf("javascript:") === 0)
+              if (!url || url.indexOf("#") === 0 || url.indexOf("javascript:") === 0)
                   return;
 
               url = self.getFullHref(this);
@@ -5001,12 +5001,12 @@
 
           return url;
       },
-      getLinkUrl: function(linkOrUrl) {
+      getLinkUrl: function (linkOrUrl) {
           // if (linkOrUrl && )
           return linkOrUrl;
       },
-      getFullHref: function(href) {
-          if(!href) return '';
+      getFullHref: function (href) {
+          if (!href) return '';
 
           if (!_.isString(href)) {
               href = href.getAttribute('href');
@@ -5041,7 +5041,7 @@
     CSS_MAIN: tpl_mainCss,
 
     preferencesHTML: tpl_preferencesHTML
-        .uiTrans().replace(/\\n/g, '\n'),
+      .uiTrans().replace(/\\n/g, '\n'),
 
     preferencesCSS: tpl_preferencesCSS,
   };
@@ -5065,7 +5065,7 @@
       // 站点字体
       siteFontFamily: '',
 
-      init: function(){
+      init: function () {
           UI.refreshMainStyle();
 
           UI.refreshSkinStyle(Setting.skin_name, true);
@@ -5081,7 +5081,7 @@
           UI.$preferencesBtn = $('#preferencesBtn');
 
           // 初始化是否隐藏
-          if(Setting.hide_footer_nav){
+          if (Setting.hide_footer_nav) {
               UI.hideFooterNavStyle(true);
           }
 
@@ -5089,22 +5089,22 @@
           UI.hideMenuList(Setting.menu_list_hiddden);  // 初始化章节列表是否隐藏
           UI.hidePreferencesButton(Setting.hide_preferences_button);  // 初始化设置按钮是否隐藏
       },
-      refreshMainStyle: function(){
+      refreshMainStyle: function () {
           // 添加站点字体到样式中
           if (App$1.site.useSiteFont && App$1.siteFontInfo) {
               UI.siteFontFamily = App$1.siteFontInfo.siteFontFamily;
           }
 
           var mainCss = Res.CSS_MAIN
-                  .replace("{font_family}", UI.siteFontFamily + Setting.font_family)
-                  .replace("{font_size}", UI.calcContentFontSize(Setting.font_size))
-                  .replace("{title_font_size}", UI.calcTitleFontSize(Setting.font_size))
-                  .replace("{content_width}", Setting.content_width)
-                  .replace("{text_line_height}", Setting.text_line_height)
-                  .replace("{paragraph_height}", Setting.paragraph_height)
-                  .replace("{menu-bar-hidden}", Setting.menu_bar_hidden ? "display:none;" : "");
+              .replace("{font_family}", UI.siteFontFamily + Setting.font_family)
+              .replace("{font_size}", UI.calcContentFontSize(Setting.font_size))
+              .replace("{title_font_size}", UI.calcTitleFontSize(Setting.font_size))
+              .replace("{content_width}", Setting.content_width)
+              .replace("{text_line_height}", Setting.text_line_height)
+              .replace("{paragraph_height}", Setting.paragraph_height)
+              .replace("{menu-bar-hidden}", Setting.menu_bar_hidden ? "display:none;" : "");
 
-          if(UI.$mainStyle){
+          if (UI.$mainStyle) {
               UI.$mainStyle.text(mainCss);
               return;
           }
@@ -5113,10 +5113,10 @@
               .text(mainCss)
               .appendTo('head');
       },
-      hideFooterNavStyle: function(hidden){
+      hideFooterNavStyle: function (hidden) {
           var navStyle = $("#footer_nav_css");
-          if(hidden) {
-              if(navStyle.length === 0) {
+          if (hidden) {
+              if (navStyle.length === 0) {
                   $('<style>')
                       .attr("id", "footer_nav_css")
                       .text(".chapter-footer-nav { display: none; }")
@@ -5126,39 +5126,39 @@
               navStyle.remove();
           }
       },
-      hideMenuList: function(hidden){
-          if(typeof(hidden) === "undefined"){
+      hideMenuList: function (hidden) {
+          if (typeof (hidden) === "undefined") {
               hidden = !UI.menu_list_hiddden;
           }
 
-          if(hidden){
+          if (hidden) {
               UI.$menu.addClass('hidden');
               UI.$content.css("margin-left", "");
-          }else {
+          } else {
               UI.$menu.removeClass('hidden');
               UI.$content.css("margin-left", "320px");
           }
           UI.menu_list_hiddden = hidden;
       },
-      hidePreferencesButton: function(hidden) {
+      hidePreferencesButton: function (hidden) {
           hidden = _.isUndefined(hidden) ? Setting.hide_preferences_button : hidden;
 
           UI.$preferencesBtn.toggle(!hidden);
       },
-      hideMenuBar: function(hidden) {
+      hideMenuBar: function (hidden) {
           hidden = _.isUndefined(hidden) ? Setting.menu_bar_hidden : hidden;
 
           UI.$menuBar.toggle(!hidden);
       },
-      refreshSkinStyle: function(skin_name, isFirst){
+      refreshSkinStyle: function (skin_name, isFirst) {
           var $style = $("#skin_style");
-          if($style.length === 0){
+          if ($style.length === 0) {
               $style = $('<style id="skin_style">').appendTo('head');
           }
 
           // 图片章节夜间模式会变的无法看
           if (isFirst && skin_name.indexOf('夜间'.uiTrans()) != -1 && Setting.picNightModeCheck) {
-              setTimeout(function(){
+              setTimeout(function () {
                   var img = $('#mynovelreader-content img')[0];
                   // console.log(img.width, img.height)
                   if (img && img.width > 500 && img.height > 1000) {
@@ -5170,15 +5170,15 @@
 
           $style.text(UI.skins[skin_name]);
       },
-      refreshExtraStyle: function(css){
+      refreshExtraStyle: function (css) {
           var style = $("#extra_style");
-          if(style.length === 0){
+          if (style.length === 0) {
               style = $('<style id="extra_style">').appendTo('head');
           }
 
           style.text(css);
       },
-      toggleQuietMode: function() {
+      toggleQuietMode: function () {
           this._isQuietMode = !this._isQuietMode;
           var selector = '#menu-bar, #menu, #preferencesBtn, .readerbtn';
 
@@ -5193,7 +5193,7 @@
               $(selector).removeClass("quiet-mode");
           }
       },
-      addButton: async function(){
+      addButton: async function () {
           GM_addStyle('\
             .readerbtn {\
                 position: fixed;\
@@ -5220,10 +5220,10 @@
           $("<div>")
               .addClass("readerbtn")
               .html(App$1.isEnabled ? "退出".uiTrans() : "阅读模式".uiTrans())
-              .mousedown(async function(event){
-                  if(event.which == 1){
+              .mousedown(async function (event) {
+                  if (event.which == 1) {
                       await App$1.toggle();
-                  }else if(event.which == 2){
+                  } else if (event.which == 2) {
                       event.preventDefault();
                       L_setValue("mynoverlreader_disable_once", true);
 
@@ -5233,9 +5233,9 @@
               })
               .appendTo('body');
       },
-      calcContentFontSize: function(fontSizeStr) {
+      calcContentFontSize: function (fontSizeStr) {
           var m = fontSizeStr.match(/([\d\.]+)(px|r?em|pt)/);
-          if(m) {
+          if (m) {
               var size = m[1],
                   type = m[2];
               return parseFloat(size, 10) + type;
@@ -5248,9 +5248,9 @@
 
           return "";
       },
-      calcTitleFontSize: function(fontSizeStr){
+      calcTitleFontSize: function (fontSizeStr) {
           var m = fontSizeStr.match(/([\d\.]+)(px|r?em|pt)/);
-          if(m) {
+          if (m) {
               var size = m[1],
                   type = m[2];
               return parseFloat(size, 10) * 1.8 + type;
@@ -5263,14 +5263,14 @@
 
           return "";
       },
-      fixMobile: function(){  // 自适应网页设计
+      fixMobile: function () {  // 自适应网页设计
           var meta = document.createElement("meta");
           meta.setAttribute("name", "viewport");
           meta.setAttribute("content", "width=device-width, initial-scale=1");
           document.head.appendChild(meta);
       },
-      preferencesShow: function(event){
-          if($("#reader_preferences").length){
+      preferencesShow: function (event) {
+          if ($("#reader_preferences").length) {
               return;
           }
 
@@ -5286,19 +5286,19 @@
 
           UI.preferencesLoadHandler();
       },
-      _loadBlocker: function() {
+      _loadBlocker: function () {
           UI.$blocker = $('<div>').attr({
               id: 'uil_blocker',
               style: 'position:fixed;top:0px;left:0px;right:0px;bottom:0px;background-color:#000;opacity:0.5;z-index:100000;'
           }).appendTo('body');
       },
-      hide: function(){
-          if(UI.$prefs) UI.$prefs.remove();
-          if(UI.$blocker) UI.$blocker.remove();
+      hide: function () {
+          if (UI.$prefs) UI.$prefs.remove();
+          if (UI.$blocker) UI.$blocker.remove();
           UI.$prefs = null;
           UI.$blocker = null;
       },
-      preferencesLoadHandler: function(){
+      preferencesLoadHandler: function () {
           var $form = $("#preferences");
 
           // checkbox
@@ -5348,29 +5348,29 @@
           var $lang = $form.find("#lang");
           $("<option>").text("zh-CN").appendTo($lang);
           $("<option>").text("zh-TW").appendTo($lang);
-          $lang.val(Setting.lang).change(function(){
+          $lang.val(Setting.lang).change(function () {
               var key = $(this).find("option:selected").text();
               Setting.lang = key;
           });
 
           // 皮肤
           var $skin = $form.find("#skin");
-          for(var key in UI.skins){
+          for (var key in UI.skins) {
               $("<option>").text(key).appendTo($skin);
           }
-          $skin.val(Setting.skin_name).change(function(){
+          $skin.val(Setting.skin_name).change(function () {
               var key = $(this).find("option:selected").text();
               UI.refreshSkinStyle(key);
               Setting.skin_name = key;
           });
 
           // 字体大小等预览
-          var preview = _.debounce(function(){
-              switch(this.id){
+          var preview = _.debounce(function () {
+              switch (this.id) {
                   case "font-size":
                       var contentFontSize = UI.calcContentFontSize(this.value);
                       var titleFontSize = UI.calcTitleFontSize(this.value);
-                      if(titleFontSize) {
+                      if (titleFontSize) {
                           UI.$content.css("font-size", contentFontSize);
                           UI.$content.find("h1").css("font-size", titleFontSize);
                       }
@@ -5398,17 +5398,17 @@
           $form.find("#setOpenSpeechKey").get(0).value = Setting.openSpeechKey;
 
           // 点击事件
-          $form.on('click', 'input:checkbox, input:button', function(event){
+          $form.on('click', 'input:checkbox, input:button', function (event) {
               UI.preferencesClickHandler(event.target); // 不用 await
           });
       },
-      cleanPreview: function() {
+      cleanPreview: function () {
           UI.$content.find("h1").css("font-size", "");
 
           // 恢复初始设置（有误操作）
           // UI.$content.removeAttr('style');
       },
-      preferencesClickHandler: async function(target){
+      preferencesClickHandler: async function (target) {
           var key;
           switch (target.id) {
               case 'close_button':
@@ -5473,12 +5473,12 @@
                   break;
           }
       },
-      preferencesCloseHandler: function(){
+      preferencesCloseHandler: function () {
           UI.cleanPreview();
 
           UI.hide();
       },
-      preferencesSaveHandler: function(){
+      preferencesSaveHandler: function () {
           var $form = $("#preferences");
 
           // Setting.setDisableAutoLaunch($form.find("#disable-auto-launch").get(0).checked);
@@ -5570,10 +5570,10 @@
 
           UI.hide();
       },
-      openHelp: function() {
+      openHelp: function () {
 
       },
-      notice: function (htmlText, ms){
+      notice: function (htmlText, ms) {
           var $noticeDiv = $("#alert");
           if (!ms) {
               ms = 1666;
@@ -5583,7 +5583,7 @@
           $noticeDiv.find("p").html(htmlText);
           $noticeDiv.fadeIn("fast");
 
-          UI.noticeDivto = setTimeout(function(){
+          UI.noticeDivto = setTimeout(function () {
               $noticeDiv.fadeOut(500);
           }, ms);
 
@@ -5622,42 +5622,42 @@
   let _messageTimeId;
 
   function notice(html, duration, noticeType, onClose) {
-    if (typeof duration === 'undefined')
-        duration = 2000;
+      if (typeof duration === 'undefined')
+          duration = 2000;
 
-    var closeMessage = function() {
-        $messageDiv.remove();
-        $messageDiv = null;
+      var closeMessage = function () {
+          $messageDiv.remove();
+          $messageDiv = null;
 
-        if (typeof onClose === 'function') {
-            onClose();
-        }
-    };
+          if (typeof onClose === 'function') {
+              onClose();
+          }
+      };
 
-    if (!$messageDiv) {
-        var iconHtml = '';
-        if (noticeType === 'loading') {
-            iconHtml = '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>';
-        }
+      if (!$messageDiv) {
+          var iconHtml = '';
+          if (noticeType === 'loading') {
+              iconHtml = '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>';
+          }
 
-        $messageDiv = $('<div id="message" class="noRemove">' + iconHtml + '<span id="content"></span></div>')
-            .appendTo('body');
+          $messageDiv = $('<div id="message" class="noRemove">' + iconHtml + '<span id="content"></span></div>')
+              .appendTo('body');
 
-        if (duration == 0) {
-            $messageDiv.on('click', closeMessage);
-        }
-    }
+          if (duration == 0) {
+              $messageDiv.on('click', closeMessage);
+          }
+      }
 
-    $messageDiv.find('#content').html(html);
+      $messageDiv.find('#content').html(html);
 
-    if (duration > 0) {
-        clearTimeout(_messageTimeId);
-        _messageTimeId = setTimeout(closeMessage, duration);
-    }
+      if (duration > 0) {
+          clearTimeout(_messageTimeId);
+          _messageTimeId = setTimeout(closeMessage, duration);
+      }
   }
 
   function loading(html, duration, onClose) {
-    notice(html, duration, 'loading', onClose);
+      notice(html, duration, 'loading', onClose);
   }
 
   function saveAs(data, filename) {
@@ -5723,39 +5723,39 @@
     })
   }
 
-  function cnNum2ArabNum(cn){
-    var arab, parts, cnChars = '零一二三四五六七八九';
+  function cnNum2ArabNum(cn) {
+      var arab, parts, cnChars = '零一二三四五六七八九';
 
-    if (!cn) {
-        return 0
-    }
+      if (!cn) {
+          return 0
+      }
 
-    if (cn.indexOf('亿') !== -1){
-        parts = cn.split('亿');
-        return cnNum2ArabNum(parts[0]) * 1e8 + cnNum2ArabNum(parts[1])
-    }
+      if (cn.indexOf('亿') !== -1) {
+          parts = cn.split('亿');
+          return cnNum2ArabNum(parts[0]) * 1e8 + cnNum2ArabNum(parts[1])
+      }
 
-    if (cn.indexOf('万') !== -1){
-        parts = cn.split('万');
-        return cnNum2ArabNum(parts[0]) * 1e4 + cnNum2ArabNum(parts[1])
-    }
+      if (cn.indexOf('万') !== -1) {
+          parts = cn.split('万');
+          return cnNum2ArabNum(parts[0]) * 1e4 + cnNum2ArabNum(parts[1])
+      }
 
-    if (cn.indexOf('十') === 0){
-        cn = '一' + cn;
-    }
+      if (cn.indexOf('十') === 0) {
+          cn = '一' + cn;
+      }
 
-    arab = cn
-        .replace(/[零一二三四五六七八九]/g, function (a) {
-            return '+' + cnChars.indexOf(a)
-        })
-        .replace(/(十|百|千)/g, function(a, b){
-            return '*' + (
-                b == '十' ? 1e1 :
-                b == '百' ? 1e2 : 1e3
-            )
-        });
+      arab = cn
+          .replace(/[零一二三四五六七八九]/g, function (a) {
+              return '+' + cnChars.indexOf(a)
+          })
+          .replace(/(十|百|千)/g, function (a, b) {
+              return '*' + (
+                  b == '十' ? 1e1 :
+                      b == '百' ? 1e2 : 1e3
+              )
+          });
 
-    return (new Function('return ' + arab))()
+      return (new Function('return ' + arab))()
   }
 
   function getNumFromChapterTitle(title) {
@@ -5819,14 +5819,14 @@
     chapters.push(html);
 
     var msg = '已下载 ' + chapters.length + ' 章，' +
-        (parser.chapterTitle || '');
+      (parser.chapterTitle || '');
 
     loading(msg, 0);
   }
   function finish(parser) {
     var allTxt = chapters.join('\n\n');
     if (isWindows) {
-        allTxt = allTxt.replace(/\n/g, '\r\n');
+      allTxt = allTxt.replace(/\n/g, '\r\n');
     }
 
     if (parser) {
@@ -5838,15 +5838,15 @@
   async function getOnePage(parser, nextUrl) {
     var isEnd = false;
     if (parser && parser.content) {
-        toTxt(parser);
-        nextUrl = parser.nextUrl;
-        isEnd = parser.isTheEnd;
+      toTxt(parser);
+      nextUrl = parser.nextUrl;
+      isEnd = parser.isTheEnd;
     }
 
     if (!nextUrl || isEnd) {
-        C.log('全部获取完毕');
-        finish(parser);
-        return;
+      C.log('全部获取完毕');
+      finish(parser);
+      return;
     }
 
     sleep(config.download_delay);
@@ -5873,18 +5873,18 @@
     }
 
     if (doc) {
-        var par = new Parser(App$1.site, doc, nextUrl);
-        await par.getAll();
-        await getOnePage(par);
+      var par = new Parser(App$1.site, doc, nextUrl);
+      await par.getAll();
+      await getOnePage(par);
     } else {
-        C.error('超时或连接出错');
-        finish();
+      C.error('超时或连接出错');
+      finish();
     }
   }
 
-  async function run(cachedParsers=[]) {
+  async function run(cachedParsers = []) {
     C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`);
-    
+
     lastRequestUrl = "";
 
     cachedParsers.forEach(toTxt);
@@ -6099,7 +6099,7 @@
           App$1.scrollToArticle(elem);
         }
       },
-      getToSpeekText(fromSelection=false) {
+      getToSpeekText(fromSelection = false) {
         let startIndex = this.speakIndex;
 
         // 这是 jQuery 对象
@@ -6157,7 +6157,7 @@
 
         this.synth.speak(this.utterance);
       },
-      listenForSpeechEvents (endFn) {
+      listenForSpeechEvents(endFn) {
         this.utterance.onstart = () => {
           this.playState = STATE.playing;
         };
@@ -6260,7 +6260,7 @@
       clenaupEventArray.push(() => {
         try {
           thisArg.removeEventListener(...argumentsList);
-        } catch (e) {}
+        } catch (e) { }
       });
     }
   });
@@ -6275,7 +6275,7 @@
       clenaupEventArray.push(() => {
         try {
           _disconnect.apply(thisArg, argumentsList);
-        } catch (e) {}
+        } catch (e) { }
       });
     }
   });
@@ -6295,7 +6295,7 @@
     try {
       unsafeWindow.$(unsafeWindow).off();
       unsafeWindow.$(document).off();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   if (window.name === 'mynovelreader-iframe') {
@@ -6308,7 +6308,7 @@
     }
   });
 
-  console$1.clear = () => {};
+  console$1.clear = () => { };
 
   const proxies = new WeakMap();
 
@@ -6333,8 +6333,8 @@
   class BaseRequest {
     /**@param { import("../typings/MyNovelReader").SiteConfig } siteInfo */
     constructor(siteInfo) {
-      this.errorHandle = () => {};
-      this.finishHandle = () => {};
+      this.errorHandle = () => { };
+      this.finishHandle = () => { };
       // 站点规则
       this.siteInfo = siteInfo;
     }
@@ -6399,8 +6399,8 @@
       return this.doc
     }
 
-    hide() {}
-    show() {}
+    hide() { }
+    show() { }
   }
 
   class IframeRequest extends BaseRequest {
@@ -6564,7 +6564,7 @@
       // 站点规则
       site: null,
 
-      init: async function() {
+      init: async function () {
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
               return;
           }
@@ -6594,8 +6594,8 @@
           var readx = App$1.launch;
 
           try {
-              exportFunction(readx, unsafeWindow, {defineAs: "readx"});
-          } catch(ex) {
+              exportFunction(readx, unsafeWindow, { defineAs: "readx" });
+          } catch (ex) {
               C.error('无法定义 readx 函数');
           }
 
@@ -6636,7 +6636,7 @@
               await UI.addButton();
           }
       },
-      loadCustomSetting: function() {
+      loadCustomSetting: function () {
           var customRules;
           try {
               customRules = eval(Setting.customSiteinfo);
@@ -6654,11 +6654,11 @@
 
           C.log('载入自定义替换规则成功', Rule.customReplace);
       },
-      getCurSiteInfo: function() {
+      getCurSiteInfo: function () {
           var rules = Rule.customRules.concat(Rule.specialSite);
           var locationHref = location.href;
 
-          var info = _.find(rules, function(x) {
+          var info = _.find(rules, function (x) {
               return toRE(x.url).test(locationHref);
           });
 
@@ -6670,7 +6670,7 @@
           }
           return info;
       },
-      isAutoLaunch: function() {
+      isAutoLaunch: function () {
           var locationHost = location.host,
               referrer = document.referrer;
 
@@ -6701,7 +6701,7 @@
                   return false;
           }
       },
-      addMutationObserve: function(doc) {
+      addMutationObserve: function (doc) {
           var shouldAdd = false;
           var $doc = $(doc);
 
@@ -6748,7 +6748,7 @@
               })
           }
       },
-      launch: async function() {
+      launch: async function () {
           // 只解析一次，防止多次重复解析一个页面
           if (document.body && document.body.getAttribute("name") == "MyNovelReader") {
               return await App$1.toggle();
@@ -6799,7 +6799,7 @@
           if (App$1.site.fInit)
               App$1.site.fInit();
       },
-      processPage: async function(parser) {
+      processPage: async function (parser) {
           // 对 Document 进行处理
           document.body.innerHTML = '';
           App$1.prepDocument();
@@ -6830,11 +6830,11 @@
                   .addClass('chapter')
                   .append(
                       $("<div>")
-                      .attr({
-                          "realHref": parser.prevUrl,
-                          "onclick": "return false;"
-                      })
-                      .text("上一章".uiTrans())
+                          .attr({
+                              "realHref": parser.prevUrl,
+                              "onclick": "return false;"
+                          })
+                          .text("上一章".uiTrans())
                   )
                   .prependTo(App$1.$chapterList);
           }
@@ -6894,7 +6894,7 @@
               await App$1.doRequest();
           }
       },
-      initRequest: function() {
+      initRequest: function () {
           App$1.httpRequest = new HttpRequest(App$1.site);
           App$1.iframeRequest = new IframeRequest(App$1.site);
 
@@ -6906,14 +6906,14 @@
           App$1.iframeRequest.setErrorHandle(() => App$1.scrollForce());
           App$1.iframeRequest.setFinishHandle(() => App$1.scroll());
       },
-      prepDocument: function() {
-          window.onload = window.onunload = function() {};
+      prepDocument: function () {
+          window.onload = window.onunload = function () { };
 
           // 破解右键限制
           var doc = document;
           var bd = doc.body;
           bd.onclick = bd.ondblclick = bd.onselectstart = bd.oncopy = bd.onpaste = bd.onkeydown = bd.oncontextmenu = bd.onmousemove = bd.onselectstart = bd.ondragstart = doc.onselectstart = doc.oncopy = doc.onpaste = doc.onkeydown = doc.oncontextmenu = null;
-          doc.onclick = doc.ondblclick = doc.onselectstart = doc.oncontextmenu = doc.onmousedown = doc.onkeydown = function() {
+          doc.onclick = doc.ondblclick = doc.onselectstart = doc.oncontextmenu = doc.onmousedown = doc.onkeydown = function () {
               return true;
           };
 
@@ -6937,9 +6937,9 @@
               .removeAttr('style')
               .removeAttr('bgcolor');
 
-          $('style:not(.noRemove)').filter(function() {
+          $('style:not(.noRemove)').filter(function () {
               var $style = $(this);
-              if($style.text().indexOf('#cVim-link-container') != -1) {  // chrome 的 cVim 扩展
+              if ($style.text().indexOf('#cVim-link-container') != -1) {  // chrome 的 cVim 扩展
                   return false;
               }
               return true;
@@ -6954,12 +6954,12 @@
               return false
           }).remove();
       },
-      initDocument: function(parser) {
+      initDocument: function (parser) {
           document.title = parser.docTitle;
 
           document.body.innerHTML = $.nano(tpl_mainHtml.uiTrans(), parser);
       },
-      clean: function() {
+      clean: function () {
           $('body > *:not("#container, .readerbtn, .noRemove, #reader_preferences, #uil_blocker,iframe[name=\'mynovelreader-iframe\']")').remove();
           $('link[rel="stylesheet"]:not(.noRemove)').remove();
           $('body, #container').removeAttr('style').removeAttr('class');
@@ -6968,7 +6968,7 @@
               unsafeWindow.jQuery(document).off("selectstart").off("contextmenu");
           }
       },
-      cleanAgain: function() {
+      cleanAgain: function () {
           // var host = location.host;
           // if (!host.match(/qidian\.com|zongheng\.com/)) {  // 只在起点、纵横等网站运行
           //     return;
@@ -6979,12 +6979,12 @@
           setTimeout(App$1.clean, 5000);
           setTimeout(App$1.clean, 8000);
           // TM 用 addEventListener('load') 有问题
-          window.onload = function() {
+          window.onload = function () {
               App$1.clean();
               setTimeout(App$1.clean, 500);
           };
       },
-      toggle: async function() {
+      toggle: async function () {
           if (App$1.isEnabled) { // 退出
               GM_setValue("auto_enable", false);
               L_setValue("mynoverlreader_disable_once", true);
@@ -6998,13 +6998,13 @@
               await App$1.launch();
           }
       },
-      removeListener: function() {
+      removeListener: function () {
           C.log("移除各种事件监听");
-          App$1.remove.forEach(function(_remove) {
+          App$1.remove.forEach(function (_remove) {
               _remove();
           });
       },
-      appendPage: function(parser, isFirst) {
+      appendPage: function (parser, isFirst) {
           var chapter = $("article:last");
           if (chapter.length && parser.isSection) { // 每次获取的不是一章，而是一节
               var lastText = chapter.find("p:last").remove().text().trimRight();
@@ -7039,13 +7039,13 @@
                   .addClass('chapter')
                   .append(
                       $("<div>")
-                      .attr({
-                          href: "#page-" + App$1.pageNum,
-                          "realHref": parser.curPageUrl,
-                          onclick: "return false;",
-                          title: parser.chapterTitle
-                      })
-                      .text(parser.chapterTitle)
+                          .attr({
+                              href: "#page-" + App$1.pageNum,
+                              "realHref": parser.curPageUrl,
+                              onclick: "return false;",
+                              title: parser.chapterTitle
+                          })
+                          .text(parser.chapterTitle)
                   )
                   .prependTo(App$1.$chapterList);
 
@@ -7062,11 +7062,11 @@
 
           bus.$emit(APPEND_NEXT_PAGE);
       },
-      resetCache: function() {  // 更新缓存变量
+      resetCache: function () {  // 更新缓存变量
           App$1.menuItems = App$1.$chapterList.find("div");
           App$1.scrollItems = $("article[id^=page-]");
       },
-      registerControls: function() {
+      registerControls: function () {
           // 内容滚动
           var throttled = _.throttle(App$1.scroll, 200);
           $(window).scroll(throttled);
@@ -7074,21 +7074,21 @@
           App$1.registerKeys();
 
           if (Setting.dblclickPause) {
-              App$1.$content.on("dblclick", function() {
+              App$1.$content.on("dblclick", function () {
                   App$1.pauseHandler();
               });
           }
 
           // 左侧章节列表
-          App$1.$menuHeader.click(function() {
+          App$1.$menuHeader.click(function () {
               App$1.copyCurTitle();
           });
 
-          App$1.$menuBar.click(function() {
+          App$1.$menuBar.click(function () {
               UI.hideMenuList();
           });
 
-          App$1.$doc.on("mousedown", "#chapter-list div", function(event) {
+          App$1.$doc.on("mousedown", "#chapter-list div", function (event) {
               switch (event.which) {
                   case 1:
                       var href = $(this).attr("href");
@@ -7105,15 +7105,15 @@
               }
           });
 
-          $("#preferencesBtn").click(function(event) {
+          $("#preferencesBtn").click(function (event) {
               event.preventDefault();
               UI.preferencesShow();
           });
 
           GM_registerMenuCommand("小说阅读脚本设置".uiTrans(), UI.preferencesShow.bind(UI));
       },
-      registerKeys: function() {
-          key('enter', function(event) {
+      registerKeys: function () {
+          key('enter', function (event) {
               if (UI.$prefs) {
                   return;
               }
@@ -7125,7 +7125,7 @@
               event.preventDefault();
           });
 
-          key('left', function(event) {
+          key('left', function (event) {
               var scrollTop = $(window).scrollTop();
               if (scrollTop === 0) {
                   location.href = App$1.prevUrl;
@@ -7141,7 +7141,7 @@
               return false;
           });
 
-          key('right', function(event) {
+          key('right', function (event) {
               if (App$1.getRemain() === 0) {
                   location.href = App$1.lastRequestUrl || App$1.requestUrl;
               } else {
@@ -7153,50 +7153,50 @@
               return false;
           });
 
-          key('esc', function(){
+          key('esc', function () {
               if (UI.$prefs) {
                   UI.hide();
                   return false;
               }
           });
 
-          key('shift+/', function() {
+          key('shift+/', function () {
               UI.openHelp();
               return false;
           });
 
-          key(Setting.quietModeKey, function(){
+          key(Setting.quietModeKey, function () {
               UI.toggleQuietMode();
               return false;
           });
 
-          key(Setting.hideMenuListKey, function(){
+          key(Setting.hideMenuListKey, function () {
               UI.hideMenuList();
               return false;
           });
 
-          key(Setting.openPreferencesKey, function(){
+          key(Setting.openPreferencesKey, function () {
               UI.preferencesShow();
               return false;
           });
 
-          key(Setting.openSpeechKey, function() {
+          key(Setting.openSpeechKey, function () {
               bus.$emit(SHOW_SPEECH);
               return false;
           });
 
           // PageUp
-          key(',', function() {
+          key(',', function () {
               let { scrollX, scrollY, innerHeight } = window;
               window.scrollTo(scrollX, scrollY - innerHeight * .9);
           });
           // PageDown
-          key('.', function() {
+          key('.', function () {
               let { scrollX, scrollY, innerHeight } = window;
               window.scrollTo(scrollX, scrollY + innerHeight * .9);
           });
       },
-      copyCurTitle: function() {
+      copyCurTitle: function () {
           if (Setting.copyCurTitle) {
               var title = $(App$1.curFocusElement).find(".title").text()
                   .replace(/第?\S+章/, "").trim();
@@ -7204,7 +7204,7 @@
               GM_setClipboard(title, "text");
           }
       },
-      scrollToArticle: function(elem) {
+      scrollToArticle: function (elem) {
           var offsetTop;
           if (typeof elem == "number") {
               offsetTop = elem;
@@ -7220,17 +7220,17 @@
               $("html, body").stop().scrollTop(offsetTop);
           }
       },
-      openUrl: function(url, errorMsg) {
+      openUrl: function (url, errorMsg) {
           if (url) {
               // ff30 Greasemonkey 会报错：Greasemonkey 访问违规：unsafeWindow 无法调用 GM_openInTab。新建脚本采用按键调用也这样。
-              setTimeout(function() {
+              setTimeout(function () {
                   GM_openInTab(url, false);
               }, 0);
           } else if (errorMsg) {
               UI.notice(errorMsg);
           }
       },
-      pauseHandler: async function() {
+      pauseHandler: async function () {
           App$1.paused = !App$1.paused;
           if (App$1.paused) {
               UI.notice('<b>状态</b>:自动翻页<span style="color:red!important;"><b>暂停</b></span>'.uiTrans());
@@ -7240,9 +7240,9 @@
               await App$1.scroll();
           }
       },
-      scroll: async function() {
+      scroll: async function () {
           if (App$1.request.display && Math.floor(App$1.getRemain() - iframeHeight) < 0) {
-              window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight  + 51);
+              window.scrollTo(0, document.body.scrollHeight - window.innerHeight - iframeHeight + 51);
           }
 
           if (!App$1.paused && App$1.getRemain() < Setting.remain_height) {
@@ -7255,7 +7255,7 @@
 
           App$1.updateCurFocusElement();
       },
-      scrollForce: async function() {
+      scrollForce: async function () {
           switch (App$1.request.status) {
               case RequestStatus.Idle:
                   await App$1.doRequest();
@@ -7269,12 +7269,12 @@
                   break;
           }
       },
-      updateCurFocusElement: function() { // 滚动激活章节列表
+      updateCurFocusElement: function () { // 滚动激活章节列表
           // Get container scroll position
           var fromTop = $(window).scrollTop() + $(window).height() / 2;
 
           // Get id of current scroll item
-          var cur = App$1.scrollItems.map(function() {
+          var cur = App$1.scrollItems.map(function () {
               if ($(this).offset().top < fromTop)
                   return this;
           });
@@ -7312,13 +7312,13 @@
               }
           }
       },
-      getRemain: function() {
+      getRemain: function () {
           var scrollHeight = Math.max(document.documentElement.scrollHeight,
               document.body.scrollHeight);
           var remain = scrollHeight - window.innerHeight - window.scrollY;
           return remain;
       },
-      doRequest: async function() {
+      doRequest: async function () {
           var nextUrl = App$1.requestUrl;
           const referer = App$1.lastRequestUrl || App$1.curPageUrl;
           App$1.lastRequestUrl = App$1.requestUrl;
@@ -7343,22 +7343,22 @@
               } else {
                   App$1.request = App$1.httpRequest;
               }
-              
+
               C.log('获取下一页', nextUrl);
               if (App$1.site.withReferer) {
                   App$1.request.send(nextUrl, referer);
               } else {
                   App$1.request.send(nextUrl);
               }
-      
+
           }
       },
-      loaded: async function(doc) {
+      loaded: async function (doc) {
           var parser = new Parser(App$1.site, doc, App$1.curPageUrl);
           await parser.getAll();
           await App$1.addNextPage(parser);
       },
-      addNextPage: async function(parser) {
+      addNextPage: async function (parser) {
           if (parser.content) {
               App$1.appendPage(parser);
 
@@ -7379,14 +7379,14 @@
           }
 
       },
-      afterLoad: async function() {
+      afterLoad: async function () {
 
           if (Setting.preloadNextPage) {
               await sleep(200);
               App$1.doRequest();  // 不用 await
           }
       },
-      fixImageFloats: function(articleContent) {
+      fixImageFloats: function (articleContent) {
 
           articleContent = articleContent || document;
 
@@ -7403,7 +7403,7 @@
       },
 
       isSaveing: false,
-      saveAsTxt: async function() {
+      saveAsTxt: async function () {
           // if (App.site.useiframe) {
           //     UI.notice('暂不支持', 3000);
           //     return;
@@ -7444,7 +7444,7 @@
                   external.push(styleSheet.href);
               }
           }
-          
+
           // 处理成 font-family 样式格式
           let familyList = [];
 
@@ -7468,128 +7468,128 @@
           });
 
           fonts.siteFontFamily = familyList.join(',') + ',';
-          
+
           return fonts
       }
   };
 
   var BookLinkMe = {
-    clickedColor: "666666",
+      clickedColor: "666666",
 
-    init: function() {
+      init: function () {
 
-        this.addUnreadButton();
+          this.addUnreadButton();
 
-        // if (location.pathname.indexOf("/book-") === 0) {
-        //     this.chapterPageAddTiebaLink();
-        // }
-    },
-    addUnreadButton: function(){  // 添加一键打开所有未读链接
-        var $parent = $('td[colspan="2"]:contains("未读"):first, td[colspan="2"]:contains("未讀"):first');
-        if(!$parent.length) return;
+          // if (location.pathname.indexOf("/book-") === 0) {
+          //     this.chapterPageAddTiebaLink();
+          // }
+      },
+      addUnreadButton: function () {  // 添加一键打开所有未读链接
+          var $parent = $('td[colspan="2"]:contains("未读"):first, td[colspan="2"]:contains("未讀"):first');
+          if (!$parent.length) return;
 
-        var openAllUnreadLinks = async function(event){
-            event.preventDefault();
+          var openAllUnreadLinks = async function (event) {
+              event.preventDefault();
 
-            var links = $x('./ancestor::table[@width="100%"]/descendant::a[img[@alt="未读"]]', event.target);
-            for (let link of links) {
-              // 忽略没有盗版的
-              let chapterLink = link.parentNode.nextSibling.nextSibling.querySelector('a');
-              if (chapterLink.querySelector('font[color*="800000"]')) {
-                 continue;
+              var links = $x('./ancestor::table[@width="100%"]/descendant::a[img[@alt="未读"]]', event.target);
+              for (let link of links) {
+                  // 忽略没有盗版的
+                  let chapterLink = link.parentNode.nextSibling.nextSibling.querySelector('a');
+                  if (chapterLink.querySelector('font[color*="800000"]')) {
+                      continue;
+                  }
+
+                  await delay(200);
+
+                  if (isFirefox)
+                      link.click();
+                  else
+                      GM_openInTab(link.href);
+
+                  // 设置点击后的样式
+                  // 未读左边的 1x 链接
+                  link.parentNode.previousSibling.querySelector('font')
+                      .setAttribute('color', BookLinkMe.clickedColor);
+                  chapterLink.classList.add('mclicked');
+              }
+          };
+
+
+          $('<a>')
+              .attr({ href: 'javascript:;', title: '一键打开所有未读链接', style: 'width:auto;' })
+              .click(openAllUnreadLinks)
+              .append($('<img src="me.png" style="max-width: 20px;">'))
+              .appendTo($parent);
+      },
+      chapterPageAddTiebaLink: function () {
+          var link = $('font:contains("贴吧")').parent().get(0);
+          if (!link) return;
+
+          var tiebaUrl = 'http://tieba.baidu.com/f?kw=' + $('h1').text();
+          console.log('GM_xmlhttpRequest', tiebaUrl);
+          GM_xmlhttpRequest({
+              method: "GET",
+              url: tiebaUrl,
+              onload: function (response) {
+                  var doc = parseHTML(response.responseText);
+                  BookLinkMe.load(doc);
+              }
+          });
+      },
+      load: function (doc) {
+          var $data = $(doc).find('.threadlist_text > a').map(function () {
+              return {
+                  title: $(this).text(),
+                  url: 'http://tieba.baidu.com' + $(this).attr('href')
+              }
+          });
+
+          var trimTitle = function (title, strict) {
+              title = title.trim()
+                  .replace(/\.\.\.$/, '');
+
+              if (strict) {
+                  title = title.replace(/第.*?章\s*/, '');
               }
 
-              await delay(200);
+              // if (toNum) {
+              //     title = title.replace(/[零一二三四五六七八九十百千万亿]+/, cnNum2ArabNum);
+              // }
 
-              if(isFirefox)
-                  link.click();
-              else
-                  GM_openInTab(link.href);
+              return title;
+          };
 
-              // 设置点击后的样式
-              // 未读左边的 1x 链接
-              link.parentNode.previousSibling.querySelector('font')
-                  .setAttribute('color', BookLinkMe.clickedColor);
-              chapterLink.classList.add('mclicked');
-            }
-        };
+          var findUrl = function (sTitle) {
+              if (!sTitle) return;
 
+              var url;
+              $data.each(function (i, item) {
+                  var tiebaTitle = item.title;
+                  if (tiebaTitle.indexOf(trimTitle(sTitle)) > 0 ||
+                      sTitle.indexOf(trimTitle(tiebaTitle, true)) > 0  // 包含贴吧标题的部分
+                  ) {
+                      url = item.url;
+                      return true;
+                  }
+              });
 
-        $('<a>')
-            .attr({ href: 'javascript:;', title: '一键打开所有未读链接', style: 'width:auto;' })
-            .click(openAllUnreadLinks)
-            .append($('<img src="me.png" style="max-width: 20px;">'))
-            .appendTo($parent);
-    },
-    chapterPageAddTiebaLink: function() {
-        var link = $('font:contains("贴吧")').parent().get(0);
-        if (!link) return;
+              return url;
+          };
 
-        var tiebaUrl = 'http://tieba.baidu.com/f?kw=' + $('h1').text();
-        console.log('GM_xmlhttpRequest', tiebaUrl);
-        GM_xmlhttpRequest({
-            method: "GET",
-            url: tiebaUrl,
-            onload: function(response) {
-                var doc = parseHTML(response.responseText);
-                BookLinkMe.load(doc);
-            }
-        });
-    },
-    load: function(doc) {
-        var $data = $(doc).find('.threadlist_text > a').map(function() {
-            return {
-                title: $(this).text(),
-                url: 'http://tieba.baidu.com' + $(this).attr('href')
-            }
-        });
+          $('a:contains("搜索本章节")').each(function () {
+              var $this = $(this),
+                  $thisLine = $this.parent().parent(),
+                  chapterTitle = $thisLine.prev().find('a[href^="/jump.php"]:first').text();
 
-        var trimTitle = function(title, strict) {
-            title = title.trim()
-                .replace(/\.\.\.$/, '');
-
-            if (strict) {
-                title = title.replace(/第.*?章\s*/, '');
-            }
-
-            // if (toNum) {
-            //     title = title.replace(/[零一二三四五六七八九十百千万亿]+/, cnNum2ArabNum);
-            // }
-
-            return title;
-        };
-
-        var findUrl = function(sTitle) {
-            if (!sTitle) return;
-
-            var url;
-            $data.each(function(i, item) {
-                var tiebaTitle = item.title;
-                if (tiebaTitle.indexOf(trimTitle(sTitle)) > 0 ||
-                    sTitle.indexOf(trimTitle(tiebaTitle, true)) > 0  // 包含贴吧标题的部分
-                ) {
-                    url = item.url;
-                    return true;
-                }
-            });
-
-            return url;
-        };
-
-        $('a:contains("搜索本章节")').each(function(){
-            var $this = $(this),
-                $thisLine = $this.parent().parent(),
-                chapterTitle = $thisLine.prev().find('a[href^="/jump.php"]:first').text();
-
-            var url = findUrl(chapterTitle);
-            if (url) {
-                $('<a>')
-                    .attr({ target: '_blank', href: url })
-                    .text('贴吧')
-                    .appendTo($this.parent());
-            }
-        });
-    }
+              var url = findUrl(chapterTitle);
+              if (url) {
+                  $('<a>')
+                      .attr({ target: '_blank', href: url })
+                      .text('贴吧')
+                      .appendTo($this.parent());
+              }
+          });
+      }
   };
 
   toggleConsole(Setting.debug);
