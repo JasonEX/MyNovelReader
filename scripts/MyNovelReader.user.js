@@ -2496,7 +2496,8 @@
           url: "https://www.611zw.com/books/\\d+/\\d+(_)?\\d+.html",
           exampleUrl: "https://www.611zw.com/books/175956/57627355.html",
 
-          titleSelector: ".reader-main h1.title",
+          checkSection: true,
+          titleSelector: ".title",
           contentReplace: ["(www.)?611zw.com"]
       },
       {
@@ -2505,6 +2506,7 @@
           exampleUrl: "https://www.bifengzw.com/read/AgVVAApc/1644315500.html",
 
           titleSelector: "h1",
+          bookTitleSelector: ".breadcrumb > li:nth-child(2) > a",
           contentSelector: ".content"
       }
   ];
