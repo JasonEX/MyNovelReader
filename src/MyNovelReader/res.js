@@ -12,3 +12,4 @@ var Res = {
 };
 
 export default Res
+

@@ -13,3 +13,4 @@ if (location.host.indexOf('booklink.me') > -1) {
 } else {
   App.init();
 }
+

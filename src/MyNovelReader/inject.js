@@ -105,3 +105,4 @@ export function setPropertyReadOnly(obj, prop, target) {
     set() { }
   })
 }
+

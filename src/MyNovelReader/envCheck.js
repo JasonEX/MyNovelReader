@@ -40,3 +40,4 @@ export function envCheckInit() {
   mousedownEventTest()
   minFontSizeTest()
 }
+

@@ -1328,3 +1328,4 @@ Parser.prototype = {
 };
 
 export default Parser
+
