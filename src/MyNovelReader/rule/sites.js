@@ -1486,6 +1486,7 @@ const sites = [
         exampleUrl: "https://www.bifengzw.com/read/AgVVAApc/1644315500.html",
 
         titleSelector: "h1",
+        bookTitleSelector: ".breadcrumb > li:nth-child(2) > a",
         contentSelector: ".content"
     }
 ];
