@@ -362,7 +362,7 @@ const replace = {
   '\\b(?:boos|boso)\\b': 'BOSS',
 
   '伱': '你', '勐': '猛', '澹': '淡', '桉': '案', '莪': '我',
-
+  '個': '个',
 };
 
 export default replace
