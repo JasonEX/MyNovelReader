@@ -8,20 +8,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: build
-        uses: actions/setup-node@v3
-        with:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - with:
           node-version: 16
-        run: |
+      - run: |
           yarn
           yarn build src/MyNovelReader
       - name: push
-        uses: actions/checkout@v3
-        run: |
-          date > generated.txt
+      - uses: actions/checkout@v3
+      - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add .
-          git commit -m "generated"
+          git add scripts
+          git commit -m "auto: user script generated"
           git push
