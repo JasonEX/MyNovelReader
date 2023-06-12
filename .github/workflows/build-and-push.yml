@@ -19,7 +19,7 @@ jobs:
           yarn
           yarn build src/MyNovelReader
       - name: push
-      - run: |
+        run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add scripts
