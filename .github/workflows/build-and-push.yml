@@ -8,16 +8,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: build
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - with:
           node-version: 16
+      - name: build
       - run: |
           yarn
           yarn build src/MyNovelReader
-      - name: push
       - uses: actions/checkout@v3
+      - name: push
       - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
