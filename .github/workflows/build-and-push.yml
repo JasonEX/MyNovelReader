@@ -18,8 +18,4 @@ jobs:
         run: |
           yarn
           yarn build src/MyNovelReader
-      - name: upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: MyNovelReader
-          path: scripts/MyNovelReader.user.js
+
