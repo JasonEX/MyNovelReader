@@ -5,7 +5,7 @@ name: Build user script and push to repo
 on: [push]
 permissions:
   contents: write
-
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,7 +15,11 @@ jobs:
         with:
           node-version: 16
       - name: build
-      - run: |
+        run: |
           yarn
           yarn build src/MyNovelReader
-
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: MyNovelReader
+          path: scripts/MyNovelReader.user.js
