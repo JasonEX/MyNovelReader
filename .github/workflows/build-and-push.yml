@@ -14,9 +14,14 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - name: build
+      - name: build prepare
         run: |
           yarn
+      - name: convert EOL
+        run: |
+          find 'node_modules/@ywzhaiqi/rollup-plugin-less' -type f -print0 | xargs -0 dos2unix
+      - name: build
+        run: |
           yarn build src/MyNovelReader
       - name: push
         run: |
