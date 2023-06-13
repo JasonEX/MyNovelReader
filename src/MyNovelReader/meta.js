@@ -266,6 +266,7 @@
 // @match          *://www.qisxs.com/*/*.html
 // @match          *://www.611zw.com/books/*/*.html
 // @match          *://www.bifengzw.com/read/*/*.html
+// @match          *://www.ibiquges.com/*/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
