@@ -20,6 +20,8 @@ jobs:
       - name: convert EOL
         run: |
           find 'node_modules/@ywzhaiqi/rollup-plugin-less' -not -type d -exec file "{}" ";" | grep CRLF
+          echo '/* Hi */' >> 'node_modules/@ywzhaiqi/rollup-plugin-less/dist/rollup-plugin-less.js'
+          cat 'node_modules/@ywzhaiqi/rollup-plugin-less/dist/rollup-plugin-less.js'
           find 'node_modules/@ywzhaiqi/rollup-plugin-less' -type f -exec sed -i 's/\r//g' {} \;
           find 'node_modules/@ywzhaiqi/rollup-plugin-less' -not -type d -exec file "{}" ";" | grep CRLF
       - name: build
