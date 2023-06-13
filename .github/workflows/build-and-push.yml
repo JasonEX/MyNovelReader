@@ -19,9 +19,9 @@ jobs:
           yarn
       - name: convert EOL
         run: |
-          grep -r '^M' 'node_modules/@ywzhaiqi/rollup-plugin-less'
+          grep -r '^M' 'node_modules/@ywzhaiqi/rollup-plugin-less/dist'
           find 'node_modules/@ywzhaiqi/rollup-plugin-less' -type f -exec sed -i 's/^M//g' {} \;
-          grep -r '^M' 'node_modules/@ywzhaiqi/rollup-plugin-less'
+          grep -r '^M' 'node_modules/@ywzhaiqi/rollup-plugin-less/dist'
       - name: build
         run: |
           yarn build src/MyNovelReader
