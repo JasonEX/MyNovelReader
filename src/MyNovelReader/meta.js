@@ -266,6 +266,7 @@
 // @match          *://www.qisxs.com/*/*.html
 // @match          *://www.611zw.com/books/*/*.html
 // @match          *://www.bifengzw.com/read/*/*.html
+// @match          *://www.ibiquges.com/*/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -280,6 +281,7 @@
 // @include        *://wap.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.com/vip/*/*
+// @match          *://m.xindingdianxsw.com/*/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
