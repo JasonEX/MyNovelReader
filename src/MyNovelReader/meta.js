@@ -281,6 +281,7 @@
 // @include        *://wap.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.com/vip/*/*
+// @match          *://m.xindingdianxsw.com/*/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
