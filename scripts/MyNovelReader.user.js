@@ -2511,6 +2511,16 @@
           titleSelector: "h1",
           bookTitleSelector: ".breadcrumb > li:nth-child(2) > a",
           contentSelector: ".content"
+      },
+      {
+          siteName: "UU看书网",
+          url: "https://www.uuks.org/b/\\d+/\\d+.html",
+          exampleUrl: "https://www.uuks.org/b/73675/920931.html",
+
+          bookTitleSelector: function () {
+              return unsafeWindow.booktitle;
+          },
+          contentSelector: "#content"
       }
   ];
 
