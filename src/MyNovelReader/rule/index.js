@@ -1,7 +1,7 @@
 import sites from './sites'
 import replace from './replace'
 import replaceAll from './replaceAll'
-import * as oneWordReplace from './oneWrodReplace'
+import * as oneWordReplace from './oneWordReplace'
 
 // Unicode/2000-2FFF：http://zh.wikibooks.org/wiki/Unicode/2000-2FFF
 // Unicode/F000-FFFF：https://zh.wikibooks.org/wiki/Unicode/F000-FFFF
