@@ -1,6 +1,6 @@
 # This workflow will generate user script using yarn and then publish to GitHub repo
 
-name: Build user script and push to repo
+name: User script generation
 
 on: [push]
 permissions:
