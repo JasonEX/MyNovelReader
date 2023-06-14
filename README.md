@@ -1,4 +1,5 @@
 # My Novel Reader
+[![User script generation](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml)
 
 [MyNovelReader](scripts/MyNovelReader.user.js)：小说阅读脚本
 
