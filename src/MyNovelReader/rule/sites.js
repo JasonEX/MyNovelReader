@@ -152,6 +152,7 @@ const sites = [
 
         contentSelector: '.content',
         // contentHandle: false,
+        timeout: 3000,
 
         isVipChapter($doc) {
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()
