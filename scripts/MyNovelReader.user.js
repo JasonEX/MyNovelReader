@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.8.3
+// @version        7.5.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1160,6 +1160,7 @@
 
           contentSelector: '.content',
           // contentHandle: false,
+          timeout: 3000,
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
@@ -3413,7 +3414,7 @@
     return rules;
   }
 
-  var tpl_mainHtml = "<div id=\"container\">\n    <div id=\"menu-bar\" title=\"点击显示隐藏章节列表\"></div>\n    <div id=\"menu\">\n        <div id=\"header\" title=\"打开目录\">\n            <a href=\"{indexUrl}\" target=\"_blank\">{bookTitle}</a>\n        </div>\n        <div id=\"divider\"></div>\n        <ul id=\"chapter-list\" title=\"左键滚动，中键打开链接（无阅读模式）\">\n        </ul>\n    </div>\n    <div id=\"mynovelreader-content\"></div>\n    <div id=\"loading\" style=\"display:none\"></div>\n    <div id=\"preferencesBtn\">\n        <img style=\"width:16px\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABwklEQVRIibVVzWrCQBAeQk/bdk+bm0aWDQEPHtwVahdavLU9aw6KAQ+SQ86Sa19Aqu0T9NafSw8ttOgr1CewUB9CBL3Yy26x1qRp0A8GhsnO9yUzmxmAhKjX68cAMAeAufK3C875FQAsAWCp/O3CsqyhFlB+Oti2/cAYewrD8FDHarXahWEYUy1gGMbUdd1z/TwMw0PG2JNt2/ex5IyxR02CEJpIKbuEkJGOrRshZCSl7CKEJjrGGHuIFMjlcs9RZElNcWxGEAQHGONxWnKM8TgIgoPYMkkpL9MKqNx4xNX8LyOEvMeSq5uxMZlz3vN9v+D7foFz3os6V61Wz36QNhqNUyHENaV0CACLTUnFYvF6/WVUbJPIglI6FELctFqtMiT59Ha7TdcFVCxJ6XYs0Gw2T1SJBlsq0ZxSOhBC3Hied/QjSTUoqsn9lSb3o879avI61FXbzTUFACiXy7v70Tqdzj7G+COtwJ+jIpPJvKYl12ZZ1kucwJs+iBD6lFJ2TdOMHB2mab7/a1xXKpW9fD5/6zjO3erCcV33PMnCcRwnfuHEYXVlZrPZQWqiKJRKpe8Bt5Ol73leCQBmADBTfiJ8AebTYCRbI3BUAAAAAElFTkSuQmCC\"/>\n    </div>\n    <div id=\"alert\" style=\"display: none;\">\n        <p id=\"App-notice\"></p>\n    </div>\n\n    <div id=\"app\">\n\n    </div>\n</div>";
+  var tpl_mainHtml = "<div id=\"container\">\n    <div id=\"menu-bar\" title=\"点击显示隐藏章节列表\"></div>\n    <div id=\"menu\">\n        <div id=\"header\" title=\"打开目录\">\n            <a href=\"{indexUrl}\" target=\"_blank\">{bookTitle}</a>\n        </div>\n        <div id=\"divider\"></div>\n        <ul id=\"chapter-list\" title=\"左键滚动，中键打开链接（无阅读模式）\">\n        </ul>\n    </div>\n    <div id=\"mynovelreader-content\"></div>\n    <div id=\"loading\" style=\"display:none\"></div>\n    <div id=\"preferencesBtn\">\n        <img style=\"width:16px\" src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABwklEQVRIibVVzWrCQBAeQk/bdk+bm0aWDQEPHtwVahdavLU9aw6KAQ+SQ86Sa19Aqu0T9NafSw8ttOgr1CewUB9CBL3Yy26x1qRp0A8GhsnO9yUzmxmAhKjX68cAMAeAufK3C875FQAsAWCp/O3CsqyhFlB+Oti2/cAYewrD8FDHarXahWEYUy1gGMbUdd1z/TwMw0PG2JNt2/ex5IyxR02CEJpIKbuEkJGOrRshZCSl7CKEJjrGGHuIFMjlcs9RZElNcWxGEAQHGONxWnKM8TgIgoPYMkkpL9MKqNx4xNX8LyOEvMeSq5uxMZlz3vN9v+D7foFz3os6V61Wz36QNhqNUyHENaV0CACLTUnFYvF6/WVUbJPIglI6FELctFqtMiT59Ha7TdcFVCxJ6XYs0Gw2T1SJBlsq0ZxSOhBC3Hied/QjSTUoqsn9lSb3o879avI61FXbzTUFACiXy7v70Tqdzj7G+COtwJ+jIpPJvKYl12ZZ1kucwJs+iBD6lFJ2TdOMHB2mab7/a1xXKpW9fD5/6zjO3erCcV33PMnCcRwnfuHEYXVlZrPZQWqiKJRKpe8Bt5Ol73leCQBmADBTfiJ8AebTYCRbI3BUAAAAAElFTkSuQmCC\"/>\n    </div>\n    <div id=\"alert\" style=\"display: none;\">\n        <p id=\"App-notice\"></p>\n    </div>\n\n    <div id=\"mynovelreader-app\">\n\n    </div>\n</div>";
 
   const autoBookTitleSelector = Rule.bookTitleSelector;
 
@@ -6240,7 +6241,7 @@
 
   function runVue() {
     new Vue({
-      el: '#app',
+      el: '#mynovelreader-app',
       render: h => h(App)
     });
   }
