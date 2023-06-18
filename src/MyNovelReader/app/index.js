@@ -3,7 +3,7 @@ import App from './App.vue'
 
 export function runVue() {
   new Vue({
-    el: '#app',
+    el: '#mynovelreader-app',
     render: h => h(App)
   })
 }
