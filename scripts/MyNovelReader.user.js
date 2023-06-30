@@ -1160,7 +1160,8 @@
 
           contentSelector: '.content',
           // contentHandle: false,
-          timeout: 3000,
+          //timeout: 3000,
+          mutationSelector: '#vite-plugin-ssr_pageContext',
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
@@ -1745,7 +1746,7 @@
           // contentHandle: false,
           titleSelector: 'h1',
           contentSelector: ".txtnav",
-          contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad",
+          contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2",
           nextSelector: '.page1 a:nth-child(4)',
           prevSelector: '.page1 a:nth-child(1)',
           indexSelector: '.page1 a:nth-child(3)',
