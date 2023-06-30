@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="mynovelreader-app">
     <speech class="speech" v-if="speechDialogVisible" v-on:closeSpeech="hideSpeech" />
   </div>
 </template>
