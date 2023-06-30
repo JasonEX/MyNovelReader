@@ -1161,9 +1161,7 @@
           contentSelector: '.content',
           // contentHandle: false,
           //timeout: 3000,
-          mutationSelector: 'main',
-          mutationChildCount: 0,
-          
+
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
               const { pageContext } = JSON.parse(json);
@@ -6215,7 +6213,7 @@
   };
 
   var App = {
-  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[(_vm.speechDialogVisible)?_c('speech',{staticClass:"speech",on:{"closeSpeech":_vm.hideSpeech}}):_vm._e()],1)},
+  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"mynovelreader-app"}},[(_vm.speechDialogVisible)?_c('speech',{staticClass:"speech",on:{"closeSpeech":_vm.hideSpeech}}):_vm._e()],1)},
   staticRenderFns: [],
     data() {
       return {
