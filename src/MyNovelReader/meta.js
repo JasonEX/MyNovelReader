@@ -279,6 +279,7 @@
 // @match          *://m.jjwxc.net/vip/*/*
 // @match          *://m.jjwxc.com/vip/*/*
 // @match          *://m.xindingdianxsw.com/*/*/*.html
+// @match          *://m.123duw.com/dudu-*/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
