@@ -1412,7 +1412,6 @@ const sites = [
         contentSelector: "#cont-body",
         prevSelector: ".col-md-6.text-center a:first",
         nextSelector: ".col-md-6.text-center a:last"
-
     },
 
     {siteName: '123读',
@@ -1421,7 +1420,6 @@ const sites = [
         contentSelector: '#content',
         nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
         contentReplace: ['…。。\\s本章未完，请点击下一页继续阅读！', '^"$']
-
     },
 
     {siteName: '阿拉法小说网',
@@ -1499,6 +1497,24 @@ const sites = [
             return unsafeWindow.booktitle;
         },
         contentSelector: "#content"
+    },
+    {
+        siteName: "123读书网-手机站",
+        url: "https://m.123duw.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
+        exampleUrl: "https://m.123duw.com/dudu-31/8452541/55196666.html",
+
+        titleReg: "(.*?)-(.*?)-(.*?)",
+        titlePos: 1,
+        checkSection: true,
+        prevSelector: "#PageSet a:contains('上'):contains('页')",
+        nextSelector: "#PageSet a:contains('下'):contains('页')",
+        contentSelector: ".TxtContent",
+        contentReplace: [
+            '本章没完，请点击下.?页继续阅读！如果被转码了请退出转码或者更换.?.?器即可。',
+            '….$',
+            '^.*提醒您：看完记得收藏【123读书网】 123duw.com，下次我更新您才方便继续阅读哦，期待精彩继续！$',
+            '^"$'
+        ]
     }
 ];
 
