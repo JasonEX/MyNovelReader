@@ -855,6 +855,7 @@ Parser.prototype = {
         if (this.chapterTitle) {
             try {
                 var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*')
+                reg = "(" + this.bookTitle.trim() + "\\s*)*" + "\\s*" + "(" + reg + ")*"
                 content = content.replace(toRE(`^${reg}$`), '')
                 C.log('去除内容中的标题', reg)
             } catch (e) {
