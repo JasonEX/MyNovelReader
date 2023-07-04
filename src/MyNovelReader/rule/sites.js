@@ -1515,6 +1515,18 @@ const sites = [
             '^.*提醒您：看完记得收藏【123读书网】 123duw.com，下次我更新您才方便继续阅读哦，期待精彩继续！$',
             '^"$'
         ]
+    },
+    {
+        siteName: "宙斯小说",
+        url: "http://www.zhsxs.com/zhsread/\\d+_\\d+.html",
+        exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
+
+        bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
+        contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
+        contentReplace: [
+            '^新书(、)*$',
+            '^本站(、)*$'
+        ]
     }
 ];
 
