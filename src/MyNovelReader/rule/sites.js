@@ -1521,8 +1521,7 @@ const sites = [
         contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
         contentReplace: [
             '^新书(、)*$',
-            '^本站(、)*$',
-            '\\A(.*)$'
+            '^本站(、)*$'
         ]
     }
 ];
