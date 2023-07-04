@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.9.3
+// @version        7.5.9.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2546,7 +2546,12 @@
           exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
 
           bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
-          contentSelector: "#form1 > table > tbody > tr > td > div:has(p)"
+          contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
+          contentReplace: [
+              '^新书(、)*$',
+              '^本站(、)*$',
+              '\\A(.*)$'
+          ]
       }
   ];
 
@@ -4598,6 +4603,7 @@
           if (this.chapterTitle) {
               try {
                   var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*');
+                  reg = "(" + this.bookTitle.trim() + "\\s*)*" + "\\s*" + "(" + reg + ")*";
                   content = content.replace(toRE(`^${reg}$`), '');
                   C.log('去除内容中的标题', reg);
               } catch (e) {
