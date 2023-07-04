@@ -1518,7 +1518,12 @@ const sites = [
         exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
 
         bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
-        contentSelector: "#form1 > table > tbody > tr > td > div:has(p)"
+        contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
+        contentReplace: [
+            '^新书(、)*$',
+            '^本站(、)*$',
+            '\\A(.*)$'
+        ]
     }
 ];
 
