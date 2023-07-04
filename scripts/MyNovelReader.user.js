@@ -264,6 +264,7 @@
 // @match          *://www.611zw.com/books/*/*.html
 // @match          *://www.bifengzw.com/read/*/*.html
 // @match          *://www.ibiquges.com/*/*/*.html
+// @match          *://www.zhsxs.com/zhsread/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1924,7 +1925,6 @@
               for (const dataUrl of dataUrls) {
                   $('<img>').attr('src', dataUrl).appendTo($container);
               }
-
           }
       },
       {
@@ -2539,6 +2539,14 @@
               '^.*提醒您：看完记得收藏【123读书网】 123duw.com，下次我更新您才方便继续阅读哦，期待精彩继续！$',
               '^"$'
           ]
+      },
+      {
+          siteName: "宙斯小说",
+          url: "http://www.zhsxs.com/zhsread/\\d+_\\d+.html",
+          exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
+
+          bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
+          contentSelector: "#form1 > table > tbody > tr > td > div:has(p)"
       }
   ];
 
