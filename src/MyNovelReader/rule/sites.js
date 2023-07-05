@@ -1540,6 +1540,19 @@ const sites = [
         titlePos: 1,
         useiframe: true,
         contentSelector: ".con"
+    },
+    {
+        siteName: "苟在小说网",
+        url: "https://www.gouzaixs.com/xiaoshuo/\\d+/\\d+(-\\d+)?.html",
+        exampleUrl: "https://www.gouzaixs.com/xiaoshuo/1/1.html",
+
+        bookTitleSelector: function ($doc) {
+            return unsafeWindow.Title;
+        },
+        titleReg: "(.*?)-(.*?)-",
+        titlePos: 1,
+        useiframe: true,
+        contentSelector: ".con"
     }
 ];
 
