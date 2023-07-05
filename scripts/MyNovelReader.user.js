@@ -265,6 +265,7 @@
 // @match          *://www.bifengzw.com/read/*/*.html
 // @match          *://www.ibiquges.com/*/*/*.html
 // @match          *://www.zhsxs.com/zhsread/*.html
+// @match          *://www.deqixs.com/xiaoshuo/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2551,6 +2552,19 @@
               '^新书(、)*$',
               '^本站(、)*$'
           ]
+      },
+      {
+          siteName: "得奇小说网",
+          url: "https://www.deqixs.com/xiaoshuo/\\d+/\\d+(-\\d+)?.html",
+          exampleUrl: "https://www.deqixs.com/xiaoshuo/4/74219.html",
+
+          bookTitleSelector: function ($doc) {
+              return unsafeWindow.Title;
+          },
+          titleSelector: function ($doc) {
+              return unsafeWindow.ArticleTitle;
+          },
+          contentSelector: ".con"
       }
   ];
 
