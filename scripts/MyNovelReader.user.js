@@ -266,6 +266,7 @@
 // @match          *://www.ibiquges.com/*/*/*.html
 // @match          *://www.zhsxs.com/zhsread/*.html
 // @match          *://www.deqixs.com/xiaoshuo/*/*.html
+// @match          *://www.gouzaixs.com/xiaoshuo/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2562,6 +2563,19 @@
               return unsafeWindow.Title;
           },
           titleReg: "(.*?)-(.*?)-(.*?)",
+          titlePos: 1,
+          useiframe: true,
+          contentSelector: ".con"
+      },
+      {
+          siteName: "苟在小说网",
+          url: "https://www.gouzaixs.com/xiaoshuo/\\d+/\\d+(-\\d+)?.html",
+          exampleUrl: "https://www.gouzaixs.com/xiaoshuo/1/1.html",
+
+          bookTitleSelector: function ($doc) {
+              return unsafeWindow.Title;
+          },
+          titleReg: "(.*?)-(.*?)-",
           titlePos: 1,
           useiframe: true,
           contentSelector: ".con"
