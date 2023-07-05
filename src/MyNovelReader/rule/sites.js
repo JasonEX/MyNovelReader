@@ -1532,9 +1532,9 @@ const sites = [
         bookTitleSelector: function ($doc) {
             return unsafeWindow.Title;
         },
-        titleSelector: function ($doc) {
-            return unsafeWindow.ArticleTitle;
-        },
+        titleReg: "(.*?)-(.*?)-(.*?)",
+        titlePos: 1,
+        useiframe: true,
         contentSelector: ".con"
     }
 ];
