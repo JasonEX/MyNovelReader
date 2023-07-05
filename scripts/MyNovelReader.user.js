@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.9.4
+// @version        7.5.9.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2917,7 +2917,7 @@
     '\\b(?:boos|boso)\\b': 'BOSS',
 
     '伱': '你', '勐': '猛', '澹': '淡', '桉': '案', '莪': '我',
-    '個': '个',
+    '個': '个', '苌': '长',
   };
 
   const r = String.raw;
