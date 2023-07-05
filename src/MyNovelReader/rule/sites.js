@@ -1523,6 +1523,19 @@ const sites = [
             '^新书(、)*$',
             '^本站(、)*$'
         ]
+    },
+    {
+        siteName: "得奇小说网",
+        url: "https://www.deqixs.com/xiaoshuo/\\d+/\\d+(-\\d+)?.html",
+        exampleUrl: "https://www.deqixs.com/xiaoshuo/4/74219.html",
+
+        bookTitleSelector: function ($doc) {
+            return unsafeWindow.Title;
+        },
+        titleSelector: function ($doc) {
+            return unsafeWindow.ArticleTitle;
+        },
+        contentSelector: ".con"
     }
 ];
 
