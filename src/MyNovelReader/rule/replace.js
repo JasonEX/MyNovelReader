@@ -376,6 +376,11 @@ const replace = {
   'II万': '二万',
   'II者': '二者',
   'II位': '二位',
+  'II哥': '二哥',
+  'II弟': '二弟',
+  'II姐': '二姐',
+  'II妹': '二妹',
+  'II样': '两样',
 };
 
 export default replace
