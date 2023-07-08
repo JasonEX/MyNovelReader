@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.9.6
+// @version        7.5.9.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -242,7 +242,7 @@
 // @match          *://wufangdao.com/html/*/*/*.html
 // @match          *://www.jinghuashuge.cc/id/*/*.html
 // @match          *://www.qbiqus.com/*/*.html
-// @match          *://www.123duw.com/dudu-*/*/*.html
+// @match          *://www.123du*.*/dudu-*/*/*.html
 // @match          *://www.17yue.com/*/*.html
 // @match          *://www.nuoqiu.com/*/*.html
 // @match          *://www.dldxs.cc/xs/*/*.html
@@ -282,7 +282,7 @@
 // @match          *://m.jjwxc.net/vip/*/*
 // @match          *://m.jjwxc.com/vip/*/*
 // @match          *://m.xindingdianxsw.com/*/*/*.html
-// @match          *://m.123duw.com/dudu-*/*/*.html
+// @match          *://m.123du*.*/dudu-*/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -2447,7 +2447,7 @@
       },
       {
           siteName: '123读',
-          url: 'https?://www\\.123duw\\.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+          url: 'https?://www\\.123duw?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
           checkSection: true,
           contentSelector: '#content',
           nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
@@ -2526,7 +2526,7 @@
       },
       {
           siteName: "123读书网-手机站",
-          url: "https://m.123duw.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
+          url: "https://m.123duw?.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
           exampleUrl: "https://m.123duw.com/dudu-31/8452541/55196666.html",
 
           titleReg: "(.*?)-(.*?)-(.*?)",
