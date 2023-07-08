@@ -242,7 +242,7 @@
 // @match          *://wufangdao.com/html/*/*/*.html
 // @match          *://www.jinghuashuge.cc/id/*/*.html
 // @match          *://www.qbiqus.com/*/*.html
-// @match          *://www.123duw.com/dudu-*/*/*.html
+// @match          *://www.123du*.*/dudu-*/*/*.html
 // @match          *://www.17yue.com/*/*.html
 // @match          *://www.nuoqiu.com/*/*.html
 // @match          *://www.dldxs.cc/xs/*/*.html
@@ -282,7 +282,7 @@
 // @match          *://m.jjwxc.net/vip/*/*
 // @match          *://m.jjwxc.com/vip/*/*
 // @match          *://m.xindingdianxsw.com/*/*/*.html
-// @match          *://m.123duw.com/dudu-*/*/*.html
+// @match          *://m.123du*.*/dudu-*/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
