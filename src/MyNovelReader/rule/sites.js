@@ -1413,9 +1413,9 @@ const sites = [
         prevSelector: ".col-md-6.text-center a:first",
         nextSelector: ".col-md-6.text-center a:last"
     },
-
-    {siteName: '123读',
-        url: 'https?://www\\.123duw\\.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+    {
+        siteName: '123读',
+        url: 'https?://www\\.123duw?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
         checkSection: true,
         contentSelector: '#content',
         nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
@@ -1500,7 +1500,7 @@ const sites = [
     },
     {
         siteName: "123读书网-手机站",
-        url: "https://m.123duw.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
+        url: "https://m.123duw?.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
         exampleUrl: "https://m.123duw.com/dudu-31/8452541/55196666.html",
 
         titleReg: "(.*?)-(.*?)-(.*?)",
