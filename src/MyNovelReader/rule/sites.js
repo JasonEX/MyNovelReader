@@ -1535,7 +1535,10 @@ const sites = [
         titleReg: "(.*?)-(.*?)-(.*?)",
         titlePos: 1,
         useiframe: true,
-        contentSelector: ".con"
+        contentSelector: ".con",
+        contentReplace: [
+            {'II' : '二'}
+        ]
     },
     {
         siteName: "苟在小说网",
