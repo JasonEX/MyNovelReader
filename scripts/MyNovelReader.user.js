@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.9
+// @version        7.6.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -27,9 +27,6 @@
 // @require        https://cdn.staticfile.org/underscore.js/1.7.0/underscore-min.js
 // @require        https://cdn.staticfile.org/keymaster/1.6.1/keymaster.min.js
 // @require        https://cdn.staticfile.org/crypto-js/4.1.1/crypto-js.min.js
-// @ require        https://greasyfork.org/scripts/2672-meihua-cn2tw/code/Meihua_cn2tw.js?version=7375
-// 晋江文学城防盗字体对照表
-// @ require        https://greasyfork.org/scripts/425673-%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81/code/%E6%99%8B%E6%B1%9F%E6%96%87%E5%AD%A6%E5%9F%8E%E9%98%B2%E7%9B%97%E5%AD%97%E7%AC%A6%E8%A7%A3%E7%A0%81.js?version=987740
 
 // @connect        *
 // @connect        *://*.qidian.com/
@@ -246,6 +243,7 @@
 // @match          *://www.jinghuashuge.cc/id/*/*.html
 // @match          *://www.qbiqus.com/*/*.html
 // @match          *://www.123duw.com/dudu-*/*/*.html
+// @match          *://www.123du.vip/dudu-*/*/*.html
 // @match          *://www.17yue.com/*/*.html
 // @match          *://www.nuoqiu.com/*/*.html
 // @match          *://www.dldxs.cc/xs/*/*.html
@@ -267,6 +265,10 @@
 // @match          *://www.611zw.com/books/*/*.html
 // @match          *://www.bifengzw.com/read/*/*.html
 // @match          *://www.ibiquges.com/*/*/*.html
+// @match          *://www.zhsxs.com/zhsread/*.html
+// @match          *://www.deqixs.com/xiaoshuo/*/*.html
+// @match          *://www.gouzaixs.com/xiaoshuo/*/*.html
+// @match          *://www.baba5.cc/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -282,6 +284,8 @@
 // @include        *://m.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.com/vip/*/*
 // @match          *://m.xindingdianxsw.com/*/*/*.html
+// @match          *://m.123duw.com/dudu-*/*/*.html
+// @match          *://m.123du.vip/dudu-*/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -1184,7 +1188,7 @@
 
           contentSelector: '.content',
           // contentHandle: false,
-          timeout: 3000,
+          //timeout: 3000,
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
@@ -1744,7 +1748,7 @@
       // contentHandle: false,
       titleSelector: 'h1',
       contentSelector: ".txtnav",
-      contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad",
+      contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2",
       nextSelector: '.page1 a:nth-child(4)',
       prevSelector: '.page1 a:nth-child(1)',
       indexSelector: '.page1 a:nth-child(3)',
@@ -2440,16 +2444,14 @@
           contentSelector: "#cont-body",
           prevSelector: ".col-md-6.text-center a:first",
           nextSelector: ".col-md-6.text-center a:last"
-
       },
-
-      {siteName: '123读',
-          url: 'https?://www\\.123duw\\.com/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+      {
+          siteName: '123读',
+          url: 'https?://www\\.123duw?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
           checkSection: true,
           contentSelector: '#content',
           nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
           contentReplace: ['…。。\\s本章未完，请点击下一页继续阅读！', '^"$']
-
       },
 
       {siteName: '阿拉法小说网',
@@ -2527,6 +2529,72 @@
               return unsafeWindow.booktitle;
           },
           contentSelector: "#content"
+      },
+      {
+          siteName: "123读书网-手机站",
+          url: "https://m.123duw?.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
+          exampleUrl: "https://m.123duw.com/dudu-31/8452541/55196666.html",
+
+          titleReg: "(.*?)-(.*?)-(.*?)",
+          titlePos: 1,
+          checkSection: true,
+          prevSelector: "#PageSet a:contains('上'):contains('页')",
+          nextSelector: "#PageSet a:contains('下'):contains('页')",
+          contentSelector: ".TxtContent",
+          contentReplace: [
+              '本章没完，请点击下.?页继续阅读！如果被转码了请退出转码或者更换.?.?器即可。',
+              '….$',
+              '^.*提醒您：看完记得收藏【123读书网】 123duw.com，下次我更新您才方便继续阅读哦，期待精彩继续！$',
+              '^"$'
+          ]
+      },
+      {
+          siteName: "宙斯小说",
+          url: "http://www.zhsxs.com/zhsread/\\d+_\\d+.html",
+          exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
+
+          bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
+          contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
+          contentReplace: [
+              '^新书(、)*$',
+              '^本站(、)*$'
+          ]
+      },
+      {
+          siteName: "得奇小说网",
+          url: "https://www.deqixs.com/xiaoshuo/\\d+/\\d+(-\\d+)?.html",
+          exampleUrl: "https://www.deqixs.com/xiaoshuo/4/74219.html",
+
+          bookTitleSelector: function ($doc) {
+              return unsafeWindow.Title;
+          },
+          titleReg: "(.*?)-(.*?)-(.*?)",
+          titlePos: 1,
+          useiframe: true,
+          contentSelector: ".con"
+      },
+      {
+          siteName: "苟在小说网",
+          url: "https://www.gouzaixs.com/xiaoshuo/\\d+/\\d+(-\\d+)?.html",
+          exampleUrl: "https://www.gouzaixs.com/xiaoshuo/1/1.html",
+
+          bookTitleSelector: function ($doc) {
+              return unsafeWindow.Title;
+          },
+          titleReg: "(.*?)-(.*?)-",
+          titlePos: 1,
+          useiframe: true,
+          contentSelector: ".con"
+      },
+
+      {siteName: "88读书网",
+          url: "https?://www\\.baba5\\.cc/.*?/.*?\\.html",
+          exampleUrl: 'https://www.baba5.cc/yuanlaishizuqiuzhishena0/read_88.html',
+          titleSelector: '.pt-read-title > a',
+          contentSelector: ".pt-read-text",
+          nextSelector: '.pt-read-btn a:nth-child(4)',
+          prevSelector: '.pt-read-btn a:nth-child(2)',
+          indexSelector: '.pt-read-btn a:nth-child(3)',
       }
   ];
 
@@ -4578,6 +4646,7 @@
           if (this.chapterTitle) {
               try {
                   var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*');
+                  reg = "(" + this.bookTitle.trim() + "\\s*)*" + "\\s*" + "(" + reg + ")*";
                   content = content.replace(toRE(`^${reg}$`), '');
                   C.log('去除内容中的标题', reg);
               } catch (e) {
@@ -6218,7 +6287,7 @@
   };
 
   var App = {
-  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"app"}},[(_vm.speechDialogVisible)?_c('speech',{staticClass:"speech",on:{"closeSpeech":_vm.hideSpeech}}):_vm._e()],1)},
+  render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"mynovelreader-app"}},[(_vm.speechDialogVisible)?_c('speech',{staticClass:"speech",on:{"closeSpeech":_vm.hideSpeech}}):_vm._e()],1)},
   staticRenderFns: [],
     data() {
       return {
