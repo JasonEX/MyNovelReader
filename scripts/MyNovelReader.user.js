@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.5.9.7
+// @version        7.6.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -268,6 +268,7 @@
 // @match          *://www.zhsxs.com/zhsread/*.html
 // @match          *://www.deqixs.com/xiaoshuo/*/*.html
 // @match          *://www.gouzaixs.com/xiaoshuo/*/*.html
+// @match          *://www.baba5.cc/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2584,6 +2585,16 @@
           titlePos: 1,
           useiframe: true,
           contentSelector: ".con"
+      },
+
+      {siteName: "88读书网",
+          url: "https?://www\\.baba5\\.cc/.*?/.*?\\.html",
+          exampleUrl: 'https://www.baba5.cc/yuanlaishizuqiuzhishena0/read_88.html',
+          titleSelector: '.pt-read-title > a',
+          contentSelector: ".pt-read-text",
+          nextSelector: '.pt-read-btn a:nth-child(4)',
+          prevSelector: '.pt-read-btn a:nth-child(2)',
+          indexSelector: '.pt-read-btn a:nth-child(3)',
       }
   ];
 
