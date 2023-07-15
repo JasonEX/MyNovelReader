@@ -1552,6 +1552,16 @@ const sites = [
         titlePos: 1,
         useiframe: true,
         contentSelector: ".con"
+    },
+
+    {siteName: "88读书网",
+        url: "https?://www\\.baba5\\.cc/.*?/.*?\\.html",
+        exampleUrl: 'https://www.baba5.cc/yuanlaishizuqiuzhishena0/read_88.html',
+        titleSelector: '.pt-read-title > a',
+        contentSelector: ".pt-read-text",
+        nextSelector: '.pt-read-btn a:nth-child(4)',
+        prevSelector: '.pt-read-btn a:nth-child(2)',
+        indexSelector: '.pt-read-btn a:nth-child(3)',
     }
 ];
 
