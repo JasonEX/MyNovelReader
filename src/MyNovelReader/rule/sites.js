@@ -1361,10 +1361,15 @@ const sites = [
     },
 
     {siteName: "mjj小说",
-        url: "https://mjjxs.net/chapter/\\d+/\\d+.html",
-        exampleUrl: "https://mjjxs.net/chapter/61559303/1.html?4299",
+        url: "https?://mjjxs\\.net/v3_uni_0705\\?\\d#/v3/\\d+/\\d+/\\d+\\.html",
+        // exampleUrl: "https://mjjxs.net/chapter/61559303/1.html?4299",
+        exampleUrl: "https://mjjxs.net/v3_uni_0705?2#/v3/92509095/2777856/1.html",
 
         contentSelector: ".content",
+        prevSelector: "#pb_prev",
+        indexSelector: "#pb_mulu",
+        nextSelector: "#pb_next",
+        useiframe: true,
         contentReplace: ["你正在阅读章节 【.*?】", "你正在阅读 《.*?》 章节： .*", 
         "\\[ 百万网络书库,已开启防爬虫,只支持浏览器阅读,如果显示不正常,请浏览器访问 mjjxs.com \\]", 
         "\\[ 免费无广告，书架自动追更，百万书库 mjjxs.com 啥书都能找到 \\]",
@@ -1563,6 +1568,18 @@ const sites = [
         nextSelector: '.pt-read-btn a:nth-child(4)',
         prevSelector: '.pt-read-btn a:nth-child(2)',
         indexSelector: '.pt-read-btn a:nth-child(3)',
+    },
+
+    {siteName: "逛笔趣阁小说网",
+        url: "https?://www\\.fkxs\\.net/.*?/.*?\\.html",
+        exampleUrl: 'https://www.fkxs.net/241_241951/117822179.html',
+
+        checkSection: true,
+        titleSelector: '.bookname h1',
+        contentSelector: ".content",
+        nextSelector: '.bottem2 a:nth-child(4)',
+        prevSelector: '.bottem2 a:nth-child(2)',
+        indexSelector: '.bottem2 a:nth-child(3)',
     }
 ];
 
