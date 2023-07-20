@@ -183,7 +183,6 @@ const sites = [
         },
 
     },
-
     {
         siteName: "创世中文网",
         url: "^https?://(?:chuangshi|yunqi)\\.qq\\.com/|^http://dushu\\.qq\\.com/read.html\\?bid=",
@@ -420,7 +419,6 @@ const sites = [
         titleReg: '(.*?)-(.*?)-.*',
         contentSelector: '#ChapterBody',
     },
-
     // === 内容补丁
     //   {siteName: "给力文学小说阅读网",
     //       url: "^https?://www\\.geiliwx\\.com/.*\\.shtml",
@@ -612,7 +610,6 @@ const sites = [
             "请记住本站域名:"
         ]
     },
-
     // ===== 特殊的获取下一页链接
     //   {siteName: "看书啦",
     //       url: "^https?://www.kanshu.la/book/\\w+/\\d+\\.shtml",
@@ -954,7 +951,6 @@ const sites = [
                 .parent()
                 .attr('href')
         },
-
     },
     {
         siteName: '飞速中文',
@@ -963,7 +959,6 @@ const sites = [
 
         contentRemove: 'p[style], .l',
         noSection: true,
-
     },
     {
         siteName: '顶点小说',
@@ -973,7 +968,6 @@ const sites = [
         contentSelector: '#contents',
         bookTitleSelector: 'dl > dt > a:last',
         noSection: true,
-
     },
     {
         siteName: '铅笔小说',
@@ -1023,7 +1017,6 @@ const sites = [
         exampleUrl: 'https://www.asxs.com/view/174811/2330811.html',
 
         noSection: true
-
     },
     {
         siteName: 'legado-webui',
@@ -1046,7 +1039,6 @@ const sites = [
                 body
             })
         }
-
     },
     {
         siteName: '有度中文网',
@@ -1074,7 +1066,6 @@ const sites = [
             $('<a>').attr('href', url_next).text(nextName).appendTo(body)
             $('<a>').attr('href', url_index).text('目录').appendTo(body)
         }
-
     },
     {
         siteName: '小书亭',
@@ -1082,7 +1073,6 @@ const sites = [
         exampleUrl: 'http://www.xiaoshuting.la/4/4325/72082213.html',
 
         noSection: true
-
     },
     {
         siteName: '小书亭',
@@ -1090,7 +1080,6 @@ const sites = [
         exampleUrl: 'http://www.xiaoshutingapp.com/html/11341/151211.html',
 
         noSection: true
-
     },
     {
         siteName: '饭团看书',
@@ -1098,7 +1087,6 @@ const sites = [
         exampleUrl: 'http://www.fantuankanshu.com/html/6/6286/83813065.html',
 
         noSection: true
-
     },
     {
         siteName: 'E品中文',
@@ -1106,7 +1094,6 @@ const sites = [
         exampleUrl: 'http://www.epzw.com/html/92/92675/1.html',
 
         noSection: true
-
     },
     {
         siteName: '爱好中文网',
@@ -1114,7 +1101,6 @@ const sites = [
         exampleUrl: 'http://www.ahzww.org/10/10922/254841.html',
 
         noSection: true
-
     },
     {
         siteName: '第一小说',
@@ -1122,7 +1108,6 @@ const sites = [
         exampleUrl: 'https://www.01xs.com/xiaoshuo/120924/1.html',
 
         noSection: true
-
     },
     {
         siteName: '思路客',
@@ -1138,7 +1123,6 @@ const sites = [
         exampleUrl: 'http://www.siluke.com/0/112/112444/1874061.html',
 
         noSection: true
-
     },
     {
         siteName: '小书亭',
@@ -1147,7 +1131,6 @@ const sites = [
 
         contentSelector: '.Text',
         bookTitleSelector: '.summary a'
-
     },
     {
         siteName: '2k小说网',
@@ -1156,7 +1139,6 @@ const sites = [
 
         contentSelector: '.Text',
         bookTitleSelector: '.summary a'
-
     },
     {
         siteName: '2k小说网',
@@ -1165,7 +1147,6 @@ const sites = [
 
         contentSelector: '.Text',
         bookTitleSelector: '.summary a'
-
     },
     {
         siteName: '镇魂',
@@ -1177,7 +1158,6 @@ const sites = [
         indexUrl: 'a[rel~=category]',
         nextUrl: 'a[rel=next]',
         prevUrl: 'a[rel=prev]',
-
     },
     {
         siteName: '360小说网',
@@ -1188,7 +1168,6 @@ const sites = [
             return $doc.find('#read_title h1').contents()[0].data.split(' 章节目录 ')[1]
         },
         noSection: true
-
     },
     {
         siteName: '顶点小说',
@@ -1198,7 +1177,6 @@ const sites = [
         titleSelector: '.atitle',
         bookTitleSelector: '.linkleft > a:nth-child(3)',
         contentReplace: ['^【重要提醒】$'],
-
     },
     {
         siteName: '52小说网 ',
@@ -1206,7 +1184,6 @@ const sites = [
         exampleUrl: 'http://www.5ixsw.net/html/100/100075/4.html',
 
         checkSection: true,
-
     },
     {
         siteName: '笔趣阁',
@@ -1233,7 +1210,6 @@ const sites = [
             $html.prepend(style)
             return $html[0].outerHTML
         }
-
     },
     {
         siteName: '精华书阁',
@@ -1275,7 +1251,6 @@ const sites = [
         //     ]
         //     return this.replaceText($html[0].outerHTML, contentReplace)
         // }
-
     },
     {
         siteName: '看书啦',
@@ -1294,7 +1269,6 @@ const sites = [
             'ωωw.ΚＡЙδhυ㈤.net',
             'kΑnＳhú伍.ξà',
         ]
-
     },
     {
         siteName: '一五文学',
@@ -1327,7 +1301,6 @@ const sites = [
             }
             return asdfaetd
         }
-
     },
     {
         siteName: '天天看小说',
@@ -1359,7 +1332,6 @@ const sites = [
             */
             "[wWщшω]{0,3} ?[¸◆⊕●.•＿¤☢⊙▲✿★▪]? ?(?:[tTтⓣ] ?){2}[kKκКⓚ] ?[aAǎáдāΛⓐ] ?[nNⓝ] ?[¸◆⊕●.•＿¤☢⊙▲✿★▪]? ?[cCС￠℃] ?[oO〇○Ο] ?"
         ]
-
     },
     {
         siteName: "mjj小说",
@@ -1377,7 +1349,6 @@ const sites = [
 
         useiframe: true,
         withReferer: true
-
     },
     {
         siteName: "无防盗小说网",
@@ -1385,7 +1356,6 @@ const sites = [
         exampleUrl: "https://wufangdao.com/html/17/17078/455411.html",
 
         noSection: true
-
     },
     {
         siteName: "ESJ",
@@ -1537,7 +1507,7 @@ const sites = [
         useiframe: true,
         contentSelector: ".con",
         contentReplace: [
-            {'II' : '二'}
+            { 'II': '二' }
         ]
     },
     {
@@ -1553,8 +1523,8 @@ const sites = [
         useiframe: true,
         contentSelector: ".con"
     },
-
-    {siteName: "88读书网",
+    {
+        siteName: "88读书网",
         url: "https?://www\\.baba5\\.cc/.*?/.*?\\.html",
         exampleUrl: 'https://www.baba5.cc/yuanlaishizuqiuzhishena0/read_88.html',
         titleSelector: '.pt-read-title > a',
@@ -1562,6 +1532,18 @@ const sites = [
         nextSelector: '.pt-read-btn a:nth-child(4)',
         prevSelector: '.pt-read-btn a:nth-child(2)',
         indexSelector: '.pt-read-btn a:nth-child(3)',
+    },
+    {
+        siteName: "逛笔趣阁小说网",
+        url: "https?://www\\.fkxs\\.net/.*?/.*?\\.html",
+        exampleUrl: 'https://www.fkxs.net/241_241951/117822179.html',
+
+        checkSection: true,
+        titleSelector: '.bookname h1',
+        contentSelector: ".content",
+        nextSelector: '.bottem2 a:nth-child(4)',
+        prevSelector: '.bottem2 a:nth-child(2)',
+        indexSelector: '.bottem2 a:nth-child(3)',
     }
 ];
 
