@@ -270,6 +270,7 @@
 // @match          *://www.gouzaixs.com/xiaoshuo/*/*.html
 // @match          *://www.baba5.cc/*/*.html
 // @match          *://www.fkxs.net/*/*.html
+// @match          *://www.09k.net/kkb/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

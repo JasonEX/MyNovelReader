@@ -1544,7 +1544,11 @@ const sites = [
         titleReg: "(.*?)-(.*?)-(.*?)",
         titlePos: 1,
         useiframe: true,
-        contentSelector: ".con"
+        contentSelector: ".con",
+        contentReplace: [
+            { 'II': '二' },
+            { '壹': '一' }
+        ]
     },
     {
         siteName: "苟在小说网",
@@ -1580,6 +1584,18 @@ const sites = [
         nextSelector: '.bottem2 a:nth-child(4)',
         prevSelector: '.bottem2 a:nth-child(2)',
         indexSelector: '.bottem2 a:nth-child(3)',
+    },
+    {
+        siteName: "永久看小说",
+        url: "https://www.09k.net/kkb/\\d+/\\d+(-\\d+)?.html",
+        exampleUrl: "https://www.09k.net/kkb/021338893523/56870262.html",
+
+        checkSection: true,
+        prevSelector: "#PageSet a:contains('上'):contains('页')",
+        nextSelector: "#PageSet a:contains('下'):contains('页')",
+        contentReplace: [
+            "…."
+        ]
     }
 ];
 
