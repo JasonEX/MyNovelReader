@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.1.1
+// @version        7.6.1.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -270,6 +270,7 @@
 // @match          *://www.gouzaixs.com/xiaoshuo/*/*.html
 // @match          *://www.baba5.cc/*/*.html
 // @match          *://www.fkxs.net/*/*.html
+// @match          *://www.09k.net/kkb/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2541,7 +2542,8 @@
           useiframe: true,
           contentSelector: ".con",
           contentReplace: [
-              { 'II': '二' }
+              { 'II': '二' },
+              { '壹': '一' }
           ]
       },
       {
@@ -2578,6 +2580,18 @@
           nextSelector: '.bottem2 a:nth-child(4)',
           prevSelector: '.bottem2 a:nth-child(2)',
           indexSelector: '.bottem2 a:nth-child(3)',
+      },
+      {
+          siteName: "永久看小说",
+          url: "https://www.09k.net/kkb/\\d+/\\d+(-\\d+)?.html",
+          exampleUrl: "https://www.09k.net/kkb/021338893523/56870262.html",
+
+          checkSection: true,
+          prevSelector: "#PageSet a:contains('上'):contains('页')",
+          nextSelector: "#PageSet a:contains('下'):contains('页')",
+          contentReplace: [
+              "…."
+          ]
       }
   ];
 
