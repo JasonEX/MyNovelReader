@@ -1594,7 +1594,7 @@ const sites = [
         prevSelector: "#PageSet a:contains('上'):contains('页')",
         nextSelector: "#PageSet a:contains('下'):contains('页')",
         contentReplace: [
-            "…."
+            "…\\."
         ]
     }
 ];
