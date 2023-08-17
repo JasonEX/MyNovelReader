@@ -113,7 +113,7 @@
 // @include        *://www.my285.com/*/*/*/*.htm
 // @include        *://www.hjwzw.com/Book/Read/*,*
 // @include        *://www.hjwzw.com/Book/Read/*_*
-// @include        *://www.69shu.com/txt/*/*
+// @include        *://www.69shuba.com/txt/*/*
 // @include        *://www.77nt.com/*/*.html
 // @include        *://www.33yq.com/read/*/*/*.shtml
 // @include        *://www.bqg5200.com/xiaoshuo/*/*/*.html
