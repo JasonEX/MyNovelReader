@@ -708,7 +708,7 @@ const sites = [
   },
 
   {siteName: "69书吧",
-    url: "https?://www\\.69shu\\.com/txt/\\d+/\\d+",
+    url: "https?://www\\.69shuba\\.com/txt/\\d+/\\d+",
     // contentHandle: false,
     titleSelector: 'h1',
     contentSelector: ".txtnav",
