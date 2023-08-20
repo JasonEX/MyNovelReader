@@ -1509,7 +1509,8 @@ const sites = [
         contentSelector: ".con",
         contentReplace: [
             { 'II': '二' },
-            { '壹': '一' }
+            { '壹': '一' },
+            { '贰': '二' }
         ]
     },
     {
