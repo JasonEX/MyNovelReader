@@ -119,7 +119,7 @@
 // @include        *://www.bqg5200.com/xiaoshuo/*/*/*.html
 // @include        *://www.biquge5200.cc/*/*.html
 // @include        *://read.qidian.com/chapter/*
-// @include        *://www.ptwxz.com/html/*/*/*.html
+// @include        *://www.piaotian.com/html/*/*/*.html
 // @include        *://www.miaobige.com/*/*/*.html
 // @include        *://www.shuhai.com/read/*/*.html
 // @include        *://www.23qb.com/book/*/*.html
