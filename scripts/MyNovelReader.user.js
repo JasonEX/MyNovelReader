@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.3
+// @version        7.6.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -31,6 +31,7 @@
 // @connect        *
 // @connect        *://*.qidian.com/
 // @connect        bgme.bid
+// @connect        xrzww.com
 
 // @include        *://vipreader.qidian.com/chapter/*/*
 // @include        *://www.qdmm.com/BookReader/*,*.aspx
@@ -119,7 +120,7 @@
 // @include        *://www.bqg5200.com/xiaoshuo/*/*/*.html
 // @include        *://www.biquge5200.cc/*/*.html
 // @include        *://read.qidian.com/chapter/*
-// @include        *://www.ptwxz.com/html/*/*/*.html
+// @include        *://www.piaotian.com/html/*/*/*.html
 // @include        *://www.miaobige.com/*/*/*.html
 // @include        *://www.shuhai.com/read/*/*.html
 // @include        *://www.23qb.com/book/*/*.html
@@ -1588,8 +1589,8 @@
         contentSelector: "#showcontent",
     },
     {siteName: "飘天文学",
-        url: "^https?://www\\.ptwxz\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
-        exampleUrl: 'https://www.ptwxz.com/html/12/12450/8654958.html',
+        url: "^https?://www\\.piaotian\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
+        exampleUrl: 'https://www.piaotian.com/html/15/15083/10323993.html',
         // titleReg: "(.*)最新章节,(.*),飘天文学",
         bookTitleSelector: '#content > h1 > a',
         contentSelector: "#content",
@@ -2631,6 +2632,66 @@
           contentReplace: [
               "…\\."
           ]
+      },
+
+      {siteName: "息壤中文网",
+          url: "https://xrzww.com/bookread",
+
+          titleSelector: ".chapter_name",
+          contentSelector: ".novel_box",
+          mutationSelector: ".novel_box",
+          mutationChildCount: 1,
+
+          nextUrl($doc) {
+              return `https://xrzww.com/bookread#${new Date().getTime()}`
+          },
+
+          contentPatch($doc) {
+              $doc.find(".chapter_name span").remove();
+              $doc.find(".novel_box div span").remove();
+              $doc.find(".novel_box .others").remove();
+          },
+
+          async getContent($doc) {
+              if (!this.info.readinfo) {
+                  this.info.readinfo = JSON.parse(localStorage.getItem("readinfo"));
+                  let { next_chapter, next_chapter_order, chapter_ispay } = await this.info._getChapterData();
+                  if (chapter_ispay === 1) {
+                      this.info.isVipChapter = () => true;
+                      return
+                  }
+
+                  this.info.readinfo.chapter_id = next_chapter;
+                  this.info.readinfo.chapter_order = next_chapter_order;
+              }
+
+              const { next_chapter, next_chapter_order, chapter_ispay, chapter_name, content } = await this.info._getChapterData();
+              if (chapter_ispay === 1) {
+                  this.info.isVipChapter = () => true;
+                  return
+              }
+              const contentHtml = content.split("\n").map(s => `<p>${s}</p>`).join("\n");
+              const html = `<h1>${chapter_name}</h1><div class="content">${contentHtml}</div>`;
+              
+              this.info.readinfo.chapter_id = next_chapter;
+              this.info.readinfo.chapter_order = next_chapter_order;
+
+              return {
+                  html
+              }
+          },
+
+          async _getChapterData({ nid, vid, chapter_id, chapter_order, showpic } = this.readinfo) {
+              const options = {
+                  url: `https://pre-api.xrzww.com/api/readNovelByWeb?nid=${nid}&vid=${vid}&chapter_id=${chapter_id}&chapter_order=${chapter_order}&showpic=${showpic}`,
+                  method: "GET",
+                  overrideMimeType: "text/html;charset=utf-8",
+                  headers: {},
+              };
+              const res = await Request(options);
+              return JSON.parse(res.responseText).data
+          }
+
       }
   ];
 
@@ -3925,6 +3986,7 @@
           if (!this.hasContent() && this.info.getContent) {
               C.log('开始 info.getContent');
               data = await this.info.getContent.call(this, this.$doc);
+              this.$content = null;
           } /* else {
               // 特殊处理，例如起点
               var ajaxScript = this.$doc.find('.' + READER_AJAX);

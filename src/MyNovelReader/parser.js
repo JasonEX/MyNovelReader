@@ -97,6 +97,7 @@ Parser.prototype = {
         if (!this.hasContent() && this.info.getContent) {
             C.log('开始 info.getContent')
             data = await this.info.getContent.call(this, this.$doc);
+            this.$content = null
         } /* else {
             // 特殊处理，例如起点
             var ajaxScript = this.$doc.find('.' + READER_AJAX);
