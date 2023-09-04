@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.4
+// @version        7.6.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -201,7 +201,6 @@
 // @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
 // @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
 // @match          *://www.156n.net/html/*/*/*.html
-// @match          *://www.ahzww.org/*/*/*.html
 // @match          *://www.31xs.org/*/*/*.html
 // @match          *://www.31xs.net/*/*/*.html
 // @match          *://www.01xs.com/xiaoshuo/*/*.html
@@ -2112,40 +2111,32 @@
       },
 
       {siteName: '小书亭',
-          url: 'http://www.xiaoshuting.la/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.xiaoshuting.la/4/4325/72082213.html',
+          url: 'https://www.xiaoshuting.la/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.xiaoshuting.la/4/4325/72082213.html',
 
           noSection: true
 
       },
 
       {siteName: '小书亭',
-          url: 'http://www.xiaoshutingapp.com/html/\\d+/\\d+.html',
-          exampleUrl: 'http://www.xiaoshutingapp.com/html/11341/151211.html',
+          url: 'https://www.xiaoshutingapp.com/html/\\d+/\\d+.html',
+          exampleUrl: 'https://www.xiaoshutingapp.com/html/11341/151211.html',
 
           noSection: true
 
       },
 
       {siteName: '饭团看书',
-          url: 'http://www.fantuankanshu.com/html/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.fantuankanshu.com/html/6/6286/83813065.html',
+          url: 'https://www.fantuankanshu.com/html/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.fantuankanshu.com/html/6/6286/83813065.html',
 
           noSection: true
 
       },
 
       {siteName: 'E品中文',
-          url: 'http://www.epzw.com/html/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.epzw.com/html/92/92675/1.html',
-
-          noSection: true
-
-      },
-
-      {siteName: '爱好中文网',
-          url: 'http://www.ahzww.org/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.ahzww.org/10/10922/254841.html',
+          url: 'https://www.epzw.com/html/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.epzw.com/html/92/92675/1.html',
 
           noSection: true
 
@@ -2160,24 +2151,24 @@
       },
 
       {siteName: '思路客',
-          url: 'http://www.slkslk.com/\\d+/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.slkslk.com/0/8/8342/139031.html',
+          url: 'https://www.slkslk.com/\\d+/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.slkslk.com/0/8/8342/139031.html',
 
           noSection: true
 
       },
 
       {siteName: '思路客',
-          url: 'http://www.siluke.com/\\d+/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.siluke.com/0/112/112444/1874061.html',
+          url: 'https://www.siluke.com/\\d+/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.siluke.com/0/112/112444/1874061.html',
 
           noSection: true
 
       },
 
       {siteName: '小书亭',
-          url: 'http://www.xiaoshuting.cc/xiaoshuo/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.xiaoshuting.cc/xiaoshuo/4/4469/62562.html',
+          url: 'https://www.xiaoshuting.cc/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.xiaoshuting.cc/xiaoshuo/4/4469/62562.html',
 
           contentSelector: '.Text',
           bookTitleSelector: '.summary a'
@@ -2185,8 +2176,8 @@
       },
 
       {siteName: '2k小说网',
-          url: 'http://www.2kxiaoshuo.com/xiaoshuo/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.2kxiaoshuo.com/xiaoshuo/18/18207/254891.html',
+          url: 'https://www.2kxiaoshuo.com/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.2kxiaoshuo.com/xiaoshuo/18/18207/254891.html',
 
           contentSelector: '.Text',
           bookTitleSelector: '.summary a'
@@ -2194,8 +2185,8 @@
       },
 
       {siteName: '2k小说网',
-          url: 'http://www.2kxs.la/xiaoshuo/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.2kxs.la/xiaoshuo/11/11245/202411.html',
+          url: 'https://www.2kxs.la/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.2kxs.la/xiaoshuo/11/11245/202411.html',
 
           contentSelector: '.Text',
           bookTitleSelector: '.summary a'
