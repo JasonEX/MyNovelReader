@@ -281,6 +281,19 @@ const sites = [
           );
       }
   },
+
+    {siteName: "纵横中文网",
+        url: "https?://read\\.zongheng\\.com/chapter/\\d+\\/\\d+\\.html",
+        exampleUrl: 'https://read.zongheng.com/chapter/1251858/72302352.html',
+
+        titleSelector: ".title_txtbox",
+        contentSelector: '.content',
+
+        contentPatch($doc) {
+            $doc.find('.Jfcounts').remove()
+        }
+    },
+
   {siteName: "晋江文学网",
       url: /^https?:\/\/(www|my)\.jjwxc\.net\/onebook(|_vip)\.php\S*/,
       titleReg: /《(.*?)》.*[ˇ^](.*?)[ˇ^].*/,
@@ -1647,6 +1660,24 @@ const sites = [
             }
             const res = await Request(options)
             return JSON.parse(res.responseText).data
+        }
+
+    },
+
+    {siteName: '完本书库',
+        url: 'https://www.wanbenshuku.cc/book/\\d+/.*?.html',
+        exampleUrl: 'https://www.wanbenshuku.cc/book/1582528/207611628_1.html',
+
+        useiframe: true,
+        mutationSelector: '#txt',
+        mutationChildCount: 0,
+
+        nextSelector($doc) {
+            const win = $doc[0].defaultView
+            if (win.nexturl) {
+                return atob(win.nexturl)
+            }
+            return $doc.find('.bottom1 a[rel="next"]').attr('href')
         }
 
     }

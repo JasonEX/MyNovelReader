@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.5
+// @version        7.6.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -56,6 +56,7 @@
 // @match          *://www.qimao.com/shuku/*-*/
 // @match          *://www.qidian.com/chapter/*/*
 // @match          *://m.qidian.com/chapter/*/*
+// @match          *://read.zongheng.com/chapter/*/*.html
 // http://www.tianyabook.com/*/*.htm
 
 // @include        *://tieba.baidu.com/p/*
@@ -271,6 +272,7 @@
 // @match          *://www.baba5.cc/*/*.html
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
+// @match          *://www.wanbenshuku.cc/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1319,6 +1321,19 @@
             );
         }
     },
+
+      {siteName: "纵横中文网",
+          url: "https?://read\\.zongheng\\.com/chapter/\\d+\\/\\d+\\.html",
+          exampleUrl: 'https://read.zongheng.com/chapter/1251858/72302352.html',
+
+          titleSelector: ".title_txtbox",
+          contentSelector: '.content',
+
+          contentPatch($doc) {
+              $doc.find('.Jfcounts').remove();
+          }
+      },
+
     {siteName: "晋江文学网",
         url: /^https?:\/\/(www|my)\.jjwxc\.net\/onebook(|_vip)\.php\S*/,
         titleReg: /《(.*?)》.*[ˇ^](.*?)[ˇ^].*/,
@@ -2681,6 +2696,24 @@
               };
               const res = await Request(options);
               return JSON.parse(res.responseText).data
+          }
+
+      },
+
+      {siteName: '完本书库',
+          url: 'https://www.wanbenshuku.cc/book/\\d+/.*?.html',
+          exampleUrl: 'https://www.wanbenshuku.cc/book/1582528/207611628_1.html',
+
+          useiframe: true,
+          mutationSelector: '#txt',
+          mutationChildCount: 0,
+
+          nextSelector($doc) {
+              const win = $doc[0].defaultView;
+              if (win.nexturl) {
+                  return atob(win.nexturl)
+              }
+              return $doc.find('.bottom1 a[rel="next"]').attr('href')
           }
 
       }
