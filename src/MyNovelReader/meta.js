@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.3.1
+// @version        7.6.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -31,6 +31,7 @@
 // @connect        *
 // @connect        *://*.qidian.com/
 // @connect        bgme.bid
+// @connect        xrzww.com
 
 // @match          *://vipreader.qidian.com/chapter/*/*
 // @match          *://www.qdmm.com/BookReader/*,*.aspx
@@ -55,6 +56,7 @@
 // @match          *://www.qimao.com/shuku/*-*/
 // @match          *://www.qidian.com/chapter/*/*
 // @match          *://m.qidian.com/chapter/*/*
+// @match          *://read.zongheng.com/chapter/*/*.html
 // @match          *://www.tianyabook.com/*/*.html
 
 // @match          *://tieba.baidu.com/p/*
@@ -200,7 +202,6 @@
 // @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
 // @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
 // @match          *://www.156n.net/html/*/*/*.html
-// @match          *://www.ahzww.org/*/*/*.html
 // @match          *://www.31xs.org/*/*/*.html
 // @match          *://www.31xs.net/*/*/*.html
 // @match          *://www.01xs.com/xiaoshuo/*/*.html
@@ -271,6 +272,7 @@
 // @match          *://www.baba5.cc/*/*.html
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
+// @match          *://www.wanbenshuku.cc/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

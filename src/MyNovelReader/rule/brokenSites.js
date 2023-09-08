@@ -1916,4 +1916,13 @@ const brokenSites = [
         contentRemove: 'div',
 
     },
+
+    {siteName: '爱好中文网',
+        url: 'http://www.ahzww.org/\\d+/\\d+/\\d+.html',
+        exampleUrl: 'http://www.ahzww.org/10/10922/254841.html',
+
+        noSection: true
+
+    },
+
 ]
