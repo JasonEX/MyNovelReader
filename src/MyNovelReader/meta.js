@@ -273,6 +273,7 @@
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
 // @match          *://www.wanbenshuku.cc/book/*/*.html
+// @match          *://m.moyisy.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

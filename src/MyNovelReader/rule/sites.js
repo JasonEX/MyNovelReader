@@ -1680,6 +1680,17 @@ const sites = [
             return $doc.find('.bottom1 a[rel="next"]').attr('href')
         }
 
+    },
+    {
+        siteName: "宜小说",
+        url: "https://m.moyisy.com/book/\\d+/\\d+(_\\d+)?.html",
+        exampleUrl: "https://m.moyisy.com/book/67655/5818642.html",
+
+        checkSection: true,
+
+        contentPatch($doc) {
+            $doc.find("#content.content div").remove()
+        }
     }
 ];
 
