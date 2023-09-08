@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.3.1
+// @version        7.6.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -31,6 +31,7 @@
 // @connect        *
 // @connect        *://*.qidian.com/
 // @connect        bgme.bid
+// @connect        xrzww.com
 
 // @match          *://vipreader.qidian.com/chapter/*/*
 // @match          *://www.qdmm.com/BookReader/*,*.aspx
@@ -55,6 +56,7 @@
 // @match          *://www.qimao.com/shuku/*-*/
 // @match          *://www.qidian.com/chapter/*/*
 // @match          *://m.qidian.com/chapter/*/*
+// @match          *://read.zongheng.com/chapter/*/*.html
 // @match          *://www.tianyabook.com/*/*.html
 
 // @match          *://tieba.baidu.com/p/*
@@ -200,7 +202,6 @@
 // @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
 // @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
 // @match          *://www.156n.net/html/*/*/*.html
-// @match          *://www.ahzww.org/*/*/*.html
 // @match          *://www.31xs.org/*/*/*.html
 // @match          *://www.31xs.net/*/*/*.html
 // @match          *://www.01xs.com/xiaoshuo/*/*.html
@@ -271,6 +272,7 @@
 // @match          *://www.baba5.cc/*/*.html
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
+// @match          *://www.wanbenshuku.cc/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1299,6 +1301,20 @@
               );
           }
       },
+
+      {
+          siteName: "纵横中文网",
+          url: "https?://read\\.zongheng\\.com/chapter/\\d+\\/\\d+\\.html",
+          exampleUrl: 'https://read.zongheng.com/chapter/1251858/72302352.html',
+
+          titleSelector: ".title_txtbox",
+          contentSelector: '.content',
+
+          contentPatch($doc) {
+              $doc.find('.Jfcounts').remove();
+          }
+      },
+
       {
           siteName: "晋江文学网",
           url: /^https?:\/\/(www|my)\.jjwxc\.net\/onebook(|_vip)\.php\S*/,
@@ -1583,8 +1599,8 @@
       },
       {
           siteName: "飘天文学",
-          url: "^https?://www\\.ptwxz\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
-          exampleUrl: 'https://www.ptwxz.com/html/12/12450/8654958.html',
+          url: "^https?://www\\.piaotian\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
+          exampleUrl: 'https://www.piaotian.com/html/15/15083/10323993.html',
           // titleReg: "(.*)最新章节,(.*),飘天文学",
           bookTitleSelector: '#content > h1 > a',
           contentSelector: "#content",
@@ -1649,6 +1665,7 @@
               "请记住本站域名:"
           ]
       },
+
       // ===== 特殊的获取下一页链接
       //   {siteName: "看书啦",
       //       url: "^https?://www.kanshu.la/book/\\w+/\\d+\\.shtml",
@@ -2103,38 +2120,35 @@
               $('<a>').attr('href', url_index).text('目录').appendTo(body);
           }
       },
+
       {
           siteName: '小书亭',
-          url: 'http://www.xiaoshuting.la/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.xiaoshuting.la/4/4325/72082213.html',
+          url: 'https://www.xiaoshuting.la/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.xiaoshuting.la/4/4325/72082213.html',
 
           noSection: true
       },
+
       {
           siteName: '小书亭',
-          url: 'http://www.xiaoshutingapp.com/html/\\d+/\\d+.html',
-          exampleUrl: 'http://www.xiaoshutingapp.com/html/11341/151211.html',
+          url: 'https://www.xiaoshutingapp.com/html/\\d+/\\d+.html',
+          exampleUrl: 'https://www.xiaoshutingapp.com/html/11341/151211.html',
 
           noSection: true
       },
+
       {
           siteName: '饭团看书',
-          url: 'http://www.fantuankanshu.com/html/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.fantuankanshu.com/html/6/6286/83813065.html',
+          url: 'https://www.fantuankanshu.com/html/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.fantuankanshu.com/html/6/6286/83813065.html',
 
           noSection: true
       },
+
       {
           siteName: 'E品中文',
-          url: 'http://www.epzw.com/html/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.epzw.com/html/92/92675/1.html',
-
-          noSection: true
-      },
-      {
-          siteName: '爱好中文网',
-          url: 'http://www.ahzww.org/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.ahzww.org/10/10922/254841.html',
+          url: 'https://www.epzw.com/html/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.epzw.com/html/92/92675/1.html',
 
           noSection: true
       },
@@ -2145,41 +2159,46 @@
 
           noSection: true
       },
+
       {
           siteName: '思路客',
-          url: 'http://www.slkslk.com/\\d+/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.slkslk.com/0/8/8342/139031.html',
+          url: 'https://www.slkslk.com/\\d+/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.slkslk.com/0/8/8342/139031.html',
 
           noSection: true
 
       },
+
       {
           siteName: '思路客',
-          url: 'http://www.siluke.com/\\d+/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.siluke.com/0/112/112444/1874061.html',
+          url: 'https://www.siluke.com/\\d+/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.siluke.com/0/112/112444/1874061.html',
 
           noSection: true
       },
+
       {
           siteName: '小书亭',
-          url: 'http://www.xiaoshuting.cc/xiaoshuo/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.xiaoshuting.cc/xiaoshuo/4/4469/62562.html',
+          url: 'https://www.xiaoshuting.cc/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.xiaoshuting.cc/xiaoshuo/4/4469/62562.html',
 
           contentSelector: '.Text',
           bookTitleSelector: '.summary a'
       },
+
       {
           siteName: '2k小说网',
-          url: 'http://www.2kxiaoshuo.com/xiaoshuo/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.2kxiaoshuo.com/xiaoshuo/18/18207/254891.html',
+          url: 'https://www.2kxiaoshuo.com/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.2kxiaoshuo.com/xiaoshuo/18/18207/254891.html',
 
           contentSelector: '.Text',
           bookTitleSelector: '.summary a'
       },
+
       {
           siteName: '2k小说网',
-          url: 'http://www.2kxs.la/xiaoshuo/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'http://www.2kxs.la/xiaoshuo/11/11245/202411.html',
+          url: 'https://www.2kxs.la/xiaoshuo/\\d+/\\d+/\\d+.html',
+          exampleUrl: 'https://www.2kxs.la/xiaoshuo/11/11245/202411.html',
 
           contentSelector: '.Text',
           bookTitleSelector: '.summary a'
@@ -2594,6 +2613,86 @@
           contentReplace: [
               "…."
           ]
+      },
+
+      {
+          siteName: "息壤中文网",
+          url: "https://xrzww.com/bookread",
+
+          titleSelector: ".chapter_name",
+          contentSelector: ".novel_box",
+          mutationSelector: ".novel_box",
+          mutationChildCount: 1,
+
+          nextUrl($doc) {
+              return `https://xrzww.com/bookread#${new Date().getTime()}`
+          },
+
+          contentPatch($doc) {
+              $doc.find(".chapter_name span").remove();
+              $doc.find(".novel_box div span").remove();
+              $doc.find(".novel_box .others").remove();
+          },
+
+          async getContent($doc) {
+              if (!this.info.readinfo) {
+                  this.info.readinfo = JSON.parse(localStorage.getItem("readinfo"));
+                  let { next_chapter, next_chapter_order, chapter_ispay } = await this.info._getChapterData();
+                  if (chapter_ispay === 1) {
+                      this.info.isVipChapter = () => true;
+                      return
+                  }
+
+                  this.info.readinfo.chapter_id = next_chapter;
+                  this.info.readinfo.chapter_order = next_chapter_order;
+              }
+
+              const { next_chapter, next_chapter_order, chapter_ispay, chapter_name, content } = await this.info._getChapterData();
+              if (chapter_ispay === 1) {
+                  this.info.isVipChapter = () => true;
+                  return
+              }
+              const contentHtml = content.split("\n").map(s => `<p>${s}</p>`).join("\n");
+              const html = `<h1>${chapter_name}</h1><div class="content">${contentHtml}</div>`;
+
+              this.info.readinfo.chapter_id = next_chapter;
+              this.info.readinfo.chapter_order = next_chapter_order;
+
+              return {
+                  html
+              }
+          },
+
+          async _getChapterData({ nid, vid, chapter_id, chapter_order, showpic } = this.readinfo) {
+              const options = {
+                  url: `https://pre-api.xrzww.com/api/readNovelByWeb?nid=${nid}&vid=${vid}&chapter_id=${chapter_id}&chapter_order=${chapter_order}&showpic=${showpic}`,
+                  method: "GET",
+                  overrideMimeType: "text/html;charset=utf-8",
+                  headers: {},
+              };
+              const res = await Request(options);
+              return JSON.parse(res.responseText).data
+          }
+
+      },
+
+      {
+          siteName: '完本书库',
+          url: 'https://www.wanbenshuku.cc/book/\\d+/.*?.html',
+          exampleUrl: 'https://www.wanbenshuku.cc/book/1582528/207611628_1.html',
+
+          useiframe: true,
+          mutationSelector: '#txt',
+          mutationChildCount: 0,
+
+          nextSelector($doc) {
+              const win = $doc[0].defaultView;
+              if (win.nexturl) {
+                  return atob(win.nexturl)
+              }
+              return $doc.find('.bottom1 a[rel="next"]').attr('href')
+          }
+
       }
   ];
 
@@ -3888,6 +3987,7 @@
           if (!this.hasContent() && this.info.getContent) {
               C.log('开始 info.getContent');
               data = await this.info.getContent.call(this, this.$doc);
+              this.$content = null;
           } /* else {
               // 特殊处理，例如起点
               var ajaxScript = this.$doc.find('.' + READER_AJAX);
