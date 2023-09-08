@@ -1669,8 +1669,6 @@ const sites = [
         exampleUrl: 'https://www.wanbenshuku.cc/book/1582528/207611628_1.html',
 
         useiframe: true,
-        mutationSelector: '#txt',
-        mutationChildCount: 0,
 
         nextSelector($doc) {
             const win = $doc[0].defaultView
@@ -1681,6 +1679,7 @@ const sites = [
         }
 
     },
+
     {
         siteName: "宜小说",
         url: "https://m.moyisy.com/book/\\d+/\\d+(_\\d+)?.html",
@@ -1691,7 +1690,31 @@ const sites = [
         contentPatch($doc) {
             $doc.find("#content.content div").remove()
         }
-    }
+    },
+
+    {siteName: "独阅读|深度阅读",
+        url: "^https?://www\\.(duread\\.cn|duyuedu\\.net)/chapter/book_chapter_detail/\\d+$",
+        exampleUrl: 'https://www.duread.cn/chapter/book_chapter_detail/100081563',
+
+        useiframe: true,
+        titleSelector: ".article-title",
+        contentSelector: '.article-content',
+        indexSelector: '.btn-group-vertical a:nth-child(1)',
+
+        prevSelector($doc) {
+            return $doc.find("#J_BtnPagePrev").attr("data-href")
+        },
+
+        nextSelector($doc) {
+            return $doc.find("#J_BtnPageNext").attr("data-href")
+        },
+
+        contentPatch($doc) {
+            $doc.find('.J_Num').remove()
+        }
+
+    },
+
 ];
 
 export default sites
