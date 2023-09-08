@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.6
+// @version        7.6.6.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -273,6 +273,7 @@
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
 // @match          *://www.wanbenshuku.cc/book/*/*.html
+// @match          *://m.moyisy.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2614,7 +2615,6 @@
               "…."
           ]
       },
-
       {
           siteName: "息壤中文网",
           url: "https://xrzww.com/bookread",
@@ -2675,7 +2675,6 @@
           }
 
       },
-
       {
           siteName: '完本书库',
           url: 'https://www.wanbenshuku.cc/book/\\d+/.*?.html',
@@ -2693,6 +2692,17 @@
               return $doc.find('.bottom1 a[rel="next"]').attr('href')
           }
 
+      },
+      {
+          siteName: "宜小说",
+          url: "https://m.moyisy.com/book/\\d+/\\d+(_\\d+)?.html",
+          exampleUrl: "https://m.moyisy.com/book/67655/5818642.html",
+
+          checkSection: true,
+
+          contentPatch($doc) {
+              $doc.find("#content.content div").remove();
+          }
       }
   ];
 
