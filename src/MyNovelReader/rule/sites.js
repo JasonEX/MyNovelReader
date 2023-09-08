@@ -1577,7 +1577,6 @@ const sites = [
             "…."
         ]
     },
-
     {
         siteName: "息壤中文网",
         url: "https://xrzww.com/bookread",
@@ -1638,7 +1637,6 @@ const sites = [
         }
 
     },
-
     {
         siteName: '完本书库',
         url: 'https://www.wanbenshuku.cc/book/\\d+/.*?.html',
