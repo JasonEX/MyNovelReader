@@ -1715,6 +1715,18 @@ const sites = [
 
     },
 
+    {siteName: '岁月小说网',
+        url: 'https://www.suiyuexs.com/read/\\d+/\\d+\\.html',
+        exampleUrl: 'https://www.suiyuexs.com/read/22749855/115609200.html',
+        
+        bookTitleSelector: '.chapter-nav > p:first > a:last()',
+        useiframe: true,
+        contentSelector: '#txt',
+        mutationSelector: "#txt",
+        mutationChildCount: 0,
+
+    }
+
 ];
 
 export default sites
