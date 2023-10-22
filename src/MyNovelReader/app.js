@@ -412,7 +412,7 @@ var App = {
 
         // remove body style
         $('link[rel="stylesheet"], script').remove();
-        $('body')
+        $('html, body')
             .removeAttr('style')
             .removeAttr('bgcolor');
 
