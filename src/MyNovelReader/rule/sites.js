@@ -1651,7 +1651,6 @@ const sites = [
             }
             return $doc.find('.bottom1 a[rel="next"]').attr('href')
         }
-
     },
     {
         siteName: "宜小说",
@@ -1677,15 +1676,12 @@ const sites = [
         prevSelector($doc) {
             return $doc.find("#J_BtnPagePrev").attr("data-href")
         },
-
         nextSelector($doc) {
             return $doc.find("#J_BtnPageNext").attr("data-href")
         },
-
         contentPatch($doc) {
             $doc.find('.J_Num').remove()
         }
-
     },
     {
         siteName: '岁月小说网',
@@ -1697,7 +1693,6 @@ const sites = [
         contentSelector: '#txt',
         mutationSelector: "#txt",
         mutationChildCount: 0,
-
     }
 ];
 
