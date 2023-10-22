@@ -1724,9 +1724,19 @@ const sites = [
         contentSelector: '#txt',
         mutationSelector: "#txt",
         mutationChildCount: 0,
+    },
+    {
+        siteName: '笔趣阁',
+        url: 'http://m.biquxs.com/book/\\d+/.*?.html',
+        exampleUrl: 'http://m.biquxs.com/book/13516/9382746.html',
 
-    }
+        checkSection: true,
 
+        contentSelector: "#chaptercontent",
+        contentPatch($doc) {
+            $doc.find("#chaptercontent p:not(.content_detail)").remove()
+        }
+    },
 ];
 
 export default sites
