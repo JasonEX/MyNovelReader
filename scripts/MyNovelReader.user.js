@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.8
+// @version        7.6.8.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -294,6 +294,7 @@
 // @match          *://m.xindingdianxsw.com/*/*/*.html
 // @match          *://m.123duw.com/dudu-*/*/*.html
 // @match          *://m.123du.vip/dudu-*/*/*.html
+// @match          *://m.biquxs.com/book/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -2568,7 +2569,8 @@
           contentReplace: [
               { 'II': '二' },
               { '壹': '一' },
-              { '贰': '二' }
+              { '贰': '二' },
+              { 'Ⅱ': '二' },
           ]
       },
       {
@@ -2734,7 +2736,19 @@
           contentSelector: '#txt',
           mutationSelector: "#txt",
           mutationChildCount: 0,
-      }
+      },
+      {
+          siteName: '笔趣阁',
+          url: 'http://m.biquxs.com/book/\\d+/.*?.html',
+          exampleUrl: 'http://m.biquxs.com/book/13516/9382746.html',
+
+          checkSection: true,
+
+          contentSelector: "#chaptercontent",
+          contentPatch($doc) {
+              $doc.find("#chaptercontent p:not(.content_detail)").remove();
+          }
+      },
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
@@ -5153,7 +5167,7 @@
           return url;
       },
       checkNextUrl: function (url) {
-          const sectionUrlRegex = /\/\d+[_-]\d+\.html?$/;
+          const sectionUrlRegex = /\/\d+([_-]\d+|\/\d)\.html?$/;
           if (url && this.info.checkSection) {
               // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
               if (!sectionUrlRegex.test(this.curPageUrl) &&
