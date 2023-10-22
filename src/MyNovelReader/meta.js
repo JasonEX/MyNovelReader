@@ -294,6 +294,7 @@
 // @match          *://m.xindingdianxsw.com/*/*/*.html
 // @match          *://m.123duw.com/dudu-*/*/*.html
 // @match          *://m.123du.vip/dudu-*/*/*.html
+// @match          *://m.biquxs.com/book/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html

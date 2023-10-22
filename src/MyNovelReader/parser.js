@@ -1222,8 +1222,8 @@ Parser.prototype = {
         this.prevUrl = url || '';
         return url;
     },
-    checkNextUrl: function(url){
-        const sectionUrlRegex = /\/\d+[_-]\d+\.html?$/
+    checkNextUrl: function (url) {
+        const sectionUrlRegex = /\/\d+([_-]\d+|\/\d)\.html?$/
         if (url && this.info.checkSection) {
             // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
             if (!sectionUrlRegex.test(this.curPageUrl) &&
