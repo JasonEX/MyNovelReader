@@ -279,6 +279,7 @@
 // @match          *://www.wanbenshuku.cc/book/*/*.html
 // @match          *://m.moyisy.com/book/*/*.html
 // @match          *://www.suiyuexs.com/read/*/*.html
+// @match          *://www.jingdianyulu.org/yulus/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
