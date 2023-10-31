@@ -2749,6 +2749,16 @@
               $doc.find("#chaptercontent p:not(.content_detail)").remove();
           }
       },
+      {
+          siteName: '语录书院',
+          url: 'https://www.jingdianyulu.org/yulus/\\d+/.*?.html',
+          exampleUrl: 'https://www.jingdianyulu.org/yulus/17410287770/59700783-2.html',
+
+          checkSection: true,
+          prevSelector: "#PageSet a:contains('上'):contains('页')",
+          nextSelector: "#PageSet a:contains('下'):contains('页')",
+          contentSelector: "#content",
+      },
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
