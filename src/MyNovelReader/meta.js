@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.6.9
+// @version        7.7.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -32,6 +32,7 @@
 // @connect        *://*.qidian.com/
 // @connect        bgme.bid
 // @connect        xrzww.com
+// @connect        qidian.com
 
 // @include        *://vipreader.qidian.com/chapter/*/*
 // @include        *://www.qdmm.com/BookReader/*,*.aspx
