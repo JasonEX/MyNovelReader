@@ -1716,6 +1716,21 @@ const sites = [
         nextSelector: "#PageSet a:contains('下'):contains('页')",
         contentSelector: "#content",
     },
+    {
+        siteName: '语录书院-移动版',
+        url: 'https://m.jingdianyulu.org/yulus/\\d+/.*?.html',
+        exampleUrl: 'https://m.jingdianyulu.org/yulus/17710148533/59468382-2.html',
+
+        checkSection: true,
+        prevSelector: "#PageSet a:contains('上'):contains('页')",
+        nextSelector: "#PageSet a:contains('下'):contains('页')",
+        contentSelector: ".TxtContent",
+        contentReplace: [
+            "…..*$",
+            "^.*本章没完，请点击下—页继续阅读！如果被转码了请退出转码或者更换浏揽器即可。.*$",
+            "^\\d+.$"
+        ]
+    },
 ];
 
 export default sites
