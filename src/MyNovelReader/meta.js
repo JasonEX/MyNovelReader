@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.1
+// @version        7.7.1.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -298,6 +298,7 @@
 // @match          *://m.123duw.com/dudu-*/*/*.html
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
+// @match          *://m.jingdianyulu.org/yulus/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
