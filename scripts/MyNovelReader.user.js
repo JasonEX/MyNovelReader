@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.1
+// @version        7.7.1.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -298,6 +298,7 @@
 // @match          *://m.123duw.com/dudu-*/*/*.html
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
+// @match          *://m.jingdianyulu.org/yulus/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -2760,6 +2761,21 @@
           prevSelector: "#PageSet a:contains('上'):contains('页')",
           nextSelector: "#PageSet a:contains('下'):contains('页')",
           contentSelector: "#content",
+      },
+      {
+          siteName: '语录书院-移动版',
+          url: 'https://m.jingdianyulu.org/yulus/\\d+/.*?.html',
+          exampleUrl: 'https://m.jingdianyulu.org/yulus/17710148533/59468382-2.html',
+
+          checkSection: true,
+          prevSelector: "#PageSet a:contains('上'):contains('页')",
+          nextSelector: "#PageSet a:contains('下'):contains('页')",
+          contentSelector: ".TxtContent",
+          contentReplace: [
+              "…..*$",
+              "^.*本章没完，请点击下—页继续阅读！如果被转码了请退出转码或者更换浏揽器即可。.*$",
+              "^\\d+.$"
+          ]
       },
   ];
 
