@@ -239,6 +239,7 @@ const exclude = {
     '顛乾倒坤': '颠乾倒坤',
     '黃潤乾': '黄润乾',
     '黄润乾': '黄润乾',
+    '沈默': '沉默',
 }
 
 function getMiddleStr(str, leftStr, rightStr) {

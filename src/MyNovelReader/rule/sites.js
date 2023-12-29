@@ -684,54 +684,53 @@ const sites = [
         prevSelector: "#zhang_top",
         nextSelector: "#zhang_down",
 
-        contentSelector: "#tt_text",
-        contentRemove: "#tt_text tbody tr",
-        contentReplace: [
-            '欢迎访问英文小说网http://novel.tingroom.com'
-        ],
-    },
-    {
-        siteName: '笔趣阁 nuanyuehanxing',
-        url: '^https?://www\\.nuanyuehanxing\\.com/\\w+/\\d+/\\d+\\.html',
-        exampleUrl: 'https://www.nuanyuehanxing.com/shu/56388575/111040667.html',
-        bookTitleSelector: '.bookname',
-        timeout: 500,
-        useiframe: true,
-        contentRemove: 'a',
-    },
-    // 这网站为了防抓取，内容顺序都是不对的，只好采用 iframe 方式
-    {
-        siteName: '和图书',
-        exampleUrl: 'http://www.hetushu.com/book/1421/964983.html',
-        url: '^https?://www.hetushu.com/book/\\d+/\\d+.html',
-        bookTitleSelector: '#left h3',
-        nextSelector: 'a#next',
-        prevSelector: 'a#pre',
-        indexSelector: '#left h3 a',
-        useiframe: true,
-        // 后面的是 和图书 的干扰码
-        contentRemove: 'h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins',
-        contentPatch: function ($doc) {
-            // 转换 div 到 p
-            $doc.find('#content div').each(function () {
-                let html = $(this).html()
-                $(this).replaceWith(
-                    $('<p>').html(html)
-                )
-            })
-        }
-    },
-    {
-        siteName: "69书吧",
-        url: "https?://www\\.69shuba\\.com/txt/\\d+/\\d+",
-        exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
-        // contentHandle: false,
-        titleSelector: 'h1',
-        contentSelector: ".txtnav",
-        contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2",
-        nextSelector: '.page1 a:nth-child(4)',
-        prevSelector: '.page1 a:nth-child(1)',
-        indexSelector: '.page1 a:nth-child(3)',
+    contentSelector: "#tt_text",
+    contentRemove: "#tt_text tbody tr",
+    contentReplace: [
+        '欢迎访问英文小说网http://novel.tingroom.com'
+    ],
+  },
+  {siteName: '笔趣阁 nuanyuehanxing',
+    url: '^https?://www\\.nuanyuehanxing\\.com/\\w+/\\d+/\\d+\\.html',
+    exampleUrl: 'https://www.nuanyuehanxing.com/shu/56388575/111040667.html',
+    bookTitleSelector: '.bookname',
+    timeout: 500,
+    useiframe: true,
+    contentRemove: 'a',
+  },
+
+  // 这网站为了防抓取，内容顺序都是不对的，只好采用 iframe 方式
+  {siteName: '和图书',
+    exampleUrl: 'http://www.hetushu.com/book/1421/964983.html',
+    url: '^https?://www.hetushu.com/book/\\d+/\\d+.html',
+    bookTitleSelector: '#left h3',
+    nextSelector: 'a#next',
+    prevSelector: 'a#pre',
+    indexSelector: '#left h3 a',
+    useiframe: true,
+    // 后面的是 和图书 的干扰码
+    contentRemove: 'h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins',
+    contentPatch: function($doc) {
+        // 转换 div 到 p
+        $doc.find('#content div').each(function() {
+            let html = $(this).html()
+            $(this).replaceWith(
+                $('<p>').html(html)
+            )
+        })
+    }
+  },
+
+  {siteName: "69书吧",
+    url: "https?://www\\.69(shuba|xinshu)\\.com/txt/\\d+/\\d+",
+    exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
+    // contentHandle: false,
+    titleSelector: 'h1',
+    contentSelector: ".txtnav",
+    contentRemove: ".txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2",
+    nextSelector: '.page1 a:nth-child(4)',
+    prevSelector: '.page1 a:nth-child(1)',
+    indexSelector: '.page1 a:nth-child(3)',
     },
     {
         siteName: "读万卷",
