@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.2
+// @version        7.7.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -280,6 +280,7 @@
 // @match          *://m.moyisy.com/book/*/*.html
 // @match          *://www.suiyuexs.com/read/*/*.html
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
+// @match          *://sangtacviet.vip/truyen/*/1/*/*/
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2806,6 +2807,26 @@
               "^.*本章没完，请点击下—页继续阅读！如果被转码了请退出转码或者更换浏揽器即可。.*$",
               "^\\d+.$"
           ]
+      },
+
+      {siteName: 'Sangtacviet',
+          url: 'https://sangtacviet.vip/truyen/.*?/1/\\d+/\\d+/',
+          exampleUrl: 'https://sangtacviet.vip/truyen/faloo/1/1361906/',
+
+          prevSelector: '#navprevtop',
+          nextSelector: '#navnexttop',
+          indexSelector: '#navcentertop',
+          titleSelector: '#bookchapnameholder',
+          bookTitleSelector: '#booknameholder',
+          contentSelector: '#content-container > .contentbox',
+          contentReplace: ['@Bạn đang đọc bản lưu trong hệ thống'],
+
+          useiframe: true,
+          contentHandle: false,
+
+          mutationSelector: '#content-container > .contentbox',
+          mutationChildText: 'Đang tải nội dung chương...',
+
       },
   ];
 

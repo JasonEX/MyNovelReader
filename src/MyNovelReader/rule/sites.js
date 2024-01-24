@@ -1762,6 +1762,26 @@ const sites = [
             "^\\d+.$"
         ]
     },
+
+    {siteName: 'Sangtacviet',
+        url: 'https://sangtacviet.vip/truyen/.*?/1/\\d+/\\d+/',
+        exampleUrl: 'https://sangtacviet.vip/truyen/faloo/1/1361906/',
+
+        prevSelector: '#navprevtop',
+        nextSelector: '#navnexttop',
+        indexSelector: '#navcentertop',
+        titleSelector: '#bookchapnameholder',
+        bookTitleSelector: '#booknameholder',
+        contentSelector: '#content-container > .contentbox',
+        contentReplace: ['@Bạn đang đọc bản lưu trong hệ thống'],
+
+        useiframe: true,
+        contentHandle: false,
+
+        mutationSelector: '#content-container > .contentbox',
+        mutationChildText: 'Đang tải nội dung chương...',
+
+    },
 ];
 
 export default sites

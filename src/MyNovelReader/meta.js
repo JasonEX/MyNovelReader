@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.2
+// @version        7.7.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -280,6 +280,7 @@
 // @match          *://m.moyisy.com/book/*/*.html
 // @match          *://www.suiyuexs.com/read/*/*.html
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
+// @match          *://sangtacviet.vip/truyen/*/1/*/*/
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
