@@ -20,6 +20,7 @@ export interface SiteConfig {
   mutationSelector?: string
   mutationChildCount?: number
   mutationChildText?: string
+  mutationCheck?: ($doc: JQuery<Document>) => boolean
   useiframe?: boolean
   iframeSandbox?: undefined | string
   contentSelector?: string

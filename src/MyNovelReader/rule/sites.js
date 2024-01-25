@@ -1770,7 +1770,9 @@ const sites = [
         prevSelector: '#navprevtop',
         nextSelector: '#navnexttop',
         indexSelector: '#navcentertop',
-        titleSelector: '#bookchapnameholder',
+        titleSelector($doc) {
+            return $doc.find('#bookchapnameholder').text() || 'No Title'
+        },
         bookTitleSelector: '#booknameholder',
         contentSelector: '#content-container > .contentbox',
         contentReplace: ['@Bạn đang đọc bản lưu trong hệ thống'],
@@ -1780,6 +1782,10 @@ const sites = [
 
         mutationSelector: '#content-container > .contentbox',
         mutationChildText: 'Đang tải nội dung chương...',
+        mutationCheck($doc) {
+            const href = $doc.find("#navnexttop").attr("href")
+            return !href.endsWith("/0/")
+        }
 
     },
 ];
