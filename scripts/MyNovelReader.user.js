@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.4
+// @version        7.7.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1230,10 +1230,10 @@
                   const $body = $doc.find("body");
                   const chapterUrl = `/chapter/${bookId}/`;
                   $('<div class="next_chapter">')
-                      .attr("href", chapterUrl + next.toString())
+                      .attr("href", chapterUrl + next.toString() + '/')
                       .appendTo($body);
                   $('<div class="prev_chapter">')
-                      .attr("href", chapterUrl + prev.toString())
+                      .attr("href", chapterUrl + prev.toString() + '/')
                       .appendTo($body);
               }
           },

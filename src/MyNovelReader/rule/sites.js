@@ -180,10 +180,10 @@ const sites = [
                 const $body = $doc.find("body")
                 const chapterUrl = `/chapter/${bookId}/`
                 $('<div class="next_chapter">')
-                    .attr("href", chapterUrl + next.toString())
+                    .attr("href", chapterUrl + next.toString() + '/')
                     .appendTo($body)
                 $('<div class="prev_chapter">')
-                    .attr("href", chapterUrl + prev.toString())
+                    .attr("href", chapterUrl + prev.toString() + '/')
                     .appendTo($body)
             }
         },
