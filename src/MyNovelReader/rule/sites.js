@@ -193,11 +193,11 @@ const sites = [
             const { pageContext } = JSON.parse(json)
             const { chapterInfo } = pageContext.pageProps.pageData
 
-            if (chapterInfo.vipStatus === 1) { // 是 vip 章节
+            // if (chapterInfo.vipStatus === 1) { // 是 vip 章节
                 this.useiframe = true;
                 this.mutationSelector = '.content'
                 this.mutationChildCount = 0
-            }
+            // }
             if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
                 // 不支持
                 this.isVipChapter = () => true
