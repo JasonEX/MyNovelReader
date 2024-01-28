@@ -1788,6 +1788,14 @@ const sites = [
         }
 
     },
+
+    {siteName: '手机小说',
+        url: 'https://www.shoujix.com/shoujixs_\\d+_\\d+.html',
+        exampleUrl: 'https://www.shoujix.com/shoujixs_199607_47546183.html',
+
+        contentSelector: '#zjny'
+
+    },
 ];
 
 export default sites

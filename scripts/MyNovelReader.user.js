@@ -281,6 +281,7 @@
 // @match          *://www.suiyuexs.com/read/*/*.html
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
+// @match          *://www.shoujix.com/shoujixs_*_*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2832,6 +2833,14 @@
               const href = $doc.find("#navnexttop").attr("href");
               return !href.endsWith("/0/")
           }
+
+      },
+
+      {siteName: '手机小说',
+          url: 'https://www.shoujix.com/shoujixs_\\d+_\\d+.html',
+          exampleUrl: 'https://www.shoujix.com/shoujixs_199607_47546183.html',
+
+          contentSelector: '#zjny'
 
       },
   ];
