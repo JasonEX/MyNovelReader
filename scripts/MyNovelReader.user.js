@@ -281,7 +281,7 @@
 // @match          *://www.suiyuexs.com/read/*/*.html
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
-// @include        *://www.shoujix.com/shoujixs_*_*.html
+// @match          *://www.shoujix.com/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
