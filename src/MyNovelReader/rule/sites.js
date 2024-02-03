@@ -730,6 +730,7 @@ const sites = [
     nextSelector: '.page1 a:nth-child(4)',
     prevSelector: '.page1 a:nth-child(1)',
     indexSelector: '.page1 a:nth-child(3)',
+    useiframe: true,
     },
 
   {siteName: "读万卷",
