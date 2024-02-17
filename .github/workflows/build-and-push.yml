@@ -16,6 +16,7 @@ jobs:
           node-version: 16
       - name: build prepare
         run: |
+          yarn config set strict-ssl false
           yarn install
       - name: build
         run: |
