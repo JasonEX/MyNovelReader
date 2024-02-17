@@ -16,7 +16,7 @@ jobs:
           node-version: 16
       - name: build prepare
         run: |
-          yarn
+          yarn install
       - name: build
         run: |
           yarn build src/MyNovelReader
