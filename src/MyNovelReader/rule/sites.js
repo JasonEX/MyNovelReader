@@ -158,10 +158,10 @@ const sites = [
                 const $body = $doc.find("body")
                 const chapterUrl = `/chapter/${bookId}/`
                 $('<div class="next_chapter">')
-                    .attr("href", chapterUrl + next.toString())
+                    .attr("href", chapterUrl + next.toString() + '/')
                     .appendTo($body)
                 $('<div class="prev_chapter">')
-                    .attr("href", chapterUrl + prev.toString())
+                    .attr("href", chapterUrl + prev.toString() + '/')
                     .appendTo($body)
             }
         },
@@ -171,11 +171,11 @@ const sites = [
             const { pageContext } = JSON.parse(json)
             const { chapterInfo } = pageContext.pageProps.pageData
 
-            if (chapterInfo.vipStatus === 1) { // 是 vip 章节
+            // if (chapterInfo.vipStatus === 1) { // 是 vip 章节
                 this.useiframe = true;
                 this.mutationSelector = '.content'
                 this.mutationChildCount = 0
-            }
+            // }
             if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
                 // 不支持
                 this.isVipChapter = () => true
@@ -731,6 +731,7 @@ const sites = [
     nextSelector: '.page1 a:nth-child(4)',
     prevSelector: '.page1 a:nth-child(1)',
     indexSelector: '.page1 a:nth-child(3)',
+    useiframe: true,
     },
     {
         siteName: "读万卷",
@@ -1730,6 +1731,40 @@ const sites = [
             "^.*本章没完，请点击下—页继续阅读！如果被转码了请退出转码或者更换浏揽器即可。.*$",
             "^\\d+.$"
         ]
+    },
+
+    {siteName: 'Sangtacviet',
+        url: 'https://sangtacviet.vip/truyen/.*?/1/\\d+/\\d+/',
+        exampleUrl: 'https://sangtacviet.vip/truyen/faloo/1/1361906/',
+
+        prevSelector: '#navprevtop',
+        nextSelector: '#navnexttop',
+        indexSelector: '#navcentertop',
+        titleSelector($doc) {
+            return $doc.find('#bookchapnameholder').text() || 'No Title'
+        },
+        bookTitleSelector: '#booknameholder',
+        contentSelector: '#content-container > .contentbox',
+        contentReplace: ['@Bạn đang đọc bản lưu trong hệ thống'],
+
+        useiframe: true,
+        contentHandle: false,
+
+        mutationSelector: '#content-container > .contentbox',
+        mutationChildText: 'Đang tải nội dung chương...',
+        mutationCheck($doc) {
+            const href = $doc.find("#navnexttop").attr("href")
+            return !href.endsWith("/0/")
+        }
+
+    },
+
+    {siteName: '手机小说',
+        url: 'https://www.shoujix.com/shoujixs_\\d+_\\d+.html',
+        exampleUrl: 'https://www.shoujix.com/shoujixs_199607_47546183.html',
+
+        contentSelector: '#zjny'
+
     },
 ];
 

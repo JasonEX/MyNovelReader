@@ -4,57 +4,78 @@ import { toRE } from './lib'
 // 等待页面上的元素出现
 export function observeElement(
   doc,
-  { contentSelector, mutationSelector, mutationChildText, mutationChildCount }
+  {
+    contentSelector,
+    mutationSelector,
+    mutationChildText,
+    mutationChildCount,
+    mutationCheck
+  }
 ) {
-  var shouldAdd = false
   var $doc = $(doc)
 
   var contentSize = $doc.find(contentSelector).size()
 
   if (contentSize && !mutationSelector) {
-    shouldAdd = false
-  } else {
-    var target = $doc.find(mutationSelector)[0]
+    return
+  }
 
-    if (target) {
-      var beforeTargetChilren = target.children.length
-      C.log(`target.children.length = ${target.children.length}`, target)
+  var target = $doc.find(mutationSelector)[0]
 
-      if (mutationChildText) {
-        if (target.textContent.indexOf(mutationChildText) > -1) {
-          shouldAdd = true
-        }
-      } else {
-        if (
-          mutationChildCount === undefined ||
-          target.children.length <= mutationChildCount
-        ) {
-          shouldAdd = true
-        }
+  if (!target) {
+    return
+  }
+
+  var check = true
+
+  if (_.isFunction(mutationCheck)) {
+    check = mutationCheck($doc)
+  }
+
+  var beforeTargetChilren = target.children.length
+  C.log(`target.children.length = ${target.children.length}`, target)
+
+  // 未找到加载中标志文本
+  const textNotFound = mutationChildText && !target.textContent.includes(mutationChildText)
+
+  if (textNotFound && check) {
+    return
+  }
+
+  // 节点孩子数量足够多（一般正文的节点数量会多于加载时）
+  const childCountEnough = mutationChildCount !== undefined && target.children.length > mutationChildCount
+
+  if (childCountEnough && check) {
+    return
+  }
+
+  if ((textNotFound || childCountEnough) && !check) {
+    // 正文已生成，但检查函数还未通过，设置为 0 使得 nodeAdded 始终为 true
+    beforeTargetChilren = 0
+  }
+
+  return new Promise(resolve => {
+    var observer = new MutationObserver(function () {
+      const target = $doc.find(mutationSelector)[0]
+      var nodeAdded = target.children.length > beforeTargetChilren
+      var check = true
+      if (nodeAdded && _.isFunction(mutationCheck)) {
+        check = mutationCheck($doc)
       }
-    }
-  }
 
-  if (shouldAdd) {
-    return new Promise(resolve => {
-      var observer = new MutationObserver(function () {
-        target = $doc.find(mutationSelector)[0]
-        var nodeAdded = target.children.length > beforeTargetChilren
-
-        if (nodeAdded) {
-          observer.disconnect()
-          resolve()
-        }
-      })
-
-      observer.observe(document, {
-        childList: true,
-        subtree: true
-      })
-
-      C.log('添加 MutationObserve 成功：', mutationSelector)
+      if (nodeAdded && check) {
+        observer.disconnect()
+        resolve()
+      }
     })
-  }
+
+    observer.observe(document, {
+      childList: true,
+      subtree: true
+    })
+
+    C.log('添加 MutationObserve 成功：', mutationSelector)
+  })
 }
 
 // 等待 DOM 稳定

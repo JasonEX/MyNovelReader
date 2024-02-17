@@ -74,6 +74,9 @@
     mutationSelector: '', // 内容生成监视器，检测到该节点的孩子数量发生变化就会触发加载，使用 jQuery 选择器
     mutationChildCount: 0, // 节点孩子数量，小于等于该数字则认为需要等待内容生成
     mutationChildText: '', // 判断文本，该节点如果含有该文本则认为需要等待内容生成
+    mutationCheck($doc) { // 检查函数，确保内容生成后页面中的其他元素已加载
+        // $doc = $(document)
+    },
 
     useiframe: false, // 使用 iframe 加载完整网页，如果章节内容是动态加载的需要开启
     // 设置 iframe 的 sandbox 属性，详见 https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/iframe#attr-sandbox
