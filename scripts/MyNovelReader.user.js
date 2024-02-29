@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.7
+// @version        7.7.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1772,7 +1772,11 @@
     },
 
     {siteName: "69书吧",
-      url: "https?://www\\.69(shuba|xinshu)\\.com/txt/\\d+/\\d+",
+      // www.69shu.com
+      // www.69shuba.com
+      // www.69xinshu.com
+      // www.69shu.pro
+      url: "https?://www\\.69shu\\.pro/txt/\\d+/\\d+",
       exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
       // contentHandle: false,
       titleSelector: 'h1',
