@@ -699,7 +699,6 @@ const sites = [
         useiframe: true,
         contentRemove: 'a',
     },
-
     // 这网站为了防抓取，内容顺序都是不对的，只好采用 iframe 方式
     {
         siteName: '和图书',
@@ -722,10 +721,13 @@ const sites = [
             })
         }
     },
-
     {
         siteName: "69书吧",
-        url: "https?://www\\.69(shuba|xinshu)\\.com/txt/\\d+/\\d+",
+        // www.69shu.com
+        // www.69shuba.com
+        // www.69xinshu.com
+        // www.69shu.pro
+        url: "https?://www\\.69shu\\.pro/txt/\\d+/\\d+",
         exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
         // contentHandle: false,
         titleSelector: 'h1',
