@@ -724,10 +724,11 @@ const sites = [
     {
         siteName: "69书吧",
         // www.69shu.com
+        // www.69shux.com
         // www.69shuba.com
         // www.69xinshu.com
         // www.69shu.pro
-        url: "https?://www\\.69shu\\.pro/txt/\\d+/\\d+",
+        url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|com)/txt/\\d+/\\d+",
         exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
         // contentHandle: false,
         titleSelector: 'h1',
@@ -737,6 +738,9 @@ const sites = [
         prevSelector: '.page1 a:nth-child(1)',
         indexSelector: '.page1 a:nth-child(3)',
         useiframe: true,
+        contentReplace: [
+            '[^\n\u4e00-\u9fff\u3400-\u4DBFa-zA-Z。、，；：“”（）【】《》「」？！,;:\'"!?()\\[\\]{}…]*'
+    ]
     },
     {
         siteName: "读万卷",
