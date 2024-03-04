@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.8.4
+// @version        7.7.8.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -303,6 +303,7 @@
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.jingdianyulu.org/yulus/*/*.html
+// @match          *://m.xianqihaotianmi.org/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -2815,7 +2816,6 @@
               const href = $doc.find("#navnexttop").attr("href");
               return !href.endsWith("/0/")
           }
-
       },
       {
           siteName: '手机小说',
@@ -2823,6 +2823,22 @@
           exampleUrl: 'https://www.shoujix.com/shoujixs_199607_47546183.html',
 
           contentSelector: '#zjny'
+      },
+      {
+          siteName: '言情小说阁-移动版',
+          url: 'http://m.xianqihaotianmi.org/book_\\d+/\\d+(_\\d+)?.html',
+          exampleUrl: 'http://m.xianqihaotianmi.org/book_86899/47598965_2.html',
+
+          checkSection: true,
+          titleReg: "(.*?)_(.*?)_(.*?)",
+          titlePos: 1,
+          prevSelector: "#pt_prev",
+          nextSelector: "#pt_next",
+          contentSelector: "#chaptercontent",
+          contentPatch($doc) {
+              $doc.find("#chaptercontent p").remove();
+              $doc.find("#chaptercontent a").remove();
+          }
       },
   ];
 
