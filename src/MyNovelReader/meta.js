@@ -304,6 +304,7 @@
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.jingdianyulu.org/yulus/*/*.html
+// @match          *://m.xianqihaotianmi.org/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html

@@ -1798,7 +1798,6 @@ const sites = [
             const href = $doc.find("#navnexttop").attr("href")
             return !href.endsWith("/0/")
         }
-
     },
 
     {siteName: '手机小说',
@@ -1807,6 +1806,22 @@ const sites = [
 
         contentSelector: '#zjny'
 
+    },
+    {
+        siteName: '言情小说阁-移动版',
+        url: 'http://m.xianqihaotianmi.org/book_\\d+/\\d+(_\\d+)?.html',
+        exampleUrl: 'http://m.xianqihaotianmi.org/book_86899/47598965_2.html',
+
+        checkSection: true,
+        titleReg: "(.*?)_(.*?)_(.*?)",
+        titlePos: 1,
+        prevSelector: "#pt_prev",
+        nextSelector: "#pt_next",
+        contentSelector: "#chaptercontent",
+        contentPatch($doc) {
+            $doc.find("#chaptercontent p").remove()
+            $doc.find("#chaptercontent a").remove()
+        }
     },
 ];
 
