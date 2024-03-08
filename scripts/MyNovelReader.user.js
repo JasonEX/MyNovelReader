@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.8.5
+// @version        7.7.8.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1220,23 +1220,23 @@
                       .appendTo($body);
               }
           },
-
+  /*
           startLaunch($doc) {
-              const json = $doc.find('#vite-plugin-ssr_pageContext').text();
-              const { pageContext } = JSON.parse(json);
-              const { chapterInfo } = pageContext.pageProps.pageData;
+              const json = $doc.find('#vite-plugin-ssr_pageContext').text()
+              const { pageContext } = JSON.parse(json)
+              const { chapterInfo } = pageContext.pageProps.pageData
 
               // if (chapterInfo.vipStatus === 1) { // 是 vip 章节
               this.useiframe = true;
-              this.mutationSelector = '.content';
-              this.mutationChildCount = 0;
+              this.mutationSelector = '.content'
+              this.mutationChildCount = 0
               // }
               if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
                   // 不支持
-                  this.isVipChapter = () => true;
+                  this.isVipChapter = () => true
               }
           },
-
+  */
       },
       {
           siteName: "创世中文网",
