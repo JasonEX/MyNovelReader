@@ -165,7 +165,7 @@ const sites = [
                     .appendTo($body)
             }
         },
-
+/*
         startLaunch($doc) {
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()
             const { pageContext } = JSON.parse(json)
@@ -181,7 +181,7 @@ const sites = [
                 this.isVipChapter = () => true
             }
         },
-
+*/
     },
     {
         siteName: "创世中文网",
