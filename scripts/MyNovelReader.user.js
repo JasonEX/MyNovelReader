@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.8.8
+// @version        7.7.8.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1793,9 +1793,6 @@
           prevSelector: '.page1 a:nth-child(1)',
           indexSelector: '.page1 a:nth-child(3)',
           useiframe: true,
-          contentReplace: [
-              '[^\n\u4e00-\u9fff\u3400-\u4DBFa-zA-Z0-9。、，；：“”（）【】《》「」？！~\\-%\.,;:\'"!?()\\[\\]{}…]*'
-      ]
       },
       {
           siteName: "读万卷",
