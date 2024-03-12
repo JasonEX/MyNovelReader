@@ -739,7 +739,7 @@ const sites = [
         indexSelector: '.page1 a:nth-child(3)',
         useiframe: true,
         contentReplace: [
-            '[^\n\u4e00-\u9fff\u3400-\u4DBFa-zA-Z0-9。、，；：“”（）【】《》「」？！~-%\.,;:\'"!?()\\[\\]{}…]*'
+            '[^\n\u4e00-\u9fff\u3400-\u4DBFa-zA-Z0-9。、，；：“”（）【】《》「」？！~\\-%\.,;:\'"!?()\\[\\]{}…]*'
     ]
     },
     {
