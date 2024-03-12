@@ -134,7 +134,7 @@ const sites = [
 
         isVipChapter($doc) {
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()
-						if (!json) return false
+            if (!json) return false
             const { pageContext } = JSON.parse(json)
             const { vipStatus, isBuy } = pageContext.pageProps.pageData.chapterInfo
             if (vipStatus && !isBuy) {
