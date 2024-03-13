@@ -127,7 +127,7 @@
 // @include        *://www.bqg5200.com/xiaoshuo/*/*/*.html
 // @include        *://www.biquge5200.cc/*/*.html
 // @include        *://read.qidian.com/chapter/*
-// @include        *://www.piaotian.com/html/*/*/*.html
+// @include        *://www.piaotia.com/html/*/*/*.html
 // @include        *://www.miaobige.com/*/*/*.html
 // @include        *://www.shuhai.com/read/*/*.html
 // @include        *://www.23qb.com/book/*/*.html
@@ -284,6 +284,7 @@
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
+// @match          *://www.twking.cc/*_*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1616,8 +1617,8 @@
         contentSelector: "#showcontent",
     },
     {siteName: "飘天文学",
-        url: "^https?://www\\.piaotian\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
-        exampleUrl: 'https://www.piaotian.com/html/15/15083/10323993.html',
+        url: "^https?://www\\.piaotia\\.com/html/\\d+/\\d+/\\d+\\.html",
+        exampleUrl: 'https://www.piaotia.com/html/15/15083/10323993.html',
         // titleReg: "(.*)最新章节,(.*),飘天文学",
         bookTitleSelector: '#content > h1 > a',
         contentSelector: "#content",
