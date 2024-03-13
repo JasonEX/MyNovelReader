@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.8
+// @version        7.7.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -95,6 +95,7 @@
 // @include        *://book.sfacg.com/Novel/*/*/*/
 // @include        *://www.ttzw.com/book/*/*.html
 // @include        *://www.uukanshu.com/*/*/*.html
+// @include        *://www.zhaoshuyuan.com/*/*/*.html
 // @include        *://www.uukanshu.net/*/*/*.html
 // @include        *://book.kanunu.org/*/*/*.html
 // @include        *://www.kanunu8.com/book*/*.html
@@ -1666,6 +1667,13 @@
           //   '\\(\\)',
         ],
         contentRemove: '.ad_content'
+    },
+    {siteName: "找书苑",
+        url: "^https?://www\\.zhaoshuyuan\\.com/.*/\\d+/\\d+.html.*",
+        exampleUrl: 'https://www.zhaoshuyuan.com/b/174835/10801.html',
+        contentReplace: [
+            '找书苑\\s*[wｗ]+.[zｚ][hｈ][aａ][oｏ][sｓ][hｈ][uｕ][yｙ][uｕ][aａ][nｎ].[cｃ][oｏ][mｍ]\\s*',
+        ],
     },
     {siteName: "黄金屋中文网",
         url: /www\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,

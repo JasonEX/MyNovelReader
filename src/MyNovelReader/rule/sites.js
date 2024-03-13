@@ -615,6 +615,13 @@ const sites = [
       ],
       contentRemove: '.ad_content'
   },
+  {siteName: "找书苑",
+      url: "^https?://www\\.zhaoshuyuan\\.com/.*/\\d+/\\d+.html.*",
+      exampleUrl: 'https://www.zhaoshuyuan.com/b/174835/10801.html',
+      contentReplace: [
+          '找书苑\\s*[wｗ]+.[zｚ][hｈ][aａ][oｏ][sｓ][hｈ][uｕ][yｙ][uｕ][aａ][nｎ].[cｃ][oｏ][mｍ]\\s*',
+      ],
+  },
   {siteName: "黄金屋中文网",
       url: /www\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,
       exampleUrl: 'https://tw.hjwzw.com/Book/Read/1889,577987',
