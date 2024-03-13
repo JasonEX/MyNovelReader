@@ -4344,6 +4344,8 @@
           //     docTitle = this.convert2tw(docTitle);
           // }
 
+          this.originChapterTitle = chapterTitle;
+
           bookTitle = chineseConversion(bookTitle);
           chapterTitle = chineseConversion(chapterTitle);
           docTitle = chineseConversion(docTitle);
@@ -4927,9 +4929,9 @@
           C.log(`本章字数：${content.length}`);
 
           // 去除内容中的标题
-          if (this.chapterTitle) {
+          if (this.originChapterTitle) {
               try {
-                  var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*');
+                  var reg = toReStr(this.originChapterTitle.trim()).replace(/\s+/g, '\\s*');
                   reg = "(" + this.bookTitle.trim() + "\\s*)*" + "\\s*" + "(" + reg + ")*";
                   content = content.replace(toRE(`^${reg}$`), '');
                   C.log('去除内容中的标题', reg);
