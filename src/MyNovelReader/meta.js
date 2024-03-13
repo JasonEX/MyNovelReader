@@ -95,7 +95,7 @@
 // @include        *://book.sfacg.com/Novel/*/*/*/
 // @include        *://www.ttzw.com/book/*/*.html
 // @include        *://www.uukanshu.com/*/*/*.html
-// @include        *://www.zhaoshuyuan.com/*/*/*.html
+// @include        *://www.zhaoshuyuan.com/*/*/*.html*
 // @include        *://www.uukanshu.net/*/*/*.html
 // @include        *://book.kanunu.org/*/*/*.html
 // @include        *://www.kanunu8.com/book*/*.html
