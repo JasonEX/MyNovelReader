@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.8.12
+// @version        7.7.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -95,6 +95,7 @@
 // @match          *://book.sfacg.com/Novel/*/*/*/
 // @match          *://www.ttzw.com/book/*/*.html
 // @match          *://www.uukanshu.com/*/*/*.html
+// @match          *://www.zhaoshuyuan.com/*/*/*.html*
 // @match          *://www.uukanshu.net/*/*/*.html
 // @match          *://book.kanunu.org/*/*/*.html
 // @match          *://www.kanunu8.com/book*/*.html
@@ -127,7 +128,7 @@
 // @match          *://www.bqg5200.com/xiaoshuo/*/*/*.html
 // @match          *://www.biquge5200.cc/*/*.html
 // @match          *://read.qidian.com/chapter/*
-// @match          *://www.ptwxz.com/html/*/*/*.html
+// @match          *://www.piaotia.com/html/*/*/*.html
 // @match          *://www.miaobige.com/*/*/*.html
 // @match          *://www.shuhai.com/read/*/*.html
 // @match          *://www.23qb.com/book/*/*.html
@@ -284,6 +285,7 @@
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
+// @match          *://www.twking.cc/*_*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1590,7 +1592,6 @@
               '来源长佩文学网（https://www.gongzicp.com）',
           ]
       },
-
       // ===========================================================
       {
           siteName: "E品中文网",
@@ -1601,8 +1602,8 @@
       },
       {
           siteName: "飘天文学",
-          url: "^https?://www\\.piaotian\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
-          exampleUrl: 'https://www.piaotian.com/html/15/15083/10323993.html',
+          url: "^https?://www\\.piaotia\\.com/html/\\d+/\\d+/\\d+\\.html",
+          exampleUrl: 'https://www.piaotia.com/html/15/15083/10323993.html',
           // titleReg: "(.*)最新章节,(.*),飘天文学",
           bookTitleSelector: '#content > h1 > a',
           contentSelector: "#content",
@@ -1654,6 +1655,14 @@
               //   '\\(\\)',
           ],
           contentRemove: '.ad_content'
+      },
+      {
+          siteName: "找书苑",
+          url: "^https?://www\\.zhaoshuyuan\\.com/.*/\\d+/\\d+.html.*",
+          exampleUrl: 'https://www.zhaoshuyuan.com/b/174835/10801.html',
+          contentReplace: [
+              '找书苑\\s*[wｗ]+.[zｚ][hｈ][aａ][oｏ][sｓ][hｈ][uｕ][yｙ][uｕ][aａ][nｎ].[cｃ][oｏ][mｍ]\\s*',
+          ],
       },
       {
           siteName: "黄金屋中文网",
@@ -4312,6 +4321,8 @@
           //     docTitle = this.convert2tw(docTitle);
           // }
 
+          this.originChapterTitle = chapterTitle;
+
           bookTitle = chineseConversion(bookTitle);
           chapterTitle = chineseConversion(chapterTitle);
           docTitle = chineseConversion(docTitle);
@@ -4895,9 +4906,9 @@
           C.log(`本章字数：${content.length}`);
 
           // 去除内容中的标题
-          if (this.chapterTitle) {
+          if (this.originChapterTitle) {
               try {
-                  var reg = toReStr(this.chapterTitle.trim()).replace(/\s+/g, '\\s*');
+                  var reg = toReStr(this.originChapterTitle.trim()).replace(/\s+/g, '\\s*');
                   reg = "(" + this.bookTitle.trim() + "\\s*)*" + "\\s*" + "(" + reg + ")*";
                   content = content.replace(toRE(`^${reg}$`), '');
                   C.log('去除内容中的标题', reg);
