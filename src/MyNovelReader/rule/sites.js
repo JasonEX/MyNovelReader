@@ -103,56 +103,60 @@ const sites = [
             this.info.mutationChildCount = 0
         }
 
-        // 滚屏的方式无法获取下一页
-        if ($doc.find('#j_chapterPrev').length === 0) {
-            var $node = $doc.find('div[id^="chapter-"]');
-            const prevUrl = $node.attr('data-purl').replace("www", "read")
-            const nextUrl = $node.attr('data-nurl').replace("www", "read")
-            // 加上一页链接
-            $('<div id="j_chapterPrev">')
-                .attr('href', prevUrl)
-                .appendTo($doc.find('body'));
-            // 加下一页链接
-            $('<div id="j_chapterNext">')
-                .attr('href', nextUrl)
-                .appendTo($doc.find('body'));
-            // 目录
-            var indexUrl = $('#bookImg').attr('href') + '#Catalog';
-            $('<div id="my_index">目录</div>')
-                .attr('href', indexUrl)
-                .appendTo($doc.find('body'));
-        }
+            // 滚屏的方式无法获取下一页
+            if ($doc.find('#j_chapterPrev').length === 0) {
+                var $node = $doc.find('div[id^="chapter-"]');
+                const prevUrl = $node.attr('data-purl').replace("www", "read")
+                const nextUrl = $node.attr('data-nurl').replace("www", "read")
+                // 加上一页链接
+                $('<div id="j_chapterPrev">')
+                    .attr('href', prevUrl)
+                    .appendTo($doc.find('body'));
+                // 加下一页链接
+                $('<div id="j_chapterNext">')
+                    .attr('href', nextUrl)
+                    .appendTo($doc.find('body'));
+                // 目录
+                var indexUrl = $('#bookImg').attr('href') + '#Catalog';
+                $('<div id="my_index">目录</div>')
+                    .attr('href', indexUrl)
+                    .appendTo($doc.find('body'));
+            }
+        },
+        startLaunch($doc) {
+            const win = $doc[0].defaultView
+            if (win.g_data.chapter.vipStatus === 1) { // 是 vip 章节
+                this.useiframe = true;
+                this.mutationSelector = '.read-content.j_readContent'
+                this.mutationChildCount = 0
+            }
+            if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
+                // 不支持
+                this.contentSelector = ""
+                this.isVipChapter = () => true
+                // this.useRawContent = true;
+                // this.cloneNode = true;
+            }
+        },
     },
-    startLaunch($doc) {
-        const win = $doc[0].defaultView
-        if (win.g_data.chapter.vipStatus === 1) { // 是 vip 章节
-            this.useiframe = true;
-            this.mutationSelector = '.read-content.j_readContent'
-            this.mutationChildCount = 0
-        }
-        if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
-            // 不支持
-            this.contentSelector = "" 
-            this.isVipChapter = () => true
-            // this.useRawContent = true;
-            // this.cloneNode = true;
-        }
-    },
-  },
-    {siteName: "起点新版-20230517",
+    {
+        siteName: "起点新版-20240317",
         url: "^https?://(www|m)\\.qidian\\.com/chapter/.*",
 
-        bookTitleSelector: "#r-breadcrumbs > a:last",
+        //bookTitleSelector: ".bookTitle",
+        titleReg: "(.*?)《(.*?)》(.*?)",
+        titlePos: 1,
         titleSelector: "h1.text-1\\.3em",
 
         prevSelector: '.prev_chapter',
         nextSelector: '.next_chapter',
-        indexSelector: '#r-breadcrumbs > a:last',
-
+        indexSelector: '.catalog',
 
         contentSelector: '.content',
         // contentHandle: false,
-        //timeout: 3000,
+        //useiframe: true,
+        mutationSelector: 'main.content',
+        mutationChildCount: 0,
 
         isVipChapter($doc) {
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()
@@ -175,35 +179,19 @@ const sites = [
             }
             const { bookId } = pageContext.pageProps.pageData.bookInfo
 
-            // 滚动翻页
-            if ($doc.find('.nav-btn-group > a').length < 3) {
-                const $body = $doc.find("body")
-                const chapterUrl = `/chapter/${bookId}/`
-                $('<div class="next_chapter">')
-                    .attr("href", chapterUrl + next.toString() + '/')
-                    .appendTo($body)
-                $('<div class="prev_chapter">')
-                    .attr("href", chapterUrl + prev.toString() + '/')
-                    .appendTo($body)
-            }
+            const $body = $doc.find("body")
+            const chapterUrl = `/chapter/${bookId}/`
+            const catalogUrl = `/book/${bookId}/catalog/`
+            $('<div class="next_chapter">')
+                .attr("href", chapterUrl + next.toString() + '/')
+                .appendTo($body)
+            $('<div class="prev_chapter">')
+                .attr("href", chapterUrl + prev.toString() + '/')
+                .appendTo($body)
+            $('<div class="catalog">')
+                .attr("href", catalogUrl)
+                .appendTo($body)
         },
-
-        startLaunch($doc) {
-            const json = $doc.find('#vite-plugin-ssr_pageContext').text()
-            const { pageContext } = JSON.parse(json)
-            const { chapterInfo } = pageContext.pageProps.pageData
-
-            // if (chapterInfo.vipStatus === 1) { // 是 vip 章节
-                this.useiframe = true;
-                this.mutationSelector = '.content'
-                this.mutationChildCount = 0
-            // }
-            if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
-                // 不支持
-                this.isVipChapter = () => true
-            }
-        },
-
     },
 
   {siteName: "创世中文网",
