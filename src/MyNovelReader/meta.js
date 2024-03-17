@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.8.12
+// @version        7.7.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -95,6 +95,7 @@
 // @match          *://book.sfacg.com/Novel/*/*/*/
 // @match          *://www.ttzw.com/book/*/*.html
 // @match          *://www.uukanshu.com/*/*/*.html
+// @match          *://www.zhaoshuyuan.com/*/*/*.html*
 // @match          *://www.uukanshu.net/*/*/*.html
 // @match          *://book.kanunu.org/*/*/*.html
 // @match          *://www.kanunu8.com/book*/*.html
@@ -127,7 +128,7 @@
 // @match          *://www.bqg5200.com/xiaoshuo/*/*/*.html
 // @match          *://www.biquge5200.cc/*/*.html
 // @match          *://read.qidian.com/chapter/*
-// @match          *://www.ptwxz.com/html/*/*/*.html
+// @match          *://www.piaotia.com/html/*/*/*.html
 // @match          *://www.miaobige.com/*/*/*.html
 // @match          *://www.shuhai.com/read/*/*.html
 // @match          *://www.23qb.com/book/*/*.html
@@ -284,6 +285,7 @@
 // @match          *://www.jingdianyulu.org/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
+// @match          *://www.twking.cc/*_*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

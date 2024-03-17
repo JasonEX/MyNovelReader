@@ -535,7 +535,6 @@ const sites = [
             '来源长佩文学网（https://www.gongzicp.com）',
         ]
     },
-
     // ===========================================================
     {
         siteName: "E品中文网",
@@ -546,8 +545,8 @@ const sites = [
     },
     {
         siteName: "飘天文学",
-        url: "^https?://www\\.piaotian\\.(net|com)/html/\\d+/\\d+/\\d+\\.html",
-        exampleUrl: 'https://www.piaotian.com/html/15/15083/10323993.html',
+        url: "^https?://www\\.piaotia\\.com/html/\\d+/\\d+/\\d+\\.html",
+        exampleUrl: 'https://www.piaotia.com/html/15/15083/10323993.html',
         // titleReg: "(.*)最新章节,(.*),飘天文学",
         bookTitleSelector: '#content > h1 > a',
         contentSelector: "#content",
@@ -599,6 +598,14 @@ const sites = [
             //   '\\(\\)',
         ],
         contentRemove: '.ad_content'
+    },
+    {
+        siteName: "找书苑",
+        url: "^https?://www\\.zhaoshuyuan\\.com/.*/\\d+/\\d+.html.*",
+        exampleUrl: 'https://www.zhaoshuyuan.com/b/174835/10801.html',
+        contentReplace: [
+            '找书苑\\s*[wｗ]+.[zｚ][hｈ][aａ][oｏ][sｓ][hｈ][uｕ][yｙ][uｕ][aａ][nｎ].[cｃ][oｏ][mｍ]\\s*',
+        ],
     },
     {
         siteName: "黄金屋中文网",
