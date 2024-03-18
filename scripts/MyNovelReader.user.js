@@ -1188,6 +1188,7 @@
 
           contentSelector: '.content',
           mutationSelector: 'main.content',
+          mutationChildCount: 0,
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
