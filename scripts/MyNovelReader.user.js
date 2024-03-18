@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9
+// @version        7.7.9.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1187,10 +1187,7 @@
           indexSelector: '.catalog',
 
           contentSelector: '.content',
-          // contentHandle: false,
-          //useiframe: true,
           mutationSelector: 'main.content',
-          mutationChildCount: 0,
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
@@ -1217,16 +1214,12 @@
               const $body = $doc.find("body");
               const chapterUrl = `/chapter/${bookId}/`;
               const catalogUrl = `/book/${bookId}/catalog/`;
-              $('<div class="next_chapter">')
-                  .attr("href", chapterUrl + next.toString() + '/')
-                  .appendTo($body);
-              $('<div class="prev_chapter">')
-                  .attr("href", chapterUrl + prev.toString() + '/')
-                  .appendTo($body);
-              $('<div class="catalog">')
-                  .attr("href", catalogUrl)
-                  .appendTo($body);
-          },
+              const prevUrl = prev !== -1 ? `${chapterUrl}${prev}/` : '';
+              const nextUrl = next !== -1 ? `${chapterUrl}${next}/` : '';
+              $('<div class="catalog">').attr("href", catalogUrl).appendTo($body);
+              $('<div class="prev_chapter">').attr("href", prevUrl).appendTo($body);
+              $('<div class="next_chapter">').attr("href", nextUrl).appendTo($body);
+         },
       },
       {
           siteName: "创世中文网",
