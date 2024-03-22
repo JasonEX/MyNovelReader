@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.1
+// @version        7.7.9.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -286,6 +286,8 @@
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
 // @match          *://www.twking.cc/*_*/*.html
+// @match          *://www.bilinovel.com/novel/*/*.html
+// @match          *://tw.bilinovel.com/novel/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
