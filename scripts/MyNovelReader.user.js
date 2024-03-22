@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.1
+// @version        7.7.9.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -286,6 +286,8 @@
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
 // @match          *://www.twking.cc/*_*/*.html
+// @match          *://www.bilinovel.com/novel/*/*.html
+// @match          *://tw.bilinovel.com/novel/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2824,10 +2826,40 @@
           nextSelector: "#pt_next",
           contentSelector: "#chaptercontent",
           contentPatch($doc) {
-              $doc.find("#chaptercontent p").remove();
-              $doc.find("#chaptercontent a").remove();
+          //contentPatch: function (fakeStub) {
+              $doc.find('#chaptercontent p').remove();
+              $doc.find('#chaptercontent a').remove();
+              const _title = $doc.find('title').text().match(/(第\d+章\s+[\u4e00-\u9fa5]+)/)[0];
+              $doc.find('#chaptercontent').contents().filter(function() {
+                  return this.nodeType === 3 && new RegExp(_title.replace(/\s+/g, "\\s+")).test($(this).text());
+              }).remove();
           }
       },
+      {
+          siteName: '哔哩轻小说',
+          url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+\.html',
+          exampleUrl: 'https://www.bilinovel.com/novel/4048/227859.html',
+          useiframe: true,
+
+          bookTitleSelector: function () {
+              return unsafeWindow.ReadParams.articlename;
+          },
+          titleSelector: "#atitle",
+          prevSelector: "#footlink > a:nth-child(1)",
+          nextSelector: "#footlink > a:nth-child(4)",
+          indexSelector: "#footlink > a:nth-child(2)",
+          contentSelector: ".bcontent",
+          contentPatch($doc) {
+              const scriptText = $doc.find('body > script:nth-child(1)').text();
+              const urls = scriptText.match(/url_(previous|index|articleinfo|next):'([^']+)'/g).map(url => url.split(':')[1].slice(1, -1));
+              const footlinkAnchors = $doc.find("#footlink a");
+              const anchorIndex = [0, 2, 3, 1];
+
+              footlinkAnchors.each(function(index) {
+                  $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
+              });
+          }
+      }
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====
