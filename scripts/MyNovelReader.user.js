@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9
+// @version        7.8.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -285,6 +285,8 @@
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
 // @match          *://www.twking.cc/*_*/*.html
+// @match          *://www.bilinovel.com/novel/*/*.html
+// @match          *://tw.bilinovel.com/novel/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -304,6 +306,7 @@
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.jingdianyulu.org/yulus/*/*.html
+// @match          *://m.xianqihaotianmi.org/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -1157,56 +1160,59 @@
               this.info.mutationChildCount = 0;
           }
 
-          // 滚屏的方式无法获取下一页
-          if ($doc.find('#j_chapterPrev').length === 0) {
-              var $node = $doc.find('div[id^="chapter-"]');
-              const prevUrl = $node.attr('data-purl').replace("www", "read");
-              const nextUrl = $node.attr('data-nurl').replace("www", "read");
-              // 加上一页链接
-              $('<div id="j_chapterPrev">')
-                  .attr('href', prevUrl)
-                  .appendTo($doc.find('body'));
-              // 加下一页链接
-              $('<div id="j_chapterNext">')
-                  .attr('href', nextUrl)
-                  .appendTo($doc.find('body'));
-              // 目录
-              var indexUrl = $('#bookImg').attr('href') + '#Catalog';
-              $('<div id="my_index">目录</div>')
-                  .attr('href', indexUrl)
-                  .appendTo($doc.find('body'));
-          }
+              // 滚屏的方式无法获取下一页
+              if ($doc.find('#j_chapterPrev').length === 0) {
+                  var $node = $doc.find('div[id^="chapter-"]');
+                  const prevUrl = $node.attr('data-purl').replace("www", "read");
+                  const nextUrl = $node.attr('data-nurl').replace("www", "read");
+                  // 加上一页链接
+                  $('<div id="j_chapterPrev">')
+                      .attr('href', prevUrl)
+                      .appendTo($doc.find('body'));
+                  // 加下一页链接
+                  $('<div id="j_chapterNext">')
+                      .attr('href', nextUrl)
+                      .appendTo($doc.find('body'));
+                  // 目录
+                  var indexUrl = $('#bookImg').attr('href') + '#Catalog';
+                  $('<div id="my_index">目录</div>')
+                      .attr('href', indexUrl)
+                      .appendTo($doc.find('body'));
+              }
+          },
+          startLaunch($doc) {
+              const win = $doc[0].defaultView;
+              if (win.g_data.chapter.vipStatus === 1) { // 是 vip 章节
+                  this.useiframe = true;
+                  this.mutationSelector = '.read-content.j_readContent';
+                  this.mutationChildCount = 0;
+              }
+              if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
+                  // 不支持
+                  this.contentSelector = "";
+                  this.isVipChapter = () => true;
+                  // this.useRawContent = true;
+                  // this.cloneNode = true;
+              }
+          },
       },
-      startLaunch($doc) {
-          const win = $doc[0].defaultView;
-          if (win.g_data.chapter.vipStatus === 1) { // 是 vip 章节
-              this.useiframe = true;
-              this.mutationSelector = '.read-content.j_readContent';
-              this.mutationChildCount = 0;
-          }
-          if (win.g_data.chapter.cES === 2) { // vip 加密 + Html、Css 混淆章节
-              // 不支持
-              this.contentSelector = ""; 
-              this.isVipChapter = () => true;
-              // this.useRawContent = true;
-              // this.cloneNode = true;
-          }
-      },
-    },
-      {siteName: "起点新版-20230517",
+      {
+          siteName: "起点新版-20230517",
           url: "^https?://(www|m)\\.qidian\\.com/chapter/.*",
 
-          bookTitleSelector: "#r-breadcrumbs > a:last",
+          //bookTitleSelector: ".bookTitle",
+          titleReg: "(.*?)《(.*?)》(.*?)",
+          titlePos: 1,
           titleSelector: "h1.text-1\\.3em",
 
           prevSelector: '.prev_chapter',
           nextSelector: '.next_chapter',
-          indexSelector: '#r-breadcrumbs > a:last',
+          indexSelector: '.catalog',
 
-
+          useiframe: true,
           contentSelector: '.content',
-          // contentHandle: false,
-          //timeout: 3000,
+          mutationSelector: 'main.content',
+          mutationChildCount: 0,
 
           isVipChapter($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
@@ -1223,35 +1229,27 @@
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
               const { pageContext } = JSON.parse(json);
               const { next, prev, vipStatus } = pageContext.pageProps.pageData.chapterInfo;
-              const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra;
-              if (vipStatus === 0 && nextVipStatus === 1) {
-                  this.info.useiframe = true;
-              }
+              // const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra
+              // if (vipStatus === 0 && nextVipStatus === 1) {
+              //     this.info.useiframe = true;
+              // }
               const { bookId } = pageContext.pageProps.pageData.bookInfo;
 
-              // 滚动翻页
-              if ($doc.find('.nav-btn-group > a').length < 3) {
-                  const $body = $doc.find("body");
-                  const chapterUrl = `/chapter/${bookId}/`;
-                  $('<div class="next_chapter">')
-                      .attr("href", chapterUrl + next.toString() + '/')
-                      .appendTo($body);
-                  $('<div class="prev_chapter">')
-                      .attr("href", chapterUrl + prev.toString() + '/')
-                      .appendTo($body);
-              }
-          },
+              const $body = $doc.find("body");
+              const chapterUrl = `/chapter/${bookId}/`;
+              const catalogUrl = `/book/${bookId}/catalog/`;
+              const prevUrl = prev !== -1 ? `${chapterUrl}${prev}/` : '';
+              const nextUrl = next !== -1 ? `${chapterUrl}${next}/` : '';
+              $('<div class="catalog">').attr("href", catalogUrl).appendTo($body);
+              $('<div class="prev_chapter">').attr("href", prevUrl).appendTo($body);
+              $('<div class="next_chapter">').attr("href", nextUrl).appendTo($body);
+         },
 
           startLaunch($doc) {
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
               const { pageContext } = JSON.parse(json);
               const { chapterInfo } = pageContext.pageProps.pageData;
 
-              // if (chapterInfo.vipStatus === 1) { // 是 vip 章节
-                  this.useiframe = true;
-                  this.mutationSelector = '.content';
-                  this.mutationChildCount = 0;
-              // }
               if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
                   // 不支持
                   this.isVipChapter = () => true;
@@ -2848,7 +2846,6 @@
               const href = $doc.find("#navnexttop").attr("href");
               return !href.endsWith("/0/")
           }
-
       },
 
       {siteName: '手机小说',
@@ -2858,6 +2855,52 @@
           contentSelector: '#zjny'
 
       },
+      {
+          siteName: '言情小说阁-移动版',
+          url: 'http://m.xianqihaotianmi.org/book_\\d+/\\d+(_\\d+)?.html',
+          exampleUrl: 'http://m.xianqihaotianmi.org/book_86899/47598965_2.html',
+
+          checkSection: true,
+          titleReg: "(.*?)_(.*?)_(.*?)",
+          titlePos: 1,
+          prevSelector: "#pt_prev",
+          nextSelector: "#pt_next",
+          contentSelector: "#chaptercontent",
+          contentPatch($doc) {
+          //contentPatch: function (fakeStub) {
+              $doc.find('#chaptercontent p').remove();
+              $doc.find('#chaptercontent a').remove();
+              const _title = $doc.find('title').text().match(/(第\d+章\s+[\u4e00-\u9fa5]+)/)[0];
+              $doc.find('#chaptercontent').contents().filter(function() {
+                  return this.nodeType === 3 && new RegExp(_title.replace(/\s+/g, "\\s+")).test($(this).text());
+              }).remove();
+          }
+      },
+      {
+          siteName: '哔哩轻小说',
+          url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+\.html',
+          exampleUrl: 'https://www.bilinovel.com/novel/4048/227859.html',
+          useiframe: true,
+
+          bookTitleSelector: function () {
+              return unsafeWindow.ReadParams.articlename;
+          },
+          titleSelector: "#atitle",
+          prevSelector: "#footlink > a:nth-child(1)",
+          nextSelector: "#footlink > a:nth-child(4)",
+          indexSelector: "#footlink > a:nth-child(2)",
+          contentSelector: ".bcontent",
+          contentPatch($doc) {
+              const scriptText = $doc.find('body > script:nth-child(1)').text();
+              const urls = scriptText.match(/url_(previous|index|articleinfo|next):'([^']+)'/g).map(url => url.split(':')[1].slice(1, -1));
+              const footlinkAnchors = $doc.find("#footlink a");
+              const anchorIndex = [0, 2, 3, 1];
+
+              footlinkAnchors.each(function(index) {
+                  $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
+              });
+          }
+      }
   ];
 
   // ===== 小说拼音字、屏蔽字修复 =====

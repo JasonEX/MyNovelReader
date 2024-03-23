@@ -140,7 +140,7 @@ const sites = [
         },
     },
     {
-        siteName: "起点新版-20240317",
+        siteName: "起点新版-20230517",
         url: "^https?://(www|m)\\.qidian\\.com/chapter/.*",
 
         //bookTitleSelector: ".bookTitle",
@@ -152,6 +152,7 @@ const sites = [
         nextSelector: '.next_chapter',
         indexSelector: '.catalog',
 
+        useiframe: true,
         contentSelector: '.content',
         mutationSelector: 'main.content',
         mutationChildCount: 0,
@@ -171,10 +172,10 @@ const sites = [
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()
             const { pageContext } = JSON.parse(json)
             const { next, prev, vipStatus } = pageContext.pageProps.pageData.chapterInfo
-            const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra
-            if (vipStatus === 0 && nextVipStatus === 1) {
-                this.info.useiframe = true;
-            }
+            // const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra
+            // if (vipStatus === 0 && nextVipStatus === 1) {
+            //     this.info.useiframe = true;
+            // }
             const { bookId } = pageContext.pageProps.pageData.bookInfo
 
             const $body = $doc.find("body")
@@ -186,6 +187,18 @@ const sites = [
             $('<div class="prev_chapter">').attr("href", prevUrl).appendTo($body);
             $('<div class="next_chapter">').attr("href", nextUrl).appendTo($body);
        },
+
+        startLaunch($doc) {
+            const json = $doc.find('#vite-plugin-ssr_pageContext').text()
+            const { pageContext } = JSON.parse(json)
+            const { chapterInfo } = pageContext.pageProps.pageData
+
+            if (chapterInfo.cES === 2) { // vip 加密 + Html、Css 混淆章节
+                // 不支持
+                this.isVipChapter = () => true
+            }
+        },
+
     },
 
   {siteName: "创世中文网",
