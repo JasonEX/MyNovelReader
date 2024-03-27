@@ -260,6 +260,7 @@
 // @match          *://www.twking.cc/*_*/*.html
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
+// @match          *://tw.linovellib.com/novel/*/*.html
 // @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
 
