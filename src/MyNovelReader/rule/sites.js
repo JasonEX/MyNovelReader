@@ -1782,9 +1782,10 @@ const sites = [
     },
     {
         siteName: '哔哩轻小说',
-        url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+\.html',
+        url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+(_\\d+)?\.html',
         exampleUrl: 'https://www.bilinovel.com/novel/4048/227859.html',
         useiframe: true,
+        checkSection: true,
 
         bookTitleSelector: function () {
             return unsafeWindow.ReadParams.articlename;
