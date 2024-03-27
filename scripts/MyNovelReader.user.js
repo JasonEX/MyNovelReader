@@ -288,7 +288,7 @@
 // @match          *://www.twking.cc/*_*/*.html
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
-// @match          *://tw.linovellib.com/novel/*/*.html
+// @match          *://tw.linovelib.com/novel/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
