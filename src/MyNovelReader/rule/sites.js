@@ -1782,7 +1782,7 @@ const sites = [
     },
     {
         siteName: '哔哩轻小说',
-        url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+(_\\d+)?\.html',
+        url: 'https://(www|tw)\.(bilinovel|linovelib)\.com/novel/\\d+/\\d+(_\\d+)?\.html',
         exampleUrl: 'https://www.bilinovel.com/novel/4048/227859.html',
         useiframe: true,
         checkSection: true,
@@ -1794,7 +1794,7 @@ const sites = [
         prevSelector: "#footlink > a:nth-child(1)",
         nextSelector: "#footlink > a:nth-child(4)",
         indexSelector: "#footlink > a:nth-child(2)",
-        contentSelector: ".bcontent",
+        contentSelector: ".acontent, .bcontent",
         contentPatch($doc) {
             const scriptText = $doc.find('body > script:nth-child(1)').text();
             const urls = scriptText.match(/url_(previous|index|articleinfo|next):'([^']+)'/g).map(url => url.split(':')[1].slice(1, -1));
