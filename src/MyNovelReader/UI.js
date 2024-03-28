@@ -300,6 +300,9 @@ var UI = {
         // 快速启动
         $form.find('#fastboot').get(0).checked = Setting.fastboot
 
+        // 删除含网站域名行
+        $form.find('#remove-domain-line').get(0).checked = Setting.removeDomainLine
+
         // 界面语言
         var $lang = $form.find("#lang");
         $("<option>").text("zh-CN").appendTo($lang);
@@ -504,6 +507,9 @@ var UI = {
 
         // 快速启动
         Setting.fastboot = $form.find('#fastboot').get(0).checked
+
+        // 删除含网站域名行
+        Setting.removeDomainLine = $form.find('#remove-domain-line').get(0).checked
 
         // 自定义替换规则直接生效
         var rules = $form.find("#custom_replace_rules").get(0).value;
