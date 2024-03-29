@@ -1831,6 +1831,19 @@ const sites = [
         nextSelector: "a.btn-primary:nth-child(4)",
         indexSelector: "a.btn-primary:nth-child(3)",
         contentSelector: ".txt_tcontent"
+    },
+    {
+        siteName: '乐文小说',
+        url: 'https://m\.lwxiaoshuo\.org/shu/\\d+/\\d+\.html',
+        exampleUrl: 'https://m.lwxiaoshuo.org/shu/36354/171272950.html',
+        checkSection: true,
+
+        bookTitleSelector: ".path > a:nth-child(2)",
+        titleSelector: ".headline",
+        prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+        nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+        indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+        contentSelector: ".content"
     }
 ];
 
