@@ -7034,7 +7034,8 @@
       loadCustomSetting: function () {
           var customRules;
           try {
-              customRules = eval(Setting.customSiteinfo);
+              //customRules = eval(Setting.customSiteinfo);
+              customRules = new Function(Setting.customSiteinfo);
           } catch (e) {
               C.error('载入自定义站点配置错误', e);
           }
