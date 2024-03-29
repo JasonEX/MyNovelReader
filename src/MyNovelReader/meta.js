@@ -261,6 +261,7 @@
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
 // @match          *://tw.linovelib.com/novel/*/*.html
+// @match          *://www.wenku8.net/novel/*/*/*.htm
 // @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
 
