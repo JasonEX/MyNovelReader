@@ -1818,6 +1818,19 @@ const sites = [
         nextSelector: "#footlink > a:nth-child(4)",
         indexSelector: "#footlink > a:nth-child(5)",
         contentSelector: "#content"
+    },
+    {
+        siteName: 'UU看书',
+        url: 'https://www\.uuread\.tw/chapter/\\d+/\\d+(_\\d+)?\.html',
+        exampleUrl: 'https://www.uuread.tw/chapter/11681/3006418.html',
+        checkSection: true,
+
+        bookTitleSelector: ".bread > li:nth-child(4) > a:nth-child(1)",
+        titleSelector: [".chatit", "（.*）$"],
+        prevSelector: "a.btn-primary:nth-child(1)",
+        nextSelector: "a.btn-primary:nth-child(4)",
+        indexSelector: "a.btn-primary:nth-child(3)",
+        contentSelector: ".txt_tcontent"
     }
 ];
 
