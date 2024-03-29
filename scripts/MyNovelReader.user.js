@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.6
+// @version        7.7.9.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -311,6 +311,7 @@
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.jingdianyulu.org/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html
+// @match          *://m.lwxiaoshuo.org/shu/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -2889,6 +2890,19 @@
           nextSelector: "a.btn-primary:nth-child(4)",
           indexSelector: "a.btn-primary:nth-child(3)",
           contentSelector: ".txt_tcontent"
+      },
+      {
+          siteName: '乐文小说',
+          url: 'https://m\.lwxiaoshuo\.org/shu/\\d+/\\d+\.html',
+          exampleUrl: 'https://m.lwxiaoshuo.org/shu/36354/171272950.html',
+          checkSection: true,
+
+          bookTitleSelector: ".path > a:nth-child(2)",
+          titleSelector: ".headline",
+          prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+          nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+          indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+          contentSelector: ".content"
       }
   ];
 
