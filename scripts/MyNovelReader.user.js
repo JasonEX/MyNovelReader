@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.4
+// @version        7.7.9.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -289,6 +289,7 @@
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
 // @match          *://tw.linovelib.com/novel/*/*.html
+// @match          *://www.wenku8.net/novel/*/*/*.htm
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2861,6 +2862,19 @@
                   $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
               });
           }
+      },
+      {
+          siteName: '轻小说文库',
+          url: 'https://www\.wenku8\.net/novel/\\d+/\\d+/\\d+\.htm',
+          exampleUrl: 'https://www.wenku8.net/novel/2/2449/91347.htm',
+          noSection: true,
+
+          bookTitleSelector: "#linkleft > a:nth-child(3)",
+          titleSelector: "#title",
+          prevSelector: "#foottext > a:nth-child(3)",
+          nextSelector: "#footlink > a:nth-child(4)",
+          indexSelector: "#footlink > a:nth-child(5)",
+          contentSelector: "#content"
       }
   ];
 
