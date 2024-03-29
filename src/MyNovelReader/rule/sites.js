@@ -1805,6 +1805,19 @@ const sites = [
                 $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
             });
         }
+    },
+    {
+        siteName: '轻小说文库',
+        url: 'https://www\.wenku8\.net/novel/\\d+/\\d+/\\d+\.htm',
+        exampleUrl: 'https://www.wenku8.net/novel/2/2449/91347.htm',
+        noSection: true,
+
+        bookTitleSelector: "#linkleft > a:nth-child(3)",
+        titleSelector: "#title",
+        prevSelector: "#foottext > a:nth-child(3)",
+        nextSelector: "#footlink > a:nth-child(4)",
+        indexSelector: "#footlink > a:nth-child(5)",
+        contentSelector: "#content"
     }
 ];
 
