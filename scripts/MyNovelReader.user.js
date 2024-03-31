@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.8
+// @version        7.7.9.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2905,9 +2905,7 @@
           contentSelector: ".content",
 
           startLaunch($doc) {
-              window.addEventListener('touchstart', function(event) { event.stopPropagation(); }, true);
-              window.addEventListener('touchend', function(event) { event.stopPropagation(); }, true);
-              window.addEventListener('message', function(event) { event.stopPropagation(); }, true);
+              cleanupEvents();
           }
       }
   ];
@@ -6710,7 +6708,7 @@
   });
   MutationObserver$1.prototype.observe = observeProxy;
 
-  function cleanupEvents(iframe) {
+  function cleanupEvents$1(iframe) {
     let func;
     const length = clenaupEventArray.length;
     while ((func = clenaupEventArray.pop())) func();
@@ -6728,7 +6726,7 @@
   }
 
   if (window.name === 'mynovelreader-iframe') {
-    unsafeWindow.$cleanupEvents = cleanupEvents;
+    unsafeWindow.$cleanupEvents = cleanupEvents$1;
   }
 
   Object$1.defineProperty(Navigator.prototype, 'platform', {
@@ -7212,7 +7210,7 @@
           var parser = new Parser(App$1.site, document);
           var hasContent = !!parser.hasContent();
           if (hasContent) {
-              cleanupEvents();
+              cleanupEvents$1();
               document.body.setAttribute("name", "MyNovelReader");
               App$1.parsedPages[window.location.href] = true;
               await parser.getAll();
