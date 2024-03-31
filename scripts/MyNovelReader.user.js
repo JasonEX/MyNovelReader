@@ -1065,6 +1065,94 @@
     }
   }
 
+  const {
+    HTMLElement,
+    EventTarget,
+    MutationObserver: MutationObserver$1,
+    Navigator,
+    Proxy,
+    Reflect,
+    Object: Object$1,
+    setTimeout: setTimeout$1,
+    clearTimeout: clearTimeout$1,
+    console: console$1
+  } = unsafeWindow;
+
+  // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
+  const _focus = HTMLElement.prototype.focus;
+  HTMLElement.prototype.focus = function focus() {
+    _focus.call(this, { preventScroll: true });
+  };
+
+  const clenaupEventArray = [];
+
+  const _addEventListener = EventTarget.prototype.addEventListener;
+  const addEventListenerProxy = new Proxy(_addEventListener, {
+    apply(target, thisArg, argumentsList) {
+      Reflect.apply(target, thisArg, argumentsList);
+      clenaupEventArray.push(() => {
+        try {
+          thisArg.removeEventListener(...argumentsList);
+        } catch (e) { }
+      });
+    }
+  });
+  EventTarget.prototype.addEventListener = addEventListenerProxy;
+  document.addEventListener = addEventListenerProxy;
+
+  const _observe = MutationObserver$1.prototype.observe;
+  const _disconnect = MutationObserver$1.prototype.disconnect;
+  const observeProxy = new Proxy(_observe, {
+    apply(target, thisArg, argumentsList) {
+      Reflect.apply(target, thisArg, argumentsList);
+      clenaupEventArray.push(() => {
+        try {
+          _disconnect.apply(thisArg, argumentsList);
+        } catch (e) { }
+      });
+    }
+  });
+  MutationObserver$1.prototype.observe = observeProxy;
+
+  function cleanupEvents(iframe) {
+    let func;
+    const length = clenaupEventArray.length;
+    while ((func = clenaupEventArray.pop())) func();
+    C.log(`${iframe ? '[iframe] ' : ''}已移除 ${length} 个事件监听器和观察器`);
+
+    var highestTimeoutId = setTimeout$1(';');
+    for (var i = 0; i < highestTimeoutId; i++) {
+      clearTimeout$1(i);
+    }
+
+    try {
+      unsafeWindow.$(unsafeWindow).off();
+      unsafeWindow.$(document).off();
+    } catch (e) { }
+  }
+
+  if (window.name === 'mynovelreader-iframe') {
+    unsafeWindow.$cleanupEvents = cleanupEvents;
+  }
+
+  Object$1.defineProperty(Navigator.prototype, 'platform', {
+    get: function platform() {
+      return ''
+    }
+  });
+
+  console$1.clear = () => { };
+
+  const proxies = new WeakMap();
+
+  unsafeWindow.Proxy = new Proxy(Proxy, {
+    construct: function (target, argumentsList, newTarget) {
+      const proxy = Reflect.construct(target, argumentsList, newTarget);
+      proxies.set(proxy, argumentsList[0]);
+      return proxy
+    }
+  });
+
   // ===== 自定义站点规则 =====
 
   /**@typedef { import("../../typings/MyNovelReader").SiteConfigs } SiteConfigs */
@@ -6659,94 +6747,6 @@
     });
   }
 
-  const {
-    HTMLElement,
-    EventTarget,
-    MutationObserver: MutationObserver$1,
-    Navigator,
-    Proxy,
-    Reflect,
-    Object: Object$1,
-    setTimeout: setTimeout$1,
-    clearTimeout: clearTimeout$1,
-    console: console$1
-  } = unsafeWindow;
-
-  // 防止 iframe 中的脚本调用 focus 方法导致页面发生滚动
-  const _focus = HTMLElement.prototype.focus;
-  HTMLElement.prototype.focus = function focus() {
-    _focus.call(this, { preventScroll: true });
-  };
-
-  const clenaupEventArray = [];
-
-  const _addEventListener = EventTarget.prototype.addEventListener;
-  const addEventListenerProxy = new Proxy(_addEventListener, {
-    apply(target, thisArg, argumentsList) {
-      Reflect.apply(target, thisArg, argumentsList);
-      clenaupEventArray.push(() => {
-        try {
-          thisArg.removeEventListener(...argumentsList);
-        } catch (e) { }
-      });
-    }
-  });
-  EventTarget.prototype.addEventListener = addEventListenerProxy;
-  document.addEventListener = addEventListenerProxy;
-
-  const _observe = MutationObserver$1.prototype.observe;
-  const _disconnect = MutationObserver$1.prototype.disconnect;
-  const observeProxy = new Proxy(_observe, {
-    apply(target, thisArg, argumentsList) {
-      Reflect.apply(target, thisArg, argumentsList);
-      clenaupEventArray.push(() => {
-        try {
-          _disconnect.apply(thisArg, argumentsList);
-        } catch (e) { }
-      });
-    }
-  });
-  MutationObserver$1.prototype.observe = observeProxy;
-
-  function cleanupEvents$1(iframe) {
-    let func;
-    const length = clenaupEventArray.length;
-    while ((func = clenaupEventArray.pop())) func();
-    C.log(`${iframe ? '[iframe] ' : ''}已移除 ${length} 个事件监听器和观察器`);
-
-    var highestTimeoutId = setTimeout$1(';');
-    for (var i = 0; i < highestTimeoutId; i++) {
-      clearTimeout$1(i);
-    }
-
-    try {
-      unsafeWindow.$(unsafeWindow).off();
-      unsafeWindow.$(document).off();
-    } catch (e) { }
-  }
-
-  if (window.name === 'mynovelreader-iframe') {
-    unsafeWindow.$cleanupEvents = cleanupEvents$1;
-  }
-
-  Object$1.defineProperty(Navigator.prototype, 'platform', {
-    get: function platform() {
-      return ''
-    }
-  });
-
-  console$1.clear = () => { };
-
-  const proxies = new WeakMap();
-
-  unsafeWindow.Proxy = new Proxy(Proxy, {
-    construct: function (target, argumentsList, newTarget) {
-      const proxy = Reflect.construct(target, argumentsList, newTarget);
-      proxies.set(proxy, argumentsList[0]);
-      return proxy
-    }
-  });
-
   /** @enum {number} */
   const RequestStatus = {
     Idle: 0,
@@ -7210,7 +7210,7 @@
           var parser = new Parser(App$1.site, document);
           var hasContent = !!parser.hasContent();
           if (hasContent) {
-              cleanupEvents$1();
+              cleanupEvents();
               document.body.setAttribute("name", "MyNovelReader");
               App$1.parsedPages[window.location.href] = true;
               await parser.getAll();
