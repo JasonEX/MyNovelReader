@@ -1843,7 +1843,13 @@ const sites = [
         prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
         nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
         indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
-        contentSelector: ".content"
+        contentSelector: ".content",
+
+        startLaunch($doc) {
+            window.addEventListener('touchstart', function(event) { event.stopPropagation(); }, true);
+            window.addEventListener('touchend', function(event) { event.stopPropagation(); }, true);
+            window.addEventListener('message', function(event) { event.stopPropagation(); }, true);
+        }
     }
 ];
 
