@@ -1846,9 +1846,7 @@ const sites = [
         contentSelector: ".content",
 
         startLaunch($doc) {
-            window.addEventListener('touchstart', function(event) { event.stopPropagation(); }, true);
-            window.addEventListener('touchend', function(event) { event.stopPropagation(); }, true);
-            window.addEventListener('message', function(event) { event.stopPropagation(); }, true);
+            cleanupEvents();
         }
     }
 ];
