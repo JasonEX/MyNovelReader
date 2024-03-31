@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.7
+// @version        7.7.9.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2902,7 +2902,13 @@
           prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
           nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
           indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
-          contentSelector: ".content"
+          contentSelector: ".content",
+
+          startLaunch($doc) {
+              window.addEventListener('touchstart', function(event) { event.stopPropagation(); }, true);
+              window.addEventListener('touchend', function(event) { event.stopPropagation(); }, true);
+              window.addEventListener('message', function(event) { event.stopPropagation(); }, true);
+          }
       }
   ];
 
