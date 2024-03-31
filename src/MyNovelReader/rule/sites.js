@@ -1,6 +1,7 @@
 import getMiddleStr from '../utils/string'
 import { C, Request, toRE } from '../lib';
 import { replaceJjwxcCharacter } from '../utils/jjwxcFontDecode';
+import { cleanupEvents } from './inject'
 
 // ===== 自定义站点规则 =====
 
