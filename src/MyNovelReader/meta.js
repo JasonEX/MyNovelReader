@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.9
+// @version        7.7.9.10
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -282,7 +282,7 @@
 // @match          *://www.wanbenshuku.cc/book/*/*.html
 // @match          *://m.moyisy.com/book/*/*.html
 // @match          *://www.suiyuexs.com/read/*/*.html
-// @match          *://www.jingdianyulu.org/yulus/*/*.html
+// @match          *://www.yulusy.com/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
 // @match          *://www.twking.cc/*_*/*.html
@@ -309,7 +309,7 @@
 // @match          *://m.123duw.com/dudu-*/*/*.html
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
-// @match          *://m.jingdianyulu.org/yulus/*/*.html
+// @match          *://m.yulusy.com/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html
 // @match          *://m.lwxiaoshuo.org/shu/*/*.html
 

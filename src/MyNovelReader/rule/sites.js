@@ -1705,8 +1705,8 @@ const sites = [
     },
     {
         siteName: '语录书院',
-        url: 'https://www.jingdianyulu.org/yulus/\\d+/.*?.html',
-        exampleUrl: 'https://www.jingdianyulu.org/yulus/17410287770/59700783-2.html',
+        url: 'https://www.yulusy.com/yulus/\\d+/.*?.html',
+        exampleUrl: 'https://www.yulusy.com/yulus/17410287770/59700783-2.html',
 
         checkSection: true,
         prevSelector: "#PageSet a:contains('上'):contains('页')",
@@ -1715,8 +1715,8 @@ const sites = [
     },
     {
         siteName: '语录书院-移动版',
-        url: 'https://m.jingdianyulu.org/yulus/\\d+/.*?.html',
-        exampleUrl: 'https://m.jingdianyulu.org/yulus/17710148533/59468382-2.html',
+        url: 'https://m.yulusy.com/yulus/\\d+/.*?.html',
+        exampleUrl: 'https://m.yulusy.com/yulus/17710148533/59468382-2.html',
 
         checkSection: true,
         prevSelector: "#PageSet a:contains('上'):contains('页')",
