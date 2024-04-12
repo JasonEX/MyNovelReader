@@ -131,6 +131,7 @@ const sites = [
         indexSelector: '.catalog',
 
         contentSelector: '.content',
+        useiframe: true,
         mutationSelector: 'main.content',
         mutationChildCount: 0,
 
@@ -149,11 +150,7 @@ const sites = [
 
             const json = $doc.find('#vite-plugin-ssr_pageContext').text()
             const { pageContext } = JSON.parse(json)
-            const { next, prev, vipStatus } = pageContext.pageProps.pageData.chapterInfo
-            const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra
-            if (vipStatus === 0 && nextVipStatus === 1) {
-                this.info.useiframe = true;
-            }
+            const { next, prev } = pageContext.pageProps.pageData.chapterInfo
             const { bookId } = pageContext.pageProps.pageData.bookInfo
 
             const $body = $doc.find("body")
