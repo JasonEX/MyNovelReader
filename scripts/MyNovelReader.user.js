@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.10
+// @version        7.7.9.11
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1281,6 +1281,7 @@
           indexSelector: '.catalog',
 
           contentSelector: '.content',
+          useiframe: true,
           mutationSelector: 'main.content',
           mutationChildCount: 0,
 
@@ -1299,11 +1300,7 @@
 
               const json = $doc.find('#vite-plugin-ssr_pageContext').text();
               const { pageContext } = JSON.parse(json);
-              const { next, prev, vipStatus } = pageContext.pageProps.pageData.chapterInfo;
-              const { nextVipStatus } = pageContext.pageProps.pageData.chapterInfo.extra;
-              if (vipStatus === 0 && nextVipStatus === 1) {
-                  this.info.useiframe = true;
-              }
+              const { next, prev } = pageContext.pageProps.pageData.chapterInfo;
               const { bookId } = pageContext.pageProps.pageData.bookInfo;
 
               const $body = $doc.find("body");
