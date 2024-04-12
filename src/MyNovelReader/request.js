@@ -121,6 +121,7 @@ export class IframeRequest extends BaseRequest {
       this.status = RequestStatus.Fail
       this.hide()
       this.errorHandle()
+      this.resolve(null)
       C.error('IframeRequest 请求过程出现异常')
       return
     }

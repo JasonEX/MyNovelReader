@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.2
+// @version        7.8.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -3393,6 +3393,7 @@
     '【书友福利】看书即可得现金or点币，还有iPhone12、Switch等你抽！关注vx公众号【书友大本营】可领！',
     '关注公众号：书粉基地，关注即送现金、点币！',
     '【看书领红包】关注公..众号【看文基地】，看书抽最高888现金红包！',
+    '小主，这个章节后面还有哦^\\.^，请点击下一页继续阅读，后面更精彩！',
 
     '这候.*?章汜[。.]?',
     '强牺.*?读牺[。.]?',
@@ -3729,11 +3730,11 @@
       '.ydselect > .weizhi > a:last',
       '.bdsub > .bdsite > a:last',
       '#sitebar > a:last',
+      '.con_top > a:eq(1)',
       '.con_top > a:last',
       '.breadCrumb > a:last',
       '.bookNav > a:last',
       '.srcbox > a:last',
-      '.con_top > a:last',
       '.con_top > .nr_s1 > a:last',
       '.location > a:last',
       '.nav > a:last',
@@ -4381,7 +4382,10 @@
                   // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
 
           if (chapterTitle.startsWith(bookTitle)) {
-              chapterTitle = chapterTitle.replace(bookTitle, '').trim();
+              var _chapterTitle = chapterTitle.replace(bookTitle, '').trim();
+              if (_chapterTitle.length > 0) {
+                  chapterTitle = _chapterTitle;
+              }
           }
 
           bookTitle = bookTitle.replace(/(?:最新章节|章节目录)$/, '');
@@ -6874,6 +6878,7 @@
         this.status = RequestStatus.Fail;
         this.hide();
         this.errorHandle();
+        this.resolve(null);
         C.error('IframeRequest 请求过程出现异常');
         return
       }

@@ -254,7 +254,10 @@ Parser.prototype = {
                 // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
 
         if (chapterTitle.startsWith(bookTitle)) {
-            chapterTitle = chapterTitle.replace(bookTitle, '').trim();
+            var _chapterTitle = chapterTitle.replace(bookTitle, '').trim();
+            if (_chapterTitle.length > 0) {
+                chapterTitle = _chapterTitle
+            }
         }
 
         bookTitle = bookTitle.replace(/(?:最新章节|章节目录)$/, '');
