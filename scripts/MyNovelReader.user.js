@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.12
+// @version        7.7.9.13
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -40,6 +40,7 @@
 // @match          *://chuangshi.qq.com/*bk/*/*-r-*.html*
 // @match          *://yunqi.qq.com/*bk/*/*.html
 // @match          *://dushu.qq.com/read.html?bid=*
+// @match          *://xiaoshuo.qq.com/read/*/*
 // @match          *://www.jjwxc.net/onebook.php?novelid=*&chapterid=*
 // @match          *://my.jjwxc.net/onebook_vip.php?novelid=*&chapterid=*
 // @match          *://book.zongheng.com/chapter/*/*.html
@@ -2998,6 +2999,19 @@
           startLaunch($doc) {
               cleanupEvents();
           }
+      },
+      {
+          siteName: 'QQ阅读',
+          url: 'https://xiaoshuo.qq.com/read/\\d+/\\d+',
+          exampleUrl: 'https://xiaoshuo.qq.com/read/1049351256/43',
+          checkSection: true,
+
+          bookTitleSelector: ".book-title",
+          titleSelector: ".chapter-title",
+          prevSelector: "a.read-pagination-item:nth-child(1)",
+          nextSelector: "a.read-pagination-item:nth-child(3)",
+          indexSelector: "a.read-pagination-item:nth-child(2)",
+          contentSelector: "#article",
       }
   ];
 
