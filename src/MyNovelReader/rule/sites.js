@@ -1852,6 +1852,19 @@ const sites = [
         startLaunch($doc) {
             cleanupEvents();
         }
+    },
+    {
+        siteName: 'QQ阅读',
+        url: 'https://xiaoshuo.qq.com/read/\\d+/\\d+',
+        exampleUrl: 'https://xiaoshuo.qq.com/read/1049351256/43',
+        checkSection: true,
+
+        bookTitleSelector: ".book-title",
+        titleSelector: ".chapter-title",
+        prevSelector: "a.read-pagination-item:nth-child(1)",
+        nextSelector: "a.read-pagination-item:nth-child(3)",
+        indexSelector: "a.read-pagination-item:nth-child(2)",
+        contentSelector: "#article",
     }
 ];
 
