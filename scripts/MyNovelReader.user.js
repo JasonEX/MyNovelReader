@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.7.9.11
+// @version        7.7.9.12
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1281,7 +1281,7 @@
           indexSelector: '.catalog',
 
           contentSelector: '.content',
-          useiframe: true,
+          useiframe: 0,
           mutationSelector: 'main.content',
           mutationChildCount: 0,
 
@@ -1311,7 +1311,13 @@
               $('<div class="catalog">').attr("href", catalogUrl).appendTo($body);
               $('<div class="prev_chapter">').attr("href", prevUrl).appendTo($body);
               $('<div class="next_chapter">').attr("href", nextUrl).appendTo($body);
-         },
+          },
+
+          startLaunch($doc) {
+              if ($doc[0].location.host.startsWith('www')) {
+                  this.useiframe = 1;
+              }
+          }
       },
       {
           siteName: "创世中文网",
@@ -2915,11 +2921,11 @@
           nextSelector: "#pt_next",
           contentSelector: "#chaptercontent",
           contentPatch($doc) {
-          //contentPatch: function (fakeStub) {
+              //contentPatch: function (fakeStub) {
               $doc.find('#chaptercontent p').remove();
               $doc.find('#chaptercontent a').remove();
               const _title = $doc.find('title').text().match(/(第\d+章\s+[\u4e00-\u9fa5]+)/)[0];
-              $doc.find('#chaptercontent').contents().filter(function() {
+              $doc.find('#chaptercontent').contents().filter(function () {
                   return this.nodeType === 3 && new RegExp(_title.replace(/\s+/g, "\\s+")).test($(this).text());
               }).remove();
           }
@@ -2945,7 +2951,7 @@
               const footlinkAnchors = $doc.find("#footlink a");
               const anchorIndex = [0, 2, 3, 1];
 
-              footlinkAnchors.each(function(index) {
+              footlinkAnchors.each(function (index) {
                   $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
               });
           }
