@@ -1847,6 +1847,22 @@ const sites = [
                 $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
             });
         }
+    },
+
+    {siteName: '69shux',
+        url: 'https://69shux.com/txt/\\d+/\\d+',
+        exampleUrl: 'https://69shux.com/txt/59608/41087519',
+
+        titleSelector: 'h1',
+        contentSelector: ".txtnav",
+        contentRemove: ".txtinfo.hide720, #txtright, .err_tips",
+        nextSelector: '.page1 a:nth-child(4)',
+        prevSelector: '.page1 a:nth-child(1)',
+        indexSelector: '.page1 a:nth-child(3)',
+
+        useiframe: true,
+        iframeSandbox: "allow-same-origin allow-scripts"
+
     }
 ];
 

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.3
+// @version        7.8.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -287,6 +287,7 @@
 // @match          *://www.twking.cc/*_*/*.html
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
+// @match          *://69shux.com/txt/*/*
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2908,6 +2909,22 @@
                   $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
               });
           }
+      },
+
+      {siteName: '69shux',
+          url: 'https://69shux.com/txt/\\d+/\\d+',
+          exampleUrl: 'https://69shux.com/txt/59608/41087519',
+
+          titleSelector: 'h1',
+          contentSelector: ".txtnav",
+          contentRemove: ".txtinfo.hide720, #txtright, .err_tips",
+          nextSelector: '.page1 a:nth-child(4)',
+          prevSelector: '.page1 a:nth-child(1)',
+          indexSelector: '.page1 a:nth-child(3)',
+
+          useiframe: true,
+          iframeSandbox: "allow-same-origin allow-scripts"
+
       }
   ];
 
@@ -3714,7 +3731,7 @@
         "#article_content", "#BookTextRead", "#booktext", "#book_text", "#BookText", "#BookTextt", "#readtext", "#readcon", "#read",
         "#TextContent", "#txtContent" , "#text_c", "#txt_td", "#TXT", "#txt", "#zjneirong",
         "#contentTxt", "#oldtext", "#a_content", "#contents", "#content2", "#contentts", "#content1", "#content", 
-        "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content",
+        "#booktxt", "#nr", "#rtext", "#articlecontent", "#novelcontent", "#text-content", "#articlebody",
         "#ChapterContents", "#acontent", "#chapterinfo", "#read_content", "#chapter-content",
         ".novel_content", ".readmain_inner", ".noveltext", ".booktext", ".yd_text2",
         ".articlecontent", ".readcontent", ".txtnav", ".content", ".art_con", ".article",
@@ -3733,6 +3750,7 @@
       '.con_top > a:eq(1)',
       '.con_top > a:last',
       '.breadCrumb > a:last',
+      '.breadcrumb > a:last',
       '.bookNav > a:last',
       '.srcbox > a:last',
       '.con_top > .nr_s1 > a:last',
