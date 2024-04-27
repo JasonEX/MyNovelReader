@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.4
+// @version        7.8.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -288,6 +288,7 @@
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
 // @match          *://69shux.com/txt/*/*
+// @match          *://www.biquxs.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2924,6 +2925,20 @@
 
           useiframe: true,
           iframeSandbox: "allow-same-origin allow-scripts"
+
+      },
+
+      {siteName: '笔趣阁',
+          url: 'http://www.biquxs.com/book/\\d+/\\d+.html',
+          exampleUrl: 'http://www.biquxs.com/book/17539/9351052.html',
+
+          titleReg: '(.*?)_(.*?)_',
+          titlePos: 1,
+
+          contentSelector: '#content',
+          nextSelector: '.page_chapter .next',
+          prevSelector: '.page_chapter .pre',
+          indexSelector: '.page_chapter .back',
 
       }
   ];
@@ -7512,9 +7527,10 @@
                   chapterItem.addClass('active');
               }
 
-              App$1.pageNum += 1;
               App$1.resetCache();
           }
+
+          App$1.pageNum += 1;
 
           App$1.oArticles.push(chapter[0].outerHTML);
           App$1.parsers.push(parser);
@@ -7759,7 +7775,6 @@
               if (Setting.addToHistory) {
                   var curNum = id.match(/\d+/)[0] - 1;  // 当前是第几个
                   var curTitle = App$1.parsers[curNum].docTitle;
-                  document.title = curTitle;
 
                   // 有域名的限制，起点过渡到 vip 章节无法生效
                   var url = activeUrl.replace('http://read.qidian.com', '');
@@ -7768,6 +7783,9 @@
                   } catch (e) {
                       C.error('添加下一页到历史记录失败', e);
                   }
+
+                  document.title = curTitle;
+
               }
           }
       },

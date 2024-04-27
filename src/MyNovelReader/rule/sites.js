@@ -1863,6 +1863,20 @@ const sites = [
         useiframe: true,
         iframeSandbox: "allow-same-origin allow-scripts"
 
+    },
+
+    {siteName: '笔趣阁',
+        url: 'http://www.biquxs.com/book/\\d+/\\d+.html',
+        exampleUrl: 'http://www.biquxs.com/book/17539/9351052.html',
+
+        titleReg: '(.*?)_(.*?)_',
+        titlePos: 1,
+
+        contentSelector: '#content',
+        nextSelector: '.page_chapter .next',
+        prevSelector: '.page_chapter .pre',
+        indexSelector: '.page_chapter .back',
+
     }
 ];
 

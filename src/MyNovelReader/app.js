@@ -532,9 +532,10 @@ var App = {
                 chapterItem.addClass('active');
             }
 
-            App.pageNum += 1;
             App.resetCache();
         }
+
+        App.pageNum += 1;
 
         App.oArticles.push(chapter[0].outerHTML);
         App.parsers.push(parser);
@@ -781,7 +782,6 @@ var App = {
             if (Setting.addToHistory) {
                 var curNum = id.match(/\d+/)[0] - 1;  // 当前是第几个
                 var curTitle = App.parsers[curNum].docTitle;
-                document.title = curTitle;
 
                 // 有域名的限制，起点过渡到 vip 章节无法生效
                 var url = activeUrl.replace('http://read.qidian.com', '');
@@ -790,6 +790,9 @@ var App = {
                 } catch (e) {
                     C.error('添加下一页到历史记录失败', e);
                 }
+
+                document.title = curTitle;
+
             }
         }
     },
