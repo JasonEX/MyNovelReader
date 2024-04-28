@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.5
+// @version        7.8.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -2070,29 +2070,14 @@
               const re = toRE("\\{url_previous:'(.*?)',url_next:'(.*?)',url_index:'(.*?)',\\}");
               const ReadParams = $doc.find('script:contains(ReadParams)').text();
               const [_, url_previous, url_next, url_index] = re.exec(ReadParams);
-              let previousName = $doc.find('#readbg > p > a:nth-child(1)').text();
-              switch (previousName) {
-                  case '<-':
-                      previousName = '上一页';
-                      break;
-                  case '<<':
-                      previousName = '上一章';
-                      break;
-              }
-              let nextName = $doc.find('#readbg > p > a:nth-child(5)').text();
-              switch (nextName) {
-                  case '->':
-                      nextName = '下一页';
-                      break;
-                  case '>>':
-                      nextName = '下一章';
-                      break;
-              }
+
+              const nextName = url_next.includes("_") ? '下一页' : '下一章';
+
               const body = $doc.find('body');
 
               $doc.find('p:contains(（继续下一页）)').remove();
 
-              $('<a>').attr('href', url_previous).text(previousName).appendTo(body);
+              $('<a>').attr('href', url_previous).text('上一章').appendTo(body);
               $('<a>').attr('href', url_next).text(nextName).appendTo(body);
               $('<a>').attr('href', url_index).text('目录').appendTo(body);
 

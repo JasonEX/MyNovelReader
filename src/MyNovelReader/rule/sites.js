@@ -1003,33 +1003,14 @@ const sites = [
             const re = toRE("\\{url_previous:'(.*?)',url_next:'(.*?)',url_index:'(.*?)',\\}")
             const ReadParams = $doc.find('script:contains(ReadParams)').text()
             const [_, url_previous, url_next, url_index] = re.exec(ReadParams)
-            let previousName = $doc.find('#readbg > p > a:nth-child(1)').text()
-            switch (previousName) {
-                case '<-':
-                    previousName = '上一页'
-                    break;
-                case '<<':
-                    previousName = '上一章'
-                    break;
-                default:
-                    break;
-            }
-            let nextName = $doc.find('#readbg > p > a:nth-child(5)').text()
-            switch (nextName) {
-                case '->':
-                    nextName = '下一页'
-                    break;
-                case '>>':
-                    nextName = '下一章'
-                    break;
-                default:
-                    break;
-            }
+
+            const nextName = url_next.includes("_") ? '下一页' : '下一章'
+
             const body = $doc.find('body')
 
             $doc.find('p:contains(（继续下一页）)').remove()
 
-            $('<a>').attr('href', url_previous).text(previousName).appendTo(body)
+            $('<a>').attr('href', url_previous).text('上一章').appendTo(body)
             $('<a>').attr('href', url_next).text(nextName).appendTo(body)
             $('<a>').attr('href', url_index).text('目录').appendTo(body)
 
