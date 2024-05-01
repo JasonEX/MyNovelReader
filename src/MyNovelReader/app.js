@@ -786,7 +786,7 @@ var App = {
                 // 有域名的限制，起点过渡到 vip 章节无法生效
                 var url = activeUrl.replace('http://read.qidian.com', '');
                 try {
-                    unsafeWindow.history.pushState(null, curTitle, url);
+                    history.pushState(null, curTitle, url);
                 } catch (e) {
                     C.error('添加下一页到历史记录失败', e);
                 }

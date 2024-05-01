@@ -18,13 +18,13 @@ export var C;
 
 export function toggleConsole(debug) {
     if (debug) {
-        C = {...unsafeWindow.console};
+        C = console;
     } else {
         C = {
             log: nullFn,
             debug: nullFn,
-            error: unsafeWindow.console.error,
-            warn: unsafeWindow.console.warn,
+            error: console.error,
+            warn: console.warn,
             group: nullFn,
             groupCollapsed: nullFn,
             groupEnd: nullFn,

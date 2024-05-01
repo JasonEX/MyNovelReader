@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.6
+// @version        7.8.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -479,13 +479,13 @@
 
   function toggleConsole(debug) {
       if (debug) {
-          C = {...unsafeWindow.console};
+          C = console;
       } else {
           C = {
               log: nullFn,
               debug: nullFn,
-              error: unsafeWindow.console.error,
-              warn: unsafeWindow.console.warn,
+              error: console.error,
+              warn: console.warn,
               group: nullFn,
               groupCollapsed: nullFn,
               groupEnd: nullFn,
@@ -7764,7 +7764,7 @@
                   // 有域名的限制，起点过渡到 vip 章节无法生效
                   var url = activeUrl.replace('http://read.qidian.com', '');
                   try {
-                      unsafeWindow.history.pushState(null, curTitle, url);
+                      history.pushState(null, curTitle, url);
                   } catch (e) {
                       C.error('添加下一页到历史记录失败', e);
                   }
