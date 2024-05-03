@@ -254,7 +254,10 @@ Parser.prototype = {
         // .replace(/(第?\S+?[章节卷回])(.*)/, "$1 $2");
 
         if (chapterTitle.startsWith(bookTitle)) {
-            chapterTitle = chapterTitle.replace(bookTitle, '').trim();
+            var _chapterTitle = chapterTitle.replace(bookTitle, '').trim();
+            if (_chapterTitle.length > 0) {
+                chapterTitle = _chapterTitle
+            }
         }
 
         bookTitle = bookTitle.replace(/(?:最新章节|章节目录)$/, '');
@@ -876,13 +879,15 @@ Parser.prototype = {
         }
 
         // 删除含网站域名行文本
-        const removeText = []
-        const hostRe = toRE(`^.*?${this._curPageHost}.*?$`)
-        content = content.replace(hostRe, match => {
-            removeText.push(match)
-            return ''
-        })
-        C.log(`删除含网站域名行`, hostRe, removeText)
+        if (Setting.removeDomainLine) {
+            const removeText = []
+            const hostRe = toRE(`^.*?${this._curPageHost}.*?$`)
+            content = content.replace(hostRe, match => {
+                removeText.push(match)
+                return ''
+            })  
+            C.log(`删除含网站域名行`, hostRe, removeText)
+        }
 
         // C.groupCollapsed('文本内容 - contentReplace')
         // C.log(content)

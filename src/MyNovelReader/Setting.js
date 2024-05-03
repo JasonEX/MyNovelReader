@@ -305,6 +305,14 @@ const Setting = {
     },
     set fastboot(bool) {
         GM_setValue('fastboot', bool);
+    },
+
+    // 删除含网站域名行
+    get removeDomainLine() {
+        return GM_getValue('removeDomainLine', true);
+    },
+    set removeDomainLine(bool) {
+        GM_setValue('removeDomainLine', bool);
     }
 };
 
