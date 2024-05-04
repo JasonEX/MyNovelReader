@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.8
+// @version        7.8.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -91,28 +91,18 @@
 
 // 其它网站
 // @include        *://book.sfacg.com/Novel/*/*/*/
-// @include        *://www.ttzw.com/book/*/*.html
 // @include        *://www.zhaoshuyuan.com/*/*/*.html*
 // @include        *://book.kanunu.org/*/*/*.html
 // @include        *://www.kanunu8.com/book*/*.html
 // @include        *://www.epzww.com/book/*/*
-// @include        *://www.23us.cc/html/*/*/*.html
 // @include        *://www.biqudu.com/*/*.html
-// @include        *://www.bequgezw.com/*/*/*.html
-// @include        *://www.biqubao.com/book/*/*.html
-// @include        *://www.biquwu.cc/biquge/*/*.html
 // @include        *://www.qududu.com/book/*/*/*.html
-// @include        *://www.moneyren.com/book/*/*/*.shtml
-// @include        *://www.moksos.com/*/*/*.html
-// @include        *://www.69zw.com/xiaoshuo/*/*/*.html
 // @include        *://b.faloo.com/p/*/*.html
 // @include        *://b.faloo.com/*_*.html
-// @include        *://www.xstxt.com/*/*/
 // @include        *://www.my285.com/*/*/*/*.htm
 // @include        *://www.hjwzw.com/Book/Read/*,*
 // @include        *://www.hjwzw.com/Book/Read/*_*
 // @include        *://www.69shu.top/txt/*/*
-// @include        *://www.77nt.com/*/*.html
 // @include        *://www.biquge5200.cc/*/*.html
 // @include        *://read.qidian.com/chapter/*
 // @include        *://www.piaotia.com/html/*/*/*.html
@@ -125,13 +115,10 @@
 // @include        *://www.b5200.net/*/*.html
 // @include        *://novel.tingroom.com/*/*/*.html
 // @include        *://www.ciweimao.com/chapter/*
-// @include        *://www.aixs.org/xs/*/*/*.html
 // @include        *://m.zwduxs.com/*_*/*.html
-// @include        *://www.69shu.la/69shu/*/*/*.html
-// @include        *://www.xs52.com/xiaoshuo/*/*/*.html
 // @include        *://www.ranwen.la/files/article/*/*/*.html
 // @include        *://www.3xs.cc/*/*.html
-// @include        *://www.nuanyuehanxing.com/*/*/*.html
+// @include        *://www.nuanyuehanxing.cc/*/*/*.html
 // @include        *://www.gongzicp.com/read-*.html
 // @include        *://www.xs321.net/book/*/*/*.html
 // @include        *://www.hetushu.com/book/*/*.html
@@ -143,8 +130,6 @@
 // @match          *://www.biqusa.com/*/*.html
 // @match          *://www.biququ.com/html/*/*.html
 // @match          *://www.ddxs.com/*/*.html
-// @match          *://www.biqugetv.com/*/*.html
-// @match          *://www.feiazw.com/Html/*/*.html
 // @match          *://www.xn--fiq228cu93a4kh.com/Html/*/*.html
 // @match          *://www.555x.org/read/*/*.html
 // @match          *://www.soxscc.net/*/*.html
@@ -192,7 +177,6 @@
 // @match          *://www.yqxsw.org/html/*/*/*.html
 // @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
 // @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
-// @match          *://www.156n.net/html/*/*/*.html
 // @match          *://www.31xs.org/*/*/*.html
 // @match          *://www.31xs.net/*/*/*.html
 // @match          *://www.01xs.com/xiaoshuo/*/*.html
@@ -200,26 +184,14 @@
 // @match          *://www.yawenba.net/book/*/*.html
 // @match          *://www.aiyueshuxiang.com/html/*/*.html
 // @match          *://www.zhenhunxiaoshuo.com/*.html
-// @match          *://www.yywenxuan.com/*/*.html
+// @match          *://www.xiyuwx.com/*/*.html
 // @match          *://www.waptxt.com/*/*.html
 // @match          *://www.5xw.net/*/*/*.html
-// @match          *://www.23tr.com/book/*/*.html
-// @match          *://www.gdbzkz.com/*/*.html
-// @match          *://www.qb5.tw/book_*/*.html
 // @match          *://www.5ycn.com/*/*/*.html
-// @match          *://www.dldtxt.com/xs/*/*.html
 // @match          *://www.67shu.net/book/*/*.html
-// @match          *://www.ibiquge.net/*/*.html
-// @match          *://www.xiashu9.com/book/*/*.html
 // @match          *://zerifeisheng.com/book/*/*.html
 // @match          *://quanxiaoshuo.com/*/*/
 // @match          *://www.xbbshuwu.com/*/*.html
-// @match          *://www.xygyhd.org/book/*/*.html
-// @match          *://www.23xstxt.com/book/*/*/*.html
-// @match          *://www.biqiudu.com/novel/*/*.html
-// @match          *://www.shubaow.net/*/*.html
-// @match          *://www.qingdou.la/*/*.html
-// @match          *://www.mayiwxw.com/*/*.html
 // @match          *://www.bg3.co/novel/pagea/*.html
 // @match          *://cn.bg3.co/novel/pagea/*.html
 // @match          *://tw.bg3.co/novel/pagea/*.html
@@ -227,15 +199,12 @@
 // @match          *://wufangdao.com/html/*/*/*.html
 // @match          *://www.jinghuashuge.cc/id/*/*.html
 // @match          *://www.qbiqus.com/*/*.html
-// @match          *://www.123duw.com/dudu-*/*/*.html
-// @match          *://www.123du.vip/dudu-*/*/*.html
+// @match          *://www.123dua.com/dudu-*/*/*.html
 // @match          *://www.17yue.com/*/*.html
 // @match          *://www.nuoqiu.com/*/*.html
-// @match          *://www.dldxs.cc/xs/*/*.html
 // @match          *://www.yawen8.com/*/*/*.html
 // @match          *://www.bookxuan.org/book/*/*/*.html
 // @match          *://www.shenmaxiaoshuo.com/book/*/*.html
-// @match          *://www.dldxs.cc/xs/*/*.html
 // @match          *://www.16kbook.org/book/*/*.html
 // @match          *://www.1kanshu.com/html/*/*.html
 // @match          *://www.dawenxue.net/*/*.html
@@ -243,25 +212,27 @@
 // @match          *://www.33yq.org/read/*/*.shtml
 // @match          *://www.3uxiaoshuo.com/xiaoshuo/*/*.html
 // @match          *://www.zrfsxs.com/xiaoshuo/*/*.html
-// @match          *://www.p2wt.com/htm/*/*.html
 // @match          *://www.31xs.com/*/*/*.html
 // @match          *://www.70sw.net/read/*/*/*.html
 // @match          *://www.qisxs.com/*/*.html
-// @match          *://www.611zw.com/books/*/*.html
-// @match          *://www.bifengzw.com/read/*/*.html
-// @match          *://www.ibiquges.com/*/*/*.html
-// @match          *://www.zhsxs.com/zhsread/*.html
+// @match          *://www.zhswx.com/zhsread/*.html
+// @match          *://www.zfxwx.com/read/*/*.html
+// @match          *://www.622zw.com/books/*/*.html
 // @match          *://www.deqixs.com/xiaoshuo/*/*.html
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
-// @match          *://www.jingdianyulu.org/yulus/*/*.html
+// @match          *://www.yulusy.com/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
 // @match          *://www.twking.cc/*_*/*.html
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
+// @match          *://tw.linovelib.com/novel/*/*.html
+// @match          *://www.wenku8.net/novel/*/*/*.htm
+// @match          *://www.uuread.tw/chapter/*/*.html
 // @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
+// @match          *://www.dbxsc.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -277,10 +248,9 @@
 // @include        *://m.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.com/vip/*/*
 // @match          *://m.xindingdianxsw.com/*/*/*.html
-// @match          *://m.123duw.com/dudu-*/*/*.html
-// @match          *://m.123du.vip/dudu-*/*/*.html
+// @match          *://m.123dua.com/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
-// @match          *://m.jingdianyulu.org/yulus/*/*.html
+// @match          *://m.yulusy.com/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html
 
 // @exclude        */List.htm
@@ -1606,7 +1576,7 @@
         ],
     },
     {siteName: "黄金屋中文网",
-        url: /www\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,
+        url: /tw\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,
         exampleUrl: 'https://tw.hjwzw.com/Book/Read/1889,577987',
         titleSelector: "h1",
         indexSelector: "td a[href='./']",
@@ -1680,8 +1650,8 @@
       ],
     },
     {siteName: '笔趣阁 nuanyuehanxing',
-      url: '^https?://www\\.nuanyuehanxing\\.com/\\w+/\\d+/\\d+\\.html',
-      exampleUrl: 'https://www.nuanyuehanxing.com/shu/56388575/111040667.html',
+      url: '^https?://www\\.nuanyuehanxing\\.cc/\\w+/\\d+/\\d+\\.html',
+      exampleUrl: 'https://www.nuanyuehanxing.cc/shu/56388575/111040667.html',
       bookTitleSelector: '.bookname',
       timeout: 500,
       useiframe: true,
@@ -1925,32 +1895,10 @@
       },
 
       {siteName: 'YY文轩',
-          url: 'https?://www\\.yywenxuan\\.com/\\d+/.*?\\.html',
-          exampleUrl: 'http://www.yywenxuan.com/523903/13063045.html',
+          url: 'https?://www\\.xiyuwx\\.com/\\d+/.*?\\.html',
+          exampleUrl: 'http://www.xiyuwx.com/523903/13063045.html',
           useiframe: true,
           contentSelector: '#ad'
-      },
-
-      {siteName: '霹雳书坊',
-          url: 'https?://(?:www|m).pilibook.com/\\d+/\\d+/\\d+.html',
-          exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
-
-          nextSelector($doc) {
-              return $doc.find('img[src="https://m.pilibook.com/17mb/style/03.png"]')
-                  .parent()
-                  .attr('href')
-          },
-          prevSelector($doc) {
-              return $doc.find('img[src="https://m.pilibook.com/17mb/style/01.png"]')
-                  .parent()
-                  .attr('href')
-          },
-          indexSelector($doc) {
-              return $doc.find('img[src="https://m.pilibook.com/17mb/style/05.png"]')
-                  .parent()
-                  .attr('href')
-          },
-
       },
 
       {siteName: '飞速中文',
@@ -2253,8 +2201,8 @@
       },
 
       {siteName: "独步小说网",
-          url: "https?://www.dubuxiaoshuo.com/book/.*?/.*?\\.html",
-          exampleUrl: "https://www.dubuxiaoshuo.com/book/p1693/565590.html",
+          url: "https?://www.dbxsc.com/book/.*?/.*?\\.html",
+          exampleUrl: "https://www.dbxsc.com/book/p1693/565590.html",
 
           contentSelector: "#cont-body",
           prevSelector: ".col-md-6.text-center a:first",
@@ -2262,7 +2210,7 @@
       },
       {
           siteName: '123读',
-          url: 'https?://www\\.123duw?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+          url: 'https?://www\\.123dua?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
           checkSection: true,
           contentSelector: '#content',
           nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
@@ -2289,6 +2237,8 @@
 
       {siteName: "飞翔鸟中文网",
           url: "https?://www\\.fxnzw\\.com/fxnread/\\d+_\\d+.html",
+          exampleUrl: "https://www.fxnzw.com/fxnread/50217_11878551.html",
+
           bookTitleSelector: "#breadCrumb a:nth-child(2)",
           contentSelector: "#content > div[style]:last",
 
@@ -2316,20 +2266,20 @@
       },
 
       {
-          siteName: "611中文",
-          url: "https://www.611zw.com/books/\\d+/\\d+(_)?\\d+.html",
-          exampleUrl: "https://www.611zw.com/books/175956/57627355.html",
+          siteName: "622中文",
+          url: "https://www.622zw.com/books/\\d+/\\d+(_)?\\d+.html",
+          exampleUrl: "https://www.622zw.com/books/175956/57627355.html",
 
           checkSection: true,
 
           titleSelector: ".reader-main h1.title",
-          contentReplace: ["(www.)?611zw.com"]
+          contentReplace: ["(www.)?622zw.com"]
       },
 
       {
           siteName: "东流小说",
-          url: "https://www.bifengzw.com/read/.*/\\d+(_)?\\d+.html",
-          exampleUrl: "https://www.bifengzw.com/read/AgVVAApc/1644315500.html",
+          url: "https://www.zfxwx.com/read/.*/\\d+(_)?\\d+.html",
+          exampleUrl: "https://www.zfxwx.com/read/AgVVAApc/1644315500.html",
 
           titleSelector: "h1",
           bookTitleSelector: ".breadcrumb > li:nth-child(2) > a",
@@ -2348,7 +2298,7 @@
       {
           siteName: "123读书网-手机站",
           url: "https://m.123duw?.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
-          exampleUrl: "https://m.123duw.com/dudu-31/8452541/55196666.html",
+          exampleUrl: "https://m.123dua.com/dudu-31/8452541/55196666.html",
 
           titleReg: "(.*?)-(.*?)-(.*?)",
           titlePos: 1,
@@ -2365,8 +2315,8 @@
       },
       {
           siteName: "宙斯小说",
-          url: "http://www.zhsxs.com/zhsread/\\d+_\\d+.html",
-          exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
+          url: "https?://www.zhswx.com/read/\\d+_\\d+.html",
+          exampleUrl: "http://www.zhswx.com/read/63755_22738751.html",
 
           bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
           contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
@@ -2514,8 +2464,8 @@
       },
       {
           siteName: '语录书院',
-          url: 'https://www.jingdianyulu.org/yulus/\\d+/.*?.html',
-          exampleUrl: 'https://www.jingdianyulu.org/yulus/17410287770/59700783-2.html',
+          url: 'https://www.yulusy.com/yulus/\\d+/.*?.html',
+          exampleUrl: 'https://www.yulusy.com/yulus/17410287770/59700783-2.html',
 
           checkSection: true,
           prevSelector: "#PageSet a:contains('上'):contains('页')",
@@ -2524,8 +2474,8 @@
       },
       {
           siteName: '语录书院-移动版',
-          url: 'https://m.jingdianyulu.org/yulus/\\d+/.*?.html',
-          exampleUrl: 'https://m.jingdianyulu.org/yulus/17710148533/59468382-2.html',
+          url: 'https://m.yulusy.com/yulus/\\d+/.*?.html',
+          exampleUrl: 'https://m.yulusy.com/yulus/17710148533/59468382-2.html',
 
           checkSection: true,
           prevSelector: "#PageSet a:contains('上'):contains('页')",
@@ -2593,9 +2543,10 @@
       },
       {
           siteName: '哔哩轻小说',
-          url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+\.html',
+          url: 'https://(www|tw)\.(bilinovel|linovelib)\.com/novel/\\d+/\\d+(_\\d+)?\.html',
           exampleUrl: 'https://www.bilinovel.com/novel/4048/227859.html',
           useiframe: true,
+          checkSection: true,
 
           bookTitleSelector: function () {
               return unsafeWindow.ReadParams.articlename;
@@ -2604,7 +2555,7 @@
           prevSelector: "#footlink > a:nth-child(1)",
           nextSelector: "#footlink > a:nth-child(4)",
           indexSelector: "#footlink > a:nth-child(2)",
-          contentSelector: ".bcontent",
+          contentSelector: ".acontent, .bcontent",
           contentPatch($doc) {
               const scriptText = $doc.find('body > script:nth-child(1)').text();
               const urls = scriptText.match(/url_(previous|index|articleinfo|next):'([^']+)'/g).map(url => url.split(':')[1].slice(1, -1));
@@ -2615,6 +2566,32 @@
                   $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
               });
           }
+      },
+      {
+          siteName: '轻小说文库',
+          url: 'https://www\.wenku8\.net/novel/\\d+/\\d+/\\d+\.htm',
+          exampleUrl: 'https://www.wenku8.net/novel/2/2449/91347.htm',
+          noSection: true,
+
+          bookTitleSelector: "#linkleft > a:nth-child(3)",
+          titleSelector: "#title",
+          prevSelector: "#foottext > a:nth-child(3)",
+          nextSelector: "#footlink > a:nth-child(4)",
+          indexSelector: "#footlink > a:nth-child(5)",
+          contentSelector: "#content"
+      },
+      {
+          siteName: 'UU看书',
+          url: 'https://www\.uuread\.tw/chapter/\\d+/\\d+(_\\d+)?\.html',
+          exampleUrl: 'https://www.uuread.tw/chapter/11681/3006418.html',
+          checkSection: true,
+
+          bookTitleSelector: ".bread > li:nth-child(4) > a:nth-child(1)",
+          titleSelector: [".chatit", "（.*）$"],
+          prevSelector: "a.btn-primary:nth-child(1)",
+          nextSelector: "a.btn-primary:nth-child(4)",
+          indexSelector: "a.btn-primary:nth-child(3)",
+          contentSelector: ".txt_tcontent"
       },
 
       {siteName: '69shux',

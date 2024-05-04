@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.8
+// @version        7.8.9
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -91,28 +91,18 @@
 
 // 其它网站
 // @include        *://book.sfacg.com/Novel/*/*/*/
-// @include        *://www.ttzw.com/book/*/*.html
 // @include        *://www.zhaoshuyuan.com/*/*/*.html*
 // @include        *://book.kanunu.org/*/*/*.html
 // @include        *://www.kanunu8.com/book*/*.html
 // @include        *://www.epzww.com/book/*/*
-// @include        *://www.23us.cc/html/*/*/*.html
 // @include        *://www.biqudu.com/*/*.html
-// @include        *://www.bequgezw.com/*/*/*.html
-// @include        *://www.biqubao.com/book/*/*.html
-// @include        *://www.biquwu.cc/biquge/*/*.html
 // @include        *://www.qududu.com/book/*/*/*.html
-// @include        *://www.moneyren.com/book/*/*/*.shtml
-// @include        *://www.moksos.com/*/*/*.html
-// @include        *://www.69zw.com/xiaoshuo/*/*/*.html
 // @include        *://b.faloo.com/p/*/*.html
 // @include        *://b.faloo.com/*_*.html
-// @include        *://www.xstxt.com/*/*/
 // @include        *://www.my285.com/*/*/*/*.htm
 // @include        *://www.hjwzw.com/Book/Read/*,*
 // @include        *://www.hjwzw.com/Book/Read/*_*
 // @include        *://www.69shu.top/txt/*/*
-// @include        *://www.77nt.com/*/*.html
 // @include        *://www.biquge5200.cc/*/*.html
 // @include        *://read.qidian.com/chapter/*
 // @include        *://www.piaotia.com/html/*/*/*.html
@@ -125,13 +115,10 @@
 // @include        *://www.b5200.net/*/*.html
 // @include        *://novel.tingroom.com/*/*/*.html
 // @include        *://www.ciweimao.com/chapter/*
-// @include        *://www.aixs.org/xs/*/*/*.html
 // @include        *://m.zwduxs.com/*_*/*.html
-// @include        *://www.69shu.la/69shu/*/*/*.html
-// @include        *://www.xs52.com/xiaoshuo/*/*/*.html
 // @include        *://www.ranwen.la/files/article/*/*/*.html
 // @include        *://www.3xs.cc/*/*.html
-// @include        *://www.nuanyuehanxing.com/*/*/*.html
+// @include        *://www.nuanyuehanxing.cc/*/*/*.html
 // @include        *://www.gongzicp.com/read-*.html
 // @include        *://www.xs321.net/book/*/*/*.html
 // @include        *://www.hetushu.com/book/*/*.html
@@ -143,8 +130,6 @@
 // @match          *://www.biqusa.com/*/*.html
 // @match          *://www.biququ.com/html/*/*.html
 // @match          *://www.ddxs.com/*/*.html
-// @match          *://www.biqugetv.com/*/*.html
-// @match          *://www.feiazw.com/Html/*/*.html
 // @match          *://www.xn--fiq228cu93a4kh.com/Html/*/*.html
 // @match          *://www.555x.org/read/*/*.html
 // @match          *://www.soxscc.net/*/*.html
@@ -192,7 +177,6 @@
 // @match          *://www.yqxsw.org/html/*/*/*.html
 // @match          *://www.2kxiaoshuo.com/xiaoshuo/*/*/*.html
 // @match          *://www.2kxs.la/xiaoshuo/*/*/*.html
-// @match          *://www.156n.net/html/*/*/*.html
 // @match          *://www.31xs.org/*/*/*.html
 // @match          *://www.31xs.net/*/*/*.html
 // @match          *://www.01xs.com/xiaoshuo/*/*.html
@@ -200,26 +184,14 @@
 // @match          *://www.yawenba.net/book/*/*.html
 // @match          *://www.aiyueshuxiang.com/html/*/*.html
 // @match          *://www.zhenhunxiaoshuo.com/*.html
-// @match          *://www.yywenxuan.com/*/*.html
+// @match          *://www.xiyuwx.com/*/*.html
 // @match          *://www.waptxt.com/*/*.html
 // @match          *://www.5xw.net/*/*/*.html
-// @match          *://www.23tr.com/book/*/*.html
-// @match          *://www.gdbzkz.com/*/*.html
-// @match          *://www.qb5.tw/book_*/*.html
 // @match          *://www.5ycn.com/*/*/*.html
-// @match          *://www.dldtxt.com/xs/*/*.html
 // @match          *://www.67shu.net/book/*/*.html
-// @match          *://www.ibiquge.net/*/*.html
-// @match          *://www.xiashu9.com/book/*/*.html
 // @match          *://zerifeisheng.com/book/*/*.html
 // @match          *://quanxiaoshuo.com/*/*/
 // @match          *://www.xbbshuwu.com/*/*.html
-// @match          *://www.xygyhd.org/book/*/*.html
-// @match          *://www.23xstxt.com/book/*/*/*.html
-// @match          *://www.biqiudu.com/novel/*/*.html
-// @match          *://www.shubaow.net/*/*.html
-// @match          *://www.qingdou.la/*/*.html
-// @match          *://www.mayiwxw.com/*/*.html
 // @match          *://www.bg3.co/novel/pagea/*.html
 // @match          *://cn.bg3.co/novel/pagea/*.html
 // @match          *://tw.bg3.co/novel/pagea/*.html
@@ -227,15 +199,12 @@
 // @match          *://wufangdao.com/html/*/*/*.html
 // @match          *://www.jinghuashuge.cc/id/*/*.html
 // @match          *://www.qbiqus.com/*/*.html
-// @match          *://www.123duw.com/dudu-*/*/*.html
-// @match          *://www.123du.vip/dudu-*/*/*.html
+// @match          *://www.123dua.com/dudu-*/*/*.html
 // @match          *://www.17yue.com/*/*.html
 // @match          *://www.nuoqiu.com/*/*.html
-// @match          *://www.dldxs.cc/xs/*/*.html
 // @match          *://www.yawen8.com/*/*/*.html
 // @match          *://www.bookxuan.org/book/*/*/*.html
 // @match          *://www.shenmaxiaoshuo.com/book/*/*.html
-// @match          *://www.dldxs.cc/xs/*/*.html
 // @match          *://www.16kbook.org/book/*/*.html
 // @match          *://www.1kanshu.com/html/*/*.html
 // @match          *://www.dawenxue.net/*/*.html
@@ -243,14 +212,12 @@
 // @match          *://www.33yq.org/read/*/*.shtml
 // @match          *://www.3uxiaoshuo.com/xiaoshuo/*/*.html
 // @match          *://www.zrfsxs.com/xiaoshuo/*/*.html
-// @match          *://www.p2wt.com/htm/*/*.html
 // @match          *://www.31xs.com/*/*/*.html
 // @match          *://www.70sw.net/read/*/*/*.html
 // @match          *://www.qisxs.com/*/*.html
-// @match          *://www.611zw.com/books/*/*.html
-// @match          *://www.bifengzw.com/read/*/*.html
-// @match          *://www.ibiquges.com/*/*/*.html
-// @match          *://www.zhsxs.com/zhsread/*.html
+// @match          *://www.zhswx.com/zhsread/*.html
+// @match          *://www.zfxwx.com/read/*/*.html
+// @match          *://www.622zw.com/books/*/*.html
 // @match          *://www.deqixs.com/xiaoshuo/*/*.html
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
@@ -265,6 +232,7 @@
 // @match          *://www.uuread.tw/chapter/*/*.html
 // @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
+// @match          *://www.dbxsc.com/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -280,8 +248,7 @@
 // @include        *://m.jjwxc.net/vip/*/*
 // @include        *://m.jjwxc.com/vip/*/*
 // @match          *://m.xindingdianxsw.com/*/*/*.html
-// @match          *://m.123duw.com/dudu-*/*/*.html
-// @match          *://m.123du.vip/dudu-*/*/*.html
+// @match          *://m.123dua.com/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.yulusy.com/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html

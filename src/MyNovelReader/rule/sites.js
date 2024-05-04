@@ -566,7 +566,7 @@ const sites = [
       ],
   },
   {siteName: "黄金屋中文网",
-      url: /www\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,
+      url: /tw\.hjwzw\.com\/Book\/Read\/\d+[,_]\d+$/,
       exampleUrl: 'https://tw.hjwzw.com/Book/Read/1889,577987',
       titleSelector: "h1",
       indexSelector: "td a[href='./']",
@@ -640,8 +640,8 @@ const sites = [
     ],
   },
   {siteName: '笔趣阁 nuanyuehanxing',
-    url: '^https?://www\\.nuanyuehanxing\\.com/\\w+/\\d+/\\d+\\.html',
-    exampleUrl: 'https://www.nuanyuehanxing.com/shu/56388575/111040667.html',
+    url: '^https?://www\\.nuanyuehanxing\\.cc/\\w+/\\d+/\\d+\\.html',
+    exampleUrl: 'https://www.nuanyuehanxing.cc/shu/56388575/111040667.html',
     bookTitleSelector: '.bookname',
     timeout: 500,
     useiframe: true,
@@ -885,32 +885,10 @@ const sites = [
     },
 
     {siteName: 'YY文轩',
-        url: 'https?://www\\.yywenxuan\\.com/\\d+/.*?\\.html',
-        exampleUrl: 'http://www.yywenxuan.com/523903/13063045.html',
+        url: 'https?://www\\.xiyuwx\\.com/\\d+/.*?\\.html',
+        exampleUrl: 'http://www.xiyuwx.com/523903/13063045.html',
         useiframe: true,
         contentSelector: '#ad'
-    },
-
-    {siteName: '霹雳书坊',
-        url: 'https?://(?:www|m).pilibook.com/\\d+/\\d+/\\d+.html',
-        exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
-
-        nextSelector($doc) {
-            return $doc.find('img[src="https://m.pilibook.com/17mb/style/03.png"]')
-                .parent()
-                .attr('href')
-        },
-        prevSelector($doc) {
-            return $doc.find('img[src="https://m.pilibook.com/17mb/style/01.png"]')
-                .parent()
-                .attr('href')
-        },
-        indexSelector($doc) {
-            return $doc.find('img[src="https://m.pilibook.com/17mb/style/05.png"]')
-                .parent()
-                .attr('href')
-        },
-
     },
 
     {siteName: '飞速中文',
@@ -1213,8 +1191,8 @@ const sites = [
     },
 
     {siteName: "独步小说网",
-        url: "https?://www.dubuxiaoshuo.com/book/.*?/.*?\\.html",
-        exampleUrl: "https://www.dubuxiaoshuo.com/book/p1693/565590.html",
+        url: "https?://www.dbxsc.com/book/.*?/.*?\\.html",
+        exampleUrl: "https://www.dbxsc.com/book/p1693/565590.html",
 
         contentSelector: "#cont-body",
         prevSelector: ".col-md-6.text-center a:first",
@@ -1222,7 +1200,7 @@ const sites = [
     },
     {
         siteName: '123读',
-        url: 'https?://www\\.123duw?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
+        url: 'https?://www\\.123dua?\\.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html',
         checkSection: true,
         contentSelector: '#content',
         nextSelector: '#PageSet a:contains("下一页"), .bottem2 a:contains("下一章")',
@@ -1249,6 +1227,8 @@ const sites = [
 
     {siteName: "飞翔鸟中文网",
         url: "https?://www\\.fxnzw\\.com/fxnread/\\d+_\\d+.html",
+        exampleUrl: "https://www.fxnzw.com/fxnread/50217_11878551.html",
+
         bookTitleSelector: "#breadCrumb a:nth-child(2)",
         contentSelector: "#content > div[style]:last",
 
@@ -1276,20 +1256,20 @@ const sites = [
     },
 
     {
-        siteName: "611中文",
-        url: "https://www.611zw.com/books/\\d+/\\d+(_)?\\d+.html",
-        exampleUrl: "https://www.611zw.com/books/175956/57627355.html",
+        siteName: "622中文",
+        url: "https://www.622zw.com/books/\\d+/\\d+(_)?\\d+.html",
+        exampleUrl: "https://www.622zw.com/books/175956/57627355.html",
 
         checkSection: true,
 
         titleSelector: ".reader-main h1.title",
-        contentReplace: ["(www.)?611zw.com"]
+        contentReplace: ["(www.)?622zw.com"]
     },
 
     {
         siteName: "东流小说",
-        url: "https://www.bifengzw.com/read/.*/\\d+(_)?\\d+.html",
-        exampleUrl: "https://www.bifengzw.com/read/AgVVAApc/1644315500.html",
+        url: "https://www.zfxwx.com/read/.*/\\d+(_)?\\d+.html",
+        exampleUrl: "https://www.zfxwx.com/read/AgVVAApc/1644315500.html",
 
         titleSelector: "h1",
         bookTitleSelector: ".breadcrumb > li:nth-child(2) > a",
@@ -1308,7 +1288,7 @@ const sites = [
     {
         siteName: "123读书网-手机站",
         url: "https://m.123duw?.(com|vip)/dudu-\\d+/\\d+/\\d+(-\\d+)?.html",
-        exampleUrl: "https://m.123duw.com/dudu-31/8452541/55196666.html",
+        exampleUrl: "https://m.123dua.com/dudu-31/8452541/55196666.html",
 
         titleReg: "(.*?)-(.*?)-(.*?)",
         titlePos: 1,
@@ -1325,8 +1305,8 @@ const sites = [
     },
     {
         siteName: "宙斯小说",
-        url: "http://www.zhsxs.com/zhsread/\\d+_\\d+.html",
-        exampleUrl: "http://www.zhsxs.com/zhsread/63755_22738751.html",
+        url: "https?://www.zhswx.com/read/\\d+_\\d+.html",
+        exampleUrl: "http://www.zhswx.com/read/63755_22738751.html",
 
         bookTitleSelector: "#form1 > table > tbody > tr > td > div[align='center'] > a:last-child",
         contentSelector: "#form1 > table > tbody > tr > td > div:has(p)",
