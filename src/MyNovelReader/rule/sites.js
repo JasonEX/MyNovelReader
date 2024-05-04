@@ -1474,8 +1474,8 @@ const sites = [
     },
     {
         siteName: '语录书院',
-        url: 'https://www.jingdianyulu.org/yulus/\\d+/.*?.html',
-        exampleUrl: 'https://www.jingdianyulu.org/yulus/17410287770/59700783-2.html',
+        url: 'https://www.yulusy.com/yulus/\\d+/.*?.html',
+        exampleUrl: 'https://www.yulusy.com/yulus/17410287770/59700783-2.html',
 
         checkSection: true,
         prevSelector: "#PageSet a:contains('上'):contains('页')",
@@ -1484,8 +1484,8 @@ const sites = [
     },
     {
         siteName: '语录书院-移动版',
-        url: 'https://m.jingdianyulu.org/yulus/\\d+/.*?.html',
-        exampleUrl: 'https://m.jingdianyulu.org/yulus/17710148533/59468382-2.html',
+        url: 'https://m.yulusy.com/yulus/\\d+/.*?.html',
+        exampleUrl: 'https://m.yulusy.com/yulus/17710148533/59468382-2.html',
 
         checkSection: true,
         prevSelector: "#PageSet a:contains('上'):contains('页')",
@@ -1553,9 +1553,10 @@ const sites = [
     },
     {
         siteName: '哔哩轻小说',
-        url: 'https://(www|tw)\.bilinovel\.com/novel/\\d+/\\d+\.html',
+        url: 'https://(www|tw)\.(bilinovel|linovelib)\.com/novel/\\d+/\\d+(_\\d+)?\.html',
         exampleUrl: 'https://www.bilinovel.com/novel/4048/227859.html',
         useiframe: true,
+        checkSection: true,
 
         bookTitleSelector: function () {
             return unsafeWindow.ReadParams.articlename;
@@ -1564,7 +1565,7 @@ const sites = [
         prevSelector: "#footlink > a:nth-child(1)",
         nextSelector: "#footlink > a:nth-child(4)",
         indexSelector: "#footlink > a:nth-child(2)",
-        contentSelector: ".bcontent",
+        contentSelector: ".acontent, .bcontent",
         contentPatch($doc) {
             const scriptText = $doc.find('body > script:nth-child(1)').text();
             const urls = scriptText.match(/url_(previous|index|articleinfo|next):'([^']+)'/g).map(url => url.split(':')[1].slice(1, -1));
@@ -1575,6 +1576,32 @@ const sites = [
                 $(this).removeAttr('onclick').attr('href', urls[anchorIndex[index]]);
             });
         }
+    },
+    {
+        siteName: '轻小说文库',
+        url: 'https://www\.wenku8\.net/novel/\\d+/\\d+/\\d+\.htm',
+        exampleUrl: 'https://www.wenku8.net/novel/2/2449/91347.htm',
+        noSection: true,
+
+        bookTitleSelector: "#linkleft > a:nth-child(3)",
+        titleSelector: "#title",
+        prevSelector: "#foottext > a:nth-child(3)",
+        nextSelector: "#footlink > a:nth-child(4)",
+        indexSelector: "#footlink > a:nth-child(5)",
+        contentSelector: "#content"
+    },
+    {
+        siteName: 'UU看书',
+        url: 'https://www\.uuread\.tw/chapter/\\d+/\\d+(_\\d+)?\.html',
+        exampleUrl: 'https://www.uuread.tw/chapter/11681/3006418.html',
+        checkSection: true,
+
+        bookTitleSelector: ".bread > li:nth-child(4) > a:nth-child(1)",
+        titleSelector: [".chatit", "（.*）$"],
+        prevSelector: "a.btn-primary:nth-child(1)",
+        nextSelector: "a.btn-primary:nth-child(4)",
+        indexSelector: "a.btn-primary:nth-child(3)",
+        contentSelector: ".txt_tcontent"
     },
 
     {siteName: '69shux',

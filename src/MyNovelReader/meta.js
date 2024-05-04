@@ -254,12 +254,15 @@
 // @match          *://www.deqixs.com/xiaoshuo/*/*.html
 // @match          *://www.fkxs.net/*/*.html
 // @match          *://www.09k.net/kkb/*/*.html
-// @match          *://www.jingdianyulu.org/yulus/*/*.html
+// @match          *://www.yulusy.com/yulus/*/*.html
 // @match          *://sangtacviet.vip/truyen/*/1/*/*/
 // @match          *://www.shoujix.com/*.html
 // @match          *://www.twking.cc/*_*/*.html
 // @match          *://www.bilinovel.com/novel/*/*.html
 // @match          *://tw.bilinovel.com/novel/*/*.html
+// @match          *://tw.linovelib.com/novel/*/*.html
+// @match          *://www.wenku8.net/novel/*/*/*.htm
+// @match          *://www.uuread.tw/chapter/*/*.html
 // @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
 
@@ -280,7 +283,7 @@
 // @match          *://m.123duw.com/dudu-*/*/*.html
 // @match          *://m.123du.vip/dudu-*/*/*.html
 // @match          *://m.biquxs.com/book/*/*.html
-// @match          *://m.jingdianyulu.org/yulus/*/*.html
+// @match          *://m.yulusy.com/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html
 
 // @exclude        */List.htm
