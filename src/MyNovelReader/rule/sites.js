@@ -676,7 +676,8 @@ const sites = [
     // www.69xinshu.com
     // www.69shu.pro
     // www.69shu.top
-    url: "https?://www\\.69shu\\.top/txt/\\d+/\\d+",
+    // www.69shuba.pro
+    url: "https?://www\\.69shuba\\.pro/txt/\\d+/\\d+",
     exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
     // contentHandle: false,
     titleSelector: 'h1',

@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.8.9
+// @version        7.9.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -133,7 +133,6 @@
 // @match          *://www.xn--fiq228cu93a4kh.com/Html/*/*.html
 // @match          *://www.555x.org/read/*/*.html
 // @match          *://www.soxscc.net/*/*.html
-// @match          *://www.kubiji.net/*/*.html
 // @match          *://www.linovelib.com/novel/*/*.html
 // @match          *://www.uuks.org/b/*/*.html
 // @match          *://www.230book.net/book/*/*.html
@@ -165,9 +164,8 @@
 // @match          *://www.ranwena.net/files/article/*/*/*.html
 // @match          *://www.biququ.info/html/*/*.html
 // @match          *://www.fqxsw.org/html/*/*.html
-// @match          *://www.fanqianxs.com/html/*/*.html
 // @match          *://www.cxzww.com/read/*/*/*.html
-// @match          *://www.mdwenxue.com/book/*/*/*.html
+// @match          *://www.5ebook.net/book/*/*/*.html
 // @match          *://www.yyxs.la/html/*/*/*.html
 // @match          *://www.slkslk.com/*/*/*/*.html
 // @match          *://www.siluke.com/*/*/*/*.html
@@ -191,7 +189,6 @@
 // @match          *://www.67shu.net/book/*/*.html
 // @match          *://zerifeisheng.com/book/*/*.html
 // @match          *://quanxiaoshuo.com/*/*/
-// @match          *://www.xbbshuwu.com/*/*.html
 // @match          *://www.bg3.co/novel/pagea/*.html
 // @match          *://cn.bg3.co/novel/pagea/*.html
 // @match          *://tw.bg3.co/novel/pagea/*.html
