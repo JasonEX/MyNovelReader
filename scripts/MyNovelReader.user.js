@@ -112,7 +112,7 @@
 // @match          *://www.my285.com/*/*/*/*.htm
 // @match          *://www.hjwzw.com/Book/Read/*,*
 // @match          *://www.hjwzw.com/Book/Read/*_*
-// @match          *://www.69shu*/txt/*/*
+// @include        *://www.69shu*/txt/*/*
 // @match          *://www.77nt.com/*/*.html
 // @match          *://www.biquge5200.cc/*/*.html
 // @match          *://read.qidian.com/chapter/*
