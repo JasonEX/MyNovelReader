@@ -677,6 +677,11 @@ const sites = [
     // www.69shu.pro
     // www.69shu.top
     // www.69shuba.pro
+    // www.69shu.cx
+    // www.69shuba.cx
+    // www.69shu.me
+    // www.69shuba.me
+    // www.69shu.ac
     url: "https?://www\\.69shuba\\.pro/txt/\\d+/\\d+",
     exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
     // contentHandle: false,
@@ -1612,6 +1617,14 @@ const sites = [
         nextSelector: '.page_chapter .next',
         prevSelector: '.page_chapter .pre',
         indexSelector: '.page_chapter .back',
+
+    },
+
+    {siteName: '微风小说',
+        url: 'https?://(?:m|www).wfxs.tw/xiaoshuo/\\d+/\\d+/',
+        exampleUrl: 'https://m.wfxs.tw/xiaoshuo/22454/7990959/',
+
+        contentReplace: ['本章尚未完結,請點擊下一頁繼續閱讀---->>>', '本章已閱讀完畢\\(請點擊下一章繼續閱讀!\\)']
 
     }
 ];

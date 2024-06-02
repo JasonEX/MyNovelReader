@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.0
+// @version        7.9.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -230,6 +230,9 @@
 // @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
 // @match          *://www.dbxsc.com/book/*/*.html
+// @match          *://www.weifengxs.com/chapter/*/*.html
+// @match          *://m.wfxs.tw/xiaoshuo/*/*/
+// @match          *://www.wfxs.tw/xiaoshuo/*/*/
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1684,6 +1687,11 @@
       // www.69shu.pro
       // www.69shu.top
       // www.69shuba.pro
+      // www.69shu.cx
+      // www.69shuba.cx
+      // www.69shu.me
+      // www.69shuba.me
+      // www.69shu.ac
       url: "https?://www\\.69shuba\\.pro/txt/\\d+/\\d+",
       exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
       // contentHandle: false,
@@ -2620,6 +2628,14 @@
           prevSelector: '.page_chapter .pre',
           indexSelector: '.page_chapter .back',
 
+      },
+
+      {siteName: '微风小说',
+          url: 'https?://(?:m|www).wfxs.tw/xiaoshuo/\\d+/\\d+/',
+          exampleUrl: 'https://m.wfxs.tw/xiaoshuo/22454/7990959/',
+
+          contentReplace: ['本章尚未完結,請點擊下一頁繼續閱讀---->>>', '本章已閱讀完畢\\(請點擊下一章繼續閱讀!\\)']
+
       }
   ];
 
@@ -3399,8 +3415,8 @@
     titleReplace: /^章节目录|^文章正文|^正文卷?|全文免费阅读|最新章节|\(文\)/,
 
     // nextRegExp: /[上前下后][一]?[页张个篇章节步]/,
-    nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
-    prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
+    nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一頁'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
+    prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一頁'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
     // 忽略的下一页链接，匹配 href
     nextUrlIgnore: [
         /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
@@ -4993,7 +5009,8 @@
               // 一般第一页下一章按钮文本含页就是多页章节
               // 判断是否分页章节在获取上一页链接函数中处理
               // 这里如果是分页章节则跳过下一页地址的检查
-              if (!this.isSection && urlElement.text().includes('页')) {
+              var t = urlElement.text();
+              if (!this.isSection && (t.includes('页') || t.includes('頁'))) {
                   isSectionUrl = true;
               }
           }
@@ -5054,7 +5071,8 @@
               // 一般第二页的上一章按钮文本含页就是多页章节
               // 这里如果判断成功则是第二页之后的内容
               // 设置 isSection 为 true 就可以将第二页之后的内容合并到第一页里面
-              if (url && !this.isSection && urlElement.text().includes('页')) {
+              var t = urlElement.text();
+              if (url && !this.isSection && (t.includes('页') || t.includes('頁'))) {
                   C.log('检测到多页章节链接，开启多页章节合并为一章模式');
                   this.isSection = true;
               }

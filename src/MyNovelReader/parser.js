@@ -1153,7 +1153,8 @@ Parser.prototype = {
             // 一般第一页下一章按钮文本含页就是多页章节
             // 判断是否分页章节在获取上一页链接函数中处理
             // 这里如果是分页章节则跳过下一页地址的检查
-            if (!this.isSection && urlElement.text().includes('页')) {
+            var t = urlElement.text()
+            if (!this.isSection && (t.includes('页') || t.includes('頁'))) {
                 isSectionUrl = true;
             }
         }
@@ -1214,7 +1215,8 @@ Parser.prototype = {
             // 一般第二页的上一章按钮文本含页就是多页章节
             // 这里如果判断成功则是第二页之后的内容
             // 设置 isSection 为 true 就可以将第二页之后的内容合并到第一页里面
-            if (url && !this.isSection && urlElement.text().includes('页')) {
+            var t = urlElement.text()
+            if (url && !this.isSection && (t.includes('页') || t.includes('頁'))) {
                 C.log('检测到多页章节链接，开启多页章节合并为一章模式')
                 this.isSection = true;
             }
