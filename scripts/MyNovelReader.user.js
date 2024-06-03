@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.2
+// @version        7.9.3
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -233,6 +233,8 @@
 // @match          *://www.weifengxs.com/chapter/*/*.html
 // @match          *://m.wfxs.tw/xiaoshuo/*/*/
 // @match          *://www.wfxs.tw/xiaoshuo/*/*/
+// @match          *://feibzw.com/Html/*/*.html
+// @match          *://www.xsbiquge.la/book/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -1908,7 +1910,7 @@
       },
 
       {siteName: '飞速中文',
-          url: 'https://(?:www.)?(?:feiazw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
+          url: 'https://(?:www.)?(?:feiazw|feibzw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
           exampleUrl: 'https://www.feiazw.com/Html/21975/18399024.html',
 
           contentRemove: 'p[style], .l',
@@ -2635,6 +2637,20 @@
           exampleUrl: 'https://m.wfxs.tw/xiaoshuo/22454/7990959/',
 
           contentReplace: ['本章尚未完結,請點擊下一頁繼續閱讀---->>>', '本章已閱讀完畢\\(請點擊下一章繼續閱讀!\\)']
+
+      },
+
+      {siteName: '新笔趣阁',
+          url: 'http://www.xsbiquge.la/book/\\d+/\\d+.html',
+          exampleUrl: 'http://www.xsbiquge.la/book/2066/1417147.html',
+
+          titleReg: '(.*?)_(.*?)_',
+          titlePos: 1,
+
+          contentSelector: '#content',
+          nextSelector: '.page_chapter .next',
+          prevSelector: '.page_chapter .pre',
+          indexSelector: '.page_chapter .back',
 
       }
   ];
