@@ -235,6 +235,7 @@
 // @match          *://www.wfxs.tw/xiaoshuo/*/*/
 // @match          *://feibzw.com/Html/*/*.html
 // @match          *://www.xsbiquge.la/book/*/*.html
+// @match          *://www.bqgege.com/reader/*/*
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/

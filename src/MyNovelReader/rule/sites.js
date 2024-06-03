@@ -1640,6 +1640,45 @@ const sites = [
         prevSelector: '.page_chapter .pre',
         indexSelector: '.page_chapter .back',
 
+    },
+
+    // 需要配合 ignore-x-frame-options 扩展使用 
+    // https://chromewebstore.google.com/detail/ignore-x-frame-options/ammjifkhlacaphegobaekhnapdjmeclo
+    // https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options-header/
+    {siteName: '笔趣阁',
+        url: 'http://www.bqgege.com/reader/.*?/',
+        exampleUrl: 'http://www.bqgege.com/reader/mXEmgH8/',
+
+        bookTitleSelector: '.breadcrumb ol li a:last',
+        titleSelector: '.breadcrumb ol li:last',
+        contentSelector: '.__b',
+        mutationSelector: '.__b',
+        mutationChildCount: 1,
+        useiframe: true,
+
+        contentPatch($doc) {
+            var sectionEls = Array.from($doc.find(".page a")).reverse()
+            var foundActive = false
+            var nextSectionEl, prevSectionEl
+            for (const el of sectionEls) {
+                var $el = $(el)
+                if (foundActive) {
+                    nextSectionEl = $el
+                    break
+                }
+                foundActive = $el.hasClass("active")
+                if (!foundActive) {
+                    prevSectionEl = $el
+                }
+            }
+            if (nextSectionEl) {
+                nextSectionEl.text("下一页")
+            }
+            if (prevSectionEl) {
+                prevSectionEl.text("上一页")
+            }
+        }
+
     }
 ];
 
