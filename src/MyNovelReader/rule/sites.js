@@ -1644,7 +1644,7 @@ const sites = [
 
     // 需要配合 ignore-x-frame-options 扩展使用 
     // https://chromewebstore.google.com/detail/ignore-x-frame-options/ammjifkhlacaphegobaekhnapdjmeclo
-    // https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options-header/
+    // https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
     {siteName: '笔趣阁',
         url: 'http://www.bqgege.com/reader/.*?/',
         exampleUrl: 'http://www.bqgege.com/reader/mXEmgH8/',
