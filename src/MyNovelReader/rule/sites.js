@@ -1642,8 +1642,8 @@ const sites = [
 
     },
 
-    // 需要配合 ignore-x-frame-options 扩展使用 
-    // https://chromewebstore.google.com/detail/ignore-x-frame-options/ammjifkhlacaphegobaekhnapdjmeclo
+    // 需要配合 ignore-x-frame-headers 扩展使用 
+    // https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
     // https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
     {siteName: '笔趣阁',
         url: 'http://www.bqgege.com/reader/.*?/',
@@ -1678,6 +1678,14 @@ const sites = [
                 prevSectionEl.text("上一页")
             }
         }
+
+    },
+
+    {siteName: '大熊猫文学网',
+        url: 'https://www.dxmwx.org/read/\\d+_\\d+.html',
+        exampleUrl: 'https://www.dxmwx.org/read/40004_9947948.html',
+
+        contentSelector: '#Lab_Contents'
 
     }
 ];

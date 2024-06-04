@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.3
+// @version        7.9.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -236,6 +236,7 @@
 // @match          *://feibzw.com/Html/*/*.html
 // @match          *://www.xsbiquge.la/book/*/*.html
 // @match          *://www.bqgege.com/reader/*/*
+// @match          *://www.dxmwx.org/read/*_*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2655,8 +2656,8 @@
 
       },
 
-      // 需要配合 ignore-x-frame-options 扩展使用 
-      // https://chromewebstore.google.com/detail/ignore-x-frame-options/ammjifkhlacaphegobaekhnapdjmeclo
+      // 需要配合 ignore-x-frame-headers 扩展使用 
+      // https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
       // https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
       {siteName: '笔趣阁',
           url: 'http://www.bqgege.com/reader/.*?/',
@@ -2691,6 +2692,14 @@
                   prevSectionEl.text("上一页");
               }
           }
+
+      },
+
+      {siteName: '大熊猫文学网',
+          url: 'https://www.dxmwx.org/read/\\d+_\\d+.html',
+          exampleUrl: 'https://www.dxmwx.org/read/40004_9947948.html',
+
+          contentSelector: '#Lab_Contents'
 
       }
   ];

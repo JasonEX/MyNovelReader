@@ -12,7 +12,7 @@
 
 # 注意事项
 
-部分站点需要安装 `ignore-x-frame-options` 扩展绕过 iframe 限制，否则脚本无法正常工作
+部分站点需要安装 `ignore-x-frame-headers` 扩展绕过 iframe 限制，否则脚本无法正常工作
 
 安装扩展：
 [Chrome][ignore-x-frame-options-chrome]
@@ -30,6 +30,6 @@
 [install_github]: https://github.com/821938089/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
 [siteExample]: /src/MyNovelReader/rule/siteExample.js
-[ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-options/ammjifkhlacaphegobaekhnapdjmeclo
+[ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
 [ignore-x-frame-options-firefox]: https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
 
