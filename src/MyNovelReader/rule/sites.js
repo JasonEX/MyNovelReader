@@ -1094,7 +1094,8 @@ const sites = [
     },
 
     {siteName: '精华书阁',
-        url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan|richvv).com/\\d+/.*?.html',
+        // url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan|richvv).com/\\d+/.*?.html',
+        url: 'https?://www.babahome.net/\\d+/.*?.html',
         exampleUrl: 'https://www.richvv.com/172/652.html',
 
         contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',

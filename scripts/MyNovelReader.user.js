@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.4
+// @version        7.9.5
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -192,7 +192,7 @@
 // @match          *://www.bg3.co/novel/pagea/*.html
 // @match          *://cn.bg3.co/novel/pagea/*.html
 // @match          *://tw.bg3.co/novel/pagea/*.html
-// @match          *://www.richvv.com/*/*.html
+// @match          *://www.babahome.net/*/*.html
 // @match          *://wufangdao.com/html/*/*/*.html
 // @match          *://www.jinghuashuge.cc/id/*/*.html
 // @match          *://www.qbiqus.com/*/*.html
@@ -2108,7 +2108,8 @@
       },
 
       {siteName: '精华书阁',
-          url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan|richvv).com/\\d+/.*?.html',
+          // url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan|richvv).com/\\d+/.*?.html',
+          url: 'https?://www.babahome.net/\\d+/.*?.html',
           exampleUrl: 'https://www.richvv.com/172/652.html',
 
           contentSelector: '#nr_content, #hp_coonten, #jb_contsen, #wr_consten',
