@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.5
+// @version        7.9.6
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -237,6 +237,7 @@
 // @match          *://www.xsbiquge.la/book/*/*.html
 // @match          *://www.bqgege.com/reader/*/*
 // @match          *://www.dxmwx.org/read/*_*.html
+// @match          *://ixdzs8.com/read/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2701,6 +2702,18 @@
           exampleUrl: 'https://www.dxmwx.org/read/40004_9947948.html',
 
           contentSelector: '#Lab_Contents'
+
+      },
+
+      {siteName: '爱下电子书',
+          url: 'https://ixdzs8.com/read/\\d+/p\\d+.html',
+          exampleUrl: 'https://ixdzs8.com/read/42730/p1.html',
+
+          prevSelector: '.chapter-pre',
+          nextSelector: '.chapter-next',
+          indexSelector: 'a:contains(书籍页)',
+
+          contentSelector: '.page-content section'
 
       }
   ];

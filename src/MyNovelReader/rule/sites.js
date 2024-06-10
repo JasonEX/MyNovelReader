@@ -1688,6 +1688,18 @@ const sites = [
 
         contentSelector: '#Lab_Contents'
 
+    },
+
+    {siteName: '爱下电子书',
+        url: 'https://ixdzs8.com/read/\\d+/p\\d+.html',
+        exampleUrl: 'https://ixdzs8.com/read/42730/p1.html',
+
+        prevSelector: '.chapter-pre',
+        nextSelector: '.chapter-next',
+        indexSelector: 'a:contains(书籍页)',
+
+        contentSelector: '.page-content section'
+
     }
 ];
 
