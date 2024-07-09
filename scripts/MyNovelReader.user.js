@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.6
+// @version        7.9.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -22,11 +22,11 @@
 // @grant          GM_info
 // @grant          unsafeWindow
 // @homepageURL    https://greasyfork.org/scripts/292/
-// @require        https://cdn.staticfile.org/vue/2.2.6/vue.min.js
-// @require        https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js
-// @require        https://cdn.staticfile.org/underscore.js/1.7.0/underscore-min.js
-// @require        https://cdn.staticfile.org/keymaster/1.6.1/keymaster.min.js
-// @require        https://cdn.staticfile.org/crypto-js/4.1.1/crypto-js.min.js
+// @require        https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.6/vue.min.js
+// @require        https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js
+// @require        https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js
+// @require        https://cdnjs.cloudflare.com/ajax/libs/keymaster/1.6.1/keymaster.min.js
+// @require        https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js
 
 // @connect        *
 // @connect        *://*.qidian.com/
