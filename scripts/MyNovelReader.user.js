@@ -238,6 +238,7 @@
 // @match          *://www.bqgege.com/reader/*/*
 // @match          *://www.dxmwx.org/read/*_*.html
 // @match          *://ixdzs8.com/read/*/*.html
+// @match          *://www.69shuba.pro/txt/*/*
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
