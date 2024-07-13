@@ -682,7 +682,10 @@ const sites = [
     // www.69shu.me
     // www.69shuba.me
     // www.69shu.ac
-    url: "https?://www\\.69shuba\\.pro/txt/\\d+/\\d+",
+    // www.69yuedu.net
+    // www.69yuedu.pro
+    // www.69yuedu.co
+    url: "https?://69shuba\\.cx/txt/\\d+/\\d+",
     exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
     // contentHandle: false,
     titleSelector: 'h1',
