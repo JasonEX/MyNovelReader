@@ -228,7 +228,6 @@
 // @match          *://tw.linovelib.com/novel/*/*.html
 // @match          *://www.wenku8.net/novel/*/*/*.htm
 // @match          *://www.uuread.tw/chapter/*/*.html
-// @match          *://69shux.com/txt/*/*
 // @match          *://www.biquxs.com/book/*/*.html
 // @match          *://www.dbxsc.com/book/*/*.html
 // @match          *://www.weifengxs.com/chapter/*/*.html
@@ -239,7 +238,7 @@
 // @match          *://www.bqgege.com/reader/*/*
 // @match          *://www.dxmwx.org/read/*_*.html
 // @match          *://ixdzs8.com/read/*/*.html
-// @include        *://www.69shu*/txt/*/*
+// @include        *://*69shu*/txt/*/*
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
