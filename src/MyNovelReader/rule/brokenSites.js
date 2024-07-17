@@ -2187,4 +2187,26 @@ const brokenSites = [
 
     },
 
+    {siteName: '霹雳书坊',
+        url: 'https?://(?:www|m).pilibook.com/\\d+/\\d+/\\d+.html',
+        exampleUrl: 'https://www.pilibook.com/2/2781/692547.html',
+
+        nextSelector($doc) {
+            return $doc.find('img[src="https://m.pilibook.com/17mb/style/03.png"]')
+                .parent()
+                .attr('href')
+        },
+        prevSelector($doc) {
+            return $doc.find('img[src="https://m.pilibook.com/17mb/style/01.png"]')
+                .parent()
+                .attr('href')
+        },
+        indexSelector($doc) {
+            return $doc.find('img[src="https://m.pilibook.com/17mb/style/05.png"]')
+                .parent()
+                .attr('href')
+        },
+
+    },
+
 ]

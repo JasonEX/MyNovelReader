@@ -12,8 +12,13 @@
 
 [jsDelivr][install_jsdelivr]
 
-## 本版本
-[Github][install_github_JasonEX]
+# 注意事项
+
+部分站点需要安装 `ignore-x-frame-headers` 扩展绕过 iframe 限制，否则脚本无法正常工作
+
+安装扩展：
+[Chrome][ignore-x-frame-options-chrome]
+[Firefox][ignore-x-frame-options-firefox]
 
 # 原作者主页
 
@@ -28,3 +33,6 @@
 [install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
 [install_github_JasonEX]: https://github.com/JasonEX/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [siteExample]: /src/MyNovelReader/rule/siteExample.js
+[ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
+[ignore-x-frame-options-firefox]: https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
+

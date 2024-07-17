@@ -17,8 +17,8 @@ var Rule = {
   titleReplace: /^章节目录|^文章正文|^正文卷?|全文免费阅读|最新章节|\(文\)/,
 
   // nextRegExp: /[上前下后][一]?[页张个篇章节步]/,
-  nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
-  prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
+  nextSelector: "a[rel='next'], a:contains('下一页'), a:contains('下一頁'), a:contains('下一章'), a:contains('下一节'), a:contains('下页'), a:contains('下章')",
+  prevSelector: "a[rel='prev'], a:contains('上一页'), a:contains('上一頁'), a:contains('上一章'), a:contains('上一节'), a:contains('上页'), a:contains('上章')",
   // 忽略的下一页链接，匹配 href
   nextUrlIgnore: [
     /(?:(?:index|list|last|LastPage|end)\.)|BuyChapterUnLogin|^javascript:/i,
