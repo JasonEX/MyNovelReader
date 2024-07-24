@@ -346,7 +346,7 @@ interface SiteRule {
 
   /**
    * 每次頁面加載完成時調用，使用 iframe 請求完成時也會調用
-   * this = 该站点规则 Object
+   * this = 該站點規則 Object
    * $doc=JQuery(document)
    * @author Paul-16098
    *
@@ -356,7 +356,7 @@ interface SiteRule {
 
   /**
    * 進入閲讀模式時調用
-   * this = 该站点规则 Object
+   * this = 該站點規則 Object
    * $doc=JQuery(document)
    * @author Paul-16098
    *
@@ -366,7 +366,7 @@ interface SiteRule {
 
   /**
    * 閲讀界面加載完成時調用
-   * this = 该站点规则 Object
+   * this = 該站點規則 Object
    * @author Paul-16098
    *
    * @type {?(this: object) => any}
