@@ -4,6 +4,8 @@
 
 [自定义站点规则说明][siteExample]
 
+[自定义站点规则说明(TS)][siteExampleTs]
+
 # 安装
 
 [Github][install_github]
@@ -30,6 +32,7 @@
 [install_github]: https://github.com/821938089/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
 [siteExample]: /src/MyNovelReader/rule/siteExample.js
+[siteExampleTs]: /src/MyNovelReader/rule/siteExample.ts
 [ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
 [ignore-x-frame-options-firefox]: https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
 
