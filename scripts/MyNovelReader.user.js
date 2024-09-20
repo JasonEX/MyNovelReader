@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.8
+// @version        7.9.8.1
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -239,6 +239,7 @@
 // @match          *://www.dxmwx.org/read/*_*.html
 // @match          *://ixdzs8.com/read/*/*.html
 // @include        *://*69shu*/txt/*/*
+// @match          *://www.69hsw.com/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
@@ -2623,7 +2624,6 @@
           indexSelector: "a.btn-primary:nth-child(3)",
           contentSelector: ".txt_tcontent"
       },
-
       {
           siteName: '69shux',
           url: 'https://69shux.com/txt/\\d+/\\d+',
@@ -2640,7 +2640,6 @@
           iframeSandbox: "allow-same-origin allow-scripts"
 
       },
-
       {
           siteName: '笔趣阁',
           url: 'http://www.biquxs.com/book/\\d+/\\d+.html',
@@ -2655,7 +2654,6 @@
           indexSelector: '.page_chapter .back',
 
       },
-
       {
           siteName: '微风小说',
           url: 'https?://(?:m|www).wfxs.tw/xiaoshuo/\\d+/\\d+/',
@@ -2664,7 +2662,6 @@
           contentReplace: ['本章尚未完結,請點擊下一頁繼續閱讀---->>>', '本章已閱讀完畢\\(請點擊下一章繼續閱讀!\\)']
 
       },
-
       {
           siteName: '新笔趣阁',
           url: 'http://www.xsbiquge.la/book/\\d+/\\d+.html',
@@ -2679,7 +2676,6 @@
           indexSelector: '.page_chapter .back',
 
       },
-
       // 需要配合 ignore-x-frame-headers 扩展使用 
       // https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
       // https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
@@ -2719,7 +2715,6 @@
           }
 
       },
-
       {
           siteName: '大熊猫文学网',
           url: 'https://www.dxmwx.org/read/\\d+_\\d+.html',
@@ -2728,7 +2723,6 @@
           contentSelector: '#Lab_Contents'
 
       },
-
       {
           siteName: '爱下电子书',
           url: 'https://ixdzs8.com/read/\\d+/p\\d+.html',
@@ -2740,6 +2734,14 @@
 
           contentSelector: '.page-content section'
 
+      },
+      {
+          siteName: '69书吧',
+          url: 'https://www.69hsw.com/\\d+/\\d+(_\\d+)?\.html',
+          exampleUrl: 'https://www.69hsw.com/87/69776.html',
+
+          bookTitleSelector: '#wrapper > article > div.con_top > a:nth-child(3)',
+          titleSelector: ['h1', '（./.）']
       }
   ];
 
