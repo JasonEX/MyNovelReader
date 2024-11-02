@@ -246,7 +246,6 @@ const sites = [
             );
         }
     },
-
     {
         siteName: "纵横中文网",
         url: "https?://read\\.zongheng\\.com/chapter/\\d+\\/\\d+\\.html",
@@ -259,7 +258,6 @@ const sites = [
             $doc.find('.Jfcounts').remove()
         }
     },
-
     {
         siteName: "晋江文学网",
         url: /^https?:\/\/(www|my)\.jjwxc\.net\/onebook(|_vip)\.php\S*/,
@@ -461,7 +459,6 @@ const sites = [
             '来源长佩文学网（https://www.gongzicp.com）',
         ]
     },
-
     // ===========================================================
     {
         siteName: "E品中文网",
@@ -518,7 +515,6 @@ const sites = [
             "请记住本站域名:"
         ]
     },
-
     // ===== 特殊的获取下一页链接
     //   {siteName: "看书啦",
     //       url: "^https?://www.kanshu.la/book/\\w+/\\d+\\.shtml",
@@ -593,7 +589,6 @@ const sites = [
         useiframe: true,
         contentRemove: 'a',
     },
-
     // 这网站为了防抓取，内容顺序都是不对的，只好采用 iframe 方式
     {
         siteName: '和图书',
@@ -616,7 +611,6 @@ const sites = [
             })
         }
     },
-
     {
         siteName: "69书吧",
         // www.69shu.com
@@ -633,7 +627,7 @@ const sites = [
         // www.69yuedu.net
         // www.69yuedu.pro
         // www.69yuedu.co
-        url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|top|com|cx|net|co|me)/txt/\\d+/\\d+",
+        url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c)/\\d+/\\d+",
         exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
         // contentHandle: false,
         titleSelector: 'h1',
@@ -1029,7 +1023,6 @@ const sites = [
         nextUrl: 'a[rel=next]',
         prevUrl: 'a[rel=prev]',
     },
-
     {
         siteName: '精华书阁',
         // url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan|richvv).com/\\d+/.*?.html',
@@ -1131,7 +1124,6 @@ const sites = [
         prevSelector: "a:contains('上一话')",
         nextSelector: "a:contains('下一话')",
     },
-
     {
         siteName: "独步小说网",
         url: "https?://www.dbxsc.com/book/.*?/.*?\\.html",
