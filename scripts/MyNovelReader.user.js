@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.8.1
+// @version        7.9.8.2
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -238,7 +238,7 @@
 // @match          *://www.bqgege.com/reader/*/*
 // @match          *://www.dxmwx.org/read/*_*.html
 // @match          *://ixdzs8.com/read/*/*.html
-// @include        *://*69shu*/txt/*/*
+// @include        *://*69shu*/*/*/*
 // @match          *://www.69hsw.com/*/*.html
 
 // legado-webui
@@ -1352,7 +1352,6 @@
               );
           }
       },
-
       {
           siteName: "纵横中文网",
           url: "https?://read\\.zongheng\\.com/chapter/\\d+\\/\\d+\\.html",
@@ -1365,7 +1364,6 @@
               $doc.find('.Jfcounts').remove();
           }
       },
-
       {
           siteName: "晋江文学网",
           url: /^https?:\/\/(www|my)\.jjwxc\.net\/onebook(|_vip)\.php\S*/,
@@ -1567,7 +1565,6 @@
               '来源长佩文学网（https://www.gongzicp.com）',
           ]
       },
-
       // ===========================================================
       {
           siteName: "E品中文网",
@@ -1624,7 +1621,6 @@
               "请记住本站域名:"
           ]
       },
-
       // ===== 特殊的获取下一页链接
       //   {siteName: "看书啦",
       //       url: "^https?://www.kanshu.la/book/\\w+/\\d+\\.shtml",
@@ -1699,7 +1695,6 @@
           useiframe: true,
           contentRemove: 'a',
       },
-
       // 这网站为了防抓取，内容顺序都是不对的，只好采用 iframe 方式
       {
           siteName: '和图书',
@@ -1722,7 +1717,6 @@
               });
           }
       },
-
       {
           siteName: "69书吧",
           // www.69shu.com
@@ -1739,7 +1733,7 @@
           // www.69yuedu.net
           // www.69yuedu.pro
           // www.69yuedu.co
-          url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|top|com|cx|net|co|me)/txt/\\d+/\\d+",
+          url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c)/\\d+/\\d+",
           exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
           // contentHandle: false,
           titleSelector: 'h1',
@@ -2135,7 +2129,6 @@
           nextUrl: 'a[rel=next]',
           prevUrl: 'a[rel=prev]',
       },
-
       {
           siteName: '精华书阁',
           // url: 'https?://(?:www.)?(?:2ksk|jhssd|xbyuan|richvv).com/\\d+/.*?.html',
@@ -2237,7 +2230,6 @@
           prevSelector: "a:contains('上一话')",
           nextSelector: "a:contains('下一话')",
       },
-
       {
           siteName: "独步小说网",
           url: "https?://www.dbxsc.com/book/.*?/.*?\\.html",
