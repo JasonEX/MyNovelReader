@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.8.3
+// @version        7.9.8.4
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -259,7 +259,7 @@
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.yulusy.com/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html
-// @match          *://m.lwxiaoshuo.org/shu/*/*.html
+// @match          *://m.ilwxs.com/shu/*/*.html
 // @match          *://m.shuhaige.net/*/*.html
 
 // @exclude        */List.htm
@@ -2735,6 +2735,41 @@
 
           bookTitleSelector: '#wrapper > article > div.con_top > a:nth-child(3)',
           titleSelector: ['h1', '（./.）']
+      },
+      {
+          siteName: '乐文小说',
+          url: 'https://m\.ilwxs\.com/shu/\\d+/\\d+\.html',
+          exampleUrl: 'https://m.ilwxs.com/shu/36354/171272950.html',
+          checkSection: true,
+          bookTitleSelector: ".path > a:nth-child(2)",
+          titleSelector: ".headline",
+          prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+          nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+          indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+          contentSelector: ".content",
+
+          startLaunch($doc) {
+              cleanupEvents();
+          }
+      },
+      {
+          siteName: '书海阁',
+          url: 'https://m\.shuhaige\.net/\\d+/\\d+(_\\d+)?\.html',
+          exampleUrl: 'https://m.shuhaige.net/36354/171272950.html',
+          checkSection: true,
+          bookTitleSelector: ".path > a:nth-child(2)",
+          titleSelector: ".headline",
+          prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+          nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+          indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+          contentSelector: ".content",
+          contentReplace: [
+              "^.*请点击下一页继续阅读.*$"
+          ],
+
+          startLaunch($doc) {
+              cleanupEvents();
+          }
       }
   ];
 
