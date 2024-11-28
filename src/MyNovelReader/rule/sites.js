@@ -1644,6 +1644,25 @@ const sites = [
         startLaunch($doc) {
             cleanupEvents();
         }
+    },
+    {
+        siteName: '书海阁',
+        url: 'https://m\.shuhaige\.net/\\d+/\\d+(_\\d+)?\.html',
+        exampleUrl: 'https://m.shuhaige.net/36354/171272950.html',
+        checkSection: true,
+        bookTitleSelector: ".path > a:nth-child(2)",
+        titleSelector: ".headline",
+        prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+        nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+        indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+        contentSelector: ".content",
+        contentReplace: [
+            "^.*请点击下一页继续阅读.*$"
+        ],
+
+        startLaunch($doc) {
+            cleanupEvents();
+        }
     }
 ];
 
