@@ -1628,6 +1628,22 @@ const sites = [
 
         bookTitleSelector: '#wrapper > article > div.con_top > a:nth-child(3)',
         titleSelector: ['h1', '（./.）']
+    },
+    {
+        siteName: '乐文小说',
+        url: 'https://m\.ilwxs\.com/shu/\\d+/\\d+\.html',
+        exampleUrl: 'https://m.ilwxs.com/shu/36354/171272950.html',
+        checkSection: true,
+        bookTitleSelector: ".path > a:nth-child(2)",
+        titleSelector: ".headline",
+        prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+        nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+        indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+        contentSelector: ".content",
+
+        startLaunch($doc) {
+            cleanupEvents();
+        }
     }
 ];
 

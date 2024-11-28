@@ -259,7 +259,7 @@
 // @match          *://m.biquxs.com/book/*/*.html
 // @match          *://m.yulusy.com/yulus/*/*.html
 // @match          *://m.xianqihaotianmi.org/*/*.html
-// @match          *://m.lwxiaoshuo.org/shu/*/*.html
+// @match          *://m.ilwxs.com/shu/*/*.html
 // @match          *://m.shuhaige.net/*/*.html
 
 // @exclude        */List.htm
