@@ -1452,7 +1452,7 @@ const sites = [
             //contentPatch: function (fakeStub) {
             $doc.find('#chaptercontent p').remove();
             $doc.find('#chaptercontent a').remove();
-            const _title = $doc.find('title').text().match(/(第\d+章\s+[\u4e00-\u9fa5]+)/)[0];
+            const _title = $doc.find('title').text().match(/(第[^\s]+章\s+[\u4e00-\u9fa5]+)/)[0];
             $doc.find('#chaptercontent').contents().filter(function () {
                 return this.nodeType === 3 && new RegExp(_title.replace(/\s+/g, "\\s+")).test($(this).text());
             }).remove();
