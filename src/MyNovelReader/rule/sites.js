@@ -637,6 +637,9 @@ const sites = [
         prevSelector: '.page1 a:nth-child(1)',
         indexSelector: '.page1 a:nth-child(3)',
         useiframe: true,
+        contentReplace: [
+            '.*无错版本在69书吧.*'
+        ],
     },
     {
         siteName: "书山中文网",
