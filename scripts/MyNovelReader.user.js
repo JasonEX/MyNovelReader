@@ -240,6 +240,7 @@
 // @match          *://ixdzs8.com/read/*/*.html
 // @include        *://*69shu*/*/*/*
 // @match          *://www.69hsw.com/*/*.html
+// @match          *://www.69yuedu.net/r/*/*.html
 
 // legado-webui
 // @match          *://localhost:5000/bookshelf/*/*/
