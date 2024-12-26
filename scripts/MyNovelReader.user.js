@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.8.6
+// @version        7.9.8.7
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1734,7 +1734,7 @@
           // www.69yuedu.net
           // www.69yuedu.pro
           // www.69yuedu.co
-          url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c)/\\d+/\\d+",
+          url: "https?://(www\\.)?69[shu|yuedu][a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c|r)/\.+/\.+",
           exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
           // contentHandle: false,
           titleSelector: 'h1',
