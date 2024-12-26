@@ -627,7 +627,7 @@ const sites = [
         // www.69yuedu.net
         // www.69yuedu.pro
         // www.69yuedu.co
-        url: "https?://(www\\.)?69shu[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c)/\\d+/\\d+",
+        url: "https?://(www\\.)?69[shu|yuedu][a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c|r)/\.+/\.+",
         exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
         // contentHandle: false,
         titleSelector: 'h1',
