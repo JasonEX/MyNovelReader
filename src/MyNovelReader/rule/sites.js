@@ -638,7 +638,8 @@ const sites = [
         indexSelector: '.page1 a:nth-child(3)',
         useiframe: true,
         contentReplace: [
-            '.*无错版本在69书吧.*'
+            '.*无错版本在69书吧.*',
+            '.*本小说最新章节在.*首发.*'
         ],
     },
     {
