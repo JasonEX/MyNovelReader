@@ -627,7 +627,7 @@ const sites = [
         // www.69yuedu.net
         // www.69yuedu.pro
         // www.69yuedu.co
-        url: "https?://(www\\.)?69[shu|yuedu][a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c|r)/\.+/\.+",
+        url: "https?://(www\\.)?69(shu|yuedu)[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c|r)/\.+/\.+",
         exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
         // contentHandle: false,
         titleSelector: 'h1',
@@ -638,10 +638,7 @@ const sites = [
         indexSelector: '.page1 a:nth-child(3)',
         useiframe: true,
         contentReplace: [
-            '.*本小说最新章节在.*首发.*',
-            '.*更多最新热门小说在.*书吧看.*',
-            '.*6.*9.*书.*吧.*',
-            '.*六.*九.*书.*吧.*'
+            '.*[6六].*[9九].*书.*吧.*'
         ],
     },
     {
