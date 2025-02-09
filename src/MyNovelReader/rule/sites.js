@@ -1666,6 +1666,22 @@ const sites = [
         startLaunch($doc) {
             cleanupEvents();
         }
+    },
+    {
+        siteName: '天天书吧',
+        url: 'https://m\.ttshu8\.com//book/\\d+/\\d+(_\\d+)?\.html',
+        exampleUrl: 'https://m.ttshu8.com/book/126065/162737983.html',
+        checkSection: true,
+        bookTitleSelector: ".path > a:nth-child(2)",
+        titleSelector: ".headline",
+        prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+        nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+        indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+        contentSelector: ".content",
+
+        startLaunch($doc) {
+            cleanupEvents();
+        }
     }
 ];
 
