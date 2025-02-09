@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.8.7
+// @version        7.9.8.8
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -262,6 +262,7 @@
 // @match          *://m.xianqihaotianmi.org/*/*.html
 // @match          *://m.ilwxs.com/shu/*/*.html
 // @match          *://m.shuhaige.net/*/*.html
+// @match          *://m.ttshu8.com/book/*/*.html
 
 // @exclude        */List.htm
 // @exclude        */List.html
@@ -2770,6 +2771,22 @@
           contentReplace: [
               "^.*请点击下一页继续阅读.*$"
           ],
+
+          startLaunch($doc) {
+              cleanupEvents();
+          }
+      },
+      {
+          siteName: '天天书吧',
+          url: 'https://m\.ttshu8\.com//book/\\d+/\\d+(_\\d+)?\.html',
+          exampleUrl: 'https://m.ttshu8.com/book/126065/162737983.html',
+          checkSection: true,
+          bookTitleSelector: ".path > a:nth-child(2)",
+          titleSelector: ".headline",
+          prevSelector: "div.pager:nth-child(5) > a:nth-child(1)",
+          nextSelector: "div.pager:nth-child(5) > a:nth-child(3)",
+          indexSelector: "div.pager:nth-child(5) > a:nth-child(2)",
+          contentSelector: ".content",
 
           startLaunch($doc) {
               cleanupEvents();
