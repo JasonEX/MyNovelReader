@@ -109,7 +109,17 @@ export class IframeRequest extends BaseRequest {
     if (!this.display) {
       this.show()
     }
-    this.iframe.setAttribute('src', url + '#mynovelreader')
+
+    const src = url + '#mynovelreader'
+
+    if (this.iframe.src === src) {
+      this.iframe.setAttribute('src', 'about:blank')
+      await sleep(100)
+      this.iframe.setAttribute('src', src)
+    } else {
+      this.iframe.setAttribute('src', src)
+    }
+
     return new Promise(resolve => (this.resolve = resolve))
   }
 

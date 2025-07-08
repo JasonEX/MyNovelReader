@@ -3,7 +3,7 @@
 // @name           My Novel Reader
 // @name:zh-CN     小说阅读脚本
 // @name:zh-TW     小說閱讀腳本
-// @version        7.9.9
+// @version        8.0.0
 // @namespace      https://github.com/ywzhaiqi
 // @author         ywzhaiqi
 // @contributor    Roger Au, shyangs, JixunMoe、akiba9527 及其他网友
@@ -1701,7 +1701,8 @@
       // www.69yuedu.net
       // www.69yuedu.pro
       // www.69yuedu.co
-      url: "https?://69shuba\\.cx/txt/\\d+/\\d+",
+      // www.69shu.biz
+      url: "https?://www.69shuba\\.com/txt/\\d+/\\d+",
       exampleUrl: "https://www.69shuba.com/txt/46867/31307961",
       // contentHandle: false,
       titleSelector: 'h1',
@@ -1711,6 +1712,7 @@
       prevSelector: '.page1 a:nth-child(1)',
       indexSelector: '.page1 a:nth-child(3)',
       useiframe: true,
+      withReferer: true,
       },
 
     {siteName: "书山中文网",
@@ -6680,7 +6682,17 @@
       if (!this.display) {
         this.show();
       }
-      this.iframe.setAttribute('src', url + '#mynovelreader');
+
+      const src = url + '#mynovelreader';
+
+      if (this.iframe.src === src) {
+        this.iframe.setAttribute('src', 'about:blank');
+        await sleep(100);
+        this.iframe.setAttribute('src', src);
+      } else {
+        this.iframe.setAttribute('src', src);
+      }
+
       return new Promise(resolve => (this.resolve = resolve))
     }
 
@@ -6818,6 +6830,7 @@
       iframeRequest: null,
       // 站点规则
       site: null,
+      preloadNextPagePromiseResolve: null,
 
       init: async function() {
           if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
@@ -7534,6 +7547,7 @@
               if ($(this).offset().top < fromTop)
                   return this;
           });
+          var visitedLength = cur.length;
           // Get the id of the current element
           App$1.curFocusIndex = cur.length - 1;
           cur = cur[cur.length - 1];
@@ -7568,6 +7582,12 @@
                   document.title = curTitle;
 
               }
+
+              if (this.preloadNextPagePromiseResolve && App$1.scrollItems.length === visitedLength) {
+                  this.preloadNextPagePromiseResolve();
+                  this.preloadNextPagePromiseResolve = null;
+              }
+
           }
       },
       getRemain: function() {
@@ -7640,6 +7660,7 @@
       afterLoad: async function() {
 
           if (Setting.preloadNextPage) {
+              await new Promise(resolve => this.preloadNextPagePromiseResolve = resolve);
               await sleep(200);
               App$1.doRequest();  // 不用 await
           }
