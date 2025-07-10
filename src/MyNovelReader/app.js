@@ -41,6 +41,7 @@ var App = {
     iframeRequest: null,
     // 站点规则
     site: null,
+    preloadNextPagePromiseResolve: null,
 
     init: async function () {
         if (["mynovelreader-iframe", "superpreloader-iframe"].indexOf(window.name) != -1) { // 用于加载下一页的 iframe
@@ -761,6 +762,7 @@ var App = {
             if ($(this).offset().top < fromTop)
                 return this;
         });
+        var visitedLength = cur.length
         // Get the id of the current element
         App.curFocusIndex = cur.length - 1
         cur = cur[cur.length - 1];
@@ -795,6 +797,12 @@ var App = {
                 document.title = curTitle;
 
             }
+
+            if (this.preloadNextPagePromiseResolve && App.scrollItems.length === visitedLength) {
+                this.preloadNextPagePromiseResolve()
+                this.preloadNextPagePromiseResolve = null
+            }
+
         }
     },
     getRemain: function () {
@@ -869,6 +877,7 @@ var App = {
     afterLoad: async function () {
 
         if (Setting.preloadNextPage) {
+            await new Promise(resolve => this.preloadNextPagePromiseResolve = resolve)
             await sleep(200)
             App.doRequest();  // 不用 await
         }

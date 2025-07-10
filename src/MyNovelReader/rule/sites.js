@@ -640,6 +640,7 @@ const sites = [
         contentReplace: [
             '.*[6六].*[9九].*书.*吧.*'
         ],
+        withReferer: true,
     },
     {
         siteName: "书山中文网",
