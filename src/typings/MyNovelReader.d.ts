@@ -47,6 +47,8 @@ export interface SiteConfig {
   isVipChapter?: ($doc: JQuery<Document>) => boolean | undefined
 }
 
-interface replaceMap {
+export interface replaceMap {
   [key: string]: string
 }
+
+export type Nullable<T> = T | null | undefined;

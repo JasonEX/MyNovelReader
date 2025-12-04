@@ -1,7 +1,7 @@
 import Setting from './Setting'
 import config from './config'
 import Rule from './rule'
-import tpl_mainHtml from './res/main.html'
+import tpl_mainHtml from './res/main.tpl'
 import Parser from './parser'
 import {
     C, L_getValue, L_setValue, L_removeValue, parseHTML,
@@ -542,7 +542,7 @@ var App = {
         App.oArticles.push(chapter[0].outerHTML);
         App.parsers.push(parser);
 
-        bus.$emit(APPEND_NEXT_PAGE)
+        bus.emit(APPEND_NEXT_PAGE)
     },
     resetCache: function () {  // 更新缓存变量
         App.menuItems = App.$chapterList.find("div");
@@ -663,7 +663,7 @@ var App = {
         });
 
         key(Setting.openSpeechKey, function () {
-            bus.$emit(SHOW_SPEECH)
+            bus.emit(SHOW_SPEECH)
             return false;
         });
 

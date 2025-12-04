@@ -1,5 +1,18 @@
 // 其它设置
-const config = {
+export interface Config {
+  lang: string;
+  soduso: boolean;
+  // content_replacements: boolean;     // 小说屏蔽字修复
+  fixImageFloats: boolean;
+  paragraphBlank: boolean;
+  end_color: string;
+  // PRELOADER: boolean;                // 提前预读下一页
+  xhr_time: number;
+  download_delay: number;
+  dumpContentMinLength: number;
+}
+
+const config: Config = {
   lang: 'zh-CN',
 
   soduso: false,                  // www.sodu.so 跳转

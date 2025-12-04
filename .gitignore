@@ -1,3 +1,4 @@
+.serena/
 node_modules
 bower_components
 *.sublime-workspace
@@ -10,3 +11,4 @@ temp/
 */Super_preloaderPlus/test/testGoogleSearch.js
 src/common/test.ts
 rollup.build.css
+package-lock.json

@@ -430,7 +430,7 @@ var UI = {
                 break;
             case 'speech':
                 UI.preferencesCloseHandler();
-                bus.$emit(SHOW_SPEECH)
+                bus.emit(SHOW_SPEECH)
                 break;
             default:
                 break;

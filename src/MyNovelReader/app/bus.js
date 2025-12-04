@@ -1,6 +1,6 @@
-import Vue from 'vue'
+import mitt from 'mitt'
 
-const bus = new Vue()
+const bus = mitt()
 
 // 显示 语音朗读 对话框
 export const SHOW_SPEECH = 'show-speech'

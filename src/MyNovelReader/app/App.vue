@@ -4,34 +4,28 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import bus, { SHOW_SPEECH } from './bus'
 import Speech from './components/Speech.vue'
 
-export default {
-  data() {
-    return {
-      speechDialogVisible: false,
-    }
-  },
-  components: {
-    Speech,
-  },
-  created() {
-    bus.$on(SHOW_SPEECH, this.showSpeech)
-  },
-  beforeDestory() {
-    bus.$off(SHOW_SPEECH, this.hideSpeech)
-  },
-  methods: {
-    showSpeech() {
-      this.speechDialogVisible = true
-    },
-    hideSpeech() {
-      this.speechDialogVisible = false
-    }
-  }
+const speechDialogVisible = ref(false)
+
+const showSpeech = () => {
+  speechDialogVisible.value = true
 }
+
+const hideSpeech = () => {
+  speechDialogVisible.value = false
+}
+
+onMounted(() => {
+  bus.on(SHOW_SPEECH, showSpeech)
+})
+
+onBeforeUnmount(() => {
+  bus.off(SHOW_SPEECH, showSpeech)
+})
 </script>
 
 <style lang="less">

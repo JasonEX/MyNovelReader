@@ -1,9 +1,7 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
 
 export function runVue() {
-  new Vue({
-    el: '#mynovelreader-app',
-    render: h => h(App)
-  })
+  const app = createApp(App)
+  app.mount('#mynovelreader-app')
 }

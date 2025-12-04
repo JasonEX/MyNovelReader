@@ -1,6 +1,6 @@
-import tpl_mainCss from './res/main.css'
-import tpl_preferencesHTML from './res/preferences.html'
-import tpl_preferencesCSS from './res/preferences.css'
+import tpl_mainCss from './res/main.css.txt'
+import tpl_preferencesHTML from './res/preferences.tpl'
+import tpl_preferencesCSS from './res/preferences.css.txt'
 
 var Res = {
   CSS_MAIN: tpl_mainCss,

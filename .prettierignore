@@ -1,0 +1,14 @@
+dist/
+node_modules/
+coverage/
+*.min.js
+*.d.ts
+*.log
+.DS_Store
+.vscode/
+.github/
+scripts/
+# 构建产物
+build/
+# 用户脚本可能包含特殊语法
+scripts/*.user.js

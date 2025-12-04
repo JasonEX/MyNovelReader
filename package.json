@@ -7,8 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "build": "rollup -c rollup.config.js --myinput src/MyNovelReader",
-    "buildw": "rollup -c rollup.config.js -w --myinput src/MyNovelReader"
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+    "format": "prettier --write .",
+    "lint:fix": "eslint . --ext .js,.ts,.vue --fix",
+    "test": "vitest"
   },
   "repository": {
     "type": "git",
@@ -21,26 +26,27 @@
     "url": "https://github.com/ywzhaiqi/userscript/issues"
   },
   "homepage": "https://github.com/ywzhaiqi/userscript#readme",
-  "dependencies": {},
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^14.0.0",
-    "@rollup/plugin-node-resolve": "^8.4.0",
-    "@rollup/plugin-typescript": "^5.0.2",
-    "@rollup/pluginutils": "^4.2.1",
     "@types/jquery": "^3.2.12",
-    "@types/minimist": "^1.2.0",
     "@types/underscore": "^1.11.4",
-    "@ywzhaiqi/rollup-plugin-less": "^0.1.1",
-    "benny": "^3.7.1",
-    "cross-env": "^7.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitejs/plugin-vue": "^5.2.0",
     "dayjs": "^1.11.0",
-    "minimist": "^1.2.6",
-    "node-fetch": "^3.2.3",
-    "rollup": "^2.23.1",
-    "rollup-plugin-string": "^3.0.0",
-    "rollup-plugin-vue2": "^0.8.1",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "less": "^4.0.0",
+    "mitt": "^3.0.0",
+    "prettier": "^3.0.0",
     "terser": "^5.14.1",
     "tslib": "^2.0.1",
-    "typescript": "^3.9.7"
+    "typescript": "^5.0.0",
+    "vite": "^6.2.0",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
+    "vitest": "^3.2.0",
+    "vue": "^3.4.0",
+    "vue-eslint-parser": "^9.0.0"
   }
 }
