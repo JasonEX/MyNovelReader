@@ -1,14 +1,34 @@
+.DS_Store
+Thumbs.db
+
+# Editor / tooling metadata
 .serena/
-node_modules
-bower_components
+.vscode/
 *.sublime-workspace
-*.cache
-.rts2_cache/
+
+# Dependency directories
+node_modules/
+bower_components/
+
+# Build outputs / generated artifacts
+dist/
+rollup.build.css
+scripts/*.user.js.backup
+
+# Temp and cache
 tmp/
 temp/
 .test/
+.rts2_cache/
+*.cache
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test fixtures to skip
 */searchEngineJumpCE/test/
 */Super_preloaderPlus/test/testGoogleSearch.js
 src/common/test.ts
-rollup.build.css
-package-lock.json
