@@ -22,7 +22,7 @@
 // @grant          GM_info
 // @grant          unsafeWindow
 // @homepageURL    https://greasyfork.org/scripts/292/
-// @require        https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.0/vue.global.min.js
+// @require        https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.6/vue.min.js
 // @require        https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js
 // @require        https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js
 // @require        https://cdnjs.cloudflare.com/ajax/libs/keymaster/1.6.1/keymaster.min.js
