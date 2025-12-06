@@ -1,14 +1,14 @@
-import config from './config'
-import Parser from './parser'
-import { loading } from './components/message'
-import App from './app'
-import { saveAs, isWindows } from './utils'
-import getNumFromChapterTitle from './utils/getNumFromChapterTitle'
-import { sleep, C } from './lib'
+import config from './config';
+import Parser from './parser';
+import { loading } from './components/message';
+import App from './app';
+import { saveAs, isWindows } from './utils';
+import getNumFromChapterTitle from './utils/getNumFromChapterTitle';
+import { sleep, C } from './lib';
 
 const chapters = [];
 
-let lastRequestUrl = ""
+let lastRequestUrl = '';
 
 const fileName = {
   bookTitle: '',
@@ -17,39 +17,38 @@ const fileName = {
   end: 0,
 
   setBookTitle(bookTitle) {
-    this.bookTitle = bookTitle
+    this.bookTitle = bookTitle;
   },
   setStart(chapterTitle) {
-    let num = getNumFromChapterTitle(chapterTitle)
+    let num = getNumFromChapterTitle(chapterTitle);
     if (num) {
-      this.start = num
+      this.start = num;
     }
   },
   setEnd(chapterTitle) {
-    let num = getNumFromChapterTitle(chapterTitle)
+    let num = getNumFromChapterTitle(chapterTitle);
     if (num) {
-      this.end = num
+      this.end = num;
     }
   },
 
   toString() {
-    let start = this.start || ''
-    let end = this.end || ''
+    let start = this.start || '';
+    let end = this.end || '';
     let count = chapters.length;
 
-    return `${this.bookTitle || '未知名称'}(${start} - ${end},共${count}章)${this.ext}`
-  }
+    return `${this.bookTitle || '未知名称'}(${start} - ${end},共${count}章)${this.ext}`;
+  },
 };
 
 function toTxt(parser) {
   var html = $.nano('{chapterTitle}\n\n{contentTxt}', parser);
   chapters.push(html);
 
-  var msg = '已下载 ' + chapters.length + ' 章，' +
-    (parser.chapterTitle || '')
+  var msg = '已下载 ' + chapters.length + ' 章，' + (parser.chapterTitle || '');
 
   loading(msg, 0);
-};
+}
 
 function finish(parser) {
   var allTxt = chapters.join('\n\n');
@@ -58,11 +57,11 @@ function finish(parser) {
   }
 
   if (parser) {
-    fileName.setEnd(parser.chapterTitle)
+    fileName.setEnd(parser.chapterTitle);
   }
 
   saveAs(allTxt, fileName.toString());
-};
+}
 
 async function getOnePage(parser, nextUrl) {
   var isEnd = false;
@@ -78,22 +77,22 @@ async function getOnePage(parser, nextUrl) {
     return;
   }
 
-  await sleep(config.download_delay)
+  await sleep(config.download_delay);
 
-  getNextPage(nextUrl)
-};
+  getNextPage(nextUrl);
+}
 
 async function getNextPage(nextUrl) {
-  C.log('[存为txt]正在获取：', nextUrl)
+  C.log('[存为txt]正在获取：', nextUrl);
 
-  const referer = lastRequestUrl || location.href
-  lastRequestUrl = nextUrl
-  let request, doc
+  const referer = lastRequestUrl || location.href;
+  lastRequestUrl = nextUrl;
+  let request, doc;
 
   if (App.site.useiframe) {
-    request = App.iframeRequest
+    request = App.iframeRequest;
   } else {
-    request = App.httpRequest
+    request = App.httpRequest;
   }
 
   if (App.site.withReferer) {
@@ -104,8 +103,8 @@ async function getNextPage(nextUrl) {
 
   if (doc) {
     var par = new Parser(App.site, doc, nextUrl);
-    await par.getAll()
-    await getOnePage(par)
+    await par.getAll();
+    await getOnePage(par);
   } else {
     C.error('超时或连接出错');
     finish();
@@ -113,19 +112,18 @@ async function getNextPage(nextUrl) {
 }
 
 async function run(cachedParsers = []) {
-  C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`)
+  C.log(`[存为txt]每章下载延时 ${config.download_delay} 毫秒`);
 
-  lastRequestUrl = ""
+  lastRequestUrl = '';
 
   cachedParsers.forEach(toTxt);
 
-  var firstParser = cachedParsers[0]
+  var firstParser = cachedParsers[0];
   fileName.setBookTitle(firstParser.bookTitle);
-  fileName.setStart(firstParser.chapterTitle)
+  fileName.setStart(firstParser.chapterTitle);
 
   var lastParser = cachedParsers[cachedParsers.length - 1];
   await getOnePage(null, lastParser.nextUrl);
 }
 
-export default run
-
+export default run;

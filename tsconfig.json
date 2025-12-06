@@ -1,27 +1,28 @@
 {
   "compilerOptions": {
-      "rootDir": "src",
-      "sourceMap": false,          // allow sourcemap support
-      "strictNullChecks": true,   // enable strict null checks as a best practice
-      "noUnusedLocals": true,      // report errors on unused locals
-      "noUnusedParameters": true,  // report errors on unused parameters
-      "module": "esnext",            // specifiy module code generation
-      "jsx": "preserve",          // preserve JSX for Vue JSX support
-      "target": "es2020",            // specify ECMAScript target version
-      "lib": [ "es2020", "dom" ],
-      "moduleResolution": "node",
-      "allowJs": true,             // allow a partial TypeScript and JavaScript codebase
-      "allowSyntheticDefaultImports": true,
-      "skipLibCheck": true,
-      "baseUrl": "./",
-      "paths": {
-        "@/*": ["./src/*"]
-      },
-      "types": ["vue"]            // include Vue type definitions
+    "rootDir": "src",
+    "sourceMap": false, // allow sourcemap support
+    "strictNullChecks": true, // enable strict null checks as a best practice
+    "noUnusedLocals": true, // report errors on unused locals
+    "noUnusedParameters": true, // report errors on unused parameters
+    "module": "esnext", // specifiy module code generation
+    "jsx": "preserve", // preserve JSX for Vue JSX support
+    "target": "es2020", // specify ECMAScript target version
+    "lib": ["es2020", "dom"],
+    "moduleResolution": "node",
+    "allowJs": true, // allow a partial TypeScript and JavaScript codebase
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["vue"] // include Vue type definitions
   },
   "include": [
-    "./**/*.ts",
-    "./**/*.tsx",
-    "./**/*.vue"                  // include Vue single-file components
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue", // include Vue single-file components
+    "src/**/*.d.ts"
   ]
 }

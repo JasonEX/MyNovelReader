@@ -7,16 +7,19 @@
 ## 安装
 
 ### 821938089 上游版本
+
 - [Github][install_github]
 - [jsDelivr][install_jsdelivr]
 
 ## 开发
 
 ### 环境要求
+
 - Node.js >= 18
 - npm
 
 ### 技术栈
+
 - **构建工具**: Vite 6
 - **前端框架**: Vue 3 (Composition API)
 - **语言**: JavaScript / TypeScript
@@ -69,6 +72,7 @@ npm run format
 ## 注意事项
 
 部分站点需要安装 `ignore-x-frame-headers` 扩展绕过 iframe 限制：
+
 - [Chrome][ignore-x-frame-options-chrome]
 - [Firefox][ignore-x-frame-options-firefox]
 

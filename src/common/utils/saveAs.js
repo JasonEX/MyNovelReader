@@ -1,8 +1,8 @@
 function saveAs(data, filename) {
-  if(!filename) filename = 'console.json'
+  if (!filename) filename = 'console.json';
 
   if (typeof data == 'object') {
-      data = JSON.stringify(data, undefined, 4);
+    data = JSON.stringify(data, undefined, 4);
   }
 
   var blob = new Blob([data], { type: 'application/octet-stream' });
@@ -11,7 +11,7 @@ function saveAs(data, filename) {
   tmpLink.href = blobUrl;
   tmpLink.style.display = 'none';
   tmpLink.setAttribute('download', filename);
-  tmpLink.setAttribute('target', '_blank')
+  tmpLink.setAttribute('target', '_blank');
   document.body.appendChild(tmpLink);
 
   tmpLink.click();
@@ -19,4 +19,4 @@ function saveAs(data, filename) {
   window.URL.revokeObjectURL(blobUrl);
 }
 
-export default saveAs
+export default saveAs;

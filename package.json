@@ -1,6 +1,7 @@
 {
   "name": "ywzhaiqi-userscript",
   "version": "2.0.0",
+  "type": "module",
   "description": "ywzhaiqi 的 userScript 脚本",
   "main": "",
   "directories": {
@@ -10,9 +11,10 @@
     "build": "vite build",
     "dev": "vite build --watch",
     "preview": "vite preview",
-    "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+    "lint": "eslint .",
+    "lint:strict": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "lint:fix": "eslint . --ext .js,.ts,.vue --fix",
+    "lint:fix": "eslint . --fix",
     "test": "vitest"
   },
   "repository": {

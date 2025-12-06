@@ -1,38 +1,37 @@
 <!-- 来源：https://github.com/greyby/vue-spinner/blob/master/src/PulseLoader.vue !-->
 <template>
-<div class="v-spinner" v-show="loading">
-    <div class="v-pulse v-pulse1" v-bind:style="[spinnerStyle,spinnerDelay1]">
-    </div><div class="v-pulse v-pulse2" v-bind:style="[spinnerStyle,spinnerDelay2]">
-    </div><div class="v-pulse v-pulse3" v-bind:style="[spinnerStyle,spinnerDelay3]">
-    </div>
+  <div v-show="loading" class="v-spinner">
+    <div class="v-pulse v-pulse1" v-bind:style="[spinnerStyle, spinnerDelay1]"></div>
+    <div class="v-pulse v-pulse2" v-bind:style="[spinnerStyle, spinnerDelay2]"></div>
+    <div class="v-pulse v-pulse3" v-bind:style="[spinnerStyle, spinnerDelay3]"></div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   loading: {
     type: Boolean,
-    default: true
+    default: true,
   },
   color: {
     type: String,
-    default: '#5dc596'
+    default: '#5dc596',
   },
   size: {
     type: String,
-    default: '15px'
+    default: '15px',
   },
   margin: {
     type: String,
-    default: '2px'
+    default: '2px',
   },
   radius: {
     type: String,
-    default: '100%'
-  }
-})
+    default: '100%',
+  },
+});
 
 const spinnerStyle = computed(() => ({
   backgroundColor: props.color,
@@ -45,12 +44,12 @@ const spinnerStyle = computed(() => ({
   animationDuration: '0.75s',
   animationIterationCount: 'infinite',
   animationTimingFunction: 'cubic-bezier(.2,.68,.18,1.08)',
-  animationFillMode: 'both'
-}))
+  animationFillMode: 'both',
+}));
 
-const spinnerDelay1 = { animationDelay: '0.12s' }
-const spinnerDelay2 = { animationDelay: '0.24s' }
-const spinnerDelay3 = { animationDelay: '0.36s' }
+const spinnerDelay1 = { animationDelay: '0.12s' };
+const spinnerDelay2 = { animationDelay: '0.24s' };
+const spinnerDelay3 = { animationDelay: '0.36s' };
 </script>
 
 <style>
@@ -60,40 +59,34 @@ const spinnerDelay3 = { animationDelay: '0.36s' }
     text-align: center;
 }
 */
-@-webkit-keyframes v-pulseStretchDelay
-{
-    0%,
-    80%
-    {
-        -webkit-transform: scale(1);
-                transform: scale(1);
-        -webkit-opacity: 1;
-                opacity: 1;
-    }
-    45%
-    {
-        -webkit-transform: scale(0.1);
-                transform: scale(0.1);
-        -webkit-opacity: 0.7;
-                opacity: 0.7;
-    }
+@-webkit-keyframes v-pulseStretchDelay {
+  0%,
+  80% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    -webkit-opacity: 1;
+    opacity: 1;
+  }
+  45% {
+    -webkit-transform: scale(0.1);
+    transform: scale(0.1);
+    -webkit-opacity: 0.7;
+    opacity: 0.7;
+  }
 }
-@keyframes v-pulseStretchDelay
-{
-    0%,
-    80%
-    {
-        -webkit-transform: scale(1);
-                transform: scale(1);
-        -webkit-opacity: 1;
-                opacity: 1;
-    }
-    45%
-    {
-        -webkit-transform: scale(0.1);
-                transform: scale(0.1);
-        -webkit-opacity: 0.7;
-                opacity: 0.7;
-    }
+@keyframes v-pulseStretchDelay {
+  0%,
+  80% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    -webkit-opacity: 1;
+    opacity: 1;
+  }
+  45% {
+    -webkit-transform: scale(0.1);
+    transform: scale(0.1);
+    -webkit-opacity: 0.7;
+    opacity: 0.7;
+  }
 }
 </style>

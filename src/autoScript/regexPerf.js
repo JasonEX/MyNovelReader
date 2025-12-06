@@ -1,4 +1,4 @@
-const { add, suite, cycle, complete } = require('benny')
+const { add, suite, cycle, complete } = require('benny');
 
 const data = `  第1章 梦的开始
 
@@ -182,15 +182,15 @@ const data = `  第1章 梦的开始
 
   ps：已完本《希泊尼战纪》《蔚蓝星途》《请叫我馆主大人》，有兴趣的可以去看看，谢谢！
 
-  (本章完)`
+  (本章完)`;
 
 // 用于测试的正则
-const re = /a/gim
+const re = /a/gim;
 
 const re2 =
-  /想要看最新章节内容，请下载爱阅小说app，无广告免费阅读最新章节内容。网站已经不更新最新章节内容，最新章节内容已经在爱阅小说APP更新。/gim
-const re3 = /想要/gim
-const re4 = /.*?(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)/gim
+  /想要看最新章节内容，请下载爱阅小说app，无广告免费阅读最新章节内容。网站已经不更新最新章节内容，最新章节内容已经在爱阅小说APP更新。/gim;
+const re3 = /想要/gim;
+const re4 = /.*?(?:下载)?爱阅(?:小说)?app.*?。(?:活动推广期间.*。)/gim;
 
 suite(
   '正则性能测试',
@@ -199,18 +199,18 @@ suite(
   //   data.replace(re, '')
   // }),
   add('re2', () => {
-    data.replace(re2, '')
+    data.replace(re2, '');
   }),
   // add('re3', () => {
   //   data.replace(re3, '')
   // }),
   add('re4', () => {
-    data.replace(re4, '')
+    data.replace(re4, '');
   }),
 
   cycle(),
   complete()
-)
+);
 
 /*
 
