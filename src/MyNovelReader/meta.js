@@ -22,7 +22,6 @@
 // @grant          GM_info
 // @grant          unsafeWindow
 // @homepageURL    https://greasyfork.org/scripts/292/
-// @require        https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.6/vue.min.js
 // @require        https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js
 // @require        https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js
 // @require        https://cdnjs.cloudflare.com/ajax/libs/keymaster/1.6.1/keymaster.min.js
@@ -88,7 +87,6 @@
 // @match          *://www.tatajk.net/book/*/*.html
 // @match          *://www.147xs.org/book/*/*.html
 // @match          *://www.biqugeso.org/biquge_*/*.html
-
 
 // 其它网站
 // @match          *://book.sfacg.com/Novel/*/*/*/
