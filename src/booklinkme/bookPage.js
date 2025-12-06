@@ -1,35 +1,46 @@
-import { $x, GM_request } from '../common/utils'
-import config from './config'
-
+import { $x, GM_request } from '../common/utils';
+import config from './config';
 
 async function getAndInsertFirst(url) {
-  let html = await GM_request(url);
-  var doc = new DOMParser().parseFromString(html, 'text/html')
+  try {
+    const response = await GM_request(url);
+    const html = typeof response === 'string' ? response : response && response.responseText;
+    if (!html) {
+      console.error('getAndInsertFirst empty response', url);
+      return;
+    }
+    var doc = new DOMParser().parseFromString(html, 'text/html');
 
-  if (url.includes('www.lwxs520.com')) {
-    var chapters = $x('//div[@class="dccss"]/a', doc);
-    var lastChapter = chapters[chapters.length - 1];
+    if (url.includes('www.lwxs520.com')) {
+      var chapters = $x('//div[@class="dccss"]/a', doc);
+      var lastChapter = chapters[chapters.length - 1];
 
-    insertToFirst(url, lastChapter.textContent)
+      insertToFirst(url, lastChapter.textContent);
+    }
+  } catch (error) {
+    console.error('getAndInsertFirst request failed', url, error);
   }
 }
 
 function insertToFirst(newUrl, text) {
   var firstLink = $x('//font[text()="补充链接"]/..')[0];
-  firstLink.insertAdjacentHTML('beforebegin', `
+  firstLink.insertAdjacentHTML(
+    'beforebegin',
+    `
       <a href="${newUrl}" target="_blank" style="margin-right: 3px;">
           <font color="red">${text}</font>
-      </a>`)
-  return firstLink
+      </a>`
+  );
+  return firstLink;
 }
 
 export function fixErrorBook() {
-  const thisPageBookName = $('h1').text().trim()
-  const txt = config.newsites
+  const thisPageBookName = $('h1').text().trim();
+  const txt = config.newsites;
   txt.split('\n').forEach(line => {
-    const [bookName, newUrl, newName] = line.split(/,|，/g)
+    const [bookName, newUrl, newName] = line.split(/,|，/g);
     if (bookName == thisPageBookName) {
-      insertToFirst(newUrl, newName || '我的补充')
+      insertToFirst(newUrl, newName || '我的补充');
     }
-  })
+  });
 }
