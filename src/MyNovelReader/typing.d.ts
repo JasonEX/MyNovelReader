@@ -71,3 +71,6 @@ declare module '*.tpl' {
     const tpl: { uiTrans: () => string };
     export default tpl;
 }
+
+// CommonJS require for dynamic imports
+declare function require(module: string): any;

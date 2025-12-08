@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, no-useless-escape */
+/* eslint-disable no-unused-vars, no-useless-escape */
 import type { UnderscoreStatic } from 'underscore';
 import Setting from './Setting';
 // import config from './config'
@@ -6,10 +6,37 @@ import Parser from './parser';
 import Rule from './rule';
 import { toggleConsole, L_setValue } from './lib';
 import Res from './res';
-import AppModule from './app';
 import bus, { SHOW_SPEECH } from './app/bus';
+import { getApp } from './appRef';
 
-const App = AppModule as any;
+// 使用 getApp() 获取 App 实例，避免循环依赖
+const App = {
+  get isEnabled() {
+    return getApp()?.isEnabled;
+  },
+  get site() {
+    return getApp()?.site;
+  },
+  get siteFontInfo() {
+    return getApp()?.siteFontInfo;
+  },
+  get curFocusElement() {
+    return getApp()?.curFocusElement;
+  },
+  get oArticles() {
+    return getApp()?.oArticles;
+  },
+  get activeUrl() {
+    return getApp()?.activeUrl;
+  },
+  get curPageUrl() {
+    return getApp()?.curPageUrl;
+  },
+  toggle: () => getApp()?.toggle(),
+  openUrl: (url: string) => getApp()?.openUrl(url),
+  resetCache: () => getApp()?.resetCache(),
+  saveAsTxt: () => getApp()?.saveAsTxt(),
+};
 
 declare const _: UnderscoreStatic;
 
@@ -143,11 +170,11 @@ const UI: UIType = {
     const targetHidden = typeof hidden === 'undefined' ? !UI.menu_list_hiddden : hidden;
 
     if (targetHidden) {
-      UI.$menu.addClass('hidden');
+      UI.$menu.removeClass('menu-open');
       UI.$content.css('margin-left', '');
     } else {
-      UI.$menu.removeClass('hidden');
-      UI.$content.css('margin-left', '320px');
+      UI.$menu.addClass('menu-open');
+      UI.$content.css('margin-left', '');
     }
     UI.menu_list_hiddden = targetHidden;
   },
@@ -162,10 +189,40 @@ const UI: UIType = {
     UI.$menuBar.toggle(!shouldHide);
   },
   refreshSkinStyle: function (skin_name, isFirst) {
+    if (!skin_name) {
+      skin_name = '缺省皮肤'.uiTrans();
+    }
+
     var $style = $('#skin_style');
+
     if ($style.length === 0) {
       $style = $('<style id="skin_style">').appendTo('head');
     }
+
+    // 皮肤到 data-skin 属性的映射（使用翻译后的 key）
+    const skinToDataAttr: Record<string, string> = {
+      ['缺省皮肤'.uiTrans()]: 'light',
+      ['暗色皮肤'.uiTrans()]: 'light',
+      ['白底黑字'.uiTrans()]: 'light',
+      ['夜间模式'.uiTrans()]: 'dark',
+      ['夜间模式1'.uiTrans()]: 'dark',
+      ['夜间模式2'.uiTrans()]: 'dark',
+      ['夜间模式（多看）'.uiTrans()]: 'dark',
+      ['橙色背景'.uiTrans()]: 'light',
+      ['绿色背景'.uiTrans()]: 'light',
+      ['绿色背景2'.uiTrans()]: 'light',
+      ['蓝色背景'.uiTrans()]: 'light',
+      ['棕黄背景'.uiTrans()]: 'light',
+      ['经典皮肤'.uiTrans()]: 'light',
+      ['起点牛皮纸（深色）'.uiTrans()]: 'light',
+      ['起点牛皮纸（浅色）'.uiTrans()]: 'light',
+      ['起点黑色'.uiTrans()]: 'dark',
+      ['绿色亮字'.uiTrans()]: 'dark',
+      ['图书双层'.uiTrans()]: 'light',
+    };
+
+    const dataSkin = skinToDataAttr[skin_name] || 'light';
+    document.documentElement.setAttribute('data-skin', dataSkin);
 
     // 图片章节夜间模式会变的无法看
     if (isFirst && skin_name.indexOf('夜间'.uiTrans()) !== -1 && Setting.picNightModeCheck) {
@@ -173,6 +230,7 @@ const UI: UIType = {
         const img = $('#mynovelreader-content img')[0] as HTMLImageElement | undefined;
         if (img && img.width > 500 && img.height > 1000) {
           $style.text(UI.skins['缺省皮肤'.uiTrans()]);
+          document.documentElement.setAttribute('data-skin', 'light');
         }
       }, 200);
     }
@@ -291,9 +349,14 @@ const UI: UIType = {
     UI.$prefs = $('<div id="reader_preferences">')
       .css(
         'cssText',
-        'position:fixed; top:12%; left:50%; transform: translateX(-50%); width:500px; z-index:300000;'
+        'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(500px,90vw); max-height:80vh; z-index:300001; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.2); overflow:hidden;'
       )
       .append($('<style>').text(Res.preferencesCSS))
+      .append(
+        $('<div class="prefs-header">').html(
+          '<span>设置</span><span id="top-buttons"><input title="部分选项需要刷新页面才能生效" id="save_button" value="✓ 确认" type="button"><input title="取消本次设定，所有选项还原" id="close_button" value="✕ 取消" type="button"></span>'
+        )
+      )
       .append($('<div class="body">').html(Res.getPreferencesHTML()))
       .appendTo('body');
 
@@ -305,7 +368,7 @@ const UI: UIType = {
       .attr({
         id: 'uil_blocker',
         style:
-          'position:fixed;top:0px;left:0px;right:0px;bottom:0px;background-color:#000;opacity:0.5;z-index:100000;',
+          'position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:300000;',
       })
       .appendTo('body');
   },
@@ -317,6 +380,10 @@ const UI: UIType = {
   },
   preferencesLoadHandler: function () {
     const $form = $('#preferences');
+
+    UI.$prefs?.on('click', '#save_button, #close_button', function (event) {
+      UI.preferencesClickHandler(event.target as HTMLInputElement);
+    });
 
     const getInput = <T extends HTMLElement = HTMLInputElement>(selector: string): T =>
       $form.find(selector).get(0) as T;

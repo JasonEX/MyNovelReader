@@ -1,5 +1,6 @@
 import Setting from './Setting';
 import UI from './UI';
+import { setApp } from './appRef';
 import { C, sleep, DOMContentLoaded } from './lib';
 import saveManager from './app/save/SaveManager';
 import './inject';
@@ -279,5 +280,8 @@ var App = {
     return fontManager.getSiteFontInfo();
   },
 };
+
+// 注册 App 实例到共享引用
+setApp(App);
 
 export default App;
