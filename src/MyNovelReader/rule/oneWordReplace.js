@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 // import _ from 'underscore'
 
 // 单字替换，可能会误替换，所以需要特殊处理

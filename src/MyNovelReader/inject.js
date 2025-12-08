@@ -28,7 +28,9 @@ const addEventListenerProxy = new Proxy(_addEventListener, {
     clenaupEventArray.push(() => {
       try {
         thisArg.removeEventListener(...argumentsList);
-      } catch (e) {}
+      } catch {
+        // ignore removal failures
+      }
     });
   },
 });
@@ -43,7 +45,9 @@ const observeProxy = new Proxy(_observe, {
     clenaupEventArray.push(() => {
       try {
         _disconnect.apply(thisArg, argumentsList);
-      } catch (e) {}
+      } catch {
+        // ignore disconnect errors
+      }
     });
   },
 });
@@ -63,7 +67,9 @@ export function cleanupEvents(iframe) {
   try {
     unsafeWindow.$(unsafeWindow).off();
     unsafeWindow.$(document).off();
-  } catch (e) {}
+  } catch {
+    // ignore when jQuery is unavailable
+  }
 }
 
 if (window.name === 'mynovelreader-iframe') {

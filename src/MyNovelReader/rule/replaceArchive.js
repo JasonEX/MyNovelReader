@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // 不再使用的替换规则
 
 const replace = {

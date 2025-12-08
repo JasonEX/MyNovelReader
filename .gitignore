@@ -5,6 +5,12 @@ Thumbs.db
 .serena/
 .vscode/
 *.sublime-workspace
+AGENTS.md
+opencode.json
+coverage/
+
+# TypeScript
+*.tsbuildinfo
 
 # Dependency directories
 node_modules/

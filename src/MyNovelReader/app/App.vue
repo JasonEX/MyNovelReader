@@ -7,7 +7,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import bus, { SHOW_SPEECH } from './bus';
-import Speech from './components/Speech.vue';
+import { Speech } from './components';
 
 const speechDialogVisible = ref(false);
 

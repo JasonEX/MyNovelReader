@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys, no-irregular-whitespace */
 // ===== 小说拼音字、屏蔽字修复 =====
 // 运行在未替换 <br> 之前，.* 可能会造成全部替换
 const replace = {

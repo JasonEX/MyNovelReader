@@ -1,7 +1,7 @@
 import { $x, GM_request } from '../common/utils';
 import config from './config';
 
-async function getAndInsertFirst(url) {
+async function _getAndInsertFirst(url) {
   try {
     const response = await GM_request(url);
     const html = typeof response === 'string' ? response : response && response.responseText;

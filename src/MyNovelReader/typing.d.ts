@@ -1,7 +1,12 @@
+/* eslint-disable no-unused-vars */
 // Type definitions for MyNovelReader
 
 // Global jQuery instance (provided by userscript manager)
 declare const $: JQueryStatic;
+
+interface String {
+  uiTrans(): string;
+}
 
 // Greasemonkey/Tampermonkey API
 declare function GM_getValue<T>(key: string, defaultValue?: T): T;
@@ -61,3 +66,8 @@ declare module MyNovelReader {
 
 // Utility types
 declare type Nullable<T> = T | null | undefined;
+
+declare module '*.tpl' {
+    const tpl: { uiTrans: () => string };
+    export default tpl;
+}

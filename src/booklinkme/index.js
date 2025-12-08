@@ -9,7 +9,7 @@ const config = {
 };
 
 // booklink.me 隐藏符合文字的链接
-function hideChapterLink(selector, textReg) {
+function _hideChapterLink(selector, textReg) {
   var links = document.querySelectorAll(selector),
     link;
   for (var i = links.length - 1; i >= 0; i--) {
@@ -76,7 +76,7 @@ class PcPage {
       // 未读左边的 1x 链接
       link.parentNode.previousSibling
         .querySelector('font')
-        .setAttribute('color', Config.clickedColor);
+        .setAttribute('color', config.clickedColor);
       chapterLink.classList.add('mclicked');
     });
   }

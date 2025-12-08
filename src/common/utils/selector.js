@@ -9,15 +9,17 @@
 export function $x(aXPath, aContext) {
   var nodes = [];
   var doc = document;
-  var aContext = aContext || doc;
+  var context = aContext || doc;
 
   try {
-    var results = doc.evaluate(aXPath, aContext, null, XPathResult.ANY_TYPE, null);
+    var results = doc.evaluate(aXPath, context, null, XPathResult.ANY_TYPE, null);
     var node;
     while ((node = results.iterateNext())) {
       nodes.push(node);
     }
-  } catch (ex) {}
+  } catch {
+    // ignore invalid xpath
+  }
 
   return nodes;
 }

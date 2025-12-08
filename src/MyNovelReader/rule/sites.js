@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape, no-unused-vars */
 import getMiddleStr from '../utils/string';
 import { C, Request, toRE } from '../lib';
 import { replaceJjwxcCharacter } from '../utils/jjwxcFontDecode';

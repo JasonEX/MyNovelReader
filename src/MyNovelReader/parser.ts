@@ -1,3 +1,6 @@
+/* eslint-disable no-useless-escape, no-irregular-whitespace, no-unused-vars, @typescript-eslint/no-unused-vars */
+import type { IParser, SiteConfig, replaceMap } from '../typings/MyNovelReader';
+import type { UnderscoreStatic } from 'underscore';
 import Setting from './Setting';
 import config from './config';
 import Rule, { CHAR_ALIAS } from './rule';
@@ -10,33 +13,60 @@ import {
   unwrapTag,
   getTextNodesIn,
 } from './lib';
-import { READER_AJAX } from './consts';
 import autoGetBookTitle from './parser/autoGetBookTitle';
-import { Request } from './lib';
 import { getNormalizeMap, toCDB, toDBC } from './rule/replaceNormalize';
 import { chineseConversion } from './cnConv';
+import { cn2twTable } from './cnConv/zhConversion';
 import { cleanHTML, renderHTML } from './libdom';
 
-function getElemFontSize(_heading) {
-  var fontSize = 0;
-  var _heading_style = window.getComputedStyle(_heading, null);
-  if (_heading_style) {
+declare const _: UnderscoreStatic;
+
+type ReplacementRule = string | RegExp | replaceMap | Array<string | RegExp | replaceMap>;
+
+function getElemFontSize(heading: Element | null): number {
+  if (!heading) {
+    return 0;
+  }
+
+  let fontSize = 0;
+  const headingStyle = window.getComputedStyle(heading, null);
+  if (headingStyle) {
     // firefox57 2017年9月10日 会错误
     try {
-      var str = _heading_style.getPropertyValue('font-size') || 0;
+      const str = headingStyle.getPropertyValue('font-size') || '0';
       fontSize = parseInt(str, 10);
-    } catch (e) {}
+    } catch (e) {
+      // ignore font-size parse errors
+    }
   }
 
   return fontSize;
 }
 
-function Parser() {
-  this.init.apply(this, arguments);
-}
+class Parser implements IParser {
+  info: Partial<SiteConfig>;
+  doc: Document;
+  $doc: JQuery<Document>;
+  curPageUrl: string;
+  _curPageHost: string;
+  isTheEnd: boolean | 'vip';
+  isSection: boolean;
+  $content?: JQuery<HTMLElement>;
+  content: string;
+  bookTitle: string;
+  chapterTitle: string;
+  docTitle: string;
+  originChapterTitle?: string;
+  indexUrl: string;
+  prevUrl: string;
+  nextUrl: string;
+  theEndColor?: string;
+  a?: HTMLAnchorElement;
 
-Parser.prototype = {
-  constructor: Parser,
+  constructor(info?: Partial<SiteConfig>, doc?: Document, curPageUrl?: string) {
+    this.init(info, doc, curPageUrl);
+  }
+
   get contentTxt() {
     // callback 才有用
     var text = $('<div>').html(this.content).text().trimRight();
@@ -45,9 +75,9 @@ Parser.prototype = {
     text = text.replace(/([^\n])　　/, '$1\n　　');
 
     return text;
-  },
+  }
 
-  init: function (info, doc, curPageUrl) {
+  init(info, doc, curPageUrl) {
     // 站点规则
     this.info = info || {};
     this.doc = info.cloneNode && doc.defaultView ? doc.cloneNode(true) : doc;
@@ -62,8 +92,8 @@ Parser.prototype = {
     if (doc.defaultView && doc.defaultView.$cleanupEvents) {
       doc.defaultView.$cleanupEvents(true);
     }
-  },
-  applyPatch: function () {
+  }
+  applyPatch() {
     var contentPatch = this.info.contentPatch;
     if (contentPatch) {
       try {
@@ -73,8 +103,8 @@ Parser.prototype = {
         C.log('Error: Content Patch Error!', e);
       }
     }
-  },
-  applyAsyncPatch: async function () {
+  }
+  async applyAsyncPatch() {
     var contentPatch = this.info.contentPatchAsync;
     if (contentPatch) {
       try {
@@ -84,8 +114,8 @@ Parser.prototype = {
         C.log('Error: Content Patch[Async] Error!', e);
       }
     }
-  },
-  getAll: async function () {
+  }
+  async getAll() {
     C.log('开始解析页面');
 
     this.applyPatch();
@@ -97,14 +127,14 @@ Parser.prototype = {
     this.parse();
 
     return this;
-  },
-  preProcessDoc: async function () {
+  }
+  async preProcessDoc() {
     let data;
 
     if (!this.hasContent() && this.info.getContent) {
       C.log('开始 info.getContent');
       data = await this.info.getContent.call(this, this.$doc);
-      this.$content = null;
+      this.$content = undefined;
     } /* else {
             // 特殊处理，例如起点
             var ajaxScript = this.$doc.find('.' + READER_AJAX);
@@ -151,8 +181,8 @@ Parser.prototype = {
 
       this.$doc.find('body').prepend(div);
     }
-  },
-  parse: function () {
+  }
+  parse() {
     C.group('开始获取链接');
     this.getPrevUrl();
     this.getIndexUrl();
@@ -164,9 +194,9 @@ Parser.prototype = {
     C.groupEnd();
 
     this.getContent();
-  },
+  }
 
-  hasContent: function () {
+  hasContent() {
     if (this.$content) {
       return this.$content.size() > 0;
     }
@@ -206,9 +236,9 @@ Parser.prototype = {
     // C.debug($content);
 
     return $content.size() > 0;
-  },
+  }
   // 获取书名和章节标题
-  getTitles: function () {
+  getTitles() {
     var info = this.info,
       chapterTitle,
       bookTitle,
@@ -250,7 +280,7 @@ Parser.prototype = {
       bookTitle = this.replaceText(bookTitle, Rule.bookTitleReplace);
     }
     if (info.bookTitleReplace) {
-      bookTitle = bookTitle.replace(toRE(info.bookTitleReplace), '');
+      bookTitle = this.replaceText(bookTitle, info.bookTitleReplace);
     }
 
     // 标题间增加一个空格，不准确，已注释
@@ -287,8 +317,8 @@ Parser.prototype = {
     C.log('Book Title: ' + this.bookTitle);
     C.log('Chapter Title: ' + this.chapterTitle);
     C.log('Document Title: ' + this.docTitle);
-  },
-  getTitleFromRule: function (selectorOrArray) {
+  }
+  getTitleFromRule(selectorOrArray) {
     var title = '';
     if (!selectorOrArray) {
       return '';
@@ -329,91 +359,85 @@ Parser.prototype = {
     }
 
     return title;
-  },
+  }
   // 智能获取章节标题
-  autoGetChapterTitle: function (document) {
-    var _main_selector = 'h1, h2, h3',
-      _second_selector = '#TextTitle, #title, .ChapterName, #lbChapterName, div.h1, #nr_title',
-      _positive_regexp = Rule.titleRegExp,
-      // _positive_regexp = /第?\S+[章节卷回]|\d{2,4}/,
-      // _negative_regexp = /[上前下后][一]?[页张个篇章节步]/,
-      _title_remove_regexp = /最新章节|书书网/,
-      $doc = $(document),
-      _document_title = document.title || $doc.find('title').text(),
-      _search_document_title = ' ' + _document_title.replace(/\s+/gi, ' ') + ' ';
-    var _headings = $doc.find(_main_selector);
+  autoGetChapterTitle(currentDocument: Document) {
+    const mainSelector = 'h1, h2, h3';
+    const secondSelector = '#TextTitle, #title, .ChapterName, #lbChapterName, div.h1, #nr_title';
+    const positiveRegexp = Rule.titleRegExp;
+    const titleRemoveRegexp = /最新章节|书书网/;
+    const $doc = $(currentDocument);
+    const documentTitle = currentDocument.title || $doc.find('title').text();
+    const searchDocumentTitle = ` ${documentTitle.replace(/\s+/gi, ' ')} `;
+    const headings = $doc.find(mainSelector).toArray() as HTMLElement[];
+
     // 加上 second selector 并去除包含的
-    $doc.find(_second_selector).each(function () {
-      if ($(this).find(_main_selector).length === 0) {
-        _headings.push(this);
+    $doc.find(secondSelector).each(function () {
+      const current = this as HTMLElement;
+      if ($(current).find(mainSelector).length === 0) {
+        headings.push(current);
       }
     });
 
-    var possibleTitles = {},
-      _heading_text;
+    const possibleTitles: Record<string, number> = {};
 
     C.groupCollapsed('自动查找章节标题');
 
-    $(_headings).each(function () {
-      var _heading = this,
-        _heading_text = _heading.textContent.trim();
+    $(headings).each(function () {
+      const heading = this as HTMLElement;
+      const headingText = heading.textContent?.trim() ?? '';
 
-      if (!_heading_text || _heading_text in possibleTitles) {
+      if (!headingText || headingText in possibleTitles) {
         return;
       }
 
-      C.group('开始计算 "' + _heading_text + '" 的得分');
+      C.group(`开始计算 "${headingText}" 的得分`);
 
-      // h1 为 1， h2 为 2
-      var nodeNum = parseInt(_heading.nodeName.slice(1), 10) || 10,
-        score = 10 / nodeNum,
-        _heading_words = _heading_text.replace(/\s+/g, ' ').split(' '),
-        _matched_words = '';
+      const nodeNum = parseInt(heading.nodeName.slice(1), 10) || 10;
+      let score = 10 / nodeNum;
+      const headingWords = headingText.replace(/\s+/g, ' ').split(' ');
+      let matchedWords = '';
       C.log('初始得分：' + score);
 
       // 后面这种是特殊的判断
-      if (_positive_regexp.test(_heading_text) || /\d{2,4}/.test(_heading_text)) {
+      if (positiveRegexp.test(headingText) || /\d{2,4}/.test(headingText)) {
         score += 50;
       }
-      // if(_negative_regexp.test(_heading_text)){
-      //     score -= 100;
-      // }
 
       C.log('符合正则计算后得分：' + score);
 
       //  count words present in title
-      for (var j = 0, _j = _heading_words.length; j < _j; j++) {
-        if (_search_document_title.indexOf(_heading_words[j]) > -1) {
-          _matched_words += _heading_words[j] + ' ';
+      for (let j = 0; j < headingWords.length; j += 1) {
+        if (searchDocumentTitle.indexOf(headingWords[j]) > -1) {
+          matchedWords += headingWords[j] + ' ';
         }
       }
-      score += _matched_words.length * 1.5;
+      score += matchedWords.length * 1.5;
 
       C.log('跟页面标题比较后得分：' + score);
 
-      var _font_size_add_score = getElemFontSize(_heading) * 1.5;
-      score += _font_size_add_score;
+      const fontSizeAddScore = getElemFontSize(heading) * 1.5;
+      score += fontSizeAddScore;
 
       C.log('计算大小后得分：' + score);
 
-      possibleTitles[_heading_text] = score;
+      possibleTitles[headingText] = score;
 
       C.groupEnd();
     });
 
-    // 找到分数最高的值
-    var topScoreTitle,
-      score_tmp = 0;
-    for (_heading_text in possibleTitles) {
-      if (possibleTitles[_heading_text] > score_tmp) {
-        topScoreTitle = _heading_text;
-        score_tmp = possibleTitles[_heading_text];
+    let topScoreTitle: string | undefined;
+    let scoreTmp = 0;
+    Object.keys(possibleTitles).forEach(headingText => {
+      if (possibleTitles[headingText] > scoreTmp) {
+        topScoreTitle = headingText;
+        scoreTmp = possibleTitles[headingText];
       }
-    }
+    });
 
-    var curTitle = topScoreTitle;
+    let curTitle = topScoreTitle;
     if (!curTitle) {
-      curTitle = _document_title;
+      curTitle = documentTitle;
 
       // 下面的正则从
       //     Firefox-Firefox浏览器论坛-卡饭论坛 - 互助分享 - 大气谦和!
@@ -421,7 +445,7 @@ Parser.prototype = {
       //     Firefox-Firefox浏览器论坛-卡饭论坛
       curTitle = curTitle.replace(/\s-\s.*/i, '').replace(/_[^\[\]【】]+$/, '');
       curTitle = curTitle.trim();
-      curTitle = curTitle.replace(_title_remove_regexp, '');
+      curTitle = curTitle.replace(titleRemoveRegexp, '');
     }
 
     curTitle = curTitle.replace(Rule.titleReplace, '');
@@ -429,12 +453,10 @@ Parser.prototype = {
     C.groupEnd();
 
     return curTitle;
-  },
+  }
 
   // 获取和处理内容
-  getContent: function () {
-    var self = this;
-
+  getContent() {
     this.hasContent();
 
     if (!this.$content || this.$content.size() <= 0) {
@@ -453,8 +475,8 @@ Parser.prototype = {
     } else {
       this.content = this.handleContentText2(this.$content[0], this.info);
     }
-  },
-  handleContentText: function (node, info) {
+  }
+  handleContentText(node, info) {
     // 已弃用
     if (!node) return null;
 
@@ -526,7 +548,10 @@ Parser.prototype = {
     const treeWalker = document.createTreeWalker($div[0], NodeFilter.SHOW_COMMENT);
 
     while (treeWalker.nextNode()) {
-      treeWalker.currentNode.remove();
+      const currentNode = treeWalker.currentNode;
+      if (currentNode && currentNode.parentNode) {
+        currentNode.parentNode.removeChild(currentNode);
+      }
     }
 
     // 尝试删除正文中的章节标题
@@ -574,14 +599,12 @@ Parser.prototype = {
           return false;
 
         // 有效文本（排除注释、换行符、空白）个数为 0
-        return (
-          $this
-            .contents()
-            .filter(function () {
-              return this.nodeType != 8 && !this.textContent.match(/^\s*$/);
-            })
-            .size() == 0
-        );
+        const hasContent =
+          $this.contents().filter(function () {
+            return this.nodeType != 8 && !(this.textContent || '').match(/^\s*$/);
+          }).length > 0;
+
+        return !hasContent;
       })
       .remove();
 
@@ -637,15 +660,15 @@ Parser.prototype = {
     C.groupEnd();
 
     return text;
-  },
-  clearContent: function (dom, info) {
+  }
+  clearContent(dom, info) {
     // 已弃用
     // 将br，转换为p段落
-    let elements = [];
+    let elements: Element[] = [];
     let brCount = 0;
     $(dom)
       .contents()
-      .each(function (index, element) {
+      .each(function (_index, element) {
         if (element.nodeName === 'BR') {
           brCount++;
           $(element).remove();
@@ -716,7 +739,7 @@ Parser.prototype = {
     }
 
     // 删除含网站域名行文本
-    const removeText = [];
+    const removeText: string[] = [];
     const hostRe = toRE(`^.*?${this._curPageHost}.*?$`);
     content = content.replace(hostRe, match => {
       removeText.push(match);
@@ -791,31 +814,41 @@ Parser.prototype = {
           node.data = finalContents[index];
         }
       });
-    } else {
-      const centerTextNode = textNodes[parseInt(textNodes.length / 2)];
-      const parentNode = $(centerTextNode).closest('div');
-      const nodeAncestors = $(centerTextNode, parentNode).parents().slice(1);
+    } else if (textNodes.length) {
+      const centerTextNode = textNodes[Math.floor(textNodes.length / 2)];
+      if (!centerTextNode || !centerTextNode.parentNode) {
+        return;
+      }
+
+      const parentNode = $(centerTextNode.parentNode as HTMLElement).closest('div');
+      const nodeAncestors = $(centerTextNode).parents().slice(1);
       let appended = false; // 是否手动添加过p标签
       finalContents.forEach((text, index) => {
-        if (_.isUndefined(textNodes[index])) {
+        const currentNode = textNodes[index];
+        if (!currentNode) {
           $('<p>').text(text).appendTo(parentNode);
-        } else if (textNodes[index].data.trim() !== text) {
-          const textNodeAncestors = $(textNodes[index], parentNode).parents().slice(1);
-          if (
-            !appended &&
-            nodeAncestors.not(textNodeAncestors).length === 0 &&
-            textNodes[index].parentNode.nodeName === 'P'
-          ) {
-            textNodes[index].data = text;
-          } else {
-            appended = true;
-            textNodes[index].remove();
-            $('<p>').text(text).appendTo(parentNode);
-          }
+          return;
+        }
+
+        if (currentNode.data.trim() === text) {
+          return;
+        }
+
+        const textNodeAncestors = $(currentNode).parents().slice(1);
+        if (
+          !appended &&
+          nodeAncestors.not(textNodeAncestors).length === 0 &&
+          currentNode.parentNode?.nodeName === 'P'
+        ) {
+          currentNode.data = text;
+        } else {
+          appended = true;
+          currentNode.remove();
+          $('<p>').text(text).appendTo(parentNode);
         }
       });
     }
-  },
+  }
   handleContentText2(node, info) {
     if (!node) return null;
 
@@ -882,7 +915,7 @@ Parser.prototype = {
 
     // 删除含网站域名行文本
     if (Setting.removeDomainLine) {
-      const removeText = [];
+      const removeText: string[] = [];
       const hostRe = toRE(`^.*?${this._curPageHost}.*?$`);
       content = content.replace(hostRe, match => {
         removeText.push(match);
@@ -933,12 +966,12 @@ Parser.prototype = {
     C.groupEnd();
 
     return contentHTML;
-  },
-  normalizeContent: function (html) {
+  }
+  normalizeContent(html) {
     html = html.replace(/<\/p><p>/g, '</p>\n<p>');
 
     return html;
-  },
+  }
   /**
    * 移除内容中大块的重复。
    * 例如：http://www.wangshuge.com/books/109/109265/28265316.html
@@ -946,7 +979,7 @@ Parser.prototype = {
    * @param  {string} html 内容
    * @return {string}      处理后的内容
    */
-  removeDump: function (html) {
+  removeDump(html) {
     html = this.normalizeContent(html);
     var newContent = html;
 
@@ -969,8 +1002,8 @@ Parser.prototype = {
     }
 
     return newContent;
-  },
-  replaceHtml: function (text, replaceRule) {
+  }
+  replaceHtml(text, replaceRule) {
     // replaceRule 给“自定义替换规则直接生效”用
     if (!replaceRule) {
       replaceRule = Rule.replace;
@@ -988,76 +1021,71 @@ Parser.prototype = {
     text = this.contentReplacements(text, replaceRule);
 
     // 还原图片
-    text = $.nano(text, imgs);
+    text = $.nano ? $.nano(text, imgs) : text;
 
     return text;
-  },
-  contentReplacements: function (text, rule) {
+  }
+  contentReplacements(text: string, rule: replaceMap) {
     if (!text) return text;
 
-    for (var key in rule) {
-      text = text.replace(toRE(key, 'ig'), rule[key]);
-    }
-    return text;
-  },
-  replaceText: function (text, rule) {
-    var self = this;
+    let replaced = text;
+    Object.keys(rule).forEach(key => {
+      replaced = replaced.replace(toRE(key, 'ig'), rule[key]);
+    });
+    return replaced;
+  }
+  replaceText(text: string, rule: ReplacementRule) {
+    if (!rule) return text;
+
     switch (true) {
       case _.isRegExp(rule):
-        text = text.replace(rule, '');
-        break;
+        return text.replace(rule as RegExp, '');
       case _.isString(rule):
-        // 还原简写
         _.each(CHAR_ALIAS, function (value, key) {
-          rule = rule.replace(key, value);
+          rule = (rule as string).replace(key, value);
         });
-        text = text.replace(toRE(rule), '');
-        break;
+        return text.replace(toRE(rule as string), '');
       case _.isArray(rule):
-        rule.forEach(function (r) {
-          text = self.replaceText(text, r);
+        (rule as Array<string | RegExp | replaceMap>).forEach(r => {
+          text = this.replaceText(text, r);
         });
-        break;
+        return text;
       case _.isObject(rule):
-        var key;
-        for (key in rule) {
-          text = text.replace(toRE(key), rule[key]);
-        }
-        break;
+        Object.keys(rule as replaceMap).forEach(key => {
+          text = text.replace(toRE(key), (rule as replaceMap)[key]);
+        });
+        return text;
+      default:
+        return text;
     }
-    return text;
-  },
-  convert2tw: function (text) {
+  }
+  convert2tw(text: string | null | undefined) {
     if (!text) return text;
 
-    var ii, len, str;
-    str = text.split('');
-    len = str.length;
-    for (ii = 0; ii < len; ii++) {
-      str[ii] = cn2tw[str[ii]] || str[ii];
+    const chars = text.split('');
+    for (let i = 0; i < chars.length; i += 1) {
+      chars[i] = cn2twTable[chars[i]] || chars[i];
     }
 
-    str = str.join('');
-
-    return str;
-  },
-  contentCustomReplace: function (text) {
+    return chars.join('');
+  }
+  contentCustomReplace(text) {
     if (!text) return text;
 
     for (var key in Rule.customReplace) {
       text = text.replace(toRE(key), Rule.customReplace[key]);
     }
     return text;
-  },
-  splitContent: function (text) {
+  }
+  splitContent(text) {
     // 有些章节整个都集中在一起，没有分段，这个函数用于简易分段
     if (text.indexOf('。') == -1) {
       return [text];
     }
 
     var hasMark = false,
-      lines = [],
-      charCotainer = [];
+      lines: string[] = [],
+      charCotainer: string[] = [];
 
     text.split('').forEach(function (c) {
       charCotainer.push(c);
@@ -1073,11 +1101,11 @@ Parser.prototype = {
     });
 
     return lines;
-  },
+  }
 
-  getIndexUrl: function () {
-    var url = '',
-      selector = this.info.indexSelector || this.info.indexUrl;
+  getIndexUrl() {
+    let url = '';
+    const selector = this.info.indexSelector ?? this.info.indexUrl;
 
     if (selector === false) {
       this.indexUrl = url;
@@ -1087,41 +1115,36 @@ Parser.prototype = {
     // 先尝试站点规则
     if (selector && _.isFunction(selector)) {
       try {
-        url = selector(this.$doc);
+        url = this.checkLinks(selector(this.$doc));
       } catch (e) {
         C.error('执行获取目录链接函数规则出错', e);
       }
-    } else if (this.info.indexSelector) {
-      url = this.$doc.find(this.info.indexSelector);
+    } else if (typeof this.info.indexSelector === 'string') {
+      url = this.checkLinks(this.$doc.find(this.info.indexSelector));
     }
 
     // 再尝试通用规则
-    if (!url || !url.length) {
-      var selectors = Rule.indexSelectors;
-      var _indexLink;
-      // 按照顺序选取目录链接
-      for (var i = 0, l = selectors.length; i < l; i++) {
-        _indexLink = this.$doc.find(selectors[i]);
-        if (_indexLink.length > 0) {
-          url = _indexLink;
+    if (!url) {
+      const selectors = Rule.indexSelectors;
+      for (let i = 0; i < selectors.length; i += 1) {
+        const indexLink = this.$doc.find(selectors[i]);
+        if (indexLink.length > 0) {
+          url = this.checkLinks(indexLink);
           break;
         }
       }
     }
 
     if (url) {
-      url = this.checkLinks(url);
       C.log('找到目录链接: ' + url);
-    }
-
-    if (!url) {
+    } else {
       C.log('无法找到目录链接.');
     }
 
     this.indexUrl = url;
     return url;
-  },
-  getNextUrl: function () {
+  }
+  getNextUrl() {
     var url = '',
       selector = this.info.nextSelector || this.info.nextUrl,
       noSection = this.info.noSection;
@@ -1182,9 +1205,9 @@ Parser.prototype = {
     }
 
     return url;
-  },
+  }
   // 获取上下页及目录页链接
-  getPrevUrl: function () {
+  getPrevUrl() {
     var url = '',
       selector = this.info.prevSelector || this.info.prevUrl,
       noSection = this.info.noSection;
@@ -1236,8 +1259,8 @@ Parser.prototype = {
 
     this.prevUrl = url || '';
     return url;
-  },
-  checkNextUrl: function (url) {
+  }
+  checkNextUrl(url) {
     const sectionUrlRegex = /\/\d+([_-]\d+|\/\d)\.html?$/;
     if (url && this.info.checkSection) {
       // 如果第一页的下一页地址和第二页（当前解析页）的上一页地址都不能通过分页地址正则的检测，则不是分页章节
@@ -1251,8 +1274,8 @@ Parser.prototype = {
     }
 
     // 跟 include 比较
-    var includeUrl = this.info.includeUrl || this.getIncludeUrl();
-    if (!toRE(includeUrl).test(url)) return false;
+    const includeUrl = this.info.includeUrl || this.getIncludeUrl() || '';
+    if (!includeUrl || !toRE(includeUrl).test(url)) return false;
 
     switch (true) {
       case url === '':
@@ -1278,8 +1301,8 @@ Parser.prototype = {
       default:
         return true;
     }
-  },
-  getIncludeUrl: function () {
+  }
+  getIncludeUrl() {
     var includeUrl = this.info.url;
 
     if (!includeUrl && typeof GM_info !== 'undefined') {
@@ -1295,10 +1318,9 @@ Parser.prototype = {
 
     this.info.includeUrl = includeUrl;
     return includeUrl;
-  },
-  checkLinks: function (links) {
-    var self = this;
-    var url = '';
+  }
+  checkLinks(links?: JQuery<HTMLElement> | string | null) {
+    let url = '';
 
     if (!links) return '';
 
@@ -1306,22 +1328,21 @@ Parser.prototype = {
       return this.getFullHref(links);
     }
 
-    links &&
-      links.each(function () {
-        url = $(this).attr('href');
-        if (!url || url.indexOf('#') === 0 || url.indexOf('javascript:') === 0) return;
+    links.each(function (this: Element) {
+      const href = $(this).attr('href') || '';
+      if (!href || href.indexOf('#') === 0 || href.indexOf('javascript:') === 0) return;
 
-        url = self.getFullHref(this);
-        return false;
-      });
+      url = href;
+      return false;
+    });
 
-    return url;
-  },
-  getLinkUrl: function (linkOrUrl) {
+    return this.getFullHref(url);
+  }
+  getLinkUrl(linkOrUrl) {
     // if (linkOrUrl && )
     return linkOrUrl;
-  },
-  getFullHref: function (href) {
+  }
+  getFullHref(href) {
     if (!href) return '';
 
     if (!_.isString(href)) {
@@ -1344,7 +1365,7 @@ Parser.prototype = {
     // }
 
     return a.href;
-  },
-};
+  }
+}
 
 export default Parser;

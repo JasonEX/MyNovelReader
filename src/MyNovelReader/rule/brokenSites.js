@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape, no-dupe-keys, no-unused-vars */
 // 失效网站规则存档
 
 // R.I.P.

@@ -87,7 +87,7 @@ if (!String.prototype.uiTrans) {
         regexp;
       if (config.lang !== 'zh-TW') return _this;
 
-      if (uiTrans.hasOwnProperty(_this)) return uiTrans[_this];
+      if (Object.prototype.hasOwnProperty.call(uiTrans, _this)) return uiTrans[_this];
 
       for (key in uiTrans) {
         regexp = new RegExp(key, 'g');

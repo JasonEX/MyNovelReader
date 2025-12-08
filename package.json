@@ -15,7 +15,15 @@
     "lint:strict": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest"
+    "test": "vitest",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,less,html}": "prettier --write"
   },
   "repository": {
     "type": "git",
@@ -34,13 +42,18 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-vue": "^5.2.0",
+    "@vitest/coverage-v8": "^3.2.0",
     "dayjs": "^1.11.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-vue": "^9.0.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.2.0",
     "less": "^4.0.0",
+    "lint-staged": "^16.2.7",
     "mitt": "^3.0.0",
+    "pinia": "^2.3.1",
     "prettier": "^3.0.0",
     "terser": "^5.14.1",
     "tslib": "^2.0.1",

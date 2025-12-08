@@ -13,8 +13,9 @@
     </span>
 
     <div v-if="playState == STATE.playing" class="loader">
-      <pulse-loader></pulse-loader>
+      <LoadingSpinner />
     </div>
+
     <div v-else>
       <div>
         <label
@@ -57,7 +58,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import PulseLoader from '../../../common/components/spinner/PulseLoader.vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 import oldApp from '../../app.js';
 import bus, { APPEND_NEXT_PAGE } from '../bus.js';
 import { locations, formatMillisencod } from '../../utils';
@@ -70,7 +71,6 @@ const STATE = {
 
 // 响应式数据
 const emit = defineEmits(['closeSpeech']);
-const text = ref('');
 const playState = ref(STATE.stoping); // 监控朗读的状态
 const isPlaying = ref(false); // 按钮的状态
 const elapsedTime = ref(0);
@@ -281,10 +281,10 @@ const listenForSpeechEvents = endFn => {
     playState.value = STATE.pausing;
     elapsedTime.value = event.elapsedTime;
   };
-  utterance.value.onresume = e => {
+  utterance.value.onresume = _event => {
     playState.value = STATE.playing;
   };
-  utterance.value.onend = event => {
+  utterance.value.onend = _event => {
     playState.value = STATE.stoping;
     // elapsedTime.value = event.elapsedTime
     elapsedTime.value = null;

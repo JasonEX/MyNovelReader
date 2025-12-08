@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 const r = String.raw;
 
 const replaceAll = [

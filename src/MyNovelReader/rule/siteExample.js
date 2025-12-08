@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys, no-unused-vars */
 // 自定义站点规则说明
 
 // 注意：除了 url 选项，其他的都是可选的

@@ -136,7 +136,7 @@ export function renderHTML(text) {
   text = text
     .split('\n')
     .filter(t => !!t.trim())
-    .map(t => `<p>　　${escapeHtml(t)}</p>`)
+    .map(t => `<p>\u3000\u3000${escapeHtml(t)}</p>`)
     .join('\n');
 
   return `<div class="content">${text}</div>`;

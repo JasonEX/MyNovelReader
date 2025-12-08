@@ -29,7 +29,7 @@ interface GM_Script_Info {
     namespace: string;
     description: string;
     version: string;
-    includes: string;
+    includes: string[];
     excludes: string;
     matches: string;
     resources: any[];

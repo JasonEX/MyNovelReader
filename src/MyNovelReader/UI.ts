@@ -1,15 +1,62 @@
+/* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, no-useless-escape */
+import type { UnderscoreStatic } from 'underscore';
 import Setting from './Setting';
 // import config from './config'
 import Parser from './parser';
 import Rule from './rule';
-import { toggleConsole, L_setValue, isChrome } from './lib';
+import { toggleConsole, L_setValue } from './lib';
 import Res from './res';
-import App from './app';
+import AppModule from './app';
 import bus, { SHOW_SPEECH } from './app/bus';
 
-const SAVE_MESSAGE_NAME = 'userscript-MyNovelReader-Setting-Saved';
+const App = AppModule as any;
 
-var UI = {
+declare const _: UnderscoreStatic;
+
+type CustomReplaceRules = string | Record<string, string>;
+
+interface UIType {
+  tpl_footer_nav: string;
+  skins: Record<string, string>;
+  siteFontFamily: string;
+  menu_list_hiddden: boolean;
+  _rules?: CustomReplaceRules;
+  _isQuietMode: boolean;
+  noticeDivto?: number;
+  $menu: JQuery<HTMLElement>;
+  $menuBar: JQuery<HTMLElement>;
+  $content: JQuery<HTMLElement>;
+  $preferencesBtn: JQuery<HTMLElement>;
+  $prefs: JQuery<HTMLElement> | null;
+  $blocker: JQuery<HTMLElement> | null;
+  $mainStyle: JQuery<HTMLElement> | null;
+  $_quietStyle: JQuery<HTMLElement> | null;
+  init(): void;
+  refreshMainStyle(): void;
+  hideFooterNavStyle(hidden: boolean): void;
+  hideMenuList(hidden?: boolean): void;
+  hidePreferencesButton(hidden?: boolean): void;
+  hideMenuBar(hidden?: boolean): void;
+  refreshSkinStyle(skinName: string, isFirst?: boolean): void;
+  refreshExtraStyle(css: string): void;
+  toggleQuietMode(force?: boolean): void;
+  addButton(): Promise<void>;
+  calcContentFontSize(fontSizeStr: string): string;
+  calcTitleFontSize(fontSizeStr: string): string;
+  fixMobile(): void;
+  preferencesShow(event?: Event): void;
+  _loadBlocker(): void;
+  hide(): void;
+  preferencesLoadHandler(): void;
+  cleanPreview(): void;
+  preferencesClickHandler(target: HTMLInputElement): Promise<void>;
+  preferencesCloseHandler(): void;
+  preferencesSaveHandler(): void;
+  openHelp(): void;
+  notice(htmlText: string, ms?: number): JQuery<HTMLElement>;
+}
+
+const UI: UIType = {
   tpl_footer_nav: '\
         <div class="chapter-footer-nav">\
             <a class="prev-page" href="{prevUrl}">上一页</a> | \
@@ -17,16 +64,26 @@ var UI = {
             <a class="next-page" style="color:{theEndColor}" href="{nextUrl}">下一页</a>\
         </div>\
         '.uiTrans(),
-  skins: {},
+  skins: {} as Record<string, string>,
   // 站点字体
   siteFontFamily: '',
+  menu_list_hiddden: false,
+  _isQuietMode: false,
+  $menu: null as unknown as JQuery<HTMLElement>,
+  $menuBar: null as unknown as JQuery<HTMLElement>,
+  $content: null as unknown as JQuery<HTMLElement>,
+  $preferencesBtn: null as unknown as JQuery<HTMLElement>,
+  $prefs: null,
+  $blocker: null,
+  $mainStyle: null,
+  $_quietStyle: null,
 
   init: function () {
     UI.refreshMainStyle();
 
-    UI.refreshSkinStyle(Setting.skin_name, true);
+    UI.refreshSkinStyle(String(Setting.skin_name), true);
 
-    UI.refreshExtraStyle(Setting.extra_css);
+    UI.refreshExtraStyle(String(Setting.extra_css));
 
     UI.fixMobile();
 
@@ -42,21 +99,24 @@ var UI = {
     }
 
     // UI.toggleQuietMode();  // 初始化安静模式
-    UI.hideMenuList(Setting.menu_list_hiddden); // 初始化章节列表是否隐藏
-    UI.hidePreferencesButton(Setting.hide_preferences_button); // 初始化设置按钮是否隐藏
+    UI.hideMenuList(Boolean(Setting.menu_list_hiddden)); // 初始化章节列表是否隐藏
+    UI.hidePreferencesButton(Boolean(Setting.hide_preferences_button)); // 初始化设置按钮是否隐藏
   },
   refreshMainStyle: function () {
     // 添加站点字体到样式中
-    if (App.site.useSiteFont && App.siteFontInfo) {
+    if (App.site?.useSiteFont && App.siteFontInfo?.siteFontFamily) {
       UI.siteFontFamily = App.siteFontInfo.siteFontFamily;
     }
 
-    var mainCss = Res.CSS_MAIN.replace('{font_family}', UI.siteFontFamily + Setting.font_family)
-      .replace('{font_size}', UI.calcContentFontSize(Setting.font_size))
-      .replace('{title_font_size}', UI.calcTitleFontSize(Setting.font_size))
-      .replace('{content_width}', Setting.content_width)
-      .replace('{text_line_height}', Setting.text_line_height)
-      .replace('{paragraph_height}', Setting.paragraph_height)
+    const mainCss = Res.CSS_MAIN.replace(
+      '{font_family}',
+      UI.siteFontFamily + String(Setting.font_family)
+    )
+      .replace('{font_size}', UI.calcContentFontSize(String(Setting.font_size)))
+      .replace('{title_font_size}', UI.calcTitleFontSize(String(Setting.font_size)))
+      .replace('{content_width}', String(Setting.content_width))
+      .replace('{text_line_height}', String(Setting.text_line_height))
+      .replace('{paragraph_height}', String(Setting.paragraph_height))
       .replace('{menu-bar-hidden}', Setting.menu_bar_hidden ? 'display:none;' : '');
 
     if (UI.$mainStyle) {
@@ -80,28 +140,26 @@ var UI = {
     }
   },
   hideMenuList: function (hidden) {
-    if (typeof hidden === 'undefined') {
-      hidden = !UI.menu_list_hiddden;
-    }
+    const targetHidden = typeof hidden === 'undefined' ? !UI.menu_list_hiddden : hidden;
 
-    if (hidden) {
+    if (targetHidden) {
       UI.$menu.addClass('hidden');
       UI.$content.css('margin-left', '');
     } else {
       UI.$menu.removeClass('hidden');
       UI.$content.css('margin-left', '320px');
     }
-    UI.menu_list_hiddden = hidden;
+    UI.menu_list_hiddden = targetHidden;
   },
   hidePreferencesButton: function (hidden) {
-    hidden = _.isUndefined(hidden) ? Setting.hide_preferences_button : hidden;
+    const shouldHide = _.isUndefined(hidden) ? Boolean(Setting.hide_preferences_button) : hidden;
 
-    UI.$preferencesBtn.toggle(!hidden);
+    UI.$preferencesBtn.toggle(!shouldHide);
   },
   hideMenuBar: function (hidden) {
-    hidden = _.isUndefined(hidden) ? Setting.menu_bar_hidden : hidden;
+    const shouldHide = _.isUndefined(hidden) ? Boolean(Setting.menu_bar_hidden) : hidden;
 
-    UI.$menuBar.toggle(!hidden);
+    UI.$menuBar.toggle(!shouldHide);
   },
   refreshSkinStyle: function (skin_name, isFirst) {
     var $style = $('#skin_style');
@@ -110,13 +168,11 @@ var UI = {
     }
 
     // 图片章节夜间模式会变的无法看
-    if (isFirst && skin_name.indexOf('夜间'.uiTrans()) != -1 && Setting.picNightModeCheck) {
+    if (isFirst && skin_name.indexOf('夜间'.uiTrans()) !== -1 && Setting.picNightModeCheck) {
       setTimeout(function () {
-        var img = $('#mynovelreader-content img')[0];
-        // console.log(img.width, img.height)
+        const img = $('#mynovelreader-content img')[0] as HTMLImageElement | undefined;
         if (img && img.width > 500 && img.height > 1000) {
           $style.text(UI.skins['缺省皮肤'.uiTrans()]);
-          return;
         }
       }, 200);
     }
@@ -180,7 +236,7 @@ var UI = {
           await App.toggle();
         } else if (event.which == 2) {
           event.preventDefault();
-          L_setValue('mynoverlreader_disable_once', true);
+          L_setValue('mynoverlreader_disable_once', 'true');
 
           var url = App.activeUrl || App.curPageUrl;
           App.openUrl(url);
@@ -189,31 +245,31 @@ var UI = {
       .appendTo('body');
   },
   calcContentFontSize: function (fontSizeStr) {
-    var m = fontSizeStr.match(/([\d\.]+)(px|r?em|pt)/);
+    var m = fontSizeStr.match(/[\d\.]+(px|r?em|pt)/);
     if (m) {
-      var size = m[1],
-        type = m[2];
-      return parseFloat(size, 10) + type;
+      var size = m[0].match(/[\d\.]+/);
+      var type = m[1];
+      return (size ? parseFloat(size[0]) : 0) + type;
     }
 
     m = fontSizeStr.match(/([\d\.]+)/);
     if (m) {
-      return parseFloat(m[1], 10) + 'px';
+      return parseFloat(m[1]) + 'px';
     }
 
     return '';
   },
   calcTitleFontSize: function (fontSizeStr) {
-    var m = fontSizeStr.match(/([\d\.]+)(px|r?em|pt)/);
+    var m = fontSizeStr.match(/[\d\.]+(px|r?em|pt)/);
     if (m) {
-      var size = m[1],
-        type = m[2];
-      return parseFloat(size, 10) * 1.8 + type;
+      var size = m[0].match(/[\d\.]+/);
+      var type = m[1];
+      return (size ? parseFloat(size[0]) : 0) * 1.8 + type;
     }
 
     m = fontSizeStr.match(/([\d\.]+)/);
     if (m) {
-      return parseFloat(m[1], 10) * 1.8 + 'px';
+      return parseFloat(m[1]) * 1.8 + 'px';
     }
 
     return '';
@@ -225,7 +281,7 @@ var UI = {
     meta.setAttribute('content', 'width=device-width, initial-scale=1');
     document.head.appendChild(meta);
   },
-  preferencesShow: function (event) {
+  preferencesShow: function (_event) {
     if ($('#reader_preferences').length) {
       return;
     }
@@ -242,6 +298,7 @@ var UI = {
       .appendTo('body');
 
     UI.preferencesLoadHandler();
+    void _event;
   },
   _loadBlocker: function () {
     UI.$blocker = $('<div>')
@@ -259,59 +316,68 @@ var UI = {
     UI.$blocker = null;
   },
   preferencesLoadHandler: function () {
-    var $form = $('#preferences');
+    const $form = $('#preferences');
 
-    // checkbox
-    // $form.find("#enable-cn2tw").get(0).checked = Setting.cn2tw;
-    // $form.find("#disable-auto-launch").get(0).checked = Setting.getDisableAutoLaunch();
-    $form.find('#booklink-enable').get(0).checked = Setting.booklink_enable;
-    $form.find('#debug').get(0).checked = Setting.debug;
-    $form.find('#quietMode').get(0).checked = Setting.isQuietMode;
-    $form.find('#pic-nightmode-check').get(0).checked = Setting.picNightModeCheck;
-    $form.find('#copyCurTitle').get(0).checked = Setting.copyCurTitle;
+    const getInput = <T extends HTMLElement = HTMLInputElement>(selector: string): T =>
+      $form.find(selector).get(0) as T;
 
-    $form.find('#hide-menu-list').get(0).checked = Setting.menu_list_hiddden;
-    $form.find('#hide-footer-nav').get(0).checked = Setting.hide_footer_nav;
-    $form.find('#hide-preferences-button').get(0).checked = Setting.hide_preferences_button;
-    $form.find('#add-nextpage-to-history').get(0).checked = Setting.addToHistory;
-    $form.find('#enable-dblclick-pause').get(0).checked = Setting.dblclickPause;
+    const setChecked = (selector: string, value: boolean) => {
+      getInput<HTMLInputElement>(selector).checked = value;
+    };
 
-    $form.find('#font-family').get(0).value = Setting.font_family;
-    $form.find('#font-size').get(0).value = Setting.font_size;
-    $form.find('#content_width').get(0).value = Setting.content_width;
-    $form.find('#text_line_height').get(0).value = Setting.text_line_height;
-    $form.find('#paragraph_height').get(0).value = Setting.paragraph_height;
-    $form.find('#split_content').get(0).checked = Setting.split_content;
-    $form.find('#scroll_animate').get(0).checked = Setting.scrollAnimate;
+    const setValue = (selector: string, value: string | number) => {
+      getInput<HTMLInputElement>(selector).value = String(value);
+    };
 
-    $form.find('#remain-height').get(0).value = Setting.remain_height;
-    $form.find('#extra_css').get(0).value = Setting.extra_css;
-    $form.find('#custom_siteinfo').get(0).value = Setting.customSiteinfo;
-    UI._rules = $form.find('#custom_replace_rules').get(0).value = Setting.customReplaceRules;
+    const setTextareaValue = (selector: string, value: string) => {
+      getInput<HTMLTextAreaElement>(selector).value = value;
+    };
 
-    $form.find('#preload-next-page').get(0).checked = Setting.preloadNextPage;
+    setChecked('#booklink-enable', Boolean(Setting.booklink_enable));
+    setChecked('#debug', Boolean(Setting.debug));
+    setChecked('#quietMode', Boolean(Setting.isQuietMode));
+    setChecked('#pic-nightmode-check', Boolean(Setting.picNightModeCheck));
+    setChecked('#copyCurTitle', Boolean(Setting.copyCurTitle));
 
-    // 启动模式
-    $form.find(`#launch-mode-${Setting.launchMode}`).get(0).checked = true;
+    setChecked('#hide-menu-list', Boolean(Setting.menu_list_hiddden));
+    setChecked('#hide-footer-nav', Boolean(Setting.hide_footer_nav));
+    setChecked('#hide-preferences-button', Boolean(Setting.hide_preferences_button));
+    setChecked('#add-nextpage-to-history', Boolean(Setting.addToHistory));
+    setChecked('#enable-dblclick-pause', Boolean(Setting.dblclickPause));
 
-    // 繁简转换
-    $form.find(`#chinese-conversion-${Setting.chineseConversion}`).get(0).checked = true;
+    setValue('#font-family', String(Setting.font_family));
+    setValue('#font-size', String(Setting.font_size));
+    setValue('#content_width', String(Setting.content_width));
+    setValue('#text_line_height', String(Setting.text_line_height));
+    setValue('#paragraph_height', String(Setting.paragraph_height));
+    setChecked('#split_content', Boolean(Setting.split_content));
+    setChecked('#scroll_animate', Boolean(Setting.scrollAnimate));
 
-    // 内容标准化
-    $form.find('#enable-content-normalize').get(0).checked = Setting.contentNormalize;
-    $form.find('#merge-qoutes-content').get(0).checked = Setting.mergeQoutesContent;
+    setValue('#remain-height', String(Setting.remain_height));
+    setTextareaValue('#extra_css', String(Setting.extra_css));
+    setTextareaValue('#custom_siteinfo', String(Setting.customSiteinfo));
+    const customRules = String(Setting.customReplaceRules);
+    setTextareaValue('#custom_replace_rules', customRules);
+    UI._rules = customRules;
 
-    // 快速启动
-    $form.find('#fastboot').get(0).checked = Setting.fastboot;
+    setChecked('#preload-next-page', Boolean(Setting.preloadNextPage));
 
-    // 删除含网站域名行
-    $form.find('#remove-domain-line').get(0).checked = Setting.removeDomainLine;
+    getInput<HTMLInputElement>(`#launch-mode-${Setting.launchMode}`).checked = true;
+
+    getInput<HTMLInputElement>(`#chinese-conversion-${Setting.chineseConversion}`).checked = true;
+
+    setChecked('#enable-content-normalize', Boolean(Setting.contentNormalize));
+    setChecked('#merge-qoutes-content', Boolean(Setting.mergeQoutesContent));
+
+    setChecked('#fastboot', Boolean(Setting.fastboot));
+
+    setChecked('#remove-domain-line', Boolean(Setting.removeDomainLine));
 
     // 界面语言
     var $lang = $form.find('#lang');
     $('<option>').text('zh-CN').appendTo($lang);
     $('<option>').text('zh-TW').appendTo($lang);
-    $lang.val(Setting.lang).change(function () {
+    $lang.val(String(Setting.lang)).change(function () {
       var key = $(this).find('option:selected').text();
       Setting.lang = key;
     });
@@ -321,14 +387,14 @@ var UI = {
     for (var key in UI.skins) {
       $('<option>').text(key).appendTo($skin);
     }
-    $skin.val(Setting.skin_name).change(function () {
+    $skin.val(String(Setting.skin_name)).change(function () {
       var key = $(this).find('option:selected').text();
       UI.refreshSkinStyle(key);
       Setting.skin_name = key;
     });
 
     // 字体大小等预览
-    var preview = _.debounce(function () {
+    var preview = _.debounce(function (this: HTMLInputElement) {
       switch (this.id) {
         case 'font-size':
           var contentFontSize = UI.calcContentFontSize(this.value);
@@ -347,9 +413,13 @@ var UI = {
         case 'text_line_height':
           UI.$content.css('line-height', this.value);
           break;
-        case 'paragraph_height':
-          $(App.curFocusElement).find('p').css('margin', `${this.value} 0`);
+        case 'paragraph_height': {
+          const focusElement = App.curFocusElement as HTMLElement | null;
+          if (focusElement) {
+            $(focusElement).find('p').css('margin', `${this.value} 0`);
+          }
           break;
+        }
         default:
           break;
       }
@@ -357,14 +427,14 @@ var UI = {
     $form.on('input', 'input', preview);
 
     // 初始化设置按键
-    $form.find('#quietModeKey').get(0).value = Setting.quietModeKey;
-    $form.find('#openPreferencesKey').get(0).value = Setting.openPreferencesKey;
-    $form.find('#setHideMenuListKey').get(0).value = Setting.hideMenuListKey;
-    $form.find('#setOpenSpeechKey').get(0).value = Setting.openSpeechKey;
+    setValue('#quietModeKey', String(Setting.quietModeKey));
+    setValue('#openPreferencesKey', String(Setting.openPreferencesKey));
+    setValue('#setHideMenuListKey', String(Setting.hideMenuListKey));
+    setValue('#setOpenSpeechKey', String(Setting.openSpeechKey));
 
     // 点击事件
     $form.on('click', 'input:checkbox, input:button', function (event) {
-      UI.preferencesClickHandler(event.target); // 不用 await
+      UI.preferencesClickHandler(event.target as HTMLInputElement); // 不用 await
     });
   },
   cleanPreview: function () {
@@ -401,28 +471,28 @@ var UI = {
       case 'hide-footer-nav':
         break;
       case 'quietModeKey':
-        key = prompt('请输入打开设置的快捷键：'.uiTrans(), Setting.quietModeKey);
+        key = prompt('请输入打开设置的快捷键：'.uiTrans(), String(Setting.quietModeKey));
         if (key) {
           Setting.quietModeKey = key;
           $(target).val(key);
         }
         break;
       case 'openPreferencesKey':
-        key = prompt('请输入打开设置的快捷键：'.uiTrans(), Setting.openPreferencesKey);
+        key = prompt('请输入打开设置的快捷键：'.uiTrans(), String(Setting.openPreferencesKey));
         if (key) {
           Setting.openPreferencesKey = key;
           $(target).val(key);
         }
         break;
       case 'setHideMenuListKey':
-        key = prompt('请输入切换左侧章节列表的快捷键：'.uiTrans(), Setting.hideMenuListKey);
+        key = prompt('请输入切换左侧章节列表的快捷键：'.uiTrans(), String(Setting.hideMenuListKey));
         if (key) {
           Setting.hideMenuListKey = key;
           $(target).val(key);
         }
         break;
       case 'setOpenSpeechKey':
-        key = prompt('请输入打开朗读的快捷键：'.uiTrans(), Setting.openSpeechKey);
+        key = prompt('请输入打开朗读的快捷键：'.uiTrans(), String(Setting.openSpeechKey));
         if (key) {
           Setting.openSpeechKey = key;
           $(target).val(key);
@@ -446,92 +516,99 @@ var UI = {
     UI.hide();
   },
   preferencesSaveHandler: function () {
-    var $form = $('#preferences');
+    const $form = $('#preferences');
+
+    const getInput = <T extends HTMLElement = HTMLInputElement>(selector: string): T =>
+      $form.find(selector).get(0) as T;
+
+    const getChecked = (selector: string): boolean => getInput<HTMLInputElement>(selector).checked;
+    const getValue = (selector: string): string => getInput<HTMLInputElement>(selector).value;
+    const getTextareaValue = (selector: string): string =>
+      getInput<HTMLTextAreaElement>(selector).value;
 
     // Setting.setDisableAutoLaunch($form.find("#disable-auto-launch").get(0).checked);
 
     // Setting.cn2tw = $form.find("#enable-cn2tw").get(0).checked;
-    Setting.booklink_enable = $form.find('#booklink-enable').get(0).checked;
-    Setting.isQuietMode = $form.find('#quietMode').get(0).checked;
-    Setting.debug = $form.find('#debug').get(0).checked;
-    Setting.picNightModeCheck = $form.find('#pic-nightmode-check').get(0).checked;
-    Setting.setCopyCurTitle($form.find('#copyCurTitle').get(0).checked);
+    Setting.booklink_enable = getChecked('#booklink-enable');
+    Setting.isQuietMode = getChecked('#quietMode');
+    Setting.debug = getChecked('#debug');
+    Setting.picNightModeCheck = getChecked('#pic-nightmode-check');
+    Setting.setCopyCurTitle(getChecked('#copyCurTitle'));
 
-    Setting.addToHistory = $form.find('#add-nextpage-to-history').get(0).checked;
-    Setting.dblclickPause = $form.find('#enable-dblclick-pause').get(0).checked;
+    Setting.addToHistory = getChecked('#add-nextpage-to-history');
+    Setting.dblclickPause = getChecked('#enable-dblclick-pause');
 
     var skinName = $form.find('#skin').find('option:selected').text();
     Setting.skin_name = skinName;
     UI.refreshSkinStyle(skinName);
 
-    Setting.font_family = $form.find('#font-family').get(0).value;
+    Setting.font_family = getValue('#font-family');
     UI.$content.css('font-family', Setting.font_family);
 
-    Setting.font_size = $form.find('#font-size').get(0).value;
-    Setting.text_line_height = $form.find('#text_line_height').get(0).value;
-    Setting.paragraph_height = $form.find('#paragraph_height').get(0).value;
-    Setting.content_width = $form.find('#content_width').get(0).value;
-    Setting.remain_height = $form.find('#remain-height').get(0).value;
-    Setting.split_content = $form.find('#split_content').get(0).checked;
-    Setting.scrollAnimate = $form.find('#scroll_animate').get(0).checked;
+    Setting.font_size = getValue('#font-size');
+    Setting.text_line_height = getValue('#text_line_height');
+    Setting.paragraph_height = getValue('#paragraph_height');
+    Setting.content_width = getValue('#content_width');
+    Setting.remain_height = getValue('#remain-height');
+    Setting.split_content = getChecked('#split_content');
+    Setting.scrollAnimate = getChecked('#scroll_animate');
 
-    Setting.menu_list_hiddden = $form.find('#hide-menu-list').get(0).checked;
+    Setting.menu_list_hiddden = getChecked('#hide-menu-list');
     UI.hideMenuList(Setting.menu_list_hiddden);
 
-    Setting.hide_footer_nav = $form.find('#hide-footer-nav').get(0).checked;
+    Setting.hide_footer_nav = getChecked('#hide-footer-nav');
     UI.hideFooterNavStyle(Setting.hide_footer_nav);
 
-    Setting.hide_preferences_button = $form.find('#hide-preferences-button').get(0).checked;
+    Setting.hide_preferences_button = getChecked('#hide-preferences-button');
 
-    var css = $form.find('#extra_css').get(0).value;
+    const css = getTextareaValue('#extra_css');
     UI.refreshExtraStyle(css);
     Setting.extra_css = css;
 
-    Setting.customSiteinfo = $form.find('#custom_siteinfo').get(0).value;
+    Setting.customSiteinfo = getTextareaValue('#custom_siteinfo');
 
-    Setting.preloadNextPage = $form.find('#preload-next-page').get(0).checked;
+    Setting.preloadNextPage = getChecked('#preload-next-page');
 
     // 启动模式
     $form.find('#launch-mode input').each(function () {
-      if (this.checked) {
-        Setting.launchMode = this.value;
+      if ((this as HTMLInputElement).checked) {
+        Setting.launchMode = (this as HTMLInputElement).value;
       }
     });
 
     // 繁简转换
     $form.find('#chinese-conversion input').each(function () {
-      if (this.checked) {
-        Setting.chineseConversion = this.value;
+      if ((this as HTMLInputElement).checked) {
+        Setting.chineseConversion = (this as HTMLInputElement).value;
       }
     });
 
     // 内容标准化
-    Setting.contentNormalize = $form.find('#enable-content-normalize').get(0).checked;
-    Setting.mergeQoutesContent = $form.find('#merge-qoutes-content').get(0).checked;
+    Setting.contentNormalize = getChecked('#enable-content-normalize');
+    Setting.mergeQoutesContent = getChecked('#merge-qoutes-content');
 
     // 快速启动
-    Setting.fastboot = $form.find('#fastboot').get(0).checked;
+    Setting.fastboot = getChecked('#fastboot');
 
     // 删除含网站域名行
-    Setting.removeDomainLine = $form.find('#remove-domain-line').get(0).checked;
+    Setting.removeDomainLine = getChecked('#remove-domain-line');
 
     // 自定义替换规则直接生效
-    var rules = $form.find('#custom_replace_rules').get(0).value;
-    Setting.customReplaceRules = rules;
-    if (rules != UI._rules) {
-      var contentHtml = App.oArticles.join('\n');
-      if (rules) {
-        // 转换规则
-        rules = Rule.parseCustomReplaceRules(rules);
-        // 替换
-        contentHtml = Parser.prototype.replaceHtml(contentHtml, rules);
+    const rulesText = getTextareaValue('#custom_replace_rules');
+    Setting.customReplaceRules = rulesText;
+    if (rulesText !== UI._rules) {
+      let contentHtml = App.oArticles.join('\n');
+      if (rulesText) {
+        const replaceRules = Rule.parseCustomReplaceRules(rulesText) as Record<string, string>;
+        contentHtml = Parser.prototype.replaceHtml(contentHtml, replaceRules);
+        UI._rules = replaceRules;
+      } else {
+        UI._rules = rulesText;
       }
 
       UI.$content.html(contentHtml);
 
       App.resetCache();
-
-      UI._rules = rules;
     }
 
     // 重新载入样式

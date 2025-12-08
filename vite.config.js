@@ -13,6 +13,26 @@ const metaHeader =
     ? metaText.slice(metaStart, metaEnd + '// ==/UserScript=='.length)
     : '';
 
+const externalDeps = [
+  'jquery',
+  'zepto',
+  'dayjs',
+  'ajax-hook',
+  'md5',
+  'underscore',
+  'keymaster',
+  'crypto-js',
+];
+
+const sideEffectModules = [
+  'lang.js',
+  'meta.js',
+  'inject.js',
+  'jquery-extensions',
+  'easing',
+  'lib.js',
+];
+
 // 插件：将模板和样式文件作为字符串导入
 function stringPlugin() {
   return {
@@ -53,7 +73,7 @@ export default defineConfig({
       entry: path.resolve(__dirname, 'src/MyNovelReader/index.js'),
       name: 'MyNovelReader',
       formats: ['iife'],
-      fileName: format => 'MyNovelReader.user.js',
+      fileName: _format => 'MyNovelReader.user.js',
     },
     outDir: 'scripts',
     emptyOutDir: false,
@@ -83,20 +103,10 @@ export default defineConfig({
     },
     cssMinify: true,
     rollupOptions: {
-      external: [
-        'jquery',
-        'zepto',
-        'dayjs',
-        'ajax-hook',
-        'md5',
-        'underscore',
-        'keymaster',
-        'crypto-js',
-      ],
+      external: externalDeps,
       treeshake: {
-        // Keep side-effectful modules like lang.js, meta.js etc. so
-        // prototype extensions (uiTrans) and metadata are not tree-shaken.
-        moduleSideEffects: true,
+        // Keep essential side-effect modules (language setup, metadata, jQuery extensions) only.
+        moduleSideEffects: id => sideEffectModules.some(moduleId => id.includes(moduleId)),
         propertyReadSideEffects: false,
         tryCatchDeoptimization: false,
       },
@@ -135,8 +145,14 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'node',
+    environment: 'jsdom',
     globals: true,
     include: ['tests/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: 'coverage',
+      include: ['src/common/utils/**/*.{js,ts}'],
+    },
   },
 });
