@@ -1,42 +1,10 @@
 /* eslint-disable no-unused-vars, no-useless-escape */
 import type { UnderscoreStatic } from 'underscore';
 import Setting from './Setting';
-// import config from './config'
-import Parser from './parser';
-import Rule from './rule';
 import { toggleConsole, L_setValue } from './lib';
 import Res from './res';
 import bus, { SHOW_SPEECH } from './app/bus';
-import { getApp } from './appRef';
-
-// 使用 getApp() 获取 App 实例，避免循环依赖
-const App = {
-  get isEnabled() {
-    return getApp()?.isEnabled;
-  },
-  get site() {
-    return getApp()?.site;
-  },
-  get siteFontInfo() {
-    return getApp()?.siteFontInfo;
-  },
-  get curFocusElement() {
-    return getApp()?.curFocusElement;
-  },
-  get oArticles() {
-    return getApp()?.oArticles;
-  },
-  get activeUrl() {
-    return getApp()?.activeUrl;
-  },
-  get curPageUrl() {
-    return getApp()?.curPageUrl;
-  },
-  toggle: () => getApp()?.toggle(),
-  openUrl: (url: string) => getApp()?.openUrl(url),
-  resetCache: () => getApp()?.resetCache(),
-  saveAsTxt: () => getApp()?.saveAsTxt(),
-};
+import uiService from './app/ui/UIServiceImpl';
 
 declare const _: UnderscoreStatic;
 
@@ -131,8 +99,9 @@ const UI: UIType = {
   },
   refreshMainStyle: function () {
     // 添加站点字体到样式中
-    if (App.site?.useSiteFont && App.siteFontInfo?.siteFontFamily) {
-      UI.siteFontFamily = App.siteFontInfo.siteFontFamily;
+    const siteFontFamily = uiService.getSiteFontFamily();
+    if (siteFontFamily) {
+      UI.siteFontFamily = siteFontFamily;
     }
 
     const mainCss = Res.CSS_MAIN.replace(
@@ -286,18 +255,23 @@ const UI: UIType = {
         '
     );
 
+    const { isEnabled } = uiService.getStatus();
+
     $('<div>')
       .addClass('readerbtn')
-      .html(App.isEnabled ? '退出'.uiTrans() : '阅读模式'.uiTrans())
+      .html(isEnabled ? '退出'.uiTrans() : '阅读模式'.uiTrans())
       .mousedown(async function (event) {
         if (event.which == 1) {
-          await App.toggle();
+          await uiService.toggle();
         } else if (event.which == 2) {
           event.preventDefault();
           L_setValue('mynoverlreader_disable_once', 'true');
 
-          var url = App.activeUrl || App.curPageUrl;
-          App.openUrl(url);
+          const { activeUrl, currentUrl } = uiService.getStatus();
+          const url = activeUrl || currentUrl;
+          if (url) {
+            uiService.openUrl(url);
+          }
         }
       })
       .appendTo('body');
@@ -481,7 +455,7 @@ const UI: UIType = {
           UI.$content.css('line-height', this.value);
           break;
         case 'paragraph_height': {
-          const focusElement = App.curFocusElement as HTMLElement | null;
+          const focusElement = uiService.getPreviewArticle();
           if (focusElement) {
             $(focusElement).find('p').css('margin', `${this.value} 0`);
           }
@@ -567,7 +541,7 @@ const UI: UIType = {
         break;
       case 'saveAsTxt':
         UI.preferencesCloseHandler();
-        await App.saveAsTxt();
+        await uiService.saveAsTxt();
         break;
       case 'speech':
         UI.preferencesCloseHandler();
@@ -664,18 +638,9 @@ const UI: UIType = {
     const rulesText = getTextareaValue('#custom_replace_rules');
     Setting.customReplaceRules = rulesText;
     if (rulesText !== UI._rules) {
-      let contentHtml = App.oArticles.join('\n');
-      if (rulesText) {
-        const replaceRules = Rule.parseCustomReplaceRules(rulesText) as Record<string, string>;
-        contentHtml = Parser.prototype.replaceHtml(contentHtml, replaceRules);
-        UI._rules = replaceRules;
-      } else {
-        UI._rules = rulesText;
-      }
-
+      const { html: contentHtml } = uiService.applyCustomReplaceRules(rulesText);
+      UI._rules = rulesText;
       UI.$content.html(contentHtml);
-
-      App.resetCache();
     }
 
     // 重新载入样式
