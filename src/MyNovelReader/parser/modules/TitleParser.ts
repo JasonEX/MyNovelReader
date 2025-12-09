@@ -3,6 +3,7 @@ import type { UnderscoreStatic } from 'underscore';
 import type TextReplacer from './TextReplacer';
 import autoGetBookTitle from '../autoGetBookTitle';
 import Rule from '../../rule';
+import { executeSelector, parseSelector } from '../../rule/selector';
 import { C, toRE } from '../../lib';
 import { chineseConversion } from '../../cnConv';
 import { getElemFontSize } from './ParserUtils';
@@ -93,44 +94,38 @@ export default class TitleParser {
   }
 
   getTitleFromRule(selectorOrArray) {
-    let title = '';
     if (!selectorOrArray) {
       return '';
     }
 
-    if (_.isFunction(selectorOrArray)) {
-      try {
-        title = selectorOrArray(this.parser.$doc);
-      } catch (e) {
-        C.error('执行获取标题函数规则出错', e);
-      }
-      if (!title) {
-        C.error('无法找到标题', selectorOrArray, this.parser.doc);
-        return '';
-      }
-      return title;
-    }
-
-    let selector;
-    let replace;
-
-    if (_.isArray(selectorOrArray)) {
-      selector = selectorOrArray[0];
-      replace = selectorOrArray[1];
-    } else {
-      selector = selectorOrArray;
-    }
-
-    const $title = this.parser.$doc.find(selector);
-    if (!$title.length) {
-      C.error('无法找到标题', selector, this.parser.doc);
+    const parsedSelector = parseSelector<string | JQuery<HTMLElement>>(selectorOrArray);
+    if (!parsedSelector) {
       return '';
     }
 
-    title = $title.first().text().trim();
+    let result: string | JQuery<HTMLElement> | null;
 
-    if (replace) {
-      title = title.replace(toRE(replace), '');
+    if (parsedSelector.type === 'function') {
+      try {
+        result = executeSelector<string | JQuery<HTMLElement>>(parsedSelector, this.parser.$doc);
+      } catch (e) {
+        C.error('执行获取标题函数规则出错', e);
+        return '';
+      }
+    } else {
+      result = executeSelector(parsedSelector, this.parser.$doc) as JQuery<HTMLElement> | null;
+    }
+
+    if (!result || (typeof result !== 'string' && result.length === 0)) {
+      C.error('无法找到标题', selectorOrArray, this.parser.doc);
+      return '';
+    }
+
+    let title =
+      typeof result === 'string' ? result : (result as JQuery<HTMLElement>).first().text().trim();
+
+    if (parsedSelector.replace) {
+      title = title.replace(toRE(parsedSelector.replace), '');
     }
 
     return title;

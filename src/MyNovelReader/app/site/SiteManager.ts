@@ -2,6 +2,7 @@ import type { SiteConfig } from '../../../typings/MyNovelReader';
 import Setting from '../../Setting';
 import config from '../../config';
 import Rule from '../../rule';
+import { validateRuleSchemas } from '../../rule/schema';
 import { C, L_getValue, L_removeValue, toRE } from '../../lib';
 
 type RuleModule = {
@@ -39,6 +40,7 @@ class SiteManager {
 
     if (Array.isArray(customRules)) {
       ruleModule.customRules = customRules;
+      validateRuleSchemas(ruleModule.customRules, 'customRules');
       C.log('载入自定义站点规则成功', customRules);
     }
 

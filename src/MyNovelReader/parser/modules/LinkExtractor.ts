@@ -2,6 +2,7 @@ import type { IParser } from '../types';
 import type { UnderscoreStatic } from 'underscore';
 import config from '../../config';
 import Rule from '../../rule';
+import { executeSelector, type LegacySelectorValue, parseSelector } from '../../rule/selector';
 import { C, toRE, wildcardToRegExpStr } from '../../lib';
 
 declare const _: UnderscoreStatic;
@@ -35,22 +36,19 @@ export default class LinkExtractor {
       return url;
     }
 
-    if (selector && _.isFunction(selector)) {
-      try {
-        url = this.checkLinks(selector(this.parser.$doc));
-      } catch (e) {
-        C.error('执行获取目录链接函数规则出错', e);
-      }
-    } else if (typeof this.parser.info.indexSelector === 'string') {
-      url = this.checkLinks(this.parser.$doc.find(this.parser.info.indexSelector));
-    }
+    const indexLink = this.executeLinkSelector(selector, '执行获取目录链接函数规则出错') as
+      | JQuery<HTMLElement>
+      | string
+      | null;
+
+    url = this.checkLinks(indexLink as JQuery<HTMLElement>);
 
     if (!url) {
       const selectors = Rule.indexSelectors;
       for (let i = 0; i < selectors.length; i += 1) {
-        const indexLink = this.parser.$doc.find(selectors[i]);
-        if (indexLink.length > 0) {
-          url = this.checkLinks(indexLink);
+        const fallbackLink = this.parser.$doc.find(selectors[i]);
+        if (fallbackLink.length > 0) {
+          url = this.checkLinks(fallbackLink);
           break;
         }
       }
@@ -76,20 +74,11 @@ export default class LinkExtractor {
       return url;
     }
 
-    let urlElement: JQuery<HTMLElement> | undefined | string;
+    let urlElement: JQuery<HTMLElement> | undefined | string | null;
     let isSectionUrl = false;
 
     if (selector) {
-      if (_.isFunction(selector)) {
-        try {
-          urlElement = selector(this.parser.$doc);
-        } catch (e) {
-          C.error('执行获取下一页链接函数规则出错', e);
-        }
-      } else {
-        urlElement = this.parser.$doc.find(selector);
-      }
-
+      urlElement = this.executeLinkSelector(selector, '执行获取下一页链接函数规则出错');
       url = this.checkLinks(urlElement as JQuery<HTMLElement>);
     }
 
@@ -134,19 +123,10 @@ export default class LinkExtractor {
       return url;
     }
 
-    let urlElement: JQuery<HTMLElement> | undefined | string;
+    let urlElement: JQuery<HTMLElement> | undefined | string | null;
 
     if (selector) {
-      if (_.isFunction(selector)) {
-        try {
-          urlElement = selector(this.parser.$doc);
-        } catch (e) {
-          C.error('执行获取上一页链接函数规则出错', e);
-        }
-      } else {
-        urlElement = this.parser.$doc.find(selector);
-      }
-
+      urlElement = this.executeLinkSelector(selector, '执行获取上一页链接函数规则出错');
       url = this.checkLinks(urlElement as JQuery<HTMLElement>);
     }
 
@@ -233,6 +213,28 @@ export default class LinkExtractor {
 
     this.parser.info.includeUrl = includeUrl;
     return includeUrl;
+  }
+
+  private executeLinkSelector(
+    selector: LegacySelectorValue<string | JQuery<HTMLElement> | undefined> | null | undefined,
+    errorMessage: string
+  ) {
+    const parsed = parseSelector<string | JQuery<HTMLElement> | undefined>(selector);
+
+    if (!parsed) {
+      return null;
+    }
+
+    if (parsed.type === 'function') {
+      try {
+        return executeSelector(parsed, this.parser.$doc);
+      } catch (e) {
+        C.error(errorMessage, e);
+        return null;
+      }
+    }
+
+    return executeSelector(parsed, this.parser.$doc);
   }
 
   checkLinks(links?: JQuery<HTMLElement> | string | null) {

@@ -2,6 +2,7 @@ import sites from './sites';
 import replace from './replace';
 import replaceAll from './replaceAll';
 import * as oneWordReplace from './oneWordReplace';
+import { validateRuleSchemas } from './schema';
 
 // Unicode/2000-2FFF：http://zh.wikibooks.org/wiki/Unicode/2000-2FFF
 // Unicode/F000-FFFF：https://zh.wikibooks.org/wiki/Unicode/F000-FFFF
@@ -172,6 +173,8 @@ var Rule = {
 // Rule.replace = replace
 
 oneWordReplace.extendRule(Rule.replace);
+
+validateRuleSchemas(Rule.specialSite, 'specialSite');
 
 // ===== 全局移除，在替换 <br> 为 \n 之后 =====
 // Rule.replaceAll = replaceAll
