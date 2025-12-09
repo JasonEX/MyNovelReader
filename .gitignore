@@ -6,7 +6,6 @@ Thumbs.db
 .vscode/
 *.sublime-workspace
 AGENTS.md
-opencode.json
 coverage/
 
 # TypeScript
@@ -14,27 +13,18 @@ coverage/
 
 # Dependency directories
 node_modules/
-bower_components/
 
 # Build outputs / generated artifacts
 dist/
-rollup.build.css
 scripts/*.user.js.backup
 
 # Temp and cache
 tmp/
 temp/
 .test/
-.rts2_cache/
 *.cache
 
 # Logs
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
-
-# Test fixtures to skip
-*/searchEngineJumpCE/test/
-*/Super_preloaderPlus/test/testGoogleSearch.js
-src/common/test.ts

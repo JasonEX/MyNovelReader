@@ -2,51 +2,77 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-const metaPath = path.resolve(__dirname, 'src/MyNovelReader/meta.js');
-const metaText = fs.readFileSync(metaPath, 'utf8');
-const metaStart = metaText.indexOf('// ==UserScript==');
-const metaEnd = metaText.indexOf('// ==/UserScript==');
-const metaHeader =
-  metaStart !== -1 && metaEnd !== -1
-    ? metaText.slice(metaStart, metaEnd + '// ==/UserScript=='.length)
-    : '';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const externalDeps = [
-  'jquery',
-  'zepto',
-  'dayjs',
-  'ajax-hook',
-  'md5',
-  'underscore',
-  'keymaster',
-  'crypto-js',
-];
+const entryPoint = path.resolve(__dirname, 'src/index.ts');
 
-const sideEffectModules = [
-  'lang.js',
-  'meta.js',
-  'inject.js',
-  'jquery-extensions',
-  'easing',
-  'lib.js',
-];
+// Generate meta header from version.ts
+const version =
+  fs
+    .readFileSync(path.resolve(__dirname, 'src/version.ts'), 'utf8')
+    .match(/VERSION\s*=\s*['"]([^'"]+)['"]/)?.[1] || '2.0.0';
 
-// 插件：将模板和样式文件作为字符串导入
-function stringPlugin() {
-  return {
-    name: 'string',
-    enforce: 'pre',
-    load(id) {
-      if (id.endsWith('.tpl') || id.endsWith('.css.txt')) {
-        return `export default ${JSON.stringify(fs.readFileSync(id, 'utf-8'))}`;
-      }
-    },
-  };
-}
+const metaHeader = `// ==UserScript==
+// @id             mynovelreader@ywzhaiqi@gmail.com
+// @name           My Novel Reader
+// @name:zh-CN     小说阅读脚本
+// @name:zh-TW     小說閱讀腳本
+// @version        ${version}
+// @namespace      https://github.com/ywzhaiqi
+// @author         ywzhaiqi
+// @description    小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
+// @license        GPL version 3
+// @homepageURL    https://greasyfork.org/scripts/292/
+// @grant          GM_xmlhttpRequest
+// @grant          GM_addStyle
+// @grant          GM_getValue
+// @grant          GM_setValue
+// @grant          GM_deleteValue
+// @grant          GM_listValues
+// @grant          GM_openInTab
+// @grant          GM_setClipboard
+// @grant          GM_registerMenuCommand
+// @grant          GM_info
+// @grant          unsafeWindow
+// @connect        *
+// @match          *://*/*.html
+// @match          *://*/*.htm
+// @match          *://*/*.shtml
+// @match          *://*/*/*.html
+// @match          *://*/*/*/*.html
+// @match          *://*/*/*/*/*.html
+// @match          *://*/*.php?*
+// @match          *://*/txt/*/*
+// @match          *://*/book/*/*
+// @match          *://*/read/*/*
+// @match          *://*/chapter/*/*
+// @match          *://*/novel/*/*
+// @match          *://www.qidian.com/chapter/*/*
+// @match          *://m.qidian.com/chapter/*/*
+// @match          *://read.qidian.com/chapter/*
+// @match          *://vipreader.qidian.com/chapter/*/*
+// @match          *://book.zongheng.com/chapter/*/*.html
+// @match          *://read.zongheng.com/chapter/*/*.html
+// @match          *://www.17k.com/chapter/*/*.html
+// @match          *://www.jjwxc.net/onebook.php?*
+// @match          *://my.jjwxc.net/onebook_vip.php?*
+// @match          *://book.sfacg.com/Novel/*/*/*/
+// @match          *://weread.qq.com/web/reader/*
+// @match          *://www.tadu.com/book/*/*/
+// @match          *://tieba.baidu.com/p/*
+// @match          *://masiro.me/admin/novelReading*
+// @exclude        *://*/*/index.html
+// @exclude        *://*/*/list.html
+// @exclude        *://*/search/*
+// @exclude        *://*/login*
+// @exclude        *://www.tadu.com/book/*/toc/
+// ==/UserScript==`;
 
-// 插件：强制把 UserScript 元数据头插入最终产物
+// Plugin: Insert UserScript meta header into final bundle
 function userscriptHeaderPlugin() {
   return {
     name: 'userscript-header',
@@ -70,78 +96,29 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: path.resolve(__dirname, 'src/MyNovelReader/index.js'),
+      entry: entryPoint,
       name: 'MyNovelReader',
       formats: ['iife'],
-      fileName: _format => 'MyNovelReader.user.js',
+      fileName: () => 'MyNovelReader.user.js',
     },
     outDir: 'scripts',
     emptyOutDir: false,
     sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      mangle: false,
-      compress: {
-        defaults: false,
-        unused: true,
-        dead_code: true,
-        conditionals: true,
-        booleans: true,
-        sequences: true,
-        evaluate: true,
-        drop_console: true,
-        drop_debugger: true,
-      },
-      format: {
-        // 保留 UserScript 元数据头，否则被压缩器去掉后脚本无法被油猴识别
-        comments: (_node, comment) => comment.value.includes('==UserScript=='),
-        beautify: false,
-        preserve_annotations: true,
-      },
-      keep_classnames: true,
-      keep_fnames: true,
-    },
+    minify: false,
     cssMinify: true,
     rollupOptions: {
-      external: externalDeps,
-      treeshake: {
-        // Keep essential side-effect modules (language setup, metadata, jQuery extensions) only.
-        moduleSideEffects: id => sideEffectModules.some(moduleId => id.includes(moduleId)),
-        propertyReadSideEffects: false,
-        tryCatchDeoptimization: false,
-      },
       output: {
-        globals: {
-          jquery: 'jQuery',
-          zepto: 'Zepto',
-          dayjs: 'dayjs',
-          'ajax-hook': 'ah',
-          md5: 'md5',
-          underscore: '_',
-          keymaster: 'key',
-          'crypto-js': 'CryptoJS',
-        },
-        banner: metaHeader || '/* This script build by Vite. */',
+        banner: metaHeader,
         inlineDynamicImports: true,
       },
     },
     cssCodeSplit: false,
   },
-  plugins: [vue(), cssInjectedByJsPlugin(), stringPlugin(), userscriptHeaderPlugin()],
+  plugins: [vue(), cssInjectedByJsPlugin(), userscriptHeaderPlugin()],
   css: {
-    // 不提取 CSS 文件，将样式内联到 JS 中
     extract: false,
-    // 将 CSS 作为模块注入
     modules: {
       scopeBehaviour: 'global',
-    },
-    // 配置预处理器
-    preprocessorOptions: {
-      less: {
-        // 可添加全局 Less 变量等配置
-        additionalData: '',
-        javascriptEnabled: true,
-      },
     },
   },
   test: {
@@ -152,7 +129,12 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',
-      include: ['src/common/utils/**/*.{js,ts}'],
+      include: ['src/core/**/*.{js,ts}'],
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
   },
 });

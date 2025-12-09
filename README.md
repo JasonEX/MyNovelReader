@@ -2,8 +2,7 @@
 
 [![User script generation](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml)
 
-现代化的小说阅读 UserScript，支持自动翻页、自定义样式、语音朗读等功能。当前正逐步用
-TypeScript 重构核心逻辑与站点适配。
+现代化的小说阅读 UserScript，支持自动翻页、自定义样式、语音朗读等功能。核心逻辑已使用 TypeScript 重构。
 
 ## 安装
 
@@ -14,7 +13,7 @@ TypeScript 重构核心逻辑与站点适配。
 
 ### 开发版 / 本仓库
 
-- 运行 `npm install && npm run build`，油猴在“从文件安装”中选择 `scripts/MyNovelReader.user.js`。
+- 运行 `npm install && npm run build`，油猴在"从文件安装"中选择 `scripts/MyNovelReader.user.js`。
 - 开发调试可执行 `npm run dev` 持续构建，然后在油猴中指向同一文件。
 
 ## 开发
@@ -28,7 +27,7 @@ TypeScript 重构核心逻辑与站点适配。
 
 - **构建工具**: Vite 6
 - **前端框架**: Vue 3 (Composition API) + Pinia
-- **语言**: JavaScript / TypeScript（逐步迁移）
+- **语言**: TypeScript
 - **测试框架**: Vitest (jsdom)
 - **代码规范**: ESLint + Prettier + lint-staged（Husky pre-commit）
 
@@ -43,45 +42,41 @@ npm test -- --coverage       # 生成 coverage 报告（已在 .gitignore）
 npm run lint                 # 基础语法检查
 npm run lint:strict          # 不允许有 warnings
 npm run format               # Prettier 全量格式化
-npx vitest run tests/unit/string-utils.test.ts  # 运行单个测试
+npx vitest run tests/unit/xxx.test.ts  # 运行单个测试
 ```
 
 ### 项目结构
 
 ```
 ├── src/
-│   ├── MyNovelReader/
-│   │   ├── app/             # Vue UI 与阅读器核心，按域拆分
-│   │   │   ├── core/        # 协调器、主流程
-│   │   │   ├── document/    # DOM 解析与阅读页抽取
-│   │   │   ├── page/        # 页面切换、分页
-│   │   │   ├── scroll/      # 滚动/自动翻页
-│   │   │   ├── site/        # 站点适配层
-│   │   │   ├── ui/          # UI 行为、组件适配
-│   │   │   └── components/  # Vue 组件（如语音、Loading）
-│   │   ├── rule/            # 站点规则（仍包含 legacy JS）
-│   │   ├── services/        # 请求、存储、语音等服务
-│   │   ├── stores/          # Pinia 状态
-│   │   ├── utils/           # TS 工具方法与 jQuery 扩展
-│   │   ├── types/           # 类型定义
-│   │   └── meta.js          # UserScript 元数据头
-│   └── common/utils/        # 跨脚本共享工具
+│   ├── index.ts             # 入口文件
+│   ├── bootstrap.ts         # 启动逻辑
+│   ├── meta.ts              # UserScript 元数据
+│   ├── version.ts           # 版本号
+│   ├── core/                # 核心逻辑
+│   │   ├── detection/       # 智能内容检测
+│   │   │   ├── ContentDetector.ts    # 内容检测器
+│   │   │   ├── NavigationDetector.ts # 导航检测
+│   │   │   ├── TitleDetector.ts      # 标题检测
+│   │   │   └── ConfidenceScorer.ts   # 置信度评分
+│   │   ├── parser/          # 内容解析
+│   │   ├── converter/       # 繁简转换
+│   │   ├── rules/           # 站点规则管理
+│   │   └── protection/      # 站点保护
+│   ├── ui/                  # UI 组件
+│   ├── utils/               # 工具函数
+│   └── typings/             # 类型定义
 ├── tests/unit/              # Vitest 单元测试
 ├── scripts/                 # 构建输出 MyNovelReader.user.js
 └── coverage/                # 覆盖率输出（忽略提交）
 ```
-
-### 自定义站点规则
-
-参见 [站点规则说明][siteExample]，可按需新增到 `src/MyNovelReader/rule/`。
 
 ### 注意事项
 
 - 部分站点需要安装 `ignore-x-frame-headers` 扩展绕过 iframe 限制：
   - [Chrome][ignore-x-frame-options-chrome]
   - [Firefox][ignore-x-frame-options-firefox]
-- 新增站点适配或较大改动时，优先使用 TypeScript/Pinia，并保持 `npm run lint:strict` 与
-  `npm test` 通过。
+- 新增站点适配或较大改动时，保持 `npm run lint:strict` 与 `npm test` 通过。
 
 ## 原作者
 
@@ -92,6 +87,5 @@ npx vitest run tests/unit/string-utils.test.ts  # 运行单个测试
 [ywzhaiqi_greasyfork]: https://greasyfork.org/users/145-ywzhaiqi
 [install_github]: https://github.com/821938089/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
 [install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
-[siteExample]: /src/MyNovelReader/rule/siteExample.js
 [ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
 [ignore-x-frame-options-firefox]: https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
