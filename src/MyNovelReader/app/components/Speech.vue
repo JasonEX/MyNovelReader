@@ -56,18 +56,24 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { storeToRefs } from 'pinia';
 import LoadingSpinner from './LoadingSpinner.vue';
-import oldApp from '../../app.js';
 import bus, { APPEND_NEXT_PAGE } from '../bus.js';
 import { locations, formatMillisencod } from '../../utils';
+import { getApp, syncAppToStores } from '../../appRef';
+import { useReaderStore } from '../../stores/readerStore';
 
 const STATE = {
   playing: 1,
   pausing: 2,
   stoping: 0,
 };
+
+const readerStore = useReaderStore();
+const { curFocusIndex } = storeToRefs(readerStore);
+const getLegacyApp = () => getApp();
 
 // 响应式数据
 const emit = defineEmits(['closeSpeech']);
@@ -140,9 +146,12 @@ const saveSetting = () => {
 const start = async () => {
   isPlaying.value = true;
 
+  syncAppToStores();
+  const focusIndex = curFocusIndex.value ?? 0;
+
   // 获取当前所在的章节
-  speakIndex = oldApp.curFocusIndex;
-  startSpeakIndex = oldApp.curFocusIndex;
+  speakIndex = focusIndex;
+  startSpeakIndex = focusIndex;
   let toSpeekText = getToSpeekText(true);
 
   bus.off(APPEND_NEXT_PAGE, waitForNext);
@@ -194,7 +203,10 @@ const checkAgin = async () => {
   } else {
     isFindingNext = true;
     // 加载下一章
-    await oldApp.scrollForce();
+    const app = getLegacyApp();
+    if (app?.scrollForce) {
+      await app.scrollForce();
+    }
   }
 };
 
@@ -204,24 +216,56 @@ const waitForNext = async () => {
   }
 };
 
-const scrollToNext = () => {
-  let elem = oldApp.scrollItems.get(speakIndex);
-  if (elem) {
-    oldApp.scrollToArticle(elem);
+const getScrollItems = () => {
+  const app = getLegacyApp();
+  const items = app?.scrollItems;
+
+  if (items) {
+    if (typeof items.toArray === 'function') {
+      return items.toArray();
+    }
+
+    if (typeof items.get === 'function') {
+      const length = Number((items as { length?: number }).length ?? 0);
+      return Array.from({ length }, (_value, idx) => items.get?.(idx)).filter(Boolean);
+    }
   }
+
+  return Array.from(document.querySelectorAll('article[id^=page-]'));
+};
+
+const getScrollItem = index => {
+  const app = getLegacyApp();
+  const items = app?.scrollItems;
+
+  if (items && typeof items.get === 'function') {
+    return items.get(index);
+  }
+
+  return getScrollItems()[index];
+};
+
+const scrollToNext = () => {
+  const elem = getScrollItem(speakIndex);
+  if (!elem) {
+    return;
+  }
+
+  const app = getLegacyApp();
+  if (app?.scrollToArticle) {
+    app.scrollToArticle(elem);
+    return;
+  }
+
+  elem.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
 };
 
 const getToSpeekText = (fromSelection = false) => {
   let startIndex = speakIndex;
 
-  // 这是 jQuery 对象
-  let text = oldApp.scrollItems
-    .toArray()
-    .filter((elem, i) => {
-      return i == startIndex;
-    })
-    // .map(elem => elem.textContent.slice(0, 10))  // debug
-    .map(elem => elem.textContent)
+  let text = getScrollItems()
+    .filter((elem, i) => i == startIndex)
+    .map(elem => elem?.textContent || '')
     .join('\n');
 
   if (fromSelection) {
@@ -281,10 +325,10 @@ const listenForSpeechEvents = endFn => {
     playState.value = STATE.pausing;
     elapsedTime.value = event.elapsedTime;
   };
-  utterance.value.onresume = _event => {
+  utterance.value.onresume = () => {
     playState.value = STATE.playing;
   };
-  utterance.value.onend = _event => {
+  utterance.value.onend = () => {
     playState.value = STATE.stoping;
     // elapsedTime.value = event.elapsedTime
     elapsedTime.value = null;

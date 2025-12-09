@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Setting from '../../src/MyNovelReader/Setting';
 import { ScrollManager } from '../../src/MyNovelReader/app/scroll/ScrollManager';
 import { RequestStatus } from '../../src/MyNovelReader/request';

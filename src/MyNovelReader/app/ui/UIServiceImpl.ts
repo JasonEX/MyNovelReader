@@ -1,25 +1,38 @@
+import { getActivePinia } from 'pinia';
 import Parser from '../../parser';
 import Rule from '../../rule';
-import { getApp, type IApp } from '../../appRef';
-import type { IUIService, AppStatus } from './IAppContext';
+import { getApp, type IApp, syncAppToStores } from '../../appRef';
+import { useReaderStore } from '../../stores/readerStore';
+import type { AppStatus, IUIService } from './IAppContext';
 
 class UIServiceImpl implements IUIService {
+  private readerStore: ReturnType<typeof useReaderStore> | null = null;
+
   getStatus(): AppStatus {
-    const app = this.getApp();
-    const currentUrl = this.normalizeUrl(app?.curPageUrl);
-    const activeUrl = this.normalizeUrl(app?.activeUrl);
+    this.syncStoreState();
+
+    const store = this.getReaderStore();
+    const legacyApp = this.getLegacyApp();
+    const rawCurrentUrl = (store?.curPageUrl as string | null | undefined) ?? legacyApp?.curPageUrl;
+    const rawActiveUrl = (store?.activeUrl as string | null | undefined) ?? legacyApp?.activeUrl;
 
     return {
-      isEnabled: Boolean(app?.isEnabled),
-      currentUrl,
-      activeUrl,
+      isEnabled: Boolean((store?.isEnabled as boolean | undefined) ?? legacyApp?.isEnabled),
+      currentUrl: this.normalizeUrl(rawCurrentUrl),
+      activeUrl: this.normalizeUrl(rawActiveUrl),
     };
   }
 
   getSiteFontFamily(): string {
-    const app = this.getApp();
-    const siteUsesFont = Boolean(app?.site?.useSiteFont);
-    const siteFontFamily = app?.siteFontInfo?.siteFontFamily;
+    this.syncStoreState();
+
+    const store = this.getReaderStore();
+    const legacyApp = this.getLegacyApp();
+    const siteUsesFont = Boolean(
+      store?.site?.useSiteFont ?? (legacyApp?.site as { useSiteFont?: boolean } | null)?.useSiteFont
+    );
+    const siteFontFamily =
+      store?.siteFontInfo?.siteFontFamily ?? legacyApp?.siteFontInfo?.siteFontFamily;
 
     if (siteUsesFont && typeof siteFontFamily === 'string') {
       return siteFontFamily;
@@ -29,12 +42,18 @@ class UIServiceImpl implements IUIService {
   }
 
   getPreviewArticle(): HTMLElement | null {
-    const app = this.getApp();
-    return (app?.curFocusElement as HTMLElement | null) ?? null;
+    this.syncStoreState();
+    const store = this.getReaderStore();
+
+    if (store?.curFocusElement) {
+      return (store.curFocusElement as HTMLElement | null) ?? null;
+    }
+
+    return (this.getLegacyApp()?.curFocusElement as HTMLElement | null) ?? null;
   }
 
   async toggle(): Promise<void> {
-    await this.getApp()?.toggle?.();
+    await this.getLegacyApp()?.toggle?.();
   }
 
   openUrl(url: string): void {
@@ -44,7 +63,7 @@ class UIServiceImpl implements IUIService {
       return;
     }
 
-    this.getApp()?.openUrl?.(target);
+    this.getLegacyApp()?.openUrl?.(target);
   }
 
   openCurrent(): void {
@@ -57,17 +76,39 @@ class UIServiceImpl implements IUIService {
   }
 
   async saveAsTxt(): Promise<void> {
-    await this.getApp()?.saveAsTxt?.();
+    await this.getLegacyApp()?.saveAsTxt?.();
   }
 
   applyCustomReplaceRules(rulesText: string): { html: string } {
-    const app = this.getApp();
-    const articles = Array.isArray(app?.oArticles) ? app.oArticles : [];
+    const app = this.getLegacyApp();
+    const articles = this.getArticles(app);
     const html = this.applyRulesOnArticles(articles, rulesText);
 
     app?.resetCache?.();
 
     return { html };
+  }
+
+  private getReaderStore(): ReturnType<typeof useReaderStore> | null {
+    if (this.readerStore) {
+      return this.readerStore;
+    }
+
+    const activePinia = getActivePinia();
+    if (!activePinia) {
+      return null;
+    }
+
+    this.readerStore = useReaderStore(activePinia);
+    return this.readerStore;
+  }
+
+  private getLegacyApp(): IApp | null {
+    return getApp();
+  }
+
+  private syncStoreState(): void {
+    syncAppToStores();
   }
 
   private applyRulesOnArticles(articles: unknown[], rulesText: string): string {
@@ -81,8 +122,13 @@ class UIServiceImpl implements IUIService {
     return Parser.prototype.replaceHtml(contentHtml, replaceRules);
   }
 
-  private getApp(): IApp | null {
-    return getApp();
+  private getArticles(app: IApp | null): unknown[] {
+    if (Array.isArray(app?.oArticles)) {
+      return app?.oArticles ?? [];
+    }
+
+    const nodes = document.querySelectorAll('article[id^=page-]');
+    return Array.from(nodes).map(node => node.outerHTML);
   }
 
   private normalizeUrl(url: string | null | undefined): string | null {

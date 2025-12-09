@@ -103,7 +103,22 @@ export default [
       ...ts.configs.recommended.rules,
       'no-undef': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
+      // Apply lightweight import ordering to keep diffs clean
+      'sort-imports': [
+        'warn',
+        {
+          ignoreCase: true,
+          ignoreDeclarationSort: false,
+          ignoreMemberSort: false,
+          memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
+          allowSeparatedGroups: true,
+        },
+      ],
     },
   },
   // Type definitions
@@ -149,7 +164,12 @@ export default [
     rules: {
       ...prettierConfig.rules,
       'prettier/prettier': 'warn',
-      // Relax rules for legacy code - these can be gradually fixed
+    },
+  },
+  // Legacy JavaScript rules (kept lenient for existing scripts)
+  {
+    files: ['**/*.js'],
+    rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-empty': 'warn',
       'no-useless-escape': 'warn',

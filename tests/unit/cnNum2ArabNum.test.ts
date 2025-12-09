@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import cnNum2ArabNum from '../../src/MyNovelReader/utils/cnNum2ArabNum';
 
 describe('cnNum2ArabNum', () => {

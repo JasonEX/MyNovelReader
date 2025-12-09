@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SaveManager } from '../../src/MyNovelReader/app/save/SaveManager';
 
 const saveAsMock = vi.hoisted(() => vi.fn());

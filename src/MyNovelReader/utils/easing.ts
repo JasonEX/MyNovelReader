@@ -1,4 +1,6 @@
 // jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
+export {}; // Make this a module
+
 type EasingFunction = (
   _x: number,
   _t: number,
@@ -8,6 +10,15 @@ type EasingFunction = (
   _s?: number
 ) => number;
 type EasingMap = Record<string, EasingFunction | string>;
+
+// Extend jQuery.easing type to include our custom methods
+declare global {
+  interface JQueryEasingFunctions {
+    [key: string]: EasingFunction | string | undefined;
+    def?: string;
+    jswing?: EasingFunction;
+  }
+}
 
 const consume = (..._args: number[]): void => {};
 const jq: JQueryStatic | undefined =
@@ -19,7 +30,8 @@ if (jq && jq.easing) {
   const easingExtensions: EasingMap = {
     def: 'easeOutQuad',
     swing: function (a, b, c, d, e) {
-      return (jq.easing[jq.easing.def] as EasingFunction)(a, b, c, d, e);
+      const defName = jq.easing.def as unknown as string;
+      return (jq.easing[defName] as EasingFunction)(a, b, c, d, e);
     },
     easeInQuad: function (a, b, c, d, e) {
       consume(a);
@@ -188,7 +200,7 @@ if (jq && jq.easing) {
         : (d / 2) * ((b -= 2) * b * (((f *= 1.525) + 1) * b + f) + 2) + c;
     },
     easeInBounce: function (a, b, c, d, e) {
-      return d - jq.easing.easeOutBounce(a, e - b, 0, d, e) + c;
+      return d - (jq.easing.easeOutBounce as EasingFunction)(a, e - b, 0, d, e) + c;
     },
     easeOutBounce: function (a, b, c, d, e) {
       consume(a);
@@ -202,8 +214,8 @@ if (jq && jq.easing) {
     },
     easeInOutBounce: function (a, b, c, d, e) {
       return b < e / 2
-        ? 0.5 * jq.easing.easeInBounce(a, 2 * b, 0, d, e) + c
-        : 0.5 * jq.easing.easeOutBounce(a, 2 * b - e, 0, d, e) + 0.5 * d + c;
+        ? 0.5 * (jq.easing.easeInBounce as EasingFunction)(a, 2 * b, 0, d, e) + c
+        : 0.5 * (jq.easing.easeOutBounce as EasingFunction)(a, 2 * b - e, 0, d, e) + 0.5 * d + c;
     },
   };
 

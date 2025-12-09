@@ -160,9 +160,14 @@ class DocumentManager {
       return;
     }
 
-    const contentSize = siteConfig.contentSelector
-      ? document.querySelectorAll(siteConfig.contentSelector).length
-      : 0;
+    const resolvedContentSelector =
+      typeof siteConfig.contentSelector === 'function'
+        ? siteConfig.contentSelector($(document))
+        : siteConfig.contentSelector;
+    const contentSize =
+      typeof resolvedContentSelector === 'string'
+        ? document.querySelectorAll(resolvedContentSelector).length
+        : 0;
     if (contentSize && !siteConfig.mutationSelector) {
       return;
     }

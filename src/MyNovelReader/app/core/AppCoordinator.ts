@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+import { getActivePinia } from 'pinia';
 import type { IParser as ParserInstance, SiteConfig } from '../../../typings/MyNovelReader';
 import type { AppContext } from './AppState';
 import Setting from '../../Setting';
@@ -14,11 +14,13 @@ import uiController from '../ui/UIController';
 import bus, { SHOW_SPEECH } from '../bus';
 import siteManagerInstance, { SiteManager } from '../site/SiteManager';
 import fontManagerInstance, { FontManager } from '../font/FontManager';
+import { type ReaderState, useReaderStore } from '../../stores/readerStore';
 
 type AutoLaunchResult = boolean | -1;
 
 class AppCoordinator {
   private static instance: AppCoordinator;
+  private readerStore: ReturnType<typeof useReaderStore> | null = null;
 
   private constructor(
     private readonly siteManager: SiteManager,
@@ -87,6 +89,7 @@ class AppCoordinator {
       GM_setValue('auto_enable', false);
       L_setValue('mynoverlreader_disable_once', 'true');
       appContext.isEnabled = false;
+      this.syncStoreState(appContext, { isEnabled: false });
 
       const targetUrl = appContext.activeUrl || appContext.curPageUrl || window.location.href;
       if (targetUrl) {
@@ -99,6 +102,7 @@ class AppCoordinator {
     GM_setValue('auto_enable', true);
     L_removeValue('mynoverlreader_disable_once');
     appContext.isEnabled = true;
+    this.syncStoreState(appContext, { isEnabled: true });
     await this.launch(appContext);
   }
 
@@ -117,6 +121,7 @@ class AppCoordinator {
     this.runSiteFilter(site);
 
     appContext.siteFontInfo = this.fontManager.resolveSiteFont(appContext, site);
+    this.syncStoreState(appContext);
 
     const parser = new Parser(site, document);
     const hasContent = !!parser.hasContent();
@@ -126,10 +131,12 @@ class AppCoordinator {
         document.body.setAttribute('name', 'MyNovelReader');
       }
       appContext.parsedPages[window.location.href] = true;
+      this.syncStoreState(appContext, { parsedPages: appContext.parsedPages });
       await parser.getAll();
       await this.processPage(appContext, parser as unknown as ParserInstance);
     } else {
       appContext.isEnabled = true;
+      this.syncStoreState(appContext, { isEnabled: true });
       $('.readerbtn').remove();
       await UI.addButton();
       $('.readerbtn').text('无内容');
@@ -139,6 +146,8 @@ class AppCoordinator {
     if (site && typeof site.fInit === 'function') {
       site.fInit();
     }
+
+    this.syncStoreState(appContext);
   }
 
   async processPage(appContext: AppContext, parser: ParserInstance): Promise<void> {
@@ -211,6 +220,7 @@ class AppCoordinator {
     appContext.isTheEnd = parser.isTheEnd as boolean | 'vip';
     appContext.curPageUrl = this.getCurPageUrl(appContext);
     appContext.isEnabled = true;
+    this.syncStoreState(appContext);
     await UI.addButton();
 
     history.scrollRestoration = 'manual';
@@ -227,6 +237,56 @@ class AppCoordinator {
     if (Setting.preloadNextPage) {
       await appContext.doRequest?.();
     }
+  }
+
+  private getReaderStore(): ReturnType<typeof useReaderStore> | null {
+    if (this.readerStore) {
+      return this.readerStore;
+    }
+
+    const activePinia = getActivePinia();
+    if (!activePinia) {
+      return null;
+    }
+
+    try {
+      this.readerStore = useReaderStore(activePinia);
+      return this.readerStore;
+    } catch (error) {
+      C.warn('Reader store is not ready yet', error);
+      return null;
+    }
+  }
+
+  private getReaderStateSnapshot(appContext: AppContext): ReaderState {
+    return {
+      isEnabled: appContext.isEnabled,
+      parsedPages: appContext.parsedPages ?? {},
+      pageNum: appContext.pageNum,
+      paused: appContext.paused,
+      curPageUrl: appContext.curPageUrl,
+      requestUrl: appContext.requestUrl,
+      lastRequestUrl: appContext.lastRequestUrl,
+      curFocusElement: appContext.curFocusElement,
+      curFocusIndex: appContext.curFocusIndex,
+      scrollOffsets: appContext.scrollOffsets ?? [],
+      site: (appContext.site as SiteConfig | null) ?? null,
+      siteFontInfo: appContext.siteFontInfo ?? null,
+      isTheEnd: appContext.isTheEnd,
+      activeUrl: appContext.activeUrl,
+      indexUrl: appContext.indexUrl ?? null,
+      prevUrl: appContext.prevUrl ?? null,
+    };
+  }
+
+  private syncStoreState(appContext: AppContext, overrides: Partial<ReaderState> = {}): void {
+    const store = this.getReaderStore();
+    if (!store) {
+      return;
+    }
+
+    const snapshot = { ...this.getReaderStateSnapshot(appContext), ...overrides };
+    store.setState(snapshot);
   }
 
   private runSiteFilter(site: SiteConfig | null): void {
@@ -289,6 +349,7 @@ class AppCoordinator {
       getCurFocusElement: () => appContext.curFocusElement,
       onPausedChange: (paused: boolean) => {
         appContext.paused = paused;
+        this.syncStoreState(appContext, { paused });
       },
     });
 
@@ -352,6 +413,7 @@ class AppCoordinator {
     appContext.lastRequestUrl = requestManager.getLastRequestUrl();
     appContext.curPageUrl = requestManager.getCurPageUrl();
     appContext.isTheEnd = requestManager.getIsTheEnd();
+    this.syncStoreState(appContext);
   }
 
   private getCurPageUrl(appContext: AppContext): string {

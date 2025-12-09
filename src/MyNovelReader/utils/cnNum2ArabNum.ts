@@ -25,7 +25,7 @@ function cnNum2ArabNum(cn: string): number {
     .replace(/[零一二三四五六七八九]/g, function (a) {
       return '+' + cnChars.indexOf(a);
     })
-    .replace(/(十|百|千)/g, function (a, b) {
+    .replace(/(十|百|千)/g, function (_a, b) {
       return '*' + (b == '十' ? 1e1 : b == '百' ? 1e2 : 1e3);
     });
 

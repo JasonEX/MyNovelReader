@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DocumentManager } from '../../src/MyNovelReader/app/document/DocumentManager';
 
 const templateMock = vi.hoisted(() => ({ uiTrans: () => '<div id="tpl"></div>' }));

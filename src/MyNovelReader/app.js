@@ -11,6 +11,115 @@ import requestManager from './app/request/RequestManager';
 import fontManager from './app/font/FontManager';
 import pageManager from './app/page/PageManager';
 import uiController from './app/ui/UIController';
+import { getActivePinia } from 'pinia';
+import { watch } from 'vue';
+import { useReaderStore } from './stores/readerStore';
+
+const readerStateKeys = [
+  'isEnabled',
+  'parsedPages',
+  'pageNum',
+  'paused',
+  'curPageUrl',
+  'requestUrl',
+  'lastRequestUrl',
+  'curFocusElement',
+  'curFocusIndex',
+  'scrollOffsets',
+  'site',
+  'siteFontInfo',
+  'isTheEnd',
+  'activeUrl',
+  'indexUrl',
+  'prevUrl',
+];
+
+let readerStoreInstance = null;
+let stopReaderWatch = null;
+
+function getReaderStoreInstance() {
+  if (readerStoreInstance) {
+    return readerStoreInstance;
+  }
+
+  const activePinia = getActivePinia();
+  if (!activePinia) {
+    return null;
+  }
+
+  try {
+    readerStoreInstance = useReaderStore(activePinia);
+    return readerStoreInstance;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function pickReaderStateFromApp() {
+  return {
+    isEnabled: App.isEnabled,
+    parsedPages: App.parsedPages,
+    pageNum: App.pageNum,
+    paused: App.paused,
+    curPageUrl: App.curPageUrl,
+    requestUrl: App.requestUrl,
+    lastRequestUrl: App.lastRequestUrl,
+    curFocusElement: App.curFocusElement,
+    curFocusIndex: App.curFocusIndex,
+    scrollOffsets: App.scrollOffsets,
+    site: App.site,
+    siteFontInfo: App.siteFontInfo,
+    isTheEnd: App.isTheEnd,
+    activeUrl: App.activeUrl,
+    indexUrl: App.indexUrl || null,
+    prevUrl: App.prevUrl || null,
+  };
+}
+
+function syncStoreFromApp(partial) {
+  const store = getReaderStoreInstance();
+  if (!store) {
+    return;
+  }
+
+  store.setState({ ...pickReaderStateFromApp(), ...(partial || {}) });
+}
+
+function applyReaderStateToApp(state) {
+  readerStateKeys.forEach(function (key) {
+    if (typeof state[key] !== 'undefined') {
+      App[key] = state[key];
+    }
+  });
+}
+
+function bindStoreBridge() {
+  const store = getReaderStoreInstance();
+  if (!store) {
+    return;
+  }
+
+  syncStoreFromApp();
+
+  if (!stopReaderWatch) {
+    stopReaderWatch = watch(
+      function () {
+        return store.getState();
+      },
+      function (nextState) {
+        applyReaderStateToApp(nextState);
+      },
+      {
+        deep: true,
+      }
+    );
+  }
+}
+
+function syncStoreIfReady(partial) {
+  syncStoreFromApp(partial);
+  bindStoreBridge();
+}
 
 var App = {
   isEnabled: false,
@@ -57,6 +166,7 @@ var App = {
 
     coordinator.loadCustomSetting();
     App.site = coordinator.resolveSite();
+    syncStoreIfReady({ site: App.site });
 
     // 等待 DOMContentLoaded 事件触发
     if (!App.site.fastboot && !Setting.fastboot) {
@@ -94,7 +204,9 @@ var App = {
     }
   },
   launch: async function () {
-    return await appCoordinator.launch(App);
+    const result = await appCoordinator.launch(App);
+    syncStoreIfReady();
+    return result;
   },
   processPage: async function (parser) {
     return await appCoordinator.processPage(App, parser);
@@ -105,6 +217,11 @@ var App = {
   removeListener: function () {
     C.log('移除各种事件监听');
     uiController.removeListeners();
+
+    if (typeof stopReaderWatch === 'function') {
+      stopReaderWatch();
+      stopReaderWatch = null;
+    }
   },
   initPageManager: function () {
     pageManager.init({
@@ -115,6 +232,7 @@ var App = {
       },
       setPageNum: function (pageNum) {
         App.pageNum = pageNum;
+        syncStoreIfReady({ pageNum: pageNum });
       },
       oArticles: App.oArticles || (App.oArticles = []),
       parsers: App.parsers || (App.parsers = []),
@@ -122,6 +240,7 @@ var App = {
         App.menuItems = cache.menuItems;
         App.scrollItems = cache.scrollItems;
         App.scrollOffsets = cache.scrollOffsets;
+        syncStoreIfReady({ scrollOffsets: App.scrollOffsets });
       },
     });
   },
@@ -152,6 +271,8 @@ var App = {
     } else {
       $('html, body').stop().scrollTop(offsetTop);
     }
+
+    syncStoreIfReady();
   },
   openUrl: function (url, errorMsg) {
     uiController.openUrl(url, errorMsg);
@@ -175,6 +296,7 @@ var App = {
     }
 
     App.updateCurFocusElement();
+    syncStoreIfReady();
   },
   scrollForce: async function () {
     if (!App.request) {
@@ -256,6 +378,12 @@ var App = {
       if (App.scrollItems.length === visitedLength) {
         requestManager.resolvePreload();
       }
+
+      syncStoreIfReady({
+        curFocusElement: App.curFocusElement,
+        curFocusIndex: App.curFocusIndex,
+        activeUrl: App.activeUrl,
+      });
     }
   },
   getRemain: function () {
@@ -283,5 +411,6 @@ var App = {
 
 // 注册 App 实例到共享引用
 setApp(App);
+bindStoreBridge();
 
 export default App;

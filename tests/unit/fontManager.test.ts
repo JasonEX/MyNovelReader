@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FontManager } from '../../src/MyNovelReader/app/font/FontManager';
 
 class FakeCSSFontFaceRule {

@@ -1,9 +1,9 @@
 import config from '../../config';
 import Parser from '../../parser';
 import { loading } from '../../components/message';
-import { saveAs, isWindows } from '../../utils';
+import { isWindows, saveAs } from '../../utils';
 import getNumFromChapterTitle from '../../utils/getNumFromChapterTitle';
-import { sleep, C } from '../../lib';
+import { C, sleep } from '../../lib';
 import { HttpRequest, IframeRequest } from '../../request';
 import type { IParser as ParserInstance, SiteConfig } from '../../../typings/MyNovelReader';
 

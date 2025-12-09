@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SiteConfig } from '../../src/typings/MyNovelReader';
 import { SiteManager } from '../../src/MyNovelReader/app/site/SiteManager';
 
