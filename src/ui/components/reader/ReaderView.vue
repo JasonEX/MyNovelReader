@@ -232,6 +232,8 @@ const {
   visibleChapters,
   topSpacer,
   bottomSpacer,
+  heights: chapterHeights,
+  averageHeight,
   setHeight: setChapterHeight,
   updateWindow,
 } = useVirtualChapters(chapters, {
@@ -342,10 +344,25 @@ function setChapterRef(index: number) {
   };
 }
 
+function estimateIndexFromOffset(offset: number): number {
+  if (chapters.value.length === 0) return -1;
+
+  let acc = 0;
+  for (let i = 0; i < chapters.value.length; i++) {
+    const url = chapters.value[i].chapter.url;
+    const height = chapterHeights.value.get(url) ?? averageHeight.value;
+    acc += height;
+    if (offset < acc) {
+      return i;
+    }
+  }
+  return chapters.value.length - 1;
+}
+
 // Scroll handling - Core logic (will be throttled)
 function handleScrollCore() {
   const mainEl = mainRef.value;
-  if (!mainEl || visibleChapters.value.length === 0) return;
+  if (!mainEl) return;
 
   const currentScrollY = mainEl.scrollTop;
   const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
@@ -381,7 +398,19 @@ function handleScrollCore() {
     }
   }
 
-  if (!currentChapterEl || currentChapterIdx === -1) return;
+  if (!currentChapterEl || currentChapterIdx === -1) {
+    // Fallback: when spacer fills the viewport, estimate index from scroll offset
+    const estimatedIdx = estimateIndexFromOffset(currentScrollY + mainEl.clientHeight / 2);
+    if (estimatedIdx !== -1) {
+      readerStore.setCurrentChapter(estimatedIdx);
+      updateWindow(estimatedIdx);
+      if (scrollHeight > 0) {
+        const overallPercent = Math.round((currentScrollY / scrollHeight) * 100);
+        readerStore.updateScroll(overallPercent);
+      }
+    }
+    return;
+  }
 
   // Update current chapter in store (this updates header title and browser URL)
   readerStore.setCurrentChapter(currentChapterIdx);
@@ -407,33 +436,47 @@ async function loadPrevWithScrollAdjust(jumpToStart = false) {
   const mainEl = mainRef.value;
   if (!mainEl || isLoadingPrev.value) return;
 
-  // Remember current scroll position
+  // 1. Remember current scroll position and topSpacer
   const oldScrollTop = mainEl.scrollTop;
+  const oldTopSpacer = topSpacer.value;
 
   const success = await readerStore.loadPrevChapter();
 
   if (success) {
-    // Wait for Vue to update DOM
+    // 2. Wait for Vue to update DOM
     await nextTick();
 
-    // Wait one more frame to ensure rendering is complete
+    // 3. Update virtual window to include new chapter (critical!)
+    updateWindow(readerStore.currentChapterIndex);
+
+    // 4. Wait for window change to trigger re-render
+    await nextTick();
     await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
 
     if (jumpToStart) {
-      // When user explicitly wants to go to previous chapter, snap to its title to avoid bounce
-      const targetIndex = Math.max(readerStore.currentChapterIndex - 1, 0);
-      await jumpToChapter(targetIndex, 'auto');
+      // When user explicitly wants to go to previous chapter, snap to its title
+      await jumpToChapter(0, 'auto');
       return;
     }
 
-    // Default: keep visual position (infinite scroll experience)
+    // 5. Get new chapter height and cache it
     const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
     if (chapterEls.length > 0) {
       const newChapterEl = chapterEls[0] as HTMLElement;
       const newChapterHeight = newChapterEl.offsetHeight;
 
-      // Adjust scroll position by the height of new content
-      mainEl.scrollTop = oldScrollTop + newChapterHeight;
+      // 6. Ensure new chapter height is cached
+      const newEntry = readerStore.chapters[0];
+      if (newEntry) {
+        setChapterHeight(newEntry.chapter.url, newChapterHeight);
+      }
+
+      // 7. Wait for heights update to trigger reactive updates
+      await nextTick();
+
+      // 8. Calculate scroll adjustment including spacer delta
+      const spacerDelta = topSpacer.value - oldTopSpacer;
+      mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
     }
   }
 }

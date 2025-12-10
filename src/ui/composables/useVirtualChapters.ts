@@ -82,7 +82,9 @@ export function useVirtualChapters(
 
   const bottomSpacer = computed(() => {
     const endOffset = getOffsetBefore(visibleRange.value.end);
-    return Math.max(0, totalHeight.value - endOffset);
+    // Use getOffsetBefore for total to ensure consistent calculation basis
+    const totalOffset = getOffsetBefore(chapters.value.length);
+    return Math.max(0, totalOffset - endOffset);
   });
 
   // === Methods ===
@@ -99,10 +101,14 @@ export function useVirtualChapters(
 
   function getOffsetBefore(index: number): number {
     if (index <= 0) return 0;
+    if (chapters.value.length === 0) return 0;
+
     let offset = 0;
     const len = Math.min(index, chapters.value.length);
     for (let i = 0; i < len; i++) {
-      const url = chapters.value[i].chapter.url;
+      const entry = chapters.value[i];
+      if (!entry) continue; // Defensive check
+      const url = entry.chapter.url;
       offset += heights.value.get(url) ?? averageHeight.value;
     }
     return offset;
@@ -122,18 +128,42 @@ export function useVirtualChapters(
   }
 
   // === Watchers ===
-  // Initialize window when chapters are first loaded
   watch(
     chapters,
     newChapters => {
-      if (newChapters.length > 0 && virtualWindow.value.end === 0) {
+      // Remove heights for chapters that were trimmed from the list
+      const currentUrls = new Set(newChapters.map(entry => entry.chapter.url));
+      for (const url of heights.value.keys()) {
+        if (!currentUrls.has(url)) {
+          heights.value.delete(url);
+        }
+      }
+
+      // Initialize window when chapters are first loaded
+      if (newChapters.length === 0) {
+        virtualWindow.value = { start: 0, end: 0 };
+        return;
+      }
+
+      if (virtualWindow.value.end === 0) {
         virtualWindow.value = {
           start: 0,
           end: Math.min(newChapters.length, windowSize),
         };
+        return;
+      }
+
+      // Clamp window when list shrinks after trimming cached chapters
+      const clampedEnd = Math.min(newChapters.length, virtualWindow.value.end);
+      const clampedStart = Math.min(
+        virtualWindow.value.start,
+        Math.max(0, clampedEnd - windowSize)
+      );
+      if (clampedStart !== virtualWindow.value.start || clampedEnd !== virtualWindow.value.end) {
+        virtualWindow.value = { start: clampedStart, end: clampedEnd };
       }
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   );
 
   return {
