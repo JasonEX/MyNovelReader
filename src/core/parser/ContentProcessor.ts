@@ -154,7 +154,7 @@ export class ContentProcessor {
   private removeUnwantedElements(element: Element): void {
     for (const selector of REMOVE_SELECTORS) {
       try {
-        const elements = element.querySelectorAll(selector);
+        const elements = this.smartQueryAll(element, selector);
         elements.forEach(el => el.remove());
       } catch {
         // Invalid selector, skip
@@ -169,7 +169,7 @@ export class ContentProcessor {
     const selectorList = selectors.split(',').map(s => s.trim());
     for (const selector of selectorList) {
       try {
-        const elements = element.querySelectorAll(selector);
+        const elements = this.smartQueryAll(element, selector);
         elements.forEach(el => el.remove());
       } catch {
         // Invalid selector, skip
@@ -487,5 +487,82 @@ export class ContentProcessor {
    */
   private escapeRegExp(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
+   * Minimal jQuery-like selector support for content cleaning (:contains, :eq, :first, :last)
+   */
+  private smartQueryAll(root: Element | Document, selector: string): Element[] {
+    // Try native selector first
+    try {
+      return Array.from(root.querySelectorAll(selector));
+    } catch {
+      // fall through
+    }
+
+    // Handle :eq(n)
+    const eqMatch = selector.match(/^(.*):eq\(([-]?\d+)\)$/);
+    if (eqMatch) {
+      const baseSel = eqMatch[1] || '*';
+      const index = parseInt(eqMatch[2], 10);
+      try {
+        const nodes = Array.from(root.querySelectorAll(baseSel));
+        if (nodes.length === 0) return [];
+        const idx = index >= 0 ? index : nodes.length + index;
+        return nodes[idx] ? [nodes[idx]] : [];
+      } catch {
+        return [];
+      }
+    }
+
+    // Handle :last and :first
+    const lastMatch = selector.match(/^(.*):last(?:\(\))?$/);
+    if (lastMatch) {
+      const baseSel = lastMatch[1] || '*';
+      try {
+        const nodes = Array.from(root.querySelectorAll(baseSel));
+        return nodes.length ? [nodes[nodes.length - 1]] : [];
+      } catch {
+        return [];
+      }
+    }
+
+    const firstMatch = selector.match(/^(.*):first(?:\(\))?$/);
+    if (firstMatch) {
+      const baseSel = firstMatch[1] || '*';
+      try {
+        const nodes = Array.from(root.querySelectorAll(baseSel));
+        return nodes.length ? [nodes[0]] : [];
+      } catch {
+        return [];
+      }
+    }
+
+    // Handle chained :contains("text")
+    let currentSel = selector;
+    const containsTexts: string[] = [];
+    const containsRegex = /^(.*):contains\((['"]?)(.*?)\2\)$/;
+
+    while (true) {
+      const match = currentSel.match(containsRegex);
+      if (!match) break;
+      containsTexts.unshift(match[3]);
+      currentSel = match[1];
+    }
+
+    if (containsTexts.length > 0) {
+      const baseSel = currentSel.trim() || '*';
+      try {
+        let candidates = Array.from(root.querySelectorAll(baseSel));
+        for (const text of containsTexts) {
+          candidates = candidates.filter(el => (el.textContent || '').includes(text));
+        }
+        return candidates;
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
   }
 }

@@ -221,7 +221,9 @@ function openRuleEditor() {
 }
 
 async function handleRuleSave(rule: SiteRule) {
-  await ruleStore.saveRule(rule);
+  if (currentDomain.value) {
+    await ruleStore.saveUserRule(currentDomain.value, rule);
+  }
   ruleEditorVisible.value = false;
 }
 

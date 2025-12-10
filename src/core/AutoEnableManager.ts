@@ -151,7 +151,7 @@ export class AutoEnableManager {
     }
 
     // Run detection
-    const detection = this.detectionEngine.detect(doc);
+    const detection = this.detectionEngine.detect(doc, doc.location?.href || window.location.href);
 
     const decision: AutoEnableDecision = {
       shouldEnable: detection.confidence.overall >= (this.options.confidenceThreshold || 0.6),
@@ -277,14 +277,14 @@ export class AutoEnableManager {
     if (navigation.next || navigation.prev || navigation.index) {
       rule.navigation = {};
 
-      if (navigation.next?.selector) {
-        rule.navigation.next = navigation.next.selector;
+      if (navigation.next) {
+        rule.navigation.next = navigation.next.selector || navigation.next.url;
       }
-      if (navigation.prev?.selector) {
-        rule.navigation.prev = navigation.prev.selector;
+      if (navigation.prev) {
+        rule.navigation.prev = navigation.prev.selector || navigation.prev.url;
       }
-      if (navigation.index?.selector) {
-        rule.navigation.index = navigation.index.selector;
+      if (navigation.index) {
+        rule.navigation.index = navigation.index.selector || navigation.index.url;
       }
     }
 

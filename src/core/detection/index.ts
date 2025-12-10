@@ -29,20 +29,20 @@ export class DetectionEngine {
   /**
    * Run full detection on the document
    */
-  detect(doc: Document = document): DetectionEngineResult {
+  detect(
+    doc: Document = document,
+    currentUrl: string = window.location.href
+  ): DetectionEngineResult {
     // Run all detectors
     const content = this.contentDetector.detect(doc);
     const navigation = this.navigationDetector.detect(doc);
     const title = this.titleDetector.detect(doc);
 
     // Validate navigation against current URL
-    const validatedNav = this.navigationDetector.validateNavigation(
-      window.location.href,
-      navigation
-    );
+    const validatedNav = this.navigationDetector.validateNavigation(currentUrl, navigation);
 
     // Detect multi-page chapter sections
-    const section = this.navigationDetector.detectSection(doc, window.location.href, validatedNav);
+    const section = this.navigationDetector.detectSection(doc, currentUrl, validatedNav);
 
     const results: DetectionResults = {
       content,
@@ -60,9 +60,12 @@ export class DetectionEngine {
   /**
    * Detect section only (for use when navigation is already known)
    */
-  detectSection(doc: Document = document): SectionDetectionResult {
+  detectSection(
+    doc: Document = document,
+    currentUrl: string = window.location.href
+  ): SectionDetectionResult {
     const navigation = this.navigationDetector.detect(doc);
-    return this.navigationDetector.detectSection(doc, window.location.href, navigation);
+    return this.navigationDetector.detectSection(doc, currentUrl, navigation);
   }
 
   /**

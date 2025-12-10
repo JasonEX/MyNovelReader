@@ -5,6 +5,15 @@
 
 import { NAV_PATTERNS, NavigationResult, NavLinkResult, SectionDetectionResult } from './types';
 
+/** Polyfill for CSS.escape (not available in jsdom) */
+function cssEscape(str: string): string {
+  if (typeof CSS !== 'undefined' && CSS.escape) {
+    return CSS.escape(str);
+  }
+  // Simple escape for IDs and classes
+  return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
+}
+
 /** URLs to ignore as navigation links */
 const INVALID_URL_PATTERNS = [
   /(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
@@ -60,6 +69,7 @@ export class NavigationDetector {
         return {
           element: relLink as HTMLAnchorElement,
           url: (relLink as HTMLAnchorElement).href,
+          selector: this.generateSelector(relLink as HTMLAnchorElement),
           confidence: 0.95,
           method: 'rel-attribute',
           text: relLink.textContent?.trim(),
@@ -129,6 +139,7 @@ export class NavigationDetector {
     return {
       element: best.element,
       url: best.element.href,
+      selector: this.generateSelector(best.element),
       confidence: Math.min(best.score / 15, 0.9),
       method: 'text-matching',
       text: best.text,
@@ -421,5 +432,61 @@ export class NavigationDetector {
     }
 
     return null;
+  }
+
+  /**
+   * Generate a CSS selector for a link element
+   */
+  private generateSelector(element: Element): string {
+    // Prefer ID
+    if ((element as HTMLElement).id) {
+      return `#${cssEscape((element as HTMLElement).id)}`;
+    }
+
+    // Try unique class
+    const classList = Array.from(element.classList || []);
+    for (const cls of classList) {
+      try {
+        if (document.querySelectorAll(`.${cssEscape(cls)}`).length === 1) {
+          return `.${cssEscape(cls)}`;
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    return this.generatePathSelector(element);
+  }
+
+  /**
+   * Generate a path-based selector (e.g., body > div:nth-of-type(2) > a)
+   */
+  private generatePathSelector(element: Element): string {
+    const path: string[] = [];
+    let current: Element | null = element;
+
+    while (current && current !== document.body && current !== document.documentElement) {
+      let segment = current.tagName.toLowerCase();
+
+      if ((current as HTMLElement).id) {
+        segment = `#${cssEscape((current as HTMLElement).id)}`;
+        path.unshift(segment);
+        break;
+      }
+
+      const parent = current.parentElement;
+      if (parent) {
+        const siblings = Array.from(parent.children).filter(c => c.tagName === current!.tagName);
+        if (siblings.length > 1) {
+          const index = siblings.indexOf(current) + 1;
+          segment += `:nth-of-type(${index})`;
+        }
+      }
+
+      path.unshift(segment);
+      current = parent;
+    }
+
+    return path.join(' > ');
   }
 }

@@ -22,6 +22,8 @@ export interface NavLinkResult {
   element: HTMLAnchorElement;
   /** The URL of the link */
   url: string;
+  /** Generated CSS selector for the link */
+  selector?: string;
   /** Confidence score 0-1 */
   confidence: number;
   /** Detection method used */

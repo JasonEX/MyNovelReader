@@ -94,7 +94,7 @@ export class Parser {
 
     // Fallback to detection-based navigation if rule selectors didn't find links
     if (!navigation.next || !navigation.prev) {
-      const detectedNav = this.detectionEngine.detect(doc).results.navigation;
+      const detectedNav = this.detectionEngine.detect(doc, url).results.navigation;
       if (!navigation.next && detectedNav.next?.url) {
         navigation.next = detectedNav.next.url;
       }
@@ -148,7 +148,7 @@ export class Parser {
     url: string,
     fallbackRule?: SiteRule
   ): ParsedChapter | null {
-    const detection = this.detectionEngine.detect(doc);
+    const detection = this.detectionEngine.detect(doc, url);
 
     if (!detection.results.content.element) {
       return null;
@@ -212,8 +212,8 @@ export class Parser {
   /**
    * Get detection results without parsing
    */
-  detect(doc: Document = document): DetectionEngineResult {
-    return this.detectionEngine.detect(doc);
+  detect(doc: Document = document, url?: string): DetectionEngineResult {
+    return this.detectionEngine.detect(doc, url || doc.location?.href || window.location.href);
   }
 
   /**
@@ -282,7 +282,11 @@ export class Parser {
 
     // Fallback to detection
     if (!chapter) {
-      const detection = this.detectionEngine.detect(doc);
+      const currentUrl =
+        doc.location?.href ||
+        (doc as Document & { _mnrUrl?: string })._mnrUrl ||
+        window.location.href;
+      const detection = this.detectionEngine.detect(doc, currentUrl);
       chapter = detection.results.title.chapterTitle;
       book = book || detection.results.title.bookTitle;
     }
@@ -311,11 +315,96 @@ export class Parser {
    * Select element with error handling
    */
   private selectElement(doc: Document, selector: string): Element | null {
-    try {
-      return doc.querySelector(selector);
-    } catch {
-      return null;
+    const selectors = selector
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    for (const sel of selectors) {
+      const el = this.smartSelect(doc, sel);
+      if (el) return el;
     }
+
+    return null;
+  }
+
+  /**
+   * Minimal jQuery-like selector support (:contains, :eq, :last)
+   */
+  private smartSelect(doc: Document, selector: string): Element | null {
+    // Try native selector first
+    try {
+      const native = doc.querySelector(selector);
+      if (native) return native;
+    } catch {
+      // ignore and try custom parsing
+    }
+
+    // Handle :eq(n)
+    const eqMatch = selector.match(/^(.*):eq\(([-]?\d+)\)$/);
+    if (eqMatch) {
+      const baseSel = eqMatch[1] || '*';
+      const index = parseInt(eqMatch[2], 10);
+      try {
+        const nodes = Array.from(doc.querySelectorAll(baseSel));
+        if (nodes.length === 0) return null;
+        const idx = index >= 0 ? index : nodes.length + index;
+        return nodes[idx] || null;
+      } catch {
+        return null;
+      }
+    }
+
+    // Handle :last
+    const lastMatch = selector.match(/^(.*):last(?:\(\))?$/);
+    if (lastMatch) {
+      const baseSel = lastMatch[1] || '*';
+      try {
+        const nodes = Array.from(doc.querySelectorAll(baseSel));
+        return nodes.length ? nodes[nodes.length - 1] : null;
+      } catch {
+        return null;
+      }
+    }
+
+    // Handle :first
+    const firstMatch = selector.match(/^(.*):first(?:\(\))?$/);
+    if (firstMatch) {
+      const baseSel = firstMatch[1] || '*';
+      try {
+        const nodes = Array.from(doc.querySelectorAll(baseSel));
+        return nodes.length ? nodes[0] : null;
+      } catch {
+        return null;
+      }
+    }
+
+    // Handle one or more :contains("text")
+    let currentSel = selector;
+    const containsTexts: string[] = [];
+    const containsRegex = /^(.*):contains\((['"]?)(.*?)\2\)$/;
+
+    while (true) {
+      const match = currentSel.match(containsRegex);
+      if (!match) break;
+      containsTexts.unshift(match[3]); // applied inner-most last
+      currentSel = match[1];
+    }
+
+    if (containsTexts.length > 0) {
+      const baseSel = currentSel.trim() || '*';
+      try {
+        let candidates = Array.from(doc.querySelectorAll(baseSel));
+        for (const text of containsTexts) {
+          candidates = candidates.filter(el => (el.textContent || '').includes(text));
+        }
+        return candidates[0] || null;
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
   }
 
   /**

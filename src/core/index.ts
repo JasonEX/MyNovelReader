@@ -13,9 +13,9 @@ export {
 
 export type {
   DetectionEngineResult,
-  ContentDetectionResult,
-  NavigationDetectionResult,
-  TitleDetectionResult,
+  ContentResult,
+  NavigationResult,
+  TitleResult,
   ConfidenceReport,
   NavLinkResult,
 } from '@/core/detection';
