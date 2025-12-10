@@ -831,18 +831,49 @@ export const useReaderStore = defineStore('reader', () => {
     const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
     const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
     const results: TocEntry[] = [];
-    const seenUrls = new Set<string>();
+    const seenUrls = new Map<string, number>(); // url -> index in results
+
+    const isPlaceholder = (title: string) => /^章节\s*\d+$/i.test(title.trim());
+    const isBetterTitle = (oldTitle: string, newTitle: string): boolean => {
+      const oldWhitelist = isLikelyChapterTitle(oldTitle);
+      const newWhitelist = isLikelyChapterTitle(newTitle);
+
+      // Prefer titles that look like real chapters
+      if (newWhitelist && !oldWhitelist) return true;
+      if (oldWhitelist && !newWhitelist) return false;
+
+      // Avoid replacing a non-placeholder with a placeholder
+      if (!isPlaceholder(oldTitle) && isPlaceholder(newTitle)) return false;
+      if (isPlaceholder(oldTitle) && !isPlaceholder(newTitle)) return true;
+
+      // Otherwise prefer the longer (more informative) title
+      return newTitle.length > oldTitle.length;
+    };
 
     for (const a of links) {
       const text = (a.textContent || '').trim();
       const href = a.getAttribute('href') || '';
       const abs = normalizeUrl(href, base);
-      if (!abs || seenUrls.has(abs)) continue;
+      if (!abs) continue;
 
-      if (textPattern.test(text) || urlPattern.test(href)) {
-        seenUrls.add(abs);
+      // Only keep links that look like chapters
+      if (!(textPattern.test(text) || urlPattern.test(href))) {
+        continue;
+      }
+
+      const title = text || `章节 ${results.length + 1}`;
+
+      if (seenUrls.has(abs)) {
+        // If we already have this URL, upgrade the title when the new one is better
+        const idx = seenUrls.get(abs)!;
+        const current = results[idx];
+        if (isBetterTitle(current.title, title)) {
+          results[idx] = { title, url: abs };
+        }
+      } else {
+        seenUrls.set(abs, results.length);
         results.push({
-          title: text || `章节 ${results.length + 1}`,
+          title,
           url: abs,
         });
       }

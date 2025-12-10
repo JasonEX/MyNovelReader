@@ -23,33 +23,6 @@ import { SiteRule } from './types';
 const specialRules: SiteRule[] = [
   // Qidian (起点) - VIP chapters, dynamic content
   {
-    id: 'qidian-read',
-    name: '起点新版-阅文',
-    version: 1,
-    match: {
-      pattern: '^https?://(?:read|vipreader)\\.qidian\\.com/chapter/.*',
-      exclude: ['/lastpage/'],
-    },
-    content: {
-      selector: '.read-content.j_readContent',
-      remove: '.review-count',
-    },
-    navigation: {
-      next: '#j_chapterNext',
-      prev: '#j_chapterPrev',
-      index: '.chapter-control a:contains("目录"), #my_index',
-    },
-    title: {
-      selector: 'h3.j_chapterName',
-      bookSelector: '#bookImg',
-    },
-    advanced: {
-      mutationSelector: '.read-content.j_readContent',
-      mutationChildCount: 0,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://read.qidian.com/chapter/...' },
-  },
-  {
     id: 'qidian-www',
     name: '起点新版-20240317',
     version: 1,

@@ -350,9 +350,11 @@ function handleScrollCore() {
   const currentScrollY = mainEl.scrollTop;
   const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
 
-  // Find current visible chapter using cached refs (avoid querySelectorAll)
+  // Find current visible chapter using visible area calculation
   let currentChapterEl: HTMLElement | null = null;
-  let currentChapterIdx = 0;
+  let currentChapterIdx = -1;
+  let maxVisibleHeight = 0;
+
   const viewportTop = currentScrollY;
   const viewportBottom = currentScrollY + mainEl.clientHeight;
 
@@ -361,17 +363,25 @@ function handleScrollCore() {
     if (!el) continue;
 
     const elTop = el.offsetTop;
-    const elBottom = elTop + el.offsetHeight;
+    const elHeight = el.offsetHeight;
+    const elBottom = elTop + elHeight;
 
-    if (elTop <= viewportBottom && elBottom >= viewportTop) {
-      currentChapterEl = el;
+    // Update height cache
+    setChapterHeight(entry.chapter.url, elHeight);
+
+    // Calculate visible overlap
+    const visibleTop = Math.max(elTop, viewportTop);
+    const visibleBottom = Math.min(elBottom, viewportBottom);
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+    if (visibleHeight > maxVisibleHeight) {
+      maxVisibleHeight = visibleHeight;
       currentChapterIdx = entry.index;
-      setChapterHeight(entry.chapter.url, el.offsetHeight);
-      break;
+      currentChapterEl = el;
     }
   }
 
-  if (!currentChapterEl) return;
+  if (!currentChapterEl || currentChapterIdx === -1) return;
 
   // Update current chapter in store (this updates header title and browser URL)
   readerStore.setCurrentChapter(currentChapterIdx);
