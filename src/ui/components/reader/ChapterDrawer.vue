@@ -37,9 +37,13 @@
       </div>
 
       <!-- 缓存统计 -->
-      <div v-else-if="cachedCount > 0" class="mnr-cache-stats">
-        <span class="mnr-cached-icon">✓</span>
-        已缓存 {{ cachedCount }} 章
+      <div v-else-if="persistedCount > 0 || sessionCount > 0" class="mnr-cache-stats">
+        <span v-if="persistedCount > 0" class="mnr-stat-persisted">
+          <span class="mnr-persisted-icon">✓</span> 已保存 {{ persistedCount }} 章
+        </span>
+        <span v-if="sessionCount > 0" class="mnr-stat-session">
+          <span class="mnr-cached-icon">○</span> 临时 {{ sessionCount }} 章
+        </span>
       </div>
 
       <ul class="mnr-chapter-list">
@@ -55,11 +59,13 @@
           "
           :class="{
             active: ch.isCurrent,
-            cached: ch.isCached && !ch.isCurrent,
+            cached: ch.isCached && !ch.isPersisted && !ch.isCurrent,
+            persisted: ch.isPersisted && !ch.isCurrent,
           }"
           @click="handleSelect(ch)"
         >
-          <span v-if="ch.isCached" class="mnr-cached-icon" title="已缓存">✓</span>
+          <span v-if="ch.isPersisted" class="mnr-persisted-icon" title="已持久化">✓</span>
+          <span v-else-if="ch.isCached" class="mnr-cached-icon" title="临时缓存">○</span>
           {{ ch.title }}
         </li>
       </ul>
@@ -88,7 +94,10 @@ const contentRef = ref<HTMLElement | null>(null);
 const activeRef = ref<HTMLElement | null>(null);
 
 // Count cached chapters
-const cachedCount = computed(() => props.chapters.filter(ch => ch.isCached).length);
+const persistedCount = computed(() => props.chapters.filter(ch => ch.isPersisted).length);
+const sessionCount = computed(
+  () => props.chapters.filter(ch => ch.isCached && !ch.isPersisted).length
+);
 
 const scrollActiveIntoView = async (behavior: 'auto' | 'smooth' = 'auto') => {
   await nextTick();
@@ -296,8 +305,17 @@ function handleSelect(entry: TocEntryWithStatus) {
 .mnr-cache-stats {
   padding: 8px 16px;
   font-size: 12px;
-  color: #4caf50;
   border-bottom: 1px solid var(--mnr-border, #e5e5e5);
+  display: flex;
+  gap: 12px;
+}
+
+.mnr-stat-persisted {
+  color: #4caf50;
+}
+
+.mnr-stat-session {
+  color: #9e9e9e;
 }
 
 /* Chapter list */
@@ -331,12 +349,24 @@ function handleSelect(entry: TocEntryWithStatus) {
   color: var(--mnr-link, #1976d2);
 }
 
-/* Cached chapter style */
+/* Cached chapter style - session cache (gray) */
 .mnr-chapter-list li.cached {
+  color: #9e9e9e;
+}
+
+/* Persisted chapter style - saved to storage (green) */
+.mnr-chapter-list li.persisted {
   color: #4caf50;
 }
 
 .mnr-cached-icon {
+  color: #9e9e9e;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mnr-persisted-icon {
   color: #4caf50;
   font-size: 12px;
   flex-shrink: 0;

@@ -58,7 +58,7 @@
   try {
     if (typeof document != "undefined") {
       var elementStyle = document.createElement("style");
-      elementStyle.appendChild(document.createTextNode(".mnr-prompt-overlay[data-v-333f72bb]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-333f72bb]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-333f72bb .3s ease-out}@keyframes mnr-slide-up-333f72bb{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-333f72bb]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-333f72bb]{font-size:28px}.mnr-prompt-title[data-v-333f72bb]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-333f72bb]{margin-bottom:16px}.mnr-confidence-bar[data-v-333f72bb]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-333f72bb]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-333f72bb]{background:#4caf50}.mnr-confidence-fill.medium[data-v-333f72bb]{background:#ff9800}.mnr-confidence-fill.low[data-v-333f72bb]{background:#f44336}.mnr-confidence-text[data-v-333f72bb]{font-size:13px;color:#666}.mnr-results[data-v-333f72bb]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-333f72bb]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-333f72bb]{color:#2e7d32}.mnr-result-item.warning[data-v-333f72bb]{color:#ed6c02}.mnr-result-icon[data-v-333f72bb]{font-weight:700}.mnr-checkbox-label[data-v-333f72bb]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-333f72bb]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-333f72bb]{display:flex;gap:12px}.mnr-btn[data-v-333f72bb]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-333f72bb]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-333f72bb]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-333f72bb]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-333f72bb],.mnr-fade-leave-active[data-v-333f72bb]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-333f72bb],.mnr-fade-leave-to[data-v-333f72bb]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-333f72bb]{background:#2a2a2a}.mnr-prompt-title[data-v-333f72bb]{color:#e0e0e0}.mnr-confidence-bar[data-v-333f72bb]{background:#444}.mnr-confidence-text[data-v-333f72bb]{color:#aaa}.mnr-checkbox-label[data-v-333f72bb]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-333f72bb]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-333f72bb]{padding:16px;margin:8px}.mnr-prompt-title[data-v-333f72bb]{font-size:16px}.mnr-btn[data-v-333f72bb]{padding:12px 16px}}.mnr-progress[data-v-bc314d2a]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-bc314d2a]{opacity:0}.mnr-progress-bar[data-v-bc314d2a]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-bc314d2a]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-5d0b2cb8]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-5d0b2cb8]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 2px 8px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s ease}.mnr-fab[data-v-5d0b2cb8]:hover{background:var(--mnr-border, #f0f0f0);transform:scale(1.05)}.mnr-fab[data-v-5d0b2cb8]:disabled{opacity:.5;cursor:not-allowed;transform:none}.mnr-fab-group[data-v-5d0b2cb8]{display:flex;gap:8px}.mnr-fab-badge[data-v-5d0b2cb8]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;padding:2px 4px;border-radius:8px;line-height:1}.mnr-drawer[data-v-23964fb4]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-23964fb4]{transform:translate(0)}.mnr-drawer-overlay[data-v-23964fb4]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-23964fb4],.mnr-fade-leave-active[data-v-23964fb4]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-23964fb4],.mnr-fade-leave-to[data-v-23964fb4]{opacity:0}.mnr-drawer-header[data-v-23964fb4]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-23964fb4]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-23964fb4]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-23964fb4]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-23964fb4]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-23964fb4]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-23964fb4]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-23964fb4 1s linear infinite}@keyframes mnr-spin-23964fb4{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-23964fb4]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-23964fb4]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-23964fb4]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-23964fb4]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-23964fb4]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-23964fb4]{padding:8px 16px;font-size:12px;color:#4caf50;border-bottom:1px solid var(--mnr-border, #e5e5e5)}.mnr-chapter-list[data-v-23964fb4]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-23964fb4]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-23964fb4]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-23964fb4]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-23964fb4]{color:#4caf50}.mnr-cached-icon[data-v-23964fb4]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-23964fb4]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-6493a95a]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-6493a95a]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-6493a95a]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-6493a95a]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-6493a95a]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-6493a95a]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-6493a95a]{font-weight:600}.mnr-picker-hint[data-v-6493a95a]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-6493a95a]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-6493a95a]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-6493a95a]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-2f6fea54]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-2f6fea54]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-2f6fea54]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-2f6fea54]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-2f6fea54]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-2f6fea54]{display:flex;gap:4px}.mnr-tab-btn[data-v-2f6fea54]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-2f6fea54]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-2f6fea54]{margin-bottom:24px}.mnr-section-title[data-v-2f6fea54]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-2f6fea54]{margin-bottom:16px}.mnr-form-group label[data-v-2f6fea54]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-2f6fea54],.mnr-form-group textarea[data-v-2f6fea54]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-2f6fea54]:focus,.mnr-form-group textarea[data-v-2f6fea54]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-2f6fea54]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-2f6fea54]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-2f6fea54]{width:18px;height:18px}.mnr-code-toolbar[data-v-2f6fea54]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-2f6fea54]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]:hover{opacity:.8}.mnr-code-editor[data-v-2f6fea54]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-2f6fea54]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-2f6fea54],.mnr-css-editor[data-v-2f6fea54]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-2f6fea54]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-2f6fea54]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-2f6fea54]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-2f6fea54]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-ff174329]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-ff174329]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-ff174329]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-ff174329] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-ff174329] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-ff174329] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-ff174329]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-ff174329]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-ff174329]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-ff174329]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-ff174329]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-ff174329]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-ff174329]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-ff174329],.mnr-loading-next[data-v-ff174329]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-ff174329]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-ff174329 1s linear infinite}.mnr-loading-overlay[data-v-ff174329]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;z-index:1000}.mnr-loading-spinner[data-v-ff174329]{width:40px;height:40px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:mnr-spin-ff174329 1s linear infinite}@keyframes mnr-spin-ff174329{to{transform:rotate(360deg)}}.mnr-error-toast[data-v-ff174329]{position:fixed;bottom:24px;left:50%;transform:translate(-50%);background:#d32f2f;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;cursor:pointer;z-index:1001;animation:mnr-fade-in-ff174329 .3s ease}@keyframes mnr-fade-in-ff174329{0%{opacity:0;transform:translate(-50%) translateY(20px)}to{opacity:1;transform:translate(-50%) translateY(0)}}@media(min-width:768px){.mnr-reader-content[data-v-ff174329]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-ff174329]{padding:40px}}.mnr-rule-editor-overlay[data-v-ff174329]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-ff174329]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-ff174329]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}"));
+      elementStyle.appendChild(document.createTextNode(".mnr-prompt-overlay[data-v-333f72bb]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-333f72bb]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-333f72bb .3s ease-out}@keyframes mnr-slide-up-333f72bb{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-333f72bb]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-333f72bb]{font-size:28px}.mnr-prompt-title[data-v-333f72bb]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-333f72bb]{margin-bottom:16px}.mnr-confidence-bar[data-v-333f72bb]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-333f72bb]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-333f72bb]{background:#4caf50}.mnr-confidence-fill.medium[data-v-333f72bb]{background:#ff9800}.mnr-confidence-fill.low[data-v-333f72bb]{background:#f44336}.mnr-confidence-text[data-v-333f72bb]{font-size:13px;color:#666}.mnr-results[data-v-333f72bb]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-333f72bb]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-333f72bb]{color:#2e7d32}.mnr-result-item.warning[data-v-333f72bb]{color:#ed6c02}.mnr-result-icon[data-v-333f72bb]{font-weight:700}.mnr-checkbox-label[data-v-333f72bb]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-333f72bb]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-333f72bb]{display:flex;gap:12px}.mnr-btn[data-v-333f72bb]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-333f72bb]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-333f72bb]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-333f72bb]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-333f72bb],.mnr-fade-leave-active[data-v-333f72bb]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-333f72bb],.mnr-fade-leave-to[data-v-333f72bb]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-333f72bb]{background:#2a2a2a}.mnr-prompt-title[data-v-333f72bb]{color:#e0e0e0}.mnr-confidence-bar[data-v-333f72bb]{background:#444}.mnr-confidence-text[data-v-333f72bb]{color:#aaa}.mnr-checkbox-label[data-v-333f72bb]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-333f72bb]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-333f72bb]{padding:16px;margin:8px}.mnr-prompt-title[data-v-333f72bb]{font-size:16px}.mnr-btn[data-v-333f72bb]{padding:12px 16px}}.mnr-progress[data-v-bc314d2a]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-bc314d2a]{opacity:0}.mnr-progress-bar[data-v-bc314d2a]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-bc314d2a]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-5d0b2cb8]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-5d0b2cb8]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 2px 8px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s ease}.mnr-fab[data-v-5d0b2cb8]:hover{background:var(--mnr-border, #f0f0f0);transform:scale(1.05)}.mnr-fab[data-v-5d0b2cb8]:disabled{opacity:.5;cursor:not-allowed;transform:none}.mnr-fab-group[data-v-5d0b2cb8]{display:flex;gap:8px}.mnr-fab-badge[data-v-5d0b2cb8]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;padding:2px 4px;border-radius:8px;line-height:1}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-6493a95a]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-6493a95a]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-6493a95a]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-6493a95a]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-6493a95a]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-6493a95a]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-6493a95a]{font-weight:600}.mnr-picker-hint[data-v-6493a95a]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-6493a95a]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-6493a95a]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-6493a95a]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-2f6fea54]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-2f6fea54]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-2f6fea54]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-2f6fea54]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-2f6fea54]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-2f6fea54]{display:flex;gap:4px}.mnr-tab-btn[data-v-2f6fea54]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-2f6fea54]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-2f6fea54]{margin-bottom:24px}.mnr-section-title[data-v-2f6fea54]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-2f6fea54]{margin-bottom:16px}.mnr-form-group label[data-v-2f6fea54]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-2f6fea54],.mnr-form-group textarea[data-v-2f6fea54]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-2f6fea54]:focus,.mnr-form-group textarea[data-v-2f6fea54]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-2f6fea54]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-2f6fea54]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-2f6fea54]{width:18px;height:18px}.mnr-code-toolbar[data-v-2f6fea54]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-2f6fea54]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]:hover{opacity:.8}.mnr-code-editor[data-v-2f6fea54]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-2f6fea54]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-2f6fea54],.mnr-css-editor[data-v-2f6fea54]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-2f6fea54]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-2f6fea54]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-2f6fea54]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-2f6fea54]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-22b07746]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-22b07746]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-22b07746]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-22b07746] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-22b07746] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-22b07746] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-22b07746]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-22b07746]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-22b07746]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-22b07746]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-22b07746]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-22b07746]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-22b07746]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-22b07746],.mnr-loading-next[data-v-22b07746]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-22b07746]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-22b07746 1s linear infinite}.mnr-loading-overlay[data-v-22b07746]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;z-index:1000}.mnr-loading-spinner[data-v-22b07746]{width:40px;height:40px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:mnr-spin-22b07746 1s linear infinite}@keyframes mnr-spin-22b07746{to{transform:rotate(360deg)}}.mnr-toast[data-v-22b07746]{position:fixed;bottom:24px;left:50%;transform:translate(-50%);background:#000000bf;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;cursor:pointer;z-index:1001}.mnr-toast--error[data-v-22b07746]{background:#d32f2f}.mnr-toast-enter-active[data-v-22b07746],.mnr-toast-leave-active[data-v-22b07746]{transition:all .3s ease}.mnr-toast-enter-from[data-v-22b07746],.mnr-toast-leave-to[data-v-22b07746]{opacity:0;transform:translate(-50%) translateY(20px)}@media(min-width:768px){.mnr-reader-content[data-v-22b07746]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-22b07746]{padding:40px}}.mnr-rule-editor-overlay[data-v-22b07746]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-22b07746]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-22b07746]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}"));
       document.head.appendChild(elementStyle);
     }
   } catch (e) {
@@ -17336,6 +17336,8 @@ var MyNovelReader = (function(exports) {
     const chapters = ref([]);
     const currentChapterIndex = ref(0);
     const error = ref(null);
+    const toastType = ref("error");
+    const toastTimer = ref(null);
     const scrollPercent = ref(0);
     const history = ref([]);
     const loadedUrls = ref(/* @__PURE__ */ new Set());
@@ -17350,6 +17352,7 @@ var MyNovelReader = (function(exports) {
     const tocLoading = ref(false);
     const tocAbort = ref(null);
     const cachedContents = ref(/* @__PURE__ */ new Map());
+    const persistedUrls = ref(/* @__PURE__ */ new Set());
     const chapter = computed(() => {
       var _a;
       return ((_a = chapters.value[currentChapterIndex.value]) == null ? void 0 : _a.chapter) || null;
@@ -17396,6 +17399,7 @@ var MyNovelReader = (function(exports) {
       return toc.value.map((entry) => ({
         ...entry,
         isCached: loadedUrls.value.has(entry.url) || cachedContents.value.has(entry.url),
+        isPersisted: persistedUrls.value.has(entry.url),
         isCurrent: entry.url === currentUrl
       }));
     });
@@ -17489,7 +17493,11 @@ var MyNovelReader = (function(exports) {
     }
     async function loadNextChapter() {
       const lastChapter = chapters.value[chapters.value.length - 1];
-      if (!(lastChapter == null ? void 0 : lastChapter.chapter.nextUrl) || isLoadingNext.value) {
+      if (isLoadingNext.value) {
+        return false;
+      }
+      if (!(lastChapter == null ? void 0 : lastChapter.chapter.nextUrl)) {
+        showToast("已经是最后一章了", "info");
         return false;
       }
       const nextUrl = lastChapter.chapter.nextUrl;
@@ -17509,10 +17517,12 @@ var MyNovelReader = (function(exports) {
         console.log("[MNR] Skipping invalid chapter URL:", nextUrl);
         loadedUrls.value.add(nextUrl);
         isLoadingNext.value = false;
+        showToast("已经是最后一章了", "info");
         return false;
       }
       const normalizeUrl2 = (url) => url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
       if (lastChapter.chapter.indexUrl && normalizeUrl2(nextUrl) === normalizeUrl2(lastChapter.chapter.indexUrl)) {
+        showToast("已经是最后一章了", "info");
         return false;
       }
       try {
@@ -17522,16 +17532,21 @@ var MyNovelReader = (function(exports) {
         const doc2 = await promise;
         pendingNextAbort.value = null;
         if (!doc2) {
-          throw new Error("Failed to fetch page");
+          loadedUrls.value.add(nextUrl);
+          showToast("已经是最后一章了", "info");
+          return false;
         }
         const parser = getParser();
         const parsed = await parser.parse(doc2, nextUrl);
         if (!parsed) {
-          throw new Error("Failed to parse chapter");
+          loadedUrls.value.add(nextUrl);
+          showToast("已经是最后一章了", "info");
+          return false;
         }
         const isTocPage = detectTocPage(parsed.content, nextUrl, lastChapter.chapter.url);
         if (isTocPage) {
           loadedUrls.value.add(nextUrl);
+          showToast("已经是最后一章了", "info");
           return false;
         }
         const id = `chapter-${Date.now()}-${chapters.value.length}`;
@@ -17568,7 +17583,7 @@ var MyNovelReader = (function(exports) {
         return true;
       } catch (e) {
         console.error("[MNR] Failed to load next chapter:", e);
-        error.value = "加载下一章失败";
+        setError("加载下一章失败");
         return false;
       } finally {
         isLoadingNext.value = false;
@@ -17576,12 +17591,17 @@ var MyNovelReader = (function(exports) {
     }
     async function loadPrevChapter() {
       const firstChapter = chapters.value[0];
-      if (!(firstChapter == null ? void 0 : firstChapter.chapter.prevUrl) || isLoadingPrev.value) {
+      if (isLoadingPrev.value) {
+        return false;
+      }
+      if (!(firstChapter == null ? void 0 : firstChapter.chapter.prevUrl)) {
+        showToast("已经是第一章了", "info");
         return false;
       }
       const prevUrl = firstChapter.chapter.prevUrl;
       const normalizeUrl2 = (url) => url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
       if (firstChapter.chapter.indexUrl && normalizeUrl2(prevUrl) === normalizeUrl2(firstChapter.chapter.indexUrl)) {
+        showToast("已经是第一章了", "info");
         return false;
       }
       if (loadedUrls.value.has(prevUrl)) {
@@ -17600,6 +17620,7 @@ var MyNovelReader = (function(exports) {
         console.log("[MNR] Skipping invalid chapter URL:", prevUrl);
         loadedUrls.value.add(prevUrl);
         isLoadingPrev.value = false;
+        showToast("已经是第一章了", "info");
         return false;
       }
       try {
@@ -17609,16 +17630,21 @@ var MyNovelReader = (function(exports) {
         const doc2 = await promise;
         pendingPrevAbort.value = null;
         if (!doc2) {
-          throw new Error("Failed to fetch page");
+          loadedUrls.value.add(prevUrl);
+          showToast("已经是第一章了", "info");
+          return false;
         }
         const parser = getParser();
         const parsed = await parser.parse(doc2, prevUrl);
         if (!parsed) {
-          throw new Error("Failed to parse chapter");
+          loadedUrls.value.add(prevUrl);
+          showToast("已经是第一章了", "info");
+          return false;
         }
         const isTocPage = detectTocPage(parsed.content, prevUrl, firstChapter.chapter.url);
         if (isTocPage) {
           loadedUrls.value.add(prevUrl);
+          showToast("已经是第一章了", "info");
           return false;
         }
         if (parsed.nextUrl && normalizeUrl2(parsed.nextUrl) === normalizeUrl2(firstChapter.chapter.url)) {
@@ -17660,7 +17686,7 @@ var MyNovelReader = (function(exports) {
         return true;
       } catch (e) {
         console.error("[MNR] Failed to load previous chapter:", e);
-        error.value = "加载上一章失败";
+        setError("加载上一章失败");
         return false;
       } finally {
         isLoadingPrev.value = false;
@@ -17671,10 +17697,33 @@ var MyNovelReader = (function(exports) {
     }
     function setError(msg) {
       error.value = msg;
+      toastType.value = "error";
       isLoading.value = false;
+      if (toastTimer.value) {
+        window.clearTimeout(toastTimer.value);
+      }
+      toastTimer.value = window.setTimeout(() => {
+        error.value = null;
+        toastTimer.value = null;
+      }, 3e3);
+    }
+    function showToast(msg, type = "info", duration = 2e3) {
+      error.value = msg;
+      toastType.value = type;
+      if (toastTimer.value) {
+        window.clearTimeout(toastTimer.value);
+      }
+      toastTimer.value = window.setTimeout(() => {
+        error.value = null;
+        toastTimer.value = null;
+      }, duration);
     }
     function clearError() {
       error.value = null;
+      if (toastTimer.value) {
+        window.clearTimeout(toastTimer.value);
+        toastTimer.value = null;
+      }
     }
     function updateScroll(percent) {
       scrollPercent.value = Math.max(0, Math.min(100, percent));
@@ -17743,10 +17792,7 @@ var MyNovelReader = (function(exports) {
           cacheAbort.value = null;
           if (doc2) {
             const tocLinks = parseTocLinks(doc2, indexUrl, 1e4);
-            const currNorm = normalizeUrl(currentUrl || "", indexUrl);
-            const startIdx = tocLinks.findIndex((u) => u === currNorm);
-            const sliced = startIdx >= 0 ? tocLinks.slice(startIdx + 1) : tocLinks;
-            taskList = sliced.filter((u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+            taskList = tocLinks.filter((u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
             cacheQueue.value = [...taskList];
           }
         }
@@ -18118,6 +18164,7 @@ var MyNovelReader = (function(exports) {
       try {
         if (typeof GM_setValue !== "undefined") {
           GM_setValue(`mnr_cache_${bookId}`, JSON.stringify(data));
+          persistedUrls.value = new Set(Object.keys(chaptersObj));
           console.log(`[MNR] Cache persisted: ${cachedContents.value.size} chapters`);
         }
       } catch (e) {
@@ -18134,10 +18181,12 @@ var MyNovelReader = (function(exports) {
           const stored = GM_getValue(`mnr_cache_${bookId}`, null);
           if (stored) {
             const data = JSON.parse(stored);
+            const urls = Object.keys(data.chapters);
             for (const [url, cached] of Object.entries(data.chapters)) {
               cachedContents.value.set(url, cached);
               loadedUrls.value.add(url);
             }
+            persistedUrls.value = new Set(urls);
             console.log(`[MNR] Cache restored: ${cachedContents.value.size} chapters`);
           }
         }
@@ -18154,8 +18203,8 @@ var MyNovelReader = (function(exports) {
         if (typeof GM_deleteValue !== "undefined") {
           GM_deleteValue(`mnr_cache_${bookId}`);
         }
-        cachedContents.value.clear();
-        console.log("[MNR] Cache cleared");
+        persistedUrls.value.clear();
+        console.log("[MNR] Persisted cache cleared");
       } catch (e) {
         console.error("[MNR] Failed to clear cache:", e);
       }
@@ -18171,12 +18220,14 @@ var MyNovelReader = (function(exports) {
       chapter,
       rule,
       error,
+      toastType,
       scrollPercent,
       history,
       cacheProgress,
       toc,
       tocLoading,
       cachedContents,
+      persistedUrls,
       // Getters
       title,
       bookTitle,
@@ -18197,6 +18248,7 @@ var MyNovelReader = (function(exports) {
       loadPrevChapter,
       setLoading,
       setError,
+      showToast,
       clearError,
       updateScroll,
       getProgress,
@@ -19223,12 +19275,25 @@ var MyNovelReader = (function(exports) {
     key: 1,
     class: "mnr-cache-stats"
   };
-  const _hoisted_9$4 = { class: "mnr-chapter-list" };
-  const _hoisted_10$4 = ["onClick"];
-  const _hoisted_11$4 = {
+  const _hoisted_9$4 = {
     key: 0,
+    class: "mnr-stat-persisted"
+  };
+  const _hoisted_10$4 = {
+    key: 1,
+    class: "mnr-stat-session"
+  };
+  const _hoisted_11$4 = { class: "mnr-chapter-list" };
+  const _hoisted_12$3 = ["onClick"];
+  const _hoisted_13$3 = {
+    key: 0,
+    class: "mnr-persisted-icon",
+    title: "已持久化"
+  };
+  const _hoisted_14$3 = {
+    key: 1,
     class: "mnr-cached-icon",
-    title: "已缓存"
+    title: "临时缓存"
   };
   const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     __name: "ChapterDrawer",
@@ -19245,7 +19310,10 @@ var MyNovelReader = (function(exports) {
       const emit2 = __emit;
       const contentRef = ref(null);
       const activeRef = ref(null);
-      const cachedCount = computed(() => props.chapters.filter((ch) => ch.isCached).length);
+      const persistedCount = computed(() => props.chapters.filter((ch) => ch.isPersisted).length);
+      const sessionCount = computed(
+        () => props.chapters.filter((ch) => ch.isCached && !ch.isPersisted).length
+      );
       const scrollActiveIntoView = async (behavior = "auto") => {
         await nextTick();
         if (!props.isOpen || props.loading) return;
@@ -19331,11 +19399,17 @@ var MyNovelReader = (function(exports) {
                     })
                   }, null, 4)
                 ])
-              ])) : cachedCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_8$4, [
-                _cache[4] || (_cache[4] = createBaseVNode("span", { class: "mnr-cached-icon" }, "✓", -1)),
-                createTextVNode(" 已缓存 " + toDisplayString(cachedCount.value) + " 章 ", 1)
+              ])) : persistedCount.value > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_8$4, [
+                persistedCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_9$4, [
+                  _cache[4] || (_cache[4] = createBaseVNode("span", { class: "mnr-persisted-icon" }, "✓", -1)),
+                  createTextVNode(" 已保存 " + toDisplayString(persistedCount.value) + " 章 ", 1)
+                ])) : createCommentVNode("", true),
+                sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_10$4, [
+                  _cache[5] || (_cache[5] = createBaseVNode("span", { class: "mnr-cached-icon" }, "○", -1)),
+                  createTextVNode(" 临时 " + toDisplayString(sessionCount.value) + " 章 ", 1)
+                ])) : createCommentVNode("", true)
               ])) : createCommentVNode("", true),
-              createBaseVNode("ul", _hoisted_9$4, [
+              createBaseVNode("ul", _hoisted_11$4, [
                 (openBlock(true), createElementBlock(Fragment, null, renderList(__props.chapters, (ch) => {
                   return openBlock(), createElementBlock("li", {
                     key: ch.url,
@@ -19347,13 +19421,14 @@ var MyNovelReader = (function(exports) {
                     },
                     class: normalizeClass({
                       active: ch.isCurrent,
-                      cached: ch.isCached && !ch.isCurrent
+                      cached: ch.isCached && !ch.isPersisted && !ch.isCurrent,
+                      persisted: ch.isPersisted && !ch.isCurrent
                     }),
                     onClick: ($event) => handleSelect(ch)
                   }, [
-                    ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_11$4, "✓")) : createCommentVNode("", true),
+                    ch.isPersisted ? (openBlock(), createElementBlock("span", _hoisted_13$3, "✓")) : ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_14$3, "○")) : createCommentVNode("", true),
                     createTextVNode(" " + toDisplayString(ch.title), 1)
-                  ], 10, _hoisted_10$4);
+                  ], 10, _hoisted_12$3);
                 }), 128))
               ])
             ], 512))
@@ -19362,7 +19437,7 @@ var MyNovelReader = (function(exports) {
       };
     }
   });
-  const ChapterDrawer = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-23964fb4"]]);
+  const ChapterDrawer = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-6d373c76"]]);
   const _hoisted_1$4 = { class: "mnr-settings-panel" };
   const _hoisted_2$4 = { class: "mnr-settings-header" };
   const _hoisted_3$4 = { class: "mnr-settings-content" };
@@ -19395,11 +19470,12 @@ var MyNovelReader = (function(exports) {
   const _hoisted_27$1 = { class: "mnr-switch-row" };
   const _hoisted_28 = { class: "mnr-settings-section" };
   const _hoisted_29 = { class: "mnr-action-buttons" };
-  const _hoisted_30 = {
+  const _hoisted_30 = { class: "mnr-cache-row" };
+  const _hoisted_31 = {
     key: 0,
     class: "mnr-cache-progress"
   };
-  const _hoisted_31 = { class: "mnr-cache-count" };
+  const _hoisted_32 = { class: "mnr-cache-count" };
   const _sfc_main$4 = /* @__PURE__ */ defineComponent({
     __name: "SettingsPanel",
     props: {
@@ -19423,7 +19499,7 @@ var MyNovelReader = (function(exports) {
       const autoHideHeader = ref(configStore.behavior.autoHideHeader);
       const showProgress = ref(configStore.behavior.showProgress);
       const cacheProgress = computed(() => readerStore.cacheProgress);
-      const cachedCount = computed(() => readerStore.cachedContents.size);
+      const persistedCount = computed(() => readerStore.persistedUrls.size);
       function setTheme(id) {
         configStore.setTheme(id);
       }
@@ -19649,21 +19725,23 @@ var MyNovelReader = (function(exports) {
                         class: "mnr-action-btn",
                         onClick: _cache[13] || (_cache[13] = ($event) => _ctx.$emit("editRule"))
                       }, "编辑站点规则"),
-                      createBaseVNode("button", {
-                        class: "mnr-action-btn",
-                        onClick: _cache[14] || (_cache[14] = ($event) => _ctx.$emit("cacheAll"))
-                      }, [
-                        _cache[37] || (_cache[37] = createTextVNode(" 缓存本书 ", -1)),
-                        cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_30, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)
+                      createBaseVNode("div", _hoisted_30, [
+                        createBaseVNode("button", {
+                          class: "mnr-action-btn",
+                          onClick: _cache[14] || (_cache[14] = ($event) => _ctx.$emit("cacheAll"))
+                        }, [
+                          _cache[37] || (_cache[37] = createTextVNode(" 缓存本书 ", -1)),
+                          cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_31, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)
+                        ]),
+                        persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
+                          key: 0,
+                          class: "mnr-action-btn mnr-action-btn--danger",
+                          onClick: handleClearCache
+                        }, [
+                          _cache[38] || (_cache[38] = createTextVNode(" 清除 ", -1)),
+                          createBaseVNode("span", _hoisted_32, "(" + toDisplayString(persistedCount.value) + ")", 1)
+                        ])) : createCommentVNode("", true)
                       ]),
-                      cachedCount.value > 0 ? (openBlock(), createElementBlock("button", {
-                        key: 0,
-                        class: "mnr-action-btn mnr-action-btn--danger",
-                        onClick: handleClearCache
-                      }, [
-                        _cache[38] || (_cache[38] = createTextVNode(" 清除缓存 ", -1)),
-                        createBaseVNode("span", _hoisted_31, "(" + toDisplayString(cachedCount.value) + "章)", 1)
-                      ])) : createCommentVNode("", true),
                       createBaseVNode("button", {
                         class: "mnr-action-btn",
                         onClick: _cache[15] || (_cache[15] = ($event) => {
@@ -20801,6 +20879,7 @@ ${value}`;
       const hasNext = computed(() => readerStore.hasNext);
       const hasPrev = computed(() => readerStore.hasPrev);
       const error = computed(() => readerStore.error);
+      const toastType = computed(() => readerStore.toastType);
       const showProgress = computed(() => configStore.behavior.showProgress);
       const cacheProgress = computed(() => readerStore.cacheProgress);
       const keyboardEnabled = computed(
@@ -21331,16 +21410,21 @@ ${value}`;
             createBaseVNode("div", { class: "mnr-loading-spinner" }, null, -1),
             createBaseVNode("span", null, "加载中...", -1)
           ])])) : createCommentVNode("", true),
-          error.value ? (openBlock(), createElementBlock("div", {
-            key: 3,
-            class: "mnr-error-toast",
-            onClick: clearError
-          }, toDisplayString(error.value), 1)) : createCommentVNode("", true)
+          createVNode(Transition, { name: "mnr-toast" }, {
+            default: withCtx(() => [
+              error.value ? (openBlock(), createElementBlock("div", {
+                key: 0,
+                class: normalizeClass(["mnr-toast", { "mnr-toast--error": toastType.value === "error" }]),
+                onClick: clearError
+              }, toDisplayString(error.value), 3)) : createCommentVNode("", true)
+            ]),
+            _: 1
+          })
         ]);
       };
     }
   });
-  const ReaderView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-ff174329"]]);
+  const ReaderView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-22b07746"]]);
   const appState = {
     isInitialized: false,
     isActive: false,

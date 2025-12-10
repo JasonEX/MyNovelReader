@@ -44,6 +44,7 @@ export interface TocEntry {
 /** TOC entry with cache status for UI */
 export interface TocEntryWithStatus extends TocEntry {
   isCached: boolean;
+  isPersisted: boolean;
   isCurrent: boolean;
 }
 
@@ -74,6 +75,8 @@ export const useReaderStore = defineStore('reader', () => {
   const chapters = ref<ChapterEntry[]>([]);
   const currentChapterIndex = ref(0);
   const error = ref<string | null>(null);
+  const toastType = ref<'info' | 'error'>('error');
+  const toastTimer = ref<ReturnType<typeof setTimeout> | null>(null);
   const scrollPercent = ref(0);
   const history = ref<string[]>([]);
   const loadedUrls = ref<Set<string>>(new Set());
@@ -92,6 +95,8 @@ export const useReaderStore = defineStore('reader', () => {
 
   // Cached chapters storage (separate from display chapters for memory efficiency)
   const cachedContents = ref<Map<string, CachedChapter>>(new Map());
+  // Track which URLs are persisted to GM_Storage (vs just in-memory session cache)
+  const persistedUrls = ref<Set<string>>(new Set());
 
   // Getters - for compatibility
   const chapter = computed(() => chapters.value[currentChapterIndex.value]?.chapter || null);
@@ -117,6 +122,7 @@ export const useReaderStore = defineStore('reader', () => {
     return toc.value.map(entry => ({
       ...entry,
       isCached: loadedUrls.value.has(entry.url) || cachedContents.value.has(entry.url),
+      isPersisted: persistedUrls.value.has(entry.url),
       isCurrent: entry.url === currentUrl,
     }));
   });
@@ -244,7 +250,11 @@ export const useReaderStore = defineStore('reader', () => {
   /** Load next chapter and append to list */
   async function loadNextChapter(): Promise<boolean> {
     const lastChapter = chapters.value[chapters.value.length - 1];
-    if (!lastChapter?.chapter.nextUrl || isLoadingNext.value) {
+    if (isLoadingNext.value) {
+      return false;
+    }
+    if (!lastChapter?.chapter.nextUrl) {
+      showToast('已经是最后一章了', 'info');
       return false;
     }
 
@@ -273,6 +283,7 @@ export const useReaderStore = defineStore('reader', () => {
       console.log('[MNR] Skipping invalid chapter URL:', nextUrl);
       loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
       isLoadingNext.value = false;
+      showToast('已经是最后一章了', 'info');
       return false;
     }
 
@@ -282,6 +293,7 @@ export const useReaderStore = defineStore('reader', () => {
       lastChapter.chapter.indexUrl &&
       normalizeUrl(nextUrl) === normalizeUrl(lastChapter.chapter.indexUrl)
     ) {
+      showToast('已经是最后一章了', 'info');
       return false;
     }
 
@@ -295,13 +307,19 @@ export const useReaderStore = defineStore('reader', () => {
       const doc = await promise;
       pendingNextAbort.value = null;
       if (!doc) {
-        throw new Error('Failed to fetch page');
+        // Failed to fetch - likely end of book or invalid page
+        loadedUrls.value.add(nextUrl); // Prevent retry
+        showToast('已经是最后一章了', 'info');
+        return false;
       }
 
       const parser = getParser();
       const parsed = await parser.parse(doc, nextUrl);
       if (!parsed) {
-        throw new Error('Failed to parse chapter');
+        // Failed to parse - likely not a chapter page (end of book page, etc.)
+        loadedUrls.value.add(nextUrl); // Prevent retry
+        showToast('已经是最后一章了', 'info');
+        return false;
       }
 
       // Check if this is a TOC page using multiple heuristics
@@ -309,6 +327,7 @@ export const useReaderStore = defineStore('reader', () => {
       const isTocPage = detectTocPage(parsed.content, nextUrl, lastChapter.chapter.url);
       if (isTocPage) {
         loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
+        showToast('已经是最后一章了', 'info');
         return false;
       }
 
@@ -359,7 +378,7 @@ export const useReaderStore = defineStore('reader', () => {
       return true;
     } catch (e) {
       console.error('[MNR] Failed to load next chapter:', e);
-      error.value = '加载下一章失败';
+      setError('加载下一章失败');
       return false;
     } finally {
       isLoadingNext.value = false;
@@ -369,7 +388,11 @@ export const useReaderStore = defineStore('reader', () => {
   /** Load previous chapter and prepend to list */
   async function loadPrevChapter(): Promise<boolean> {
     const firstChapter = chapters.value[0];
-    if (!firstChapter?.chapter.prevUrl || isLoadingPrev.value) {
+    if (isLoadingPrev.value) {
+      return false;
+    }
+    if (!firstChapter?.chapter.prevUrl) {
+      showToast('已经是第一章了', 'info');
       return false;
     }
 
@@ -381,6 +404,7 @@ export const useReaderStore = defineStore('reader', () => {
       firstChapter.chapter.indexUrl &&
       normalizeUrl(prevUrl) === normalizeUrl(firstChapter.chapter.indexUrl)
     ) {
+      showToast('已经是第一章了', 'info');
       return false;
     }
 
@@ -407,6 +431,7 @@ export const useReaderStore = defineStore('reader', () => {
       console.log('[MNR] Skipping invalid chapter URL:', prevUrl);
       loadedUrls.value.add(prevUrl); // Mark as loaded to prevent retry
       isLoadingPrev.value = false;
+      showToast('已经是第一章了', 'info');
       return false;
     }
 
@@ -420,19 +445,26 @@ export const useReaderStore = defineStore('reader', () => {
       const doc = await promise;
       pendingPrevAbort.value = null;
       if (!doc) {
-        throw new Error('Failed to fetch page');
+        // Failed to fetch - likely beginning of book or invalid page
+        loadedUrls.value.add(prevUrl); // Prevent retry
+        showToast('已经是第一章了', 'info');
+        return false;
       }
 
       const parser = getParser();
       const parsed = await parser.parse(doc, prevUrl);
       if (!parsed) {
-        throw new Error('Failed to parse chapter');
+        // Failed to parse - likely not a chapter page
+        loadedUrls.value.add(prevUrl); // Prevent retry
+        showToast('已经是第一章了', 'info');
+        return false;
       }
 
       // Check if this is a TOC page using multiple heuristics
       const isTocPage = detectTocPage(parsed.content, prevUrl, firstChapter.chapter.url);
       if (isTocPage) {
         loadedUrls.value.add(prevUrl); // Mark as loaded to prevent retry
+        showToast('已经是第一章了', 'info');
         return false;
       }
 
@@ -495,7 +527,7 @@ export const useReaderStore = defineStore('reader', () => {
       return true;
     } catch (e) {
       console.error('[MNR] Failed to load previous chapter:', e);
-      error.value = '加载上一章失败';
+      setError('加载上一章失败');
       return false;
     } finally {
       isLoadingPrev.value = false;
@@ -508,11 +540,37 @@ export const useReaderStore = defineStore('reader', () => {
 
   function setError(msg: string) {
     error.value = msg;
+    toastType.value = 'error';
     isLoading.value = false;
+    // Auto-dismiss after 3 seconds
+    if (toastTimer.value) {
+      window.clearTimeout(toastTimer.value);
+    }
+    toastTimer.value = window.setTimeout(() => {
+      error.value = null;
+      toastTimer.value = null;
+    }, 3000);
+  }
+
+  function showToast(msg: string, type: 'info' | 'error' = 'info', duration = 2000) {
+    error.value = msg;
+    toastType.value = type;
+    // Auto-dismiss
+    if (toastTimer.value) {
+      window.clearTimeout(toastTimer.value);
+    }
+    toastTimer.value = window.setTimeout(() => {
+      error.value = null;
+      toastTimer.value = null;
+    }, duration);
   }
 
   function clearError() {
     error.value = null;
+    if (toastTimer.value) {
+      window.clearTimeout(toastTimer.value);
+      toastTimer.value = null;
+    }
   }
 
   function updateScroll(percent: number) {
@@ -592,7 +650,7 @@ export const useReaderStore = defineStore('reader', () => {
     let taskList = urls ? [...urls] : []; // No limit
     cacheQueue.value = [...taskList];
 
-    // 目录列表：current.indexUrl -> 解析出章节列表，再从当前章节之后开始
+    // 目录列表：current.indexUrl -> 解析出章节列表，缓存全本
     if (!taskList.length) {
       const indexUrl = chapter.value?.indexUrl;
       const currentUrl = chapter.value?.url;
@@ -604,11 +662,8 @@ export const useReaderStore = defineStore('reader', () => {
         if (doc) {
           // Get all chapters from TOC, no limit
           const tocLinks = parseTocLinks(doc, indexUrl, 10000);
-          const currNorm = normalizeUrl(currentUrl || '', indexUrl);
-          const startIdx = tocLinks.findIndex(u => u === currNorm);
-          // Get all chapters after current, filter already cached
-          const sliced = startIdx >= 0 ? tocLinks.slice(startIdx + 1) : tocLinks;
-          taskList = sliced.filter(u => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+          // Cache entire book, filter already cached
+          taskList = tocLinks.filter(u => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
           cacheQueue.value = [...taskList];
         }
       }
@@ -1178,6 +1233,8 @@ export const useReaderStore = defineStore('reader', () => {
     try {
       if (typeof GM_setValue !== 'undefined') {
         GM_setValue(`mnr_cache_${bookId}`, JSON.stringify(data));
+        // Update persistedUrls to reflect what's saved
+        persistedUrls.value = new Set(Object.keys(chaptersObj));
         console.log(`[MNR] Cache persisted: ${cachedContents.value.size} chapters`);
       }
     } catch (e) {
@@ -1200,11 +1257,13 @@ export const useReaderStore = defineStore('reader', () => {
         if (stored) {
           const data: PersistedBookCache = JSON.parse(stored as string);
 
-          // Restore to cachedContents and loadedUrls
+          // Restore to cachedContents, loadedUrls, and persistedUrls
+          const urls = Object.keys(data.chapters);
           for (const [url, cached] of Object.entries(data.chapters)) {
             cachedContents.value.set(url, cached);
             loadedUrls.value.add(url);
           }
+          persistedUrls.value = new Set(urls);
 
           console.log(`[MNR] Cache restored: ${cachedContents.value.size} chapters`);
         }
@@ -1227,8 +1286,9 @@ export const useReaderStore = defineStore('reader', () => {
       if (typeof GM_deleteValue !== 'undefined') {
         GM_deleteValue(`mnr_cache_${bookId}`);
       }
-      cachedContents.value.clear();
-      console.log('[MNR] Cache cleared');
+      // Only clear persisted URLs, keep session cache intact
+      persistedUrls.value.clear();
+      console.log('[MNR] Persisted cache cleared');
     } catch (e) {
       console.error('[MNR] Failed to clear cache:', e);
     }
@@ -1245,12 +1305,14 @@ export const useReaderStore = defineStore('reader', () => {
     chapter,
     rule,
     error,
+    toastType,
     scrollPercent,
     history,
     cacheProgress,
     toc,
     tocLoading,
     cachedContents,
+    persistedUrls,
 
     // Getters
     title,
@@ -1273,6 +1335,7 @@ export const useReaderStore = defineStore('reader', () => {
     loadPrevChapter,
     setLoading,
     setError,
+    showToast,
     clearError,
     updateScroll,
     getProgress,

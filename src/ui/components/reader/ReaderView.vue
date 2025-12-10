@@ -110,10 +110,17 @@
       <span>加载中...</span>
     </div>
 
-    <!-- Error message -->
-    <div v-if="error" class="mnr-error-toast" @click="clearError">
-      {{ error }}
-    </div>
+    <!-- Toast message -->
+    <Transition name="mnr-toast">
+      <div
+        v-if="error"
+        class="mnr-toast"
+        :class="{ 'mnr-toast--error': toastType === 'error' }"
+        @click="clearError"
+      >
+        {{ error }}
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -249,6 +256,7 @@ const isLoadingNext = computed(() => readerStore.isLoadingNext);
 const hasNext = computed(() => readerStore.hasNext);
 const hasPrev = computed(() => readerStore.hasPrev);
 const error = computed(() => readerStore.error);
+const toastType = computed(() => readerStore.toastType);
 const showProgress = computed(() => configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
 
@@ -1000,31 +1008,34 @@ onUnmounted(() => {
   }
 }
 
-/* Error toast */
-.mnr-error-toast {
+/* Toast */
+.mnr-toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: #d32f2f;
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
   padding: 12px 24px;
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
   z-index: 1001;
-  animation: mnr-fade-in 0.3s ease;
 }
 
-@keyframes mnr-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+.mnr-toast--error {
+  background: #d32f2f;
+}
+
+.mnr-toast-enter-active,
+.mnr-toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.mnr-toast-enter-from,
+.mnr-toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
 }
 
 /* Mobile first - base styles are mobile */

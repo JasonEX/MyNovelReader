@@ -178,20 +178,22 @@
             <h4>操作</h4>
             <div class="mnr-action-buttons">
               <button class="mnr-action-btn" @click="$emit('editRule')">编辑站点规则</button>
-              <button class="mnr-action-btn" @click="$emit('cacheAll')">
-                缓存本书
-                <span v-if="cacheProgress.total > 0" class="mnr-cache-progress">
-                  {{ cacheProgress.done }}/{{ cacheProgress.total }}
-                </span>
-              </button>
-              <button
-                v-if="cachedCount > 0"
-                class="mnr-action-btn mnr-action-btn--danger"
-                @click="handleClearCache"
-              >
-                清除缓存
-                <span class="mnr-cache-count">({{ cachedCount }}章)</span>
-              </button>
+              <div class="mnr-cache-row">
+                <button class="mnr-action-btn" @click="$emit('cacheAll')">
+                  缓存本书
+                  <span v-if="cacheProgress.total > 0" class="mnr-cache-progress">
+                    {{ cacheProgress.done }}/{{ cacheProgress.total }}
+                  </span>
+                </button>
+                <button
+                  v-if="persistedCount > 0"
+                  class="mnr-action-btn mnr-action-btn--danger"
+                  @click="handleClearCache"
+                >
+                  清除
+                  <span class="mnr-cache-count">({{ persistedCount }})</span>
+                </button>
+              </div>
               <button
                 class="mnr-action-btn"
                 @click="
@@ -243,7 +245,7 @@ const swipeGestures = ref(configStore.behavior.swipeGestures);
 const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 const showProgress = ref(configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
-const cachedCount = computed(() => readerStore.cachedContents.size);
+const persistedCount = computed(() => readerStore.persistedUrls.size);
 
 // Methods
 function setTheme(id: string) {
@@ -516,6 +518,15 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.mnr-cache-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mnr-cache-row .mnr-action-btn {
+  flex: 1;
 }
 
 .mnr-action-btn {
