@@ -185,6 +185,14 @@
                 </span>
               </button>
               <button
+                v-if="cachedCount > 0"
+                class="mnr-action-btn mnr-action-btn--danger"
+                @click="handleClearCache"
+              >
+                清除缓存
+                <span class="mnr-cache-count">({{ cachedCount }}章)</span>
+              </button>
+              <button
                 class="mnr-action-btn"
                 @click="
                   $emit('close');
@@ -235,6 +243,7 @@ const swipeGestures = ref(configStore.behavior.swipeGestures);
 const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 const showProgress = ref(configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
+const cachedCount = computed(() => readerStore.cachedContents.size);
 
 // Methods
 function setTheme(id: string) {
@@ -276,6 +285,12 @@ function updateTextConversion(mode: 'none' | 'sc' | 'tc') {
 
 function updateBehavior(key: string, value: boolean) {
   configStore.updateBehavior({ [key]: value });
+}
+
+async function handleClearCache() {
+  if (window.confirm('确定要清除本书的缓存吗？')) {
+    await readerStore.clearPersistedCache();
+  }
 }
 
 // Sync with store when panel opens
@@ -516,6 +531,22 @@ watch(
 
 .mnr-action-btn:hover {
   background: var(--mnr-border, #f5f5f5);
+}
+
+.mnr-action-btn--danger {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
+.mnr-action-btn--danger:hover {
+  background: #c82333;
+  border-color: #c82333;
+}
+
+.mnr-cache-count {
+  margin-left: 4px;
+  opacity: 0.8;
 }
 
 /* Transitions */

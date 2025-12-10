@@ -41,8 +41,29 @@ export interface TocEntry {
   url: string;
 }
 
+/** TOC entry with cache status for UI */
+export interface TocEntryWithStatus extends TocEntry {
+  isCached: boolean;
+  isCurrent: boolean;
+}
+
+/** Cached chapter content (separate from display chapters) */
+export interface CachedChapter {
+  chapter: ParsedChapter;
+  rule?: SiteRule;
+  cachedAt: number;
+}
+
+/** Persisted cache structure for GM storage */
+interface PersistedBookCache {
+  bookId: string;
+  indexUrl: string;
+  chapters: Record<string, CachedChapter>;
+  lastUpdated: number;
+}
+
 const MAX_CACHED_CHAPTERS = 8;
-const MAX_CACHE_TASKS = 50;
+// MAX_CACHE_TASKS removed - now unlimited
 
 export const useReaderStore = defineStore('reader', () => {
   // State
@@ -69,6 +90,9 @@ export const useReaderStore = defineStore('reader', () => {
   const tocLoading = ref(false);
   const tocAbort = ref<(() => void) | null>(null);
 
+  // Cached chapters storage (separate from display chapters for memory efficiency)
+  const cachedContents = ref<Map<string, CachedChapter>>(new Map());
+
   // Getters - for compatibility
   const chapter = computed(() => chapters.value[currentChapterIndex.value]?.chapter || null);
   const rule = computed(() => chapters.value[currentChapterIndex.value]?.rule || null);
@@ -86,6 +110,19 @@ export const useReaderStore = defineStore('reader', () => {
   const hasIndex = computed(() => !!chapter.value?.indexUrl);
   const confidence = computed(() => chapter.value?.confidence || 0);
   const method = computed(() => chapter.value?.method || 'detection');
+
+  // TOC with cache status for UI
+  const tocWithStatus = computed<TocEntryWithStatus[]>(() => {
+    const currentUrl = chapter.value?.url;
+    return toc.value.map(entry => ({
+      ...entry,
+      isCached: loadedUrls.value.has(entry.url) || cachedContents.value.has(entry.url),
+      isCurrent: entry.url === currentUrl,
+    }));
+  });
+
+  // Current chapter URL for external reference
+  const currentChapterUrl = computed(() => chapter.value?.url || '');
 
   // Actions
   function activate() {
@@ -121,6 +158,13 @@ export const useReaderStore = defineStore('reader', () => {
     originalContents.value.clear();
     originalContents.value.set(id, newChapter.content);
 
+    // Also store in cachedContents for quick jump
+    cachedContents.value.set(newChapter.url, {
+      chapter: newChapter,
+      rule: newRule,
+      cachedAt: Date.now(),
+    });
+
     // Add to history
     if (newChapter.url && !history.value.includes(newChapter.url)) {
       history.value.push(newChapter.url);
@@ -128,6 +172,73 @@ export const useReaderStore = defineStore('reader', () => {
         history.value = history.value.slice(-100);
       }
     }
+
+    // Restore persisted cache for this book (async, don't block)
+    restoreCache();
+  }
+
+  /** Helper: Append a chapter from cache to chapters list */
+  async function appendCachedChapter(cached: CachedChapter): Promise<boolean> {
+    const id = `chapter-${Date.now()}-cached-${chapters.value.length}`;
+    let content = cached.chapter.content;
+
+    // Apply current conversion mode if active
+    if (currentConversionMode.value !== 'none') {
+      content = await convertHTML(content, currentConversionMode.value);
+    }
+
+    chapters.value.push({
+      chapter: { ...cached.chapter, content },
+      rule: cached.rule,
+      id,
+    });
+
+    // Store original content for text conversion
+    originalContents.value.set(id, cached.chapter.content);
+
+    // Trim cached chapters to limit memory (keep recent ones around current index)
+    if (chapters.value.length > MAX_CACHED_CHAPTERS && currentChapterIndex.value > 2) {
+      const removed = chapters.value.shift();
+      if (removed) {
+        loadedUrls.value.delete(removed.chapter.url);
+        originalContents.value.delete(removed.id);
+        currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
+      }
+    }
+
+    return true;
+  }
+
+  /** Helper: Prepend a chapter from cache to chapters list */
+  async function prependCachedChapter(cached: CachedChapter): Promise<boolean> {
+    const id = `chapter-${Date.now()}-cached-prev-${chapters.value.length}`;
+    let content = cached.chapter.content;
+
+    // Apply current conversion mode if active
+    if (currentConversionMode.value !== 'none') {
+      content = await convertHTML(content, currentConversionMode.value);
+    }
+
+    chapters.value.unshift({
+      chapter: { ...cached.chapter, content },
+      rule: cached.rule,
+      id,
+    });
+    currentChapterIndex.value++;
+
+    // Store original content for text conversion
+    originalContents.value.set(id, cached.chapter.content);
+
+    // Trim cached chapters to limit memory (drop far end when we are near start)
+    if (chapters.value.length > MAX_CACHED_CHAPTERS) {
+      const removed = chapters.value.pop();
+      if (removed) {
+        loadedUrls.value.delete(removed.chapter.url);
+        originalContents.value.delete(removed.id);
+      }
+    }
+
+    return true;
   }
 
   /** Load next chapter and append to list */
@@ -138,7 +249,14 @@ export const useReaderStore = defineStore('reader', () => {
     }
 
     const nextUrl = lastChapter.chapter.nextUrl;
+
+    // Check if already in cachedContents (from startCacheAll or rebuildChaptersAround)
+    // If so, restore from cache instead of fetching again
     if (loadedUrls.value.has(nextUrl)) {
+      const cached = cachedContents.value.get(nextUrl);
+      if (cached) {
+        return appendCachedChapter(cached);
+      }
       return false;
     }
 
@@ -148,6 +266,14 @@ export const useReaderStore = defineStore('reader', () => {
     if (pendingNextAbort.value) {
       pendingNextAbort.value();
       pendingNextAbort.value = null;
+    }
+
+    // Pre-fetch validation: check if URL looks like a valid chapter page
+    if (isInvalidChapterUrl(nextUrl, lastChapter.chapter.url)) {
+      console.log('[MNR] Skipping invalid chapter URL:', nextUrl);
+      loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
+      isLoadingNext.value = false;
+      return false;
     }
 
     // Don't load if nextUrl is the index/TOC page
@@ -197,6 +323,13 @@ export const useReaderStore = defineStore('reader', () => {
 
       // Store original content for text conversion
       originalContents.value.set(id, parsed.content);
+
+      // Also store in cachedContents for quick jump
+      cachedContents.value.set(parsed.url, {
+        chapter: parsed,
+        rule: parsed.rule,
+        cachedAt: Date.now(),
+      });
       // height unknown now; will be measured when rendered
 
       // Apply current conversion mode if active
@@ -251,7 +384,13 @@ export const useReaderStore = defineStore('reader', () => {
       return false;
     }
 
+    // Check if already in cachedContents (from startCacheAll)
+    // If so, restore from cache instead of fetching again
     if (loadedUrls.value.has(prevUrl)) {
+      const cached = cachedContents.value.get(prevUrl);
+      if (cached) {
+        return prependCachedChapter(cached);
+      }
       return false;
     }
 
@@ -261,6 +400,14 @@ export const useReaderStore = defineStore('reader', () => {
     if (pendingPrevAbort.value) {
       pendingPrevAbort.value();
       pendingPrevAbort.value = null;
+    }
+
+    // Pre-fetch validation: check if URL looks like a valid chapter page
+    if (isInvalidChapterUrl(prevUrl, firstChapter.chapter.url)) {
+      console.log('[MNR] Skipping invalid chapter URL:', prevUrl);
+      loadedUrls.value.add(prevUrl); // Mark as loaded to prevent retry
+      isLoadingPrev.value = false;
+      return false;
     }
 
     try {
@@ -314,6 +461,13 @@ export const useReaderStore = defineStore('reader', () => {
 
       // Store original content for text conversion
       originalContents.value.set(id, parsed.content);
+
+      // Also store in cachedContents for quick jump
+      cachedContents.value.set(parsed.url, {
+        chapter: parsed,
+        rule: parsed.rule,
+        cachedAt: Date.now(),
+      });
 
       // Apply current conversion mode if active
       if (currentConversionMode.value !== 'none') {
@@ -429,14 +583,14 @@ export const useReaderStore = defineStore('reader', () => {
 
   /**
    * Batch cache chapters (best-effort, sequential)
-   * 1) 如果提供 urls，按顺序抓取
-   * 2) 否则优先使用当前章节的 indexUrl 目录列表；失败再沿用 nextUrl 链
+   * Caches to cachedContents (not chapters) for memory efficiency
+   * No limit on number of chapters - can cache entire book
    */
   async function startCacheAll(urls?: string[]): Promise<void> {
     if (cacheProgress.value.running) return;
 
-    let taskList = urls ? urls.slice(0, MAX_CACHE_TASKS) : [];
-    cacheQueue.value = taskList;
+    let taskList = urls ? [...urls] : []; // No limit
+    cacheQueue.value = [...taskList];
 
     // 目录列表：current.indexUrl -> 解析出章节列表，再从当前章节之后开始
     if (!taskList.length) {
@@ -448,30 +602,34 @@ export const useReaderStore = defineStore('reader', () => {
         const doc = await promise;
         cacheAbort.value = null;
         if (doc) {
-          const tocLinks = parseTocLinks(doc, indexUrl, MAX_CACHE_TASKS * 2);
+          // Get all chapters from TOC, no limit
+          const tocLinks = parseTocLinks(doc, indexUrl, 10000);
           const currNorm = normalizeUrl(currentUrl || '', indexUrl);
           const startIdx = tocLinks.findIndex(u => u === currNorm);
-          const sliced =
-            startIdx >= 0 ? tocLinks.slice(startIdx + 1, startIdx + 1 + MAX_CACHE_TASKS) : tocLinks;
-          taskList = sliced.filter(u => !loadedUrls.value.has(u)).slice(0, MAX_CACHE_TASKS);
-          cacheQueue.value = taskList;
+          // Get all chapters after current, filter already cached
+          const sliced = startIdx >= 0 ? tocLinks.slice(startIdx + 1) : tocLinks;
+          taskList = sliced.filter(u => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+          cacheQueue.value = [...taskList];
         }
       }
     }
 
-    // 估算总数：已知列表则用列表长度，否则用上限做估计
-    const estimatedTotal = taskList.length > 0 ? taskList.length : MAX_CACHE_TASKS;
+    // Total is actual list length
+    const estimatedTotal = taskList.length;
+    if (estimatedTotal === 0) {
+      cacheProgress.value = { done: 0, total: 0, running: false };
+      return;
+    }
     cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
 
-    let nextUrl: string | undefined | null =
-      taskList.shift() ?? chapters.value[chapters.value.length - 1]?.chapter.nextUrl;
-    let referer = chapters.value[chapters.value.length - 1]?.chapter.url;
+    let nextUrl: string | undefined | null = taskList.shift();
+    let referer = chapters.value[chapters.value.length - 1]?.chapter.url || chapter.value?.url;
 
-    while (cacheProgress.value.running && nextUrl && cacheProgress.value.done < MAX_CACHE_TASKS) {
-      // 去重
-      if (loadedUrls.value.has(nextUrl)) {
+    while (cacheProgress.value.running && nextUrl) {
+      // 去重 - check both loadedUrls and cachedContents
+      if (loadedUrls.value.has(nextUrl) || cachedContents.value.has(nextUrl)) {
         cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
-        nextUrl = taskList.shift();
+        nextUrl = taskList.shift() ?? null;
         continue;
       }
 
@@ -480,35 +638,49 @@ export const useReaderStore = defineStore('reader', () => {
       const doc = await promise;
       cacheAbort.value = null;
       if (!doc) {
-        nextUrl = taskList.shift();
+        nextUrl = taskList.shift() ?? null;
         continue;
       }
 
       const parser = getParser();
       const parsed = await parser.parse(doc, nextUrl);
       if (!parsed) {
-        nextUrl = taskList.shift();
+        nextUrl = taskList.shift() ?? null;
         continue;
       }
 
-      const id = `chapter-${Date.now()}-cache-${chapters.value.length}`;
-      chapters.value.push({ chapter: parsed, rule: parsed.rule, id });
+      // Store in cachedContents (not chapters - for memory efficiency)
+      cachedContents.value.set(parsed.url, {
+        chapter: parsed,
+        rule: parsed.rule,
+        cachedAt: Date.now(),
+      });
+
+      // Mark as loaded for deduplication
       loadedUrls.value.add(parsed.url);
-      originalContents.value.set(id, parsed.content);
 
       cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
 
       // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl
       referer = parsed.url;
-      nextUrl = taskList.shift() ?? parsed.nextUrl;
+      nextUrl = taskList.shift() ?? parsed.nextUrl ?? null;
+
+      // If following nextUrl chain, update total estimate
+      if (!cacheQueue.value.length && nextUrl && !loadedUrls.value.has(nextUrl)) {
+        cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done + 1 };
+      }
     }
 
-    // 若实际抓取数 < 估计，刷新 total 为真实值
-    if (cacheProgress.value.done < cacheProgress.value.total) {
-      cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done };
-    }
-    cacheProgress.value = { ...cacheProgress.value, running: false };
+    // Final total update
+    cacheProgress.value = {
+      ...cacheProgress.value,
+      total: cacheProgress.value.done,
+      running: false,
+    };
     cacheAbort.value = null;
+
+    // Persist cache after completion
+    await persistCache();
   }
 
   function cancelCacheAll(): void {
@@ -933,6 +1105,135 @@ export const useReaderStore = defineStore('reader', () => {
     }
   }
 
+  /**
+   * Rebuild chapters array around a target URL (for jumping to cached chapter)
+   * Clears current chapters and sets the target as the only chapter
+   */
+  async function rebuildChaptersAround(targetUrl: string): Promise<boolean> {
+    // Check cachedContents first
+    const cached = cachedContents.value.get(targetUrl);
+    if (!cached) return false;
+
+    // Clear current chapters
+    chapters.value = [];
+    currentChapterIndex.value = 0;
+    originalContents.value.clear();
+
+    // Add target chapter
+    const id = `chapter-${Date.now()}-jump-0`;
+    chapters.value.push({
+      chapter: cached.chapter,
+      rule: cached.rule,
+      id,
+    });
+
+    // Store original content
+    originalContents.value.set(id, cached.chapter.content);
+
+    // Apply current conversion mode if needed
+    if (currentConversionMode.value !== 'none') {
+      const converted = await convertHTML(cached.chapter.content, currentConversionMode.value);
+      chapters.value[0].chapter = { ...chapters.value[0].chapter, content: converted };
+    }
+
+    return true;
+  }
+
+  /**
+   * Generate a book ID from index URL for cache persistence
+   */
+  function generateBookId(indexUrl: string): string {
+    try {
+      const url = new URL(indexUrl);
+      // Use pathname as book ID (usually contains book identifier)
+      return url.hostname + url.pathname.replace(/\//g, '_');
+    } catch {
+      // Fallback to simple hash
+      return btoa(indexUrl).slice(0, 32);
+    }
+  }
+
+  /**
+   * Persist cache to GM storage
+   */
+  async function persistCache(): Promise<void> {
+    const indexUrl = chapter.value?.indexUrl;
+    if (!indexUrl || cachedContents.value.size === 0) return;
+
+    const bookId = generateBookId(indexUrl);
+
+    // Convert Map to object for JSON serialization
+    const chaptersObj: Record<string, CachedChapter> = {};
+    for (const [url, cached] of cachedContents.value) {
+      chaptersObj[url] = cached;
+    }
+
+    const data: PersistedBookCache = {
+      bookId,
+      indexUrl,
+      chapters: chaptersObj,
+      lastUpdated: Date.now(),
+    };
+
+    try {
+      if (typeof GM_setValue !== 'undefined') {
+        GM_setValue(`mnr_cache_${bookId}`, JSON.stringify(data));
+        console.log(`[MNR] Cache persisted: ${cachedContents.value.size} chapters`);
+      }
+    } catch (e) {
+      console.error('[MNR] Failed to persist cache:', e);
+    }
+  }
+
+  /**
+   * Restore cache from GM storage
+   */
+  async function restoreCache(): Promise<void> {
+    const indexUrl = chapter.value?.indexUrl;
+    if (!indexUrl) return;
+
+    const bookId = generateBookId(indexUrl);
+
+    try {
+      if (typeof GM_getValue !== 'undefined') {
+        const stored = GM_getValue(`mnr_cache_${bookId}`, null);
+        if (stored) {
+          const data: PersistedBookCache = JSON.parse(stored as string);
+
+          // Restore to cachedContents and loadedUrls
+          for (const [url, cached] of Object.entries(data.chapters)) {
+            cachedContents.value.set(url, cached);
+            loadedUrls.value.add(url);
+          }
+
+          console.log(`[MNR] Cache restored: ${cachedContents.value.size} chapters`);
+        }
+      }
+    } catch (e) {
+      console.error('[MNR] Failed to restore cache:', e);
+    }
+  }
+
+  /**
+   * Clear persisted cache for current book
+   */
+  async function clearPersistedCache(): Promise<void> {
+    const indexUrl = chapter.value?.indexUrl;
+    if (!indexUrl) return;
+
+    const bookId = generateBookId(indexUrl);
+
+    try {
+      if (typeof GM_deleteValue !== 'undefined') {
+        GM_deleteValue(`mnr_cache_${bookId}`);
+      }
+      cachedContents.value.clear();
+      console.log('[MNR] Cache cleared');
+    } catch (e) {
+      console.error('[MNR] Failed to clear cache:', e);
+    }
+  }
+
   return {
     // State
     isActive,
@@ -949,6 +1250,7 @@ export const useReaderStore = defineStore('reader', () => {
     cacheProgress,
     toc,
     tocLoading,
+    cachedContents,
 
     // Getters
     title,
@@ -959,6 +1261,8 @@ export const useReaderStore = defineStore('reader', () => {
     hasIndex,
     confidence,
     method,
+    tocWithStatus,
+    currentChapterUrl,
 
     // Actions
     activate,
@@ -976,6 +1280,10 @@ export const useReaderStore = defineStore('reader', () => {
     startCacheAll,
     cancelCacheAll,
     loadToc,
+    rebuildChaptersAround,
+    persistCache,
+    restoreCache,
+    clearPersistedCache,
     $reset,
   };
 });
@@ -1056,6 +1364,66 @@ function fetchAndParseUrl(
   };
 
   return { promise, abort };
+}
+
+/**
+ * Check if URL is invalid for chapter navigation (homepage, login, etc.)
+ * This is a quick pre-fetch check to avoid loading non-chapter pages
+ */
+function isInvalidChapterUrl(url: string, currentChapterUrl?: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname;
+
+    // Homepage/root path
+    if (pathname === '/' || pathname === '') {
+      return true;
+    }
+
+    // Very short paths are likely not chapter pages
+    const pathParts = pathname.split('/').filter(Boolean);
+    if (pathParts.length < 2) {
+      return true;
+    }
+
+    // Common non-chapter URL patterns
+    const invalidPatterns = [
+      /^https?:\/\/[^/]+\/?$/i, // Root domain
+      /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i, // Homepage variants
+      /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
+      /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // Book index without chapter
+      /\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
+      /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+    ];
+
+    for (const pattern of invalidPatterns) {
+      if (pattern.test(url) || pattern.test(pathname)) {
+        return true;
+      }
+    }
+
+    // If current chapter URL is provided, check URL structure similarity
+    if (currentChapterUrl) {
+      const currentParsed = new URL(currentChapterUrl);
+      const currentParts = currentParsed.pathname.split('/').filter(Boolean);
+
+      // If current URL has significantly more path depth, target is likely not a chapter
+      // e.g., current: /chapter/123/456, target: /book/123 -> invalid
+      if (currentParts.length >= 3 && pathParts.length < currentParts.length - 1) {
+        return true;
+      }
+
+      // Different domain/host -> invalid
+      if (parsed.host !== currentParsed.host) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch {
+    // URL parsing failed
+    return false;
+  }
 }
 
 /**

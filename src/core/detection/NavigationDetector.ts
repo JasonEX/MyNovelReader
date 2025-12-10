@@ -20,6 +20,10 @@ const INVALID_URL_PATTERNS = [
   /^javascript:/i,
   /BuyChapterUnLogin/i,
   /\/0\.html$/i,
+  // Homepage/root path patterns
+  /^https?:\/\/[^/]+\/?$/i, // Root domain only (e.g., https://www.qidian.com/)
+  /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i, // /index.html, /home.php
+  /^https?:\/\/[^/]+\/\?/i, // Root with query string (e.g., https://example.com/?ref=xxx)
 ];
 
 /** Section URL patterns - indicates multi-page chapter */
@@ -169,6 +173,29 @@ export class NavigationDetector {
       if (url.pathname === window.location.pathname) {
         return false;
       }
+    }
+
+    // Skip URLs that are clearly not chapter pages
+    try {
+      const url = new URL(href);
+      const pathname = url.pathname;
+
+      // Skip if pathname is too short (likely homepage or section page)
+      // e.g., "/", "/book", "/novel" are not chapter pages
+      if (pathname.length < 3 || pathname.split('/').filter(Boolean).length < 2) {
+        return false;
+      }
+
+      // Skip common non-chapter paths
+      const nonChapterPaths = [
+        /^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i,
+        /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // /book/ or /book/123/ without chapter
+      ];
+      for (const pattern of nonChapterPaths) {
+        if (pattern.test(pathname)) return false;
+      }
+    } catch {
+      // URL parsing failed, continue
     }
 
     return true;

@@ -18,9 +18,9 @@
     <ChapterDrawer
       :is-open="drawerOpen"
       :book-title="bookTitle"
-      :current-url="currentChapterUrl"
-      :chapters="readerStore.toc"
+      :chapters="readerStore.tocWithStatus"
       :loading="readerStore.tocLoading"
+      :cache-progress="cacheProgress"
       @close="drawerOpen = false"
       @select="handleChapterSelect"
     />
@@ -119,7 +119,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { useReaderStore } from '@/ui/stores/reader';
+import { useReaderStore, type TocEntryWithStatus } from '@/ui/stores/reader';
 import { useConfigStore } from '@/ui/stores/config';
 import { useRuleStore } from '@/ui/stores/rule';
 import { useVirtualChapters } from '@/ui/composables/useVirtualChapters';
@@ -243,7 +243,6 @@ const {
 
 const bookTitle = computed(() => readerStore.bookTitle);
 const indexUrl = computed(() => readerStore.chapter?.indexUrl);
-const currentChapterUrl = computed(() => readerStore.chapter?.url || '');
 const isLoading = computed(() => readerStore.isLoading);
 const isLoadingPrev = computed(() => readerStore.isLoadingPrev);
 const isLoadingNext = computed(() => readerStore.isLoadingNext);
@@ -274,9 +273,52 @@ function toggleDrawer() {
   }
 }
 
-function handleChapterSelect(url: string) {
-  // Navigate to the selected chapter URL
-  window.location.href = url;
+function handleChapterSelect(entry: TocEntryWithStatus) {
+  // Check if chapter is cached - smart jump
+  if (entry.isCached) {
+    jumpToCachedChapter(entry.url);
+  } else {
+    // Not cached - navigate to the URL (page reload)
+    window.location.href = entry.url;
+  }
+}
+
+/**
+ * Jump to a cached chapter without page reload
+ */
+async function jumpToCachedChapter(url: string) {
+  // First check if already in the current chapters array
+  const existingIndex = readerStore.chapters.findIndex(entry => entry.chapter.url === url);
+
+  if (existingIndex >= 0) {
+    // Already in display list - just scroll to it
+    readerStore.setCurrentChapter(existingIndex);
+    scrollToChapter(existingIndex);
+    return;
+  }
+
+  // Not in current chapters - rebuild from cache
+  const success = await readerStore.rebuildChaptersAround(url);
+  if (success) {
+    // Update browser URL without reload
+    window.history.replaceState({ mnrChapter: 0 }, '', url);
+
+    // Scroll to top
+    mainRef.value?.scrollTo({ top: 0, behavior: 'auto' });
+  } else {
+    // Fallback to page navigation if cache miss
+    window.location.href = url;
+  }
+}
+
+/**
+ * Scroll to a specific chapter in the view
+ */
+function scrollToChapter(index: number) {
+  const chapterEl = chapterRefs.value.get(index);
+  if (chapterEl) {
+    chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function handleContentClick(e: MouseEvent) {

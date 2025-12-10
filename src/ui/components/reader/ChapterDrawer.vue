@@ -21,20 +21,45 @@
     </div>
 
     <div v-else ref="contentRef" class="mnr-drawer-content">
+      <!-- 缓存进度条 -->
+      <div v-if="cacheProgress.running" class="mnr-cache-progress-bar">
+        <div class="mnr-cache-progress-text">
+          缓存中: {{ cacheProgress.done }}/{{ cacheProgress.total }}
+        </div>
+        <div class="mnr-cache-progress-track">
+          <div
+            class="mnr-cache-progress-fill"
+            :style="{
+              width: `${cacheProgress.total > 0 ? (cacheProgress.done / cacheProgress.total) * 100 : 0}%`,
+            }"
+          ></div>
+        </div>
+      </div>
+
+      <!-- 缓存统计 -->
+      <div v-else-if="cachedCount > 0" class="mnr-cache-stats">
+        <span class="mnr-cached-icon">✓</span>
+        已缓存 {{ cachedCount }} 章
+      </div>
+
       <ul class="mnr-chapter-list">
         <li
           v-for="ch in chapters"
           :key="ch.url"
           :ref="
             el => {
-              if (ch.url === currentUrl) {
-                activeRef.value = el as HTMLElement | null;
+              if (ch.isCurrent) {
+                activeRef = el as HTMLElement | null;
               }
             }
           "
-          :class="{ active: ch.url === currentUrl }"
-          @click="handleSelect(ch.url)"
+          :class="{
+            active: ch.isCurrent,
+            cached: ch.isCached && !ch.isCurrent,
+          }"
+          @click="handleSelect(ch)"
         >
+          <span v-if="ch.isCached" class="mnr-cached-icon" title="已缓存">✓</span>
           {{ ch.title }}
         </li>
       </ul>
@@ -43,28 +68,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue';
-
-export interface TocEntry {
-  title: string;
-  url: string;
-}
+import { ref, watch, nextTick, computed } from 'vue';
+import type { TocEntryWithStatus, CacheProgressState } from '@/ui/stores/reader';
 
 const props = defineProps<{
   isOpen: boolean;
   bookTitle?: string;
-  currentUrl?: string;
-  chapters: TocEntry[];
+  chapters: TocEntryWithStatus[];
   loading: boolean;
+  cacheProgress: CacheProgressState;
 }>();
 
 const emit = defineEmits<{
   close: [];
-  select: [url: string];
+  select: [entry: TocEntryWithStatus];
 }>();
 
 const contentRef = ref<HTMLElement | null>(null);
 const activeRef = ref<HTMLElement | null>(null);
+
+// Count cached chapters
+const cachedCount = computed(() => props.chapters.filter(ch => ch.isCached).length);
 
 const scrollActiveIntoView = async (behavior: 'auto' | 'smooth' = 'auto') => {
   await nextTick();
@@ -98,7 +122,7 @@ watch(
 );
 
 watch(
-  () => [props.currentUrl, props.loading, props.chapters.length],
+  () => [props.loading, props.chapters.length],
   async () => {
     await scrollActiveIntoView();
   },
@@ -113,8 +137,8 @@ watch(
   { flush: 'post' }
 );
 
-function handleSelect(url: string) {
-  emit('select', url);
+function handleSelect(entry: TocEntryWithStatus) {
+  emit('select', entry);
   emit('close');
 }
 </script>
@@ -238,6 +262,44 @@ function handleSelect(url: string) {
   opacity: 0.7;
 }
 
+/* Cache progress bar */
+.mnr-cache-progress-bar {
+  position: sticky;
+  top: 0;
+  background: var(--mnr-bg, #fff);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--mnr-border, #e5e5e5);
+  z-index: 1;
+}
+
+.mnr-cache-progress-text {
+  font-size: 12px;
+  color: var(--mnr-link, #1976d2);
+  margin-bottom: 6px;
+}
+
+.mnr-cache-progress-track {
+  height: 4px;
+  background: var(--mnr-border, #e0e0e0);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mnr-cache-progress-fill {
+  height: 100%;
+  background: var(--mnr-link, #1976d2);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Cache stats */
+.mnr-cache-stats {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #4caf50;
+  border-bottom: 1px solid var(--mnr-border, #e5e5e5);
+}
+
 /* Chapter list */
 .mnr-chapter-list {
   list-style: none;
@@ -253,6 +315,9 @@ function handleSelect(url: string) {
   line-height: 1.4;
   transition: all 0.15s ease;
   scroll-margin-block: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .mnr-chapter-list li:hover {
@@ -264,6 +329,18 @@ function handleSelect(url: string) {
   border-left-color: var(--mnr-link, #1976d2);
   font-weight: 500;
   color: var(--mnr-link, #1976d2);
+}
+
+/* Cached chapter style */
+.mnr-chapter-list li.cached {
+  color: #4caf50;
+}
+
+.mnr-cached-icon {
+  color: #4caf50;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 /* 桌面端宽度调整 */
