@@ -37,7 +37,6 @@ export interface UseVirtualChaptersReturn {
 
   // Methods
   setHeight: (url: string, height: number) => void;
-  removeHeight: (url: string) => void;
   getOffsetBefore: (index: number) => number;
   updateWindow: (currentIndex: number) => void;
   reset: () => void;
@@ -93,10 +92,6 @@ export function useVirtualChapters(
     if (prev !== height) {
       heights.value.set(url, height);
     }
-  }
-
-  function removeHeight(url: string): void {
-    heights.value.delete(url);
   }
 
   function getOffsetBefore(index: number): number {
@@ -180,7 +175,6 @@ export function useVirtualChapters(
 
     // Methods
     setHeight,
-    removeHeight,
     getOffsetBefore,
     updateWindow,
     reset,

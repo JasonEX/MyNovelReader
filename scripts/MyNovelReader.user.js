@@ -18705,9 +18705,6 @@ var MyNovelReader = (function(exports) {
         heights.value.set(url, height);
       }
     }
-    function removeHeight(url) {
-      heights.value.delete(url);
-    }
     function getOffsetBefore(index) {
       if (index <= 0) return 0;
       if (chapters.value.length === 0) return 0;
@@ -18775,7 +18772,6 @@ var MyNovelReader = (function(exports) {
       averageHeight,
       // Methods
       setHeight,
-      removeHeight,
       getOffsetBefore,
       updateWindow,
       reset
