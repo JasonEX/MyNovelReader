@@ -69,8 +69,6 @@ const specialRules: SiteRule[] = [
     title: {
       selector: 'h1.text-1\\.3em',
       pattern: '(.*?)《(.*?)》(.*?)',
-      patternIndex: 1, // Use match[1] for chapter title
-      bookPatternIndex: 2, // Use match[2] for book title
     },
     advanced: {
       useIframe: true,

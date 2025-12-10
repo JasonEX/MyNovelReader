@@ -58,7 +58,7 @@
   try {
     if (typeof document != "undefined") {
       var elementStyle = document.createElement("style");
-      elementStyle.appendChild(document.createTextNode(".mnr-prompt-overlay[data-v-333f72bb]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-333f72bb]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-333f72bb .3s ease-out}@keyframes mnr-slide-up-333f72bb{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-333f72bb]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-333f72bb]{font-size:28px}.mnr-prompt-title[data-v-333f72bb]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-333f72bb]{margin-bottom:16px}.mnr-confidence-bar[data-v-333f72bb]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-333f72bb]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-333f72bb]{background:#4caf50}.mnr-confidence-fill.medium[data-v-333f72bb]{background:#ff9800}.mnr-confidence-fill.low[data-v-333f72bb]{background:#f44336}.mnr-confidence-text[data-v-333f72bb]{font-size:13px;color:#666}.mnr-results[data-v-333f72bb]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-333f72bb]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-333f72bb]{color:#2e7d32}.mnr-result-item.warning[data-v-333f72bb]{color:#ed6c02}.mnr-result-icon[data-v-333f72bb]{font-weight:700}.mnr-checkbox-label[data-v-333f72bb]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-333f72bb]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-333f72bb]{display:flex;gap:12px}.mnr-btn[data-v-333f72bb]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-333f72bb]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-333f72bb]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-333f72bb]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-333f72bb],.mnr-fade-leave-active[data-v-333f72bb]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-333f72bb],.mnr-fade-leave-to[data-v-333f72bb]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-333f72bb]{background:#2a2a2a}.mnr-prompt-title[data-v-333f72bb]{color:#e0e0e0}.mnr-confidence-bar[data-v-333f72bb]{background:#444}.mnr-confidence-text[data-v-333f72bb]{color:#aaa}.mnr-checkbox-label[data-v-333f72bb]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-333f72bb]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-333f72bb]{padding:16px;margin:8px}.mnr-prompt-title[data-v-333f72bb]{font-size:16px}.mnr-btn[data-v-333f72bb]{padding:12px 16px}}.mnr-progress[data-v-bc314d2a]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-bc314d2a]{opacity:0}.mnr-progress-bar[data-v-bc314d2a]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-bc314d2a]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-6493a95a]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-6493a95a]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-6493a95a]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-6493a95a]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-6493a95a]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-6493a95a]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-6493a95a]{font-weight:600}.mnr-picker-hint[data-v-6493a95a]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-6493a95a]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-6493a95a]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-6493a95a]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-2f6fea54]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-2f6fea54]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-2f6fea54]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-2f6fea54]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-2f6fea54]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-2f6fea54]{display:flex;gap:4px}.mnr-tab-btn[data-v-2f6fea54]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-2f6fea54]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-2f6fea54]{margin-bottom:24px}.mnr-section-title[data-v-2f6fea54]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-2f6fea54]{margin-bottom:16px}.mnr-form-group label[data-v-2f6fea54]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-2f6fea54],.mnr-form-group textarea[data-v-2f6fea54]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-2f6fea54]:focus,.mnr-form-group textarea[data-v-2f6fea54]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-2f6fea54]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-2f6fea54]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-2f6fea54]{width:18px;height:18px}.mnr-code-toolbar[data-v-2f6fea54]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-2f6fea54]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]:hover{opacity:.8}.mnr-code-editor[data-v-2f6fea54]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-2f6fea54]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-2f6fea54],.mnr-css-editor[data-v-2f6fea54]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-2f6fea54]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-2f6fea54]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-2f6fea54]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-2f6fea54]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-1250ee2f]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-header[data-v-1250ee2f]{position:relative;z-index:10;display:flex;align-items:center;padding:12px 16px;background:inherit;border-bottom:1px solid var(--mnr-border, #e5e5e5);transition:transform .3s ease,opacity .3s ease}.mnr-reader-header.hidden[data-v-1250ee2f]{transform:translateY(-100%);opacity:0;position:absolute;width:100%}.mnr-header-left[data-v-1250ee2f],.mnr-header-right[data-v-1250ee2f]{width:48px}.mnr-header-center[data-v-1250ee2f]{flex:1;text-align:center;overflow:hidden}.mnr-header-btn[data-v-1250ee2f]{width:40px;height:40px;border:none;background:transparent;font-size:20px;cursor:pointer;color:var(--mnr-text, #333);border-radius:8px}.mnr-header-btn[data-v-1250ee2f]:hover{background:var(--mnr-border, #e0e0e0)}.mnr-chapter-title[data-v-1250ee2f]{margin:0;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mnr-text, #333)}.mnr-book-title[data-v-1250ee2f]{font-size:12px;color:var(--mnr-text, #666);opacity:.7}.mnr-reader-main[data-v-1250ee2f]{flex:1;overflow:auto;padding-bottom:40px}.mnr-reader-content[data-v-1250ee2f]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-1250ee2f] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-1250ee2f] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-1250ee2f] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-separator[data-v-1250ee2f]{display:flex;align-items:center;justify-content:center;gap:16px;max-width:var(--mnr-max-width, 800px);margin:40px auto;padding:0 20px}.mnr-separator-line[data-v-1250ee2f]{flex:1;height:1px;background:var(--mnr-border, #e0e0e0)}.mnr-separator-title[data-v-1250ee2f]{font-size:16px;font-weight:600;color:var(--mnr-text, #333);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}.mnr-chapter-end[data-v-1250ee2f]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-1250ee2f]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-1250ee2f]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-1250ee2f]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-1250ee2f]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-loading-prev[data-v-1250ee2f],.mnr-loading-next[data-v-1250ee2f]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-1250ee2f]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-1250ee2f 1s linear infinite}.mnr-loading-overlay[data-v-1250ee2f]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;z-index:1000}.mnr-loading-spinner[data-v-1250ee2f]{width:40px;height:40px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:mnr-spin-1250ee2f 1s linear infinite}@keyframes mnr-spin-1250ee2f{to{transform:rotate(360deg)}}.mnr-error-toast[data-v-1250ee2f]{position:fixed;bottom:24px;left:50%;transform:translate(-50%);background:#d32f2f;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;cursor:pointer;z-index:1001;animation:mnr-fade-in-1250ee2f .3s ease}@keyframes mnr-fade-in-1250ee2f{0%{opacity:0;transform:translate(-50%) translateY(20px)}to{opacity:1;transform:translate(-50%) translateY(0)}}@media(min-width:768px){.mnr-reader-header[data-v-1250ee2f]{padding:16px 24px}.mnr-chapter-title[data-v-1250ee2f]{font-size:18px}.mnr-reader-content[data-v-1250ee2f]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-1250ee2f]{padding:40px}}.mnr-rule-editor-overlay[data-v-1250ee2f]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-1250ee2f]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-1250ee2f]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}"));
+      elementStyle.appendChild(document.createTextNode(".mnr-prompt-overlay[data-v-333f72bb]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-333f72bb]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-333f72bb .3s ease-out}@keyframes mnr-slide-up-333f72bb{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-333f72bb]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-333f72bb]{font-size:28px}.mnr-prompt-title[data-v-333f72bb]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-333f72bb]{margin-bottom:16px}.mnr-confidence-bar[data-v-333f72bb]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-333f72bb]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-333f72bb]{background:#4caf50}.mnr-confidence-fill.medium[data-v-333f72bb]{background:#ff9800}.mnr-confidence-fill.low[data-v-333f72bb]{background:#f44336}.mnr-confidence-text[data-v-333f72bb]{font-size:13px;color:#666}.mnr-results[data-v-333f72bb]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-333f72bb]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-333f72bb]{color:#2e7d32}.mnr-result-item.warning[data-v-333f72bb]{color:#ed6c02}.mnr-result-icon[data-v-333f72bb]{font-weight:700}.mnr-checkbox-label[data-v-333f72bb]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-333f72bb]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-333f72bb]{display:flex;gap:12px}.mnr-btn[data-v-333f72bb]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-333f72bb]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-333f72bb]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-333f72bb]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-333f72bb],.mnr-fade-leave-active[data-v-333f72bb]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-333f72bb],.mnr-fade-leave-to[data-v-333f72bb]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-333f72bb]{background:#2a2a2a}.mnr-prompt-title[data-v-333f72bb]{color:#e0e0e0}.mnr-confidence-bar[data-v-333f72bb]{background:#444}.mnr-confidence-text[data-v-333f72bb]{color:#aaa}.mnr-checkbox-label[data-v-333f72bb]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-333f72bb]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-333f72bb]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-333f72bb]{padding:16px;margin:8px}.mnr-prompt-title[data-v-333f72bb]{font-size:16px}.mnr-btn[data-v-333f72bb]{padding:12px 16px}}.mnr-progress[data-v-bc314d2a]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-bc314d2a]{opacity:0}.mnr-progress-bar[data-v-bc314d2a]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-bc314d2a]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-5d0b2cb8]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-5d0b2cb8]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 2px 8px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s ease}.mnr-fab[data-v-5d0b2cb8]:hover{background:var(--mnr-border, #f0f0f0);transform:scale(1.05)}.mnr-fab[data-v-5d0b2cb8]:disabled{opacity:.5;cursor:not-allowed;transform:none}.mnr-fab-group[data-v-5d0b2cb8]{display:flex;gap:8px}.mnr-fab-badge[data-v-5d0b2cb8]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;padding:2px 4px;border-radius:8px;line-height:1}.mnr-drawer[data-v-8306dc5c]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-8306dc5c]{transform:translate(0)}.mnr-drawer-overlay[data-v-8306dc5c]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-8306dc5c],.mnr-fade-leave-active[data-v-8306dc5c]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-8306dc5c],.mnr-fade-leave-to[data-v-8306dc5c]{opacity:0}.mnr-drawer-header[data-v-8306dc5c]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-8306dc5c]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-8306dc5c]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-8306dc5c]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-8306dc5c]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-8306dc5c]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-8306dc5c]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-8306dc5c 1s linear infinite}@keyframes mnr-spin-8306dc5c{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-8306dc5c]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-chapter-list[data-v-8306dc5c]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-8306dc5c]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease}.mnr-chapter-list li[data-v-8306dc5c]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-8306dc5c]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}@media(min-width:1024px){.mnr-drawer[data-v-8306dc5c]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-6493a95a]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-6493a95a]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-6493a95a]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-6493a95a]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-6493a95a]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-6493a95a]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-6493a95a]{font-weight:600}.mnr-picker-hint[data-v-6493a95a]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-6493a95a]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-6493a95a]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-6493a95a]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-2f6fea54]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-2f6fea54]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-2f6fea54]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-2f6fea54]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-2f6fea54]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-2f6fea54]{display:flex;gap:4px}.mnr-tab-btn[data-v-2f6fea54]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-2f6fea54]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-2f6fea54]{margin-bottom:24px}.mnr-section-title[data-v-2f6fea54]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-2f6fea54]{margin-bottom:16px}.mnr-form-group label[data-v-2f6fea54]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-2f6fea54],.mnr-form-group textarea[data-v-2f6fea54]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-2f6fea54]:focus,.mnr-form-group textarea[data-v-2f6fea54]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-2f6fea54]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-2f6fea54]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-2f6fea54]{width:18px;height:18px}.mnr-code-toolbar[data-v-2f6fea54]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-2f6fea54]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-2f6fea54]:hover{opacity:.8}.mnr-code-editor[data-v-2f6fea54]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-2f6fea54]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-2f6fea54],.mnr-css-editor[data-v-2f6fea54]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-2f6fea54]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-2f6fea54]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-2f6fea54]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-2f6fea54]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-2f6fea54]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-2b4b4e60]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-2b4b4e60]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px}.mnr-reader-content[data-v-2b4b4e60]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-2b4b4e60] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-2b4b4e60] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-2b4b4e60] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-2b4b4e60]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-2b4b4e60]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-2b4b4e60]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-2b4b4e60]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-2b4b4e60]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-2b4b4e60]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-2b4b4e60]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-2b4b4e60],.mnr-loading-next[data-v-2b4b4e60]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-2b4b4e60]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-2b4b4e60 1s linear infinite}.mnr-loading-overlay[data-v-2b4b4e60]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;z-index:1000}.mnr-loading-spinner[data-v-2b4b4e60]{width:40px;height:40px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:mnr-spin-2b4b4e60 1s linear infinite}@keyframes mnr-spin-2b4b4e60{to{transform:rotate(360deg)}}.mnr-error-toast[data-v-2b4b4e60]{position:fixed;bottom:24px;left:50%;transform:translate(-50%);background:#d32f2f;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;cursor:pointer;z-index:1001;animation:mnr-fade-in-2b4b4e60 .3s ease}@keyframes mnr-fade-in-2b4b4e60{0%{opacity:0;transform:translate(-50%) translateY(20px)}to{opacity:1;transform:translate(-50%) translateY(0)}}@media(min-width:768px){.mnr-reader-content[data-v-2b4b4e60]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-2b4b4e60]{padding:40px}}.mnr-rule-editor-overlay[data-v-2b4b4e60]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-2b4b4e60]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-2b4b4e60]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}"));
       document.head.appendChild(elementStyle);
     }
   } catch (e) {
@@ -1669,11 +1669,7 @@ var MyNovelReader = (function(exports) {
       },
       title: {
         selector: "h1.text-1\\.3em",
-        pattern: "(.*?)《(.*?)》(.*?)",
-        patternIndex: 1,
-        // Use match[1] for chapter title
-        bookPatternIndex: 2
-        // Use match[2] for book title
+        pattern: "(.*?)《(.*?)》(.*?)"
       },
       advanced: {
         useIframe: true,
@@ -17306,6 +17302,8 @@ var MyNovelReader = (function(exports) {
     useStore.$id = id;
     return useStore;
   }
+  const MAX_CACHED_CHAPTERS = 8;
+  const MAX_CACHE_TASKS = 50;
   const useReaderStore = /* @__PURE__ */ defineStore("reader", () => {
     const isActive2 = ref(false);
     const isLoading = ref(false);
@@ -17319,6 +17317,14 @@ var MyNovelReader = (function(exports) {
     const loadedUrls = ref(/* @__PURE__ */ new Set());
     const originalContents = ref(/* @__PURE__ */ new Map());
     const currentConversionMode = ref("none");
+    const pendingNextAbort = ref(null);
+    const pendingPrevAbort = ref(null);
+    const cacheProgress = ref({ done: 0, total: 0, running: false });
+    const cacheQueue = ref([]);
+    const cacheAbort = ref(null);
+    const toc = ref([]);
+    const tocLoading = ref(false);
+    const tocAbort = ref(null);
     const chapter = computed(() => {
       var _a;
       return ((_a = chapters.value[currentChapterIndex.value]) == null ? void 0 : _a.chapter) || null;
@@ -17403,9 +17409,20 @@ var MyNovelReader = (function(exports) {
         return false;
       }
       isLoadingNext.value = true;
+      if (pendingNextAbort.value) {
+        pendingNextAbort.value();
+        pendingNextAbort.value = null;
+      }
+      const normalizeUrl2 = (url) => url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
+      if (lastChapter.chapter.indexUrl && normalizeUrl2(nextUrl) === normalizeUrl2(lastChapter.chapter.indexUrl)) {
+        return false;
+      }
       try {
         const referer = lastChapter.chapter.url;
-        const doc2 = await fetchAndParseUrl(nextUrl, referer);
+        const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
+        pendingNextAbort.value = abort;
+        const doc2 = await promise;
+        pendingNextAbort.value = null;
         if (!doc2) {
           throw new Error("Failed to fetch page");
         }
@@ -17413,6 +17430,11 @@ var MyNovelReader = (function(exports) {
         const parsed = await parser.parse(doc2, nextUrl);
         if (!parsed) {
           throw new Error("Failed to parse chapter");
+        }
+        const isTocPage = detectTocPage(parsed.content, nextUrl, lastChapter.chapter.url);
+        if (isTocPage) {
+          loadedUrls.value.add(nextUrl);
+          return false;
         }
         const id = `chapter-${Date.now()}-${chapters.value.length}`;
         chapters.value.push({
@@ -17432,6 +17454,14 @@ var MyNovelReader = (function(exports) {
         if (!history.value.includes(nextUrl)) {
           history.value.push(nextUrl);
         }
+        if (chapters.value.length > MAX_CACHED_CHAPTERS && currentChapterIndex.value > 2) {
+          const removed = chapters.value.shift();
+          if (removed) {
+            loadedUrls.value.delete(removed.chapter.url);
+            originalContents.value.delete(removed.id);
+            currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
+          }
+        }
         return true;
       } catch (e) {
         console.error("[MNR] Failed to load next chapter:", e);
@@ -17447,17 +17477,24 @@ var MyNovelReader = (function(exports) {
         return false;
       }
       const prevUrl = firstChapter.chapter.prevUrl;
-      const normalizeUrl = (url) => url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
-      if (firstChapter.chapter.indexUrl && normalizeUrl(prevUrl) === normalizeUrl(firstChapter.chapter.indexUrl)) {
+      const normalizeUrl2 = (url) => url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
+      if (firstChapter.chapter.indexUrl && normalizeUrl2(prevUrl) === normalizeUrl2(firstChapter.chapter.indexUrl)) {
         return false;
       }
       if (loadedUrls.value.has(prevUrl)) {
         return false;
       }
       isLoadingPrev.value = true;
+      if (pendingPrevAbort.value) {
+        pendingPrevAbort.value();
+        pendingPrevAbort.value = null;
+      }
       try {
         const referer = firstChapter.chapter.url;
-        const doc2 = await fetchAndParseUrl(prevUrl, referer);
+        const { promise, abort } = fetchAndParseUrl(prevUrl, referer);
+        pendingPrevAbort.value = abort;
+        const doc2 = await promise;
+        pendingPrevAbort.value = null;
         if (!doc2) {
           throw new Error("Failed to fetch page");
         }
@@ -17471,7 +17508,7 @@ var MyNovelReader = (function(exports) {
           loadedUrls.value.add(prevUrl);
           return false;
         }
-        if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(firstChapter.chapter.url)) {
+        if (parsed.nextUrl && normalizeUrl2(parsed.nextUrl) === normalizeUrl2(firstChapter.chapter.url)) {
         } else if (parsed.prevUrl && !parsed.nextUrl) {
           loadedUrls.value.add(prevUrl);
           return false;
@@ -17494,6 +17531,13 @@ var MyNovelReader = (function(exports) {
         }
         if (!history.value.includes(prevUrl)) {
           history.value.unshift(prevUrl);
+        }
+        if (chapters.value.length > MAX_CACHED_CHAPTERS) {
+          const removed = chapters.value.pop();
+          if (removed) {
+            loadedUrls.value.delete(removed.chapter.url);
+            originalContents.value.delete(removed.id);
+          }
         }
         return true;
       } catch (e) {
@@ -17533,10 +17577,19 @@ var MyNovelReader = (function(exports) {
       var _a;
       if (!((_a = chapter.value) == null ? void 0 : _a.url)) return null;
       return {
-        url: chapter.value.url,
+        url: readerStoreHistoryFallback(),
+        chapterUrl: chapter.value.url,
+        chapterPercent: calculateCurrentChapterPercent(),
         scrollPercent: scrollPercent.value,
         lastRead: Date.now()
       };
+    }
+    function readerStoreHistoryFallback() {
+      var _a;
+      return ((_a = chapter.value) == null ? void 0 : _a.url) || window.location.href;
+    }
+    function calculateCurrentChapterPercent() {
+      return scrollPercent.value;
     }
     async function applyTextConversion(mode) {
       currentConversionMode.value = mode;
@@ -17557,6 +17610,298 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
+    async function startCacheAll(urls) {
+      var _a, _b, _c, _d;
+      if (cacheProgress.value.running) return;
+      let taskList = urls ? urls.slice(0, MAX_CACHE_TASKS) : [];
+      cacheQueue.value = taskList;
+      if (!taskList.length) {
+        const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
+        const currentUrl = (_b = chapter.value) == null ? void 0 : _b.url;
+        if (indexUrl) {
+          const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
+          cacheAbort.value = abort;
+          const doc2 = await promise;
+          cacheAbort.value = null;
+          if (doc2) {
+            const tocLinks = parseTocLinks(doc2, indexUrl, MAX_CACHE_TASKS * 2);
+            const currNorm = normalizeUrl(currentUrl || "", indexUrl);
+            const startIdx = tocLinks.findIndex((u) => u === currNorm);
+            const sliced = startIdx >= 0 ? tocLinks.slice(startIdx + 1, startIdx + 1 + MAX_CACHE_TASKS) : tocLinks;
+            taskList = sliced.filter((u) => !loadedUrls.value.has(u)).slice(0, MAX_CACHE_TASKS);
+            cacheQueue.value = taskList;
+          }
+        }
+      }
+      const estimatedTotal = taskList.length > 0 ? taskList.length : MAX_CACHE_TASKS;
+      cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
+      let nextUrl = taskList.shift() ?? ((_c = chapters.value[chapters.value.length - 1]) == null ? void 0 : _c.chapter.nextUrl);
+      let referer = (_d = chapters.value[chapters.value.length - 1]) == null ? void 0 : _d.chapter.url;
+      while (cacheProgress.value.running && nextUrl && cacheProgress.value.done < MAX_CACHE_TASKS) {
+        if (loadedUrls.value.has(nextUrl)) {
+          cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
+          nextUrl = taskList.shift();
+          continue;
+        }
+        const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
+        cacheAbort.value = abort;
+        const doc2 = await promise;
+        cacheAbort.value = null;
+        if (!doc2) {
+          nextUrl = taskList.shift();
+          continue;
+        }
+        const parser = getParser();
+        const parsed = await parser.parse(doc2, nextUrl);
+        if (!parsed) {
+          nextUrl = taskList.shift();
+          continue;
+        }
+        const id = `chapter-${Date.now()}-cache-${chapters.value.length}`;
+        chapters.value.push({ chapter: parsed, rule: parsed.rule, id });
+        loadedUrls.value.add(parsed.url);
+        originalContents.value.set(id, parsed.content);
+        cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
+        referer = parsed.url;
+        nextUrl = taskList.shift() ?? parsed.nextUrl;
+      }
+      if (cacheProgress.value.done < cacheProgress.value.total) {
+        cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done };
+      }
+      cacheProgress.value = { ...cacheProgress.value, running: false };
+      cacheAbort.value = null;
+    }
+    function cancelCacheAll() {
+      var _a;
+      cacheProgress.value = { done: 0, total: 0, running: false };
+      cacheQueue.value = [];
+      (_a = cacheAbort.value) == null ? void 0 : _a.call(cacheAbort);
+      cacheAbort.value = null;
+    }
+    function parseTocLinks(doc2, base, limit) {
+      const entries = parseTocWithTitles(doc2, base);
+      return entries.slice(0, limit).map((entry) => entry.url);
+    }
+    function normalizeUrl(href, base) {
+      try {
+        return new URL(href, base).toString();
+      } catch {
+        return null;
+      }
+    }
+    function extractUrlPattern(url) {
+      try {
+        const u = new URL(url);
+        return u.pathname.replace(/\d+/g, "{N}");
+      } catch {
+        return url.replace(/\d+/g, "{N}");
+      }
+    }
+    const CHAPTER_TITLE_PATTERNS = [
+      // Chinese chapter formats: 第X章/节/回/话/篇/集/卷
+      /^.{0,10}第.{1,10}[章节回话篇集卷]/,
+      // Numbered chapters: 1. xxx, 001 xxx, etc.
+      /^\d{1,4}[.、\s]/,
+      // Chapter keyword at start
+      /^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
+      // English format
+      /^chapter\s*\d+/i,
+      /^(prologue|epilogue|preface)/i
+    ];
+    const NON_CHAPTER_TITLE_PATTERNS = [
+      // Announcements and notices
+      /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
+      /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更/,
+      // Author-related
+      /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
+      // Promotional content
+      /求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
+      /新书|推荐|安利|宣传|书单|书评/,
+      // Metadata pages
+      /^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
+      // Locked/VIP markers that are standalone entries (not part of chapter title)
+      /^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
+      // External links and community
+      /官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
+      // Common non-content links
+      /登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
+      /首页|返回|上一页|下一页|翻页/,
+      // Volume/section labels only (e.g., "章节2", "卷一", not real chapter titles)
+      /^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
+      /^(正文|番外|VIP卷?|免费章节?)\s*$/
+    ];
+    function extractBookId(url) {
+      try {
+        const u = new URL(url);
+        const patterns = [
+          /\/book\/(\d+)/,
+          /\/chapter\/(\d+)\//,
+          /\/(\d+)\/\d+(?:\.html?)?$/,
+          /[?&](?:book_?id|bid|id)=(\d+)/i
+        ];
+        for (const p2 of patterns) {
+          const m = u.pathname.match(p2) || u.search.match(p2);
+          if (m) return m[1];
+        }
+      } catch {
+      }
+      return null;
+    }
+    function isLikelyChapterTitle(title2) {
+      const t = title2.trim();
+      return CHAPTER_TITLE_PATTERNS.some((p2) => p2.test(t));
+    }
+    function isNonChapterTitle(title2) {
+      const t = title2.trim();
+      if (t.length < 2) return true;
+      return NON_CHAPTER_TITLE_PATTERNS.some((p2) => p2.test(t));
+    }
+    function filterTocEntries(entries) {
+      if (entries.length < 5) return entries;
+      const bookIdCounts = /* @__PURE__ */ new Map();
+      for (const entry of entries) {
+        const bookId = extractBookId(entry.url);
+        if (bookId) {
+          bookIdCounts.set(bookId, (bookIdCounts.get(bookId) || 0) + 1);
+        }
+      }
+      let dominantBookId = null;
+      let maxCount = 0;
+      for (const [bookId, count] of bookIdCounts) {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantBookId = bookId;
+        }
+      }
+      const sameBookEntries = dominantBookId && maxCount >= 5 ? entries.filter((entry) => {
+        const bookId = extractBookId(entry.url);
+        return !bookId || bookId === dominantBookId;
+      }) : entries;
+      const patternCounts = /* @__PURE__ */ new Map();
+      const patternEntries = /* @__PURE__ */ new Map();
+      for (const entry of sameBookEntries) {
+        const pattern = extractUrlPattern(entry.url);
+        patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
+        if (!patternEntries.has(pattern)) {
+          patternEntries.set(pattern, []);
+        }
+        patternEntries.get(pattern).push(entry);
+      }
+      const sortedPatterns = Array.from(patternCounts.entries()).sort((a, b) => b[1] - a[1]);
+      const dominantPatterns = /* @__PURE__ */ new Set();
+      const totalEntries = sameBookEntries.length;
+      for (const [pattern, count] of sortedPatterns) {
+        const ratio = count / totalEntries;
+        if (count >= 5 || ratio > 0.3) {
+          dominantPatterns.add(pattern);
+          const coveredCount = Array.from(dominantPatterns).reduce(
+            (sum, p2) => sum + (patternCounts.get(p2) || 0),
+            0
+          );
+          if (coveredCount / totalEntries > 0.9) break;
+        }
+      }
+      if (dominantPatterns.size === 0 && sortedPatterns.length > 0) {
+        dominantPatterns.add(sortedPatterns[0][0]);
+      }
+      const scoredEntries = sameBookEntries.map((entry) => {
+        let score = 0;
+        const pattern = extractUrlPattern(entry.url);
+        if (dominantPatterns.has(pattern)) {
+          score += 2;
+        }
+        const matchesWhitelist = isLikelyChapterTitle(entry.title);
+        if (matchesWhitelist) {
+          score += 1;
+        }
+        if (!matchesWhitelist && isNonChapterTitle(entry.title)) {
+          score -= 2;
+        }
+        return { entry, score };
+      });
+      const filtered = scoredEntries.filter(({ score }) => score >= 1).map(({ entry }) => entry);
+      if (filtered.length < sameBookEntries.length * 0.3 || filtered.length < 10) {
+        const lenientFiltered = sameBookEntries.filter((entry) => !isNonChapterTitle(entry.title));
+        if (lenientFiltered.length >= filtered.length) {
+          return sortTocEntries(lenientFiltered);
+        }
+      }
+      return sortTocEntries(filtered);
+    }
+    function sortTocEntries(entries) {
+      if (entries.length < 5) return entries;
+      const entriesWithNum = entries.map((entry, index) => ({
+        index,
+        // Keep original index
+        entry,
+        num: extractChapterNumber(entry.title)
+      })).filter((item) => item.num !== null);
+      if (entriesWithNum.length < entries.length * 0.3 || entriesWithNum.length < 3) {
+        return entries;
+      }
+      let descendingPairs = 0;
+      let ascendingPairs = 0;
+      for (let i = 0; i < entriesWithNum.length - 1; i++) {
+        const diff = entriesWithNum[i + 1].num - entriesWithNum[i].num;
+        if (diff < 0) descendingPairs++;
+        else if (diff > 0) ascendingPairs++;
+      }
+      const totalPairs = descendingPairs + ascendingPairs;
+      if (totalPairs > 0 && descendingPairs / totalPairs > 0.6) {
+        return [...entries].reverse();
+      }
+      return entries;
+    }
+    function extractChapterNumber(title2) {
+      const match1 = title2.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
+      if (match1) return parseInt(match1[1], 10);
+      const match2 = title2.match(/^(\d+)[.、\s]/);
+      if (match2) return parseInt(match2[1], 10);
+      const match3 = title2.match(/Chapter\s*(\d+)/i);
+      if (match3) return parseInt(match3[1], 10);
+      return null;
+    }
+    function parseTocWithTitles(doc2, base) {
+      const links = Array.from(doc2.querySelectorAll("a[href]"));
+      const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
+      const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
+      const results = [];
+      const seenUrls = /* @__PURE__ */ new Set();
+      for (const a of links) {
+        const text = (a.textContent || "").trim();
+        const href = a.getAttribute("href") || "";
+        const abs = normalizeUrl(href, base);
+        if (!abs || seenUrls.has(abs)) continue;
+        if (textPattern.test(text) || urlPattern.test(href)) {
+          seenUrls.add(abs);
+          results.push({
+            title: text || `章节 ${results.length + 1}`,
+            url: abs
+          });
+        }
+      }
+      return filterTocEntries(results);
+    }
+    async function loadToc() {
+      var _a, _b;
+      const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
+      if (!indexUrl || toc.value.length > 0 || tocLoading.value) return;
+      tocLoading.value = true;
+      const currentUrl = ((_b = chapter.value) == null ? void 0 : _b.url) || "";
+      try {
+        const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
+        tocAbort.value = abort;
+        const doc2 = await promise;
+        if (doc2) {
+          toc.value = parseTocWithTitles(doc2, indexUrl);
+        }
+      } catch (e) {
+        console.error("[MNR] Failed to load TOC:", e);
+      } finally {
+        tocLoading.value = false;
+        tocAbort.value = null;
+      }
+    }
     function $reset() {
       isActive2.value = false;
       isLoading.value = false;
@@ -17569,6 +17914,15 @@ var MyNovelReader = (function(exports) {
       loadedUrls.value.clear();
       originalContents.value.clear();
       currentConversionMode.value = "none";
+      cacheProgress.value = { done: 0, total: 0, running: false };
+      cacheQueue.value = [];
+      cacheAbort.value = null;
+      toc.value = [];
+      tocLoading.value = false;
+      if (tocAbort.value) {
+        tocAbort.value();
+        tocAbort.value = null;
+      }
     }
     return {
       // State
@@ -17583,6 +17937,9 @@ var MyNovelReader = (function(exports) {
       error,
       scrollPercent,
       history,
+      cacheProgress,
+      toc,
+      tocLoading,
       // Getters
       title,
       bookTitle,
@@ -17605,6 +17962,9 @@ var MyNovelReader = (function(exports) {
       updateScroll,
       getProgress,
       applyTextConversion,
+      startCacheAll,
+      cancelCacheAll,
+      loadToc,
       $reset
     };
   });
@@ -17614,13 +17974,15 @@ var MyNovelReader = (function(exports) {
     }
     return null;
   }
-  async function fetchAndParseUrl(url, referer) {
+  function fetchAndParseUrl(url, referer) {
     const gmXhr = getGmXhr();
     if (!gmXhr) {
       console.error("[MNR] GM_xmlhttpRequest not available");
-      return null;
+      return { promise: Promise.resolve(null), abort: () => {
+      } };
     }
-    return new Promise((resolve) => {
+    let request = null;
+    const promise = new Promise((resolve) => {
       const headers = {
         Accept: "text/html,application/xhtml+xml,application/xml",
         "Accept-Language": "zh-CN,zh;q=0.9"
@@ -17628,7 +17990,7 @@ var MyNovelReader = (function(exports) {
       if (referer) {
         headers["Referer"] = referer;
       }
-      gmXhr({
+      request = gmXhr({
         method: "GET",
         url,
         headers,
@@ -17662,6 +18024,13 @@ var MyNovelReader = (function(exports) {
         }
       });
     });
+    const abort = () => {
+      try {
+        request == null ? void 0 : request.abort();
+      } catch {
+      }
+    };
+    return { promise, abort };
   }
   function detectTocPage(content, pageUrl, currentChapterUrl) {
     const tocUrlPatterns = [
@@ -18150,17 +18519,17 @@ var MyNovelReader = (function(exports) {
       $reset
     };
   });
-  const _hoisted_1$6 = {
+  const _hoisted_1$8 = {
     class: "mnr-prompt-card",
     role: "dialog",
     "aria-modal": "true"
   };
-  const _hoisted_2$5 = { class: "mnr-confidence" };
-  const _hoisted_3$5 = { class: "mnr-confidence-bar" };
-  const _hoisted_4$5 = { class: "mnr-confidence-text" };
-  const _hoisted_5$4 = { class: "mnr-results" };
-  const _hoisted_6$4 = { class: "mnr-checkbox-label" };
-  const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+  const _hoisted_2$7 = { class: "mnr-confidence" };
+  const _hoisted_3$7 = { class: "mnr-confidence-bar" };
+  const _hoisted_4$7 = { class: "mnr-confidence-text" };
+  const _hoisted_5$5 = { class: "mnr-results" };
+  const _hoisted_6$5 = { class: "mnr-checkbox-label" };
+  const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     __name: "DetectionPrompt",
     props: {
       decision: {},
@@ -18209,21 +18578,21 @@ var MyNovelReader = (function(exports) {
                 class: "mnr-prompt-overlay",
                 onClick: withModifiers(handleDismiss, ["self"])
               }, [
-                createBaseVNode("div", _hoisted_1$6, [
+                createBaseVNode("div", _hoisted_1$8, [
                   _cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [
                     createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"),
                     createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")
                   ], -1)),
-                  createBaseVNode("div", _hoisted_2$5, [
-                    createBaseVNode("div", _hoisted_3$5, [
+                  createBaseVNode("div", _hoisted_2$7, [
+                    createBaseVNode("div", _hoisted_3$7, [
                       createBaseVNode("div", {
                         class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
                         style: normalizeStyle({ width: `${confidence.value * 100}%` })
                       }, null, 6)
                     ]),
-                    createBaseVNode("span", _hoisted_4$5, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)
+                    createBaseVNode("span", _hoisted_4$7, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)
                   ]),
-                  createBaseVNode("ul", _hoisted_5$4, [
+                  createBaseVNode("ul", _hoisted_5$5, [
                     (openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
                       return openBlock(), createElementBlock("li", {
                         key: reason,
@@ -18243,7 +18612,7 @@ var MyNovelReader = (function(exports) {
                       ]);
                     }), 128))
                   ]),
-                  createBaseVNode("label", _hoisted_6$4, [
+                  createBaseVNode("label", _hoisted_6$5, [
                     withDirectives(createBaseVNode("input", {
                       "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => saveForDomain.value = $event),
                       type: "checkbox",
@@ -18279,12 +18648,159 @@ var MyNovelReader = (function(exports) {
     }
     return target;
   };
-  const DetectionPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__scopeId", "data-v-333f72bb"]]);
-  const _hoisted_1$5 = {
+  const DetectionPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-333f72bb"]]);
+  function useVirtualChapters(chapters, options = {}) {
+    const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
+    const heights = ref(/* @__PURE__ */ new Map());
+    const virtualWindow = ref({ start: 0, end: windowSize });
+    const totalHeight = computed(
+      () => Array.from(heights.value.values()).reduce((sum, h2) => sum + h2, 0)
+    );
+    const averageHeight = computed(
+      () => heights.value.size > 0 ? totalHeight.value / heights.value.size : defaultHeight
+    );
+    const visibleRange = computed(() => {
+      const start = Math.max(0, virtualWindow.value.start - overscan);
+      const end = Math.min(chapters.value.length, virtualWindow.value.end + overscan);
+      return { start, end };
+    });
+    const visibleChapters = computed(() => {
+      const { start, end } = visibleRange.value;
+      return chapters.value.slice(start, end).map((entry, idx) => ({
+        ...entry,
+        index: start + idx
+      }));
+    });
+    const topSpacer = computed(() => getOffsetBefore(visibleRange.value.start));
+    const bottomSpacer = computed(() => {
+      const endOffset = getOffsetBefore(visibleRange.value.end);
+      return Math.max(0, totalHeight.value - endOffset);
+    });
+    function setHeight(url, height) {
+      const prev = heights.value.get(url);
+      if (prev !== height) {
+        heights.value.set(url, height);
+      }
+    }
+    function removeHeight(url) {
+      heights.value.delete(url);
+    }
+    function getOffsetBefore(index) {
+      if (index <= 0) return 0;
+      let offset = 0;
+      const len = Math.min(index, chapters.value.length);
+      for (let i = 0; i < len; i++) {
+        const url = chapters.value[i].chapter.url;
+        offset += heights.value.get(url) ?? averageHeight.value;
+      }
+      return offset;
+    }
+    function updateWindow(currentIndex) {
+      const halfWindow = Math.floor(windowSize / 2);
+      virtualWindow.value = {
+        start: Math.max(0, currentIndex - halfWindow),
+        end: Math.min(chapters.value.length, currentIndex + halfWindow + 1)
+      };
+    }
+    function reset() {
+      heights.value.clear();
+      virtualWindow.value = { start: 0, end: windowSize };
+    }
+    watch(
+      chapters,
+      (newChapters) => {
+        if (newChapters.length > 0 && virtualWindow.value.end === 0) {
+          virtualWindow.value = {
+            start: 0,
+            end: Math.min(newChapters.length, windowSize)
+          };
+        }
+      },
+      { immediate: true }
+    );
+    return {
+      // State
+      virtualWindow,
+      heights,
+      // Computed
+      visibleChapters,
+      topSpacer,
+      bottomSpacer,
+      totalHeight,
+      averageHeight,
+      // Methods
+      setHeight,
+      removeHeight,
+      getOffsetBefore,
+      updateWindow,
+      reset
+    };
+  }
+  function useEventListener(type, listener, options = {}) {
+    const { target = window, passive = false, capture = false } = options;
+    let attached = false;
+    const add = (currentTarget) => {
+      const element = unref(currentTarget);
+      if (element && !attached) {
+        element.addEventListener(type, listener, { capture, passive });
+        attached = true;
+      }
+    };
+    const remove2 = (currentTarget) => {
+      const element = unref(currentTarget);
+      if (element && attached) {
+        element.removeEventListener(type, listener, capture);
+        attached = false;
+      }
+    };
+    onMounted(() => add(target));
+    onScopeDispose(() => remove2(target));
+    if (isRef(target)) {
+      watch(target, (newTarget, oldTarget) => {
+        remove2(oldTarget);
+        add(newTarget);
+      });
+    }
+    return () => remove2(target);
+  }
+  function isInputElement(el) {
+    const tagName = el.tagName;
+    return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || el.isContentEditable;
+  }
+  function hasModifiers(e) {
+    return e.ctrlKey || e.altKey || e.metaKey;
+  }
+  function useKeyboardShortcuts(shortcuts, options = {}) {
+    const { enabled, ignoreInputs = true, ignoreModifiers = true } = options;
+    const isEnabled = computed(() => {
+      if (enabled === void 0) return true;
+      return unref(enabled);
+    });
+    function handleKeyDown(e) {
+      if (!isEnabled.value) return;
+      const target = e.target;
+      const key = e.key.toLowerCase();
+      for (const shortcut of shortcuts) {
+        const keys = Array.isArray(shortcut.key) ? shortcut.key : [shortcut.key];
+        const normalizedKeys = keys.map((k) => k.toLowerCase());
+        if (!normalizedKeys.includes(key)) continue;
+        const shouldIgnoreInput = ignoreInputs && !shortcut.allowInInputs;
+        if (shouldIgnoreInput && isInputElement(target)) continue;
+        const shouldIgnoreModifier = ignoreModifiers && !shortcut.allowModifiers;
+        if (shouldIgnoreModifier && hasModifiers(e)) continue;
+        if (shortcut.preventDefault) e.preventDefault();
+        if (shortcut.stopPropagation) e.stopPropagation();
+        shortcut.handler(e);
+        return;
+      }
+    }
+    useEventListener("keydown", handleKeyDown, { capture: true });
+  }
+  const _hoisted_1$7 = {
     key: 0,
     class: "mnr-progress-text"
   };
-  const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     __name: "ProgressIndicator",
     props: {
       showText: { type: Boolean, default: false },
@@ -18332,12 +18848,154 @@ var MyNovelReader = (function(exports) {
             class: "mnr-progress-bar",
             style: normalizeStyle({ width: `${percent.value}%` })
           }, null, 4),
-          __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$5, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)
+          __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$7, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)
         ], 2);
       };
     }
   });
-  const ProgressIndicator = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-bc314d2a"]]);
+  const ProgressIndicator = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__scopeId", "data-v-bc314d2a"]]);
+  const _hoisted_1$6 = { class: "mnr-floating-toolbar" };
+  const _hoisted_2$6 = { class: "mnr-fab-group" };
+  const _hoisted_3$6 = ["disabled"];
+  const _hoisted_4$6 = {
+    key: 0,
+    class: "mnr-fab-badge"
+  };
+  const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+    __name: "FloatingToolbar",
+    props: {
+      cacheRunning: { type: Boolean },
+      cacheDone: {},
+      cacheTotal: {},
+      cacheDisabled: { type: Boolean }
+    },
+    emits: ["toggleDrawer", "toggleCache", "openSettings"],
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$6, [
+          createBaseVNode("button", {
+            class: "mnr-fab",
+            title: "目录 (Tab)",
+            onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("toggleDrawer"))
+          }, "☰"),
+          createBaseVNode("div", _hoisted_2$6, [
+            createBaseVNode("button", {
+              class: "mnr-fab",
+              title: "缓存本书",
+              disabled: __props.cacheDisabled,
+              onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("toggleCache"))
+            }, [
+              createBaseVNode("span", null, toDisplayString(__props.cacheRunning ? "⏹" : "☁"), 1),
+              __props.cacheTotal > 0 ? (openBlock(), createElementBlock("span", _hoisted_4$6, toDisplayString(__props.cacheDone) + "/" + toDisplayString(__props.cacheTotal), 1)) : createCommentVNode("", true)
+            ], 8, _hoisted_3$6),
+            createBaseVNode("button", {
+              class: "mnr-fab",
+              title: "设置 (S)",
+              onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("openSettings"))
+            }, "⚙")
+          ])
+        ]);
+      };
+    }
+  });
+  const FloatingToolbar = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__scopeId", "data-v-5d0b2cb8"]]);
+  const _hoisted_1$5 = { class: "mnr-drawer-header" };
+  const _hoisted_2$5 = { class: "mnr-drawer-title" };
+  const _hoisted_3$5 = {
+    key: 0,
+    class: "mnr-drawer-loading"
+  };
+  const _hoisted_4$5 = {
+    key: 1,
+    class: "mnr-drawer-empty"
+  };
+  const _hoisted_5$4 = { class: "mnr-chapter-list" };
+  const _hoisted_6$4 = ["onClick"];
+  const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+    __name: "ChapterDrawer",
+    props: {
+      isOpen: { type: Boolean },
+      bookTitle: {},
+      currentUrl: {},
+      chapters: {},
+      loading: { type: Boolean }
+    },
+    emits: ["close", "select"],
+    setup(__props, { emit: __emit }) {
+      const props = __props;
+      const emit2 = __emit;
+      const contentRef = ref(null);
+      const activeRef = ref(null);
+      watch(
+        () => props.isOpen,
+        async (open) => {
+          if (open && activeRef.value && contentRef.value) {
+            await nextTick();
+            const container = contentRef.value;
+            const active = activeRef.value;
+            const containerHeight = container.clientHeight;
+            const activeTop = active.offsetTop;
+            const activeHeight = active.offsetHeight;
+            container.scrollTop = activeTop - containerHeight / 2 + activeHeight / 2;
+          }
+        }
+      );
+      function handleSelect(url) {
+        emit2("select", url);
+        emit2("close");
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock(Fragment, null, [
+          createVNode(Transition, { name: "mnr-fade" }, {
+            default: withCtx(() => [
+              __props.isOpen ? (openBlock(), createElementBlock("div", {
+                key: 0,
+                class: "mnr-drawer-overlay",
+                onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
+              })) : createCommentVNode("", true)
+            ]),
+            _: 1
+          }),
+          createBaseVNode("aside", {
+            class: normalizeClass(["mnr-drawer", { open: __props.isOpen }])
+          }, [
+            createBaseVNode("div", _hoisted_1$5, [
+              createBaseVNode("h3", _hoisted_2$5, toDisplayString(__props.bookTitle || "目录"), 1),
+              createBaseVNode("button", {
+                class: "mnr-drawer-close",
+                title: "关闭",
+                onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("close"))
+              }, "✕")
+            ]),
+            __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$5, [..._cache[2] || (_cache[2] = [
+              createBaseVNode("div", { class: "mnr-loading-spinner small" }, null, -1),
+              createBaseVNode("span", null, "加载目录中...", -1)
+            ])])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_4$5, [..._cache[3] || (_cache[3] = [
+              createBaseVNode("p", null, "暂无目录", -1)
+            ])])) : (openBlock(), createElementBlock("div", {
+              key: 2,
+              ref_key: "contentRef",
+              ref: contentRef,
+              class: "mnr-drawer-content"
+            }, [
+              createBaseVNode("ul", _hoisted_5$4, [
+                (openBlock(true), createElementBlock(Fragment, null, renderList(__props.chapters, (ch) => {
+                  return openBlock(), createElementBlock("li", {
+                    key: ch.url,
+                    ref_for: true,
+                    ref: (el) => ch.url === __props.currentUrl && (activeRef.value = el),
+                    class: normalizeClass({ active: ch.url === __props.currentUrl }),
+                    onClick: ($event) => handleSelect(ch.url)
+                  }, toDisplayString(ch.title), 11, _hoisted_6$4);
+                }), 128))
+              ])
+            ], 512))
+          ], 2)
+        ], 64);
+      };
+    }
+  });
+  const ChapterDrawer = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-8306dc5c"]]);
   const _hoisted_1$4 = { class: "mnr-settings-panel" };
   const _hoisted_2$4 = { class: "mnr-settings-header" };
   const _hoisted_3$4 = { class: "mnr-settings-content" };
@@ -18349,9 +19007,9 @@ var MyNovelReader = (function(exports) {
   const _hoisted_9$3 = ["value"];
   const _hoisted_10$3 = { class: "mnr-slider-value" };
   const _hoisted_11$3 = { class: "mnr-settings-section" };
-  const _hoisted_12$3 = { class: "mnr-slider-row" };
-  const _hoisted_13$3 = ["value"];
-  const _hoisted_14$3 = { class: "mnr-slider-value" };
+  const _hoisted_12$2 = { class: "mnr-slider-row" };
+  const _hoisted_13$2 = ["value"];
+  const _hoisted_14$2 = { class: "mnr-slider-value" };
   const _hoisted_15$2 = { class: "mnr-settings-section" };
   const _hoisted_16$1 = { class: "mnr-slider-row" };
   const _hoisted_17$1 = ["value"];
@@ -18370,16 +19028,21 @@ var MyNovelReader = (function(exports) {
   const _hoisted_27$1 = { class: "mnr-switch-row" };
   const _hoisted_28 = { class: "mnr-settings-section" };
   const _hoisted_29 = { class: "mnr-action-buttons" };
+  const _hoisted_30 = {
+    key: 0,
+    class: "mnr-cache-progress"
+  };
   const _sfc_main$4 = /* @__PURE__ */ defineComponent({
     __name: "SettingsPanel",
     props: {
       visible: { type: Boolean }
     },
-    emits: ["close", "editRule", "textConversionChange"],
+    emits: ["close", "editRule", "cacheAll", "textConversionChange"],
     setup(__props, { emit: __emit }) {
       const props = __props;
       const emit2 = __emit;
       const configStore = useConfigStore();
+      const readerStore = useReaderStore();
       const themes = THEMES;
       const currentTheme = computed(() => configStore.themeId);
       const fontSize = ref(configStore.reading.fontSize);
@@ -18391,6 +19054,7 @@ var MyNovelReader = (function(exports) {
       const swipeGestures = ref(configStore.behavior.swipeGestures);
       const autoHideHeader = ref(configStore.behavior.autoHideHeader);
       const showProgress = ref(configStore.behavior.showProgress);
+      const cacheProgress = computed(() => readerStore.cacheProgress);
       function setTheme(id) {
         configStore.setTheme(id);
       }
@@ -18446,12 +19110,12 @@ var MyNovelReader = (function(exports) {
             __props.visible ? (openBlock(), createElementBlock("div", {
               key: 0,
               class: "mnr-settings-overlay",
-              onClick: _cache[15] || (_cache[15] = withModifiers(($event) => _ctx.$emit("close"), ["self"]))
+              onClick: _cache[16] || (_cache[16] = withModifiers(($event) => _ctx.$emit("close"), ["self"]))
             }, [
               createBaseVNode("div", _hoisted_1$4, [
                 createBaseVNode("div", _hoisted_2$4, [
-                  _cache[16] || (_cache[16] = createBaseVNode("h3", null, "阅读设置", -1)),
-                  _cache[17] || (_cache[17] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "S", -1)),
+                  _cache[17] || (_cache[17] = createBaseVNode("h3", null, "阅读设置", -1)),
+                  _cache[18] || (_cache[18] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "S", -1)),
                   createBaseVNode("button", {
                     class: "mnr-close-btn",
                     onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
@@ -18459,7 +19123,7 @@ var MyNovelReader = (function(exports) {
                 ]),
                 createBaseVNode("div", _hoisted_3$4, [
                   createBaseVNode("section", _hoisted_4$4, [
-                    _cache[18] || (_cache[18] = createBaseVNode("h4", null, "主题", -1)),
+                    _cache[19] || (_cache[19] = createBaseVNode("h4", null, "主题", -1)),
                     createBaseVNode("div", _hoisted_5$3, [
                       (openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
                         return openBlock(), createElementBlock("button", {
@@ -18476,9 +19140,9 @@ var MyNovelReader = (function(exports) {
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_7$3, [
-                    _cache[21] || (_cache[21] = createBaseVNode("h4", null, "字体大小", -1)),
+                    _cache[22] || (_cache[22] = createBaseVNode("h4", null, "字体大小", -1)),
                     createBaseVNode("div", _hoisted_8$3, [
-                      _cache[19] || (_cache[19] = createBaseVNode("span", { class: "mnr-slider-label" }, "A", -1)),
+                      _cache[20] || (_cache[20] = createBaseVNode("span", { class: "mnr-slider-label" }, "A", -1)),
                       createBaseVNode("input", {
                         type: "range",
                         min: "14",
@@ -18487,7 +19151,7 @@ var MyNovelReader = (function(exports) {
                         class: "mnr-slider",
                         onInput: updateFontSize
                       }, null, 40, _hoisted_9$3),
-                      _cache[20] || (_cache[20] = createBaseVNode("span", {
+                      _cache[21] || (_cache[21] = createBaseVNode("span", {
                         class: "mnr-slider-label",
                         style: { "font-size": "1.2em" }
                       }, "A", -1)),
@@ -18495,9 +19159,9 @@ var MyNovelReader = (function(exports) {
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_11$3, [
-                    _cache[24] || (_cache[24] = createBaseVNode("h4", null, "行间距", -1)),
-                    createBaseVNode("div", _hoisted_12$3, [
-                      _cache[22] || (_cache[22] = createBaseVNode("span", { class: "mnr-slider-label" }, "≡", -1)),
+                    _cache[25] || (_cache[25] = createBaseVNode("h4", null, "行间距", -1)),
+                    createBaseVNode("div", _hoisted_12$2, [
+                      _cache[23] || (_cache[23] = createBaseVNode("span", { class: "mnr-slider-label" }, "≡", -1)),
                       createBaseVNode("input", {
                         type: "range",
                         min: "1.4",
@@ -18506,15 +19170,15 @@ var MyNovelReader = (function(exports) {
                         value: lineHeight.value,
                         class: "mnr-slider",
                         onInput: updateLineHeight
-                      }, null, 40, _hoisted_13$3),
-                      _cache[23] || (_cache[23] = createBaseVNode("span", { class: "mnr-slider-label" }, "☰", -1)),
-                      createBaseVNode("span", _hoisted_14$3, toDisplayString(lineHeight.value), 1)
+                      }, null, 40, _hoisted_13$2),
+                      _cache[24] || (_cache[24] = createBaseVNode("span", { class: "mnr-slider-label" }, "☰", -1)),
+                      createBaseVNode("span", _hoisted_14$2, toDisplayString(lineHeight.value), 1)
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_15$2, [
-                    _cache[27] || (_cache[27] = createBaseVNode("h4", null, "内容宽度", -1)),
+                    _cache[28] || (_cache[28] = createBaseVNode("h4", null, "内容宽度", -1)),
                     createBaseVNode("div", _hoisted_16$1, [
-                      _cache[25] || (_cache[25] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏⊐", -1)),
+                      _cache[26] || (_cache[26] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏⊐", -1)),
                       createBaseVNode("input", {
                         type: "range",
                         min: "500",
@@ -18524,17 +19188,17 @@ var MyNovelReader = (function(exports) {
                         class: "mnr-slider",
                         onInput: updateMaxWidth
                       }, null, 40, _hoisted_17$1),
-                      _cache[26] || (_cache[26] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏ ⊐", -1)),
+                      _cache[27] || (_cache[27] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏ ⊐", -1)),
                       createBaseVNode("span", _hoisted_18$1, toDisplayString(maxWidth.value) + "px", 1)
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_19$1, [
-                    _cache[29] || (_cache[29] = createBaseVNode("h4", null, "字体", -1)),
+                    _cache[30] || (_cache[30] = createBaseVNode("h4", null, "字体", -1)),
                     withDirectives(createBaseVNode("select", {
                       "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => fontFamily.value = $event),
                       class: "mnr-select",
                       onChange: updateFontFamily
-                    }, [..._cache[28] || (_cache[28] = [
+                    }, [..._cache[29] || (_cache[29] = [
                       createBaseVNode("option", { value: "system-ui, -apple-system, 'Microsoft YaHei', sans-serif" }, " 系统默认 ", -1),
                       createBaseVNode("option", { value: "'Noto Serif SC', 'Source Han Serif SC', serif" }, "思源宋体", -1),
                       createBaseVNode("option", { value: "'PingFang SC', 'Hiragino Sans GB', sans-serif" }, "苹方", -1),
@@ -18544,7 +19208,7 @@ var MyNovelReader = (function(exports) {
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_20$1, [
-                    _cache[30] || (_cache[30] = createBaseVNode("h4", null, "简繁转换", -1)),
+                    _cache[31] || (_cache[31] = createBaseVNode("h4", null, "简繁转换", -1)),
                     createBaseVNode("div", _hoisted_21$1, [
                       createBaseVNode("button", {
                         class: normalizeClass(["mnr-segment", { active: textConversion.value === "none" }]),
@@ -18562,9 +19226,9 @@ var MyNovelReader = (function(exports) {
                     textConversion.value !== "none" ? (openBlock(), createElementBlock("p", _hoisted_22$1, toDisplayString(textConversion.value === "sc" ? "将繁体转换为简体中文" : "將簡體轉換為繁體中文"), 1)) : createCommentVNode("", true)
                   ]),
                   createBaseVNode("section", _hoisted_23$1, [
-                    _cache[35] || (_cache[35] = createBaseVNode("h4", null, "阅读行为", -1)),
+                    _cache[36] || (_cache[36] = createBaseVNode("h4", null, "阅读行为", -1)),
                     createBaseVNode("label", _hoisted_24$1, [
-                      _cache[31] || (_cache[31] = createBaseVNode("span", null, "键盘导航", -1)),
+                      _cache[32] || (_cache[32] = createBaseVNode("span", null, "键盘导航", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => keyboardNav.value = $event),
                         type: "checkbox",
@@ -18574,7 +19238,7 @@ var MyNovelReader = (function(exports) {
                       ])
                     ]),
                     createBaseVNode("label", _hoisted_25$1, [
-                      _cache[32] || (_cache[32] = createBaseVNode("span", null, "手势翻页", -1)),
+                      _cache[33] || (_cache[33] = createBaseVNode("span", null, "手势翻页", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => swipeGestures.value = $event),
                         type: "checkbox",
@@ -18584,7 +19248,7 @@ var MyNovelReader = (function(exports) {
                       ])
                     ]),
                     createBaseVNode("label", _hoisted_26$1, [
-                      _cache[33] || (_cache[33] = createBaseVNode("span", null, "自动隐藏顶栏", -1)),
+                      _cache[34] || (_cache[34] = createBaseVNode("span", null, "自动隐藏顶栏", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => autoHideHeader.value = $event),
                         type: "checkbox",
@@ -18594,7 +19258,7 @@ var MyNovelReader = (function(exports) {
                       ])
                     ]),
                     createBaseVNode("label", _hoisted_27$1, [
-                      _cache[34] || (_cache[34] = createBaseVNode("span", null, "显示阅读进度", -1)),
+                      _cache[35] || (_cache[35] = createBaseVNode("span", null, "显示阅读进度", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => showProgress.value = $event),
                         type: "checkbox",
@@ -18605,7 +19269,7 @@ var MyNovelReader = (function(exports) {
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_28, [
-                    _cache[36] || (_cache[36] = createBaseVNode("h4", null, "操作", -1)),
+                    _cache[38] || (_cache[38] = createBaseVNode("h4", null, "操作", -1)),
                     createBaseVNode("div", _hoisted_29, [
                       createBaseVNode("button", {
                         class: "mnr-action-btn",
@@ -18613,7 +19277,14 @@ var MyNovelReader = (function(exports) {
                       }, "编辑站点规则"),
                       createBaseVNode("button", {
                         class: "mnr-action-btn",
-                        onClick: _cache[14] || (_cache[14] = ($event) => {
+                        onClick: _cache[14] || (_cache[14] = ($event) => _ctx.$emit("cacheAll"))
+                      }, [
+                        _cache[37] || (_cache[37] = createTextVNode(" 缓存本书 ", -1)),
+                        cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_30, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)
+                      ]),
+                      createBaseVNode("button", {
+                        class: "mnr-action-btn",
+                        onClick: _cache[15] || (_cache[15] = ($event) => {
                           _ctx.$emit("close");
                           unref(closeReader)();
                         })
@@ -18905,9 +19576,9 @@ var MyNovelReader = (function(exports) {
     key: 1,
     class: "mnr-preview-content"
   };
-  const _hoisted_12$2 = { class: "mnr-preview-content-header" };
-  const _hoisted_13$2 = ["innerHTML"];
-  const _hoisted_14$2 = {
+  const _hoisted_12$1 = { class: "mnr-preview-content-header" };
+  const _hoisted_13$1 = ["innerHTML"];
+  const _hoisted_14$1 = {
     key: 0,
     class: "mnr-highlight-overlay"
   };
@@ -19091,7 +19762,7 @@ var MyNovelReader = (function(exports) {
             matchCount.value === 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, "❌ 未找到匹配元素")) : matchCount.value === 1 ? (openBlock(), createElementBlock("span", _hoisted_9$2, "✓ 找到 1 个元素")) : (openBlock(), createElementBlock("span", _hoisted_10$2, "⚠ 找到 " + toDisplayString(matchCount.value) + " 个元素", 1))
           ], 2)) : createCommentVNode("", true),
           __props.showPreview && previewContent.value ? (openBlock(), createElementBlock("div", _hoisted_11$2, [
-            createBaseVNode("div", _hoisted_12$2, [
+            createBaseVNode("div", _hoisted_12$1, [
               _cache[3] || (_cache[3] = createBaseVNode("span", null, "预览", -1)),
               createBaseVNode("button", {
                 class: "mnr-preview-expand",
@@ -19101,10 +19772,10 @@ var MyNovelReader = (function(exports) {
             createBaseVNode("div", {
               class: normalizeClass(["mnr-preview-text", { expanded: expanded.value }]),
               innerHTML: sanitizedPreview.value
-            }, null, 10, _hoisted_13$2)
+            }, null, 10, _hoisted_13$1)
           ])) : createCommentVNode("", true),
           (openBlock(), createBlock(Teleport, { to: "body" }, [
-            isHighlighting.value && highlightRects.value.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_14$2, [
+            isHighlighting.value && highlightRects.value.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_14$1, [
               (openBlock(true), createElementBlock(Fragment, null, renderList(highlightRects.value, (rect, index) => {
                 return openBlock(), createElementBlock("div", {
                   key: index,
@@ -19132,9 +19803,9 @@ var MyNovelReader = (function(exports) {
   const _hoisted_9$1 = { class: "mnr-form-section" };
   const _hoisted_10$1 = { class: "mnr-form-group" };
   const _hoisted_11$1 = { class: "mnr-form-section" };
-  const _hoisted_12$1 = { class: "mnr-form-section" };
-  const _hoisted_13$1 = { class: "mnr-editor-content" };
-  const _hoisted_14$1 = { class: "mnr-code-toolbar" };
+  const _hoisted_12 = { class: "mnr-form-section" };
+  const _hoisted_13 = { class: "mnr-editor-content" };
+  const _hoisted_14 = { class: "mnr-code-toolbar" };
   const _hoisted_15 = {
     key: 0,
     class: "mnr-code-error"
@@ -19489,7 +20160,7 @@ ${value}`;
                 onPick: _cache[10] || (_cache[10] = ($event) => startPicking("index"))
               }, null, 8, ["selector"])
             ]),
-            createBaseVNode("div", _hoisted_12$1, [
+            createBaseVNode("div", _hoisted_12, [
               _cache[32] || (_cache[32] = createBaseVNode("h4", { class: "mnr-section-title" }, "标题", -1)),
               createVNode(SelectorPreview, {
                 selector: titleSelector.value,
@@ -19503,8 +20174,8 @@ ${value}`;
           ], 512), [
             [vShow, activeTab.value === "visual"]
           ]),
-          withDirectives(createBaseVNode("div", _hoisted_13$1, [
-            createBaseVNode("div", _hoisted_14$1, [
+          withDirectives(createBaseVNode("div", _hoisted_13, [
+            createBaseVNode("div", _hoisted_14, [
               withDirectives(createBaseVNode("select", {
                 "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => codeFormat.value = $event),
                 class: "mnr-format-select"
@@ -19628,48 +20299,69 @@ ${value}`;
   });
   const RuleEditorPanel = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-2f6fea54"]]);
   const _hoisted_1 = { class: "mnr-reader" };
-  const _hoisted_2 = { class: "mnr-header-center" };
-  const _hoisted_3 = { class: "mnr-chapter-title" };
-  const _hoisted_4 = {
-    key: 0,
-    class: "mnr-book-title"
-  };
-  const _hoisted_5 = {
+  const _hoisted_2 = {
     key: 0,
     class: "mnr-loading-prev"
   };
+  const _hoisted_3 = ["data-chapter-url"];
+  const _hoisted_4 = { class: "mnr-chapter-title" };
+  const _hoisted_5 = ["innerHTML"];
   const _hoisted_6 = {
-    key: 0,
-    class: "mnr-chapter-separator"
-  };
-  const _hoisted_7 = { class: "mnr-separator-title" };
-  const _hoisted_8 = ["data-chapter-url", "innerHTML"];
-  const _hoisted_9 = {
     key: 1,
     class: "mnr-loading-next"
   };
-  const _hoisted_10 = {
+  const _hoisted_7 = {
     key: 2,
     class: "mnr-chapter-end"
   };
-  const _hoisted_11 = { class: "mnr-chapter-nav" };
-  const _hoisted_12 = ["href"];
-  const _hoisted_13 = { class: "mnr-rule-editor-container" };
-  const _hoisted_14 = {
+  const _hoisted_8 = { class: "mnr-chapter-nav" };
+  const _hoisted_9 = ["href"];
+  const _hoisted_10 = { class: "mnr-rule-editor-container" };
+  const _hoisted_11 = {
     key: 2,
     class: "mnr-loading-overlay"
   };
+  const SCROLL_THROTTLE_MS = 16;
+  const INTERSECTION_ROOT_MARGIN = "800px";
   const _sfc_main = /* @__PURE__ */ defineComponent({
     __name: "ReaderView",
     setup(__props) {
+      function throttle(fn, delay) {
+        let lastCall = 0;
+        let timeoutId = null;
+        return ((...fnArgs) => {
+          const now = Date.now();
+          const remaining = delay - (now - lastCall);
+          if (remaining <= 0) {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+            lastCall = now;
+            fn(...fnArgs);
+          } else if (!timeoutId) {
+            timeoutId = setTimeout(() => {
+              lastCall = Date.now();
+              timeoutId = null;
+              fn(...fnArgs);
+            }, remaining);
+          }
+        });
+      }
       const readerStore = useReaderStore();
       const configStore = useConfigStore();
       const ruleStore = useRuleStore();
       const mainRef = ref(null);
+      const topSentinel = ref(null);
+      const bottomSentinel = ref(null);
       const settingsVisible = ref(false);
       const ruleEditorVisible = ref(false);
       const isPickerActive = ref(false);
-      const headerHidden = ref(false);
+      const drawerOpen = ref(false);
+      const isNavigating = ref(false);
+      const chapterRefs = /* @__PURE__ */ new Map();
+      let topObserver = null;
+      let bottomObserver = null;
       watch(isPickerActive, (active) => {
         const hideStyle = document.getElementById("mnr-hide-original");
         const readerRoot = document.getElementById("mnr-reader-root");
@@ -19695,8 +20387,6 @@ ${value}`;
           }
         }
       });
-      let lastScrollY = 0;
-      let loadDebounceTimer = null;
       const currentRule = computed(() => readerStore.rule);
       const currentDomain = computed(() => {
         try {
@@ -19706,11 +20396,24 @@ ${value}`;
         }
       });
       const chapters = computed(() => readerStore.chapters);
-      const currentTitle = computed(() => readerStore.title);
+      const {
+        visibleChapters,
+        topSpacer,
+        bottomSpacer,
+        setHeight: setChapterHeight,
+        updateWindow
+      } = useVirtualChapters(chapters, {
+        windowSize: 5,
+        overscan: 2
+      });
       const bookTitle = computed(() => readerStore.bookTitle);
       const indexUrl = computed(() => {
         var _a;
         return (_a = readerStore.chapter) == null ? void 0 : _a.indexUrl;
+      });
+      const currentChapterUrl = computed(() => {
+        var _a;
+        return ((_a = readerStore.chapter) == null ? void 0 : _a.url) || "";
       });
       const isLoading = computed(() => readerStore.isLoading);
       const isLoadingPrev = computed(() => readerStore.isLoadingPrev);
@@ -19719,18 +20422,23 @@ ${value}`;
       const hasPrev = computed(() => readerStore.hasPrev);
       const error = computed(() => readerStore.error);
       const showProgress = computed(() => configStore.behavior.showProgress);
-      const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
+      const cacheProgress = computed(() => readerStore.cacheProgress);
+      const keyboardEnabled = computed(
+        () => configStore.behavior.keyboardNavigation && !isPickerActive.value
+      );
       function navigate(direction) {
         if (indexUrl.value) {
           window.location.href = indexUrl.value;
         }
       }
-      function handleBack() {
-        if (indexUrl.value) {
-          window.location.href = indexUrl.value;
-        } else {
-          window.history.back();
+      function toggleDrawer() {
+        drawerOpen.value = !drawerOpen.value;
+        if (drawerOpen.value) {
+          readerStore.loadToc();
         }
+      }
+      function handleChapterSelect(url) {
+        window.location.href = url;
       }
       function handleContentClick(e) {
         const target = e.target;
@@ -19761,157 +20469,219 @@ ${value}`;
       async function handleTextConversionChange(mode) {
         await readerStore.applyTextConversion(mode);
       }
-      function handleScroll() {
+      function handleCacheAll() {
+        readerStore.startCacheAll();
+      }
+      function toggleCacheAll() {
+        if (cacheProgress.value.running) {
+          readerStore.cancelCacheAll();
+        } else {
+          readerStore.startCacheAll();
+        }
+      }
+      function setChapterRef(index) {
+        return (el) => {
+          if (!el) {
+            chapterRefs.delete(index);
+            return;
+          }
+          chapterRefs.set(index, el);
+          const entry = visibleChapters.value.find((c) => c.index === index);
+          if (entry) {
+            setChapterHeight(entry.chapter.url, el.offsetHeight);
+          }
+        };
+      }
+      function handleScrollCore() {
         const mainEl = mainRef.value;
-        if (!mainEl) return;
+        if (!mainEl || visibleChapters.value.length === 0) return;
         const currentScrollY = mainEl.scrollTop;
         const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
-        if (autoHideHeader.value) {
-          if (currentScrollY > lastScrollY && currentScrollY > 100) {
-            headerHidden.value = true;
-          } else {
-            headerHidden.value = false;
-          }
-        }
-        lastScrollY = currentScrollY;
-        const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
-        if (chapterEls.length === 0) return;
         let currentChapterEl = null;
         let currentChapterIdx = 0;
         const viewportTop = currentScrollY;
         const viewportBottom = currentScrollY + mainEl.clientHeight;
-        for (let i = 0; i < chapterEls.length; i++) {
-          const el = chapterEls[i];
+        for (const entry of visibleChapters.value) {
+          const el = chapterRefs.get(entry.index);
+          if (!el) continue;
           const elTop = el.offsetTop;
           const elBottom = elTop + el.offsetHeight;
           if (elTop <= viewportBottom && elBottom >= viewportTop) {
             currentChapterEl = el;
-            currentChapterIdx = i;
+            currentChapterIdx = entry.index;
+            setChapterHeight(entry.chapter.url, el.offsetHeight);
             break;
           }
         }
         if (!currentChapterEl) return;
         readerStore.setCurrentChapter(currentChapterIdx);
-        const chapterEl = currentChapterEl;
-        const chapterTop = chapterEl.offsetTop;
-        const chapterHeight = chapterEl.offsetHeight;
-        const posInChapter = currentScrollY - chapterTop + mainEl.clientHeight;
-        const chapterPercent = Math.round(posInChapter / chapterHeight * 100);
-        const clampedPercent = Math.max(0, Math.min(100, chapterPercent));
+        updateWindow(currentChapterIdx);
         if (scrollHeight > 0) {
           const overallPercent = Math.round(currentScrollY / scrollHeight * 100);
           readerStore.updateScroll(overallPercent);
         }
-        if (loadDebounceTimer) clearTimeout(loadDebounceTimer);
-        const isLastChapter = currentChapterIdx === chapterEls.length - 1;
-        if (isLastChapter && clampedPercent >= 70 && hasNext.value && !isLoadingNext.value) {
-          loadDebounceTimer = setTimeout(() => {
-            readerStore.loadNextChapter();
-          }, 200);
-        }
-        const isFirstChapter = currentChapterIdx === 0;
-        if (isFirstChapter && clampedPercent <= 30 && hasPrev.value && !isLoadingPrev.value) {
-          loadDebounceTimer = setTimeout(async () => {
-            const oldScrollHeight = mainEl.scrollHeight;
-            const success = await readerStore.loadPrevChapter();
-            if (success) {
-              globalThis.requestAnimationFrame(() => {
-                const newScrollHeight = mainEl.scrollHeight;
-                const addedHeight = newScrollHeight - oldScrollHeight;
-                mainEl.scrollTop = currentScrollY + addedHeight;
-              });
-            }
-          }, 200);
+      }
+      const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
+      async function loadPrevWithScrollAdjust() {
+        const mainEl = mainRef.value;
+        if (!mainEl || isLoadingPrev.value) return;
+        const oldScrollTop = mainEl.scrollTop;
+        const success = await readerStore.loadPrevChapter();
+        if (success) {
+          await nextTick();
+          await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+          const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
+          if (chapterEls.length > 0) {
+            const newChapterEl = chapterEls[0];
+            const newChapterHeight = newChapterEl.offsetHeight;
+            mainEl.scrollTop = oldScrollTop + newChapterHeight;
+          }
         }
       }
       function handleWheel(e) {
         const mainEl = mainRef.value;
         if (!mainEl) return;
-        if (e.deltaY < 0 && mainEl.scrollTop <= 0 && hasPrev.value && !isLoadingPrev.value) {
-          if (loadDebounceTimer) clearTimeout(loadDebounceTimer);
-          loadDebounceTimer = setTimeout(async () => {
-            const oldScrollHeight = mainEl.scrollHeight;
-            const success = await readerStore.loadPrevChapter();
-            if (success) {
-              globalThis.requestAnimationFrame(() => {
-                const newScrollHeight = mainEl.scrollHeight;
-                const addedHeight = newScrollHeight - oldScrollHeight;
-                mainEl.scrollTop = addedHeight;
-              });
-            }
-          }, 200);
+        if (e.deltaY < 0 && mainEl.scrollTop <= 0 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+          loadPrevWithScrollAdjust();
         }
       }
-      function handleKeyDown(e) {
-        if (isPickerActive.value) return;
-        if (e.key === "Escape") {
-          if (ruleEditorVisible.value) {
-            ruleEditorVisible.value = false;
-            e.preventDefault();
-            return;
+      function handleEscape() {
+        if (drawerOpen.value) {
+          drawerOpen.value = false;
+        } else if (ruleEditorVisible.value) {
+          ruleEditorVisible.value = false;
+        } else if (settingsVisible.value) {
+          settingsVisible.value = false;
+        }
+      }
+      function toggleSettings() {
+        if (!ruleEditorVisible.value) {
+          settingsVisible.value = !settingsVisible.value;
+        }
+      }
+      function toggleRuleEditor() {
+        if (!settingsVisible.value) {
+          ruleEditorVisible.value = !ruleEditorVisible.value;
+        }
+      }
+      useKeyboardShortcuts(
+        [
+          // Escape - close panels (works in inputs too)
+          {
+            key: "escape",
+            handler: handleEscape,
+            allowInInputs: true
+          },
+          // Tab - toggle chapter drawer
+          {
+            key: "tab",
+            handler: toggleDrawer,
+            preventDefault: true
+          },
+          // Enter - go to index page
+          {
+            key: "enter",
+            handler: () => {
+              if (indexUrl.value) {
+                window.location.href = indexUrl.value;
+              }
+            },
+            preventDefault: true
+          },
+          // S or , - toggle settings
+          {
+            key: ["s", ","],
+            handler: toggleSettings,
+            preventDefault: true
+          },
+          // E - toggle rule editor
+          {
+            key: "e",
+            handler: toggleRuleEditor,
+            preventDefault: true
+          },
+          // Q - exit reader
+          {
+            key: "q",
+            handler: exitReader,
+            preventDefault: true,
+            stopPropagation: true
+          },
+          // Left arrow or P - previous chapter
+          {
+            key: ["arrowleft", "p"],
+            handler: () => navigateChapter("prev"),
+            preventDefault: true,
+            stopPropagation: true
+          },
+          // Right arrow or N - next chapter
+          {
+            key: ["arrowright", "n"],
+            handler: () => navigateChapter("next"),
+            preventDefault: true,
+            stopPropagation: true
+          },
+          // Up arrow - scroll up
+          {
+            key: "arrowup",
+            handler: () => scrollReader("up"),
+            preventDefault: true
+          },
+          // Down arrow - scroll down
+          {
+            key: "arrowdown",
+            handler: () => scrollReader("down"),
+            preventDefault: true
+          },
+          // Space - page scroll
+          {
+            key: " ",
+            handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"),
+            preventDefault: true
           }
-          if (settingsVisible.value) {
-            settingsVisible.value = false;
-            e.preventDefault();
-            return;
-          }
-          return;
-        }
-        if (!configStore.behavior.keyboardNavigation) return;
-        const target = e.target;
-        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT") {
-          return;
-        }
-        switch (e.key.toLowerCase()) {
-          // 's' or ',' to toggle settings
-          case "s":
-          case ",":
-            if (!ruleEditorVisible.value) {
-              settingsVisible.value = !settingsVisible.value;
-              e.preventDefault();
-            }
+        ],
+        { enabled: keyboardEnabled }
+      );
+      function scrollReader(direction) {
+        const mainEl = mainRef.value;
+        if (!mainEl) return;
+        const step = 150;
+        const pageHeight = mainEl.clientHeight * 0.9;
+        let top = 0;
+        let behavior = "auto";
+        switch (direction) {
+          case "up":
+            top = -step;
             break;
-          // 'e' to toggle rule editor
-          case "e":
-            if (!settingsVisible.value) {
-              ruleEditorVisible.value = !ruleEditorVisible.value;
-              e.preventDefault();
-            }
+          case "down":
+            top = step;
             break;
-          // 'q' to exit reader mode
-          case "q":
-            e.preventDefault();
-            e.stopPropagation();
-            exitReader();
+          case "pageup":
+            top = -pageHeight;
+            behavior = "smooth";
             break;
-          // Left arrow or 'p' - previous chapter
-          case "arrowleft":
-          case "p":
-            e.preventDefault();
-            e.stopPropagation();
-            navigateChapter("prev");
-            break;
-          // Right arrow or 'n' - next chapter
-          case "arrowright":
-          case "n":
-            e.preventDefault();
-            e.stopPropagation();
-            navigateChapter("next");
+          case "pagedown":
+            top = pageHeight;
+            behavior = "smooth";
             break;
         }
+        mainEl.scrollBy({ top, behavior });
       }
       async function navigateChapter(direction) {
         const mainEl = mainRef.value;
         if (!mainEl) return;
         const currentIdx = readerStore.currentChapterIndex;
         const chaptersCount = readerStore.chapters.length;
+        if (isNavigating.value) {
+          return;
+        }
         if (direction === "prev") {
           if (currentIdx > 0) {
             jumpToChapter(currentIdx - 1);
           } else if (hasPrev.value && !isLoadingPrev.value) {
             const success = await readerStore.loadPrevChapter();
             if (success) {
-              globalThis.requestAnimationFrame(() => jumpToChapter(0));
+              globalThis.requestAnimationFrame(() => jumpToChapter(0, "auto"));
             }
           }
         } else {
@@ -19925,17 +20695,36 @@ ${value}`;
           }
         }
       }
-      function jumpToChapter(index) {
+      async function jumpToChapter(index, behavior = "smooth") {
         const mainEl = mainRef.value;
         if (!mainEl) return;
-        const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
-        if (index < 0 || index >= chapterEls.length) return;
-        const targetEl = chapterEls[index];
+        if (index < 0 || index >= chapters.value.length) return;
+        isNavigating.value = true;
+        updateWindow(index);
+        await nextTick();
+        await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+        const targetEl = chapterRefs.get(index);
+        if (!targetEl) {
+          isNavigating.value = false;
+          return;
+        }
+        const containerRect = mainEl.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        const targetOffset = targetRect.top - containerRect.top + mainEl.scrollTop;
         mainEl.scrollTo({
-          top: targetEl.offsetTop,
-          behavior: "smooth"
+          top: targetOffset,
+          behavior
         });
         readerStore.setCurrentChapter(index);
+        if (behavior === "smooth") {
+          setTimeout(() => {
+            isNavigating.value = false;
+          }, 200);
+        } else {
+          globalThis.requestAnimationFrame(() => {
+            isNavigating.value = false;
+          });
+        }
       }
       function exitReader() {
         closeReader();
@@ -19950,15 +20739,37 @@ ${value}`;
           mainRef.value.addEventListener("scroll", handleScroll, { passive: true });
           mainRef.value.addEventListener("wheel", handleWheel, { passive: true });
         }
-        window.addEventListener("keydown", handleKeyDown, true);
+        const observerOptions = {
+          root: mainRef.value,
+          rootMargin: INTERSECTION_ROOT_MARGIN,
+          threshold: 0
+        };
+        bottomObserver = new globalThis.IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && hasNext.value && !isLoadingNext.value && !isNavigating.value) {
+            readerStore.loadNextChapter();
+          }
+        }, observerOptions);
+        topObserver = new globalThis.IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+            loadPrevWithScrollAdjust();
+          }
+        }, observerOptions);
+        if (bottomSentinel.value) {
+          bottomObserver.observe(bottomSentinel.value);
+        }
+        if (topSentinel.value) {
+          topObserver.observe(topSentinel.value);
+        }
       });
       onUnmounted(() => {
         if (mainRef.value) {
           mainRef.value.removeEventListener("scroll", handleScroll);
           mainRef.value.removeEventListener("wheel", handleWheel);
         }
-        window.removeEventListener("keydown", handleKeyDown, true);
-        if (loadDebounceTimer) clearTimeout(loadDebounceTimer);
+        topObserver == null ? void 0 : topObserver.disconnect();
+        bottomObserver == null ? void 0 : bottomObserver.disconnect();
+        topObserver = null;
+        bottomObserver = null;
       });
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", _hoisted_1, [
@@ -19966,91 +20777,102 @@ ${value}`;
             key: 0,
             "auto-hide": true
           })) : createCommentVNode("", true),
-          createBaseVNode("header", {
-            class: normalizeClass(["mnr-reader-header", { hidden: headerHidden.value }])
-          }, [
-            createBaseVNode("div", { class: "mnr-header-left" }, [
-              createBaseVNode("button", {
-                class: "mnr-header-btn",
-                title: "返回",
-                onClick: handleBack
-              }, "←")
-            ]),
-            createBaseVNode("div", _hoisted_2, [
-              createBaseVNode("h1", _hoisted_3, toDisplayString(currentTitle.value), 1),
-              bookTitle.value ? (openBlock(), createElementBlock("span", _hoisted_4, toDisplayString(bookTitle.value), 1)) : createCommentVNode("", true)
-            ]),
-            createBaseVNode("div", { class: "mnr-header-right" }, [
-              createBaseVNode("button", {
-                class: "mnr-header-btn",
-                title: "设置",
-                onClick: openSettings
-              }, "⚙")
-            ])
-          ], 2),
+          createVNode(FloatingToolbar, {
+            "cache-running": cacheProgress.value.running,
+            "cache-done": cacheProgress.value.done,
+            "cache-total": cacheProgress.value.total,
+            "cache-disabled": cacheProgress.value.running && cacheProgress.value.total === 0,
+            onToggleDrawer: toggleDrawer,
+            onToggleCache: toggleCacheAll,
+            onOpenSettings: openSettings
+          }, null, 8, ["cache-running", "cache-done", "cache-total", "cache-disabled"]),
+          createVNode(ChapterDrawer, {
+            "is-open": drawerOpen.value,
+            "book-title": bookTitle.value,
+            "current-url": currentChapterUrl.value,
+            chapters: unref(readerStore).toc,
+            loading: unref(readerStore).tocLoading,
+            onClose: _cache[0] || (_cache[0] = ($event) => drawerOpen.value = false),
+            onSelect: handleChapterSelect
+          }, null, 8, ["is-open", "book-title", "current-url", "chapters", "loading"]),
           createBaseVNode("main", {
             ref_key: "mainRef",
             ref: mainRef,
             class: "mnr-reader-main"
           }, [
-            isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_5, [..._cache[4] || (_cache[4] = [
+            createBaseVNode("div", {
+              ref_key: "topSentinel",
+              ref: topSentinel,
+              class: "mnr-sentinel"
+            }, null, 512),
+            isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_2, [..._cache[5] || (_cache[5] = [
               createBaseVNode("div", { class: "mnr-loading-spinner small" }, null, -1),
               createBaseVNode("span", null, "加载上一章...", -1)
             ])])) : createCommentVNode("", true),
-            (openBlock(true), createElementBlock(Fragment, null, renderList(chapters.value, (entry) => {
-              return openBlock(), createElementBlock(Fragment, {
-                key: entry.id
+            createBaseVNode("div", {
+              style: normalizeStyle({ height: `${unref(topSpacer)}px` })
+            }, null, 4),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(visibleChapters), (entry) => {
+              return openBlock(), createElementBlock("article", {
+                key: entry.id,
+                ref_for: true,
+                ref: setChapterRef(entry.index),
+                class: "mnr-reader-content",
+                "data-chapter-url": entry.chapter.url,
+                onClick: handleContentClick
               }, [
-                chapters.value.indexOf(entry) > 0 ? (openBlock(), createElementBlock("div", _hoisted_6, [
-                  _cache[5] || (_cache[5] = createBaseVNode("span", { class: "mnr-separator-line" }, null, -1)),
-                  createBaseVNode("span", _hoisted_7, toDisplayString(entry.chapter.title), 1),
-                  _cache[6] || (_cache[6] = createBaseVNode("span", { class: "mnr-separator-line" }, null, -1))
-                ])) : createCommentVNode("", true),
-                createBaseVNode("article", {
-                  class: "mnr-reader-content",
-                  "data-chapter-url": entry.chapter.url,
-                  onClick: handleContentClick,
+                createBaseVNode("h1", _hoisted_4, toDisplayString(entry.chapter.title), 1),
+                createBaseVNode("div", {
                   innerHTML: entry.chapter.content
-                }, null, 8, _hoisted_8)
-              ], 64);
+                }, null, 8, _hoisted_5)
+              ], 8, _hoisted_3);
             }), 128)),
-            isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_9, [..._cache[7] || (_cache[7] = [
+            createBaseVNode("div", {
+              style: normalizeStyle({ height: `${unref(bottomSpacer)}px` })
+            }, null, 4),
+            createBaseVNode("div", {
+              ref_key: "bottomSentinel",
+              ref: bottomSentinel,
+              class: "mnr-sentinel"
+            }, null, 512),
+            isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [..._cache[6] || (_cache[6] = [
               createBaseVNode("div", { class: "mnr-loading-spinner small" }, null, -1),
               createBaseVNode("span", null, "加载下一章...", -1)
             ])])) : createCommentVNode("", true),
-            chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_10, [
-              _cache[8] || (_cache[8] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)),
-              createBaseVNode("div", _hoisted_11, [
+            chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_7, [
+              _cache[7] || (_cache[7] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)),
+              createBaseVNode("div", _hoisted_8, [
                 indexUrl.value ? (openBlock(), createElementBlock("a", {
                   key: 0,
                   href: indexUrl.value,
                   class: "mnr-chapter-link index",
-                  onClick: _cache[0] || (_cache[0] = withModifiers(($event) => navigate(), ["prevent"]))
-                }, " 返回目录 ", 8, _hoisted_12)) : createCommentVNode("", true)
+                  onClick: _cache[1] || (_cache[1] = withModifiers(($event) => navigate(), ["prevent"]))
+                }, " 返回目录 ", 8, _hoisted_9)) : createCommentVNode("", true)
               ])
             ])) : createCommentVNode("", true)
           ], 512),
           createVNode(_sfc_main$4, {
             visible: settingsVisible.value,
-            onClose: _cache[1] || (_cache[1] = ($event) => settingsVisible.value = false),
+            onClose: _cache[2] || (_cache[2] = ($event) => settingsVisible.value = false),
             onEditRule: openRuleEditor,
-            onTextConversionChange: handleTextConversionChange
+            onTextConversionChange: handleTextConversionChange,
+            onCacheAll: handleCacheAll
           }, null, 8, ["visible"]),
           ruleEditorVisible.value ? (openBlock(), createElementBlock("div", {
             key: 1,
             class: normalizeClass(["mnr-rule-editor-overlay", { "mnr-overlay-hidden": isPickerActive.value }])
           }, [
-            createBaseVNode("div", _hoisted_13, [
+            createBaseVNode("div", _hoisted_10, [
               createVNode(RuleEditorPanel, {
                 rule: currentRule.value,
                 domain: currentDomain.value,
                 onSave: handleRuleSave,
-                onCancel: _cache[2] || (_cache[2] = ($event) => ruleEditorVisible.value = false),
-                onPickerStateChange: _cache[3] || (_cache[3] = ($event) => isPickerActive.value = $event)
+                onCancel: _cache[3] || (_cache[3] = ($event) => ruleEditorVisible.value = false),
+                onPickerStateChange: _cache[4] || (_cache[4] = ($event) => isPickerActive.value = $event)
               }, null, 8, ["rule", "domain"])
             ])
           ], 2)) : createCommentVNode("", true),
-          isLoading.value ? (openBlock(), createElementBlock("div", _hoisted_14, [..._cache[9] || (_cache[9] = [
+          isLoading.value ? (openBlock(), createElementBlock("div", _hoisted_11, [..._cache[8] || (_cache[8] = [
             createBaseVNode("div", { class: "mnr-loading-spinner" }, null, -1),
             createBaseVNode("span", null, "加载中...", -1)
           ])])) : createCommentVNode("", true),
@@ -20063,7 +20885,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-1250ee2f"]]);
+  const ReaderView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-2b4b4e60"]]);
   const appState = {
     isInitialized: false,
     isActive: false,

@@ -14,8 +14,18 @@ export interface ReadingProgress {
   url: string;
   /** Scroll position (0-100%) */
   scrollPercent: number;
+  /** Current chapter (visible) URL */
+  chapterUrl: string;
+  /** Progress within current chapter (0-100%) */
+  chapterPercent: number;
   /** Last read timestamp */
   lastRead: number;
+}
+
+export interface CacheProgressState {
+  done: number;
+  total: number;
+  running: boolean;
 }
 
 /** Chapter entry for infinite scroll */
@@ -24,6 +34,15 @@ export interface ChapterEntry {
   rule?: SiteRule;
   id: string; // unique ID for Vue key
 }
+
+/** Table of contents entry */
+export interface TocEntry {
+  title: string;
+  url: string;
+}
+
+const MAX_CACHED_CHAPTERS = 8;
+const MAX_CACHE_TASKS = 50;
 
 export const useReaderStore = defineStore('reader', () => {
   // State
@@ -39,6 +58,16 @@ export const useReaderStore = defineStore('reader', () => {
   const loadedUrls = ref<Set<string>>(new Set());
   const originalContents = ref<Map<string, string>>(new Map()); // id -> original HTML
   const currentConversionMode = ref<ConversionMode>('none');
+  const pendingNextAbort = ref<(() => void) | null>(null);
+  const pendingPrevAbort = ref<(() => void) | null>(null);
+  const cacheProgress = ref<CacheProgressState>({ done: 0, total: 0, running: false });
+  const cacheQueue = ref<string[]>([]);
+  const cacheAbort = ref<(() => void) | null>(null);
+
+  // Table of contents state
+  const toc = ref<TocEntry[]>([]);
+  const tocLoading = ref(false);
+  const tocAbort = ref<(() => void) | null>(null);
 
   // Getters - for compatibility
   const chapter = computed(() => chapters.value[currentChapterIndex.value]?.chapter || null);
@@ -115,11 +144,30 @@ export const useReaderStore = defineStore('reader', () => {
 
     isLoadingNext.value = true;
 
+    // Cancel in-flight next request
+    if (pendingNextAbort.value) {
+      pendingNextAbort.value();
+      pendingNextAbort.value = null;
+    }
+
+    // Don't load if nextUrl is the index/TOC page
+    const normalizeUrl = (url: string) => url.replace(/\/$/, '').replace(/\/index\.html?$/, '');
+    if (
+      lastChapter.chapter.indexUrl &&
+      normalizeUrl(nextUrl) === normalizeUrl(lastChapter.chapter.indexUrl)
+    ) {
+      return false;
+    }
+
     try {
       // Always use referer for better compatibility with anti-scraping
       const referer = lastChapter.chapter.url;
 
-      const doc = await fetchAndParseUrl(nextUrl, referer);
+      const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
+      pendingNextAbort.value = abort;
+
+      const doc = await promise;
+      pendingNextAbort.value = null;
       if (!doc) {
         throw new Error('Failed to fetch page');
       }
@@ -128,6 +176,14 @@ export const useReaderStore = defineStore('reader', () => {
       const parsed = await parser.parse(doc, nextUrl);
       if (!parsed) {
         throw new Error('Failed to parse chapter');
+      }
+
+      // Check if this is a TOC page using multiple heuristics
+      // Sometimes "next" link points to TOC or a "Book End" page that looks like TOC
+      const isTocPage = detectTocPage(parsed.content, nextUrl, lastChapter.chapter.url);
+      if (isTocPage) {
+        loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
+        return false;
       }
 
       // Add to chapters list
@@ -141,6 +197,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       // Store original content for text conversion
       originalContents.value.set(id, parsed.content);
+      // height unknown now; will be measured when rendered
 
       // Apply current conversion mode if active
       if (currentConversionMode.value !== 'none') {
@@ -154,6 +211,16 @@ export const useReaderStore = defineStore('reader', () => {
       // Add to history
       if (!history.value.includes(nextUrl)) {
         history.value.push(nextUrl);
+      }
+
+      // Trim cached chapters to limit memory (keep recent ones around current index)
+      if (chapters.value.length > MAX_CACHED_CHAPTERS && currentChapterIndex.value > 2) {
+        const removed = chapters.value.shift();
+        if (removed) {
+          loadedUrls.value.delete(removed.chapter.url);
+          originalContents.value.delete(removed.id);
+          currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
+        }
       }
 
       return true;
@@ -190,11 +257,21 @@ export const useReaderStore = defineStore('reader', () => {
 
     isLoadingPrev.value = true;
 
+    // Cancel in-flight prev request
+    if (pendingPrevAbort.value) {
+      pendingPrevAbort.value();
+      pendingPrevAbort.value = null;
+    }
+
     try {
       // Always use referer for better compatibility with anti-scraping
       const referer = firstChapter.chapter.url;
 
-      const doc = await fetchAndParseUrl(prevUrl, referer);
+      const { promise, abort } = fetchAndParseUrl(prevUrl, referer);
+      pendingPrevAbort.value = abort;
+
+      const doc = await promise;
+      pendingPrevAbort.value = null;
       if (!doc) {
         throw new Error('Failed to fetch page');
       }
@@ -252,6 +329,15 @@ export const useReaderStore = defineStore('reader', () => {
         history.value.unshift(prevUrl);
       }
 
+      // Trim cached chapters to limit memory (drop far end when we are near start)
+      if (chapters.value.length > MAX_CACHED_CHAPTERS) {
+        const removed = chapters.value.pop();
+        if (removed) {
+          loadedUrls.value.delete(removed.chapter.url);
+          originalContents.value.delete(removed.id);
+        }
+      }
+
       return true;
     } catch (e) {
       console.error('[MNR] Failed to load previous chapter:', e);
@@ -299,10 +385,22 @@ export const useReaderStore = defineStore('reader', () => {
   function getProgress(): ReadingProgress | null {
     if (!chapter.value?.url) return null;
     return {
-      url: chapter.value.url,
+      url: readerStoreHistoryFallback(),
+      chapterUrl: chapter.value.url,
+      chapterPercent: calculateCurrentChapterPercent(),
       scrollPercent: scrollPercent.value,
       lastRead: Date.now(),
     };
+  }
+
+  // Helper to get a stable URL even if history was not updated yet
+  function readerStoreHistoryFallback(): string {
+    return chapter.value?.url || window.location.href;
+  }
+
+  // Simplified: use overall scroll percent as chapter percent approximation
+  function calculateCurrentChapterPercent(): number {
+    return scrollPercent.value;
   }
 
   /** Apply text conversion to all chapters */
@@ -329,6 +427,457 @@ export const useReaderStore = defineStore('reader', () => {
     }
   }
 
+  /**
+   * Batch cache chapters (best-effort, sequential)
+   * 1) 如果提供 urls，按顺序抓取
+   * 2) 否则优先使用当前章节的 indexUrl 目录列表；失败再沿用 nextUrl 链
+   */
+  async function startCacheAll(urls?: string[]): Promise<void> {
+    if (cacheProgress.value.running) return;
+
+    let taskList = urls ? urls.slice(0, MAX_CACHE_TASKS) : [];
+    cacheQueue.value = taskList;
+
+    // 目录列表：current.indexUrl -> 解析出章节列表，再从当前章节之后开始
+    if (!taskList.length) {
+      const indexUrl = chapter.value?.indexUrl;
+      const currentUrl = chapter.value?.url;
+      if (indexUrl) {
+        const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
+        cacheAbort.value = abort;
+        const doc = await promise;
+        cacheAbort.value = null;
+        if (doc) {
+          const tocLinks = parseTocLinks(doc, indexUrl, MAX_CACHE_TASKS * 2);
+          const currNorm = normalizeUrl(currentUrl || '', indexUrl);
+          const startIdx = tocLinks.findIndex(u => u === currNorm);
+          const sliced =
+            startIdx >= 0 ? tocLinks.slice(startIdx + 1, startIdx + 1 + MAX_CACHE_TASKS) : tocLinks;
+          taskList = sliced.filter(u => !loadedUrls.value.has(u)).slice(0, MAX_CACHE_TASKS);
+          cacheQueue.value = taskList;
+        }
+      }
+    }
+
+    // 估算总数：已知列表则用列表长度，否则用上限做估计
+    const estimatedTotal = taskList.length > 0 ? taskList.length : MAX_CACHE_TASKS;
+    cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
+
+    let nextUrl: string | undefined | null =
+      taskList.shift() ?? chapters.value[chapters.value.length - 1]?.chapter.nextUrl;
+    let referer = chapters.value[chapters.value.length - 1]?.chapter.url;
+
+    while (cacheProgress.value.running && nextUrl && cacheProgress.value.done < MAX_CACHE_TASKS) {
+      // 去重
+      if (loadedUrls.value.has(nextUrl)) {
+        cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
+        nextUrl = taskList.shift();
+        continue;
+      }
+
+      const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
+      cacheAbort.value = abort;
+      const doc = await promise;
+      cacheAbort.value = null;
+      if (!doc) {
+        nextUrl = taskList.shift();
+        continue;
+      }
+
+      const parser = getParser();
+      const parsed = await parser.parse(doc, nextUrl);
+      if (!parsed) {
+        nextUrl = taskList.shift();
+        continue;
+      }
+
+      const id = `chapter-${Date.now()}-cache-${chapters.value.length}`;
+      chapters.value.push({ chapter: parsed, rule: parsed.rule, id });
+      loadedUrls.value.add(parsed.url);
+      originalContents.value.set(id, parsed.content);
+
+      cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
+
+      // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl
+      referer = parsed.url;
+      nextUrl = taskList.shift() ?? parsed.nextUrl;
+    }
+
+    // 若实际抓取数 < 估计，刷新 total 为真实值
+    if (cacheProgress.value.done < cacheProgress.value.total) {
+      cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done };
+    }
+    cacheProgress.value = { ...cacheProgress.value, running: false };
+    cacheAbort.value = null;
+  }
+
+  function cancelCacheAll(): void {
+    cacheProgress.value = { done: 0, total: 0, running: false };
+    cacheQueue.value = [];
+    cacheAbort.value?.();
+    cacheAbort.value = null;
+  }
+
+  function parseTocLinks(doc: Document, base: string, limit: number): string[] {
+    // Reuse parseTocWithTitles to get smart filtering and sorting
+    const entries = parseTocWithTitles(doc, base);
+
+    // Return just the URLs, respecting the limit
+    return entries.slice(0, limit).map(entry => entry.url);
+  }
+
+  function normalizeUrl(href: string, base: string): string | null {
+    try {
+      return new URL(href, base).toString();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Extract URL pattern by replacing numbers with placeholders
+   * e.g., /chapter/123/456.html -> /chapter/{N}/{N}.html
+   */
+  function extractUrlPattern(url: string): string {
+    try {
+      const u = new URL(url);
+      // Replace consecutive digits with {N}, keep path structure
+      return u.pathname.replace(/\d+/g, '{N}');
+    } catch {
+      return url.replace(/\d+/g, '{N}');
+    }
+  }
+
+  /**
+   * Chapter title whitelist patterns - titles matching these are likely real chapters
+   * Based on common novel chapter naming conventions
+   */
+  const CHAPTER_TITLE_PATTERNS = [
+    // Chinese chapter formats: 第X章/节/回/话/篇/集/卷
+    /^.{0,10}第.{1,10}[章节回话篇集卷]/,
+    // Numbered chapters: 1. xxx, 001 xxx, etc.
+    /^\d{1,4}[.、\s]/,
+    // Chapter keyword at start
+    /^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
+    // English format
+    /^chapter\s*\d+/i,
+    /^(prologue|epilogue|preface)/i,
+  ];
+
+  /**
+   * Non-chapter title patterns to filter out (blacklist)
+   */
+  const NON_CHAPTER_TITLE_PATTERNS = [
+    // Announcements and notices
+    /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
+    /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更/,
+    // Author-related
+    /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
+    // Promotional content
+    /求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
+    /新书|推荐|安利|宣传|书单|书评/,
+    // Metadata pages
+    /^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
+    // Locked/VIP markers that are standalone entries (not part of chapter title)
+    /^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
+    // External links and community
+    /官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
+    // Common non-content links
+    /登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
+    /首页|返回|上一页|下一页|翻页/,
+    // Volume/section labels only (e.g., "章节2", "卷一", not real chapter titles)
+    /^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
+    /^(正文|番外|VIP卷?|免费章节?)\s*$/,
+  ];
+
+  /**
+   * Extract book ID from URL for same-book filtering
+   * Returns null if cannot extract
+   */
+  function extractBookId(url: string): string | null {
+    try {
+      const u = new URL(url);
+      // Common patterns: /book/123/, /chapter/123/456/, /123/456.html
+      const patterns = [
+        /\/book\/(\d+)/,
+        /\/chapter\/(\d+)\//,
+        /\/(\d+)\/\d+(?:\.html?)?$/,
+        /[?&](?:book_?id|bid|id)=(\d+)/i,
+      ];
+      for (const p of patterns) {
+        const m = u.pathname.match(p) || u.search.match(p);
+        if (m) return m[1];
+      }
+    } catch {
+      // Invalid URL
+    }
+    return null;
+  }
+
+  /**
+   * Check if a title matches chapter patterns (whitelist)
+   */
+  function isLikelyChapterTitle(title: string): boolean {
+    const t = title.trim();
+    return CHAPTER_TITLE_PATTERNS.some(p => p.test(t));
+  }
+
+  /**
+   * Check if a title looks like a non-chapter entry (blacklist)
+   */
+  function isNonChapterTitle(title: string): boolean {
+    const t = title.trim();
+    // Too short to be a chapter
+    if (t.length < 2) return true;
+    // Match against blacklist patterns
+    return NON_CHAPTER_TITLE_PATTERNS.some(p => p.test(t));
+  }
+
+  /**
+   * Smart filter TOC entries based on URL pattern analysis and title filtering
+   * Strategy:
+   * 1. Same-book filtering - filter out links to other books (recommendations)
+   * 2. URL pattern analysis - find dominant URL patterns (chapter URLs usually follow same pattern)
+   * 3. Title whitelist - entries matching chapter patterns get priority
+   * 4. Title blacklist - filter out non-chapter content
+   */
+  function filterTocEntries(entries: TocEntry[]): TocEntry[] {
+    if (entries.length < 5) return entries; // Too few to analyze
+
+    // Step 0: Same-book filtering - find dominant book ID and filter out other books
+    const bookIdCounts = new Map<string, number>();
+    for (const entry of entries) {
+      const bookId = extractBookId(entry.url);
+      if (bookId) {
+        bookIdCounts.set(bookId, (bookIdCounts.get(bookId) || 0) + 1);
+      }
+    }
+
+    // Find the dominant book ID (most common one)
+    let dominantBookId: string | null = null;
+    let maxCount = 0;
+    for (const [bookId, count] of bookIdCounts) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantBookId = bookId;
+      }
+    }
+
+    // Pre-filter: remove entries pointing to different books (recommendations)
+    const sameBookEntries =
+      dominantBookId && maxCount >= 5
+        ? entries.filter(entry => {
+            const bookId = extractBookId(entry.url);
+            // Keep if: no book ID detected, or matches dominant book ID
+            return !bookId || bookId === dominantBookId;
+          })
+        : entries;
+
+    // Step 1: Count URL patterns
+    const patternCounts = new Map<string, number>();
+    const patternEntries = new Map<string, TocEntry[]>();
+
+    for (const entry of sameBookEntries) {
+      const pattern = extractUrlPattern(entry.url);
+      patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
+      if (!patternEntries.has(pattern)) {
+        patternEntries.set(pattern, []);
+      }
+      patternEntries.get(pattern)!.push(entry);
+    }
+
+    // Step 2: Find dominant pattern(s)
+    const sortedPatterns = Array.from(patternCounts.entries()).sort((a, b) => b[1] - a[1]);
+
+    const dominantPatterns = new Set<string>();
+    const totalEntries = sameBookEntries.length;
+
+    for (const [pattern, count] of sortedPatterns) {
+      // Accept patterns that have at least 5 entries OR represent > 30% of total
+      const ratio = count / totalEntries;
+      if (count >= 5 || ratio > 0.3) {
+        dominantPatterns.add(pattern);
+        // Stop if we've covered enough entries (> 90%)
+        const coveredCount = Array.from(dominantPatterns).reduce(
+          (sum, p) => sum + (patternCounts.get(p) || 0),
+          0
+        );
+        if (coveredCount / totalEntries > 0.9) break;
+      }
+    }
+
+    // If no dominant pattern found, use the most common one
+    if (dominantPatterns.size === 0 && sortedPatterns.length > 0) {
+      dominantPatterns.add(sortedPatterns[0][0]);
+    }
+
+    // Step 3: Score and filter entries
+    // Score: +2 for URL pattern match, +1 for whitelist title, -2 for blacklist title
+    // But: whitelist overrides blacklist (chapter with "求票" suffix should be kept)
+    const scoredEntries = sameBookEntries.map(entry => {
+      let score = 0;
+      const pattern = extractUrlPattern(entry.url);
+
+      // URL pattern match
+      if (dominantPatterns.has(pattern)) {
+        score += 2;
+      }
+
+      // Title whitelist (looks like a chapter)
+      const matchesWhitelist = isLikelyChapterTitle(entry.title);
+      if (matchesWhitelist) {
+        score += 1;
+      }
+
+      // Title blacklist (looks like non-chapter)
+      // Only apply blacklist penalty if title doesn't match whitelist
+      // This prevents filtering "第1章 xxx（求票）" which is a valid chapter
+      if (!matchesWhitelist && isNonChapterTitle(entry.title)) {
+        score -= 2;
+      }
+
+      return { entry, score };
+    });
+
+    // Filter: keep entries with score >= 1
+    // (either URL match + not blacklisted, or whitelist title)
+    const filtered = scoredEntries.filter(({ score }) => score >= 1).map(({ entry }) => entry);
+
+    // Fallback: if filtering removed too many entries, be more conservative
+    if (filtered.length < sameBookEntries.length * 0.3 || filtered.length < 10) {
+      // More lenient: just apply blacklist filtering without URL pattern
+      const lenientFiltered = sameBookEntries.filter(entry => !isNonChapterTitle(entry.title));
+      // If lenient filter gives reasonable results, use it
+      if (lenientFiltered.length >= filtered.length) {
+        // Use lenient results, but we still need to apply sorting logic below
+        return sortTocEntries(lenientFiltered);
+      }
+    }
+
+    return sortTocEntries(filtered);
+  }
+
+  /**
+   * Detect list order and sort/reverse if necessary
+   * Handles cases where TOC is in descending order (newest first)
+   */
+  function sortTocEntries(entries: TocEntry[]): TocEntry[] {
+    if (entries.length < 5) return entries;
+
+    // Extract numbers from titles
+    const entriesWithNum = entries
+      .map((entry, index) => ({
+        index, // Keep original index
+        entry,
+        num: extractChapterNumber(entry.title),
+      }))
+      .filter(item => item.num !== null);
+
+    // Only attempt sorting if we have enough numbered entries
+    if (entriesWithNum.length < entries.length * 0.3 || entriesWithNum.length < 3) {
+      return entries;
+    }
+
+    // Check order trends using adjacent pairs
+    let descendingPairs = 0;
+    let ascendingPairs = 0;
+
+    for (let i = 0; i < entriesWithNum.length - 1; i++) {
+      const diff = entriesWithNum[i + 1].num! - entriesWithNum[i].num!;
+      if (diff < 0) descendingPairs++;
+      else if (diff > 0) ascendingPairs++;
+    }
+
+    // If overwhelmingly descending (reverse order), reverse the list
+    // Threshold: > 60% of pairs are descending
+    const totalPairs = descendingPairs + ascendingPairs;
+    if (totalPairs > 0 && descendingPairs / totalPairs > 0.6) {
+      // It's a descending list, reverse it to make it ascending (Chapter 1 -> Chapter N)
+      return [...entries].reverse();
+    }
+
+    return entries;
+  }
+
+  /**
+   * Extract chapter number from title for sorting
+   * Primarily supports Arabic numbers which are most common
+   */
+  function extractChapterNumber(title: string): number | null {
+    // 1. "第123章" / "第 123 章" / "第123话"
+    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
+    if (match1) return parseInt(match1[1], 10);
+
+    // 2. "123." / "123 " / "123、" at start
+    const match2 = title.match(/^(\d+)[.、\s]/);
+    if (match2) return parseInt(match2[1], 10);
+
+    // 3. "Chapter 123"
+    const match3 = title.match(/Chapter\s*(\d+)/i);
+    if (match3) return parseInt(match3[1], 10);
+
+    // 4. Pure number at start (riskier, check length)
+    // const match4 = title.match(/^(\d+)\s*$/);
+    // if (match4) return parseInt(match4[1], 10);
+
+    return null;
+  }
+
+  /**
+   * Parse TOC with titles from a document
+   */
+  function parseTocWithTitles(doc: Document, base: string): TocEntry[] {
+    const links = Array.from(doc.querySelectorAll('a[href]'));
+    const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
+    const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
+    const results: TocEntry[] = [];
+    const seenUrls = new Set<string>();
+
+    for (const a of links) {
+      const text = (a.textContent || '').trim();
+      const href = a.getAttribute('href') || '';
+      const abs = normalizeUrl(href, base);
+      if (!abs || seenUrls.has(abs)) continue;
+
+      if (textPattern.test(text) || urlPattern.test(href)) {
+        seenUrls.add(abs);
+        results.push({
+          title: text || `章节 ${results.length + 1}`,
+          url: abs,
+        });
+      }
+    }
+
+    // Apply smart filtering
+    return filterTocEntries(results);
+  }
+
+  /**
+   * Load table of contents from index URL
+   */
+  async function loadToc(): Promise<void> {
+    const indexUrl = chapter.value?.indexUrl;
+    if (!indexUrl || toc.value.length > 0 || tocLoading.value) return;
+
+    tocLoading.value = true;
+    const currentUrl = chapter.value?.url || '';
+
+    try {
+      const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
+      tocAbort.value = abort;
+
+      const doc = await promise;
+      if (doc) {
+        toc.value = parseTocWithTitles(doc, indexUrl);
+      }
+    } catch (e) {
+      console.error('[MNR] Failed to load TOC:', e);
+    } finally {
+      tocLoading.value = false;
+      tocAbort.value = null;
+    }
+  }
+
   function $reset() {
     isActive.value = false;
     isLoading.value = false;
@@ -341,6 +890,16 @@ export const useReaderStore = defineStore('reader', () => {
     loadedUrls.value.clear();
     originalContents.value.clear();
     currentConversionMode.value = 'none';
+    cacheProgress.value = { done: 0, total: 0, running: false };
+    cacheQueue.value = [];
+    cacheAbort.value = null;
+    // Reset TOC state
+    toc.value = [];
+    tocLoading.value = false;
+    if (tocAbort.value) {
+      tocAbort.value();
+      tocAbort.value = null;
+    }
   }
 
   return {
@@ -356,6 +915,9 @@ export const useReaderStore = defineStore('reader', () => {
     error,
     scrollPercent,
     history,
+    cacheProgress,
+    toc,
+    tocLoading,
 
     // Getters
     title,
@@ -380,6 +942,9 @@ export const useReaderStore = defineStore('reader', () => {
     updateScroll,
     getProgress,
     applyTextConversion,
+    startCacheAll,
+    cancelCacheAll,
+    loadToc,
     $reset,
   };
 });
@@ -392,16 +957,21 @@ function getGmXhr(): typeof GM_xmlhttpRequest | null {
   return null;
 }
 
-/** Fetch URL and return parsed Document */
-async function fetchAndParseUrl(url: string, referer?: string): Promise<Document | null> {
+/** Fetch URL and return parsed Document with abort handle */
+function fetchAndParseUrl(
+  url: string,
+  referer?: string
+): { promise: Promise<Document | null>; abort: () => void } {
   const gmXhr = getGmXhr();
 
   if (!gmXhr) {
     console.error('[MNR] GM_xmlhttpRequest not available');
-    return null;
+    return { promise: Promise.resolve(null), abort: () => {} };
   }
 
-  return new Promise(resolve => {
+  let request: GmXhrReturn | null = null;
+
+  const promise = new Promise<Document | null>(resolve => {
     const headers: Record<string, string> = {
       Accept: 'text/html,application/xhtml+xml,application/xml',
       'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -409,7 +979,7 @@ async function fetchAndParseUrl(url: string, referer?: string): Promise<Document
     if (referer) {
       headers['Referer'] = referer;
     }
-    gmXhr({
+    request = gmXhr({
       method: 'GET',
       url,
       headers,
@@ -445,6 +1015,16 @@ async function fetchAndParseUrl(url: string, referer?: string): Promise<Document
       },
     });
   });
+
+  const abort = () => {
+    try {
+      request?.abort();
+    } catch {
+      // ignore
+    }
+  };
+
+  return { promise, abort };
 }
 
 /**

@@ -178,6 +178,12 @@
             <h4>操作</h4>
             <div class="mnr-action-buttons">
               <button class="mnr-action-btn" @click="$emit('editRule')">编辑站点规则</button>
+              <button class="mnr-action-btn" @click="$emit('cacheAll')">
+                缓存本书
+                <span v-if="cacheProgress.total > 0" class="mnr-cache-progress">
+                  {{ cacheProgress.done }}/{{ cacheProgress.total }}
+                </span>
+              </button>
               <button
                 class="mnr-action-btn"
                 @click="
@@ -198,6 +204,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useConfigStore, THEMES } from '@/ui/stores/config';
+import { useReaderStore } from '@/ui/stores/reader';
 import { closeReader } from '@/bootstrap';
 
 const props = defineProps<{
@@ -207,11 +214,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   editRule: [];
+  cacheAll: [];
   textConversionChange: [mode: 'none' | 'sc' | 'tc'];
 }>();
 
 // Store
 const configStore = useConfigStore();
+const readerStore = useReaderStore();
 
 // Local state synced with store
 const themes = THEMES;
@@ -225,6 +234,7 @@ const keyboardNav = ref(configStore.behavior.keyboardNavigation);
 const swipeGestures = ref(configStore.behavior.swipeGestures);
 const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 const showProgress = ref(configStore.behavior.showProgress);
+const cacheProgress = computed(() => readerStore.cacheProgress);
 
 // Methods
 function setTheme(id: string) {
