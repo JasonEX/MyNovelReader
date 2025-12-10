@@ -82,6 +82,16 @@ export class Parser {
   ): ParsedChapter | null {
     const rule = ruleMatch.rule;
 
+    // Execute beforeParse hook if present
+    if (rule.hooks?.beforeParse) {
+      try {
+        const fn = new Function('doc', rule.hooks.beforeParse);
+        fn(doc);
+      } catch (e) {
+        console.warn('[Parser] beforeParse hook error:', e);
+      }
+    }
+
     // Extract content
     const contentElement = this.selectElement(doc, rule.content.selector);
     if (!contentElement) {

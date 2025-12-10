@@ -25,6 +25,8 @@ export interface ProtectionOptions {
   removeEventHijacking?: boolean;
   /** Block visibility change detection */
   blockVisibilityDetection?: boolean;
+  /** Clear all timers (setInterval/setTimeout) to reduce CPU usage */
+  clearTimers?: boolean;
 }
 
 const DEFAULT_OPTIONS: ProtectionOptions = {
@@ -35,6 +37,7 @@ const DEFAULT_OPTIONS: ProtectionOptions = {
   blockPopups: true,
   removeEventHijacking: true,
   blockVisibilityDetection: true,
+  clearTimers: true,
 };
 
 export class SiteProtection {
@@ -53,6 +56,11 @@ export class SiteProtection {
   activate(): void {
     if (this.isActive) return;
     this.isActive = true;
+
+    // Clear timers first to reduce CPU usage from tracking scripts
+    if (this.options.clearTimers) {
+      this.clearTimers();
+    }
 
     if (this.options.blockRedirects) {
       this.blockRedirects();
@@ -470,6 +478,28 @@ export class SiteProtection {
     // Re-enable scrolling
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
+  }
+
+  /**
+   * Clear all intervals and timeouts to reduce CPU usage
+   * Many novel sites use tracking scripts that create intervals causing high CPU/GC
+   */
+  private clearTimers(): void {
+    // Get the highest timer ID by creating a new one
+    const highestId = window.setInterval(() => {}, 0);
+
+    // Clear all intervals
+    for (let i = 0; i <= highestId; i++) {
+      window.clearInterval(i);
+    }
+
+    // Also clear timeouts (they share the same ID space in most browsers)
+    const highestTimeoutId = window.setTimeout(() => {}, 0);
+    for (let i = 0; i <= highestTimeoutId; i++) {
+      window.clearTimeout(i);
+    }
+
+    console.log(`[SiteProtection] Cleared ${highestId} intervals and ${highestTimeoutId} timeouts`);
   }
 
   /**

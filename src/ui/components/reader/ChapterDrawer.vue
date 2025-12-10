@@ -25,7 +25,13 @@
         <li
           v-for="ch in chapters"
           :key="ch.url"
-          :ref="el => ch.url === currentUrl && (activeRef = el as HTMLElement)"
+          :ref="
+            el => {
+              if (ch.url === currentUrl) {
+                activeRef.value = el as HTMLElement | null;
+              }
+            }
+          "
           :class="{ active: ch.url === currentUrl }"
           @click="handleSelect(ch.url)"
         >
@@ -60,23 +66,51 @@ const emit = defineEmits<{
 const contentRef = ref<HTMLElement | null>(null);
 const activeRef = ref<HTMLElement | null>(null);
 
-// 当抽屉打开时，滚动到当前章节
+const scrollActiveIntoView = async (behavior: 'auto' | 'smooth' = 'auto') => {
+  await nextTick();
+  if (!props.isOpen || props.loading) return;
+
+  const container = contentRef.value;
+  if (!container) return;
+
+  // 直接在 DOM 中查找当前高亮项，避免依赖 ref 回调未触发的情况
+  const active = (container.querySelector('li.active') as HTMLElement | null) || activeRef.value;
+
+  if (!active) return;
+  activeRef.value = active;
+
+  const targetTop = active.offsetTop - container.clientHeight / 2 + active.offsetHeight / 2;
+  container.scrollTo({
+    top: Math.max(targetTop, 0),
+    behavior,
+  });
+};
+
+// 当抽屉打开或当前章节/目录加载完成时，滚动到当前章节
 watch(
   () => props.isOpen,
   async open => {
-    if (open && activeRef.value && contentRef.value) {
-      await nextTick();
-      const container = contentRef.value;
-      const active = activeRef.value;
-
-      // 滚动到当前章节，使其居中显示
-      const containerHeight = container.clientHeight;
-      const activeTop = active.offsetTop;
-      const activeHeight = active.offsetHeight;
-
-      container.scrollTop = activeTop - containerHeight / 2 + activeHeight / 2;
+    if (open) {
+      await scrollActiveIntoView('smooth');
     }
-  }
+  },
+  { flush: 'post' }
+);
+
+watch(
+  () => [props.currentUrl, props.loading, props.chapters.length],
+  async () => {
+    await scrollActiveIntoView();
+  },
+  { flush: 'post' }
+);
+
+watch(
+  activeRef,
+  async () => {
+    await scrollActiveIntoView();
+  },
+  { flush: 'post' }
 );
 
 function handleSelect(url: string) {
@@ -218,6 +252,7 @@ function handleSelect(url: string) {
   font-size: 14px;
   line-height: 1.4;
   transition: all 0.15s ease;
+  scroll-margin-block: 24px;
 }
 
 .mnr-chapter-list li:hover {

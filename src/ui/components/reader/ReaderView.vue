@@ -402,7 +402,8 @@ function handleScrollCore() {
 const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
 
 // Load previous chapter with scroll position adjustment
-async function loadPrevWithScrollAdjust() {
+// jumpToStart: true => snap to the start (title) of the newly loaded chapter to avoid bounce
+async function loadPrevWithScrollAdjust(jumpToStart = false) {
   const mainEl = mainRef.value;
   if (!mainEl || isLoadingPrev.value) return;
 
@@ -418,7 +419,14 @@ async function loadPrevWithScrollAdjust() {
     // Wait one more frame to ensure rendering is complete
     await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
 
-    // Find the newly added chapter element (it's the first .mnr-reader-content)
+    if (jumpToStart) {
+      // When user explicitly wants to go to previous chapter, snap to its title to avoid bounce
+      const targetIndex = Math.max(readerStore.currentChapterIndex - 1, 0);
+      await jumpToChapter(targetIndex, 'auto');
+      return;
+    }
+
+    // Default: keep visual position (infinite scroll experience)
     const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
     if (chapterEls.length > 0) {
       const newChapterEl = chapterEls[0] as HTMLElement;
@@ -566,16 +574,28 @@ function scrollReader(direction: 'up' | 'down' | 'pageup' | 'pagedown') {
   let behavior: 'auto' | 'smooth' = 'auto';
 
   switch (direction) {
-    case 'up':
+    case 'up': {
+      // If already at the very top, load previous chapter
+      if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+        loadPrevWithScrollAdjust(true);
+        return;
+      }
       top = -step;
       break;
+    }
     case 'down':
       top = step;
       break;
-    case 'pageup':
+    case 'pageup': {
+      // If already at the very top, directly load previous chapter and snap to its title
+      if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+        loadPrevWithScrollAdjust(true);
+        return;
+      }
       top = -pageHeight;
       behavior = 'smooth';
       break;
+    }
     case 'pagedown':
       top = pageHeight;
       behavior = 'smooth';
@@ -709,11 +729,14 @@ onMounted(async () => {
     }
   }, observerOptions);
 
-  // Top sentinel - load previous chapter
-  topObserver = new globalThis.IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-      loadPrevWithScrollAdjust();
-    }
+  // Top sentinel - NO auto-load for previous chapter
+  // Previous chapter loading is now ONLY triggered by explicit user actions:
+  // - Wheel scroll up when at top (handleWheel)
+  // - Keyboard shortcuts (ArrowUp/PageUp when at top)
+  // This prevents unwanted bounce during programmatic navigation
+  topObserver = new globalThis.IntersectionObserver(() => {
+    // Intentionally empty - we keep the observer for potential future use
+    // but don't auto-trigger prev chapter loading
   }, observerOptions);
 
   if (bottomSentinel.value) {
@@ -760,6 +783,8 @@ onUnmounted(() => {
   overflow: auto;
   padding-top: 68px;
   padding-bottom: 40px;
+  /* Prevent rubber-band bounce from propagating and messing with prev-chapter positioning */
+  overscroll-behavior: contain;
 }
 
 .mnr-reader-content {
