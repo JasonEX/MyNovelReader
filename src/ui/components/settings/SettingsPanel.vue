@@ -177,7 +177,16 @@
           <section class="mnr-settings-section">
             <h4>操作</h4>
             <div class="mnr-action-buttons">
-              <button class="mnr-action-btn" @click="$emit('editRule')">编辑站点规则</button>
+              <div class="mnr-rule-row">
+                <button class="mnr-action-btn" @click="$emit('editRule')">编辑站点规则</button>
+                <button
+                  v-if="hasUserRule"
+                  class="mnr-action-btn mnr-action-btn--danger"
+                  @click="handleResetRule"
+                >
+                  重置
+                </button>
+              </div>
               <div class="mnr-cache-row">
                 <button class="mnr-action-btn" @click="$emit('cacheAll')">
                   缓存本书
@@ -215,15 +224,18 @@
 import { ref, computed, watch } from 'vue';
 import { useConfigStore, THEMES } from '@/ui/stores/config';
 import { useReaderStore } from '@/ui/stores/reader';
+import { useRuleStore } from '@/ui/stores/rule';
 import { closeReader } from '@/bootstrap';
 
 const props = defineProps<{
   visible: boolean;
+  domain?: string;
 }>();
 
 const emit = defineEmits<{
   close: [];
   editRule: [];
+  resetRule: [];
   cacheAll: [];
   textConversionChange: [mode: 'none' | 'sc' | 'tc'];
 }>();
@@ -231,6 +243,13 @@ const emit = defineEmits<{
 // Store
 const configStore = useConfigStore();
 const readerStore = useReaderStore();
+const ruleStore = useRuleStore();
+
+// Check if current site has user rule
+const hasUserRule = computed(() => {
+  if (!props.domain) return false;
+  return ruleStore.hasUserRule(props.domain);
+});
 
 // Local state synced with store
 const themes = THEMES;
@@ -292,6 +311,15 @@ function updateBehavior(key: string, value: boolean) {
 async function handleClearCache() {
   if (window.confirm('确定要清除本书的缓存吗？')) {
     await readerStore.clearPersistedCache();
+  }
+}
+
+async function handleResetRule() {
+  if (window.confirm('确定要重置站点规则吗？将恢复为默认/自动检测。')) {
+    if (props.domain) {
+      await ruleStore.deleteUserRule(props.domain);
+      emit('resetRule');
+    }
   }
 }
 
@@ -518,6 +546,15 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.mnr-rule-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mnr-rule-row .mnr-action-btn {
+  flex: 1;
 }
 
 .mnr-cache-row {

@@ -81,8 +81,10 @@
     <!-- Settings panel -->
     <SettingsPanel
       :visible="settingsVisible"
+      :domain="currentDomain"
       @close="settingsVisible = false"
       @editRule="openRuleEditor"
+      @resetRule="handleRuleReset"
       @textConversionChange="handleTextConversionChange"
       @cacheAll="handleCacheAll"
     />
@@ -354,9 +356,21 @@ function openRuleEditor() {
 
 async function handleRuleSave(rule: SiteRule) {
   if (currentDomain.value) {
-    await ruleStore.saveUserRule(currentDomain.value, rule);
+    try {
+      await ruleStore.saveUserRule(currentDomain.value, rule);
+      readerStore.showToast('规则已保存', 'info');
+    } catch (e) {
+      console.error('[MNR] Save rule error:', e);
+      readerStore.showToast('保存失败', 'error');
+    }
   }
   ruleEditorVisible.value = false;
+}
+
+function handleRuleReset() {
+  // Close settings panel and show toast
+  settingsVisible.value = false;
+  readerStore.showToast('站点规则已重置', 'info');
 }
 
 function openSettings() {

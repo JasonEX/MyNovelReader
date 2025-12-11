@@ -498,8 +498,6 @@ export class SiteProtection {
     for (let i = 0; i <= highestTimeoutId; i++) {
       window.clearTimeout(i);
     }
-
-    console.log(`[SiteProtection] Cleared ${highestId} intervals and ${highestTimeoutId} timeouts`);
   }
 
   /**

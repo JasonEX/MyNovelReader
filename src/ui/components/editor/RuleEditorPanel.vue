@@ -197,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, reactive } from 'vue';
+import { ref, computed, watch, reactive, toRaw } from 'vue';
 import type { SiteRule } from '@/core/rules/types';
 import ElementPicker, { type PickerMode } from './ElementPicker.vue';
 import SelectorPreview from './SelectorPreview.vue';
@@ -483,7 +483,9 @@ function save() {
   localRule.meta.updated = Date.now();
   localRule.version = (localRule.version || 0) + 1;
 
-  emit('save', { ...localRule });
+  // Convert reactive proxy to plain object for GM_setValue compatibility
+  const plainRule = JSON.parse(JSON.stringify(toRaw(localRule))) as SiteRule;
+  emit('save', plainRule);
 }
 
 // Watch for tab change to sync code

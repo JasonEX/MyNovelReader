@@ -280,7 +280,6 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Pre-fetch validation: check if URL looks like a valid chapter page
     if (isInvalidChapterUrl(nextUrl, lastChapter.chapter.url)) {
-      console.log('[MNR] Skipping invalid chapter URL:', nextUrl);
       loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
       isLoadingNext.value = false;
       showToast('已经是最后一章了', 'info');
@@ -428,7 +427,6 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Pre-fetch validation: check if URL looks like a valid chapter page
     if (isInvalidChapterUrl(prevUrl, firstChapter.chapter.url)) {
-      console.log('[MNR] Skipping invalid chapter URL:', prevUrl);
       loadedUrls.value.add(prevUrl); // Mark as loaded to prevent retry
       isLoadingPrev.value = false;
       showToast('已经是第一章了', 'info');
@@ -1293,7 +1291,6 @@ export const useReaderStore = defineStore('reader', () => {
         GM_setValue(`mnr_cache_${bookId}`, JSON.stringify(data));
         // Update persistedUrls to reflect what's saved
         persistedUrls.value = new Set(Object.keys(chaptersObj));
-        console.log(`[MNR] Cache persisted: ${cachedContents.value.size} chapters`);
       }
     } catch (e) {
       console.error('[MNR] Failed to persist cache:', e);
@@ -1322,8 +1319,6 @@ export const useReaderStore = defineStore('reader', () => {
             loadedUrls.value.add(url);
           }
           persistedUrls.value = new Set(urls);
-
-          console.log(`[MNR] Cache restored: ${cachedContents.value.size} chapters`);
         }
       }
     } catch (e) {
@@ -1346,7 +1341,6 @@ export const useReaderStore = defineStore('reader', () => {
       }
       // Only clear persisted URLs, keep session cache intact
       persistedUrls.value.clear();
-      console.log('[MNR] Persisted cache cleared');
     } catch (e) {
       console.error('[MNR] Failed to clear cache:', e);
     }
