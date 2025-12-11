@@ -102,16 +102,22 @@ export class Parser {
     // Extract navigation from rule selectors
     let navigation = this.extractNavigation(doc, rule);
 
-    // Fallback to detection-based navigation if rule selectors didn't find links
-    if (!navigation.next || !navigation.prev) {
+    // Fallback to detection-based navigation ONLY if rule doesn't define that nav type
+    // If rule defines a selector but it doesn't match, that means the link doesn't exist
+    // (e.g., first chapter has no prev link)
+    const hasRulePrev = rule.navigation?.prev && rule.navigation.prev !== false;
+    const hasRuleNext = rule.navigation?.next && rule.navigation.next !== false;
+    const hasRuleIndex = rule.navigation?.index && rule.navigation.index !== false;
+
+    if (!navigation.next || !navigation.prev || !navigation.index) {
       const detectedNav = this.detectionEngine.detect(doc, url).results.navigation;
-      if (!navigation.next && detectedNav.next?.url) {
+      if (!hasRuleNext && !navigation.next && detectedNav.next?.url) {
         navigation.next = detectedNav.next.url;
       }
-      if (!navigation.prev && detectedNav.prev?.url) {
+      if (!hasRulePrev && !navigation.prev && detectedNav.prev?.url) {
         navigation.prev = detectedNav.prev.url;
       }
-      if (!navigation.index && detectedNav.index?.url) {
+      if (!hasRuleIndex && !navigation.index && detectedNav.index?.url) {
         navigation.index = detectedNav.index.url;
       }
     }

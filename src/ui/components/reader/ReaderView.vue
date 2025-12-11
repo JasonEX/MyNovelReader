@@ -323,7 +323,7 @@ async function jumpToCachedChapter(url: string) {
  * Scroll to a specific chapter in the view
  */
 function scrollToChapter(index: number) {
-  const chapterEl = chapterRefs.value.get(index);
+  const chapterEl = chapterRefs.get(index);
   if (chapterEl) {
     chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -723,6 +723,9 @@ async function navigateChapter(direction: 'prev' | 'next') {
         // Use auto scroll to prevent bounce/race condition with top observer
         globalThis.requestAnimationFrame(() => jumpToChapter(0, 'auto'));
       }
+    } else if (!hasPrev.value) {
+      // Show toast when no previous chapter available
+      readerStore.showToast('已经是第一章了', 'info');
     }
   } else {
     if (currentIdx < chaptersCount - 1) {
@@ -732,6 +735,9 @@ async function navigateChapter(direction: 'prev' | 'next') {
       if (success) {
         globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
       }
+    } else if (!hasNext.value) {
+      // Show toast when no next chapter available
+      readerStore.showToast('已经是最后一章了', 'info');
     }
   }
 }

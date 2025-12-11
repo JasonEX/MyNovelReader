@@ -1052,13 +1052,13 @@ export const useReaderStore = defineStore('reader', () => {
 
   /**
    * Parse TOC with titles from a document
+   * Deduplication strategy: Keep last occurrence position, but prefer better titles
+   * This handles TOC pages with "recent updates" at top followed by full chapter list
    */
   function parseTocWithTitles(doc: Document, base: string): TocEntry[] {
     const links = Array.from(doc.querySelectorAll('a[href]'));
     const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
     const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
-    const results: TocEntry[] = [];
-    const seenUrls = new Map<string, number>(); // url -> index in results
 
     const isPlaceholder = (title: string) => /^章节\s*\d+$/i.test(title.trim());
     const isBetterTitle = (oldTitle: string, newTitle: string): boolean => {
@@ -1077,8 +1077,60 @@ export const useReaderStore = defineStore('reader', () => {
       return newTitle.length > oldTitle.length;
     };
 
+    /**
+     * Extract chapter title from link element
+     * Prioritizes inner title elements to avoid getting extra text like "免费", "VIP"
+     */
+    const extractLinkTitle = (a: Element): string => {
+      // Method 1: Try common title selectors (Qidian mobile sidebar, etc.)
+      const titleSelectors = [
+        '[class*="chapterItemTitle"]', // Qidian mobile: _chapterItemTitle_xxx
+        '[class*="chapter-title"]',
+        '[class*="chapterTitle"]',
+        'h2', // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
+        'h3',
+      ];
+
+      for (const sel of titleSelectors) {
+        const el = a.querySelector(sel);
+        if (el) {
+          const text = (el.textContent || '').trim();
+          if (text) return text;
+        }
+      }
+
+      // Method 2: If link has child elements, try to get first meaningful text
+      // This handles structures like: <a><div><p>Title</p><p>免费</p></div></a>
+      const firstP = a.querySelector('p');
+      if (firstP) {
+        // Check if there are multiple p elements (likely title + status)
+        const allP = a.querySelectorAll('p');
+        if (allP.length > 1) {
+          // Return first p's text (usually the title)
+          const text = (firstP.textContent || '').trim();
+          if (text) return text;
+        }
+      }
+
+      // Method 3: Get direct text content only (excludes child element text)
+      // This handles: <a>Chapter Title<span>Extra</span></a>
+      let directText = '';
+      for (const node of Array.from(a.childNodes)) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          directText += node.textContent || '';
+        }
+      }
+      directText = directText.trim();
+      if (directText) return directText;
+
+      // Fallback to full textContent
+      return (a.textContent || '').trim();
+    };
+
+    // Phase 1: Collect all candidate entries (with duplicates)
+    const candidates: TocEntry[] = [];
     for (const a of links) {
-      const text = (a.textContent || '').trim();
+      const text = extractLinkTitle(a);
       const href = a.getAttribute('href') || '';
       const abs = normalizeUrl(href, base);
       if (!abs) continue;
@@ -1088,21 +1140,27 @@ export const useReaderStore = defineStore('reader', () => {
         continue;
       }
 
-      const title = text || `章节 ${results.length + 1}`;
+      const title = text || `章节 ${candidates.length + 1}`;
+      candidates.push({ title, url: abs });
+    }
 
-      if (seenUrls.has(abs)) {
-        // If we already have this URL, upgrade the title when the new one is better
-        const idx = seenUrls.get(abs)!;
-        const current = results[idx];
-        if (isBetterTitle(current.title, title)) {
-          results[idx] = { title, url: abs };
+    // Phase 2: Deduplicate - keep last occurrence position, but prefer better title
+    // Process from end to start, so first occurrence we see is the last in document
+    const seenUrls = new Map<string, TocEntry>();
+    const results: TocEntry[] = [];
+
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const entry = candidates[i];
+      if (seenUrls.has(entry.url)) {
+        // We already have this URL from a later position
+        // Check if current (earlier) entry has better title
+        const existing = seenUrls.get(entry.url)!;
+        if (isBetterTitle(existing.title, entry.title)) {
+          existing.title = entry.title;
         }
       } else {
-        seenUrls.set(abs, results.length);
-        results.push({
-          title,
-          url: abs,
-        });
+        seenUrls.set(entry.url, entry);
+        results.unshift(entry); // Add to front to maintain order
       }
     }
 
