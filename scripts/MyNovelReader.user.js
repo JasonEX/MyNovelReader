@@ -1645,27 +1645,75 @@ var MyNovelReader = (function(exports) {
   const specialRules = [
     // Qidian (起点) - VIP chapters, dynamic content
     {
-      id: "qidian-www",
-      name: "起点新版-20240317",
-      version: 1,
+      id: "qidian",
+      name: "起点中文网",
+      version: 8,
       match: {
         pattern: "^https?://(www|m)\\.qidian\\.com/chapter/.*"
       },
       content: {
         selector: 'main[id^="c-"]',
-        remove: ".review"
+        remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]'
       },
       navigation: {
-        // Use detection fallback - Qidian's navigation is dynamically loaded
-        next: false,
-        // Let detection handle it
-        prev: false,
-        // Let detection handle it
-        index: '.catalog, a[href*="/book/"]:contains("目录")'
+        // #mnr-qidian-* are created by beforeParse hook from JSON data
+        // Fallback selectors for DOM-based navigation
+        prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
+        index: "#mnr-qidian-index",
+        next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")'
       },
       title: {
-        selector: "h1.text-1\\.3em",
-        pattern: "(.*?)《(.*?)》(.*?)"
+        selector: "h1.title, h1.text-1\\.3em, #r-nav-chapter-title"
+      },
+      hooks: {
+        // Build navigation links from pageContext JSON (SSR data)
+        beforeParse: `
+        // Remove review count from title
+        try {
+          const reviews = doc.querySelectorAll('h1 .review');
+          reviews.forEach(el => el.remove());
+        } catch (e) {}
+
+        try {
+          const script = doc.querySelector('#vite-plugin-ssr_pageContext');
+          if (script) {
+            const data = JSON.parse(script.textContent);
+            const pageData = data.pageContext?.pageProps?.pageData;
+            if (pageData) {
+              const bookId = pageData.bookInfo?.bookId;
+              const chapterInfo = pageData.chapterInfo;
+              const host = url ? new URL(url).hostname : location.hostname;
+              const navContainer = doc.createElement('div');
+              navContainer.id = 'mnr-qidian-nav';
+              navContainer.style.display = 'none';
+              if (chapterInfo?.prev && chapterInfo.prev !== -1) {
+                const prev = doc.createElement('a');
+                prev.id = 'mnr-qidian-prev';
+                prev.href = '//' + host + '/chapter/' + bookId + '/' + chapterInfo.prev + '/';
+                prev.textContent = '上一章';
+                navContainer.appendChild(prev);
+              }
+              if (chapterInfo?.next && chapterInfo.next !== -1) {
+                const next = doc.createElement('a');
+                next.id = 'mnr-qidian-next';
+                next.href = '//' + host + '/chapter/' + bookId + '/' + chapterInfo.next + '/';
+                next.textContent = '下一章';
+                navContainer.appendChild(next);
+              }
+              if (bookId) {
+                const index = doc.createElement('a');
+                index.id = 'mnr-qidian-index';
+                index.href = '//' + host + '/book/' + bookId + '/catalog/';
+                index.textContent = '目录';
+                navContainer.appendChild(index);
+              }
+              doc.body.appendChild(navContainer);
+            }
+          }
+        } catch (e) {
+          console.warn('[MyNovelReader] Qidian beforeParse error:', e);
+        }
+      `
       },
       advanced: {
         useIframe: true,
@@ -3075,8 +3123,8 @@ var MyNovelReader = (function(exports) {
       const rule = ruleMatch.rule;
       if ((_a = rule.hooks) == null ? void 0 : _a.beforeParse) {
         try {
-          const fn = new Function("doc", rule.hooks.beforeParse);
-          fn(doc2);
+          const fn = new Function("doc", "url", rule.hooks.beforeParse);
+          fn(doc2, url);
         } catch (e) {
           console.warn("[Parser] beforeParse hook error:", e);
         }

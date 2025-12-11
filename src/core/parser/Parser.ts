@@ -85,8 +85,8 @@ export class Parser {
     // Execute beforeParse hook if present
     if (rule.hooks?.beforeParse) {
       try {
-        const fn = new Function('doc', rule.hooks.beforeParse);
-        fn(doc);
+        const fn = new Function('doc', 'url', rule.hooks.beforeParse);
+        fn(doc, url);
       } catch (e) {
         console.warn('[Parser] beforeParse hook error:', e);
       }
