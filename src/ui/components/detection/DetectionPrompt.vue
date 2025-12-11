@@ -1,55 +1,53 @@
 <template>
-  <Teleport to="body">
-    <Transition name="mnr-fade">
-      <div v-if="visible" class="mnr-prompt-overlay" @click.self="handleDismiss">
-        <div class="mnr-prompt-card" role="dialog" aria-modal="true">
-          <!-- Header -->
-          <div class="mnr-prompt-header">
-            <span class="mnr-prompt-icon">📖</span>
-            <h3 class="mnr-prompt-title">启用 MyNovelReader?</h3>
+  <Transition name="mnr-fade">
+    <div v-if="visible" class="mnr-prompt-overlay" @click.self="handleDismiss">
+      <div class="mnr-prompt-card" role="dialog" aria-modal="true">
+        <!-- Header -->
+        <div class="mnr-prompt-header">
+          <span class="mnr-prompt-icon">📖</span>
+          <h3 class="mnr-prompt-title">启用 MyNovelReader?</h3>
+        </div>
+
+        <!-- Confidence indicator -->
+        <div class="mnr-confidence">
+          <div class="mnr-confidence-bar">
+            <div
+              class="mnr-confidence-fill"
+              :style="{ width: `${confidence * 100}%` }"
+              :class="confidenceClass"
+            ></div>
           </div>
+          <span class="mnr-confidence-text">
+            检测置信度: {{ (confidence * 100).toFixed(0) }}%
+          </span>
+        </div>
 
-          <!-- Confidence indicator -->
-          <div class="mnr-confidence">
-            <div class="mnr-confidence-bar">
-              <div
-                class="mnr-confidence-fill"
-                :style="{ width: `${confidence * 100}%` }"
-                :class="confidenceClass"
-              ></div>
-            </div>
-            <span class="mnr-confidence-text">
-              检测置信度: {{ (confidence * 100).toFixed(0) }}%
-            </span>
-          </div>
+        <!-- Detection results -->
+        <ul class="mnr-results">
+          <li v-for="reason in positiveReasons" :key="reason" class="mnr-result-item success">
+            <span class="mnr-result-icon">✓</span>
+            <span>{{ reason }}</span>
+          </li>
+          <li v-for="reason in negativeReasons" :key="reason" class="mnr-result-item warning">
+            <span class="mnr-result-icon">⚠</span>
+            <span>{{ reason }}</span>
+          </li>
+        </ul>
 
-          <!-- Detection results -->
-          <ul class="mnr-results">
-            <li v-for="reason in positiveReasons" :key="reason" class="mnr-result-item success">
-              <span class="mnr-result-icon">✓</span>
-              <span>{{ reason }}</span>
-            </li>
-            <li v-for="reason in negativeReasons" :key="reason" class="mnr-result-item warning">
-              <span class="mnr-result-icon">⚠</span>
-              <span>{{ reason }}</span>
-            </li>
-          </ul>
+        <!-- Auto-enable checkbox -->
+        <label class="mnr-checkbox-label">
+          <input v-model="saveForDomain" type="checkbox" class="mnr-checkbox" />
+          <span>为此站点自动启用</span>
+        </label>
 
-          <!-- Auto-enable checkbox -->
-          <label class="mnr-checkbox-label">
-            <input v-model="saveForDomain" type="checkbox" class="mnr-checkbox" />
-            <span>为此站点自动启用</span>
-          </label>
-
-          <!-- Actions -->
-          <div class="mnr-prompt-actions">
-            <button class="mnr-btn mnr-btn-secondary" @click="handleDismiss">暂不</button>
-            <button class="mnr-btn mnr-btn-primary" @click="handleAccept">启用阅读器</button>
-          </div>
+        <!-- Actions -->
+        <div class="mnr-prompt-actions">
+          <button class="mnr-btn mnr-btn-secondary" @click="handleDismiss">暂不</button>
+          <button class="mnr-btn mnr-btn-primary" @click="handleAccept">启用阅读器</button>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">

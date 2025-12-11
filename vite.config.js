@@ -114,7 +114,46 @@ export default defineConfig({
     },
     cssCodeSplit: false,
   },
-  plugins: [vue(), cssInjectedByJsPlugin(), userscriptHeaderPlugin()],
+  plugins: [
+    vue(),
+    cssInjectedByJsPlugin({
+      // Store CSS for later injection into Shadow DOM
+      // Also inject to document.head for components that need light DOM (like ElementPicker)
+      injectCodeFunction: function (cssCode) {
+        try {
+          if (typeof window !== 'undefined') {
+            // Store CSS for Shadow DOM injection
+            window.__MNR_STYLES__ = (window.__MNR_STYLES__ || '') + cssCode;
+
+            // Also inject to document.head for light DOM components (ElementPicker, etc.)
+            // Use a unique ID to prevent duplicate injection
+            var styleId = 'mnr-global-styles';
+            var existingStyle = document.getElementById(styleId);
+            if (!existingStyle) {
+              existingStyle = document.createElement('style');
+              existingStyle.id = styleId;
+              document.head.appendChild(existingStyle);
+            }
+            existingStyle.textContent = window.__MNR_STYLES__;
+
+            // If Shadow DOM already exists, also inject there
+            if (window.__MNR_SHADOW_ROOT__) {
+              var shadowStyle = window.__MNR_SHADOW_ROOT__.querySelector('#mnr-app-styles');
+              if (!shadowStyle) {
+                shadowStyle = document.createElement('style');
+                shadowStyle.id = 'mnr-app-styles';
+                window.__MNR_SHADOW_ROOT__.appendChild(shadowStyle);
+              }
+              shadowStyle.textContent = window.__MNR_STYLES__;
+            }
+          }
+        } catch (e) {
+          console.error('[MNR] CSS injection error:', e);
+        }
+      },
+    }),
+    userscriptHeaderPlugin(),
+  ],
   css: {
     extract: false,
     modules: {

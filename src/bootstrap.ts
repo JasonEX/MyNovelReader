@@ -14,10 +14,11 @@ import {
   type ParsedChapter,
   type SiteRule,
 } from '@/core';
-import { BUILD_DATE, VERSION } from '@/version';
 import { createApp, defineComponent, h, ref } from 'vue';
 import { useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
+import { BUILD_DATE, VERSION } from '@/version';
 import { createPinia } from 'pinia';
+import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
 import { ReaderView } from '@/ui/components/reader';
 
@@ -38,6 +39,7 @@ const appState: AppState = {
 // Vue app instance
 let app: ReturnType<typeof createApp> | null = null;
 let pinia: ReturnType<typeof createPinia> | null = null;
+let readerCleanup: (() => void) | null = null;
 
 /**
  * Initialize the application
@@ -94,10 +96,8 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
   saveForDomain: boolean;
 }> {
   return new Promise(resolve => {
-    // Create prompt container
-    const container = document.createElement('div');
-    container.id = 'mnr-prompt-root';
-    document.body.appendChild(container);
+    // Create Shadow DOM mount point for CSS isolation
+    const { mountPoint, cleanup } = createShadowMount('mnr-prompt-root');
 
     // Track response
     const showPrompt = ref(true);
@@ -108,7 +108,7 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
         const handleRespond = (response: { accepted: boolean; saveForDomain: boolean }) => {
           showPrompt.value = false;
           setTimeout(() => {
-            container.remove();
+            cleanup();
             resolve(response);
           }, 300);
         };
@@ -116,7 +116,7 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
         const handleDismiss = () => {
           showPrompt.value = false;
           setTimeout(() => {
-            container.remove();
+            cleanup();
             resolve({ accepted: false, saveForDomain: false });
           }, 300);
         };
@@ -133,7 +133,7 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
 
     // Mount prompt
     const promptApp = createApp(PromptWrapper);
-    promptApp.mount(container);
+    promptApp.mount(mountPoint);
   });
 }
 
@@ -166,15 +166,14 @@ function mountReaderUI(): void {
     return;
   }
 
-  // Create container
-  const container = document.createElement('div');
-  container.id = 'mnr-reader-root';
-  document.body.appendChild(container);
+  // Create Shadow DOM mount point for CSS isolation
+  const { mountPoint, cleanup } = createShadowMount('mnr-reader-root');
+  readerCleanup = cleanup;
 
   // Create and mount app with ReaderView
   app = createApp(ReaderView);
   app.use(pinia!);
-  app.mount(container);
+  app.mount(mountPoint);
 
   // Hide original page content
   hideOriginalContent();
@@ -206,10 +205,10 @@ export function closeReader(): void {
     app = null;
   }
 
-  // Remove container
-  const container = document.getElementById('mnr-reader-root');
-  if (container) {
-    container.remove();
+  // Cleanup Shadow DOM
+  if (readerCleanup) {
+    readerCleanup();
+    readerCleanup = null;
   }
 
   // Restore original content
