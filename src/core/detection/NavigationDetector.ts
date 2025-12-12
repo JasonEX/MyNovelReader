@@ -181,9 +181,20 @@ export class NavigationDetector {
       const pathname = url.pathname;
 
       // Skip if pathname is too short (likely homepage or section page)
-      // e.g., "/", "/book", "/novel" are not chapter pages
-      if (pathname.length < 3 || pathname.split('/').filter(Boolean).length < 2) {
+      if (pathname === '/' || pathname.length < 3) {
         return false;
+      }
+
+      // 如果只有一个路径部分，检查是否像章节 URL
+      const pathParts = pathname.split('/').filter(Boolean);
+      if (pathParts.length < 2) {
+        // 单路径部分：必须包含数字才可能是章节
+        // 允许: /412421_1.html, /123.html, /chapter123
+        // 排除: /book, /novel, /index.html (无数字)
+        const part = pathParts[0] || '';
+        if (!/\d/.test(part)) {
+          return false;
+        }
       }
 
       // Skip common non-chapter paths

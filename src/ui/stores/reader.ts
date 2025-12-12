@@ -795,7 +795,8 @@ export const useReaderStore = defineStore('reader', () => {
   const NON_CHAPTER_TITLE_PATTERNS = [
     // Announcements and notices
     /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
-    /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更/,
+    /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更|上架通知|卷末感言/,
+    /必看|必读|请务必阅读|读者必看/,
     // Author-related
     /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
     // Promotional content
@@ -827,6 +828,8 @@ export const useReaderStore = defineStore('reader', () => {
         /\/book\/(\d+)/,
         /\/chapter\/(\d+)\//,
         /\/(\d+)\/\d+(?:\.html?)?$/,
+        // Faloo (飞卢): /{bookId}_{chapterId}.html
+        /\/(\d+)_\d+(?:\.html?)?$/,
         /[?&](?:book_?id|bid|id)=(\d+)/i,
       ];
       for (const p of patterns) {
@@ -1057,6 +1060,10 @@ export const useReaderStore = defineStore('reader', () => {
     const links = Array.from(doc.querySelectorAll('a[href]'));
     const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
     const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
+    const excludeAncestors = (rule.value?.toc?.excludeAncestors || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
     const isPlaceholder = (title: string) => /^章节\s*\d+$/i.test(title.trim());
     const isBetterTitle = (oldTitle: string, newTitle: string): boolean => {
@@ -1128,6 +1135,22 @@ export const useReaderStore = defineStore('reader', () => {
     // Phase 1: Collect all candidate entries (with duplicates)
     const candidates: TocEntry[] = [];
     for (const a of links) {
+      // Rule-specific TOC exclusions (keep generic parser clean; configure per-site in rules).
+      if (excludeAncestors.length > 0) {
+        let excluded = false;
+        for (const sel of excludeAncestors) {
+          try {
+            if (a.closest(sel)) {
+              excluded = true;
+              break;
+            }
+          } catch {
+            // Ignore invalid selectors
+          }
+        }
+        if (excluded) continue;
+      }
+
       const text = extractLinkTitle(a);
       const href = a.getAttribute('href') || '';
       const abs = normalizeUrl(href, base);
@@ -1498,7 +1521,14 @@ function isInvalidChapterUrl(url: string, currentChapterUrl?: string): boolean {
     // Very short paths are likely not chapter pages
     const pathParts = pathname.split('/').filter(Boolean);
     if (pathParts.length < 2) {
-      return true;
+      // Some sites use single-segment chapter URLs, e.g.:
+      // - Faloo: /412421_1.html
+      // - Others: /123.html
+      // If it doesn't contain digits, it's very likely not a chapter.
+      const part = pathParts[0] || '';
+      if (!/\d/.test(part)) {
+        return true;
+      }
     }
 
     // Common non-chapter URL patterns

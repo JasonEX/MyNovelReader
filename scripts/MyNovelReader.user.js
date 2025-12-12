@@ -286,6 +286,7 @@ var MyNovelReader = (function(exports) {
     ".txt_tcontent",
     ".story_content",
     ".chapter_content",
+    ".chapter-box",
     // Element selectors
     "article"
   ];
@@ -714,8 +715,15 @@ var MyNovelReader = (function(exports) {
       try {
         const url = new URL(href);
         const pathname = url.pathname;
-        if (pathname.length < 3 || pathname.split("/").filter(Boolean).length < 2) {
+        if (pathname === "/" || pathname.length < 3) {
           return false;
+        }
+        const pathParts = pathname.split("/").filter(Boolean);
+        if (pathParts.length < 2) {
+          const part = pathParts[0] || "";
+          if (!/\d/.test(part)) {
+            return false;
+          }
         }
         const nonChapterPaths = [
           /^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i,
@@ -2282,28 +2290,6 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.lucifer-club.com/chapter-83716-1.html" }
     },
-    // Faloo (飞卢)
-    {
-      id: "faloo",
-      name: "飞卢小说网",
-      version: 1,
-      match: {
-        pattern: "^https?://b\\.faloo\\.com/\\d+_\\d+\\.html"
-      },
-      content: {
-        selector: ".noveContent"
-      },
-      navigation: {
-        next: "a#next_page",
-        prev: "a#pre_page",
-        index: "a#huimulu"
-      },
-      title: {
-        selector: "h1",
-        bookSelector: "#novelName"
-      },
-      meta: { source: "builtin" }
-    },
     // Shushan (书山中文网)
     {
       id: "shushan",
@@ -2610,6 +2596,40 @@ var MyNovelReader = (function(exports) {
         checkSection: true
       },
       meta: { source: "builtin", exampleUrl: "https://m.shuhaige.net/36354/171272950.html" }
+    },
+    // 飞卢小说网
+    {
+      id: "faloo",
+      name: "飞卢小说网",
+      version: 1,
+      match: {
+        pattern: "^https?://[a-z]\\.faloo\\.com/\\d+_\\d+\\.html"
+      },
+      content: {
+        selector: ".noveContent"
+      },
+      navigation: {
+        // Faloo uses stable ids for pager buttons; keep :contains fallback for older layouts.
+        prev: '#pre_page, a:contains("上一章")',
+        next: '#next_page, a:contains("下一章")',
+        index: '#huimulu, a:contains("目录")'
+      },
+      toc: {
+        // Exclude "作品相关/小说相关" section in Faloo catalog sidebar.
+        excludeAncestors: ".c_con_relation"
+      },
+      title: {
+        // Chapter title is in <h1>; <h2> is site-wide slogan.
+        selector: ".c_l_title > h1, h1",
+        bookSelector: "#novelName",
+        // Strip the leading book title token: "书名  1 章节名" -> "1 章节名"
+        replace: "^\\s*\\S+\\s+"
+      },
+      meta: {
+        source: "builtin",
+        autoLaunch: true,
+        exampleUrl: "https://b.faloo.com/412421_1.html"
+      }
     },
     // ==================== noSection rules (不合并分页) ====================
     // 努努书坊
@@ -4038,8 +4058,6 @@ var MyNovelReader = (function(exports) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.0";
-  const BUILD_DATE = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -11540,586 +11558,6 @@ var MyNovelReader = (function(exports) {
     }
     return container;
   }
-  /*!
-   * pinia v2.3.1
-   * (c) 2025 Eduardo San Martin Morote
-   * @license MIT
-   */
-  let activePinia;
-  const setActivePinia = (pinia2) => activePinia = pinia2;
-  const piniaSymbol = (
-    /* istanbul ignore next */
-    Symbol()
-  );
-  function isPlainObject(o) {
-    return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
-  }
-  var MutationType;
-  (function(MutationType2) {
-    MutationType2["direct"] = "direct";
-    MutationType2["patchObject"] = "patch object";
-    MutationType2["patchFunction"] = "patch function";
-  })(MutationType || (MutationType = {}));
-  function createPinia() {
-    const scope = effectScope(true);
-    const state = scope.run(() => ref({}));
-    let _p = [];
-    let toBeInstalled = [];
-    const pinia2 = markRaw({
-      install(app2) {
-        setActivePinia(pinia2);
-        {
-          pinia2._a = app2;
-          app2.provide(piniaSymbol, pinia2);
-          app2.config.globalProperties.$pinia = pinia2;
-          toBeInstalled.forEach((plugin) => _p.push(plugin));
-          toBeInstalled = [];
-        }
-      },
-      use(plugin) {
-        if (!this._a && true) {
-          toBeInstalled.push(plugin);
-        } else {
-          _p.push(plugin);
-        }
-        return this;
-      },
-      _p,
-      // it's actually undefined here
-      // @ts-expect-error
-      _a: null,
-      _e: scope,
-      _s: /* @__PURE__ */ new Map(),
-      state
-    });
-    return pinia2;
-  }
-  const noop = () => {
-  };
-  function addSubscription(subscriptions, callback, detached, onCleanup = noop) {
-    subscriptions.push(callback);
-    const removeSubscription = () => {
-      const idx = subscriptions.indexOf(callback);
-      if (idx > -1) {
-        subscriptions.splice(idx, 1);
-        onCleanup();
-      }
-    };
-    if (!detached && getCurrentScope()) {
-      onScopeDispose(removeSubscription);
-    }
-    return removeSubscription;
-  }
-  function triggerSubscriptions(subscriptions, ...args) {
-    subscriptions.slice().forEach((callback) => {
-      callback(...args);
-    });
-  }
-  const fallbackRunWithContext = (fn) => fn();
-  const ACTION_MARKER = Symbol();
-  const ACTION_NAME = Symbol();
-  function mergeReactiveObjects(target, patchToApply) {
-    if (target instanceof Map && patchToApply instanceof Map) {
-      patchToApply.forEach((value, key) => target.set(key, value));
-    } else if (target instanceof Set && patchToApply instanceof Set) {
-      patchToApply.forEach(target.add, target);
-    }
-    for (const key in patchToApply) {
-      if (!patchToApply.hasOwnProperty(key))
-        continue;
-      const subPatch = patchToApply[key];
-      const targetValue = target[key];
-      if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) {
-        target[key] = mergeReactiveObjects(targetValue, subPatch);
-      } else {
-        target[key] = subPatch;
-      }
-    }
-    return target;
-  }
-  const skipHydrateSymbol = (
-    /* istanbul ignore next */
-    Symbol()
-  );
-  function shouldHydrate(obj) {
-    return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
-  }
-  const { assign } = Object;
-  function isComputed(o) {
-    return !!(isRef(o) && o.effect);
-  }
-  function createOptionsStore(id, options, pinia2, hot) {
-    const { state, actions, getters } = options;
-    const initialState = pinia2.state.value[id];
-    let store;
-    function setup() {
-      if (!initialState && true) {
-        {
-          pinia2.state.value[id] = state ? state() : {};
-        }
-      }
-      const localState = toRefs(pinia2.state.value[id]);
-      return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
-        computedGetters[name] = markRaw(computed(() => {
-          setActivePinia(pinia2);
-          const store2 = pinia2._s.get(id);
-          return getters[name].call(store2, store2);
-        }));
-        return computedGetters;
-      }, {}));
-    }
-    store = createSetupStore(id, setup, options, pinia2, hot, true);
-    return store;
-  }
-  function createSetupStore($id, setup, options = {}, pinia2, hot, isOptionsStore) {
-    let scope;
-    const optionsForPlugin = assign({ actions: {} }, options);
-    const $subscribeOptions = { deep: true };
-    let isListening;
-    let isSyncListening;
-    let subscriptions = [];
-    let actionSubscriptions = [];
-    let debuggerEvents;
-    const initialState = pinia2.state.value[$id];
-    if (!isOptionsStore && !initialState && true) {
-      {
-        pinia2.state.value[$id] = {};
-      }
-    }
-    ref({});
-    let activeListener;
-    function $patch(partialStateOrMutator) {
-      let subscriptionMutation;
-      isListening = isSyncListening = false;
-      if (typeof partialStateOrMutator === "function") {
-        partialStateOrMutator(pinia2.state.value[$id]);
-        subscriptionMutation = {
-          type: MutationType.patchFunction,
-          storeId: $id,
-          events: debuggerEvents
-        };
-      } else {
-        mergeReactiveObjects(pinia2.state.value[$id], partialStateOrMutator);
-        subscriptionMutation = {
-          type: MutationType.patchObject,
-          payload: partialStateOrMutator,
-          storeId: $id,
-          events: debuggerEvents
-        };
-      }
-      const myListenerId = activeListener = Symbol();
-      nextTick().then(() => {
-        if (activeListener === myListenerId) {
-          isListening = true;
-        }
-      });
-      isSyncListening = true;
-      triggerSubscriptions(subscriptions, subscriptionMutation, pinia2.state.value[$id]);
-    }
-    const $reset = isOptionsStore ? function $reset2() {
-      const { state } = options;
-      const newState = state ? state() : {};
-      this.$patch(($state) => {
-        assign($state, newState);
-      });
-    } : (
-      /* istanbul ignore next */
-      noop
-    );
-    function $dispose() {
-      scope.stop();
-      subscriptions = [];
-      actionSubscriptions = [];
-      pinia2._s.delete($id);
-    }
-    const action = (fn, name = "") => {
-      if (ACTION_MARKER in fn) {
-        fn[ACTION_NAME] = name;
-        return fn;
-      }
-      const wrappedAction = function() {
-        setActivePinia(pinia2);
-        const args = Array.from(arguments);
-        const afterCallbackList = [];
-        const onErrorCallbackList = [];
-        function after(callback) {
-          afterCallbackList.push(callback);
-        }
-        function onError(callback) {
-          onErrorCallbackList.push(callback);
-        }
-        triggerSubscriptions(actionSubscriptions, {
-          args,
-          name: wrappedAction[ACTION_NAME],
-          store,
-          after,
-          onError
-        });
-        let ret;
-        try {
-          ret = fn.apply(this && this.$id === $id ? this : store, args);
-        } catch (error) {
-          triggerSubscriptions(onErrorCallbackList, error);
-          throw error;
-        }
-        if (ret instanceof Promise) {
-          return ret.then((value) => {
-            triggerSubscriptions(afterCallbackList, value);
-            return value;
-          }).catch((error) => {
-            triggerSubscriptions(onErrorCallbackList, error);
-            return Promise.reject(error);
-          });
-        }
-        triggerSubscriptions(afterCallbackList, ret);
-        return ret;
-      };
-      wrappedAction[ACTION_MARKER] = true;
-      wrappedAction[ACTION_NAME] = name;
-      return wrappedAction;
-    };
-    const partialStore = {
-      _p: pinia2,
-      // _s: scope,
-      $id,
-      $onAction: addSubscription.bind(null, actionSubscriptions),
-      $patch,
-      $reset,
-      $subscribe(callback, options2 = {}) {
-        const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
-        const stopWatcher = scope.run(() => watch(() => pinia2.state.value[$id], (state) => {
-          if (options2.flush === "sync" ? isSyncListening : isListening) {
-            callback({
-              storeId: $id,
-              type: MutationType.direct,
-              events: debuggerEvents
-            }, state);
-          }
-        }, assign({}, $subscribeOptions, options2)));
-        return removeSubscription;
-      },
-      $dispose
-    };
-    const store = reactive(partialStore);
-    pinia2._s.set($id, store);
-    const runWithContext = pinia2._a && pinia2._a.runWithContext || fallbackRunWithContext;
-    const setupStore = runWithContext(() => pinia2._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
-    for (const key in setupStore) {
-      const prop = setupStore[key];
-      if (isRef(prop) && !isComputed(prop) || isReactive(prop)) {
-        if (!isOptionsStore) {
-          if (initialState && shouldHydrate(prop)) {
-            if (isRef(prop)) {
-              prop.value = initialState[key];
-            } else {
-              mergeReactiveObjects(prop, initialState[key]);
-            }
-          }
-          {
-            pinia2.state.value[$id][key] = prop;
-          }
-        }
-      } else if (typeof prop === "function") {
-        const actionValue = action(prop, key);
-        {
-          setupStore[key] = actionValue;
-        }
-        optionsForPlugin.actions[key] = prop;
-      } else ;
-    }
-    {
-      assign(store, setupStore);
-      assign(toRaw(store), setupStore);
-    }
-    Object.defineProperty(store, "$state", {
-      get: () => pinia2.state.value[$id],
-      set: (state) => {
-        $patch(($state) => {
-          assign($state, state);
-        });
-      }
-    });
-    pinia2._p.forEach((extender) => {
-      {
-        assign(store, scope.run(() => extender({
-          store,
-          app: pinia2._a,
-          pinia: pinia2,
-          options: optionsForPlugin
-        })));
-      }
-    });
-    if (initialState && isOptionsStore && options.hydrate) {
-      options.hydrate(store.$state, initialState);
-    }
-    isListening = true;
-    isSyncListening = true;
-    return store;
-  }
-  /*! #__NO_SIDE_EFFECTS__ */
-  // @__NO_SIDE_EFFECTS__
-  function defineStore(idOrOptions, setup, setupOptions) {
-    let id;
-    let options;
-    const isSetupStore = typeof setup === "function";
-    if (typeof idOrOptions === "string") {
-      id = idOrOptions;
-      options = isSetupStore ? setupOptions : setup;
-    } else {
-      options = idOrOptions;
-      id = idOrOptions.id;
-    }
-    function useStore(pinia2, hot) {
-      const hasContext = hasInjectionContext();
-      pinia2 = // in test mode, ignore the argument provided as we can always retrieve a
-      // pinia instance with getActivePinia()
-      pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
-      if (pinia2)
-        setActivePinia(pinia2);
-      pinia2 = activePinia;
-      if (!pinia2._s.has(id)) {
-        if (isSetupStore) {
-          createSetupStore(id, setup, options, pinia2);
-        } else {
-          createOptionsStore(id, options, pinia2);
-        }
-      }
-      const store = pinia2._s.get(id);
-      return store;
-    }
-    useStore.$id = id;
-    return useStore;
-  }
-  const BASE_RESET_CSS = `
-/* Reset all inherited styles */
-:host {
-  all: initial;
-  display: block;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #333;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Ensure common elements have expected defaults */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-/* Reset form elements to browser defaults */
-input, button, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  margin: 0;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  appearance: auto;
-  -webkit-appearance: checkbox;
-  width: auto;
-  height: auto;
-  margin: 3px 3px 3px 4px;
-  cursor: pointer;
-}
-
-input[type="range"] {
-  appearance: auto;
-  -webkit-appearance: slider-horizontal;
-}
-
-button {
-  appearance: auto;
-  cursor: pointer;
-}
-
-select {
-  appearance: auto;
-  -webkit-appearance: menulist;
-}
-
-textarea {
-  appearance: auto;
-  -webkit-appearance: textarea;
-  resize: vertical;
-}
-
-/* Link defaults */
-a {
-  color: #1976d2;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* List defaults */
-ul, ol {
-  padding-left: 2em;
-}
-
-/* Ensure visibility */
-* {
-  visibility: visible !important;
-}
-`;
-  function createShadowMount(hostId) {
-    const host = document.createElement("div");
-    host.id = hostId;
-    document.body.appendChild(host);
-    const shadowRoot = host.attachShadow({ mode: "open" });
-    window.__MNR_SHADOW_ROOT__ = shadowRoot;
-    const resetStyle = document.createElement("style");
-    resetStyle.textContent = BASE_RESET_CSS;
-    shadowRoot.appendChild(resetStyle);
-    if (window.__MNR_STYLES__) {
-      const appStyle = document.createElement("style");
-      appStyle.textContent = window.__MNR_STYLES__;
-      shadowRoot.appendChild(appStyle);
-    }
-    const mountPoint = document.createElement("div");
-    mountPoint.id = `${hostId}-mount`;
-    shadowRoot.appendChild(mountPoint);
-    const cleanup = () => {
-      host.remove();
-      if (window.__MNR_SHADOW_ROOT__ === shadowRoot) {
-        window.__MNR_SHADOW_ROOT__ = void 0;
-      }
-    };
-    return { host, shadowRoot, mountPoint, cleanup };
-  }
-  const _hoisted_1$8 = {
-    class: "mnr-prompt-card",
-    role: "dialog",
-    "aria-modal": "true"
-  };
-  const _hoisted_2$7 = { class: "mnr-confidence" };
-  const _hoisted_3$7 = { class: "mnr-confidence-bar" };
-  const _hoisted_4$7 = { class: "mnr-confidence-text" };
-  const _hoisted_5$5 = { class: "mnr-results" };
-  const _hoisted_6$5 = { class: "mnr-checkbox-label" };
-  const _sfc_main$8 = /* @__PURE__ */ defineComponent({
-    __name: "DetectionPrompt",
-    props: {
-      decision: {},
-      visible: { type: Boolean }
-    },
-    emits: ["respond", "dismiss"],
-    setup(__props, { emit: __emit }) {
-      const props = __props;
-      const emit2 = __emit;
-      const saveForDomain = ref(true);
-      const confidence = computed(() => props.decision.confidence);
-      const confidenceClass = computed(() => {
-        if (confidence.value >= 0.8) return "high";
-        if (confidence.value >= 0.6) return "medium";
-        return "low";
-      });
-      const positiveReasons = computed(() => {
-        return props.decision.reasons.filter(
-          (r) => r.includes("找到") || r.includes("检测到") || r.includes("成功")
-        );
-      });
-      const negativeReasons = computed(() => {
-        return props.decision.reasons.filter(
-          (r) => r.includes("未能") || r.includes("置信度") || r.includes("警告")
-        );
-      });
-      function handleAccept() {
-        emit2("respond", {
-          accepted: true,
-          saveForDomain: saveForDomain.value
-        });
-      }
-      function handleDismiss() {
-        emit2("respond", {
-          accepted: false,
-          saveForDomain: false
-        });
-        emit2("dismiss");
-      }
-      return (_ctx, _cache) => {
-        return openBlock(), createBlock(Transition, { name: "mnr-fade" }, {
-          default: withCtx(() => [
-            __props.visible ? (openBlock(), createElementBlock("div", {
-              key: 0,
-              class: "mnr-prompt-overlay",
-              onClick: withModifiers(handleDismiss, ["self"])
-            }, [
-              createBaseVNode("div", _hoisted_1$8, [
-                _cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [
-                  createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"),
-                  createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")
-                ], -1)),
-                createBaseVNode("div", _hoisted_2$7, [
-                  createBaseVNode("div", _hoisted_3$7, [
-                    createBaseVNode("div", {
-                      class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
-                      style: normalizeStyle({ width: `${confidence.value * 100}%` })
-                    }, null, 6)
-                  ]),
-                  createBaseVNode("span", _hoisted_4$7, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)
-                ]),
-                createBaseVNode("ul", _hoisted_5$5, [
-                  (openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
-                    return openBlock(), createElementBlock("li", {
-                      key: reason,
-                      class: "mnr-result-item success"
-                    }, [
-                      _cache[1] || (_cache[1] = createBaseVNode("span", { class: "mnr-result-icon" }, "✓", -1)),
-                      createBaseVNode("span", null, toDisplayString(reason), 1)
-                    ]);
-                  }), 128)),
-                  (openBlock(true), createElementBlock(Fragment, null, renderList(negativeReasons.value, (reason) => {
-                    return openBlock(), createElementBlock("li", {
-                      key: reason,
-                      class: "mnr-result-item warning"
-                    }, [
-                      _cache[2] || (_cache[2] = createBaseVNode("span", { class: "mnr-result-icon" }, "⚠", -1)),
-                      createBaseVNode("span", null, toDisplayString(reason), 1)
-                    ]);
-                  }), 128))
-                ]),
-                createBaseVNode("label", _hoisted_6$5, [
-                  withDirectives(createBaseVNode("input", {
-                    "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => saveForDomain.value = $event),
-                    type: "checkbox",
-                    class: "mnr-checkbox"
-                  }, null, 512), [
-                    [vModelCheckbox, saveForDomain.value]
-                  ]),
-                  _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))
-                ]),
-                createBaseVNode("div", { class: "mnr-prompt-actions" }, [
-                  createBaseVNode("button", {
-                    class: "mnr-btn mnr-btn-secondary",
-                    onClick: handleDismiss
-                  }, "暂不"),
-                  createBaseVNode("button", {
-                    class: "mnr-btn mnr-btn-primary",
-                    onClick: handleAccept
-                  }, "启用阅读器")
-                ])
-              ])
-            ])) : createCommentVNode("", true)
-          ]),
-          _: 1
-        });
-      };
-    }
-  });
-  const _export_sfc = (sfc, props) => {
-    const target = sfc.__vccOpts || sfc;
-    for (const [key, val] of props) {
-      target[key] = val;
-    }
-    return target;
-  };
-  const DetectionPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-91cf13cd"]]);
   const s_2_t = {
     "·": "‧",
     "―": "─",
@@ -17624,6 +17062,356 @@ ul, ol {
       return html;
     }
   }
+  /*!
+   * pinia v2.3.1
+   * (c) 2025 Eduardo San Martin Morote
+   * @license MIT
+   */
+  let activePinia;
+  const setActivePinia = (pinia2) => activePinia = pinia2;
+  const piniaSymbol = (
+    /* istanbul ignore next */
+    Symbol()
+  );
+  function isPlainObject(o) {
+    return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
+  }
+  var MutationType;
+  (function(MutationType2) {
+    MutationType2["direct"] = "direct";
+    MutationType2["patchObject"] = "patch object";
+    MutationType2["patchFunction"] = "patch function";
+  })(MutationType || (MutationType = {}));
+  function createPinia() {
+    const scope = effectScope(true);
+    const state = scope.run(() => ref({}));
+    let _p = [];
+    let toBeInstalled = [];
+    const pinia2 = markRaw({
+      install(app2) {
+        setActivePinia(pinia2);
+        {
+          pinia2._a = app2;
+          app2.provide(piniaSymbol, pinia2);
+          app2.config.globalProperties.$pinia = pinia2;
+          toBeInstalled.forEach((plugin) => _p.push(plugin));
+          toBeInstalled = [];
+        }
+      },
+      use(plugin) {
+        if (!this._a && true) {
+          toBeInstalled.push(plugin);
+        } else {
+          _p.push(plugin);
+        }
+        return this;
+      },
+      _p,
+      // it's actually undefined here
+      // @ts-expect-error
+      _a: null,
+      _e: scope,
+      _s: /* @__PURE__ */ new Map(),
+      state
+    });
+    return pinia2;
+  }
+  const noop = () => {
+  };
+  function addSubscription(subscriptions, callback, detached, onCleanup = noop) {
+    subscriptions.push(callback);
+    const removeSubscription = () => {
+      const idx = subscriptions.indexOf(callback);
+      if (idx > -1) {
+        subscriptions.splice(idx, 1);
+        onCleanup();
+      }
+    };
+    if (!detached && getCurrentScope()) {
+      onScopeDispose(removeSubscription);
+    }
+    return removeSubscription;
+  }
+  function triggerSubscriptions(subscriptions, ...args) {
+    subscriptions.slice().forEach((callback) => {
+      callback(...args);
+    });
+  }
+  const fallbackRunWithContext = (fn) => fn();
+  const ACTION_MARKER = Symbol();
+  const ACTION_NAME = Symbol();
+  function mergeReactiveObjects(target, patchToApply) {
+    if (target instanceof Map && patchToApply instanceof Map) {
+      patchToApply.forEach((value, key) => target.set(key, value));
+    } else if (target instanceof Set && patchToApply instanceof Set) {
+      patchToApply.forEach(target.add, target);
+    }
+    for (const key in patchToApply) {
+      if (!patchToApply.hasOwnProperty(key))
+        continue;
+      const subPatch = patchToApply[key];
+      const targetValue = target[key];
+      if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) {
+        target[key] = mergeReactiveObjects(targetValue, subPatch);
+      } else {
+        target[key] = subPatch;
+      }
+    }
+    return target;
+  }
+  const skipHydrateSymbol = (
+    /* istanbul ignore next */
+    Symbol()
+  );
+  function shouldHydrate(obj) {
+    return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
+  }
+  const { assign } = Object;
+  function isComputed(o) {
+    return !!(isRef(o) && o.effect);
+  }
+  function createOptionsStore(id, options, pinia2, hot) {
+    const { state, actions, getters } = options;
+    const initialState = pinia2.state.value[id];
+    let store;
+    function setup() {
+      if (!initialState && true) {
+        {
+          pinia2.state.value[id] = state ? state() : {};
+        }
+      }
+      const localState = toRefs(pinia2.state.value[id]);
+      return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
+        computedGetters[name] = markRaw(computed(() => {
+          setActivePinia(pinia2);
+          const store2 = pinia2._s.get(id);
+          return getters[name].call(store2, store2);
+        }));
+        return computedGetters;
+      }, {}));
+    }
+    store = createSetupStore(id, setup, options, pinia2, hot, true);
+    return store;
+  }
+  function createSetupStore($id, setup, options = {}, pinia2, hot, isOptionsStore) {
+    let scope;
+    const optionsForPlugin = assign({ actions: {} }, options);
+    const $subscribeOptions = { deep: true };
+    let isListening;
+    let isSyncListening;
+    let subscriptions = [];
+    let actionSubscriptions = [];
+    let debuggerEvents;
+    const initialState = pinia2.state.value[$id];
+    if (!isOptionsStore && !initialState && true) {
+      {
+        pinia2.state.value[$id] = {};
+      }
+    }
+    ref({});
+    let activeListener;
+    function $patch(partialStateOrMutator) {
+      let subscriptionMutation;
+      isListening = isSyncListening = false;
+      if (typeof partialStateOrMutator === "function") {
+        partialStateOrMutator(pinia2.state.value[$id]);
+        subscriptionMutation = {
+          type: MutationType.patchFunction,
+          storeId: $id,
+          events: debuggerEvents
+        };
+      } else {
+        mergeReactiveObjects(pinia2.state.value[$id], partialStateOrMutator);
+        subscriptionMutation = {
+          type: MutationType.patchObject,
+          payload: partialStateOrMutator,
+          storeId: $id,
+          events: debuggerEvents
+        };
+      }
+      const myListenerId = activeListener = Symbol();
+      nextTick().then(() => {
+        if (activeListener === myListenerId) {
+          isListening = true;
+        }
+      });
+      isSyncListening = true;
+      triggerSubscriptions(subscriptions, subscriptionMutation, pinia2.state.value[$id]);
+    }
+    const $reset = isOptionsStore ? function $reset2() {
+      const { state } = options;
+      const newState = state ? state() : {};
+      this.$patch(($state) => {
+        assign($state, newState);
+      });
+    } : (
+      /* istanbul ignore next */
+      noop
+    );
+    function $dispose() {
+      scope.stop();
+      subscriptions = [];
+      actionSubscriptions = [];
+      pinia2._s.delete($id);
+    }
+    const action = (fn, name = "") => {
+      if (ACTION_MARKER in fn) {
+        fn[ACTION_NAME] = name;
+        return fn;
+      }
+      const wrappedAction = function() {
+        setActivePinia(pinia2);
+        const args = Array.from(arguments);
+        const afterCallbackList = [];
+        const onErrorCallbackList = [];
+        function after(callback) {
+          afterCallbackList.push(callback);
+        }
+        function onError(callback) {
+          onErrorCallbackList.push(callback);
+        }
+        triggerSubscriptions(actionSubscriptions, {
+          args,
+          name: wrappedAction[ACTION_NAME],
+          store,
+          after,
+          onError
+        });
+        let ret;
+        try {
+          ret = fn.apply(this && this.$id === $id ? this : store, args);
+        } catch (error) {
+          triggerSubscriptions(onErrorCallbackList, error);
+          throw error;
+        }
+        if (ret instanceof Promise) {
+          return ret.then((value) => {
+            triggerSubscriptions(afterCallbackList, value);
+            return value;
+          }).catch((error) => {
+            triggerSubscriptions(onErrorCallbackList, error);
+            return Promise.reject(error);
+          });
+        }
+        triggerSubscriptions(afterCallbackList, ret);
+        return ret;
+      };
+      wrappedAction[ACTION_MARKER] = true;
+      wrappedAction[ACTION_NAME] = name;
+      return wrappedAction;
+    };
+    const partialStore = {
+      _p: pinia2,
+      // _s: scope,
+      $id,
+      $onAction: addSubscription.bind(null, actionSubscriptions),
+      $patch,
+      $reset,
+      $subscribe(callback, options2 = {}) {
+        const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
+        const stopWatcher = scope.run(() => watch(() => pinia2.state.value[$id], (state) => {
+          if (options2.flush === "sync" ? isSyncListening : isListening) {
+            callback({
+              storeId: $id,
+              type: MutationType.direct,
+              events: debuggerEvents
+            }, state);
+          }
+        }, assign({}, $subscribeOptions, options2)));
+        return removeSubscription;
+      },
+      $dispose
+    };
+    const store = reactive(partialStore);
+    pinia2._s.set($id, store);
+    const runWithContext = pinia2._a && pinia2._a.runWithContext || fallbackRunWithContext;
+    const setupStore = runWithContext(() => pinia2._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
+    for (const key in setupStore) {
+      const prop = setupStore[key];
+      if (isRef(prop) && !isComputed(prop) || isReactive(prop)) {
+        if (!isOptionsStore) {
+          if (initialState && shouldHydrate(prop)) {
+            if (isRef(prop)) {
+              prop.value = initialState[key];
+            } else {
+              mergeReactiveObjects(prop, initialState[key]);
+            }
+          }
+          {
+            pinia2.state.value[$id][key] = prop;
+          }
+        }
+      } else if (typeof prop === "function") {
+        const actionValue = action(prop, key);
+        {
+          setupStore[key] = actionValue;
+        }
+        optionsForPlugin.actions[key] = prop;
+      } else ;
+    }
+    {
+      assign(store, setupStore);
+      assign(toRaw(store), setupStore);
+    }
+    Object.defineProperty(store, "$state", {
+      get: () => pinia2.state.value[$id],
+      set: (state) => {
+        $patch(($state) => {
+          assign($state, state);
+        });
+      }
+    });
+    pinia2._p.forEach((extender) => {
+      {
+        assign(store, scope.run(() => extender({
+          store,
+          app: pinia2._a,
+          pinia: pinia2,
+          options: optionsForPlugin
+        })));
+      }
+    });
+    if (initialState && isOptionsStore && options.hydrate) {
+      options.hydrate(store.$state, initialState);
+    }
+    isListening = true;
+    isSyncListening = true;
+    return store;
+  }
+  /*! #__NO_SIDE_EFFECTS__ */
+  // @__NO_SIDE_EFFECTS__
+  function defineStore(idOrOptions, setup, setupOptions) {
+    let id;
+    let options;
+    const isSetupStore = typeof setup === "function";
+    if (typeof idOrOptions === "string") {
+      id = idOrOptions;
+      options = isSetupStore ? setupOptions : setup;
+    } else {
+      options = idOrOptions;
+      id = idOrOptions.id;
+    }
+    function useStore(pinia2, hot) {
+      const hasContext = hasInjectionContext();
+      pinia2 = // in test mode, ignore the argument provided as we can always retrieve a
+      // pinia instance with getActivePinia()
+      pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
+      if (pinia2)
+        setActivePinia(pinia2);
+      pinia2 = activePinia;
+      if (!pinia2._s.has(id)) {
+        if (isSetupStore) {
+          createSetupStore(id, setup, options, pinia2);
+        } else {
+          createOptionsStore(id, options, pinia2);
+        }
+      }
+      const store = pinia2._s.get(id);
+      return store;
+    }
+    useStore.$id = id;
+    return useStore;
+  }
   const MAX_CACHED_CHAPTERS = 8;
   const useReaderStore = /* @__PURE__ */ defineStore("reader", () => {
     const isActive2 = ref(false);
@@ -18181,7 +17969,8 @@ ul, ol {
     const NON_CHAPTER_TITLE_PATTERNS = [
       // Announcements and notices
       /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
-      /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更/,
+      /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更|上架通知|卷末感言/,
+      /必看|必读|请务必阅读|读者必看/,
       // Author-related
       /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
       // Promotional content
@@ -18207,6 +17996,8 @@ ul, ol {
           /\/book\/(\d+)/,
           /\/chapter\/(\d+)\//,
           /\/(\d+)\/\d+(?:\.html?)?$/,
+          // Faloo (飞卢): /{bookId}_{chapterId}.html
+          /\/(\d+)_\d+(?:\.html?)?$/,
           /[?&](?:book_?id|bid|id)=(\d+)/i
         ];
         for (const p2 of patterns) {
@@ -18332,9 +18123,11 @@ ul, ol {
       return null;
     }
     function parseTocWithTitles(doc2, base) {
+      var _a, _b;
       const links = Array.from(doc2.querySelectorAll("a[href]"));
       const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
       const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
+      const excludeAncestors = (((_b = (_a = rule.value) == null ? void 0 : _a.toc) == null ? void 0 : _b.excludeAncestors) || "").split(",").map((s) => s.trim()).filter(Boolean);
       const isPlaceholder = (title2) => /^章节\s*\d+$/i.test(title2.trim());
       const isBetterTitle = (oldTitle, newTitle) => {
         const oldWhitelist = isLikelyChapterTitle(oldTitle);
@@ -18382,6 +18175,19 @@ ul, ol {
       };
       const candidates = [];
       for (const a of links) {
+        if (excludeAncestors.length > 0) {
+          let excluded = false;
+          for (const sel of excludeAncestors) {
+            try {
+              if (a.closest(sel)) {
+                excluded = true;
+                break;
+              }
+            } catch {
+            }
+          }
+          if (excluded) continue;
+        }
         const text = extractLinkTitle(a);
         const href = a.getAttribute("href") || "";
         const abs = normalizeUrl(href, base);
@@ -18664,7 +18470,10 @@ ul, ol {
       }
       const pathParts = pathname.split("/").filter(Boolean);
       if (pathParts.length < 2) {
-        return true;
+        const part = pathParts[0] || "";
+        if (!/\d/.test(part)) {
+          return true;
+        }
       }
       const invalidPatterns = [
         /^https?:\/\/[^/]+\/?$/i,
@@ -19184,6 +18993,238 @@ ul, ol {
       $reset
     };
   });
+  const VERSION = "9.0.0";
+  const BUILD_DATE = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  const BASE_RESET_CSS = `
+/* Reset all inherited styles */
+:host {
+  all: initial;
+  display: block;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure common elements have expected defaults */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Reset form elements to browser defaults */
+input, button, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  width: auto;
+  height: auto;
+  margin: 3px 3px 3px 4px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  appearance: auto;
+  -webkit-appearance: slider-horizontal;
+}
+
+button {
+  appearance: auto;
+  cursor: pointer;
+}
+
+select {
+  appearance: auto;
+  -webkit-appearance: menulist;
+}
+
+textarea {
+  appearance: auto;
+  -webkit-appearance: textarea;
+  resize: vertical;
+}
+
+/* Link defaults */
+a {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* List defaults */
+ul, ol {
+  padding-left: 2em;
+}
+
+/* Ensure visibility */
+* {
+  visibility: visible !important;
+}
+`;
+  function createShadowMount(hostId) {
+    const host = document.createElement("div");
+    host.id = hostId;
+    document.body.appendChild(host);
+    const shadowRoot = host.attachShadow({ mode: "open" });
+    window.__MNR_SHADOW_ROOT__ = shadowRoot;
+    const resetStyle = document.createElement("style");
+    resetStyle.textContent = BASE_RESET_CSS;
+    shadowRoot.appendChild(resetStyle);
+    if (window.__MNR_STYLES__) {
+      const appStyle = document.createElement("style");
+      appStyle.textContent = window.__MNR_STYLES__;
+      shadowRoot.appendChild(appStyle);
+    }
+    const mountPoint = document.createElement("div");
+    mountPoint.id = `${hostId}-mount`;
+    shadowRoot.appendChild(mountPoint);
+    const cleanup = () => {
+      host.remove();
+      if (window.__MNR_SHADOW_ROOT__ === shadowRoot) {
+        window.__MNR_SHADOW_ROOT__ = void 0;
+      }
+    };
+    return { host, shadowRoot, mountPoint, cleanup };
+  }
+  const _hoisted_1$8 = {
+    class: "mnr-prompt-card",
+    role: "dialog",
+    "aria-modal": "true"
+  };
+  const _hoisted_2$7 = { class: "mnr-confidence" };
+  const _hoisted_3$7 = { class: "mnr-confidence-bar" };
+  const _hoisted_4$7 = { class: "mnr-confidence-text" };
+  const _hoisted_5$5 = { class: "mnr-results" };
+  const _hoisted_6$5 = { class: "mnr-checkbox-label" };
+  const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+    __name: "DetectionPrompt",
+    props: {
+      decision: {},
+      visible: { type: Boolean }
+    },
+    emits: ["respond", "dismiss"],
+    setup(__props, { emit: __emit }) {
+      const props = __props;
+      const emit2 = __emit;
+      const saveForDomain = ref(true);
+      const confidence = computed(() => props.decision.confidence);
+      const confidenceClass = computed(() => {
+        if (confidence.value >= 0.8) return "high";
+        if (confidence.value >= 0.6) return "medium";
+        return "low";
+      });
+      const positiveReasons = computed(() => {
+        return props.decision.reasons.filter(
+          (r) => r.includes("找到") || r.includes("检测到") || r.includes("成功")
+        );
+      });
+      const negativeReasons = computed(() => {
+        return props.decision.reasons.filter(
+          (r) => r.includes("未能") || r.includes("置信度") || r.includes("警告")
+        );
+      });
+      function handleAccept() {
+        emit2("respond", {
+          accepted: true,
+          saveForDomain: saveForDomain.value
+        });
+      }
+      function handleDismiss() {
+        emit2("respond", {
+          accepted: false,
+          saveForDomain: false
+        });
+        emit2("dismiss");
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createBlock(Transition, { name: "mnr-fade" }, {
+          default: withCtx(() => [
+            __props.visible ? (openBlock(), createElementBlock("div", {
+              key: 0,
+              class: "mnr-prompt-overlay",
+              onClick: withModifiers(handleDismiss, ["self"])
+            }, [
+              createBaseVNode("div", _hoisted_1$8, [
+                _cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [
+                  createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"),
+                  createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")
+                ], -1)),
+                createBaseVNode("div", _hoisted_2$7, [
+                  createBaseVNode("div", _hoisted_3$7, [
+                    createBaseVNode("div", {
+                      class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
+                      style: normalizeStyle({ width: `${confidence.value * 100}%` })
+                    }, null, 6)
+                  ]),
+                  createBaseVNode("span", _hoisted_4$7, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)
+                ]),
+                createBaseVNode("ul", _hoisted_5$5, [
+                  (openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
+                    return openBlock(), createElementBlock("li", {
+                      key: reason,
+                      class: "mnr-result-item success"
+                    }, [
+                      _cache[1] || (_cache[1] = createBaseVNode("span", { class: "mnr-result-icon" }, "✓", -1)),
+                      createBaseVNode("span", null, toDisplayString(reason), 1)
+                    ]);
+                  }), 128)),
+                  (openBlock(true), createElementBlock(Fragment, null, renderList(negativeReasons.value, (reason) => {
+                    return openBlock(), createElementBlock("li", {
+                      key: reason,
+                      class: "mnr-result-item warning"
+                    }, [
+                      _cache[2] || (_cache[2] = createBaseVNode("span", { class: "mnr-result-icon" }, "⚠", -1)),
+                      createBaseVNode("span", null, toDisplayString(reason), 1)
+                    ]);
+                  }), 128))
+                ]),
+                createBaseVNode("label", _hoisted_6$5, [
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => saveForDomain.value = $event),
+                    type: "checkbox",
+                    class: "mnr-checkbox"
+                  }, null, 512), [
+                    [vModelCheckbox, saveForDomain.value]
+                  ]),
+                  _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))
+                ]),
+                createBaseVNode("div", { class: "mnr-prompt-actions" }, [
+                  createBaseVNode("button", {
+                    class: "mnr-btn mnr-btn-secondary",
+                    onClick: handleDismiss
+                  }, "暂不"),
+                  createBaseVNode("button", {
+                    class: "mnr-btn mnr-btn-primary",
+                    onClick: handleAccept
+                  }, "启用阅读器")
+                ])
+              ])
+            ])) : createCommentVNode("", true)
+          ]),
+          _: 1
+        });
+      };
+    }
+  });
+  const _export_sfc = (sfc, props) => {
+    const target = sfc.__vccOpts || sfc;
+    for (const [key, val] of props) {
+      target[key] = val;
+    }
+    return target;
+  };
+  const DetectionPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-91cf13cd"]]);
   function useVirtualChapters(chapters, options = {}) {
     const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
     const heights = ref(/* @__PURE__ */ new Map());

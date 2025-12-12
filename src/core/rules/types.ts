@@ -43,6 +43,18 @@ export interface NavigationConfig {
   index?: string | false;
 }
 
+/** Table of contents (TOC) parsing configuration */
+export interface TocConfig {
+  /**
+   * Exclude TOC links that are inside these ancestor containers.
+   * Comma-separated CSS selectors. If any selector matches `a.closest(sel)`,
+   * the link will be skipped.
+   *
+   * Example (Faloo): '.c_con_relation' to exclude "作品相关/小说相关" section.
+   */
+  excludeAncestors?: string;
+}
+
 /** Title configuration */
 export interface TitleConfig {
   /** CSS selector for chapter title */
@@ -152,6 +164,8 @@ export interface SiteRule {
   // === Optional Configurations ===
   /** Navigation link configuration */
   navigation?: NavigationConfig;
+  /** TOC parsing configuration */
+  toc?: TocConfig;
   /** Title extraction configuration */
   title?: TitleConfig;
   /** Content processing configuration */

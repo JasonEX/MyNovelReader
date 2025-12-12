@@ -676,29 +676,6 @@ const simplifiedRules: SiteRule[] = [
     meta: { source: 'builtin', exampleUrl: 'https://www.lucifer-club.com/chapter-83716-1.html' },
   },
 
-  // Faloo (飞卢)
-  {
-    id: 'faloo',
-    name: '飞卢小说网',
-    version: 1,
-    match: {
-      pattern: '^https?://b\\.faloo\\.com/\\d+_\\d+\\.html',
-    },
-    content: {
-      selector: '.noveContent',
-    },
-    navigation: {
-      next: 'a#next_page',
-      prev: 'a#pre_page',
-      index: 'a#huimulu',
-    },
-    title: {
-      selector: 'h1',
-      bookSelector: '#novelName',
-    },
-    meta: { source: 'builtin' },
-  },
-
   // Shushan (书山中文网)
   {
     id: 'shushan',
@@ -1020,6 +997,41 @@ const simplifiedRules: SiteRule[] = [
       checkSection: true,
     },
     meta: { source: 'builtin', exampleUrl: 'https://m.shuhaige.net/36354/171272950.html' },
+  },
+
+  // 飞卢小说网
+  {
+    id: 'faloo',
+    name: '飞卢小说网',
+    version: 1,
+    match: {
+      pattern: '^https?://[a-z]\\.faloo\\.com/\\d+_\\d+\\.html',
+    },
+    content: {
+      selector: '.noveContent',
+    },
+    navigation: {
+      // Faloo uses stable ids for pager buttons; keep :contains fallback for older layouts.
+      prev: '#pre_page, a:contains("上一章")',
+      next: '#next_page, a:contains("下一章")',
+      index: '#huimulu, a:contains("目录")',
+    },
+    toc: {
+      // Exclude "作品相关/小说相关" section in Faloo catalog sidebar.
+      excludeAncestors: '.c_con_relation',
+    },
+    title: {
+      // Chapter title is in <h1>; <h2> is site-wide slogan.
+      selector: '.c_l_title > h1, h1',
+      bookSelector: '#novelName',
+      // Strip the leading book title token: "书名  1 章节名" -> "1 章节名"
+      replace: '^\\s*\\S+\\s+',
+    },
+    meta: {
+      source: 'builtin',
+      autoLaunch: true,
+      exampleUrl: 'https://b.faloo.com/412421_1.html',
+    },
   },
 
   // ==================== noSection rules (不合并分页) ====================

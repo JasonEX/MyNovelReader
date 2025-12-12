@@ -185,6 +185,7 @@ export const KNOWN_CONTENT_SELECTORS = [
   '.txt_tcontent',
   '.story_content',
   '.chapter_content',
+  '.chapter-box',
   // Element selectors
   'article',
 ] as const;
