@@ -27,6 +27,7 @@ interface AppState {
   isInitialized: boolean;
   isActive: boolean;
   currentDecision: AutoEnableDecision | null;
+  originalUrl: string | null; // URL when reader was opened
 }
 
 // Global app state
@@ -34,6 +35,7 @@ const appState: AppState = {
   isInitialized: false,
   isActive: false,
   currentDecision: null,
+  originalUrl: null,
 };
 
 // Vue app instance
@@ -74,6 +76,21 @@ export async function initialize(): Promise<void> {
  * Run the auto-enable flow
  */
 async function runAutoEnable(): Promise<void> {
+  // Check if we should skip auto-enable (e.g., after exiting reader and navigating to new chapter)
+  const skipFlag = sessionStorage.getItem('mnr_skip_auto_enable');
+  if (skipFlag) {
+    // Always clear the flag
+    sessionStorage.removeItem('mnr_skip_auto_enable');
+
+    // Only skip if flag was set recently (within 5 seconds)
+    const flagTime = parseInt(skipFlag, 10);
+    if (!isNaN(flagTime) && Date.now() - flagTime < 5000) {
+      // Show floating button instead of auto-enabling
+      showFloatingButton();
+      return;
+    }
+  }
+
   const manager = getAutoEnableManager({
     enableProtection: true,
   });
@@ -146,6 +163,9 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
     return;
   }
 
+  // Save original URL before reader modifies it
+  appState.originalUrl = window.location.href;
+
   // Update reader store
   const readerStore = useReaderStore(pinia);
   readerStore.activate();
@@ -199,6 +219,22 @@ function hideOriginalContent(): void {
 export function closeReader(): void {
   if (!appState.isActive) return;
 
+  // Get current chapter URL before closing
+  let targetUrl: string | null = null;
+
+  if (pinia) {
+    const readerStore = useReaderStore(pinia);
+    const currentIndex = readerStore.currentChapterIndex;
+    const chapter = readerStore.chapters[currentIndex];
+
+    if (chapter?.chapter.url) {
+      targetUrl = chapter.chapter.url;
+    }
+  }
+
+  // Get the original page URL (saved when reader was opened)
+  const originalUrl = appState.originalUrl;
+
   // Unmount app
   if (app) {
     app.unmount();
@@ -224,6 +260,16 @@ export function closeReader(): void {
   }
 
   appState.isActive = false;
+  appState.originalUrl = null; // Clear saved URL
+
+  // If current chapter URL is different from the original page URL,
+  // navigate to the target URL so page content matches what user was reading
+  if (targetUrl && originalUrl && targetUrl !== originalUrl) {
+    // Set flag to prevent auto-enable on the new page
+    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    window.location.href = targetUrl;
+    return; // Don't show floating button, page will reload
+  }
 
   // Show floating button to re-enter
   showFloatingButton();

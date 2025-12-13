@@ -21805,7 +21805,8 @@ ${value}`;
   const appState = {
     isInitialized: false,
     isActive: false,
-    currentDecision: null
+    currentDecision: null,
+    originalUrl: null
   };
   let app = null;
   let pinia = null;
@@ -21827,6 +21828,15 @@ ${value}`;
     }
   }
   async function runAutoEnable() {
+    const skipFlag = sessionStorage.getItem("mnr_skip_auto_enable");
+    if (skipFlag) {
+      sessionStorage.removeItem("mnr_skip_auto_enable");
+      const flagTime = parseInt(skipFlag, 10);
+      if (!isNaN(flagTime) && Date.now() - flagTime < 5e3) {
+        showFloatingButton();
+        return;
+      }
+    }
     const manager = getAutoEnableManager({
       enableProtection: true
     });
@@ -21871,6 +21881,7 @@ ${value}`;
       console.error("[MNR] Pinia not initialized");
       return;
     }
+    appState.originalUrl = window.location.href;
     const readerStore = useReaderStore(pinia);
     readerStore.activate();
     readerStore.setChapter(chapter, rule);
@@ -21900,6 +21911,16 @@ ${value}`;
   }
   function closeReader() {
     if (!appState.isActive) return;
+    let targetUrl = null;
+    if (pinia) {
+      const readerStore = useReaderStore(pinia);
+      const currentIndex = readerStore.currentChapterIndex;
+      const chapter = readerStore.chapters[currentIndex];
+      if (chapter == null ? void 0 : chapter.chapter.url) {
+        targetUrl = chapter.chapter.url;
+      }
+    }
+    const originalUrl = appState.originalUrl;
     if (app) {
       app.unmount();
       app = null;
@@ -21917,6 +21938,12 @@ ${value}`;
       readerStore.deactivate();
     }
     appState.isActive = false;
+    appState.originalUrl = null;
+    if (targetUrl && originalUrl && targetUrl !== originalUrl) {
+      sessionStorage.setItem("mnr_skip_auto_enable", Date.now().toString());
+      window.location.href = targetUrl;
+      return;
+    }
     showFloatingButton();
   }
   function showFloatingButton() {
