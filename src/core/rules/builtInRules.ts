@@ -401,6 +401,40 @@ const specialRules: SiteRule[] = [
  * These can't be auto-detected but don't need iframe/mutations
  */
 const simplifiedRules: SiteRule[] = [
+  // 零点看书 / 文库吧系（示例：23.225.121.247/ldks/111291/42509753_2.html）
+  // 特点：
+  // - 同一章分页：/42509753.html -> /42509753_2.html（下一页），最后一页才出现“下一章”
+  // - 目录页：/ldks/{bookId}/（章节列表）
+  {
+    id: 'ldks-2baoe',
+    name: '零点看书（ldks）',
+    version: 1,
+    match: {
+      pattern:
+        '^https?://(?:23\\.225\\.121\\.247|www\\.2baoe\\.com)/ldks/\\d+/\\d+(?:[_-]\\d+)?\\.html$',
+    },
+    content: {
+      selector: '#content',
+      // 正文里不需要标题；导航/脚本也不需要
+      remove: 'h1.title, script',
+    },
+    navigation: {
+      prev: '.section-opt a:contains("上一章"), .section-opt a:contains("上一页")',
+      index: '.section-opt a:contains("章节列表"), a:contains("章节列表")',
+      next: '.section-opt a:contains("下一章"), .section-opt a:contains("下一页")',
+    },
+    title: {
+      selector: 'h1.title',
+    },
+    advanced: {
+      checkSection: true,
+    },
+    meta: {
+      source: 'builtin',
+      exampleUrl: 'http://23.225.121.247/ldks/111291/42509753_2.html',
+    },
+  },
+
   // Zongheng (纵横中文网)
   {
     id: 'zongheng-book',
@@ -1095,32 +1129,6 @@ const simplifiedRules: SiteRule[] = [
       noSection: true,
     },
     meta: { source: 'builtin', exampleUrl: 'http://www.ddxs.com/yuanzun/1.html' },
-  },
-
-  // 轻小说文库 (wenku8) - noSection
-  {
-    id: 'wenku8-nosection',
-    name: '轻小说文库',
-    version: 1,
-    match: {
-      pattern: 'https://www\\.wenku8\\.net/novel/\\d+/\\d+/\\d+\\.htm',
-    },
-    content: {
-      selector: '#content',
-    },
-    navigation: {
-      next: '#footlink > a:nth-child(4)',
-      prev: '#foottext > a:nth-child(3)',
-      index: '#footlink > a:nth-child(5)',
-    },
-    title: {
-      selector: '#title',
-      bookSelector: '#linkleft > a:nth-child(3)',
-    },
-    advanced: {
-      noSection: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://www.wenku8.net/novel/2/2449/91347.htm' },
   },
 ];
 

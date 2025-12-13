@@ -9,6 +9,13 @@ import { getParser } from '@/core/parser';
 import type { ParsedChapter } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
 
+type SectionInfo = {
+  isSection: boolean;
+  nextSectionUrl: string | null;
+  nextChapterUrl: string | null;
+  confidence: number;
+};
+
 export interface ReadingProgress {
   /** Chapter URL */
   url: string;
@@ -313,7 +320,8 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       const parser = getParser();
-      const parsed = await parser.parse(doc, nextUrl);
+      const merged = await parseWithSectionMerge(parser, doc, nextUrl, referer);
+      const parsed = merged;
       if (!parsed) {
         // Failed to parse - likely not a chapter page (end of book page, etc.)
         loadedUrls.value.add(nextUrl); // Prevent retry
@@ -337,7 +345,7 @@ export const useReaderStore = defineStore('reader', () => {
         rule: parsed.rule,
         id,
       });
-      loadedUrls.value.add(nextUrl);
+      loadedUrls.value.add(parsed.url);
 
       // Store original content for text conversion
       originalContents.value.set(id, parsed.content);
@@ -360,8 +368,8 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       // Add to history
-      if (!history.value.includes(nextUrl)) {
-        history.value.push(nextUrl);
+      if (!history.value.includes(parsed.url)) {
+        history.value.push(parsed.url);
       }
 
       // Trim cached chapters to limit memory (keep recent ones around current index)
@@ -450,7 +458,8 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       const parser = getParser();
-      const parsed = await parser.parse(doc, prevUrl);
+      const merged = await parseWithSectionMerge(parser, doc, prevUrl, referer);
+      const parsed = merged;
       if (!parsed) {
         // Failed to parse - likely not a chapter page
         loadedUrls.value.add(prevUrl); // Prevent retry
@@ -486,7 +495,7 @@ export const useReaderStore = defineStore('reader', () => {
         rule: parsed.rule,
         id,
       });
-      loadedUrls.value.add(prevUrl);
+      loadedUrls.value.add(parsed.url);
       currentChapterIndex.value++;
 
       // Store original content for text conversion
@@ -509,8 +518,8 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       // Add to history
-      if (!history.value.includes(prevUrl)) {
-        history.value.unshift(prevUrl);
+      if (!history.value.includes(parsed.url)) {
+        history.value.unshift(parsed.url);
       }
 
       // Trim cached chapters to limit memory (drop far end when we are near start)
@@ -696,7 +705,7 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       const parser = getParser();
-      const parsed = await parser.parse(doc, nextUrl);
+      const parsed = await parseWithSectionMerge(parser, doc, nextUrl, referer);
       if (!parsed) {
         nextUrl = taskList.shift() ?? null;
         continue;
@@ -714,7 +723,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
 
-      // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl
+      // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl（分页合并后 nextUrl 已指向下一章）
       referer = parsed.url;
       nextUrl = taskList.shift() ?? parsed.nextUrl ?? null;
 
@@ -1425,6 +1434,107 @@ export const useReaderStore = defineStore('reader', () => {
     $reset,
   };
 });
+
+function normalizeAbsoluteUrl(url: string, base?: string): string {
+  try {
+    return new URL(url, base || window.location.href).toString();
+  } catch {
+    return url;
+  }
+}
+
+function getSectionBaseUrl(url: string): string | null {
+  // /123_2.html -> /123.html
+  const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
+  if (m) return `${m[1]}${m[2]}`;
+  return null;
+}
+
+function joinHtml(a: string, b: string): string {
+  const left = (a || '').trim();
+  const right = (b || '').trim();
+  if (!left) return right;
+  if (!right) return left;
+  return `${left}<p></p>${right}`;
+}
+
+async function parseWithSectionMerge(
+  parser: ReturnType<typeof getParser>,
+  initialDoc: Document,
+  url: string,
+  referer?: string
+): Promise<ParsedChapter | null> {
+  const resolvedUrl = normalizeAbsoluteUrl(url, referer);
+
+  // If user opens a later section page, normalize to the first page for stable TOC matching.
+  const baseUrl = getSectionBaseUrl(resolvedUrl);
+  let startUrl = resolvedUrl;
+  let startDoc = initialDoc;
+  if (baseUrl && baseUrl !== resolvedUrl) {
+    const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
+    const doc = await promise;
+    if (doc) {
+      startUrl = baseUrl;
+      startDoc = doc;
+    }
+  }
+
+  const first = await parser.parse(startDoc, startUrl);
+  if (!first) return null;
+
+  // Decide whether to attempt section merging: rule says so OR detection says current/next is section-like.
+  const enableByRule = !!first.rule?.advanced?.checkSection && !first.rule?.advanced?.noSection;
+  const detection = parser.detect(startDoc, startUrl);
+  const section: SectionInfo = {
+    isSection: !!detection.results.section?.isSection,
+    nextSectionUrl: detection.results.section?.nextSectionUrl || null,
+    nextChapterUrl: detection.results.section?.nextChapterUrl || null,
+    confidence: detection.results.section?.confidence || 0,
+  };
+
+  const shouldMerge = enableByRule || (section.isSection && section.confidence >= 0.8);
+  if (!shouldMerge) return first;
+
+  let mergedContent = first.content;
+  let mergedRaw = first.rawContent;
+  let nextSectionUrl = section.nextSectionUrl;
+  let nextChapterUrl = section.nextChapterUrl || null;
+  let lastUrl = startUrl;
+
+  // Best-effort: merge up to 10 pages to avoid infinite loops.
+  const seen = new Set<string>([startUrl]);
+  for (let i = 0; i < 10 && nextSectionUrl; i++) {
+    const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
+    if (seen.has(absNextSection)) break;
+    seen.add(absNextSection);
+
+    const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
+    const nextDoc = await promise;
+    if (!nextDoc) break;
+
+    const nextParsed = await parser.parse(nextDoc, absNextSection);
+    if (!nextParsed) break;
+
+    mergedContent = joinHtml(mergedContent, nextParsed.content);
+    mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
+
+    const nextDet = parser.detect(nextDoc, absNextSection);
+    const s = nextDet.results.section;
+    if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+    nextSectionUrl = s?.nextSectionUrl || null;
+    lastUrl = absNextSection;
+  }
+
+  // After merging, nextUrl should point to next *chapter*, not the next page.
+  // Keep other fields from the first page (title/book/index/prev).
+  return {
+    ...first,
+    url: startUrl,
+    content: mergedContent,
+    rawContent: mergedRaw,
+    nextUrl: nextChapterUrl || first.nextUrl,
+  };
+}
 
 /** Get GM_xmlhttpRequest function */
 function getGmXhr(): typeof GM_xmlhttpRequest | null {

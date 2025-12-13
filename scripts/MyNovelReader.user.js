@@ -640,7 +640,7 @@ var MyNovelReader = (function(exports) {
       const patterns = NAV_PATTERNS[type];
       if (type !== "index") {
         const relLink = doc2.querySelector(`a[rel="${type}"]`);
-        if (relLink && this.isValidLink(relLink)) {
+        if (relLink && this.isValidLink(relLink, type)) {
           return {
             element: relLink,
             url: relLink.href,
@@ -656,13 +656,19 @@ var MyNovelReader = (function(exports) {
       for (const link of links) {
         const anchor = link;
         const text = ((_b = anchor.textContent) == null ? void 0 : _b.trim()) || "";
-        if (!this.isValidLink(anchor)) continue;
+        if (!this.isValidLink(anchor, type)) continue;
         let score = 0;
         for (const pattern of patterns) {
           if (pattern.test(text)) {
             score += 10;
             if (text.length <= 5) score += 5;
           }
+        }
+        if (type === "next" || type === "prev") {
+          const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text));
+          const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text));
+          if (isChapter) score += 3;
+          if (isSection && !isChapter) score -= 2;
         }
         const title = anchor.title || "";
         for (const pattern of patterns) {
@@ -699,12 +705,20 @@ var MyNovelReader = (function(exports) {
     /**
      * Check if a link is valid for navigation
      */
-    isValidLink(anchor) {
+    isValidLink(anchor, purpose) {
+      var _a;
       const href = anchor.href;
+      const text = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
       if (!href) return false;
       if (href.startsWith("javascript:")) return false;
       for (const pattern of INVALID_URL_PATTERNS) {
-        if (pattern.test(href)) return false;
+        if (pattern.test(href)) {
+          if (purpose === "index") {
+            const looksLikeIndex = NAV_PATTERNS.index.some((p2) => p2.test(text));
+            if (looksLikeIndex) continue;
+          }
+          return false;
+        }
       }
       if (href.includes("#") && !href.includes("#chapter")) {
         const url = new URL(href);
@@ -918,7 +932,7 @@ var MyNovelReader = (function(exports) {
         const text = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text));
         const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text));
-        if (isChapter && !isSection && this.isValidLink(anchor)) {
+        if (isChapter && !isSection && this.isValidLink(anchor, "next")) {
           const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
           if (!comparison.isSection) {
             return anchor.href;
@@ -2029,6 +2043,38 @@ var MyNovelReader = (function(exports) {
     }
   ];
   const simplifiedRules = [
+    // 零点看书 / 文库吧系（示例：23.225.121.247/ldks/111291/42509753_2.html）
+    // 特点：
+    // - 同一章分页：/42509753.html -> /42509753_2.html（下一页），最后一页才出现“下一章”
+    // - 目录页：/ldks/{bookId}/（章节列表）
+    {
+      id: "ldks-2baoe",
+      name: "零点看书（ldks）",
+      version: 1,
+      match: {
+        pattern: "^https?://(?:23\\.225\\.121\\.247|www\\.2baoe\\.com)/ldks/\\d+/\\d+(?:[_-]\\d+)?\\.html$"
+      },
+      content: {
+        selector: "#content",
+        // 正文里不需要标题；导航/脚本也不需要
+        remove: "h1.title, script"
+      },
+      navigation: {
+        prev: '.section-opt a:contains("上一章"), .section-opt a:contains("上一页")',
+        index: '.section-opt a:contains("章节列表"), a:contains("章节列表")',
+        next: '.section-opt a:contains("下一章"), .section-opt a:contains("下一页")'
+      },
+      title: {
+        selector: "h1.title"
+      },
+      advanced: {
+        checkSection: true
+      },
+      meta: {
+        source: "builtin",
+        exampleUrl: "http://23.225.121.247/ldks/111291/42509753_2.html"
+      }
+    },
     // Zongheng (纵横中文网)
     {
       id: "zongheng-book",
@@ -2689,31 +2735,6 @@ var MyNovelReader = (function(exports) {
         noSection: true
       },
       meta: { source: "builtin", exampleUrl: "http://www.ddxs.com/yuanzun/1.html" }
-    },
-    // 轻小说文库 (wenku8) - noSection
-    {
-      id: "wenku8-nosection",
-      name: "轻小说文库",
-      version: 1,
-      match: {
-        pattern: "https://www\\.wenku8\\.net/novel/\\d+/\\d+/\\d+\\.htm"
-      },
-      content: {
-        selector: "#content"
-      },
-      navigation: {
-        next: "#footlink > a:nth-child(4)",
-        prev: "#foottext > a:nth-child(3)",
-        index: "#footlink > a:nth-child(5)"
-      },
-      title: {
-        selector: "#title",
-        bookSelector: "#linkleft > a:nth-child(3)"
-      },
-      advanced: {
-        noSection: true
-      },
-      meta: { source: "builtin", exampleUrl: "https://www.wenku8.net/novel/2/2449/91347.htm" }
     }
   ];
   const builtInRules = [...specialRules, ...simplifiedRules];
@@ -17621,7 +17642,8 @@ var MyNovelReader = (function(exports) {
           return false;
         }
         const parser = getParser();
-        const parsed = await parser.parse(doc2, nextUrl);
+        const merged = await parseWithSectionMerge(parser, doc2, nextUrl, referer);
+        const parsed = merged;
         if (!parsed) {
           loadedUrls.value.add(nextUrl);
           showToast("已经是最后一章了", "info");
@@ -17639,7 +17661,7 @@ var MyNovelReader = (function(exports) {
           rule: parsed.rule,
           id
         });
-        loadedUrls.value.add(nextUrl);
+        loadedUrls.value.add(parsed.url);
         originalContents.value.set(id, parsed.content);
         cachedContents.value.set(parsed.url, {
           chapter: parsed,
@@ -17653,8 +17675,8 @@ var MyNovelReader = (function(exports) {
             entry.chapter = { ...entry.chapter, content: converted };
           }
         }
-        if (!history.value.includes(nextUrl)) {
-          history.value.push(nextUrl);
+        if (!history.value.includes(parsed.url)) {
+          history.value.push(parsed.url);
         }
         if (chapters.value.length > MAX_CACHED_CHAPTERS && currentChapterIndex.value > 2) {
           const removed = chapters.value.shift();
@@ -17718,7 +17740,8 @@ var MyNovelReader = (function(exports) {
           return false;
         }
         const parser = getParser();
-        const parsed = await parser.parse(doc2, prevUrl);
+        const merged = await parseWithSectionMerge(parser, doc2, prevUrl, referer);
+        const parsed = merged;
         if (!parsed) {
           loadedUrls.value.add(prevUrl);
           showToast("已经是第一章了", "info");
@@ -17741,7 +17764,7 @@ var MyNovelReader = (function(exports) {
           rule: parsed.rule,
           id
         });
-        loadedUrls.value.add(prevUrl);
+        loadedUrls.value.add(parsed.url);
         currentChapterIndex.value++;
         originalContents.value.set(id, parsed.content);
         cachedContents.value.set(parsed.url, {
@@ -17756,8 +17779,8 @@ var MyNovelReader = (function(exports) {
             entry.chapter = { ...entry.chapter, content: converted };
           }
         }
-        if (!history.value.includes(prevUrl)) {
-          history.value.unshift(prevUrl);
+        if (!history.value.includes(parsed.url)) {
+          history.value.unshift(parsed.url);
         }
         if (chapters.value.length > MAX_CACHED_CHAPTERS) {
           const removed = chapters.value.pop();
@@ -17903,7 +17926,7 @@ var MyNovelReader = (function(exports) {
           continue;
         }
         const parser = getParser();
-        const parsed = await parser.parse(doc2, nextUrl);
+        const parsed = await parseWithSectionMerge(parser, doc2, nextUrl, referer);
         if (!parsed) {
           nextUrl = taskList.shift() ?? null;
           continue;
@@ -18397,6 +18420,82 @@ var MyNovelReader = (function(exports) {
       $reset
     };
   });
+  function normalizeAbsoluteUrl(url, base) {
+    try {
+      return new URL(url, base || window.location.href).toString();
+    } catch {
+      return url;
+    }
+  }
+  function getSectionBaseUrl(url) {
+    const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
+    if (m) return `${m[1]}${m[2]}`;
+    return null;
+  }
+  function joinHtml(a, b) {
+    const left = (a || "").trim();
+    const right = (b || "").trim();
+    if (!left) return right;
+    if (!right) return left;
+    return `${left}<p></p>${right}`;
+  }
+  async function parseWithSectionMerge(parser, initialDoc, url, referer) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const resolvedUrl = normalizeAbsoluteUrl(url, referer);
+    const baseUrl = getSectionBaseUrl(resolvedUrl);
+    let startUrl = resolvedUrl;
+    let startDoc = initialDoc;
+    if (baseUrl && baseUrl !== resolvedUrl) {
+      const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
+      const doc2 = await promise;
+      if (doc2) {
+        startUrl = baseUrl;
+        startDoc = doc2;
+      }
+    }
+    const first = await parser.parse(startDoc, startUrl);
+    if (!first) return null;
+    const enableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.checkSection) && !((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.noSection);
+    const detection = parser.detect(startDoc, startUrl);
+    const section = {
+      isSection: !!((_e = detection.results.section) == null ? void 0 : _e.isSection),
+      nextSectionUrl: ((_f = detection.results.section) == null ? void 0 : _f.nextSectionUrl) || null,
+      nextChapterUrl: ((_g = detection.results.section) == null ? void 0 : _g.nextChapterUrl) || null,
+      confidence: ((_h = detection.results.section) == null ? void 0 : _h.confidence) || 0
+    };
+    const shouldMerge = enableByRule || section.isSection && section.confidence >= 0.8;
+    if (!shouldMerge) return first;
+    let mergedContent = first.content;
+    let mergedRaw = first.rawContent;
+    let nextSectionUrl = section.nextSectionUrl;
+    let nextChapterUrl = section.nextChapterUrl || null;
+    let lastUrl = startUrl;
+    const seen = /* @__PURE__ */ new Set([startUrl]);
+    for (let i = 0; i < 10 && nextSectionUrl; i++) {
+      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
+      if (seen.has(absNextSection)) break;
+      seen.add(absNextSection);
+      const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
+      const nextDoc = await promise;
+      if (!nextDoc) break;
+      const nextParsed = await parser.parse(nextDoc, absNextSection);
+      if (!nextParsed) break;
+      mergedContent = joinHtml(mergedContent, nextParsed.content);
+      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
+      const nextDet = parser.detect(nextDoc, absNextSection);
+      const s = nextDet.results.section;
+      if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+      nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
+      lastUrl = absNextSection;
+    }
+    return {
+      ...first,
+      url: startUrl,
+      content: mergedContent,
+      rawContent: mergedRaw,
+      nextUrl: nextChapterUrl || first.nextUrl
+    };
+  }
   function getGmXhr() {
     if (typeof GM_xmlhttpRequest === "function") {
       return GM_xmlhttpRequest;

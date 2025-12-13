@@ -104,6 +104,22 @@ describe('NavigationDetector', () => {
       expect(result.next?.url).toContain('/chapter/5.html');
     });
 
+    it('should allow index/list URLs for index navigation', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <a href="/book/123/index.html">目录</a>
+            <a href="/chapter/5.html">下一章</a>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.index).not.toBeNull();
+      expect(result.index?.url).toContain('/book/123/index.html');
+    });
+
     it('should return null when no navigation found', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

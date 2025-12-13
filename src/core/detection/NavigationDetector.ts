@@ -69,7 +69,7 @@ export class NavigationDetector {
     // Strategy 1: rel attribute (highest confidence)
     if (type !== 'index') {
       const relLink = doc.querySelector(`a[rel="${type}"]`);
-      if (relLink && this.isValidLink(relLink as HTMLAnchorElement)) {
+      if (relLink && this.isValidLink(relLink as HTMLAnchorElement, type)) {
         return {
           element: relLink as HTMLAnchorElement,
           url: (relLink as HTMLAnchorElement).href,
@@ -94,7 +94,7 @@ export class NavigationDetector {
       const text = anchor.textContent?.trim() || '';
 
       // Skip invalid hrefs
-      if (!this.isValidLink(anchor)) continue;
+      if (!this.isValidLink(anchor, type)) continue;
 
       // Score based on text matching
       let score = 0;
@@ -104,6 +104,15 @@ export class NavigationDetector {
           // Exact/short match bonus
           if (text.length <= 5) score += 5;
         }
+      }
+
+      // Prefer real chapter navigation over section pagination when both exist.
+      // This keeps "下一章/上一章" higher than "下一页/上一页" for next/prev detection.
+      if (type === 'next' || type === 'prev') {
+        const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
+        const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
+        if (isChapter) score += 3;
+        if (isSection && !isChapter) score -= 2;
       }
 
       // Check title attribute too
@@ -153,8 +162,9 @@ export class NavigationDetector {
   /**
    * Check if a link is valid for navigation
    */
-  private isValidLink(anchor: HTMLAnchorElement): boolean {
+  private isValidLink(anchor: HTMLAnchorElement, purpose: 'next' | 'prev' | 'index'): boolean {
     const href = anchor.href;
+    const text = anchor.textContent?.trim() || '';
 
     // Must have href
     if (!href) return false;
@@ -163,8 +173,16 @@ export class NavigationDetector {
     if (href.startsWith('javascript:')) return false;
 
     // Skip invalid URL patterns
+    // NOTE: index/list URLs are often valid *for目录页*; don't filter them for index purpose.
     for (const pattern of INVALID_URL_PATTERNS) {
-      if (pattern.test(href)) return false;
+      if (pattern.test(href)) {
+        if (purpose === 'index') {
+          // If link text looks like directory, allow list/index pages.
+          const looksLikeIndex = NAV_PATTERNS.index.some(p => p.test(text));
+          if (looksLikeIndex) continue;
+        }
+        return false;
+      }
     }
 
     // Skip anchor-only links (unless they contain chapter info)
@@ -460,7 +478,7 @@ export class NavigationDetector {
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
 
-      if (isChapter && !isSection && this.isValidLink(anchor)) {
+      if (isChapter && !isSection && this.isValidLink(anchor, 'next')) {
         // Verify it's a different chapter, not the same chapter's section
         const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
         if (!comparison.isSection) {
