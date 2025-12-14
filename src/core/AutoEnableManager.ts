@@ -9,10 +9,80 @@
  */
 
 import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
-import { ParsedChapter, Parser } from '@/core/parser';
+import { getParser, ParsedChapter, Parser } from '@/core/parser';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getSiteProtection } from '@/core/protection';
 import { SiteRule } from '@/core/rules/types';
+
+/** Get GM_xmlhttpRequest function */
+function getGmXhr(): typeof GM_xmlhttpRequest | null {
+  if (typeof GM_xmlhttpRequest === 'function') {
+    return GM_xmlhttpRequest;
+  }
+  return null;
+}
+
+/** Fetch URL and return parsed Document */
+function fetchUrl(url: string, referer?: string): Promise<Document | null> {
+  const gmXhr = getGmXhr();
+
+  if (!gmXhr) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise<Document | null>(resolve => {
+    const headers: Record<string, string> = {
+      Accept: 'text/html,application/xhtml+xml,application/xml',
+      'Accept-Language': 'zh-CN,zh;q=0.9',
+    };
+    if (referer) {
+      headers['Referer'] = referer;
+    }
+    gmXhr({
+      method: 'GET',
+      url,
+      headers,
+      overrideMimeType: 'text/html;charset=' + document.characterSet,
+      onload: response => {
+        if (response.status >= 200 && response.status < 300) {
+          try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response.responseText, 'text/html');
+            // Set base URL for relative links
+            const base = doc.createElement('base');
+            base.href = url;
+            doc.head.insertBefore(base, doc.head.firstChild);
+            // Store URL in a custom property
+            (doc as Document & { _mnrUrl: string })._mnrUrl = url;
+            resolve(doc);
+          } catch {
+            resolve(null);
+          }
+        } else {
+          resolve(null);
+        }
+      },
+      onerror: () => resolve(null),
+      ontimeout: () => resolve(null),
+    });
+  });
+}
+
+function normalizeAbsoluteUrl(url: string, base?: string): string {
+  try {
+    return new URL(url, base || window.location.href).toString();
+  } catch {
+    return url;
+  }
+}
+
+function joinHtml(a: string, b: string): string {
+  const left = (a || '').trim();
+  const right = (b || '').trim();
+  if (!left) return right;
+  if (!right) return left;
+  return `${left}<p></p>${right}`;
+}
 
 /** Section text patterns - "页" indicates section, "章" indicates chapter */
 const SECTION_TEXT_PATTERNS = [
@@ -298,21 +368,93 @@ export class AutoEnableManager {
       const chapter = await this.parser.parse(doc);
 
       if (chapter && this.launchCallback) {
-        // Fix section URL issue: if nextUrl is a section URL (e.g., /123_2.html),
-        // find the real next chapter URL from the document
         const currentUrl = doc.location?.href || window.location.href;
-        if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
-          const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
-          if (realNextChapterUrl) {
-            chapter.nextUrl = realNextChapterUrl;
-          }
-        }
 
-        this.launchCallback(chapter, decision.rule);
+        // Check if we need to merge sections
+        const enableByRule =
+          !!chapter.rule?.advanced?.checkSection && !chapter.rule?.advanced?.noSection;
+        const shouldMerge =
+          enableByRule && chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl);
+
+        if (shouldMerge) {
+          // Merge all section pages
+          const merged = await this.mergeSectionPages(chapter, currentUrl);
+          this.launchCallback(merged, decision.rule);
+        } else {
+          // No section merge needed, but still fix nextUrl if it points to a section
+          if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
+            const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
+            if (realNextChapterUrl) {
+              chapter.nextUrl = realNextChapterUrl;
+            }
+          }
+          this.launchCallback(chapter, decision.rule);
+        }
       }
     } catch (e) {
       console.error('[AutoEnableManager] Parse error:', e);
     }
+  }
+
+  /**
+   * Merge all section pages into a single chapter
+   */
+  private async mergeSectionPages(
+    firstChapter: ParsedChapter,
+    currentUrl: string
+  ): Promise<ParsedChapter> {
+    const parser = getParser();
+    let mergedContent = firstChapter.content;
+    let mergedRaw = firstChapter.rawContent;
+    let nextSectionUrl = firstChapter.nextUrl;
+    let nextChapterUrl: string | null = null;
+    let lastUrl = currentUrl;
+
+    // Merge up to 10 pages to avoid infinite loops
+    const seen = new Set<string>([currentUrl]);
+    for (let i = 0; i < 10 && nextSectionUrl; i++) {
+      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
+      if (seen.has(absNextSection)) break;
+      seen.add(absNextSection);
+
+      // Check if this is still a section URL
+      if (!isSectionLikeUrl(lastUrl, absNextSection)) {
+        // This is the next chapter, not a section
+        nextChapterUrl = absNextSection;
+        break;
+      }
+
+      const nextDoc = await fetchUrl(absNextSection, lastUrl);
+      if (!nextDoc) break;
+
+      const nextParsed = await parser.parse(nextDoc, absNextSection);
+      if (!nextParsed) break;
+
+      mergedContent = joinHtml(mergedContent, nextParsed.content);
+      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
+
+      // Check if next page's nextUrl is a section or chapter
+      if (nextParsed.nextUrl) {
+        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
+          nextSectionUrl = nextParsed.nextUrl;
+        } else {
+          // Next page's nextUrl is the next chapter
+          nextChapterUrl = nextParsed.nextUrl;
+          nextSectionUrl = null;
+        }
+      } else {
+        nextSectionUrl = null;
+      }
+
+      lastUrl = absNextSection;
+    }
+
+    return {
+      ...firstChapter,
+      content: mergedContent,
+      rawContent: mergedRaw,
+      nextUrl: nextChapterUrl || firstChapter.nextUrl,
+    };
   }
 
   /**
@@ -423,17 +565,28 @@ export class AutoEnableManager {
       const chapter = await this.parser.parse(doc);
 
       if (chapter && this.launchCallback) {
-        // Fix section URL issue: if nextUrl is a section URL (e.g., /123_2.html),
-        // find the real next chapter URL from the document
         const currentUrl = doc.location?.href || window.location.href;
-        if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
-          const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
-          if (realNextChapterUrl) {
-            chapter.nextUrl = realNextChapterUrl;
-          }
-        }
 
-        this.launchCallback(chapter, undefined);
+        // Check if we need to merge sections
+        const enableByRule =
+          !!chapter.rule?.advanced?.checkSection && !chapter.rule?.advanced?.noSection;
+        const shouldMerge =
+          enableByRule && chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl);
+
+        if (shouldMerge) {
+          // Merge all section pages
+          const merged = await this.mergeSectionPages(chapter, currentUrl);
+          this.launchCallback(merged, undefined);
+        } else {
+          // No section merge needed, but still fix nextUrl if it points to a section
+          if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
+            const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
+            if (realNextChapterUrl) {
+              chapter.nextUrl = realNextChapterUrl;
+            }
+          }
+          this.launchCallback(chapter, undefined);
+        }
       }
     } catch (e) {
       console.error('[AutoEnableManager] Manual enable error:', e);

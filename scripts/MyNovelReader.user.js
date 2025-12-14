@@ -1301,7 +1301,22 @@ var MyNovelReader = (function(exports) {
     }
   }
   const AD_PATTERNS = [
-    /本章未完[，,]点击下一页继续.*/gi,
+    // Section/page navigation hints (分页提示) - use [（(] and [）)] to match both full-width and half-width
+    /[（(]本章未完[，,]?请?点击下一页继续阅读[）)]/gi,
+    /本章未完[，,]?请?点击下一页继续.*/gi,
+    /请点击下一页继续阅读/gi,
+    /点击下一页继续阅读/gi,
+    // Page number indicators (页码指示) - match both full-width and half-width parentheses
+    /[（(]第\d+[/／]\d+页[）)]/gi,
+    /第\d+[/／]\d+页/gi,
+    // Standalone orphan parentheses left after cleaning (孤立括号清理)
+    /[（(]\s*[）)]/g,
+    // Empty parentheses
+    /[（(]\s*$/gm,
+    // Orphan opening parenthesis at end of line
+    /^\s*[）)]/gm,
+    // Orphan closing parenthesis at start of line
+    // Common site ads
     /手机用户请到.*阅读/gi,
     /请记住本书.*网址/gi,
     /百度搜索.*最新章节/gi,
@@ -3848,6 +3863,66 @@ var MyNovelReader = (function(exports) {
     }
     return protectionInstance;
   }
+  function getGmXhr$1() {
+    if (typeof GM_xmlhttpRequest === "function") {
+      return GM_xmlhttpRequest;
+    }
+    return null;
+  }
+  function fetchUrl(url, referer) {
+    const gmXhr = getGmXhr$1();
+    if (!gmXhr) {
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      const headers = {
+        Accept: "text/html,application/xhtml+xml,application/xml",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      };
+      if (referer) {
+        headers["Referer"] = referer;
+      }
+      gmXhr({
+        method: "GET",
+        url,
+        headers,
+        overrideMimeType: "text/html;charset=" + document.characterSet,
+        onload: (response) => {
+          if (response.status >= 200 && response.status < 300) {
+            try {
+              const parser = new DOMParser();
+              const doc2 = parser.parseFromString(response.responseText, "text/html");
+              const base = doc2.createElement("base");
+              base.href = url;
+              doc2.head.insertBefore(base, doc2.head.firstChild);
+              doc2._mnrUrl = url;
+              resolve(doc2);
+            } catch {
+              resolve(null);
+            }
+          } else {
+            resolve(null);
+          }
+        },
+        onerror: () => resolve(null),
+        ontimeout: () => resolve(null)
+      });
+    });
+  }
+  function normalizeAbsoluteUrl$1(url, base) {
+    try {
+      return new URL(url, base || window.location.href).toString();
+    } catch {
+      return url;
+    }
+  }
+  function joinHtml$1(a, b) {
+    const left = (a || "").trim();
+    const right = (b || "").trim();
+    if (!left) return right;
+    if (!right) return left;
+    return `${left}<p></p>${right}`;
+  }
   const SECTION_TEXT_PATTERNS = [
     /[下上]一?页/,
     // 下一页, 上一页
@@ -4028,22 +4103,73 @@ var MyNovelReader = (function(exports) {
      * Launch the reader
      */
     async launch(doc2, decision) {
-      var _a;
+      var _a, _b, _c, _d, _e;
       try {
         const chapter = await this.parser.parse(doc2);
         if (chapter && this.launchCallback) {
           const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-          if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
-            const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
-            if (realNextChapterUrl) {
-              chapter.nextUrl = realNextChapterUrl;
+          const enableByRule = !!((_c = (_b = chapter.rule) == null ? void 0 : _b.advanced) == null ? void 0 : _c.checkSection) && !((_e = (_d = chapter.rule) == null ? void 0 : _d.advanced) == null ? void 0 : _e.noSection);
+          const shouldMerge = enableByRule && chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl);
+          if (shouldMerge) {
+            const merged = await this.mergeSectionPages(chapter, currentUrl);
+            this.launchCallback(merged, decision.rule);
+          } else {
+            if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
+              const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
+              if (realNextChapterUrl) {
+                chapter.nextUrl = realNextChapterUrl;
+              }
             }
+            this.launchCallback(chapter, decision.rule);
           }
-          this.launchCallback(chapter, decision.rule);
         }
       } catch (e) {
         console.error("[AutoEnableManager] Parse error:", e);
       }
+    }
+    /**
+     * Merge all section pages into a single chapter
+     */
+    async mergeSectionPages(firstChapter, currentUrl) {
+      const parser = getParser();
+      let mergedContent = firstChapter.content;
+      let mergedRaw = firstChapter.rawContent;
+      let nextSectionUrl = firstChapter.nextUrl;
+      let nextChapterUrl = null;
+      let lastUrl = currentUrl;
+      const seen = /* @__PURE__ */ new Set([currentUrl]);
+      for (let i = 0; i < 10 && nextSectionUrl; i++) {
+        const absNextSection = normalizeAbsoluteUrl$1(nextSectionUrl, lastUrl);
+        if (seen.has(absNextSection)) break;
+        seen.add(absNextSection);
+        if (!isSectionLikeUrl$1(lastUrl, absNextSection)) {
+          nextChapterUrl = absNextSection;
+          break;
+        }
+        const nextDoc = await fetchUrl(absNextSection, lastUrl);
+        if (!nextDoc) break;
+        const nextParsed = await parser.parse(nextDoc, absNextSection);
+        if (!nextParsed) break;
+        mergedContent = joinHtml$1(mergedContent, nextParsed.content);
+        mergedRaw = joinHtml$1(mergedRaw, nextParsed.rawContent);
+        if (nextParsed.nextUrl) {
+          if (isSectionLikeUrl$1(absNextSection, nextParsed.nextUrl)) {
+            nextSectionUrl = nextParsed.nextUrl;
+          } else {
+            nextChapterUrl = nextParsed.nextUrl;
+            nextSectionUrl = null;
+          }
+        } else {
+          nextSectionUrl = null;
+        }
+        lastUrl = absNextSection;
+      }
+      return {
+        ...firstChapter,
+        content: mergedContent,
+        rawContent: mergedRaw,
+        nextUrl: nextChapterUrl || firstChapter.nextUrl
+      };
     }
     /**
      * Save detection result as user rule for current site
@@ -4124,7 +4250,7 @@ var MyNovelReader = (function(exports) {
      * Manual enable (force launch without detection)
      */
     async manualEnable(doc2 = document) {
-      var _a;
+      var _a, _b, _c, _d, _e;
       if (this.options.enableProtection) {
         const protection = getSiteProtection();
         protection.activate();
@@ -4134,13 +4260,20 @@ var MyNovelReader = (function(exports) {
         const chapter = await this.parser.parse(doc2);
         if (chapter && this.launchCallback) {
           const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-          if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
-            const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
-            if (realNextChapterUrl) {
-              chapter.nextUrl = realNextChapterUrl;
+          const enableByRule = !!((_c = (_b = chapter.rule) == null ? void 0 : _b.advanced) == null ? void 0 : _c.checkSection) && !((_e = (_d = chapter.rule) == null ? void 0 : _d.advanced) == null ? void 0 : _e.noSection);
+          const shouldMerge = enableByRule && chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl);
+          if (shouldMerge) {
+            const merged = await this.mergeSectionPages(chapter, currentUrl);
+            this.launchCallback(merged, void 0);
+          } else {
+            if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
+              const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
+              if (realNextChapterUrl) {
+                chapter.nextUrl = realNextChapterUrl;
+              }
             }
+            this.launchCallback(chapter, void 0);
           }
-          this.launchCallback(chapter, void 0);
         }
       } catch (e) {
         console.error("[AutoEnableManager] Manual enable error:", e);

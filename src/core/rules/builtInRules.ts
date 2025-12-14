@@ -1067,69 +1067,6 @@ const simplifiedRules: SiteRule[] = [
       exampleUrl: 'https://b.faloo.com/412421_1.html',
     },
   },
-
-  // ==================== noSection rules (不合并分页) ====================
-
-  // 努努书坊
-  {
-    id: 'kanunu-nosection',
-    name: '努努书坊',
-    version: 1,
-    match: {
-      pattern: '^https?://(?:book\\.kanunu\\.org|www\\.kanunu8\\.com)/.*/\\d+\\.html',
-    },
-    content: {
-      selector: 'table:eq(4) p',
-    },
-    navigation: {
-      index: "a[href^='./']",
-    },
-    title: {
-      pattern: '(.*) - (.*) - 小说在线阅读 - .* - 努努书坊',
-    },
-    advanced: {
-      noSection: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://www.kanunu8.com/book3/7748/170164.html' },
-  },
-
-  // 飞速中文
-  {
-    id: 'feiazw',
-    name: '飞速中文',
-    version: 1,
-    match: {
-      pattern: 'https://(?:www.)?(?:feiazw|feibzw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html',
-    },
-    content: {
-      selector: '#content',
-      remove: 'p[style], .l',
-    },
-    advanced: {
-      noSection: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://www.feiazw.com/Html/21975/18399024.html' },
-  },
-
-  // 顶点小说
-  {
-    id: 'ddxs',
-    name: '顶点小说',
-    version: 1,
-    match: {
-      pattern: 'https?://www\\.ddxs\\.com/.*?/\\d+.html',
-    },
-    content: {
-      selector: '#contents',
-    },
-    title: {
-      bookSelector: 'dl > dt > a:last',
-    },
-    advanced: {
-      noSection: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'http://www.ddxs.com/yuanzun/1.html' },
-  },
 ];
 
 /**
