@@ -2,9 +2,9 @@
  * Unit tests for ldks section merge behavior (multi-page chapters)
  */
 
+import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { createPinia, setActivePinia } from 'pinia';
 import { useReaderStore } from '@/ui/stores/reader';
 
 // Helper: minimal GM_xmlhttpRequest mock type
@@ -22,14 +22,14 @@ describe('ldks section merge', () => {
   it('should merge /id.html + /id_2.html and set nextUrl to next chapter', async () => {
     // Pinia store requires a DOM; create jsdom global.
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
-    // @ts-expect-error - test env
-    globalThis.window = dom.window as any;
-    // @ts-expect-error - test env
-    globalThis.document = dom.window.document as any;
-    // @ts-expect-error - test env
-    globalThis.DOMParser = dom.window.DOMParser as any;
-    // @ts-expect-error - test env
-    globalThis.Node = dom.window.Node as any;
+    // @ts-expect-error - test env: assigning jsdom window to globalThis
+    globalThis.window = dom.window;
+    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    globalThis.document = dom.window.document;
+    // @ts-expect-error - test env: assigning jsdom DOMParser to globalThis
+    globalThis.DOMParser = dom.window.DOMParser;
+    // @ts-expect-error - test env: assigning jsdom Node to globalThis
+    globalThis.Node = dom.window.Node;
 
     // Pinia store setup
     setActivePinia(createPinia());
@@ -69,14 +69,14 @@ describe('ldks section merge', () => {
     `;
 
     // Stub GM_* storage APIs used by RuleStorage in tests (RuleManager initializes on parse()).
-    // @ts-expect-error - userscript global
-    globalThis.GM_listValues = (() => []) as any;
-    // @ts-expect-error - userscript global
-    globalThis.GM_getValue = (() => null) as any;
-    // @ts-expect-error - userscript global
-    globalThis.GM_setValue = (() => {}) as any;
-    // @ts-expect-error - userscript global
-    globalThis.GM_deleteValue = (() => {}) as any;
+    // @ts-expect-error - userscript global stub
+    globalThis.GM_listValues = () => [];
+    // @ts-expect-error - userscript global stub
+    globalThis.GM_getValue = () => null;
+    // @ts-expect-error - userscript global stub
+    globalThis.GM_setValue = () => {};
+    // @ts-expect-error - userscript global stub
+    globalThis.GM_deleteValue = () => {};
 
     // Mock GM_xmlhttpRequest used by fetchAndParseUrl inside reader store.
     const gm = vi.fn((opts: MockGmXhrOpts) => {
@@ -87,8 +87,8 @@ describe('ldks section merge', () => {
       return { abort: () => {} };
     });
 
-    // @ts-expect-error - userscript global
-    globalThis.GM_xmlhttpRequest = gm as any;
+    // @ts-expect-error - userscript global stub
+    globalThis.GM_xmlhttpRequest = gm;
 
     const store = useReaderStore();
 
@@ -112,7 +112,7 @@ describe('ldks section merge', () => {
         content: { selector: '#content' },
         advanced: { checkSection: true },
         meta: { source: 'builtin' },
-      } as any,
+      },
     });
 
     const ok = await store.loadNextChapter();

@@ -1458,6 +1458,41 @@ function joinHtml(a: string, b: string): string {
   return `${left}<p></p>${right}`;
 }
 
+/**
+ * Check if nextUrl looks like a section/page URL relative to currentUrl.
+ * E.g., /123.html -> /123_2.html or /123_2.html -> /123_3.html
+ */
+function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
+  try {
+    const current = new URL(currentUrl);
+    const next = new URL(nextUrl);
+    if (current.host !== next.host) return false;
+
+    const currentPath = current.pathname;
+    const nextPath = next.pathname;
+
+    // Pattern 1: /123.html -> /123_2.html (first page to second page)
+    const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
+    const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
+    if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
+      return true;
+    }
+
+    // Pattern 2: /123_2.html -> /123_3.html (consecutive sections)
+    const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+    const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+    if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
+      const s1 = parseInt(sectionMatch1[2], 10);
+      const s2 = parseInt(sectionMatch2[2], 10);
+      if (s2 === s1 + 1) return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 async function parseWithSectionMerge(
   parser: ReturnType<typeof getParser>,
   initialDoc: Document,
@@ -1501,6 +1536,16 @@ async function parseWithSectionMerge(
   let nextChapterUrl = section.nextChapterUrl || null;
   let lastUrl = startUrl;
 
+  // When rule enables checkSection but auto-detection didn't find nextSectionUrl,
+  // check if first.nextUrl is a section URL (e.g., /123_2.html pattern).
+  // This handles cases where rule selector picks "下一页" but auto-detection picks "下一章".
+  if (enableByRule && !nextSectionUrl && first.nextUrl) {
+    const isSectionUrl = isSectionLikeUrl(startUrl, first.nextUrl);
+    if (isSectionUrl) {
+      nextSectionUrl = first.nextUrl;
+    }
+  }
+
   // Best-effort: merge up to 10 pages to avoid infinite loops.
   const seen = new Set<string>([startUrl]);
   for (let i = 0; i < 10 && nextSectionUrl; i++) {
@@ -1521,7 +1566,17 @@ async function parseWithSectionMerge(
     const nextDet = parser.detect(nextDoc, absNextSection);
     const s = nextDet.results.section;
     if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+
+    // Prefer auto-detected nextSectionUrl, but fall back to rule-parsed nextUrl if it looks like a section
     nextSectionUrl = s?.nextSectionUrl || null;
+    if (enableByRule && !nextSectionUrl && nextParsed.nextUrl) {
+      if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
+        nextSectionUrl = nextParsed.nextUrl;
+      } else {
+        // nextParsed.nextUrl is not a section URL, treat it as next chapter
+        if (!nextChapterUrl) nextChapterUrl = nextParsed.nextUrl;
+      }
+    }
     lastUrl = absNextSection;
   }
 

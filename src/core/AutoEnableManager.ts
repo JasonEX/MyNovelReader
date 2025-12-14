@@ -14,6 +14,83 @@ import { getRuleManager } from '@/core/rules/RuleManager';
 import { getSiteProtection } from '@/core/protection';
 import { SiteRule } from '@/core/rules/types';
 
+/** Section text patterns - "页" indicates section, "章" indicates chapter */
+const SECTION_TEXT_PATTERNS = [
+  /[下上]一?页/, // 下一页, 上一页
+  /[下上]一?頁/, // 繁体
+  /第\d+页/, // 第2页
+  /\(\d+\/\d+\)/, // (2/5) 分页指示
+];
+
+/** Chapter text patterns - indicates real chapter navigation */
+const CHAPTER_TEXT_PATTERNS = [
+  /[下上]一?章/, // 下一章, 上一章
+  /[下上]一?节/, // 下一节
+  /第.+章/, // 第X章
+];
+
+/**
+ * Check if nextUrl looks like a section URL relative to currentUrl
+ * E.g., /123.html -> /123_2.html or /123_2.html -> /123_3.html
+ */
+function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
+  try {
+    const current = new URL(currentUrl);
+    const next = new URL(nextUrl);
+    if (current.host !== next.host) return false;
+
+    const currentPath = current.pathname;
+    const nextPath = next.pathname;
+
+    // Pattern 1: /123.html -> /123_2.html (first page to second page)
+    const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
+    const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
+    if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
+      return true;
+    }
+
+    // Pattern 2: /123_2.html -> /123_3.html (consecutive sections)
+    const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+    const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+    if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
+      const s1 = parseInt(sectionMatch1[2], 10);
+      const s2 = parseInt(sectionMatch2[2], 10);
+      if (s2 === s1 + 1) return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Find the real next chapter URL from a document
+ * Looks for links with "下一章" text that are not section links
+ */
+function findNextChapterUrl(doc: Document, currentUrl: string): string | null {
+  const links = doc.querySelectorAll('a[href]');
+
+  for (const link of links) {
+    const anchor = link as HTMLAnchorElement;
+    const text = anchor.textContent?.trim() || '';
+
+    // Must match chapter pattern, not section pattern
+    const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
+    const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
+
+    if (isChapter && !isSection) {
+      const href = anchor.href;
+      // Verify it's not a section URL
+      if (!isSectionLikeUrl(currentUrl, href)) {
+        return href;
+      }
+    }
+  }
+
+  return null;
+}
+
 /** Auto-enable decision result */
 export interface AutoEnableDecision {
   /** Whether to show the reader */
@@ -221,6 +298,16 @@ export class AutoEnableManager {
       const chapter = await this.parser.parse(doc);
 
       if (chapter && this.launchCallback) {
+        // Fix section URL issue: if nextUrl is a section URL (e.g., /123_2.html),
+        // find the real next chapter URL from the document
+        const currentUrl = doc.location?.href || window.location.href;
+        if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
+          const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
+          if (realNextChapterUrl) {
+            chapter.nextUrl = realNextChapterUrl;
+          }
+        }
+
         this.launchCallback(chapter, decision.rule);
       }
     } catch (e) {
@@ -336,6 +423,16 @@ export class AutoEnableManager {
       const chapter = await this.parser.parse(doc);
 
       if (chapter && this.launchCallback) {
+        // Fix section URL issue: if nextUrl is a section URL (e.g., /123_2.html),
+        // find the real next chapter URL from the document
+        const currentUrl = doc.location?.href || window.location.href;
+        if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
+          const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
+          if (realNextChapterUrl) {
+            chapter.nextUrl = realNextChapterUrl;
+          }
+        }
+
         this.launchCallback(chapter, undefined);
       }
     } catch (e) {

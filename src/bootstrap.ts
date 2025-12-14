@@ -14,9 +14,9 @@ import {
   type ParsedChapter,
   type SiteRule,
 } from '@/core';
+import { BUILD_DATE, VERSION } from '@/version';
 import { createApp, defineComponent, h, ref } from 'vue';
 import { useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
-import { BUILD_DATE, VERSION } from '@/version';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';

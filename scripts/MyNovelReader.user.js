@@ -603,7 +603,7 @@ var MyNovelReader = (function(exports) {
     /^https?:\/\/[^/]+\/\?/i
     // Root with query string (e.g., https://example.com/?ref=xxx)
   ];
-  const SECTION_TEXT_PATTERNS = [
+  const SECTION_TEXT_PATTERNS$1 = [
     /[下上]一?页/,
     // 下一页, 上一页
     /[下上]一?頁/,
@@ -613,7 +613,7 @@ var MyNovelReader = (function(exports) {
     /\(\d+\/\d+\)/
     // (2/5) 分页指示
   ];
-  const CHAPTER_TEXT_PATTERNS = [
+  const CHAPTER_TEXT_PATTERNS$1 = [
     /[下上]一?章/,
     // 下一章, 上一章
     /[下上]一?节/,
@@ -665,8 +665,8 @@ var MyNovelReader = (function(exports) {
           }
         }
         if (type === "next" || type === "prev") {
-          const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text));
-          const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text));
+          const isChapter = CHAPTER_TEXT_PATTERNS$1.some((p2) => p2.test(text));
+          const isSection = SECTION_TEXT_PATTERNS$1.some((p2) => p2.test(text));
           if (isChapter) score += 3;
           if (isSection && !isChapter) score -= 2;
         }
@@ -812,8 +812,8 @@ var MyNovelReader = (function(exports) {
       }
       if (navigation.next) {
         const nextText = navigation.next.text || "";
-        const isNextSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(nextText));
-        const isNextChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(nextText));
+        const isNextSection = SECTION_TEXT_PATTERNS$1.some((p2) => p2.test(nextText));
+        const isNextChapter = CHAPTER_TEXT_PATTERNS$1.some((p2) => p2.test(nextText));
         if (isNextSection && !isNextChapter) {
           result.isSection = true;
           result.nextSectionUrl = navigation.next.url;
@@ -835,7 +835,7 @@ var MyNovelReader = (function(exports) {
       }
       if (navigation.prev && !result.isSection) {
         const prevText = navigation.prev.text || "";
-        const isPrevSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(prevText));
+        const isPrevSection = SECTION_TEXT_PATTERNS$1.some((p2) => p2.test(prevText));
         if (isPrevSection) {
           result.isSection = true;
           result.confidence = Math.max(result.confidence, 0.85);
@@ -930,8 +930,8 @@ var MyNovelReader = (function(exports) {
       for (const link of links) {
         const anchor = link;
         const text = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
-        const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text));
-        const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text));
+        const isChapter = CHAPTER_TEXT_PATTERNS$1.some((p2) => p2.test(text));
+        const isSection = SECTION_TEXT_PATTERNS$1.some((p2) => p2.test(text));
         if (isChapter && !isSection && this.isValidLink(anchor, "next")) {
           const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
           if (!comparison.isSection) {
@@ -3848,6 +3848,65 @@ var MyNovelReader = (function(exports) {
     }
     return protectionInstance;
   }
+  const SECTION_TEXT_PATTERNS = [
+    /[下上]一?页/,
+    // 下一页, 上一页
+    /[下上]一?頁/,
+    // 繁体
+    /第\d+页/,
+    // 第2页
+    /\(\d+\/\d+\)/
+    // (2/5) 分页指示
+  ];
+  const CHAPTER_TEXT_PATTERNS = [
+    /[下上]一?章/,
+    // 下一章, 上一章
+    /[下上]一?节/,
+    // 下一节
+    /第.+章/
+    // 第X章
+  ];
+  function isSectionLikeUrl$1(currentUrl, nextUrl) {
+    try {
+      const current = new URL(currentUrl);
+      const next = new URL(nextUrl);
+      if (current.host !== next.host) return false;
+      const currentPath = current.pathname;
+      const nextPath = next.pathname;
+      const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
+      const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
+      if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
+        return true;
+      }
+      const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
+        const s1 = parseInt(sectionMatch1[2], 10);
+        const s2 = parseInt(sectionMatch2[2], 10);
+        if (s2 === s1 + 1) return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  function findNextChapterUrl(doc2, currentUrl) {
+    var _a;
+    const links = doc2.querySelectorAll("a[href]");
+    for (const link of links) {
+      const anchor = link;
+      const text = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
+      const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text));
+      const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text));
+      if (isChapter && !isSection) {
+        const href = anchor.href;
+        if (!isSectionLikeUrl$1(currentUrl, href)) {
+          return href;
+        }
+      }
+    }
+    return null;
+  }
   const DEFAULT_OPTIONS = {
     confidenceThreshold: 0.6,
     autoLaunchThreshold: 0.9,
@@ -3969,9 +4028,17 @@ var MyNovelReader = (function(exports) {
      * Launch the reader
      */
     async launch(doc2, decision) {
+      var _a;
       try {
         const chapter = await this.parser.parse(doc2);
         if (chapter && this.launchCallback) {
+          const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
+          if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
+            const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
+            if (realNextChapterUrl) {
+              chapter.nextUrl = realNextChapterUrl;
+            }
+          }
           this.launchCallback(chapter, decision.rule);
         }
       } catch (e) {
@@ -4057,6 +4124,7 @@ var MyNovelReader = (function(exports) {
      * Manual enable (force launch without detection)
      */
     async manualEnable(doc2 = document) {
+      var _a;
       if (this.options.enableProtection) {
         const protection = getSiteProtection();
         protection.activate();
@@ -4065,6 +4133,13 @@ var MyNovelReader = (function(exports) {
       try {
         const chapter = await this.parser.parse(doc2);
         if (chapter && this.launchCallback) {
+          const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
+          if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
+            const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
+            if (realNextChapterUrl) {
+              chapter.nextUrl = realNextChapterUrl;
+            }
+          }
           this.launchCallback(chapter, void 0);
         }
       } catch (e) {
@@ -4079,6 +4154,8 @@ var MyNovelReader = (function(exports) {
     }
     return managerInstance;
   }
+  const VERSION = "9.0.0";
+  const BUILD_DATE = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -18439,6 +18516,30 @@ var MyNovelReader = (function(exports) {
     if (!right) return left;
     return `${left}<p></p>${right}`;
   }
+  function isSectionLikeUrl(currentUrl, nextUrl) {
+    try {
+      const current = new URL(currentUrl);
+      const next = new URL(nextUrl);
+      if (current.host !== next.host) return false;
+      const currentPath = current.pathname;
+      const nextPath = next.pathname;
+      const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
+      const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
+      if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
+        return true;
+      }
+      const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
+        const s1 = parseInt(sectionMatch1[2], 10);
+        const s2 = parseInt(sectionMatch2[2], 10);
+        if (s2 === s1 + 1) return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
   async function parseWithSectionMerge(parser, initialDoc, url, referer) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     const resolvedUrl = normalizeAbsoluteUrl(url, referer);
@@ -18470,6 +18571,12 @@ var MyNovelReader = (function(exports) {
     let nextSectionUrl = section.nextSectionUrl;
     let nextChapterUrl = section.nextChapterUrl || null;
     let lastUrl = startUrl;
+    if (enableByRule && !nextSectionUrl && first.nextUrl) {
+      const isSectionUrl = isSectionLikeUrl(startUrl, first.nextUrl);
+      if (isSectionUrl) {
+        nextSectionUrl = first.nextUrl;
+      }
+    }
     const seen = /* @__PURE__ */ new Set([startUrl]);
     for (let i = 0; i < 10 && nextSectionUrl; i++) {
       const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
@@ -18486,6 +18593,13 @@ var MyNovelReader = (function(exports) {
       const s = nextDet.results.section;
       if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
       nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
+      if (enableByRule && !nextSectionUrl && nextParsed.nextUrl) {
+        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
+          nextSectionUrl = nextParsed.nextUrl;
+        } else {
+          if (!nextChapterUrl) nextChapterUrl = nextParsed.nextUrl;
+        }
+      }
       lastUrl = absNextSection;
     }
     return {
@@ -19092,8 +19206,6 @@ var MyNovelReader = (function(exports) {
       $reset
     };
   });
-  const VERSION = "9.0.0";
-  const BUILD_DATE = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   const BASE_RESET_CSS = `
 /* Reset all inherited styles */
 :host {
