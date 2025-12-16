@@ -1067,8 +1067,10 @@ export const useReaderStore = defineStore('reader', () => {
    */
   function parseTocWithTitles(doc: Document, base: string): TocEntry[] {
     const links = Array.from(doc.querySelectorAll('a[href]'));
-    const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
-    const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
+    // Match chapter titles: 第X章/节/回/话/篇/集/卷/幕, or standalone 章/回/节/話/幕
+    const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
+    // Match chapter URLs: /chapter_1, /read/1, /123.html (pure numeric filename)
+    const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$/i;
     const excludeAncestors = (rule.value?.toc?.excludeAncestors || '')
       .split(',')
       .map(s => s.trim())
@@ -1518,7 +1520,11 @@ async function parseWithSectionMerge(
   if (!first) return null;
 
   // Decide whether to attempt section merging: rule says so OR detection says current/next is section-like.
-  const enableByRule = !!first.rule?.advanced?.checkSection && !first.rule?.advanced?.noSection;
+  // If rule explicitly sets noSection: true, skip all section merging (both rule-based and auto-detected).
+  const disableByRule = !!first.rule?.advanced?.noSection;
+  if (disableByRule) return first;
+
+  const enableByRule = !!first.rule?.advanced?.checkSection;
   const detection = parser.detect(startDoc, startUrl);
   const section: SectionInfo = {
     isSection: !!detection.results.section?.isSection,

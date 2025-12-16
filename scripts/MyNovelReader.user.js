@@ -670,6 +670,15 @@ var MyNovelReader = (function(exports) {
           if (isChapter) score += 3;
           if (isSection && !isChapter) score -= 2;
         }
+        if (type === "index") {
+          if (/^《.+》$/.test(text)) {
+            score += 8;
+          }
+          const href = anchor.href;
+          if (href.endsWith("/") || /\/index\.html?$/i.test(href)) {
+            score += 3;
+          }
+        }
         const title = anchor.title || "";
         for (const pattern of patterns) {
           if (pattern.test(title)) {
@@ -715,7 +724,8 @@ var MyNovelReader = (function(exports) {
         if (pattern.test(href)) {
           if (purpose === "index") {
             const looksLikeIndex = NAV_PATTERNS.index.some((p2) => p2.test(text));
-            if (looksLikeIndex) continue;
+            const looksLikeBookTitle = /^《.+》$/.test(text);
+            if (looksLikeIndex || looksLikeBookTitle) continue;
           }
           return false;
         }
@@ -730,6 +740,12 @@ var MyNovelReader = (function(exports) {
         const url = new URL(href);
         const pathname = url.pathname;
         if (pathname === "/" || pathname.length < 3) {
+          if (purpose === "index" && pathname.length >= 3) {
+            const looksLikeBookTitle = /^《.+》$/.test(text);
+            if (looksLikeBookTitle) {
+              return true;
+            }
+          }
           return false;
         }
         const pathParts = pathname.split("/").filter(Boolean);
@@ -738,6 +754,9 @@ var MyNovelReader = (function(exports) {
           if (!/\d/.test(part)) {
             return false;
           }
+        }
+        if (purpose === "index" && pathname.endsWith("/")) {
+          return true;
         }
         const nonChapterPaths = [
           /^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i,
@@ -2692,64 +2711,44 @@ var MyNovelReader = (function(exports) {
         exampleUrl: "https://b.faloo.com/412421_1.html"
       }
     },
-    // ==================== noSection rules (不合并分页) ====================
-    // 努努书坊
+    // 努努书坊 (kanunu8.com)
+    // 特点：
+    // - 内容在 td[width="820"] 的 p 标签中
+    // - 导航：上一页/下一页，第一章的"上一页"指向 index.html（目录）
+    // - 目录页有大量分类链接需要排除
     {
-      id: "kanunu-nosection",
+      id: "kanunu8",
       name: "努努书坊",
       version: 1,
       match: {
-        pattern: "^https?://(?:book\\.kanunu\\.org|www\\.kanunu8\\.com)/.*/\\d+\\.html"
+        pattern: "^https?://www\\.kanunu8\\.com/.+/\\d+\\.html$"
       },
       content: {
-        selector: "table:eq(4) p"
+        // 内容在宽度为820的td中的p标签
+        selector: 'td[width="820"] > p, td[width="820"] p'
       },
       navigation: {
-        index: "a[href^='./']"
+        // 底部导航表格中的链接，使用 td 位置选择
+        prev: 'table[width="700"] td:first-child a',
+        index: 'table[width="700"] td:nth-child(2) a',
+        next: 'table[width="700"] td:last-child a'
       },
       title: {
-        pattern: "(.*) - (.*) - 小说在线阅读 - .* - 努努书坊"
+        selector: 'font[color="#dc143c"][size="4"]'
+      },
+      toc: {
+        // 排除顶部导航栏的分类链接
+        excludeAncestors: '#header, .nav, .nav2, td[bgcolor="#A5BDC6"], td[bgcolor="#CEDFE5"]'
       },
       advanced: {
+        // 该网站使用"上一页/下一页"作为章节导航文本，但实际上不是分页
+        // 禁用分页检测以避免误判
         noSection: true
       },
-      meta: { source: "builtin", exampleUrl: "https://www.kanunu8.com/book3/7748/170164.html" }
-    },
-    // 飞速中文
-    {
-      id: "feiazw",
-      name: "飞速中文",
-      version: 1,
-      match: {
-        pattern: "https://(?:www.)?(?:feiazw|feibzw|xn--fiq228cu93a4kh).com/Html/\\d+/\\d+.html"
-      },
-      content: {
-        selector: "#content",
-        remove: "p[style], .l"
-      },
-      advanced: {
-        noSection: true
-      },
-      meta: { source: "builtin", exampleUrl: "https://www.feiazw.com/Html/21975/18399024.html" }
-    },
-    // 顶点小说
-    {
-      id: "ddxs",
-      name: "顶点小说",
-      version: 1,
-      match: {
-        pattern: "https?://www\\.ddxs\\.com/.*?/\\d+.html"
-      },
-      content: {
-        selector: "#contents"
-      },
-      title: {
-        bookSelector: "dl > dt > a:last"
-      },
-      advanced: {
-        noSection: true
-      },
-      meta: { source: "builtin", exampleUrl: "http://www.ddxs.com/yuanzun/1.html" }
+      meta: {
+        source: "builtin",
+        exampleUrl: "https://www.kanunu8.com/book3/7748/170164.html"
+      }
     }
   ];
   const builtInRules = [...specialRules, ...simplifiedRules];
@@ -18358,8 +18357,8 @@ var MyNovelReader = (function(exports) {
     function parseTocWithTitles(doc2, base) {
       var _a, _b;
       const links = Array.from(doc2.querySelectorAll("a[href]"));
-      const textPattern = /(第.{1,20}[章节回话篇集卷]|章|回|节|話|chapter|\d+)/i;
-      const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+/i;
+      const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
+      const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$/i;
       const excludeAncestors = (((_b = (_a = rule.value) == null ? void 0 : _a.toc) == null ? void 0 : _b.excludeAncestors) || "").split(",").map((s) => s.trim()).filter(Boolean);
       const isPlaceholder = (title2) => /^章节\s*\d+$/i.test(title2.trim());
       const isBetterTitle = (oldTitle, newTitle) => {
@@ -18689,7 +18688,9 @@ var MyNovelReader = (function(exports) {
     }
     const first = await parser.parse(startDoc, startUrl);
     if (!first) return null;
-    const enableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.checkSection) && !((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.noSection);
+    const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
+    if (disableByRule) return first;
+    const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
     const detection = parser.detect(startDoc, startUrl);
     const section = {
       isSection: !!((_e = detection.results.section) == null ? void 0 : _e.isSection),

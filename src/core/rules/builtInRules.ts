@@ -1067,6 +1067,46 @@ const simplifiedRules: SiteRule[] = [
       exampleUrl: 'https://b.faloo.com/412421_1.html',
     },
   },
+
+  // 努努书坊 (kanunu8.com)
+  // 特点：
+  // - 内容在 td[width="820"] 的 p 标签中
+  // - 导航：上一页/下一页，第一章的"上一页"指向 index.html（目录）
+  // - 目录页有大量分类链接需要排除
+  {
+    id: 'kanunu8',
+    name: '努努书坊',
+    version: 1,
+    match: {
+      pattern: '^https?://www\\.kanunu8\\.com/.+/\\d+\\.html$',
+    },
+    content: {
+      // 内容在宽度为820的td中的p标签
+      selector: 'td[width="820"] > p, td[width="820"] p',
+    },
+    navigation: {
+      // 底部导航表格中的链接，使用 td 位置选择
+      prev: 'table[width="700"] td:first-child a',
+      index: 'table[width="700"] td:nth-child(2) a',
+      next: 'table[width="700"] td:last-child a',
+    },
+    title: {
+      selector: 'font[color="#dc143c"][size="4"]',
+    },
+    toc: {
+      // 排除顶部导航栏的分类链接
+      excludeAncestors: '#header, .nav, .nav2, td[bgcolor="#A5BDC6"], td[bgcolor="#CEDFE5"]',
+    },
+    advanced: {
+      // 该网站使用"上一页/下一页"作为章节导航文本，但实际上不是分页
+      // 禁用分页检测以避免误判
+      noSection: true,
+    },
+    meta: {
+      source: 'builtin',
+      exampleUrl: 'https://www.kanunu8.com/book3/7748/170164.html',
+    },
+  },
 ];
 
 /**

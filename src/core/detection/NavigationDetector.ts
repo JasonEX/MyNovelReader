@@ -115,6 +115,20 @@ export class NavigationDetector {
         if (isSection && !isChapter) score -= 2;
       }
 
+      // For index links, also recognize book title links (wrapped in 《》)
+      // Many sites use book title as the index/catalog link
+      if (type === 'index') {
+        // Book title pattern: 《书名》
+        if (/^《.+》$/.test(text)) {
+          score += 8;
+        }
+        // URL points to directory (ends with / or is index.html)
+        const href = anchor.href;
+        if (href.endsWith('/') || /\/index\.html?$/i.test(href)) {
+          score += 3;
+        }
+      }
+
       // Check title attribute too
       const title = anchor.title || '';
       for (const pattern of patterns) {
@@ -177,9 +191,10 @@ export class NavigationDetector {
     for (const pattern of INVALID_URL_PATTERNS) {
       if (pattern.test(href)) {
         if (purpose === 'index') {
-          // If link text looks like directory, allow list/index pages.
+          // If link text looks like directory or book title, allow list/index pages.
           const looksLikeIndex = NAV_PATTERNS.index.some(p => p.test(text));
-          if (looksLikeIndex) continue;
+          const looksLikeBookTitle = /^《.+》$/.test(text);
+          if (looksLikeIndex || looksLikeBookTitle) continue;
         }
         return false;
       }
@@ -199,7 +214,16 @@ export class NavigationDetector {
       const pathname = url.pathname;
 
       // Skip if pathname is too short (likely homepage or section page)
+      // But allow for index purpose if it looks like a book directory
       if (pathname === '/' || pathname.length < 3) {
+        // For index links, allow directory paths like /book3/7748/
+        if (purpose === 'index' && pathname.length >= 3) {
+          // Allow if it looks like a book title link
+          const looksLikeBookTitle = /^《.+》$/.test(text);
+          if (looksLikeBookTitle) {
+            return true;
+          }
+        }
         return false;
       }
 
@@ -213,6 +237,11 @@ export class NavigationDetector {
         if (!/\d/.test(part)) {
           return false;
         }
+      }
+
+      // For index purpose, allow directory paths (ending with /)
+      if (purpose === 'index' && pathname.endsWith('/')) {
+        return true;
       }
 
       // Skip common non-chapter paths
