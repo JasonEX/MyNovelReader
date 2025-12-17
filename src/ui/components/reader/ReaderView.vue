@@ -26,7 +26,7 @@
     />
 
     <!-- Main content with virtualized infinite scroll -->
-    <main ref="mainRef" class="mnr-reader-main">
+    <main ref="mainRef" class="mnr-reader-main" tabindex="-1">
       <!-- Top sentinel for IntersectionObserver -->
       <div ref="topSentinel" class="mnr-sentinel"></div>
 
@@ -358,7 +358,8 @@ async function handleRuleSave(rule: SiteRule) {
   if (currentDomain.value) {
     try {
       await ruleStore.saveUserRule(currentDomain.value, rule);
-      readerStore.showToast('规则已保存', 'info');
+      // Reload current chapter to apply new rule
+      await readerStore.reloadCurrentChapter();
     } catch (e) {
       console.error('[MNR] Save rule error:', e);
       readerStore.showToast('保存失败', 'error');
@@ -367,10 +368,10 @@ async function handleRuleSave(rule: SiteRule) {
   ruleEditorVisible.value = false;
 }
 
-function handleRuleReset() {
-  // Close settings panel and show toast
+async function handleRuleReset() {
+  // Close settings panel and reload with default/auto-detection
   settingsVisible.value = false;
-  readerStore.showToast('站点规则已重置', 'info');
+  await readerStore.reloadCurrentChapter();
 }
 
 function openSettings() {
@@ -858,6 +859,10 @@ onMounted(async () => {
   if (topSentinel.value) {
     topObserver.observe(topSentinel.value);
   }
+
+  // Auto-focus main content for keyboard shortcuts
+  await nextTick();
+  mainRef.value?.focus();
 });
 
 onUnmounted(() => {

@@ -20,6 +20,7 @@ import { useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
+import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { ReaderView } from '@/ui/components/reader';
 
 /** Application state */
@@ -95,13 +96,28 @@ async function runAutoEnable(): Promise<void> {
     enableProtection: true,
   });
 
+  // First, check the decision to handle user-disabled case
+  const decision = await manager.check(document);
+  appState.currentDecision = decision;
+
+  // If user previously disabled auto-enable, show floating button only
+  if (decision.method === 'user-disabled' || decision.showFloatingButton) {
+    showFloatingButton();
+    return;
+  }
+
+  // If no auto-enable needed and no floating button, just return
+  if (!decision.shouldEnable) {
+    return;
+  }
+
   // Set up prompt callback
   manager.setPromptCallback(showPrompt);
 
   // Set up launch callback
   manager.setLaunchCallback(launchReader);
 
-  // Execute the flow
+  // Execute the flow (will use cached decision)
   await manager.execute(document);
 }
 
@@ -218,6 +234,15 @@ function hideOriginalContent(): void {
  */
 export function closeReader(): void {
   if (!appState.isActive) return;
+
+  // Save site preference - user exited reader, don't auto-enable next time
+  try {
+    const hostname = new URL(window.location.href).hostname;
+    const storage = getRuleStorage();
+    storage.setSitePreference(hostname, { enabled: false, timestamp: Date.now() });
+  } catch (e) {
+    console.error('[MNR] Failed to save site preference:', e);
+  }
 
   // Get current chapter URL before closing
   let targetUrl: string | null = null;

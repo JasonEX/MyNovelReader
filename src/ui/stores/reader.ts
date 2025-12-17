@@ -4,6 +4,7 @@
 
 import { computed, ref } from 'vue';
 import { type ConversionMode, convertHTML } from '@/core/converter';
+import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
 import { defineStore } from 'pinia';
 import { getParser } from '@/core/parser';
 import type { ParsedChapter } from '@/core/parser';
@@ -190,9 +191,13 @@ export const useReaderStore = defineStore('reader', () => {
     restoreCache();
   }
 
-  /** Helper: Append a chapter from cache to chapters list */
-  async function appendCachedChapter(cached: CachedChapter): Promise<boolean> {
-    const id = `chapter-${Date.now()}-cached-${chapters.value.length}`;
+  /** Helper: Insert a chapter from cache to chapters list */
+  async function insertCachedChapter(
+    cached: CachedChapter,
+    position: 'append' | 'prepend'
+  ): Promise<boolean> {
+    const suffix = position === 'append' ? 'cached' : 'cached-prev';
+    const id = `chapter-${Date.now()}-${suffix}-${chapters.value.length}`;
     let content = cached.chapter.content;
 
     // Apply current conversion mode if active
@@ -200,303 +205,162 @@ export const useReaderStore = defineStore('reader', () => {
       content = await convertHTML(content, currentConversionMode.value);
     }
 
-    chapters.value.push({
+    const entry = {
       chapter: { ...cached.chapter, content },
       rule: cached.rule,
       id,
-    });
+    };
+
+    if (position === 'append') {
+      chapters.value.push(entry);
+    } else {
+      chapters.value.unshift(entry);
+      currentChapterIndex.value++;
+    }
 
     // Store original content for text conversion
     originalContents.value.set(id, cached.chapter.content);
 
-    // Trim cached chapters to limit memory (keep recent ones around current index)
-    if (chapters.value.length > MAX_CACHED_CHAPTERS && currentChapterIndex.value > 2) {
-      const removed = chapters.value.shift();
-      if (removed) {
-        loadedUrls.value.delete(removed.chapter.url);
-        originalContents.value.delete(removed.id);
-        currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
-      }
-    }
-
-    return true;
-  }
-
-  /** Helper: Prepend a chapter from cache to chapters list */
-  async function prependCachedChapter(cached: CachedChapter): Promise<boolean> {
-    const id = `chapter-${Date.now()}-cached-prev-${chapters.value.length}`;
-    let content = cached.chapter.content;
-
-    // Apply current conversion mode if active
-    if (currentConversionMode.value !== 'none') {
-      content = await convertHTML(content, currentConversionMode.value);
-    }
-
-    chapters.value.unshift({
-      chapter: { ...cached.chapter, content },
-      rule: cached.rule,
-      id,
-    });
-    currentChapterIndex.value++;
-
-    // Store original content for text conversion
-    originalContents.value.set(id, cached.chapter.content);
-
-    // Trim cached chapters to limit memory (drop far end when we are near start)
+    // Trim cached chapters to limit memory
     if (chapters.value.length > MAX_CACHED_CHAPTERS) {
-      const removed = chapters.value.pop();
-      if (removed) {
-        loadedUrls.value.delete(removed.chapter.url);
-        originalContents.value.delete(removed.id);
-      }
-    }
-
-    return true;
-  }
-
-  /** Load next chapter and append to list */
-  async function loadNextChapter(): Promise<boolean> {
-    const lastChapter = chapters.value[chapters.value.length - 1];
-    if (isLoadingNext.value) {
-      return false;
-    }
-    if (!lastChapter?.chapter.nextUrl) {
-      showToast('已经是最后一章了', 'info');
-      return false;
-    }
-
-    const nextUrl = lastChapter.chapter.nextUrl;
-
-    // Check if already in cachedContents (from startCacheAll or rebuildChaptersAround)
-    // If so, restore from cache instead of fetching again
-    if (loadedUrls.value.has(nextUrl)) {
-      const cached = cachedContents.value.get(nextUrl);
-      if (cached) {
-        return appendCachedChapter(cached);
-      }
-      return false;
-    }
-
-    isLoadingNext.value = true;
-
-    // Cancel in-flight next request
-    if (pendingNextAbort.value) {
-      pendingNextAbort.value();
-      pendingNextAbort.value = null;
-    }
-
-    // Pre-fetch validation: check if URL looks like a valid chapter page
-    if (isInvalidChapterUrl(nextUrl, lastChapter.chapter.url)) {
-      loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
-      isLoadingNext.value = false;
-      showToast('已经是最后一章了', 'info');
-      return false;
-    }
-
-    // Don't load if nextUrl is the index/TOC page
-    const normalizeUrl = (url: string) => url.replace(/\/$/, '').replace(/\/index\.html?$/, '');
-    if (
-      lastChapter.chapter.indexUrl &&
-      normalizeUrl(nextUrl) === normalizeUrl(lastChapter.chapter.indexUrl)
-    ) {
-      showToast('已经是最后一章了', 'info');
-      return false;
-    }
-
-    try {
-      // Always use referer for better compatibility with anti-scraping
-      const referer = lastChapter.chapter.url;
-
-      const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
-      pendingNextAbort.value = abort;
-
-      const doc = await promise;
-      pendingNextAbort.value = null;
-      if (!doc) {
-        // Failed to fetch - likely end of book or invalid page
-        loadedUrls.value.add(nextUrl); // Prevent retry
-        showToast('已经是最后一章了', 'info');
-        return false;
-      }
-
-      const parser = getParser();
-      const merged = await parseWithSectionMerge(parser, doc, nextUrl, referer);
-      const parsed = merged;
-      if (!parsed) {
-        // Failed to parse - likely not a chapter page (end of book page, etc.)
-        loadedUrls.value.add(nextUrl); // Prevent retry
-        showToast('已经是最后一章了', 'info');
-        return false;
-      }
-
-      // Check if this is a TOC page using multiple heuristics
-      // Sometimes "next" link points to TOC or a "Book End" page that looks like TOC
-      const isTocPage = detectTocPage(parsed.content, nextUrl, lastChapter.chapter.url);
-      if (isTocPage) {
-        loadedUrls.value.add(nextUrl); // Mark as loaded to prevent retry
-        showToast('已经是最后一章了', 'info');
-        return false;
-      }
-
-      // Add to chapters list
-      const id = `chapter-${Date.now()}-${chapters.value.length}`;
-      chapters.value.push({
-        chapter: parsed,
-        rule: parsed.rule,
-        id,
-      });
-      loadedUrls.value.add(parsed.url);
-
-      // Store original content for text conversion
-      originalContents.value.set(id, parsed.content);
-
-      // Also store in cachedContents for quick jump
-      cachedContents.value.set(parsed.url, {
-        chapter: parsed,
-        rule: parsed.rule,
-        cachedAt: Date.now(),
-      });
-      // height unknown now; will be measured when rendered
-
-      // Apply current conversion mode if active
-      if (currentConversionMode.value !== 'none') {
-        const converted = await convertHTML(parsed.content, currentConversionMode.value);
-        const entry = chapters.value.find(e => e.id === id);
-        if (entry) {
-          entry.chapter = { ...entry.chapter, content: converted };
-        }
-      }
-
-      // Add to history
-      if (!history.value.includes(parsed.url)) {
-        history.value.push(parsed.url);
-      }
-
-      // Trim cached chapters to limit memory (keep recent ones around current index)
-      if (chapters.value.length > MAX_CACHED_CHAPTERS && currentChapterIndex.value > 2) {
+      if (position === 'append' && currentChapterIndex.value > 2) {
+        // Trim from beginning when appending
         const removed = chapters.value.shift();
         if (removed) {
           loadedUrls.value.delete(removed.chapter.url);
           originalContents.value.delete(removed.id);
           currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
         }
+      } else if (position === 'prepend') {
+        // Trim from end when prepending
+        const removed = chapters.value.pop();
+        if (removed) {
+          loadedUrls.value.delete(removed.chapter.url);
+          originalContents.value.delete(removed.id);
+        }
       }
-
-      return true;
-    } catch (e) {
-      console.error('[MNR] Failed to load next chapter:', e);
-      setError('加载下一章失败');
-      return false;
-    } finally {
-      isLoadingNext.value = false;
     }
+
+    return true;
   }
 
-  /** Load previous chapter and prepend to list */
-  async function loadPrevChapter(): Promise<boolean> {
-    const firstChapter = chapters.value[0];
-    if (isLoadingPrev.value) {
-      return false;
-    }
-    if (!firstChapter?.chapter.prevUrl) {
-      showToast('已经是第一章了', 'info');
+  /** Normalize URL for comparison (remove trailing slash and index.html) */
+  function normalizeUrl(url: string): string {
+    return url.replace(/\/$/, '').replace(/\/index\.html?$/, '');
+  }
+
+  /** Unified chapter loading function */
+  async function loadChapter(direction: 'next' | 'prev'): Promise<boolean> {
+    const isNext = direction === 'next';
+    const refChapter = isNext ? chapters.value[chapters.value.length - 1] : chapters.value[0];
+    const isLoadingRef = isNext ? isLoadingNext : isLoadingPrev;
+    const pendingAbortRef = isNext ? pendingNextAbort : pendingPrevAbort;
+    const endMessage = isNext ? '已经是最后一章了' : '已经是第一章了';
+    const errorMessage = isNext ? '加载下一章失败' : '加载上一章失败';
+
+    if (isLoadingRef.value) {
       return false;
     }
 
-    const prevUrl = firstChapter.chapter.prevUrl;
+    const targetUrl = isNext ? refChapter?.chapter.nextUrl : refChapter?.chapter.prevUrl;
+    if (!targetUrl) {
+      showToast(endMessage, 'info');
+      return false;
+    }
 
-    // Don't load if prevUrl is the index/TOC page (with URL normalization)
-    const normalizeUrl = (url: string) => url.replace(/\/$/, '').replace(/\/index\.html?$/, '');
+    // Don't load if targetUrl is the index/TOC page
     if (
-      firstChapter.chapter.indexUrl &&
-      normalizeUrl(prevUrl) === normalizeUrl(firstChapter.chapter.indexUrl)
+      refChapter.chapter.indexUrl &&
+      normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)
     ) {
-      showToast('已经是第一章了', 'info');
+      showToast(endMessage, 'info');
       return false;
     }
 
-    // Check if already in cachedContents (from startCacheAll)
-    // If so, restore from cache instead of fetching again
-    if (loadedUrls.value.has(prevUrl)) {
-      const cached = cachedContents.value.get(prevUrl);
+    // Check if already in cachedContents
+    if (loadedUrls.value.has(targetUrl)) {
+      const cached = cachedContents.value.get(targetUrl);
       if (cached) {
-        return prependCachedChapter(cached);
+        return insertCachedChapter(cached, isNext ? 'append' : 'prepend');
       }
       return false;
     }
 
-    isLoadingPrev.value = true;
+    isLoadingRef.value = true;
 
-    // Cancel in-flight prev request
-    if (pendingPrevAbort.value) {
-      pendingPrevAbort.value();
-      pendingPrevAbort.value = null;
+    // Cancel in-flight request
+    if (pendingAbortRef.value) {
+      pendingAbortRef.value();
+      pendingAbortRef.value = null;
     }
 
     // Pre-fetch validation: check if URL looks like a valid chapter page
-    if (isInvalidChapterUrl(prevUrl, firstChapter.chapter.url)) {
-      loadedUrls.value.add(prevUrl); // Mark as loaded to prevent retry
-      isLoadingPrev.value = false;
-      showToast('已经是第一章了', 'info');
+    if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
+      loadedUrls.value.add(targetUrl);
+      isLoadingRef.value = false;
+      showToast(endMessage, 'info');
       return false;
     }
 
     try {
-      // Always use referer for better compatibility with anti-scraping
-      const referer = firstChapter.chapter.url;
-
-      const { promise, abort } = fetchAndParseUrl(prevUrl, referer);
-      pendingPrevAbort.value = abort;
+      const referer = refChapter.chapter.url;
+      const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+      pendingAbortRef.value = abort;
 
       const doc = await promise;
-      pendingPrevAbort.value = null;
+      pendingAbortRef.value = null;
       if (!doc) {
-        // Failed to fetch - likely beginning of book or invalid page
-        loadedUrls.value.add(prevUrl); // Prevent retry
-        showToast('已经是第一章了', 'info');
+        loadedUrls.value.add(targetUrl);
+        showToast(endMessage, 'info');
         return false;
       }
 
       const parser = getParser();
-      const merged = await parseWithSectionMerge(parser, doc, prevUrl, referer);
-      const parsed = merged;
+      const parsed = await parseWithSectionMerge(parser, doc, targetUrl, referer);
       if (!parsed) {
-        // Failed to parse - likely not a chapter page
-        loadedUrls.value.add(prevUrl); // Prevent retry
-        showToast('已经是第一章了', 'info');
+        loadedUrls.value.add(targetUrl);
+        showToast(endMessage, 'info');
         return false;
       }
 
-      // Check if this is a TOC page using multiple heuristics
-      const isTocPage = detectTocPage(parsed.content, prevUrl, firstChapter.chapter.url);
+      // Check if this is a TOC page
+      const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
       if (isTocPage) {
-        loadedUrls.value.add(prevUrl); // Mark as loaded to prevent retry
-        showToast('已经是第一章了', 'info');
+        loadedUrls.value.add(targetUrl);
+        showToast(endMessage, 'info');
         return false;
       }
 
-      // Check if the loaded page's "next" URL points to our current first chapter
-      // This would indicate we're trying to load the page BEFORE the first chapter
-      if (
-        parsed.nextUrl &&
-        normalizeUrl(parsed.nextUrl) === normalizeUrl(firstChapter.chapter.url)
-      ) {
-        // This is fine, it's actually the previous chapter
-      } else if (parsed.prevUrl && !parsed.nextUrl) {
-        // Page has prev but no next - likely a TOC or non-chapter page
-        loadedUrls.value.add(prevUrl);
-        return false;
+      // Additional validation for prev: check if page has prev but no next
+      if (!isNext) {
+        if (
+          parsed.nextUrl &&
+          normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)
+        ) {
+          // This is fine, it's actually the previous chapter
+        } else if (parsed.prevUrl && !parsed.nextUrl) {
+          // Page has prev but no next - likely a TOC or non-chapter page
+          loadedUrls.value.add(targetUrl);
+          return false;
+        }
       }
 
-      // Prepend to chapters list
-      const id = `chapter-${Date.now()}-prev-${chapters.value.length}`;
-      chapters.value.unshift({
+      // Add to chapters list
+      const suffix = isNext ? '' : 'prev-';
+      const id = `chapter-${Date.now()}-${suffix}${chapters.value.length}`;
+      const entry = {
         chapter: parsed,
         rule: parsed.rule,
         id,
-      });
+      };
+
+      if (isNext) {
+        chapters.value.push(entry);
+      } else {
+        chapters.value.unshift(entry);
+        currentChapterIndex.value++;
+      }
       loadedUrls.value.add(parsed.url);
-      currentChapterIndex.value++;
 
       // Store original content for text conversion
       originalContents.value.set(id, parsed.content);
@@ -511,34 +375,57 @@ export const useReaderStore = defineStore('reader', () => {
       // Apply current conversion mode if active
       if (currentConversionMode.value !== 'none') {
         const converted = await convertHTML(parsed.content, currentConversionMode.value);
-        const entry = chapters.value.find(e => e.id === id);
-        if (entry) {
-          entry.chapter = { ...entry.chapter, content: converted };
+        const chapterEntry = chapters.value.find(e => e.id === id);
+        if (chapterEntry) {
+          chapterEntry.chapter = { ...chapterEntry.chapter, content: converted };
         }
       }
 
       // Add to history
       if (!history.value.includes(parsed.url)) {
-        history.value.unshift(parsed.url);
+        if (isNext) {
+          history.value.push(parsed.url);
+        } else {
+          history.value.unshift(parsed.url);
+        }
       }
 
-      // Trim cached chapters to limit memory (drop far end when we are near start)
+      // Trim cached chapters to limit memory
       if (chapters.value.length > MAX_CACHED_CHAPTERS) {
-        const removed = chapters.value.pop();
-        if (removed) {
-          loadedUrls.value.delete(removed.chapter.url);
-          originalContents.value.delete(removed.id);
+        if (isNext && currentChapterIndex.value > 2) {
+          const removed = chapters.value.shift();
+          if (removed) {
+            loadedUrls.value.delete(removed.chapter.url);
+            originalContents.value.delete(removed.id);
+            currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
+          }
+        } else if (!isNext) {
+          const removed = chapters.value.pop();
+          if (removed) {
+            loadedUrls.value.delete(removed.chapter.url);
+            originalContents.value.delete(removed.id);
+          }
         }
       }
 
       return true;
     } catch (e) {
-      console.error('[MNR] Failed to load previous chapter:', e);
-      setError('加载上一章失败');
+      console.error(`[MNR] Failed to load ${direction} chapter:`, e);
+      setError(errorMessage);
       return false;
     } finally {
-      isLoadingPrev.value = false;
+      isLoadingRef.value = false;
     }
+  }
+
+  /** Load next chapter and append to list */
+  async function loadNextChapter(): Promise<boolean> {
+    return loadChapter('next');
+  }
+
+  /** Load previous chapter and prepend to list */
+  async function loadPrevChapter(): Promise<boolean> {
+    return loadChapter('prev');
   }
 
   function setLoading(loading: boolean) {
@@ -760,7 +647,7 @@ export const useReaderStore = defineStore('reader', () => {
     return entries.slice(0, limit).map(entry => entry.url);
   }
 
-  function normalizeUrl(href: string, base: string): string | null {
+  function resolveUrl(href: string, base: string): string | null {
     try {
       return new URL(href, base).toString();
     } catch {
@@ -1164,7 +1051,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       const text = extractLinkTitle(a);
       const href = a.getAttribute('href') || '';
-      const abs = normalizeUrl(href, base);
+      const abs = resolveUrl(href, base);
       if (!abs) continue;
 
       // Only keep links that look like chapters
@@ -1282,6 +1169,55 @@ export const useReaderStore = defineStore('reader', () => {
     }
 
     return true;
+  }
+
+  /**
+   * Reload current chapter - refetch and reparse with current rules
+   * Used after rule updates to apply changes immediately
+   */
+  async function reloadCurrentChapter(): Promise<void> {
+    const current = chapters.value[currentChapterIndex.value];
+    if (!current) return;
+
+    const url = current.chapter.url;
+
+    showToast('正在重新加载...', 'info');
+
+    // Refetch the page
+    const { promise } = fetchAndParseUrl(url, url);
+    const doc = await promise;
+    if (!doc) {
+      showToast('重新加载失败', 'error');
+      return;
+    }
+
+    // Parse with new rules (will pick up updated rules from RuleManager)
+    const parser = getParser();
+    const parsed = await parseWithSectionMerge(parser, doc, url, url);
+
+    if (parsed) {
+      // Update current chapter
+      current.chapter = parsed;
+      current.rule = parsed.rule;
+      originalContents.value.set(current.id, parsed.content);
+
+      // Also update cached content
+      cachedContents.value.set(parsed.url, {
+        chapter: parsed,
+        rule: parsed.rule,
+        cachedAt: Date.now(),
+      });
+
+      // Reapply text conversion if active
+      if (currentConversionMode.value !== 'none') {
+        const converted = await convertHTML(parsed.content, currentConversionMode.value);
+        current.chapter = { ...current.chapter, content: converted };
+      }
+
+      showToast('规则已应用', 'info');
+    } else {
+      showToast('解析失败', 'error');
+    }
   }
 
   /**
@@ -1430,6 +1366,7 @@ export const useReaderStore = defineStore('reader', () => {
     cancelCacheAll,
     loadToc,
     rebuildChaptersAround,
+    reloadCurrentChapter,
     persistCache,
     restoreCache,
     clearPersistedCache,
@@ -1437,27 +1374,11 @@ export const useReaderStore = defineStore('reader', () => {
   };
 });
 
-function normalizeAbsoluteUrl(url: string, base?: string): string {
-  try {
-    return new URL(url, base || window.location.href).toString();
-  } catch {
-    return url;
-  }
-}
-
 function getSectionBaseUrl(url: string): string | null {
   // /123_2.html -> /123.html
   const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
   if (m) return `${m[1]}${m[2]}`;
   return null;
-}
-
-function joinHtml(a: string, b: string): string {
-  const left = (a || '').trim();
-  const right = (b || '').trim();
-  if (!left) return right;
-  if (!right) return left;
-  return `${left}<p></p>${right}`;
 }
 
 /**

@@ -195,7 +195,16 @@ export const STORAGE_KEYS = {
   RULE_PREFIX: 'mnr_rule_',
   COMMUNITY_RULES_URL: 'mnr_community_rules_url',
   LAST_COMMUNITY_UPDATE: 'mnr_community_rules_updated',
+  SITE_PREFERENCES: 'mnr_site_prefs',
 } as const;
+
+/** Site preference for auto-enable behavior */
+export interface SitePreference {
+  /** Whether to auto-enable reader on this site (true=auto, false=floating-button-only) */
+  enabled: boolean;
+  /** When this preference was last updated */
+  timestamp: number;
+}
 
 /** Default community rules URL */
 export const DEFAULT_COMMUNITY_RULES_URL =

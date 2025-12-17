@@ -1007,32 +1007,6 @@ const simplifiedRules: SiteRule[] = [
     meta: { source: 'builtin', exampleUrl: 'https://m.ilwxs.com/shu/36354/171272950.html' },
   },
 
-  // 书海阁
-  {
-    id: 'shuhaige',
-    name: '书海阁',
-    version: 1,
-    match: {
-      pattern: 'https://m\\.shuhaige\\.net/\\d+/\\d+(_\\d+)?\\.html',
-    },
-    content: {
-      selector: '.content',
-    },
-    navigation: {
-      next: 'div.pager:nth-child(5) > a:nth-child(3)',
-      prev: 'div.pager:nth-child(5) > a:nth-child(1)',
-      index: 'div.pager:nth-child(5) > a:nth-child(2)',
-    },
-    title: {
-      selector: '.headline',
-      bookSelector: '.path > a:nth-child(2)',
-    },
-    advanced: {
-      checkSection: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://m.shuhaige.net/36354/171272950.html' },
-  },
-
   // 飞卢小说网
   {
     id: 'faloo',
@@ -1069,10 +1043,6 @@ const simplifiedRules: SiteRule[] = [
   },
 
   // 努努书坊 (kanunu8.com)
-  // 特点：
-  // - 内容在 td[width="820"] 的 p 标签中
-  // - 导航：上一页/下一页，第一章的"上一页"指向 index.html（目录）
-  // - 目录页有大量分类链接需要排除
   {
     id: 'kanunu8',
     name: '努努书坊',
@@ -1105,6 +1075,58 @@ const simplifiedRules: SiteRule[] = [
     meta: {
       source: 'builtin',
       exampleUrl: 'https://www.kanunu8.com/book3/7748/170164.html',
+    },
+  },
+
+  // 书海阁小说网 (m.shuhaige.net)
+  // 特点：
+  // - 目录页：/36354/（章节列表）
+  // - 章节页：/36354/55863782.html
+  // - 分页章节：/36354/55863791.html -> /36354/55863791_2.html（下一页）
+  // - 顶部导航有"书 页"链接，底部导航有"目 录"链接
+  // - 需要清洗正文末尾的广告文字和分页提示
+  {
+    id: 'shuhaige-m',
+    name: '书海阁小说网(手机版)',
+    version: 1,
+    match: {
+      // 匹配章节页和分页（如 55863791_2.html）
+      pattern: '^https?://m\\.shuhaige\\.net/\\d+/\\d+(?:_\\d+)?\\.html$',
+    },
+    content: {
+      selector: '.content',
+      // 清洗正文末尾的广告文字和分页提示
+      replace: [
+        {
+          // 分页提示：小主，这个章节后面还有哦，请点击下一页继续阅读，后面更精彩！
+          pattern: '小主，这个章节后面还有哦.*?后面更精彩！',
+          replacement: '',
+          flags: 'g',
+        },
+        {
+          // 收藏广告：喜欢XXX请大家收藏：(m.shuhaige.net)XXX更新速度全网最快。
+          pattern: '喜欢.*?请大家收藏：\\([^)]+\\).*?更新速度全网最快。',
+          replacement: '',
+          flags: 'g',
+        },
+      ],
+    },
+    navigation: {
+      // 优先匹配"上一章/下一章"，分页时会自动处理"上一页/下一页"
+      prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
+      index: '.pager a[href$="/"]:contains("目"), .pager a:contains("目录")',
+      next: '.pager a:contains("下一章"), .pager a:contains("下一页")',
+    },
+    title: {
+      selector: 'h1.headline',
+    },
+    advanced: {
+      // 启用分页检测，自动合并章节内的多个分页
+      checkSection: true,
+    },
+    meta: {
+      source: 'builtin',
+      exampleUrl: 'https://m.shuhaige.net/36354/55863791.html',
     },
   },
 ];

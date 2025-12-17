@@ -3,7 +3,7 @@
  * Supports IndexedDB (preferred) and GM_setValue fallback
  */
 
-import { SiteRule, STORAGE_KEYS } from './types';
+import { SitePreference, SiteRule, STORAGE_KEYS } from './types';
 
 /** Storage driver interface */
 export interface RuleStorageDriver {
@@ -290,6 +290,71 @@ export class RuleStorage {
 
     return count;
   }
+
+  // ========== Site Preferences (for auto-enable behavior) ==========
+
+  /**
+   * Get site preference for a domain
+   */
+  getSitePreference(domain: string): SitePreference | null {
+    try {
+      const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+      const prefs = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
+        string,
+        SitePreference
+      >;
+      return prefs[domain] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Set site preference for a domain
+   */
+  setSitePreference(domain: string, pref: SitePreference): void {
+    try {
+      const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+      const prefs = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
+        string,
+        SitePreference
+      >;
+      prefs[domain] = pref;
+      GM_setValue(STORAGE_KEYS.SITE_PREFERENCES, prefs);
+    } catch (e) {
+      console.error('[MNR] Failed to save site preference:', e);
+    }
+  }
+
+  /**
+   * Delete site preference for a domain
+   */
+  deleteSitePreference(domain: string): void {
+    try {
+      const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+      const prefs = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
+        string,
+        SitePreference
+      >;
+      delete prefs[domain];
+      GM_setValue(STORAGE_KEYS.SITE_PREFERENCES, prefs);
+    } catch (e) {
+      console.error('[MNR] Failed to delete site preference:', e);
+    }
+  }
+}
+
+// Singleton instance
+let storageInstance: RuleStorage | null = null;
+
+/**
+ * Get the singleton RuleStorage instance
+ */
+export function getRuleStorage(): RuleStorage {
+  if (!storageInstance) {
+    storageInstance = new RuleStorage();
+  }
+  return storageInstance;
 }
 
 // Declare GM functions for TypeScript

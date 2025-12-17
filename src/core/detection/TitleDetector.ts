@@ -3,14 +3,7 @@
  */
 
 import { TITLE_PATTERN, TitleResult } from './types';
-
-/** Polyfill for CSS.escape (not available in jsdom) */
-function cssEscape(str: string): string {
-  if (typeof CSS !== 'undefined' && CSS.escape) {
-    return CSS.escape(str);
-  }
-  return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
-}
+import { cssEscape } from '@/core/utils';
 
 /** Known title selectors from existing codebase */
 const KNOWN_TITLE_SELECTORS = [

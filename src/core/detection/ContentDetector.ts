@@ -10,15 +10,7 @@ import {
   NEGATIVE_PATTERNS,
   POSITIVE_PATTERNS,
 } from './types';
-
-/** Polyfill for CSS.escape (not available in jsdom) */
-function cssEscape(str: string): string {
-  if (typeof CSS !== 'undefined' && CSS.escape) {
-    return CSS.escape(str);
-  }
-  // Simple escape for IDs and classes
-  return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
-}
+import { cssEscape } from '@/core/utils';
 
 /** Scoring weights for content detection */
 const WEIGHTS = {

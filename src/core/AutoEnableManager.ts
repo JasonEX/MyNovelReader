@@ -8,9 +8,12 @@
  * 4. User confirms → optionally save rule → launch reader
  */
 
+import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
 import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
 import { getParser, ParsedChapter, Parser } from '@/core/parser';
+import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
 import { getRuleManager } from '@/core/rules/RuleManager';
+import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { getSiteProtection } from '@/core/protection';
 import { SiteRule } from '@/core/rules/types';
 
@@ -67,37 +70,6 @@ function fetchUrl(url: string, referer?: string): Promise<Document | null> {
     });
   });
 }
-
-function normalizeAbsoluteUrl(url: string, base?: string): string {
-  try {
-    return new URL(url, base || window.location.href).toString();
-  } catch {
-    return url;
-  }
-}
-
-function joinHtml(a: string, b: string): string {
-  const left = (a || '').trim();
-  const right = (b || '').trim();
-  if (!left) return right;
-  if (!right) return left;
-  return `${left}<p></p>${right}`;
-}
-
-/** Section text patterns - "页" indicates section, "章" indicates chapter */
-const SECTION_TEXT_PATTERNS = [
-  /[下上]一?页/, // 下一页, 上一页
-  /[下上]一?頁/, // 繁体
-  /第\d+页/, // 第2页
-  /\(\d+\/\d+\)/, // (2/5) 分页指示
-];
-
-/** Chapter text patterns - indicates real chapter navigation */
-const CHAPTER_TEXT_PATTERNS = [
-  /[下上]一?章/, // 下一章, 上一章
-  /[下上]一?节/, // 下一节
-  /第.+章/, // 第X章
-];
 
 /**
  * Check if nextUrl looks like a section URL relative to currentUrl
@@ -166,7 +138,7 @@ export interface AutoEnableDecision {
   /** Whether to show the reader */
   shouldEnable: boolean;
   /** How the decision was made */
-  method: 'user-rule' | 'builtin-rule' | 'detection' | 'manual';
+  method: 'user-rule' | 'builtin-rule' | 'detection' | 'manual' | 'user-disabled';
   /** Confidence level (0-1) */
   confidence: number;
   /** The rule to use (if any) */
@@ -175,6 +147,8 @@ export interface AutoEnableDecision {
   detection?: DetectionEngineResult;
   /** Reasons for the decision */
   reasons: string[];
+  /** Whether to show the floating button (even if not auto-enabling) */
+  showFloatingButton?: boolean;
 }
 
 /** User prompt response */
@@ -255,6 +229,22 @@ export class AutoEnableManager {
    */
   async check(doc: Document = document): Promise<AutoEnableDecision> {
     const url = doc.location?.href || window.location.href;
+    const hostname = new URL(url).hostname;
+
+    // Check site preference first (user-disabled takes priority)
+    const storage = getRuleStorage();
+    const pref = storage.getSitePreference(hostname);
+    if (pref?.enabled === false) {
+      // User previously exited reader on this site, don't auto-enable
+      // But still show floating button so they can manually enable
+      return {
+        shouldEnable: false,
+        method: 'user-disabled',
+        confidence: 0,
+        reasons: ['User previously disabled auto-enable for this site'],
+        showFloatingButton: true,
+      };
+    }
 
     // Check skip patterns
     if (this.shouldSkip(url)) {
@@ -553,6 +543,16 @@ export class AutoEnableManager {
    * Manual enable (force launch without detection)
    */
   async manualEnable(doc: Document = document): Promise<void> {
+    // Save site preference - user wants reader on this site
+    const url = doc.location?.href || window.location.href;
+    try {
+      const hostname = new URL(url).hostname;
+      const storage = getRuleStorage();
+      storage.setSitePreference(hostname, { enabled: true, timestamp: Date.now() });
+    } catch (e) {
+      console.error('[AutoEnableManager] Failed to save site preference:', e);
+    }
+
     // Enable protection
     if (this.options.enableProtection) {
       const protection = getSiteProtection();

@@ -3,16 +3,9 @@
  * Also detects multi-page chapters (分页章节)
  */
 
+import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
 import { NAV_PATTERNS, NavigationResult, NavLinkResult, SectionDetectionResult } from './types';
-
-/** Polyfill for CSS.escape (not available in jsdom) */
-function cssEscape(str: string): string {
-  if (typeof CSS !== 'undefined' && CSS.escape) {
-    return CSS.escape(str);
-  }
-  // Simple escape for IDs and classes
-  return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
-}
+import { cssEscape } from '@/core/utils';
 
 /** URLs to ignore as navigation links */
 const INVALID_URL_PATTERNS = [
@@ -31,21 +24,6 @@ const _SECTION_URL_PATTERNS = [
   /\/\d+[_-]\d+\.html?$/i, // /123_2.html or /123-2.html
   /\/\d+\/\d+\.html?$/i, // /123/2.html
   /[_-]\d+\.html?$/i, // anything_2.html
-];
-
-/** Section link text patterns - "页" indicates section, "章" indicates chapter */
-const SECTION_TEXT_PATTERNS = [
-  /[下上]一?页/, // 下一页, 上一页
-  /[下上]一?頁/, // 繁体
-  /第\d+页/, // 第2页
-  /\(\d+\/\d+\)/, // (2/5) 分页指示
-];
-
-/** Chapter link text patterns - indicates real chapter navigation */
-const CHAPTER_TEXT_PATTERNS = [
-  /[下上]一?章/, // 下一章, 上一章
-  /[下上]一?节/, // 下一节
-  /第.+章/, // 第X章
 ];
 
 export class NavigationDetector {
