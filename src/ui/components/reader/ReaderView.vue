@@ -5,6 +5,7 @@
 
     <!-- Floating toolbar -->
     <FloatingToolbar
+      :visible="showControls"
       :cache-running="cacheProgress.running"
       :cache-done="cacheProgress.done"
       :cache-total="cacheProgress.total"
@@ -187,11 +188,13 @@ const ruleEditorVisible = ref(false);
 const isPickerActive = ref(false);
 const drawerOpen = ref(false);
 const isNavigating = ref(false);
+const showControls = ref(true);
 const chapterRefs = new Map<number, HTMLElement>();
 
 // IntersectionObserver instances
 let topObserver: globalThis.IntersectionObserver | null = null;
 let bottomObserver: globalThis.IntersectionObserver | null = null;
+let lastScrollTop = 0; // For scroll direction detection
 
 // Watch picker state to show/hide original page
 watch(isPickerActive, active => {
@@ -261,6 +264,7 @@ const error = computed(() => readerStore.error);
 const toastType = computed(() => readerStore.toastType);
 const showProgress = computed(() => configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
+const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
 
 // Keyboard shortcuts enabled state
 const keyboardEnabled = computed(
@@ -277,9 +281,10 @@ function navigate(direction: 'index') {
 // Drawer functions
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value;
-  // Load TOC when opening drawer
   if (drawerOpen.value) {
     readerStore.loadToc();
+    // Hide controls when opening drawer for cleaner view, or keep them?
+    // Let's keep them hidden if drawer overlaps, but drawer is sidebar.
   }
 }
 
@@ -342,6 +347,14 @@ function handleContentClick(e: MouseEvent) {
       return;
     }
     e.preventDefault();
+    return; // Stop here if it was a link
+  }
+
+  // Toggle controls visibility on content click (common reader UX)
+  // Don't toggle if selecting text
+  const selection = window.getSelection();
+  if (!selection || selection.toString().length === 0) {
+    showControls.value = !showControls.value;
   }
 }
 
@@ -352,6 +365,7 @@ function clearError() {
 function openRuleEditor() {
   settingsVisible.value = false;
   ruleEditorVisible.value = true;
+  showControls.value = false;
 }
 
 async function handleRuleSave(rule: SiteRule) {
@@ -376,6 +390,8 @@ async function handleRuleReset() {
 
 function openSettings() {
   settingsVisible.value = true;
+  // Controls can stay visible or hide? Let's keep them visible behind overlay or hide
+  showControls.value = false; // Hide floating toolbar when settings are open
 }
 
 async function handleTextConversionChange(mode: 'none' | 'sc' | 'tc') {
@@ -431,6 +447,18 @@ function handleScrollCore() {
 
   const currentScrollY = mainEl.scrollTop;
   const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
+
+  // Auto-hide controls on scroll down
+  if (autoHideHeader.value) {
+    if (currentScrollY > lastScrollTop && currentScrollY > 100) {
+      // Scrolling down & passed top area
+      showControls.value = false;
+    } else if (currentScrollY < lastScrollTop - 20) {
+      // Scrolling up significantly
+      showControls.value = true;
+    }
+  }
+  lastScrollTop = currentScrollY;
 
   // Find current visible chapter using visible area calculation
   let currentChapterEl: HTMLElement | null = null;
@@ -1008,23 +1036,32 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: #fff;
+  color: #333;
   z-index: 1000;
+  transition: opacity 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mnr-loading-overlay {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+  }
 }
 
 .mnr-loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(25, 118, 210, 0.2);
+  border-top-color: #1976d2;
   border-radius: 50%;
-  animation: mnr-spin 1s linear infinite;
+  animation: mnr-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes mnr-spin {
@@ -1036,31 +1073,41 @@ onUnmounted(() => {
 /* Toast */
 .mnr-toast {
   position: fixed;
-  bottom: 24px;
+  bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(30, 30, 30, 0.9);
+  backdrop-filter: blur(8px);
   color: #fff;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   z-index: 1001;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 90vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mnr-toast--error {
-  background: #d32f2f;
+  background: rgba(211, 47, 47, 0.95);
 }
 
 .mnr-toast-enter-active,
 .mnr-toast-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .mnr-toast-enter-from,
 .mnr-toast-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(40px) scale(0.9);
 }
 
 /* Mobile first - base styles are mobile */
