@@ -18162,7 +18162,7 @@ var MyNovelReader = (function(exports) {
       const entries = parseTocWithTitles(doc2, base);
       return entries.slice(0, limit).map((entry) => entry.url);
     }
-    function normalizeUrl(href, base) {
+    function resolveUrl(href, base) {
       try {
         return new URL(href, base).toString();
       } catch {
@@ -18412,7 +18412,7 @@ var MyNovelReader = (function(exports) {
         }
         const text = extractLinkTitle(a);
         const href = a.getAttribute("href") || "";
-        const abs = normalizeUrl(href, base);
+        const abs = resolveUrl(href, base);
         if (!abs) continue;
         if (!(textPattern.test(text) || urlPattern.test(href))) {
           continue;
