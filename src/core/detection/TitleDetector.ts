@@ -12,6 +12,7 @@ const KNOWN_TITLE_SELECTORS = [
   '.chapter-title',
   '.chapter_title',
   '.bookname h1',
+  'h1.title',
   '.title h1',
   '#chapter_title',
   '.readtitle h1',
@@ -27,6 +28,7 @@ const KNOWN_BOOK_TITLE_SELECTORS = [
   '#bookname',
   '.novel-title',
   'h2.title',
+  '.layout-tit a[title]',
   '.breadcrumb a:last-of-type',
   '.chapter-nav a:last-of-type',
 ];
