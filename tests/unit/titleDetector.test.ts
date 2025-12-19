@@ -111,6 +111,46 @@ describe('TitleDetector', () => {
       expect(result.bookTitle).toBe('我的小说');
     });
 
+    it('should detect book title from meta tags', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>第12章 测试</title>
+            <meta property="og:novel:book_name" content="元婴修仙传" />
+          </head>
+          <body>
+            <h1>第12章 测试</h1>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.bookTitle).toBe('元婴修仙传');
+    });
+
+    it('should prefer repeated book title candidates', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>《假名》 - 第1章</title>
+          </head>
+          <body>
+            <div class="bookinfo">
+              <h1>真正的书名</h1>
+            </div>
+            <a href="/index" aria-label="目录">《真正的书名》章节目录</a>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.bookTitle).toBe('真正的书名');
+    });
+
     it('should return empty result when no title found', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

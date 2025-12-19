@@ -25,12 +25,21 @@ const KNOWN_BOOK_TITLE_SELECTORS = [
   '.bookname',
   '.book-title',
   '.book_title',
+  '.book-name',
+  '.book_name',
+  '.bookinfo h1',
+  '.bookinfo h2',
   '#bookname',
+  '#book-info h1',
+  '#book-info h2',
+  '#info h1',
+  '#info h2',
   '.novel-title',
   'h2.title',
   '.layout-tit a[title]',
   '.breadcrumb a:last-of-type',
   '.chapter-nav a:last-of-type',
+  '.booknav a:first-of-type',
 ];
 
 /** Patterns to clean up title text */
@@ -186,18 +195,47 @@ export class TitleDetector {
       return true;
     };
 
-    for (const selector of KNOWN_BOOK_TITLE_SELECTORS) {
-      try {
-        const el = doc.querySelector(selector);
-        if (el) {
-          const text = (el.textContent || '').trim();
-          if (text.length > 0 && text.length < 50 && isValidBookTitle(text)) {
-            return this.cleanBookTitle(text);
+    const candidates = new Map<string, number>();
+    const addCandidate = (text: string | null | undefined, weight = 1) => {
+      if (!text) return;
+      const cleaned = this.cleanBookTitle(text);
+      if (!cleaned || !isValidBookTitle(cleaned)) return;
+      candidates.set(cleaned, (candidates.get(cleaned) || 0) + weight);
+    };
+
+    const collectFromSelectors = (selectors: string[], weight = 2): void => {
+      for (const selector of selectors) {
+        try {
+          const el = doc.querySelector(selector);
+          if (el) {
+            const text = (el.textContent || '').trim();
+            addCandidate(text, weight);
           }
+        } catch {
+          continue;
         }
-      } catch {
-        continue;
       }
+    };
+
+    // DOM selectors
+    collectFromSelectors(KNOWN_BOOK_TITLE_SELECTORS, 3);
+
+    // Meta tags commonly used by novel sites
+    const metaNames = ['og:novel:book_name', 'og:book:title', 'book_name', 'og:novel:book_name'];
+    for (const name of metaNames) {
+      const meta =
+        doc.querySelector(`meta[name="${cssEscape(name)}"]`) ||
+        doc.querySelector(`meta[property="${cssEscape(name)}"]`);
+      addCandidate(meta?.getAttribute('content'), 4);
+    }
+
+    // Generic meta titles
+    const metaTitles = ['og:title', 'twitter:title'];
+    for (const name of metaTitles) {
+      const meta =
+        doc.querySelector(`meta[name="${cssEscape(name)}"]`) ||
+        doc.querySelector(`meta[property="${cssEscape(name)}"]`);
+      addCandidate(meta?.getAttribute('content'), 2);
     }
 
     // Try to extract from document title
@@ -206,10 +244,7 @@ export class TitleDetector {
     // Prefer explicit 《书名》 pattern
     const bracketMatch = docTitle.match(/《([^》]+)》/);
     if (bracketMatch) {
-      const candidate = this.cleanBookTitle(bracketMatch[1]);
-      if (isValidBookTitle(candidate)) {
-        return candidate;
-      }
+      addCandidate(bracketMatch[1], 1);
     }
 
     // Try to strip chapter information from the first part
@@ -219,20 +254,13 @@ export class TitleDetector {
       .filter(Boolean);
     if (parts.length > 0) {
       const firstPart = parts[0];
-      const withoutChapter = this.cleanBookTitle(
-        firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, '')
-      );
-      if (withoutChapter && isValidBookTitle(withoutChapter)) {
-        return withoutChapter;
-      }
+      // Titles like "假名 - 第1章" should prefer the true book name if it repeats elsewhere
+      addCandidate(firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, ''), 1);
 
       // Find the first non-chapter part as book title
       for (const part of parts) {
         if (TITLE_PATTERN.test(part)) continue;
-        const cleanedPart = this.cleanBookTitle(part.replace(/《|》/g, ''));
-        if (isValidBookTitle(cleanedPart)) {
-          return cleanedPart;
-        }
+        addCandidate(part.replace(/《|》/g, ''), 1);
       }
     }
 
@@ -246,17 +274,34 @@ export class TitleDetector {
     if (fallbackParts.length >= 2) {
       // Book title is usually the second part or last part
       const bookPart = fallbackParts[1] || fallbackParts[fallbackParts.length - 1];
-      if (
-        bookPart.length > 0 &&
-        bookPart.length < 50 &&
-        !TITLE_PATTERN.test(bookPart) &&
-        isValidBookTitle(bookPart)
-      ) {
-        return this.cleanBookTitle(bookPart);
+      addCandidate(bookPart, 1);
+    }
+
+    // Directory links often include book title (e.g., 《书名》目录)
+    const directoryLinks = Array.from(doc.querySelectorAll('a')).filter(a =>
+      /目录|章节/.test(a.textContent || '')
+    );
+    for (const link of directoryLinks) {
+      const text = link.textContent || '';
+      const bracket = text.match(/《([^》]+)》/);
+      if (bracket) {
+        addCandidate(bracket[1], 2);
+        continue;
+      }
+      const cleaned = text.replace(/目录|章节|列表|返回|最新|TXT/gi, '').trim();
+      if (cleaned) {
+        addCandidate(cleaned, 1);
       }
     }
 
-    return undefined;
+    if (candidates.size === 0) return undefined;
+
+    const sorted = Array.from(candidates.entries()).sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    });
+
+    return sorted[0]?.[0];
   }
 
   /**
@@ -283,6 +328,8 @@ export class TitleDetector {
       .replace(/全文阅读$/, '')
       .replace(/在线阅读$/, '')
       .replace(/最新章节$/, '')
+      .replace(/无弹窗$/, '')
+      .replace(/[|｜].*$/, '')
       .trim();
   }
 
