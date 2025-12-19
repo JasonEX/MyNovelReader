@@ -2637,7 +2637,7 @@ var MyNovelReader = (function(exports) {
     {
       id: "ilwxs",
       name: "乐文小说",
-      version: 1,
+      version: 2,
       match: {
         pattern: "https://m\\.ilwxs\\.com/shu/\\d+/\\d+\\.html"
       },
@@ -2645,9 +2645,11 @@ var MyNovelReader = (function(exports) {
         selector: ".content"
       },
       navigation: {
-        next: "div.pager:nth-child(5) > a:nth-child(3)",
-        prev: "div.pager:nth-child(5) > a:nth-child(1)",
-        index: "div.pager:nth-child(5) > a:nth-child(2)"
+        // The chapter page contains both "书页" (book info) and "目录" (full chapter list).
+        // Ensure `indexUrl` points to the real TOC page (/shu/{bookId}/), not /info-{bookId}.html.
+        prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
+        next: '.pager a:contains("下一章"), .pager a:contains("下一页")',
+        index: '.pager a[href^="/shu/"][href$="/"], .pager a[href*="/shu/"][href$="/"], .pager a:contains("目 录"), .pager a:contains("目录")'
       },
       title: {
         selector: ".headline",
@@ -18091,15 +18093,13 @@ var MyNovelReader = (function(exports) {
         const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
         const currentUrl = (_b = chapter.value) == null ? void 0 : _b.url;
         if (indexUrl) {
-          const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
-          cacheAbort.value = abort;
-          const doc2 = await promise;
+          const tocEntries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, (abort) => {
+            cacheAbort.value = abort;
+          });
           cacheAbort.value = null;
-          if (doc2) {
-            const tocLinks = parseTocLinks(doc2, indexUrl, 1e4);
-            taskList = tocLinks.filter((u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
-            cacheQueue.value = [...taskList];
-          }
+          const tocLinks = tocEntries.map((e) => e.url).slice(0, 1e4);
+          taskList = tocLinks.filter((u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+          cacheQueue.value = [...taskList];
         }
       }
       const estimatedTotal = taskList.length;
@@ -18157,10 +18157,6 @@ var MyNovelReader = (function(exports) {
       cacheQueue.value = [];
       (_a = cacheAbort.value) == null ? void 0 : _a.call(cacheAbort);
       cacheAbort.value = null;
-    }
-    function parseTocLinks(doc2, base, limit) {
-      const entries = parseTocWithTitles(doc2, base);
-      return entries.slice(0, limit).map((entry) => entry.url);
     }
     function resolveUrl(href, base) {
       try {
@@ -18344,57 +18340,59 @@ var MyNovelReader = (function(exports) {
       if (match3) return parseInt(match3[1], 10);
       return null;
     }
-    function parseTocWithTitles(doc2, base) {
+    function isPlaceholderTocTitle(title2) {
+      return /^章节\s*\d+$/i.test(title2.trim());
+    }
+    function isBetterTocTitle(oldTitle, newTitle) {
+      const oldWhitelist = isLikelyChapterTitle(oldTitle);
+      const newWhitelist = isLikelyChapterTitle(newTitle);
+      if (newWhitelist && !oldWhitelist) return true;
+      if (oldWhitelist && !newWhitelist) return false;
+      if (!isPlaceholderTocTitle(oldTitle) && isPlaceholderTocTitle(newTitle)) return false;
+      if (isPlaceholderTocTitle(oldTitle) && !isPlaceholderTocTitle(newTitle)) return true;
+      return newTitle.length > oldTitle.length;
+    }
+    function extractTocLinkTitle(a) {
+      const titleSelectors = [
+        '[class*="chapterItemTitle"]',
+        // Qidian mobile: _chapterItemTitle_xxx
+        '[class*="chapter-title"]',
+        '[class*="chapterTitle"]',
+        "h2",
+        // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
+        "h3"
+      ];
+      for (const sel of titleSelectors) {
+        const el = a.querySelector(sel);
+        if (el) {
+          const text = (el.textContent || "").trim();
+          if (text) return text;
+        }
+      }
+      const firstP = a.querySelector("p");
+      if (firstP) {
+        const allP = a.querySelectorAll("p");
+        if (allP.length > 1) {
+          const text = (firstP.textContent || "").trim();
+          if (text) return text;
+        }
+      }
+      let directText = "";
+      for (const node of Array.from(a.childNodes)) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          directText += node.textContent || "";
+        }
+      }
+      directText = directText.trim();
+      if (directText) return directText;
+      return (a.textContent || "").trim();
+    }
+    function collectTocCandidates(doc2, base) {
       var _a, _b;
       const links = Array.from(doc2.querySelectorAll("a[href]"));
       const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
       const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$/i;
       const excludeAncestors = (((_b = (_a = rule.value) == null ? void 0 : _a.toc) == null ? void 0 : _b.excludeAncestors) || "").split(",").map((s) => s.trim()).filter(Boolean);
-      const isPlaceholder = (title2) => /^章节\s*\d+$/i.test(title2.trim());
-      const isBetterTitle = (oldTitle, newTitle) => {
-        const oldWhitelist = isLikelyChapterTitle(oldTitle);
-        const newWhitelist = isLikelyChapterTitle(newTitle);
-        if (newWhitelist && !oldWhitelist) return true;
-        if (oldWhitelist && !newWhitelist) return false;
-        if (!isPlaceholder(oldTitle) && isPlaceholder(newTitle)) return false;
-        if (isPlaceholder(oldTitle) && !isPlaceholder(newTitle)) return true;
-        return newTitle.length > oldTitle.length;
-      };
-      const extractLinkTitle = (a) => {
-        const titleSelectors = [
-          '[class*="chapterItemTitle"]',
-          // Qidian mobile: _chapterItemTitle_xxx
-          '[class*="chapter-title"]',
-          '[class*="chapterTitle"]',
-          "h2",
-          // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
-          "h3"
-        ];
-        for (const sel of titleSelectors) {
-          const el = a.querySelector(sel);
-          if (el) {
-            const text = (el.textContent || "").trim();
-            if (text) return text;
-          }
-        }
-        const firstP = a.querySelector("p");
-        if (firstP) {
-          const allP = a.querySelectorAll("p");
-          if (allP.length > 1) {
-            const text = (firstP.textContent || "").trim();
-            if (text) return text;
-          }
-        }
-        let directText = "";
-        for (const node of Array.from(a.childNodes)) {
-          if (node.nodeType === Node.TEXT_NODE) {
-            directText += node.textContent || "";
-          }
-        }
-        directText = directText.trim();
-        if (directText) return directText;
-        return (a.textContent || "").trim();
-      };
       const candidates = [];
       for (const a of links) {
         if (excludeAncestors.length > 0) {
@@ -18410,7 +18408,7 @@ var MyNovelReader = (function(exports) {
           }
           if (excluded) continue;
         }
-        const text = extractLinkTitle(a);
+        const text = extractTocLinkTitle(a);
         const href = a.getAttribute("href") || "";
         const abs = resolveUrl(href, base);
         if (!abs) continue;
@@ -18420,13 +18418,16 @@ var MyNovelReader = (function(exports) {
         const title2 = text || `章节 ${candidates.length + 1}`;
         candidates.push({ title: title2, url: abs });
       }
+      return candidates;
+    }
+    function dedupeTocEntries(candidates) {
       const seenUrls = /* @__PURE__ */ new Map();
       const results = [];
       for (let i = candidates.length - 1; i >= 0; i--) {
         const entry = candidates[i];
         if (seenUrls.has(entry.url)) {
           const existing = seenUrls.get(entry.url);
-          if (isBetterTitle(existing.title, entry.title)) {
+          if (isBetterTocTitle(existing.title, entry.title)) {
             existing.title = entry.title;
           }
         } else {
@@ -18434,7 +18435,135 @@ var MyNovelReader = (function(exports) {
           results.unshift(entry);
         }
       }
-      return filterTocEntries(results);
+      return results;
+    }
+    const MAX_TOC_PAGES = 120;
+    function normalizeTocPagerText(text) {
+      return text.replace(/\s+/g, "").trim();
+    }
+    function isTocNextPageText(text) {
+      const t = normalizeTocPagerText(text).toLowerCase();
+      if (!t) return false;
+      if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) return true;
+      if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) return true;
+      return false;
+    }
+    function extractTocPaginationSeed(indexUrl) {
+      try {
+        const u = new URL(indexUrl);
+        const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
+        return (m == null ? void 0 : m[1]) || null;
+      } catch {
+        return null;
+      }
+    }
+    function normalizeUrlForCompare(url) {
+      try {
+        const u = new URL(url);
+        u.hash = "";
+        return u.toString();
+      } catch {
+        return url;
+      }
+    }
+    function isValidTocPaginationUrl(candidateUrl, indexUrl) {
+      try {
+        const c = new URL(candidateUrl);
+        const idx = new URL(indexUrl);
+        if (c.protocol !== "http:" && c.protocol !== "https:") return false;
+        if (c.origin !== idx.origin) return false;
+        const seed = extractTocPaginationSeed(indexUrl);
+        if (seed && !c.pathname.includes(seed)) return false;
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    function findNextTocPageUrl(doc2, currentPageUrl, indexUrl) {
+      var _a, _b;
+      const currentNorm = normalizeUrlForCompare(currentPageUrl);
+      const pushCandidate = (candidates2, href, score) => {
+        const abs = resolveUrl(href, currentPageUrl);
+        if (!abs) return;
+        const absNorm = normalizeUrlForCompare(abs);
+        if (absNorm === currentNorm) return;
+        if (!isValidTocPaginationUrl(abs, indexUrl)) return;
+        candidates2.push({ url: abs, score });
+      };
+      const candidates = [];
+      const linkNext = (_a = doc2.querySelector('link[rel="next"][href]')) == null ? void 0 : _a.getAttribute("href");
+      if (linkNext) {
+        pushCandidate(candidates, linkNext, 100);
+      }
+      const aRelNext = (_b = doc2.querySelector('a[rel~="next"][href]')) == null ? void 0 : _b.getAttribute("href");
+      if (aRelNext) {
+        pushCandidate(candidates, aRelNext, 90);
+      }
+      for (const a of Array.from(doc2.querySelectorAll("a[href]"))) {
+        const text = a.textContent || "";
+        if (!isTocNextPageText(text)) continue;
+        const href = a.getAttribute("href");
+        if (!href) continue;
+        let score = 50;
+        const rel = (a.getAttribute("rel") || "").toLowerCase();
+        if (rel.includes("next")) score += 10;
+        const cls = (a.getAttribute("class") || "").toLowerCase();
+        if (cls.includes("next")) score += 3;
+        if (a.closest(".pager, .pagination, .page, .pagebar, .caption, nav")) score += 2;
+        pushCandidate(candidates, href, score);
+      }
+      if (candidates.length === 0) return null;
+      candidates.sort((a, b) => b.score - a.score);
+      return candidates[0].url;
+    }
+    async function loadTocEntriesPaged(indexUrl, currentUrl, setAbort) {
+      const visitedPages = /* @__PURE__ */ new Set();
+      const seenChapterUrls = /* @__PURE__ */ new Set();
+      const allCandidates = [];
+      const aborters = [];
+      let aborted = false;
+      const abortAll = () => {
+        aborted = true;
+        for (const fn of aborters) {
+          try {
+            fn();
+          } catch {
+          }
+        }
+      };
+      setAbort(abortAll);
+      try {
+        let pageUrl = indexUrl;
+        let referer = currentUrl || indexUrl;
+        while (pageUrl && visitedPages.size < MAX_TOC_PAGES) {
+          const pageKey = normalizeUrlForCompare(pageUrl);
+          if (visitedPages.has(pageKey)) break;
+          visitedPages.add(pageKey);
+          const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
+          aborters.push(abort);
+          const doc2 = await promise;
+          if (aborted) break;
+          if (!doc2) break;
+          const pageCandidates = collectTocCandidates(doc2, pageUrl);
+          allCandidates.push(...pageCandidates);
+          let newCount = 0;
+          for (const entry of pageCandidates) {
+            if (!seenChapterUrls.has(entry.url)) {
+              seenChapterUrls.add(entry.url);
+              newCount++;
+            }
+          }
+          if (visitedPages.size >= 2 && newCount === 0) break;
+          const nextPageUrl = findNextTocPageUrl(doc2, pageUrl, indexUrl);
+          if (!nextPageUrl) break;
+          referer = pageUrl;
+          pageUrl = nextPageUrl;
+        }
+      } finally {
+        setAbort(null);
+      }
+      if (allCandidates.length === 0) return [];
+      return filterTocEntries(dedupeTocEntries(allCandidates));
     }
     async function loadToc() {
       var _a, _b;
@@ -18443,12 +18572,9 @@ var MyNovelReader = (function(exports) {
       tocLoading.value = true;
       const currentUrl = ((_b = chapter.value) == null ? void 0 : _b.url) || "";
       try {
-        const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
-        tocAbort.value = abort;
-        const doc2 = await promise;
-        if (doc2) {
-          toc.value = parseTocWithTitles(doc2, indexUrl);
-        }
+        toc.value = await loadTocEntriesPaged(indexUrl, currentUrl, (abort) => {
+          tocAbort.value = abort;
+        });
       } catch (e) {
         console.error("[MNR] Failed to load TOC:", e);
       } finally {
@@ -18800,6 +18926,9 @@ var MyNovelReader = (function(exports) {
         },
         onerror: (err) => {
           console.error("[MNR] Request error:", err);
+          resolve(null);
+        },
+        onabort: () => {
           resolve(null);
         },
         ontimeout: () => {

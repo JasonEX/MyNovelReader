@@ -985,7 +985,7 @@ const simplifiedRules: SiteRule[] = [
   {
     id: 'ilwxs',
     name: '乐文小说',
-    version: 1,
+    version: 2,
     match: {
       pattern: 'https://m\\.ilwxs\\.com/shu/\\d+/\\d+\\.html',
     },
@@ -993,9 +993,12 @@ const simplifiedRules: SiteRule[] = [
       selector: '.content',
     },
     navigation: {
-      next: 'div.pager:nth-child(5) > a:nth-child(3)',
-      prev: 'div.pager:nth-child(5) > a:nth-child(1)',
-      index: 'div.pager:nth-child(5) > a:nth-child(2)',
+      // The chapter page contains both "书页" (book info) and "目录" (full chapter list).
+      // Ensure `indexUrl` points to the real TOC page (/shu/{bookId}/), not /info-{bookId}.html.
+      prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
+      next: '.pager a:contains("下一章"), .pager a:contains("下一页")',
+      index:
+        '.pager a[href^="/shu/"][href$="/"], .pager a[href*="/shu/"][href$="/"], .pager a:contains("目 录"), .pager a:contains("目录")',
     },
     title: {
       selector: '.headline',

@@ -549,17 +549,15 @@ export const useReaderStore = defineStore('reader', () => {
       const indexUrl = chapter.value?.indexUrl;
       const currentUrl = chapter.value?.url;
       if (indexUrl) {
-        const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
-        cacheAbort.value = abort;
-        const doc = await promise;
+        const tocEntries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, abort => {
+          cacheAbort.value = abort;
+        });
         cacheAbort.value = null;
-        if (doc) {
-          // Get all chapters from TOC, no limit
-          const tocLinks = parseTocLinks(doc, indexUrl, 10000);
-          // Cache entire book, filter already cached
-          taskList = tocLinks.filter(u => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
-          cacheQueue.value = [...taskList];
-        }
+
+        const tocLinks = tocEntries.map(e => e.url).slice(0, 10000);
+        // Cache entire book, filter already cached
+        taskList = tocLinks.filter(u => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+        cacheQueue.value = [...taskList];
       }
     }
 
@@ -637,14 +635,6 @@ export const useReaderStore = defineStore('reader', () => {
     cacheQueue.value = [];
     cacheAbort.value?.();
     cacheAbort.value = null;
-  }
-
-  function parseTocLinks(doc: Document, base: string, limit: number): string[] {
-    // Reuse parseTocWithTitles to get smart filtering and sorting
-    const entries = parseTocWithTitles(doc, base);
-
-    // Return just the URLs, respecting the limit
-    return entries.slice(0, limit).map(entry => entry.url);
   }
 
   function resolveUrl(href: string, base: string): string | null {
@@ -952,7 +942,77 @@ export const useReaderStore = defineStore('reader', () => {
    * Deduplication strategy: Keep last occurrence position, but prefer better titles
    * This handles TOC pages with "recent updates" at top followed by full chapter list
    */
-  function parseTocWithTitles(doc: Document, base: string): TocEntry[] {
+  function isPlaceholderTocTitle(title: string): boolean {
+    return /^章节\s*\d+$/i.test(title.trim());
+  }
+
+  function isBetterTocTitle(oldTitle: string, newTitle: string): boolean {
+    const oldWhitelist = isLikelyChapterTitle(oldTitle);
+    const newWhitelist = isLikelyChapterTitle(newTitle);
+
+    // Prefer titles that look like real chapters
+    if (newWhitelist && !oldWhitelist) return true;
+    if (oldWhitelist && !newWhitelist) return false;
+
+    // Avoid replacing a non-placeholder with a placeholder
+    if (!isPlaceholderTocTitle(oldTitle) && isPlaceholderTocTitle(newTitle)) return false;
+    if (isPlaceholderTocTitle(oldTitle) && !isPlaceholderTocTitle(newTitle)) return true;
+
+    // Otherwise prefer the longer (more informative) title
+    return newTitle.length > oldTitle.length;
+  }
+
+  /**
+   * Extract chapter title from link element
+   * Prioritizes inner title elements to avoid getting extra text like "免费", "VIP"
+   */
+  function extractTocLinkTitle(a: Element): string {
+    // Method 1: Try common title selectors (Qidian mobile sidebar, etc.)
+    const titleSelectors = [
+      '[class*="chapterItemTitle"]', // Qidian mobile: _chapterItemTitle_xxx
+      '[class*="chapter-title"]',
+      '[class*="chapterTitle"]',
+      'h2', // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
+      'h3',
+    ];
+
+    for (const sel of titleSelectors) {
+      const el = a.querySelector(sel);
+      if (el) {
+        const text = (el.textContent || '').trim();
+        if (text) return text;
+      }
+    }
+
+    // Method 2: If link has child elements, try to get first meaningful text
+    // This handles structures like: <a><div><p>Title</p><p>免费</p></div></a>
+    const firstP = a.querySelector('p');
+    if (firstP) {
+      // Check if there are multiple p elements (likely title + status)
+      const allP = a.querySelectorAll('p');
+      if (allP.length > 1) {
+        // Return first p's text (usually the title)
+        const text = (firstP.textContent || '').trim();
+        if (text) return text;
+      }
+    }
+
+    // Method 3: Get direct text content only (excludes child element text)
+    // This handles: <a>Chapter Title<span>Extra</span></a>
+    let directText = '';
+    for (const node of Array.from(a.childNodes)) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        directText += node.textContent || '';
+      }
+    }
+    directText = directText.trim();
+    if (directText) return directText;
+
+    // Fallback to full textContent
+    return (a.textContent || '').trim();
+  }
+
+  function collectTocCandidates(doc: Document, base: string): TocEntry[] {
     const links = Array.from(doc.querySelectorAll('a[href]'));
     // Match chapter titles: 第X章/节/回/话/篇/集/卷/幕, or standalone 章/回/节/話/幕
     const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
@@ -963,74 +1023,6 @@ export const useReaderStore = defineStore('reader', () => {
       .map(s => s.trim())
       .filter(Boolean);
 
-    const isPlaceholder = (title: string) => /^章节\s*\d+$/i.test(title.trim());
-    const isBetterTitle = (oldTitle: string, newTitle: string): boolean => {
-      const oldWhitelist = isLikelyChapterTitle(oldTitle);
-      const newWhitelist = isLikelyChapterTitle(newTitle);
-
-      // Prefer titles that look like real chapters
-      if (newWhitelist && !oldWhitelist) return true;
-      if (oldWhitelist && !newWhitelist) return false;
-
-      // Avoid replacing a non-placeholder with a placeholder
-      if (!isPlaceholder(oldTitle) && isPlaceholder(newTitle)) return false;
-      if (isPlaceholder(oldTitle) && !isPlaceholder(newTitle)) return true;
-
-      // Otherwise prefer the longer (more informative) title
-      return newTitle.length > oldTitle.length;
-    };
-
-    /**
-     * Extract chapter title from link element
-     * Prioritizes inner title elements to avoid getting extra text like "免费", "VIP"
-     */
-    const extractLinkTitle = (a: Element): string => {
-      // Method 1: Try common title selectors (Qidian mobile sidebar, etc.)
-      const titleSelectors = [
-        '[class*="chapterItemTitle"]', // Qidian mobile: _chapterItemTitle_xxx
-        '[class*="chapter-title"]',
-        '[class*="chapterTitle"]',
-        'h2', // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
-        'h3',
-      ];
-
-      for (const sel of titleSelectors) {
-        const el = a.querySelector(sel);
-        if (el) {
-          const text = (el.textContent || '').trim();
-          if (text) return text;
-        }
-      }
-
-      // Method 2: If link has child elements, try to get first meaningful text
-      // This handles structures like: <a><div><p>Title</p><p>免费</p></div></a>
-      const firstP = a.querySelector('p');
-      if (firstP) {
-        // Check if there are multiple p elements (likely title + status)
-        const allP = a.querySelectorAll('p');
-        if (allP.length > 1) {
-          // Return first p's text (usually the title)
-          const text = (firstP.textContent || '').trim();
-          if (text) return text;
-        }
-      }
-
-      // Method 3: Get direct text content only (excludes child element text)
-      // This handles: <a>Chapter Title<span>Extra</span></a>
-      let directText = '';
-      for (const node of Array.from(a.childNodes)) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          directText += node.textContent || '';
-        }
-      }
-      directText = directText.trim();
-      if (directText) return directText;
-
-      // Fallback to full textContent
-      return (a.textContent || '').trim();
-    };
-
-    // Phase 1: Collect all candidate entries (with duplicates)
     const candidates: TocEntry[] = [];
     for (const a of links) {
       // Rule-specific TOC exclusions (keep generic parser clean; configure per-site in rules).
@@ -1049,7 +1041,7 @@ export const useReaderStore = defineStore('reader', () => {
         if (excluded) continue;
       }
 
-      const text = extractLinkTitle(a);
+      const text = extractTocLinkTitle(a);
       const href = a.getAttribute('href') || '';
       const abs = resolveUrl(href, base);
       if (!abs) continue;
@@ -1063,28 +1055,211 @@ export const useReaderStore = defineStore('reader', () => {
       candidates.push({ title, url: abs });
     }
 
-    // Phase 2: Deduplicate - keep last occurrence position, but prefer better title
-    // Process from end to start, so first occurrence we see is the last in document
+    return candidates;
+  }
+
+  /**
+   * Deduplicate TOC entries while preserving the last occurrence position.
+   * This helps handle TOC pages that have "recent updates" at top followed by full list.
+   */
+  function dedupeTocEntries(candidates: TocEntry[]): TocEntry[] {
     const seenUrls = new Map<string, TocEntry>();
     const results: TocEntry[] = [];
 
     for (let i = candidates.length - 1; i >= 0; i--) {
       const entry = candidates[i];
       if (seenUrls.has(entry.url)) {
-        // We already have this URL from a later position
-        // Check if current (earlier) entry has better title
         const existing = seenUrls.get(entry.url)!;
-        if (isBetterTitle(existing.title, entry.title)) {
+        if (isBetterTocTitle(existing.title, entry.title)) {
           existing.title = entry.title;
         }
       } else {
         seenUrls.set(entry.url, entry);
-        results.unshift(entry); // Add to front to maintain order
+        results.unshift(entry);
       }
     }
 
-    // Apply smart filtering
-    return filterTocEntries(results);
+    return results;
+  }
+
+  const MAX_TOC_PAGES = 120;
+
+  function normalizeTocPagerText(text: string): string {
+    return text.replace(/\s+/g, '').trim();
+  }
+
+  function isTocNextPageText(text: string): boolean {
+    const t = normalizeTocPagerText(text).toLowerCase();
+    if (!t) return false;
+    if (t.includes('下一页') || t.includes('下页') || t.includes('下一頁') || t.includes('下頁')) {
+      return true;
+    }
+    // Conservative English fallback (avoid matching "next chapter")
+    if (t.includes('next') && !t.includes('chapter') && (t.includes('page') || t === 'next')) {
+      return true;
+    }
+    return false;
+  }
+
+  function extractTocPaginationSeed(indexUrl: string): string | null {
+    try {
+      const u = new URL(indexUrl);
+      // Prefer numeric IDs (most CN sites), but keep it conservative: 3+ digits.
+      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
+      return m?.[1] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeUrlForCompare(url: string): string {
+    try {
+      const u = new URL(url);
+      u.hash = '';
+      return u.toString();
+    } catch {
+      return url;
+    }
+  }
+
+  function isValidTocPaginationUrl(candidateUrl: string, indexUrl: string): boolean {
+    try {
+      const c = new URL(candidateUrl);
+      const idx = new URL(indexUrl);
+      if (c.protocol !== 'http:' && c.protocol !== 'https:') return false;
+      if (c.origin !== idx.origin) return false;
+
+      const seed = extractTocPaginationSeed(indexUrl);
+      if (seed && !c.pathname.includes(seed)) return false;
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function findNextTocPageUrl(
+    doc: Document,
+    currentPageUrl: string,
+    indexUrl: string
+  ): string | null {
+    const currentNorm = normalizeUrlForCompare(currentPageUrl);
+
+    const pushCandidate = (
+      candidates: Array<{ url: string; score: number }>,
+      href: string,
+      score: number
+    ) => {
+      const abs = resolveUrl(href, currentPageUrl);
+      if (!abs) return;
+      const absNorm = normalizeUrlForCompare(abs);
+      if (absNorm === currentNorm) return;
+      if (!isValidTocPaginationUrl(abs, indexUrl)) return;
+      candidates.push({ url: abs, score });
+    };
+
+    const candidates: Array<{ url: string; score: number }> = [];
+
+    // 1) <link rel="next" href="...">
+    const linkNext = doc.querySelector('link[rel="next"][href]')?.getAttribute('href');
+    if (linkNext) {
+      pushCandidate(candidates, linkNext, 100);
+    }
+
+    // 2) <a rel="next" href="...">
+    const aRelNext = doc.querySelector('a[rel~="next"][href]')?.getAttribute('href');
+    if (aRelNext) {
+      pushCandidate(candidates, aRelNext, 90);
+    }
+
+    // 3) Text-based paging links (e.g. "下一页")
+    for (const a of Array.from(doc.querySelectorAll('a[href]'))) {
+      const text = a.textContent || '';
+      if (!isTocNextPageText(text)) continue;
+
+      const href = a.getAttribute('href');
+      if (!href) continue;
+
+      let score = 50;
+      const rel = (a.getAttribute('rel') || '').toLowerCase();
+      if (rel.includes('next')) score += 10;
+      const cls = (a.getAttribute('class') || '').toLowerCase();
+      if (cls.includes('next')) score += 3;
+      if (a.closest('.pager, .pagination, .page, .pagebar, .caption, nav')) score += 2;
+
+      pushCandidate(candidates, href, score);
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].url;
+  }
+
+  async function loadTocEntriesPaged(
+    indexUrl: string,
+    currentUrl: string,
+    setAbort: (abort: (() => void) | null) => void
+  ): Promise<TocEntry[]> {
+    const visitedPages = new Set<string>();
+    const seenChapterUrls = new Set<string>();
+    const allCandidates: TocEntry[] = [];
+
+    const aborters: Array<() => void> = [];
+    let aborted = false;
+    const abortAll = () => {
+      aborted = true;
+      for (const fn of aborters) {
+        try {
+          fn();
+        } catch {
+          // ignore
+        }
+      }
+    };
+    setAbort(abortAll);
+
+    try {
+      let pageUrl: string | null = indexUrl;
+      let referer: string | undefined = currentUrl || indexUrl;
+
+      while (pageUrl && visitedPages.size < MAX_TOC_PAGES) {
+        const pageKey = normalizeUrlForCompare(pageUrl);
+        if (visitedPages.has(pageKey)) break;
+        visitedPages.add(pageKey);
+
+        const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
+        aborters.push(abort);
+
+        const doc = await promise;
+        if (aborted) break;
+        if (!doc) break;
+
+        const pageCandidates = collectTocCandidates(doc, pageUrl);
+        allCandidates.push(...pageCandidates);
+
+        let newCount = 0;
+        for (const entry of pageCandidates) {
+          if (!seenChapterUrls.has(entry.url)) {
+            seenChapterUrls.add(entry.url);
+            newCount++;
+          }
+        }
+
+        // If we are "turning pages" but keep seeing the same set, stop to avoid loops.
+        if (visitedPages.size >= 2 && newCount === 0) break;
+
+        const nextPageUrl = findNextTocPageUrl(doc, pageUrl, indexUrl);
+        if (!nextPageUrl) break;
+
+        referer = pageUrl;
+        pageUrl = nextPageUrl;
+      }
+    } finally {
+      setAbort(null);
+    }
+
+    if (allCandidates.length === 0) return [];
+    return filterTocEntries(dedupeTocEntries(allCandidates));
   }
 
   /**
@@ -1098,13 +1273,9 @@ export const useReaderStore = defineStore('reader', () => {
     const currentUrl = chapter.value?.url || '';
 
     try {
-      const { promise, abort } = fetchAndParseUrl(indexUrl, currentUrl);
-      tocAbort.value = abort;
-
-      const doc = await promise;
-      if (doc) {
-        toc.value = parseTocWithTitles(doc, indexUrl);
-      }
+      toc.value = await loadTocEntriesPaged(indexUrl, currentUrl, abort => {
+        tocAbort.value = abort;
+      });
     } catch (e) {
       console.error('[MNR] Failed to load TOC:', e);
     } finally {
@@ -1576,6 +1747,9 @@ function fetchAndParseUrl(
       },
       onerror: err => {
         console.error('[MNR] Request error:', err);
+        resolve(null);
+      },
+      onabort: () => {
         resolve(null);
       },
       ontimeout: () => {
