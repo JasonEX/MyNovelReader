@@ -401,6 +401,47 @@ const specialRules: SiteRule[] = [
  * These can't be auto-detected but don't need iframe/mutations
  */
 const simplifiedRules: SiteRule[] = [
+  // 我的书城网（章节正文存在混入的转义标签和反爬噪声）
+  {
+    id: 'wodeshucheng',
+    name: '我的书城网',
+    version: 1,
+    match: {
+      pattern: '^https?://www\\.wodeshucheng\\.net/.*?\\.html$',
+    },
+    content: {
+      selector: '#content',
+      replace: [
+        // 清除正文内被转义的段落、换行标签
+        { pattern: '&lt;/?p&gt;', replacement: '', flags: 'gi' },
+        { pattern: '&lt;br\\s*/?&gt;', replacement: '', flags: 'gi' },
+        // 去掉夹杂的反爬噪声（包含反斜杠的乱码片段）
+        { pattern: '\\\\[^\\s<]{2,}', replacement: '', flags: 'g' },
+        // 清理尾部插入的脚本标记或碎片
+        { pattern: 'chapter_\\(\\);?', replacement: '', flags: 'gi' },
+        { pattern: 'script\\/script', replacement: '', flags: 'gi' },
+        // 移除以“#?”开头的乱码提示
+        { pattern: '#\\?[^<\\n]{0,80}', replacement: '', flags: 'g' },
+      ],
+    },
+    navigation: {
+      prev: '#prev_url',
+      index: '#info_url',
+      next: '#next_url',
+    },
+    title: {
+      selector: 'h1.title',
+      bookSelector: '.layout-tit a[title]',
+    },
+    advanced: {
+      checkSection: true,
+    },
+    meta: {
+      source: 'builtin',
+      exampleUrl: 'https://www.wodeshucheng.net/book_95122894/455913227.html',
+    },
+  },
+
   // 零点看书 / 文库吧系（示例：23.225.121.247/ldks/111291/42509753_2.html）
   // 特点：
   // - 同一章分页：/42509753.html -> /42509753_2.html（下一页），最后一页才出现“下一章”
