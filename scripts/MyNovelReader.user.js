@@ -681,6 +681,11 @@ var MyNovelReader = (function(exports) {
     /添加書籤\s*返回目錄\s*章節報錯\s*分享給朋友[:：]?\s*/gi,
     /由於[緩缓存]原因[^<\n]{0,120}(?:更新|網站|网站|站)/gi,
     /[请請][用戶用户]直接[瀏覽浏览]器[訪访]問[^<\n]{0,120}/gi,
+    // Obfuscated "小说网最新章节更新快" spam (allow noise between characters)
+    /小[^\u4e00-\u9fff]{0,3}说[^\u4e00-\u9fff]{0,3}网[^\u4e00-\u9fff]{0,6}最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
+    /最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
+    /幻[^\u4e00-\u9fff]{0,3}想[^\u4e00-\u9fff]{0,3}姬[^\u4e00-\u9fff]{0,6}免[^\u4e00-\u9fff]{0,3}费[^\u4e00-\u9fff]{0,3}(?:阅|讀)[^\u4e00-\u9fff]{0,3}(?:读|讀)/gi,
+    /萝[^\u4e00-\u9fff]{0,3}拉[^\u4e00-\u9fff]{0,3}小[^\u4e00-\u9fff]{0,3}说[^\u4e00-\u9fff]{0,3}\d{1,3}[^\u4e00-\u9fff]{0,3}最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
     /(天天看小说|天天看小說)[^<\n]*ttks\.tw/gi,
     /⚡?\s*天天看[小小說]{2}[^<\n]*/gi,
     /https?:\/\/[^\s<>"]+/gi,
@@ -2188,12 +2193,28 @@ var MyNovelReader = (function(exports) {
       },
       content: {
         selector: "#content",
+        remove: ".appguide-wrap, .section-opt, .btn-addbs, .reader-fun",
         replace: [
           // 清除正文内被转义的段落、换行标签
           { pattern: "&lt;/?p&gt;", replacement: "", flags: "gi" },
           { pattern: "&lt;br\\s*/?&gt;", replacement: "", flags: "gi" },
+          { pattern: "&lt;script[^>]*&gt;.*?&lt;/script&gt;", replacement: "", flags: "gi" },
           // 去掉夹杂的反爬噪声（包含反斜杠的乱码片段）
           { pattern: "\\\\[^\\s<]{2,}", replacement: "", flags: "g" },
+          // 清理混杂符号的伪域名/反爬噪声
+          {
+            pattern: "[a-z0-9](?:[^\\u4e00-\\u9fff\\s]{1,3}[a-z0-9]){4,}",
+            replacement: "",
+            flags: "gi"
+          },
+          // 常见的“更新最快”变体广告（带少量噪声）
+          {
+            pattern: "小[^\\u4e00-\\u9fff]{0,3}说[^\\u4e00-\\u9fff]{0,3}网[^\\u4e00-\\u9fff]{0,6}最[^\\u4e00-\\u9fff]{0,3}新[^\\u4e00-\\u9fff]{0,3}章[^\\u4e00-\\u9fff]{0,3}节[^\\u4e00-\\u9fff]{0,6}更[^\\u4e00-\\u9fff]{0,3}新[^\\u4e00-\\u9fff]{0,3}快",
+            replacement: "",
+            flags: "gi"
+          },
+          // 特定噪声短语（稀有字形混入）
+          { pattern: "武\\d?墈书\\s*庚薪嶵筷", replacement: "", flags: "g" },
           // 清理尾部插入的脚本标记或碎片
           { pattern: "chapter_\\(\\);?", replacement: "", flags: "gi" },
           { pattern: "script\\/script", replacement: "", flags: "gi" },

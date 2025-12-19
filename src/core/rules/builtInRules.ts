@@ -411,12 +411,29 @@ const simplifiedRules: SiteRule[] = [
     },
     content: {
       selector: '#content',
+      remove: '.appguide-wrap, .section-opt, .btn-addbs, .reader-fun',
       replace: [
         // 清除正文内被转义的段落、换行标签
         { pattern: '&lt;/?p&gt;', replacement: '', flags: 'gi' },
         { pattern: '&lt;br\\s*/?&gt;', replacement: '', flags: 'gi' },
+        { pattern: '&lt;script[^>]*&gt;.*?&lt;/script&gt;', replacement: '', flags: 'gi' },
         // 去掉夹杂的反爬噪声（包含反斜杠的乱码片段）
         { pattern: '\\\\[^\\s<]{2,}', replacement: '', flags: 'g' },
+        // 清理混杂符号的伪域名/反爬噪声
+        {
+          pattern: '[a-z0-9](?:[^\\u4e00-\\u9fff\\s]{1,3}[a-z0-9]){4,}',
+          replacement: '',
+          flags: 'gi',
+        },
+        // 常见的“更新最快”变体广告（带少量噪声）
+        {
+          pattern:
+            '小[^\\u4e00-\\u9fff]{0,3}说[^\\u4e00-\\u9fff]{0,3}网[^\\u4e00-\\u9fff]{0,6}最[^\\u4e00-\\u9fff]{0,3}新[^\\u4e00-\\u9fff]{0,3}章[^\\u4e00-\\u9fff]{0,3}节[^\\u4e00-\\u9fff]{0,6}更[^\\u4e00-\\u9fff]{0,3}新[^\\u4e00-\\u9fff]{0,3}快',
+          replacement: '',
+          flags: 'gi',
+        },
+        // 特定噪声短语（稀有字形混入）
+        { pattern: '武\\d?墈书\\s*庚薪嶵筷', replacement: '', flags: 'g' },
         // 清理尾部插入的脚本标记或碎片
         { pattern: 'chapter_\\(\\);?', replacement: '', flags: 'gi' },
         { pattern: 'script\\/script', replacement: '', flags: 'gi' },
