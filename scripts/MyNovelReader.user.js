@@ -656,6 +656,10 @@ var MyNovelReader = (function(exports) {
     /一秒记住.*为您提供/gi,
     /天才一秒记住/gi,
     /笔趣阁.*www\.[a-z]+\.(com|net|org)/gi,
+    /添加书签\s*返回目录\s*章节报错\s*分享给朋友[:：]?\s*/gi,
+    /添加書籤\s*返回目錄\s*章節報錯\s*分享給朋友[:：]?\s*/gi,
+    /(天天看小说|天天看小說)[^<\n]*ttks\.tw/gi,
+    /⚡?\s*天天看[小小說]{2}[^<\n]*/gi,
     /https?:\/\/[^\s<>"]+/gi,
     /www\.[a-z0-9]+\.(com|net|org|cc)/gi
   ];
@@ -1202,12 +1206,19 @@ var MyNovelReader = (function(exports) {
      * Detect book title
      */
     detectBookTitle(doc2) {
+      const isValidBookTitle = (text) => {
+        if (!text || text.length < 2 || text.length > 100) return false;
+        const normalized = text.replace(/\s+/g, "").toLowerCase();
+        if (normalized.includes("天天看小说") || normalized.includes("天天看小說")) return false;
+        if (normalized.startsWith("⚡")) return false;
+        return true;
+      };
       for (const selector of KNOWN_BOOK_TITLE_SELECTORS) {
         try {
           const el = doc2.querySelector(selector);
           if (el) {
             const text = (el.textContent || "").trim();
-            if (text.length > 0 && text.length < 50) {
+            if (text.length > 0 && text.length < 50 && isValidBookTitle(text)) {
               return this.cleanBookTitle(text);
             }
           }
@@ -1216,10 +1227,34 @@ var MyNovelReader = (function(exports) {
         }
       }
       const docTitle = doc2.title;
-      const parts = docTitle.split(/[-_|,，]/).map((s) => s.trim());
-      if (parts.length >= 2) {
-        const bookPart = parts[1] || parts[parts.length - 1];
-        if (bookPart.length > 0 && bookPart.length < 50 && !TITLE_PATTERN.test(bookPart)) {
+      const bracketMatch = docTitle.match(/《([^》]+)》/);
+      if (bracketMatch) {
+        const candidate = this.cleanBookTitle(bracketMatch[1]);
+        if (isValidBookTitle(candidate)) {
+          return candidate;
+        }
+      }
+      const parts = docTitle.split(/[-_|,，]/).map((s) => s.trim()).filter(Boolean);
+      if (parts.length > 0) {
+        const firstPart = parts[0];
+        const withoutChapter = this.cleanBookTitle(
+          firstPart.replace(TITLE_PATTERN, "").replace(/《|》/g, "")
+        );
+        if (withoutChapter && isValidBookTitle(withoutChapter)) {
+          return withoutChapter;
+        }
+        for (const part of parts) {
+          if (TITLE_PATTERN.test(part)) continue;
+          const cleanedPart = this.cleanBookTitle(part.replace(/《|》/g, ""));
+          if (isValidBookTitle(cleanedPart)) {
+            return cleanedPart;
+          }
+        }
+      }
+      const fallbackParts = parts.length ? parts : docTitle.split(/[-_|,，]/).map((s) => s.trim()).filter(Boolean);
+      if (fallbackParts.length >= 2) {
+        const bookPart = fallbackParts[1] || fallbackParts[fallbackParts.length - 1];
+        if (bookPart.length > 0 && bookPart.length < 50 && !TITLE_PATTERN.test(bookPart) && isValidBookTitle(bookPart)) {
           return this.cleanBookTitle(bookPart);
         }
       }
@@ -17331,6 +17366,18 @@ var MyNovelReader = (function(exports) {
     }
     return char;
   }
+  async function convertText(text, mode) {
+    if (mode === "none" || !text) {
+      return text;
+    }
+    try {
+      const converter = mode === "sc" ? sify : tify;
+      return converter(text);
+    } catch (error) {
+      console.error("[ChineseConverter] Text conversion error:", error);
+      return text;
+    }
+  }
   async function convertHTML(html, mode) {
     if (mode === "none" || !html) {
       return html;
@@ -17721,6 +17768,7 @@ var MyNovelReader = (function(exports) {
     const history = ref([]);
     const loadedUrls = ref(/* @__PURE__ */ new Set());
     const originalContents = ref(/* @__PURE__ */ new Map());
+    const originalTitles = ref(/* @__PURE__ */ new Map());
     const currentConversionMode = ref("none");
     const pendingNextAbort = ref(null);
     const pendingPrevAbort = ref(null);
@@ -17728,6 +17776,7 @@ var MyNovelReader = (function(exports) {
     const cacheQueue = ref([]);
     const cacheAbort = ref(null);
     const toc = ref([]);
+    const tocOriginal = ref([]);
     const tocLoading = ref(false);
     const tocAbort = ref(null);
     const cachedContents = ref(/* @__PURE__ */ new Map());
@@ -17796,6 +17845,8 @@ var MyNovelReader = (function(exports) {
       currentChapterIndex.value = 0;
       error.value = null;
       loadedUrls.value.clear();
+      originalContents.value.clear();
+      originalTitles.value.clear();
     }
     function setChapter(newChapter, newRule) {
       const id = `chapter-${Date.now()}-0`;
@@ -17813,6 +17864,8 @@ var MyNovelReader = (function(exports) {
       loadedUrls.value.add(newChapter.url);
       originalContents.value.clear();
       originalContents.value.set(id, newChapter.content);
+      originalTitles.value.clear();
+      originalTitles.value.set(id, { title: newChapter.title, bookTitle: newChapter.bookTitle });
       cachedContents.value.set(newChapter.url, {
         chapter: newChapter,
         rule: newRule,
@@ -17824,17 +17877,16 @@ var MyNovelReader = (function(exports) {
           history.value = history.value.slice(-100);
         }
       }
+      if (currentConversionMode.value !== "none") {
+        void applyConversionToChapterEntry(id, currentConversionMode.value);
+      }
       restoreCache();
     }
     async function insertCachedChapter(cached, position) {
       const suffix = position === "append" ? "cached" : "cached-prev";
       const id = `chapter-${Date.now()}-${suffix}-${chapters.value.length}`;
-      let content2 = cached.chapter.content;
-      if (currentConversionMode.value !== "none") {
-        content2 = await convertHTML(content2, currentConversionMode.value);
-      }
       const entry = {
-        chapter: { ...cached.chapter, content: content2 },
+        chapter: { ...cached.chapter },
         rule: cached.rule,
         id
       };
@@ -17845,12 +17897,20 @@ var MyNovelReader = (function(exports) {
         currentChapterIndex.value++;
       }
       originalContents.value.set(id, cached.chapter.content);
+      originalTitles.value.set(id, {
+        title: cached.chapter.title,
+        bookTitle: cached.chapter.bookTitle
+      });
+      if (currentConversionMode.value !== "none") {
+        await applyConversionToChapterEntry(id, currentConversionMode.value);
+      }
       if (chapters.value.length > MAX_CACHED_CHAPTERS) {
         if (position === "append" && currentChapterIndex.value > 2) {
           const removed = chapters.value.shift();
           if (removed) {
             loadedUrls.value.delete(removed.chapter.url);
             originalContents.value.delete(removed.id);
+            originalTitles.value.delete(removed.id);
             currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
           }
         } else if (position === "prepend") {
@@ -17858,6 +17918,7 @@ var MyNovelReader = (function(exports) {
           if (removed) {
             loadedUrls.value.delete(removed.chapter.url);
             originalContents.value.delete(removed.id);
+            originalTitles.value.delete(removed.id);
           }
         }
       }
@@ -17949,17 +18010,14 @@ var MyNovelReader = (function(exports) {
         }
         loadedUrls.value.add(parsed.url);
         originalContents.value.set(id, parsed.content);
+        originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
         cachedContents.value.set(parsed.url, {
           chapter: parsed,
           rule: parsed.rule,
           cachedAt: Date.now()
         });
         if (currentConversionMode.value !== "none") {
-          const converted = await convertHTML(parsed.content, currentConversionMode.value);
-          const chapterEntry = chapters.value.find((e) => e.id === id);
-          if (chapterEntry) {
-            chapterEntry.chapter = { ...chapterEntry.chapter, content: converted };
-          }
+          await applyConversionToChapterEntry(id, currentConversionMode.value);
         }
         if (!history.value.includes(parsed.url)) {
           if (isNext) {
@@ -17974,6 +18032,7 @@ var MyNovelReader = (function(exports) {
             if (removed) {
               loadedUrls.value.delete(removed.chapter.url);
               originalContents.value.delete(removed.id);
+              originalTitles.value.delete(removed.id);
               currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
             }
           } else if (!isNext) {
@@ -17981,6 +18040,7 @@ var MyNovelReader = (function(exports) {
             if (removed) {
               loadedUrls.value.delete(removed.chapter.url);
               originalContents.value.delete(removed.id);
+              originalTitles.value.delete(removed.id);
             }
           }
         }
@@ -18065,24 +18125,56 @@ var MyNovelReader = (function(exports) {
     function calculateCurrentChapterPercent() {
       return scrollPercent.value;
     }
-    async function applyTextConversion(mode) {
-      currentConversionMode.value = mode;
+    async function applyConversionToChapterEntry(entryId, mode) {
+      const entry = chapters.value.find((e) => e.id === entryId);
+      if (!entry) return;
+      const originalContent = originalContents.value.get(entryId);
+      const originalTitle = originalTitles.value.get(entryId);
+      const updates = {};
       if (mode === "none") {
-        for (const entry of chapters.value) {
-          const original = originalContents.value.get(entry.id);
-          if (original && entry.chapter.content !== original) {
-            entry.chapter = { ...entry.chapter, content: original };
-          }
+        if (originalContent && entry.chapter.content !== originalContent) {
+          updates.content = originalContent;
+        }
+        if (originalTitle) {
+          updates.title = originalTitle.title;
+          updates.bookTitle = originalTitle.bookTitle;
         }
       } else {
-        for (const entry of chapters.value) {
-          const original = originalContents.value.get(entry.id);
-          if (original) {
-            const converted = await convertHTML(original, mode);
-            entry.chapter = { ...entry.chapter, content: converted };
-          }
+        if (originalContent) {
+          updates.content = await convertHTML(originalContent, mode);
+        }
+        if (originalTitle) {
+          updates.title = await convertText(originalTitle.title, mode);
+          updates.bookTitle = originalTitle.bookTitle ? await convertText(originalTitle.bookTitle, mode) : originalTitle.bookTitle;
         }
       }
+      if (Object.keys(updates).length > 0) {
+        entry.chapter = { ...entry.chapter, ...updates };
+      }
+    }
+    async function applyTocConversion(mode) {
+      if (tocOriginal.value.length === 0) {
+        toc.value = [];
+        return;
+      }
+      if (mode === "none") {
+        toc.value = [...tocOriginal.value];
+        return;
+      }
+      const converted = await Promise.all(
+        tocOriginal.value.map(async (entry) => ({
+          ...entry,
+          title: await convertText(entry.title, mode)
+        }))
+      );
+      toc.value = converted;
+    }
+    async function applyTextConversion(mode) {
+      currentConversionMode.value = mode;
+      for (const entry of chapters.value) {
+        await applyConversionToChapterEntry(entry.id, mode);
+      }
+      await applyTocConversion(mode);
     }
     async function startCacheAll(urls) {
       var _a, _b, _c, _d;
@@ -18569,6 +18661,10 @@ var MyNovelReader = (function(exports) {
       if (allCandidates.length === 0) return [];
       return filterTocEntries(dedupeTocEntries(allCandidates));
     }
+    async function setTocEntries(entries) {
+      tocOriginal.value = entries;
+      await applyTocConversion(currentConversionMode.value);
+    }
     async function loadToc() {
       var _a, _b;
       const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
@@ -18576,9 +18672,10 @@ var MyNovelReader = (function(exports) {
       tocLoading.value = true;
       const currentUrl = ((_b = chapter.value) == null ? void 0 : _b.url) || "";
       try {
-        toc.value = await loadTocEntriesPaged(indexUrl, currentUrl, (abort) => {
+        const entries = await loadTocEntriesPaged(indexUrl, currentUrl, (abort) => {
           tocAbort.value = abort;
         });
+        await setTocEntries(entries);
       } catch (e) {
         console.error("[MNR] Failed to load TOC:", e);
       } finally {
@@ -18597,11 +18694,13 @@ var MyNovelReader = (function(exports) {
       scrollPercent.value = 0;
       loadedUrls.value.clear();
       originalContents.value.clear();
+      originalTitles.value.clear();
       currentConversionMode.value = "none";
       cacheProgress.value = { done: 0, total: 0, running: false };
       cacheQueue.value = [];
       cacheAbort.value = null;
       toc.value = [];
+      tocOriginal.value = [];
       tocLoading.value = false;
       if (tocAbort.value) {
         tocAbort.value();
@@ -18614,6 +18713,7 @@ var MyNovelReader = (function(exports) {
       chapters.value = [];
       currentChapterIndex.value = 0;
       originalContents.value.clear();
+      originalTitles.value.clear();
       const id = `chapter-${Date.now()}-jump-0`;
       chapters.value.push({
         chapter: cached.chapter,
@@ -18621,9 +18721,12 @@ var MyNovelReader = (function(exports) {
         id
       });
       originalContents.value.set(id, cached.chapter.content);
+      originalTitles.value.set(id, {
+        title: cached.chapter.title,
+        bookTitle: cached.chapter.bookTitle
+      });
       if (currentConversionMode.value !== "none") {
-        const converted = await convertHTML(cached.chapter.content, currentConversionMode.value);
-        chapters.value[0].chapter = { ...chapters.value[0].chapter, content: converted };
+        await applyConversionToChapterEntry(id, currentConversionMode.value);
       }
       return true;
     }

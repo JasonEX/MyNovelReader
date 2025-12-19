@@ -1,4 +1,4 @@
 /**
  * Converter module exports
  */
-export { convertHTML, type ConversionMode } from './ChineseConverter';
+export { convertHTML, convertText, type ConversionMode } from './ChineseConverter';

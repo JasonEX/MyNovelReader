@@ -176,12 +176,20 @@ export class TitleDetector {
    * Detect book title
    */
   private detectBookTitle(doc: Document): string | undefined {
+    const isValidBookTitle = (text: string): boolean => {
+      if (!text || text.length < 2 || text.length > 100) return false;
+      const normalized = text.replace(/\s+/g, '').toLowerCase();
+      if (normalized.includes('天天看小说') || normalized.includes('天天看小說')) return false;
+      if (normalized.startsWith('⚡')) return false;
+      return true;
+    };
+
     for (const selector of KNOWN_BOOK_TITLE_SELECTORS) {
       try {
         const el = doc.querySelector(selector);
         if (el) {
           const text = (el.textContent || '').trim();
-          if (text.length > 0 && text.length < 50) {
+          if (text.length > 0 && text.length < 50 && isValidBookTitle(text)) {
             return this.cleanBookTitle(text);
           }
         }
@@ -192,11 +200,56 @@ export class TitleDetector {
 
     // Try to extract from document title
     const docTitle = doc.title;
-    const parts = docTitle.split(/[-_|,，]/).map(s => s.trim());
-    if (parts.length >= 2) {
+
+    // Prefer explicit 《书名》 pattern
+    const bracketMatch = docTitle.match(/《([^》]+)》/);
+    if (bracketMatch) {
+      const candidate = this.cleanBookTitle(bracketMatch[1]);
+      if (isValidBookTitle(candidate)) {
+        return candidate;
+      }
+    }
+
+    // Try to strip chapter information from the first part
+    const parts = docTitle
+      .split(/[-_|,，]/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (parts.length > 0) {
+      const firstPart = parts[0];
+      const withoutChapter = this.cleanBookTitle(
+        firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, '')
+      );
+      if (withoutChapter && isValidBookTitle(withoutChapter)) {
+        return withoutChapter;
+      }
+
+      // Find the first non-chapter part as book title
+      for (const part of parts) {
+        if (TITLE_PATTERN.test(part)) continue;
+        const cleanedPart = this.cleanBookTitle(part.replace(/《|》/g, ''));
+        if (isValidBookTitle(cleanedPart)) {
+          return cleanedPart;
+        }
+      }
+    }
+
+    // Try to extract using existing logic (second/last part)
+    const fallbackParts = parts.length
+      ? parts
+      : docTitle
+          .split(/[-_|,，]/)
+          .map(s => s.trim())
+          .filter(Boolean);
+    if (fallbackParts.length >= 2) {
       // Book title is usually the second part or last part
-      const bookPart = parts[1] || parts[parts.length - 1];
-      if (bookPart.length > 0 && bookPart.length < 50 && !TITLE_PATTERN.test(bookPart)) {
+      const bookPart = fallbackParts[1] || fallbackParts[fallbackParts.length - 1];
+      if (
+        bookPart.length > 0 &&
+        bookPart.length < 50 &&
+        !TITLE_PATTERN.test(bookPart) &&
+        isValidBookTitle(bookPart)
+      ) {
         return this.cleanBookTitle(bookPart);
       }
     }
