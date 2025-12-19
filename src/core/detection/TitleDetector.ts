@@ -221,12 +221,7 @@ export class TitleDetector {
     collectFromSelectors(KNOWN_BOOK_TITLE_SELECTORS, 3);
 
     // Meta tags commonly used by novel sites
-    const metaNames = [
-      'og:novel:book_name',
-      'og:book:title',
-      'book_name',
-      'og:novel:book_name',
-    ];
+    const metaNames = ['og:novel:book_name', 'og:book:title', 'book_name', 'og:novel:book_name'];
     for (const name of metaNames) {
       const meta =
         doc.querySelector(`meta[name="${cssEscape(name)}"]`) ||
@@ -249,7 +244,7 @@ export class TitleDetector {
     // Prefer explicit 《书名》 pattern
     const bracketMatch = docTitle.match(/《([^》]+)》/);
     if (bracketMatch) {
-      addCandidate(bracketMatch[1], 3);
+      addCandidate(bracketMatch[1], 1);
     }
 
     // Try to strip chapter information from the first part
@@ -259,12 +254,13 @@ export class TitleDetector {
       .filter(Boolean);
     if (parts.length > 0) {
       const firstPart = parts[0];
-      addCandidate(firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, ''), 2);
+      // Titles like "假名 - 第1章" should prefer the true book name if it repeats elsewhere
+      addCandidate(firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, ''), 1);
 
       // Find the first non-chapter part as book title
       for (const part of parts) {
         if (TITLE_PATTERN.test(part)) continue;
-        addCandidate(part.replace(/《|》/g, ''), 2);
+        addCandidate(part.replace(/《|》/g, ''), 1);
       }
     }
 
@@ -306,7 +302,6 @@ export class TitleDetector {
     });
 
     return sorted[0]?.[0];
-
   }
 
   /**
@@ -334,7 +329,7 @@ export class TitleDetector {
       .replace(/在线阅读$/, '')
       .replace(/最新章节$/, '')
       .replace(/无弹窗$/, '')
-      .replace(/[\|｜].*$/, '')
+      .replace(/[|｜].*$/, '')
       .trim();
   }
 
