@@ -1078,12 +1078,21 @@ var MyNovelReader = (function(exports) {
     ".bookname",
     ".book-title",
     ".book_title",
+    ".book-name",
+    ".book_name",
+    ".bookinfo h1",
+    ".bookinfo h2",
     "#bookname",
+    "#book-info h1",
+    "#book-info h2",
+    "#info h1",
+    "#info h2",
     ".novel-title",
     "h2.title",
     ".layout-tit a[title]",
     ".breadcrumb a:last-of-type",
-    ".chapter-nav a:last-of-type"
+    ".chapter-nav a:last-of-type",
+    ".booknav a:first-of-type"
   ];
   const TITLE_CLEANUP_PATTERNS = [
     /^章节目录/,
@@ -1208,6 +1217,7 @@ var MyNovelReader = (function(exports) {
      * Detect book title
      */
     detectBookTitle(doc2) {
+      var _a;
       const isValidBookTitle = (text) => {
         if (!text || text.length < 2 || text.length > 100) return false;
         const normalized = text.replace(/\s+/g, "").toLowerCase();
@@ -1215,52 +1225,77 @@ var MyNovelReader = (function(exports) {
         if (normalized.startsWith("⚡")) return false;
         return true;
       };
-      for (const selector of KNOWN_BOOK_TITLE_SELECTORS) {
-        try {
-          const el = doc2.querySelector(selector);
-          if (el) {
-            const text = (el.textContent || "").trim();
-            if (text.length > 0 && text.length < 50 && isValidBookTitle(text)) {
-              return this.cleanBookTitle(text);
+      const candidates = /* @__PURE__ */ new Map();
+      const addCandidate = (text, weight = 1) => {
+        if (!text) return;
+        const cleaned = this.cleanBookTitle(text);
+        if (!cleaned || !isValidBookTitle(cleaned)) return;
+        candidates.set(cleaned, (candidates.get(cleaned) || 0) + weight);
+      };
+      const collectFromSelectors = (selectors, weight = 2) => {
+        for (const selector of selectors) {
+          try {
+            const el = doc2.querySelector(selector);
+            if (el) {
+              const text = (el.textContent || "").trim();
+              addCandidate(text, weight);
             }
+          } catch {
+            continue;
           }
-        } catch {
-          continue;
         }
+      };
+      collectFromSelectors(KNOWN_BOOK_TITLE_SELECTORS, 3);
+      const metaNames = ["og:novel:book_name", "og:book:title", "book_name", "og:novel:book_name"];
+      for (const name of metaNames) {
+        const meta = doc2.querySelector(`meta[name="${cssEscape(name)}"]`) || doc2.querySelector(`meta[property="${cssEscape(name)}"]`);
+        addCandidate(meta == null ? void 0 : meta.getAttribute("content"), 4);
+      }
+      const metaTitles = ["og:title", "twitter:title"];
+      for (const name of metaTitles) {
+        const meta = doc2.querySelector(`meta[name="${cssEscape(name)}"]`) || doc2.querySelector(`meta[property="${cssEscape(name)}"]`);
+        addCandidate(meta == null ? void 0 : meta.getAttribute("content"), 2);
       }
       const docTitle = doc2.title;
       const bracketMatch = docTitle.match(/《([^》]+)》/);
       if (bracketMatch) {
-        const candidate = this.cleanBookTitle(bracketMatch[1]);
-        if (isValidBookTitle(candidate)) {
-          return candidate;
-        }
+        addCandidate(bracketMatch[1], 1);
       }
       const parts = docTitle.split(/[-_|,，]/).map((s) => s.trim()).filter(Boolean);
       if (parts.length > 0) {
         const firstPart = parts[0];
-        const withoutChapter = this.cleanBookTitle(
-          firstPart.replace(TITLE_PATTERN, "").replace(/《|》/g, "")
-        );
-        if (withoutChapter && isValidBookTitle(withoutChapter)) {
-          return withoutChapter;
-        }
+        addCandidate(firstPart.replace(TITLE_PATTERN, "").replace(/《|》/g, ""), 1);
         for (const part of parts) {
           if (TITLE_PATTERN.test(part)) continue;
-          const cleanedPart = this.cleanBookTitle(part.replace(/《|》/g, ""));
-          if (isValidBookTitle(cleanedPart)) {
-            return cleanedPart;
-          }
+          addCandidate(part.replace(/《|》/g, ""), 1);
         }
       }
       const fallbackParts = parts.length ? parts : docTitle.split(/[-_|,，]/).map((s) => s.trim()).filter(Boolean);
       if (fallbackParts.length >= 2) {
         const bookPart = fallbackParts[1] || fallbackParts[fallbackParts.length - 1];
-        if (bookPart.length > 0 && bookPart.length < 50 && !TITLE_PATTERN.test(bookPart) && isValidBookTitle(bookPart)) {
-          return this.cleanBookTitle(bookPart);
+        addCandidate(bookPart, 1);
+      }
+      const directoryLinks = Array.from(doc2.querySelectorAll("a")).filter(
+        (a) => /目录|章节/.test(a.textContent || "")
+      );
+      for (const link of directoryLinks) {
+        const text = link.textContent || "";
+        const bracket = text.match(/《([^》]+)》/);
+        if (bracket) {
+          addCandidate(bracket[1], 2);
+          continue;
+        }
+        const cleaned = text.replace(/目录|章节|列表|返回|最新|TXT/gi, "").trim();
+        if (cleaned) {
+          addCandidate(cleaned, 1);
         }
       }
-      return void 0;
+      if (candidates.size === 0) return void 0;
+      const sorted = Array.from(candidates.entries()).sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return b[0].length - a[0].length;
+      });
+      return (_a = sorted[0]) == null ? void 0 : _a[0];
     }
     /**
      * Clean up title text
@@ -1277,7 +1312,7 @@ var MyNovelReader = (function(exports) {
      * Clean up book title
      */
     cleanBookTitle(text) {
-      return text.replace(/全文阅读$/, "").replace(/在线阅读$/, "").replace(/最新章节$/, "").trim();
+      return text.replace(/全文阅读$/, "").replace(/在线阅读$/, "").replace(/最新章节$/, "").replace(/无弹窗$/, "").replace(/[|｜].*$/, "").trim();
     }
     /**
      * Validate if text is a valid chapter title
