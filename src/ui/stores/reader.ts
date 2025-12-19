@@ -3,7 +3,7 @@
  */
 
 import { computed, ref } from 'vue';
-import { type ConversionMode, convertHTML } from '@/core/converter';
+import { type ConversionMode, convertHTML, convertText } from '@/core/converter';
 import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
 import { defineStore } from 'pinia';
 import { getParser } from '@/core/parser';
@@ -89,6 +89,7 @@ export const useReaderStore = defineStore('reader', () => {
   const history = ref<string[]>([]);
   const loadedUrls = ref<Set<string>>(new Set());
   const originalContents = ref<Map<string, string>>(new Map()); // id -> original HTML
+  const originalTitles = ref<Map<string, { title: string; bookTitle?: string }>>(new Map());
   const currentConversionMode = ref<ConversionMode>('none');
   const pendingNextAbort = ref<(() => void) | null>(null);
   const pendingPrevAbort = ref<(() => void) | null>(null);
@@ -98,6 +99,7 @@ export const useReaderStore = defineStore('reader', () => {
 
   // Table of contents state
   const toc = ref<TocEntry[]>([]);
+  const tocOriginal = ref<TocEntry[]>([]);
   const tocLoading = ref(false);
   const tocAbort = ref<(() => void) | null>(null);
 
@@ -150,6 +152,8 @@ export const useReaderStore = defineStore('reader', () => {
     currentChapterIndex.value = 0;
     error.value = null;
     loadedUrls.value.clear();
+    originalContents.value.clear();
+    originalTitles.value.clear();
   }
 
   function setChapter(newChapter: ParsedChapter, newRule?: SiteRule) {
@@ -171,6 +175,8 @@ export const useReaderStore = defineStore('reader', () => {
     // Store original content for text conversion
     originalContents.value.clear();
     originalContents.value.set(id, newChapter.content);
+    originalTitles.value.clear();
+    originalTitles.value.set(id, { title: newChapter.title, bookTitle: newChapter.bookTitle });
 
     // Also store in cachedContents for quick jump
     cachedContents.value.set(newChapter.url, {
@@ -187,6 +193,10 @@ export const useReaderStore = defineStore('reader', () => {
       }
     }
 
+    if (currentConversionMode.value !== 'none') {
+      void applyConversionToChapterEntry(id, currentConversionMode.value);
+    }
+
     // Restore persisted cache for this book (async, don't block)
     restoreCache();
   }
@@ -198,15 +208,8 @@ export const useReaderStore = defineStore('reader', () => {
   ): Promise<boolean> {
     const suffix = position === 'append' ? 'cached' : 'cached-prev';
     const id = `chapter-${Date.now()}-${suffix}-${chapters.value.length}`;
-    let content = cached.chapter.content;
-
-    // Apply current conversion mode if active
-    if (currentConversionMode.value !== 'none') {
-      content = await convertHTML(content, currentConversionMode.value);
-    }
-
     const entry = {
-      chapter: { ...cached.chapter, content },
+      chapter: { ...cached.chapter },
       rule: cached.rule,
       id,
     };
@@ -220,6 +223,14 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Store original content for text conversion
     originalContents.value.set(id, cached.chapter.content);
+    originalTitles.value.set(id, {
+      title: cached.chapter.title,
+      bookTitle: cached.chapter.bookTitle,
+    });
+
+    if (currentConversionMode.value !== 'none') {
+      await applyConversionToChapterEntry(id, currentConversionMode.value);
+    }
 
     // Trim cached chapters to limit memory
     if (chapters.value.length > MAX_CACHED_CHAPTERS) {
@@ -229,6 +240,7 @@ export const useReaderStore = defineStore('reader', () => {
         if (removed) {
           loadedUrls.value.delete(removed.chapter.url);
           originalContents.value.delete(removed.id);
+          originalTitles.value.delete(removed.id);
           currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
         }
       } else if (position === 'prepend') {
@@ -237,6 +249,7 @@ export const useReaderStore = defineStore('reader', () => {
         if (removed) {
           loadedUrls.value.delete(removed.chapter.url);
           originalContents.value.delete(removed.id);
+          originalTitles.value.delete(removed.id);
         }
       }
     }
@@ -364,6 +377,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       // Store original content for text conversion
       originalContents.value.set(id, parsed.content);
+      originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
 
       // Also store in cachedContents for quick jump
       cachedContents.value.set(parsed.url, {
@@ -374,11 +388,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       // Apply current conversion mode if active
       if (currentConversionMode.value !== 'none') {
-        const converted = await convertHTML(parsed.content, currentConversionMode.value);
-        const chapterEntry = chapters.value.find(e => e.id === id);
-        if (chapterEntry) {
-          chapterEntry.chapter = { ...chapterEntry.chapter, content: converted };
-        }
+        await applyConversionToChapterEntry(id, currentConversionMode.value);
       }
 
       // Add to history
@@ -397,6 +407,7 @@ export const useReaderStore = defineStore('reader', () => {
           if (removed) {
             loadedUrls.value.delete(removed.chapter.url);
             originalContents.value.delete(removed.id);
+            originalTitles.value.delete(removed.id);
             currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
           }
         } else if (!isNext) {
@@ -404,6 +415,7 @@ export const useReaderStore = defineStore('reader', () => {
           if (removed) {
             loadedUrls.value.delete(removed.chapter.url);
             originalContents.value.delete(removed.id);
+            originalTitles.value.delete(removed.id);
           }
         }
       }
@@ -509,28 +521,71 @@ export const useReaderStore = defineStore('reader', () => {
     return scrollPercent.value;
   }
 
+  async function applyConversionToChapterEntry(
+    entryId: string,
+    mode: ConversionMode
+  ): Promise<void> {
+    const entry = chapters.value.find(e => e.id === entryId);
+    if (!entry) return;
+
+    const originalContent = originalContents.value.get(entryId);
+    const originalTitle = originalTitles.value.get(entryId);
+    const updates: Partial<ParsedChapter> = {};
+
+    if (mode === 'none') {
+      if (originalContent && entry.chapter.content !== originalContent) {
+        updates.content = originalContent;
+      }
+      if (originalTitle) {
+        updates.title = originalTitle.title;
+        updates.bookTitle = originalTitle.bookTitle;
+      }
+    } else {
+      if (originalContent) {
+        updates.content = await convertHTML(originalContent, mode);
+      }
+      if (originalTitle) {
+        updates.title = await convertText(originalTitle.title, mode);
+        updates.bookTitle = originalTitle.bookTitle
+          ? await convertText(originalTitle.bookTitle, mode)
+          : originalTitle.bookTitle;
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      entry.chapter = { ...entry.chapter, ...updates };
+    }
+  }
+
+  async function applyTocConversion(mode: ConversionMode): Promise<void> {
+    if (tocOriginal.value.length === 0) {
+      toc.value = [];
+      return;
+    }
+
+    if (mode === 'none') {
+      toc.value = [...tocOriginal.value];
+      return;
+    }
+
+    const converted = await Promise.all(
+      tocOriginal.value.map(async entry => ({
+        ...entry,
+        title: await convertText(entry.title, mode),
+      }))
+    );
+    toc.value = converted;
+  }
+
   /** Apply text conversion to all chapters */
   async function applyTextConversion(mode: ConversionMode): Promise<void> {
     currentConversionMode.value = mode;
 
-    if (mode === 'none') {
-      // Restore original content
-      for (const entry of chapters.value) {
-        const original = originalContents.value.get(entry.id);
-        if (original && entry.chapter.content !== original) {
-          entry.chapter = { ...entry.chapter, content: original };
-        }
-      }
-    } else {
-      // Convert all chapters
-      for (const entry of chapters.value) {
-        const original = originalContents.value.get(entry.id);
-        if (original) {
-          const converted = await convertHTML(original, mode);
-          entry.chapter = { ...entry.chapter, content: converted };
-        }
-      }
+    for (const entry of chapters.value) {
+      await applyConversionToChapterEntry(entry.id, mode);
     }
+
+    await applyTocConversion(mode);
   }
 
   /**
@@ -1265,6 +1320,11 @@ export const useReaderStore = defineStore('reader', () => {
   /**
    * Load table of contents from index URL
    */
+  async function setTocEntries(entries: TocEntry[]): Promise<void> {
+    tocOriginal.value = entries;
+    await applyTocConversion(currentConversionMode.value);
+  }
+
   async function loadToc(): Promise<void> {
     const indexUrl = chapter.value?.indexUrl;
     if (!indexUrl || toc.value.length > 0 || tocLoading.value) return;
@@ -1273,9 +1333,10 @@ export const useReaderStore = defineStore('reader', () => {
     const currentUrl = chapter.value?.url || '';
 
     try {
-      toc.value = await loadTocEntriesPaged(indexUrl, currentUrl, abort => {
+      const entries = await loadTocEntriesPaged(indexUrl, currentUrl, abort => {
         tocAbort.value = abort;
       });
+      await setTocEntries(entries);
     } catch (e) {
       console.error('[MNR] Failed to load TOC:', e);
     } finally {
@@ -1295,12 +1356,14 @@ export const useReaderStore = defineStore('reader', () => {
     scrollPercent.value = 0;
     loadedUrls.value.clear();
     originalContents.value.clear();
+    originalTitles.value.clear();
     currentConversionMode.value = 'none';
     cacheProgress.value = { done: 0, total: 0, running: false };
     cacheQueue.value = [];
     cacheAbort.value = null;
     // Reset TOC state
     toc.value = [];
+    tocOriginal.value = [];
     tocLoading.value = false;
     if (tocAbort.value) {
       tocAbort.value();
@@ -1321,6 +1384,7 @@ export const useReaderStore = defineStore('reader', () => {
     chapters.value = [];
     currentChapterIndex.value = 0;
     originalContents.value.clear();
+    originalTitles.value.clear();
 
     // Add target chapter
     const id = `chapter-${Date.now()}-jump-0`;
@@ -1332,11 +1396,14 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Store original content
     originalContents.value.set(id, cached.chapter.content);
+    originalTitles.value.set(id, {
+      title: cached.chapter.title,
+      bookTitle: cached.chapter.bookTitle,
+    });
 
     // Apply current conversion mode if needed
     if (currentConversionMode.value !== 'none') {
-      const converted = await convertHTML(cached.chapter.content, currentConversionMode.value);
-      chapters.value[0].chapter = { ...chapters.value[0].chapter, content: converted };
+      await applyConversionToChapterEntry(id, currentConversionMode.value);
     }
 
     return true;

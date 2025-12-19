@@ -9,6 +9,23 @@ import { sify, tify } from 'chinese-conv';
 export type ConversionMode = 'none' | 'sc' | 'tc';
 
 /**
+ * Convert plain text between Simplified/Traditional
+ */
+export async function convertText(text: string, mode: ConversionMode): Promise<string> {
+  if (mode === 'none' || !text) {
+    return text;
+  }
+
+  try {
+    const converter = mode === 'sc' ? sify : tify;
+    return converter(text);
+  } catch (error) {
+    console.error('[ChineseConverter] Text conversion error:', error);
+    return text;
+  }
+}
+
+/**
  * Convert HTML content while preserving tags
  * This converts only text nodes, keeping HTML structure intact
  */
