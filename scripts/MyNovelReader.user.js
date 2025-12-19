@@ -18444,8 +18444,12 @@ var MyNovelReader = (function(exports) {
     function isTocNextPageText(text) {
       const t = normalizeTocPagerText(text).toLowerCase();
       if (!t) return false;
-      if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) return true;
-      if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) return true;
+      if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
+        return true;
+      }
+      if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
+        return true;
+      }
       return false;
     }
     function extractTocPaginationSeed(indexUrl) {
