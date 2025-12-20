@@ -2295,11 +2295,37 @@ var MyNovelReader = (function(exports) {
      * Detect book title
      */
     detectBookTitle(doc2) {
-      var _a;
+      var _a, _b;
+      const genericLabelPattern = /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節|最新章节|最新章節|正文|内容|內容|简介|簡介|作品信息|书籍信息|書籍信息|小说|小說|阅读|閱讀|catalog|toc|contents?)$/i;
+      const breadcrumbIgnorePattern = /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節)$/i;
       const isValidBookTitle = (text2) => {
         if (!text2 || text2.length < 2 || text2.length > 100) return false;
+        if (TITLE_PATTERN.test(text2)) return false;
+        if (genericLabelPattern.test(text2.trim())) return false;
         const normalized = text2.replace(/\s+/g, "").toLowerCase();
         if (normalized.includes("天天看小说") || normalized.includes("天天看小說")) return false;
+        const siteWords = [
+          "起点中文网",
+          "起点中文網",
+          "顶点小说",
+          "頂點小說",
+          "笔趣阁",
+          "筆趣閣",
+          "小说网",
+          "小說網",
+          "小说阅读网",
+          "小說閱讀網",
+          "小说阅读",
+          "小說閱讀",
+          "阅读网",
+          "閱讀網",
+          "书吧",
+          "書吧",
+          "69书吧",
+          "69書吧"
+        ];
+        if (siteWords.some((word) => normalized.includes(word) && normalized.length <= word.length + 4))
+          return false;
         if (normalized.startsWith("⚡")) return false;
         return true;
       };
@@ -2309,6 +2335,121 @@ var MyNovelReader = (function(exports) {
         const cleaned = this.cleanBookTitle(text2);
         if (!cleaned || !isValidBookTitle(cleaned)) return;
         candidates.set(cleaned, (candidates.get(cleaned) || 0) + weight);
+      };
+      const anchorText = (el) => {
+        return (el.getAttribute("aria-label") || el.getAttribute("title") || el.textContent || "").replace(/\s+/g, " ").trim();
+      };
+      const collectFromBreadcrumbs = () => {
+        const breadcrumbSelectors = [
+          '[class*="breadcrumb"]',
+          '[class*="crumb"]',
+          '[class*="bread"]',
+          'nav[aria-label*="breadcrumb"]'
+        ];
+        const containers = doc2.querySelectorAll(breadcrumbSelectors.join(", "));
+        for (const container of Array.from(containers)) {
+          const links = Array.from(container.querySelectorAll("a"));
+          if (links.length === 0) continue;
+          const texts = links.map(anchorText).filter(Boolean);
+          const filtered = texts.filter(
+            (t) => !TITLE_PATTERN.test(t) && !breadcrumbIgnorePattern.test(t)
+          );
+          if (filtered.length === 0) continue;
+          const best = filtered.reduce((a, b) => b.length > a.length ? b : a);
+          addCandidate(best, 3);
+        }
+      };
+      const collectFromStructuredData = () => {
+        var _a2;
+        const scripts = doc2.querySelectorAll(
+          'script[type="application/ld+json"], script[type="application/json"]'
+        );
+        const tryParseJson = (text2) => {
+          try {
+            return JSON.parse(text2);
+          } catch {
+            return void 0;
+          }
+        };
+        const findBookTitle = (value, depth = 0) => {
+          if (!value || depth > 4) return void 0;
+          if (Array.isArray(value)) {
+            for (const item of value) {
+              const found = findBookTitle(item, depth + 1);
+              if (found) return found;
+            }
+            return void 0;
+          }
+          if (typeof value !== "object") return void 0;
+          const obj = value;
+          const directKeys = [
+            "bookName",
+            "book_name",
+            "bookTitle",
+            "book_title",
+            "novelName",
+            "novel_name",
+            "novelTitle",
+            "novel_title"
+          ];
+          for (const key of directKeys) {
+            const candidate = obj[key];
+            if (typeof candidate === "string") return candidate;
+          }
+          const type = obj["@type"];
+          if (typeof type === "string" && /book|novel/i.test(type)) {
+            const candidate = obj.name || obj.title;
+            if (typeof candidate === "string") return candidate;
+          }
+          const containerKeys = ["bookInfo", "book", "novel", "novelInfo", "info", "data"];
+          for (const key of containerKeys) {
+            const found = findBookTitle(obj[key], depth + 1);
+            if (found) return found;
+          }
+          for (const key of Object.keys(obj)) {
+            if (directKeys.includes(key) || containerKeys.includes(key)) continue;
+            const found = findBookTitle(obj[key], depth + 1);
+            if (found) return found;
+          }
+          return void 0;
+        };
+        for (const script of Array.from(scripts)) {
+          const text2 = (_a2 = script.textContent) == null ? void 0 : _a2.trim();
+          if (!text2) continue;
+          const data = tryParseJson(text2);
+          if (!data) continue;
+          const found = findBookTitle(data);
+          if (found) {
+            addCandidate(found, 4);
+          }
+        }
+      };
+      const collectFromScriptText = () => {
+        const scriptSelectors = [
+          "script:not([type])",
+          'script[type="text/javascript"]',
+          'script[type="application/javascript"]'
+        ];
+        const scripts = doc2.querySelectorAll(scriptSelectors.join(", "));
+        const patterns = [
+          /bookName\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
+          /book_name\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
+          /bookTitle\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
+          /book_title\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
+          /novelName\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
+          /novel_title\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
+          new RegExp(`lastread\\.set\\([^,]*,[^,]*,\\s*["\\']([^"\\'\\r\\n]{2,80})["\\']`, "i")
+        ];
+        for (const script of Array.from(scripts)) {
+          const text2 = script.textContent;
+          if (!text2 || text2.length > 2e5) continue;
+          for (const pattern of patterns) {
+            const match = text2.match(pattern);
+            if (match == null ? void 0 : match[1]) {
+              addCandidate(match[1], 3);
+            }
+          }
+        }
       };
       const collectFromSelectors = (selectors, weight = 2) => {
         for (const selector of selectors) {
@@ -2324,6 +2465,9 @@ var MyNovelReader = (function(exports) {
         }
       };
       collectFromSelectors(KNOWN_BOOK_TITLE_SELECTORS, 3);
+      collectFromBreadcrumbs();
+      collectFromStructuredData();
+      collectFromScriptText();
       const metaNames = ["og:novel:book_name", "og:book:title", "book_name", "og:novel:book_name"];
       for (const name of metaNames) {
         const meta = doc2.querySelector(`meta[name="${cssEscape(name)}"]`) || doc2.querySelector(`meta[property="${cssEscape(name)}"]`);
@@ -2333,6 +2477,20 @@ var MyNovelReader = (function(exports) {
       for (const name of metaTitles) {
         const meta = doc2.querySelector(`meta[name="${cssEscape(name)}"]`) || doc2.querySelector(`meta[property="${cssEscape(name)}"]`);
         addCandidate(meta == null ? void 0 : meta.getAttribute("content"), 2);
+      }
+      const metaKeywords = doc2.querySelector('meta[name="keywords"]');
+      if (metaKeywords == null ? void 0 : metaKeywords.getAttribute("content")) {
+        const keywords = (metaKeywords.getAttribute("content") || "").split(/[，,|｜]/).map((s) => s.trim()).filter(Boolean);
+        if (keywords.length > 0) {
+          addCandidate(keywords[0], 1);
+        }
+      }
+      const metaDescription = (_a = doc2.querySelector('meta[name="description"]')) == null ? void 0 : _a.getAttribute("content");
+      if (metaDescription) {
+        const bracket = metaDescription.match(/《([^》]+)》/);
+        if (bracket) {
+          addCandidate(bracket[1], 2);
+        }
       }
       const docTitle = doc2.title;
       const bracketMatch = docTitle.match(/《([^》]+)》/);
@@ -2373,7 +2531,7 @@ var MyNovelReader = (function(exports) {
         if (b[1] !== a[1]) return b[1] - a[1];
         return b[0].length - a[0].length;
       });
-      return (_a = sorted[0]) == null ? void 0 : _a[0];
+      return (_b = sorted[0]) == null ? void 0 : _b[0];
     }
     /**
      * Clean up title text
@@ -2390,7 +2548,33 @@ var MyNovelReader = (function(exports) {
      * Clean up book title
      */
     cleanBookTitle(text2) {
-      return text2.replace(/全文阅读$/, "").replace(/在线阅读$/, "").replace(/最新章节$/, "").replace(/无弹窗$/, "").replace(/[|｜].*$/, "").trim();
+      let cleaned = text2.trim();
+      const bracketMatch = cleaned.match(/《([^》]+)》/);
+      if (bracketMatch) {
+        cleaned = bracketMatch[1].trim();
+      }
+      cleaned = cleaned.replace(/^[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+/, "").replace(/[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+$/, "").trim();
+      const chapterMatch = cleaned.match(TITLE_PATTERN);
+      if ((chapterMatch == null ? void 0 : chapterMatch.index) !== void 0 && chapterMatch.index > 0) {
+        cleaned = cleaned.slice(0, chapterMatch.index).trim();
+      }
+      const cleanupPatterns = [
+        /(?:小说|小說)?(?:全文|在线|線上|免费|免費)?阅读$/i,
+        /(?:小说|小說)?(?:最新章节|最新章節)$/i,
+        /(?:章节目录|章節目錄|章节列表|章節列表|目录|目錄|列表)$/i,
+        /(?:TXT|txt)(?:全集|下载|下載)?$/i,
+        /(?:无弹窗|無彈窗)$/i
+      ];
+      for (const pattern of cleanupPatterns) {
+        cleaned = cleaned.replace(pattern, "").trim();
+      }
+      const siteSuffixPattern = new RegExp(
+        "[-_|—–]\\s*[^-|—–|_]{0,40}(?:小说|小說|阅读|閱讀|网|網|站|书屋|書屋|书吧|書吧|笔趣阁|筆趣閣|顶点|頂點|起点|起點|中文网|中文網|手机版|手機版|官网|官網|小说网|小說網|阅读网|閱讀網).*$",
+        "i"
+      );
+      cleaned = cleaned.replace(siteSuffixPattern, "").trim();
+      cleaned = cleaned.replace(/\s+/g, " ").trim();
+      return cleaned;
     }
     /**
      * Validate if text is a valid chapter title
@@ -4742,9 +4926,18 @@ var MyNovelReader = (function(exports) {
      * Extract title using rule
      */
     extractTitle(doc2, rule) {
-      var _a, _b, _c, _d, _e, _f, _g;
+      var _a, _b, _c, _d, _e, _f;
       let chapter = "";
       let book;
+      let detection = null;
+      const getDetection = () => {
+        var _a2;
+        if (!detection) {
+          const currentUrl = ((_a2 = doc2.location) == null ? void 0 : _a2.href) || doc2._mnrUrl || window.location.href;
+          detection = this.detectionEngine.detect(doc2, currentUrl);
+        }
+        return detection;
+      };
       if ((_a = rule.title) == null ? void 0 : _a.selector) {
         const el = this.selectElement(doc2, rule.title.selector);
         if (el) {
@@ -4763,18 +4956,21 @@ var MyNovelReader = (function(exports) {
         }
       }
       if (!chapter) {
-        const currentUrl = ((_d = doc2.location) == null ? void 0 : _d.href) || doc2._mnrUrl || window.location.href;
-        const detection = this.detectionEngine.detect(doc2, currentUrl);
-        chapter = detection.results.title.chapterTitle;
-        book = book || detection.results.title.bookTitle;
+        const detected = getDetection();
+        chapter = detected.results.title.chapterTitle;
+        book = book || detected.results.title.bookTitle;
       }
-      if (!book && ((_e = rule.title) == null ? void 0 : _e.bookSelector)) {
+      if (!book && ((_d = rule.title) == null ? void 0 : _d.bookSelector)) {
         const el = this.selectElement(doc2, rule.title.bookSelector);
         if (el) {
-          book = (_f = el.textContent) == null ? void 0 : _f.trim();
+          book = (_e = el.textContent) == null ? void 0 : _e.trim();
         }
       }
-      if (((_g = rule.title) == null ? void 0 : _g.replace) && chapter) {
+      if (!book) {
+        const detected = getDetection();
+        book = detected.results.title.bookTitle;
+      }
+      if (((_f = rule.title) == null ? void 0 : _f.replace) && chapter) {
         try {
           chapter = chapter.replace(new RegExp(rule.title.replace), "").trim();
         } catch {
