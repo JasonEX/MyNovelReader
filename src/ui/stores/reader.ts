@@ -73,6 +73,7 @@ interface PersistedBookCache {
 
 const MAX_CACHED_CHAPTERS = 8;
 // MAX_CACHE_TASKS removed - now unlimited
+const VIP_BLOCK_TOAST = '该章节为VIP/付费内容，无法加载';
 
 export const useReaderStore = defineStore('reader', () => {
   // State
@@ -88,6 +89,8 @@ export const useReaderStore = defineStore('reader', () => {
   const scrollPercent = ref(0);
   const history = ref<string[]>([]);
   const loadedUrls = ref<Set<string>>(new Set());
+  // VIP/locked chapters should not be loaded when paging
+  const vipBlockedUrls = ref<Set<string>>(new Set());
   const originalContents = ref<Map<string, string>>(new Map()); // id -> original HTML
   const originalTitles = ref<Map<string, { title: string; bookTitle?: string }>>(new Map());
   const currentConversionMode = ref<ConversionMode>('none');
@@ -114,13 +117,41 @@ export const useReaderStore = defineStore('reader', () => {
   const title = computed(() => chapter.value?.title || '');
   const bookTitle = computed(() => chapter.value?.bookTitle || '');
   const content = computed(() => chapter.value?.content || '');
+
+  function normalizeUrlForBlock(url: string): string {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = '';
+      return normalizeUrl(u.toString());
+    } catch {
+      return normalizeUrl(normalized.replace(/#.*$/, ''));
+    }
+  }
+
+  function isVipBlockedUrl(url: string): boolean {
+    return vipBlockedUrls.value.has(normalizeUrlForBlock(url));
+  }
+
+  function getVipBlockedToast(direction: 'next' | 'prev'): string | null {
+    const entry =
+      direction === 'next' ? chapters.value[chapters.value.length - 1] : chapters.value[0];
+    const navUrl = direction === 'next' ? entry?.chapter.nextUrl : entry?.chapter.prevUrl;
+    if (!navUrl) return null;
+    return isVipBlockedUrl(navUrl) ? VIP_BLOCK_TOAST : null;
+  }
+
   const hasNext = computed(() => {
     const lastChapter = chapters.value[chapters.value.length - 1];
-    return !!lastChapter?.chapter.nextUrl;
+    const nextUrl = lastChapter?.chapter.nextUrl;
+    if (!nextUrl) return false;
+    return !isVipBlockedUrl(nextUrl);
   });
   const hasPrev = computed(() => {
     const firstChapter = chapters.value[0];
-    return !!firstChapter?.chapter.prevUrl;
+    const prevUrl = firstChapter?.chapter.prevUrl;
+    if (!prevUrl) return false;
+    return !isVipBlockedUrl(prevUrl);
   });
   const hasIndex = computed(() => !!chapter.value?.indexUrl);
   const confidence = computed(() => chapter.value?.confidence || 0);
@@ -152,6 +183,7 @@ export const useReaderStore = defineStore('reader', () => {
     currentChapterIndex.value = 0;
     error.value = null;
     loadedUrls.value.clear();
+    vipBlockedUrls.value.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
     cachedContents.value.clear();
@@ -173,6 +205,7 @@ export const useReaderStore = defineStore('reader', () => {
     error.value = null;
     loadedUrls.value.clear();
     loadedUrls.value.add(newChapter.url);
+    vipBlockedUrls.value.clear();
     cachedContents.value.clear();
     persistedUrls.value.clear();
 
@@ -302,6 +335,12 @@ export const useReaderStore = defineStore('reader', () => {
       return false;
     }
 
+    // Don't load VIP chapters (cached for this session)
+    if (vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
+      showToast(VIP_BLOCK_TOAST, 'info', 3000);
+      return false;
+    }
+
     // Check if already in cachedContents
     if (loadedUrls.value.has(targetUrl)) {
       const cached = cachedContents.value.get(targetUrl);
@@ -337,6 +376,13 @@ export const useReaderStore = defineStore('reader', () => {
       if (!doc) {
         loadedUrls.value.add(targetUrl);
         showToast(endMessage, 'info');
+        return false;
+      }
+
+      // VIP page detection: do not parse / load, just toast and block it for this session
+      if (isVipChapterPage(doc)) {
+        vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
+        showToast(VIP_BLOCK_TOAST, 'info', 3000);
         return false;
       }
 
@@ -1610,6 +1656,7 @@ export const useReaderStore = defineStore('reader', () => {
     setLoading,
     setError,
     showToast,
+    getVipBlockedToast,
     clearError,
     updateScroll,
     getProgress,
@@ -1922,6 +1969,55 @@ function isInvalidChapterUrl(url: string, currentChapterUrl?: string): boolean {
     // URL parsing failed
     return false;
   }
+}
+
+function normalizeTextForVipDetection(text: string): string {
+  return text
+    .replace(/\s+/g, '')
+    .replace(/[\u3000]/g, '')
+    .replace(/[，。！？、“”‘’（）()【】[\]<>《》:：;；·~…—-]/g, '')
+    .toLowerCase();
+}
+
+/**
+ * Detect if a fetched page is a VIP / locked chapter page.
+ * Conservative heuristics to avoid false positives (e.g. "求订阅" in正文).
+ */
+function isVipChapterPage(doc: Document): boolean {
+  const rawText = doc.body?.textContent || '';
+  if (!rawText) return false;
+
+  const text = normalizeTextForVipDetection(rawText);
+
+  const patterns: RegExp[] = [
+    /本章(?:为|是)?vip章节/,
+    /(vip|付费|收费)(?:章节|内容)/,
+    /(未订阅|未购买|未解锁).{0,10}(本章|本章节|章节|内容)/,
+    /(本章|本章节|章节|内容).{0,12}(?:已)?锁定/,
+    /(本章|本章节|章节|内容).{0,12}(?:需|需要).{0,6}(订阅|购买|付费|解锁)/,
+    /(订阅|购买|付费|解锁).{0,12}(后|即可|才能|方可|才可).{0,12}(阅读|查看|继续阅读|继续查看)/,
+    /(请|需).{0,6}(订阅|购买|付费|解锁).{0,12}(阅读|查看|继续阅读|继续查看)/,
+    /立即(订阅|购买|解锁|充值)/,
+    /(订阅|购买|解锁)本章/,
+  ];
+
+  if (patterns.some(re => re.test(text))) return true;
+
+  // Extra: check common CTA buttons (helps when正文很短且关键字分散在按钮上)
+  const ctaText = Array.from(
+    doc.querySelectorAll('a,button,input[type="button"],input[type="submit"]')
+  )
+    .map(el => {
+      if (el instanceof HTMLInputElement) return el.value || '';
+      return el.textContent || '';
+    })
+    .join(' ');
+  const cta = normalizeTextForVipDetection(ctaText);
+  if (/立即(订阅|购买|解锁|充值)/.test(cta) && /(vip|付费|订阅|购买|解锁|锁定)/.test(text)) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

@@ -768,7 +768,7 @@ async function navigateChapter(direction: 'prev' | 'next') {
       }
     } else if (!hasPrev.value) {
       // Show toast when no previous chapter available
-      readerStore.showToast('已经是第一章了', 'info');
+      readerStore.showToast(readerStore.getVipBlockedToast('prev') || '已经是第一章了', 'info');
     }
   } else {
     if (currentIdx < chaptersCount - 1) {
@@ -780,7 +780,7 @@ async function navigateChapter(direction: 'prev' | 'next') {
       }
     } else if (!hasNext.value) {
       // Show toast when no next chapter available
-      readerStore.showToast('已经是最后一章了', 'info');
+      readerStore.showToast(readerStore.getVipBlockedToast('next') || '已经是最后一章了', 'info');
     }
   }
 }
