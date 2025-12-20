@@ -4,6 +4,7 @@
 
 import { AD_PATTERNS, REMOVE_SELECTORS } from '@/core/constants';
 import { ReplaceRule } from '@/core/rules/types';
+import { sanitizeHtml } from '@/core/utils';
 
 export interface ProcessingOptions {
   /** Remove common ad patterns */
@@ -46,7 +47,7 @@ export class ContentProcessor {
    */
   process(element: Element, doc: Document): string {
     if (this.options.useRawContent) {
-      return element.innerHTML;
+      return sanitizeHtml(element.innerHTML);
     }
 
     // Clone to avoid modifying original
@@ -92,7 +93,10 @@ export class ContentProcessor {
     html = this.convertBrToParagraphs(html);
 
     // Clean duplicate title/book/author info at start and end
-    html = this.cleanDuplicateInfo(html);
+    html = this.cleanDuplicateInfo(html, doc);
+
+    // Sanitize HTML to prevent unsafe content
+    html = sanitizeHtml(html);
 
     return html;
   }
@@ -270,7 +274,7 @@ export class ContentProcessor {
   /**
    * Clean duplicate book/chapter/author info at start and end of content
    */
-  private cleanDuplicateInfo(html: string): string {
+  private cleanDuplicateInfo(html: string, doc: Document): string {
     const { chapterTitle } = this.options;
 
     let result = html;
@@ -323,7 +327,7 @@ export class ContentProcessor {
     }
 
     // Strategy 2: Remove elements containing only chapter/book title
-    const tempDiv = document.createElement('div');
+    const tempDiv = doc.createElement('div');
     tempDiv.innerHTML = result;
 
     // Get all direct children and first-level text content

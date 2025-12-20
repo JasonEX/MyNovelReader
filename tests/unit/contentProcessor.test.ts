@@ -45,14 +45,14 @@ describe('ContentProcessor', () => {
   });
 
   describe('process', () => {
-    it('should return raw content when useRawContent is true', () => {
+    it('should return raw content (sanitized) when useRawContent is true', () => {
       processor.setOptions({ useRawContent: true });
       const element = doc.createElement('div');
       element.innerHTML = '<script>alert(1)</script><p>Content</p>';
 
       const result = processor.process(element, doc);
 
-      expect(result).toContain('<script>');
+      expect(result).not.toContain('<script>');
       expect(result).toContain('Content');
     });
 

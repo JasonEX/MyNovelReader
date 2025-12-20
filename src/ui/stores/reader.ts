@@ -154,6 +154,8 @@ export const useReaderStore = defineStore('reader', () => {
     loadedUrls.value.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
+    cachedContents.value.clear();
+    persistedUrls.value.clear();
   }
 
   function setChapter(newChapter: ParsedChapter, newRule?: SiteRule) {
@@ -171,6 +173,8 @@ export const useReaderStore = defineStore('reader', () => {
     error.value = null;
     loadedUrls.value.clear();
     loadedUrls.value.add(newChapter.url);
+    cachedContents.value.clear();
+    persistedUrls.value.clear();
 
     // Store original content for text conversion
     originalContents.value.clear();
@@ -1357,6 +1361,8 @@ export const useReaderStore = defineStore('reader', () => {
     loadedUrls.value.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
+    cachedContents.value.clear();
+    persistedUrls.value.clear();
     currentConversionMode.value = 'none';
     cacheProgress.value = { done: 0, total: 0, running: false };
     cacheQueue.value = [];
