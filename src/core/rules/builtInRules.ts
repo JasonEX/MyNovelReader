@@ -142,15 +142,17 @@ const specialRules: SiteRule[] = [
     },
     content: {
       selector: '#J_BookRead',
-      remove: 'i.J_Num, .chapter span',
+      remove: 'i.J_Num, .chapter span, #J_BookRead_WaterMark, .watermark',
     },
     title: {
+      selector: '.read-hd .chapter',
       bookSelector: '.breadcrumb > a:last()',
     },
     advanced: {
       useIframe: true,
       mutationSelector: '#J_BookRead',
-      mutationChildCount: 1,
+      mutationChildCount: 2,
+      timeout: 3000,
     },
     meta: { source: 'builtin', exampleUrl: 'https://www.ciweimao.com/chapter/102930784' },
   },

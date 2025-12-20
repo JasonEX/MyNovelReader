@@ -23,6 +23,7 @@ tmp/
 temp/
 .test/
 *.cache
+.npm-cache/
 
 # Logs
 npm-debug.log*

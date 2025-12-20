@@ -1,22 +1,17 @@
 /**
  * UserScript Meta Block Generator
  *
- * Generates the UserScript meta block with version from version.ts
- * Uses simplified @match rules since we now have intelligent auto-detection
+ * Centralized userscript metadata for build and runtime usage.
+ * Uses simplified @match rules since we now have intelligent auto-detection.
  */
 
-import { VERSION } from '@/version';
+import { BUILD_DATE, VERSION } from './version';
 
-/** Build timestamp */
-const BUILD_DATE = new Date().toISOString().split('T')[0];
-
-/** UserScript meta information */
-export const META = {
+export const META_BASE = {
   id: 'mynovelreader@ywzhaiqi@gmail.com',
   name: 'My Novel Reader',
   'name:zh-CN': '小说阅读脚本',
   'name:zh-TW': '小說閱讀腳本',
-  version: VERSION,
   namespace: 'https://github.com/ywzhaiqi',
   author: 'ywzhaiqi',
   contributor: 'JasonEX, Roger Au, shyangs, JixunMoe、akiba9527 及其他网友',
@@ -56,17 +51,31 @@ export const META = {
     '*://*/*/*.html',
     '*://*/*/*.htm',
     '*://*/*/*/*.html',
+    '*://*/*/*/*.htm',
+    '*://*/*/*/*/*.html',
+
+    // Common route patterns
+    '*://*/txt/*/*',
+    '*://*/book/*/*',
+    '*://*/read/*/*',
+    '*://*/chapter/*/*',
+    '*://*/novel/*/*',
 
     // Major novel platforms (explicit for better UX)
     '*://www.qidian.com/chapter/*/*',
     '*://m.qidian.com/chapter/*/*',
+    '*://read.qidian.com/chapter/*',
     '*://vipreader.qidian.com/chapter/*/*',
     '*://book.zongheng.com/chapter/*/*.html',
     '*://read.zongheng.com/chapter/*/*.html',
     '*://www.17k.com/chapter/*/*.html',
-    '*://www.jjwxc.net/onebook.php?*',
     '*://book.sfacg.com/Novel/*/*/*/',
     '*://weread.qq.com/web/reader/*',
+    '*://www.ciweimao.com/chapter/*',
+    '*://wap.ciweimao.com/chapter/*',
+    '*://www.tadu.com/book/*/*/',
+    '*://tieba.baidu.com/p/*',
+    '*://masiro.me/admin/novelReading*',
 
     // PHP patterns
     '*://*/*.php?*',
@@ -86,6 +95,7 @@ export const META = {
     '*://*/search/*',
     '*://*/login*',
     '*://*/register*',
+    '*://www.tadu.com/book/*/toc/',
   ],
 
   // Resources (none needed with new architecture)
@@ -95,72 +105,85 @@ export const META = {
   requires: [],
 };
 
+export type UserscriptMeta = typeof META_BASE & {
+  version: string;
+  buildDate?: string;
+};
+
+export function createMeta(params: { version: string; buildDate?: string }): UserscriptMeta {
+  return { ...META_BASE, version: params.version, buildDate: params.buildDate };
+}
+
+export const META = createMeta({ version: VERSION, buildDate: BUILD_DATE });
+
 /**
  * Generate the full meta block string
  */
-export function generateMetaBlock(): string {
+export function generateMetaBlock(meta: UserscriptMeta = META): string {
   const lines: string[] = ['// ==UserScript=='];
 
   // Basic info
-  lines.push(`// @id             ${META.id}`);
-  lines.push(`// @name           ${META.name}`);
-  lines.push(`// @name:zh-CN     ${META['name:zh-CN']}`);
-  lines.push(`// @name:zh-TW     ${META['name:zh-TW']}`);
-  lines.push(`// @version        ${META.version}`);
-  lines.push(`// @namespace      ${META.namespace}`);
-  lines.push(`// @author         ${META.author}`);
-  lines.push(`// @contributor    ${META.contributor}`);
-  lines.push(`// @description    ${META.description}`);
-  lines.push(`// @description:zh-CN  ${META['description:zh-CN']}`);
-  lines.push(`// @description:zh-TW  ${META['description:zh-TW']}`);
-  lines.push(`// @license        ${META.license}`);
-  lines.push(`// @homepageURL    ${META.homepageURL}`);
-  lines.push(`// @supportURL     ${META.supportURL}`);
+  lines.push(`// @id             ${meta.id}`);
+  lines.push(`// @name           ${meta.name}`);
+  lines.push(`// @name:zh-CN     ${meta['name:zh-CN']}`);
+  lines.push(`// @name:zh-TW     ${meta['name:zh-TW']}`);
+  lines.push(`// @version        ${meta.version}`);
+  lines.push(`// @namespace      ${meta.namespace}`);
+  lines.push(`// @author         ${meta.author}`);
+  lines.push(`// @contributor    ${meta.contributor}`);
+  lines.push(`// @description    ${meta.description}`);
+  lines.push(`// @description:zh-CN  ${meta['description:zh-CN']}`);
+  lines.push(`// @description:zh-TW  ${meta['description:zh-TW']}`);
+  lines.push(`// @license        ${meta.license}`);
+  lines.push(`// @homepageURL    ${meta.homepageURL}`);
+  lines.push(`// @supportURL     ${meta.supportURL}`);
 
   // Grants
   lines.push('');
-  for (const grant of META.grants) {
+  for (const grant of meta.grants) {
     lines.push(`// @grant          ${grant}`);
   }
 
   // Connects
   lines.push('');
-  for (const connect of META.connects) {
+  for (const connect of meta.connects) {
     lines.push(`// @connect        ${connect}`);
   }
 
   // Matches
   lines.push('');
   lines.push('// Match patterns (auto-detection handles specifics)');
-  for (const match of META.matches) {
+  for (const match of meta.matches) {
     lines.push(`// @match          ${match}`);
   }
 
   // Excludes
   lines.push('');
-  for (const exclude of META.excludes) {
+  for (const exclude of meta.excludes) {
     lines.push(`// @exclude        ${exclude}`);
   }
 
   // Requires (if any)
-  if (META.requires.length > 0) {
+  if (meta.requires.length > 0) {
     lines.push('');
-    for (const require of META.requires) {
+    for (const require of meta.requires) {
       lines.push(`// @require        ${require}`);
     }
   }
 
   // Resources (if any)
-  if (META.resources.length > 0) {
+  if (meta.resources.length > 0) {
     lines.push('');
-    for (const resource of META.resources) {
+    for (const resource of meta.resources) {
       lines.push(`// @resource       ${resource}`);
     }
   }
 
   // Build info comment
-  lines.push('');
-  lines.push(`// @build-date     ${BUILD_DATE}`);
+  if (meta.buildDate) {
+    lines.push('');
+    lines.push(`// @build-date     ${meta.buildDate}`);
+  }
   lines.push('// ==/UserScript==');
 
   return lines.join('\n');
@@ -169,17 +192,35 @@ export function generateMetaBlock(): string {
 /**
  * Export for vite-plugin-monkey or similar build tools
  */
-export const userscriptConfig = {
-  name: META.name,
-  namespace: META.namespace,
-  version: META.version,
-  description: META.description,
-  author: META.author,
-  license: META.license,
-  homepage: META.homepageURL,
-  supportURL: META.supportURL,
-  match: META.matches,
-  exclude: META.excludes,
-  grant: META.grants,
-  connect: META.connects,
-};
+export function toUserscriptConfig(meta: UserscriptMeta = META): Record<string, unknown> {
+  const config: Record<string, unknown> = {
+    id: meta.id,
+    name: meta.name,
+    'name:zh-CN': meta['name:zh-CN'],
+    'name:zh-TW': meta['name:zh-TW'],
+    version: meta.version,
+    namespace: meta.namespace,
+    author: meta.author,
+    contributor: meta.contributor,
+    description: meta.description,
+    'description:zh-CN': meta['description:zh-CN'],
+    'description:zh-TW': meta['description:zh-TW'],
+    license: meta.license,
+    homepageURL: meta.homepageURL,
+    supportURL: meta.supportURL,
+    match: meta.matches,
+    exclude: meta.excludes,
+    grant: meta.grants,
+    connect: meta.connects,
+    require: meta.requires,
+    resource: meta.resources,
+  };
+
+  if (meta.buildDate) {
+    config['build-date'] = meta.buildDate;
+  }
+
+  return config;
+}
+
+export const userscriptConfig = toUserscriptConfig(META);

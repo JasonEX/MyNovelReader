@@ -1,0 +1,111 @@
+import { createMeta, toUserscriptConfig } from './src/meta';
+import { defineConfig } from 'vite';
+import { fileURLToPath } from 'url';
+
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
+import fs from 'fs';
+import monkey from 'vite-plugin-monkey';
+import path from 'path';
+import vue from '@vitejs/plugin-vue';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const entryPoint = path.resolve(__dirname, 'src/index.ts');
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
+const version = pkg.version || '0.0.0';
+const buildDate = new Date().toISOString().split('T')[0];
+const meta = createMeta({ version, buildDate });
+const userscript = toUserscriptConfig(meta);
+
+export default defineConfig({
+  define: {
+    __MNR_VERSION__: JSON.stringify(version),
+    __MNR_BUILD_DATE__: JSON.stringify(buildDate),
+    'process.env.NODE_ENV': JSON.stringify('production'),
+    'process.env': JSON.stringify({ NODE_ENV: 'production' }),
+    process: JSON.stringify({ env: { NODE_ENV: 'production' } }),
+  },
+  build: {
+    outDir: 'scripts',
+    emptyOutDir: false,
+    sourcemap: false,
+    minify: false,
+    cssMinify: true,
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
+    cssCodeSplit: false,
+  },
+  plugins: [
+    vue(),
+    cssInjectedByJsPlugin({
+      // Store CSS for later injection into Shadow DOM
+      // Also inject to document.head for components that need light DOM (like ElementPicker)
+      injectCodeFunction: function (cssCode) {
+        try {
+          if (typeof window !== 'undefined') {
+            // Store CSS for Shadow DOM injection
+            window.__MNR_STYLES__ = (window.__MNR_STYLES__ || '') + cssCode;
+
+            // Also inject to document.head for light DOM components (ElementPicker, etc.)
+            // Use a unique ID to prevent duplicate injection
+            var styleId = 'mnr-global-styles';
+            var existingStyle = document.getElementById(styleId);
+            if (!existingStyle) {
+              existingStyle = document.createElement('style');
+              existingStyle.id = styleId;
+              document.head.appendChild(existingStyle);
+            }
+            existingStyle.textContent = window.__MNR_STYLES__;
+
+            // If Shadow DOM already exists, also inject there
+            if (window.__MNR_SHADOW_ROOT__) {
+              var shadowStyle = window.__MNR_SHADOW_ROOT__.querySelector('#mnr-app-styles');
+              if (!shadowStyle) {
+                shadowStyle = document.createElement('style');
+                shadowStyle.id = 'mnr-app-styles';
+                window.__MNR_SHADOW_ROOT__.appendChild(shadowStyle);
+              }
+              shadowStyle.textContent = window.__MNR_STYLES__;
+            }
+          }
+        } catch (e) {
+          console.error('[MNR] CSS injection error:', e);
+        }
+      },
+    }),
+    monkey({
+      entry: entryPoint,
+      userscript,
+      build: {
+        fileName: 'MyNovelReader.user.js',
+        autoGrant: false,
+      },
+    }),
+  ],
+  css: {
+    extract: false,
+    modules: {
+      scopeBehaviour: 'global',
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['tests/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: 'coverage',
+      include: ['src/core/**/*.{js,ts}'],
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});

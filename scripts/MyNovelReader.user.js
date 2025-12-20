@@ -1,90 +1,99 @@
 // ==UserScript==
-// @id             mynovelreader@ywzhaiqi@gmail.com
-// @name           My Novel Reader
-// @name:zh-CN     小说阅读脚本
-// @name:zh-TW     小說閱讀腳本
-// @version        9.0.0
-// @namespace      https://github.com/ywzhaiqi
-// @author         ywzhaiqi
-// @description    小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
-// @license        GPL version 3
-// @homepageURL    https://greasyfork.org/scripts/292/
-// @grant          GM_xmlhttpRequest
-// @grant          GM_addStyle
-// @grant          GM_getValue
-// @grant          GM_setValue
-// @grant          GM_deleteValue
-// @grant          GM_listValues
-// @grant          GM_openInTab
-// @grant          GM_setClipboard
-// @grant          GM_registerMenuCommand
-// @grant          GM_info
-// @grant          unsafeWindow
-// @connect        *
-// @match          *://*/*.html
-// @match          *://*/*.htm
-// @match          *://*/*.shtml
-// @match          *://*/*/*.html
-// @match          *://*/*/*/*.html
-// @match          *://*/*/*/*/*.html
-// @match          *://*/*.php?*
-// @match          *://*/txt/*/*
-// @match          *://*/book/*/*
-// @match          *://*/read/*/*
-// @match          *://*/chapter/*/*
-// @match          *://*/novel/*/*
-// @match          *://www.qidian.com/chapter/*/*
-// @match          *://m.qidian.com/chapter/*/*
-// @match          *://read.qidian.com/chapter/*
-// @match          *://vipreader.qidian.com/chapter/*/*
-// @match          *://book.zongheng.com/chapter/*/*.html
-// @match          *://read.zongheng.com/chapter/*/*.html
-// @match          *://www.17k.com/chapter/*/*.html
-// @match          *://www.jjwxc.net/onebook.php?*
-// @match          *://my.jjwxc.net/onebook_vip.php?*
-// @match          *://book.sfacg.com/Novel/*/*/*/
-// @match          *://weread.qq.com/web/reader/*
-// @match          *://www.tadu.com/book/*/*/
-// @match          *://tieba.baidu.com/p/*
-// @match          *://masiro.me/admin/novelReading*
-// @exclude        *://*/*/index.html
-// @exclude        *://*/*/list.html
-// @exclude        *://*/search/*
-// @exclude        *://*/login*
-// @exclude        *://www.tadu.com/book/*/toc/
+// @name         My Novel Reader
+// @namespace    https://github.com/ywzhaiqi
+// @version      9.0.0
+// @author       ywzhaiqi
+// @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
+// @license      GPL version 3
+// @homepage     https://github.com/ywzhaiqi/userscript#readme
+// @homepageURL  https://greasyfork.org/scripts/292/
+// @source       https://github.com/ywzhaiqi/userscript.git
+// @supportURL   https://github.com/JasonEX/MyNovelReader/issues
+// @match        *://*/*.html
+// @match        *://*/*.htm
+// @match        *://*/*.shtml
+// @match        *://*/*/*.html
+// @match        *://*/*/*.htm
+// @match        *://*/*/*/*.html
+// @match        *://*/*/*/*.htm
+// @match        *://*/*/*/*/*.html
+// @match        *://*/txt/*/*
+// @match        *://*/book/*/*
+// @match        *://*/read/*/*
+// @match        *://*/chapter/*/*
+// @match        *://*/novel/*/*
+// @match        *://www.qidian.com/chapter/*/*
+// @match        *://m.qidian.com/chapter/*/*
+// @match        *://read.qidian.com/chapter/*
+// @match        *://vipreader.qidian.com/chapter/*/*
+// @match        *://book.zongheng.com/chapter/*/*.html
+// @match        *://read.zongheng.com/chapter/*/*.html
+// @match        *://www.17k.com/chapter/*/*.html
+// @match        *://book.sfacg.com/Novel/*/*/*/
+// @match        *://weread.qq.com/web/reader/*
+// @match        *://www.ciweimao.com/chapter/*
+// @match        *://wap.ciweimao.com/chapter/*
+// @match        *://www.tadu.com/book/*/*/
+// @match        *://tieba.baidu.com/p/*
+// @match        *://masiro.me/admin/novelReading*
+// @match        *://*/*.php?*
+// @match        *://*/*_*.html
+// @match        *://*/book/*/*.html
+// @match        *://*/chapter/*/*.html
+// @match        *://*/read/*/*.html
+// @exclude      *://*/*/index.html
+// @exclude      *://*/*/list.html
+// @exclude      *://*/*/catalog.html
+// @exclude      *://*/search/*
+// @exclude      *://*/login*
+// @exclude      *://*/register*
+// @exclude      *://www.tadu.com/book/*/toc/
+// @connect      *
+// @grant        GM_addStyle
+// @grant        GM_deleteValue
+// @grant        GM_getResourceURL
+// @grant        GM_getValue
+// @grant        GM_info
+// @grant        GM_listValues
+// @grant        GM_openInTab
+// @grant        GM_registerMenuCommand
+// @grant        GM_setClipboard
+// @grant        GM_setValue
+// @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
 // ==/UserScript==
-(function() {
-  "use strict";
-  (function(cssCode) {
-    try {
-      if (typeof window !== "undefined") {
-        window.__MNR_STYLES__ = (window.__MNR_STYLES__ || "") + cssCode;
-        var styleId = "mnr-global-styles";
-        var existingStyle = document.getElementById(styleId);
-        if (!existingStyle) {
-          existingStyle = document.createElement("style");
-          existingStyle.id = styleId;
-          document.head.appendChild(existingStyle);
-        }
-        existingStyle.textContent = window.__MNR_STYLES__;
-        if (window.__MNR_SHADOW_ROOT__) {
-          var shadowStyle = window.__MNR_SHADOW_ROOT__.querySelector("#mnr-app-styles");
-          if (!shadowStyle) {
-            shadowStyle = document.createElement("style");
-            shadowStyle.id = "mnr-app-styles";
-            window.__MNR_SHADOW_ROOT__.appendChild(shadowStyle);
-          }
-          shadowStyle.textContent = window.__MNR_STYLES__;
-        }
-      }
-    } catch (e) {
-      console.error("[MNR] CSS injection error:", e);
-    }
-  })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-bc314d2a]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-bc314d2a]{opacity:0}.mnr-progress-bar[data-v-bc314d2a]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-bc314d2a]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-77ee432d]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-77ee432d]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-77ee432d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-77ee432d] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-77ee432d] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-77ee432d] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-77ee432d]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-77ee432d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-77ee432d]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-77ee432d]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-77ee432d]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-77ee432d]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-77ee432d]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-77ee432d],.mnr-loading-next[data-v-77ee432d]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-77ee432d]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-77ee432d 1s linear infinite}.mnr-loading-overlay[data-v-77ee432d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-77ee432d]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-77ee432d]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-77ee432d .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-77ee432d{to{transform:rotate(360deg)}}.mnr-toast[data-v-77ee432d]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-77ee432d]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-77ee432d],.mnr-toast-leave-active[data-v-77ee432d]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-77ee432d],.mnr-toast-leave-to[data-v-77ee432d]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-77ee432d]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-77ee432d]{padding:40px}}.mnr-rule-editor-overlay[data-v-77ee432d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-77ee432d]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-77ee432d]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
-})();
-var MyNovelReader = (function(exports) {
-  "use strict";// @license        GPL version 3
 
+(function () {
+  'use strict';
+
+  (function() {
+    (function(cssCode) {
+      try {
+        if (typeof window !== "undefined") {
+          window.__MNR_STYLES__ = (window.__MNR_STYLES__ || "") + cssCode;
+          var styleId = "mnr-global-styles";
+          var existingStyle = document.getElementById(styleId);
+          if (!existingStyle) {
+            existingStyle = document.createElement("style");
+            existingStyle.id = styleId;
+            document.head.appendChild(existingStyle);
+          }
+          existingStyle.textContent = window.__MNR_STYLES__;
+          if (window.__MNR_SHADOW_ROOT__) {
+            var shadowStyle = window.__MNR_SHADOW_ROOT__.querySelector("#mnr-app-styles");
+            if (!shadowStyle) {
+              shadowStyle = document.createElement("style");
+              shadowStyle.id = "mnr-app-styles";
+              window.__MNR_SHADOW_ROOT__.appendChild(shadowStyle);
+            }
+            shadowStyle.textContent = window.__MNR_STYLES__;
+          }
+        }
+      } catch (e) {
+        console.error("[MNR] CSS injection error:", e);
+      }
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-bc314d2a]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-bc314d2a]{opacity:0}.mnr-progress-bar[data-v-bc314d2a]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-bc314d2a]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-77ee432d]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-77ee432d]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-77ee432d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-77ee432d] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-77ee432d] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-77ee432d] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-77ee432d]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-77ee432d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-77ee432d]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-77ee432d]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-77ee432d]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-77ee432d]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-77ee432d]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-77ee432d],.mnr-loading-next[data-v-77ee432d]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-77ee432d]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-77ee432d 1s linear infinite}.mnr-loading-overlay[data-v-77ee432d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-77ee432d]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-77ee432d]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-77ee432d .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-77ee432d{to{transform:rotate(360deg)}}.mnr-toast[data-v-77ee432d]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-77ee432d]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-77ee432d],.mnr-toast-leave-active[data-v-77ee432d]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-77ee432d],.mnr-toast-leave-to[data-v-77ee432d]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-77ee432d]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-77ee432d]{padding:40px}}.mnr-rule-editor-overlay[data-v-77ee432d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-77ee432d]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-77ee432d]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+  })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
     content: 0.5,
@@ -96,10 +105,7 @@ var MyNovelReader = (function(exports) {
       this.threshold = threshold;
       this.weights = weights;
     }
-    /**
-     * Calculate confidence report from detection results
-     */
-    score(results) {
+score(results) {
       const contentScore = results.content.confidence;
       const navigationScore = this.scoreNavigation(results.navigation);
       const titleScore = results.title.confidence;
@@ -118,10 +124,7 @@ var MyNovelReader = (function(exports) {
         reasons
       };
     }
-    /**
-     * Score navigation detection result
-     */
-    scoreNavigation(nav) {
+scoreNavigation(nav) {
       let score = 0;
       let count = 0;
       if (nav.next) {
@@ -140,10 +143,7 @@ var MyNovelReader = (function(exports) {
       }
       return count > 0 ? score / count : 0;
     }
-    /**
-     * Generate human-readable reasons for the scores
-     */
-    generateReasons(results, scores) {
+generateReasons(results, scores) {
       const reasons = [];
       if (scores.content > 0.8) {
         reasons.push("找到清晰的内容区域");
@@ -175,30 +175,20 @@ var MyNovelReader = (function(exports) {
       }
       return reasons;
     }
-    /**
-     * Create a simple summary string
-     */
-    createSummary(report) {
+createSummary(report) {
       const percentage = Math.round(report.overall * 100);
       const status = report.isReliable ? "可信" : "不确定";
       return `检测置信度: ${percentage}% (${status})`;
     }
-    /**
-     * Get threshold value
-     */
-    getThreshold() {
+getThreshold() {
       return this.threshold;
     }
-    /**
-     * Set threshold value
-     */
-    setThreshold(threshold) {
+setThreshold(threshold) {
       this.threshold = threshold;
     }
   }
   const KNOWN_CONTENT_SELECTORS = [
-    // ID selectors - primary
-    "#pagecontent",
+"#pagecontent",
     "#contentbox",
     "#bmsy_content",
     "#bookpartinfo",
@@ -246,8 +236,7 @@ var MyNovelReader = (function(exports) {
     "#chapterinfo",
     "#read_content",
     "#chapter-content",
-    // New from rule migration
-    "#readerFt",
+"#readerFt",
     "#partContent",
     "#ChapterBody",
     "#showcontent",
@@ -259,8 +248,7 @@ var MyNovelReader = (function(exports) {
     "#Lab_Contents",
     "#auto-chapter",
     "#readpage_leftntxt",
-    // Class selectors
-    ".novel_content",
+".novel_content",
     ".readmain_inner",
     ".noveltext",
     ".booktext",
@@ -271,8 +259,7 @@ var MyNovelReader = (function(exports) {
     ".content",
     ".art_con",
     ".article",
-    // New from rule migration
-    ".read-content",
+".read-content",
     ".bookreadercontent",
     ".novelbody",
     ".chapter-item",
@@ -287,8 +274,7 @@ var MyNovelReader = (function(exports) {
     ".story_content",
     ".chapter_content",
     ".chapter-box",
-    // Element selectors
-    "article"
+"article"
   ];
   const NAV_PATTERNS = {
     next: [
@@ -514,16 +500,14 @@ var MyNovelReader = (function(exports) {
   const ARIA_ATTR = seal(/^aria-[\-\w]+$/);
   const IS_ALLOWED_URI = seal(
     /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|matrix):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
-    // eslint-disable-line no-useless-escape
-  );
+);
   const IS_SCRIPT_OR_DATA = seal(/^(?:\w+script|data):/i);
   const ATTR_WHITESPACE = seal(
     /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g
-    // eslint-disable-line no-control-regex
-  );
+);
   const DOCTYPE_NAME = seal(/^html$/i);
   const CUSTOM_ELEMENT = seal(/^[a-z][.\w]*(-[.\w]+)+$/i);
-  var EXPRESSIONS = /* @__PURE__ */ Object.freeze({
+  var EXPRESSIONS = Object.freeze({
     __proto__: null,
     ARIA_ATTR,
     ATTR_WHITESPACE,
@@ -539,8 +523,7 @@ var MyNovelReader = (function(exports) {
   const NODE_TYPE = {
     element: 1,
     text: 3,
-    // Deprecated
-    progressingInstruction: 7,
+progressingInstruction: 7,
     comment: 8,
     document: 9
   };
@@ -739,8 +722,8 @@ var MyNovelReader = (function(exports) {
         cfg = {};
       }
       cfg = clone(cfg);
-      PARSER_MEDIA_TYPE = // eslint-disable-next-line unicorn/prefer-includes
-      SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
+      PARSER_MEDIA_TYPE =
+SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
       transformCaseFunc = PARSER_MEDIA_TYPE === "application/xhtml+xml" ? stringToString : stringToLowerCase;
       ALLOWED_TAGS = objectHasOwnProperty(cfg, "ALLOWED_TAGS") ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
       ALLOWED_ATTR = objectHasOwnProperty(cfg, "ALLOWED_ATTR") ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
@@ -999,8 +982,7 @@ var MyNovelReader = (function(exports) {
       return createNodeIterator.call(
         root.ownerDocument || root,
         root,
-        // eslint-disable-next-line no-bitwise
-        NodeFilter2.SHOW_ELEMENT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_TEXT | NodeFilter2.SHOW_PROCESSING_INSTRUCTION | NodeFilter2.SHOW_CDATA_SECTION,
+NodeFilter2.SHOW_ELEMENT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_TEXT | NodeFilter2.SHOW_PROCESSING_INSTRUCTION | NodeFilter2.SHOW_CDATA_SECTION,
         null
       );
     };
@@ -1095,12 +1077,11 @@ var MyNovelReader = (function(exports) {
       else if (EXTRA_ELEMENT_HANDLING.attributeCheck instanceof Function && EXTRA_ELEMENT_HANDLING.attributeCheck(lcName, lcTag)) ;
       else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
         if (
-          // First condition does a very basic check if a) it's basically a valid custom element tagname AND
-          // b) if the tagName passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
-          // and c) if the attribute name passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.attributeNameCheck
-          _isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName, lcTag)) || // Alternative, second condition checks if it's an `is`-attribute, AND
-          // the value passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
-          lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value))
+
+
+_isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName, lcTag)) ||
+
+lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value))
         ) ;
         else {
           return false;
@@ -1278,8 +1259,8 @@ var MyNovelReader = (function(exports) {
           body.appendChild(importedNode);
         }
       } else {
-        if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT && // eslint-disable-next-line unicorn/prefer-includes
-        dirty.indexOf("<") === -1) {
+        if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT &&
+dirty.indexOf("<") === -1) {
           return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
         }
         body = _initDocument(dirty);
@@ -1407,16 +1388,14 @@ var MyNovelReader = (function(exports) {
     }
   }
   const WEIGHTS = {
-    // Positive indicators
-    CONTENT_ID_CLASS: 25,
+CONTENT_ID_CLASS: 25,
     ARTICLE_TAG: 15,
     HIGH_TEXT_DENSITY: 20,
     PARAGRAPH_COUNT: 10,
     CHINESE_RATIO: 15,
     TEXT_LENGTH_BONUS: 20,
-    // Max bonus for long text
-    // Negative indicators
-    NAV_HEADER_FOOTER: -25,
+
+NAV_HEADER_FOOTER: -25,
     AD_CLASS: -30,
     COMMENT_CLASS: -20,
     HIGH_LINK_DENSITY: -20
@@ -1424,10 +1403,7 @@ var MyNovelReader = (function(exports) {
   const MIN_TEXT_LENGTH = 500;
   const MIN_CHINESE_RATIO = 0.3;
   class ContentDetector {
-    /**
-     * Detect the main content area of the document
-     */
-    detect(doc2) {
+detect(doc2) {
       const selectorResult = this.tryKnownSelectors(doc2);
       if (selectorResult) {
         return selectorResult;
@@ -1450,10 +1426,7 @@ var MyNovelReader = (function(exports) {
         preview: this.getPreview(best.element)
       };
     }
-    /**
-     * Try known content selectors (fast path)
-     */
-    tryKnownSelectors(doc2) {
+tryKnownSelectors(doc2) {
       for (const selector of KNOWN_CONTENT_SELECTORS) {
         try {
           const el = doc2.querySelector(selector);
@@ -1471,10 +1444,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Find all potential content containers
-     */
-    findCandidates(doc2) {
+findCandidates(doc2) {
       const containers = doc2.querySelectorAll("div, article, section, main, td");
       return Array.from(containers).filter((el) => {
         const text2 = el.textContent || "";
@@ -1487,10 +1457,7 @@ var MyNovelReader = (function(exports) {
         return true;
       });
     }
-    /**
-     * Score all candidate elements
-     */
-    scoreCandidates(candidates) {
+scoreCandidates(candidates) {
       return candidates.map((element) => {
         let score = 0;
         const text2 = element.textContent || "";
@@ -1534,10 +1501,7 @@ var MyNovelReader = (function(exports) {
         return { element, score, textLength, linkDensity, chineseRatio };
       });
     }
-    /**
-     * Check if element contains valid novel content
-     */
-    isValidContent(element) {
+isValidContent(element) {
       const text2 = element.textContent || "";
       if (text2.length < MIN_TEXT_LENGTH) return false;
       const chineseRatio = this.calculateChineseRatio(text2);
@@ -1546,10 +1510,7 @@ var MyNovelReader = (function(exports) {
       if (linkDensity > 0.5) return false;
       return true;
     }
-    /**
-     * Check if element is a navigation/structural element
-     */
-    isNavigationElement(element) {
+isNavigationElement(element) {
       const tagName = element.tagName.toUpperCase();
       if (["NAV", "HEADER", "FOOTER", "ASIDE"].includes(tagName)) {
         return true;
@@ -1557,10 +1518,7 @@ var MyNovelReader = (function(exports) {
       const idClass = ((element.id || "") + " " + (element.className || "")).toLowerCase();
       return /nav|menu|sidebar|footer|header/.test(idClass);
     }
-    /**
-     * Calculate the ratio of link text to total text
-     */
-    calculateLinkDensity(element) {
+calculateLinkDensity(element) {
       var _a;
       const links = element.querySelectorAll("a");
       const linkText = Array.from(links).reduce((sum, a) => {
@@ -1570,18 +1528,12 @@ var MyNovelReader = (function(exports) {
       const totalText = ((_a = element.textContent) == null ? void 0 : _a.length) || 1;
       return linkText / totalText;
     }
-    /**
-     * Calculate the ratio of Chinese characters to total characters
-     */
-    calculateChineseRatio(text2) {
+calculateChineseRatio(text2) {
       const chineseChars = text2.match(/[\u4e00-\u9fff]/g) || [];
       const nonWhitespace = text2.replace(/\s/g, "");
       return chineseChars.length / Math.max(nonWhitespace.length, 1);
     }
-    /**
-     * Generate a CSS selector for the element
-     */
-    generateSelector(element) {
+generateSelector(element) {
       if (element.id) {
         return `#${cssEscape(element.id)}`;
       }
@@ -1597,10 +1549,7 @@ var MyNovelReader = (function(exports) {
       }
       return this.generatePathSelector(element);
     }
-    /**
-     * Generate a path-based selector (e.g., body > div:nth-of-type(2) > div)
-     */
-    generatePathSelector(element) {
+generatePathSelector(element) {
       const path = [];
       let current = element;
       while (current && current !== document.body && current !== document.documentElement) {
@@ -1623,23 +1572,14 @@ var MyNovelReader = (function(exports) {
       }
       return path.join(" > ");
     }
-    /**
-     * Normalize score to 0-1 range
-     */
-    normalizeScore(score) {
+normalizeScore(score) {
       return Math.min(Math.max(score / 100, 0), 1);
     }
-    /**
-     * Get preview text from element
-     */
-    getPreview(element) {
+getPreview(element) {
       const text2 = element.textContent || "";
       return text2.trim().substring(0, 200) + (text2.length > 200 ? "..." : "");
     }
-    /**
-     * Create empty result when detection fails
-     */
-    createEmptyResult() {
+createEmptyResult() {
       return {
         element: null,
         selector: "",
@@ -1650,22 +1590,15 @@ var MyNovelReader = (function(exports) {
   }
   const SECTION_TEXT_PATTERNS = [
     /[下上]一?页/,
-    // 下一页, 上一页
-    /[下上]一?頁/,
-    // 繁体
-    /第\d+页/,
-    // 第2页
-    /\(\d+\/\d+\)/
-    // (2/5) 分页指示
-  ];
+/[下上]一?頁/,
+/第\d+页/,
+/\(\d+\/\d+\)/
+];
   const CHAPTER_TEXT_PATTERNS = [
     /[下上]一?章/,
-    // 下一章, 上一章
-    /[下上]一?节/,
-    // 下一节
-    /第.+章/
-    // 第X章
-  ];
+/[下上]一?节/,
+/第.+章/
+];
   const REMOVE_SELECTORS = [
     "script",
     "style",
@@ -1705,23 +1638,17 @@ var MyNovelReader = (function(exports) {
     "ins.adsbygoogle"
   ];
   const AD_PATTERNS = [
-    // Section/page navigation hints (分页提示) - use [（(] and [）)] to match both full-width and half-width
-    /[（(]本章未完[，,]?请?点击下一页继续阅读[）)]/gi,
+/[（(]本章未完[，,]?请?点击下一页继续阅读[）)]/gi,
     /本章未完[，,]?请?点击下一页继续.*/gi,
     /请点击下一页继续阅读/gi,
     /点击下一页继续阅读/gi,
-    // Page number indicators (页码指示) - match both full-width and half-width parentheses
-    /[（(]第\d+[/／]\d+页[）)]/gi,
+/[（(]第\d+[/／]\d+页[）)]/gi,
     /第\d+[/／]\d+页/gi,
-    // Standalone orphan parentheses left after cleaning (孤立括号清理)
-    /[（(]\s*[）)]/g,
-    // Empty parentheses
-    /[（(]\s*$/gm,
-    // Orphan opening parenthesis at end of line
-    /^\s*[）)]/gm,
-    // Orphan closing parenthesis at start of line
-    // Common site ads
-    /手机用户请到.*阅读/gi,
+/[（(]\s*[）)]/g,
+/[（(]\s*$/gm,
+/^\s*[）)]/gm,
+
+/手机用户请到.*阅读/gi,
     /请记住本书.*网址/gi,
     /百度搜索.*最新章节/gi,
     /一秒记住.*为您提供/gi,
@@ -1731,8 +1658,7 @@ var MyNovelReader = (function(exports) {
     /添加書籤\s*返回目錄\s*章節報錯\s*分享給朋友[:：]?\s*/gi,
     /由於[緩缓存]原因[^<\n]{0,120}(?:更新|網站|网站|站)/gi,
     /[请請][用戶用户]直接[瀏覽浏览]器[訪访]問[^<\n]{0,120}/gi,
-    // Obfuscated "小说网最新章节更新快" spam (allow noise between characters)
-    /小[^\u4e00-\u9fff]{0,3}说[^\u4e00-\u9fff]{0,3}网[^\u4e00-\u9fff]{0,6}最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
+/小[^\u4e00-\u9fff]{0,3}说[^\u4e00-\u9fff]{0,3}网[^\u4e00-\u9fff]{0,6}最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
     /最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
     /幻[^\u4e00-\u9fff]{0,3}想[^\u4e00-\u9fff]{0,3}姬[^\u4e00-\u9fff]{0,6}免[^\u4e00-\u9fff]{0,3}费[^\u4e00-\u9fff]{0,3}(?:阅|讀)[^\u4e00-\u9fff]{0,3}(?:读|讀)/gi,
     /萝[^\u4e00-\u9fff]{0,3}拉[^\u4e00-\u9fff]{0,3}小[^\u4e00-\u9fff]{0,3}说[^\u4e00-\u9fff]{0,3}\d{1,3}[^\u4e00-\u9fff]{0,3}最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
@@ -1746,29 +1672,19 @@ var MyNovelReader = (function(exports) {
     /^javascript:/i,
     /BuyChapterUnLogin/i,
     /\/0\.html$/i,
-    // Homepage/root path patterns
-    /^https?:\/\/[^/]+\/?$/i,
-    // Root domain only (e.g., https://www.qidian.com/)
-    /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i,
-    // /index.html, /home.php
-    /^https?:\/\/[^/]+\/\?/i
-    // Root with query string (e.g., https://example.com/?ref=xxx)
-  ];
+/^https?:\/\/[^/]+\/?$/i,
+/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i,
+/^https?:\/\/[^/]+\/\?/i
+];
   class NavigationDetector {
-    /**
-     * Detect all navigation links in the document
-     */
-    detect(doc2) {
+detect(doc2) {
       return {
         next: this.findNavLink(doc2, "next"),
         prev: this.findNavLink(doc2, "prev"),
         index: this.findNavLink(doc2, "index")
       };
     }
-    /**
-     * Find a specific navigation link
-     */
-    findNavLink(doc2, type) {
+findNavLink(doc2, type) {
       var _a, _b;
       const patterns = NAV_PATTERNS[type];
       if (type !== "index") {
@@ -1844,10 +1760,7 @@ var MyNovelReader = (function(exports) {
         text: best.text
       };
     }
-    /**
-     * Check if a link is valid for navigation
-     */
-    isValidLink(anchor, purpose) {
+isValidLink(anchor, purpose) {
       var _a;
       const href = anchor.href;
       const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
@@ -1894,8 +1807,7 @@ var MyNovelReader = (function(exports) {
         const nonChapterPaths = [
           /^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i,
           /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i
-          // /book/ or /book/123/ without chapter
-        ];
+];
         for (const pattern of nonChapterPaths) {
           if (pattern.test(pathname)) return false;
         }
@@ -1903,11 +1815,7 @@ var MyNovelReader = (function(exports) {
       }
       return true;
     }
-    /**
-     * Validate navigation by comparing URLs
-     * Useful to ensure next/prev links follow expected pattern
-     */
-    validateNavigation(currentUrl, navigation) {
+validateNavigation(currentUrl, navigation) {
       const currentNum = this.extractChapterNumber(currentUrl);
       if (currentNum === null) return navigation;
       if (navigation.next) {
@@ -1924,10 +1832,7 @@ var MyNovelReader = (function(exports) {
       }
       return navigation;
     }
-    /**
-     * Try to extract chapter number from URL
-     */
-    extractChapterNumber(url) {
+extractChapterNumber(url) {
       const patterns = [
         /\/(\d+)\.html?$/i,
         /\/chapter\/(\d+)/i,
@@ -1942,11 +1847,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Detect if current page is part of a multi-page chapter (分页章节)
-     * This enables automatic section merging without manual rule configuration
-     */
-    detectSection(doc2, currentUrl, navigation) {
+detectSection(doc2, currentUrl, navigation) {
       const result = {
         isSection: false,
         currentSection: null,
@@ -1999,11 +1900,7 @@ var MyNovelReader = (function(exports) {
       }
       return result;
     }
-    /**
-     * Extract section number from URL
-     * Returns { chapter, section } or null
-     */
-    extractSectionFromUrl(url) {
+extractSectionFromUrl(url) {
       const patterns = [/\/(\d+)[_-](\d+)\.html?$/i, /\/(\d+)\/(\d+)\.html?$/i];
       for (const pattern of patterns) {
         const match = url.match(pattern);
@@ -2019,10 +1916,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Compare two URLs to detect section relationship
-     */
-    compareUrlsForSection(currentUrl, nextUrl) {
+compareUrlsForSection(currentUrl, nextUrl) {
       try {
         const current = new URL(currentUrl);
         const next = new URL(nextUrl);
@@ -2056,10 +1950,7 @@ var MyNovelReader = (function(exports) {
         return { isSection: false, confidence: 0 };
       }
     }
-    /**
-     * Calculate similarity between two URL paths
-     */
-    calculateUrlSimilarity(path1, path2) {
+calculateUrlSimilarity(path1, path2) {
       const normalize = (p2) => p2.replace(/\d+/g, "#");
       const n1 = normalize(path1);
       const n2 = normalize(path2);
@@ -2073,10 +1964,7 @@ var MyNovelReader = (function(exports) {
       }
       return matches / longer.length;
     }
-    /**
-     * Try to find the next chapter URL (skipping remaining sections)
-     */
-    findNextChapterUrl(doc2, currentUrl, _navigation) {
+findNextChapterUrl(doc2, currentUrl, _navigation) {
       var _a;
       const links = doc2.querySelectorAll("a[href]");
       for (const link of links) {
@@ -2093,10 +1981,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Generate a CSS selector for a link element
-     */
-    generateSelector(element) {
+generateSelector(element) {
       if (element.id) {
         return `#${cssEscape(element.id)}`;
       }
@@ -2112,10 +1997,7 @@ var MyNovelReader = (function(exports) {
       }
       return this.generatePathSelector(element);
     }
-    /**
-     * Generate a path-based selector (e.g., body > div:nth-of-type(2) > a)
-     */
-    generatePathSelector(element) {
+generatePathSelector(element) {
       const path = [];
       let current = element;
       while (current && current !== document.body && current !== document.documentElement) {
@@ -2180,14 +2062,10 @@ var MyNovelReader = (function(exports) {
     /最新章节$/,
     /\(文\)$/,
     /_.*$/,
-    // Remove trailing "_sitename"
-    /-.*小说.*$/i
+/-.*小说.*$/i
   ];
   class TitleDetector {
-    /**
-     * Detect chapter and book titles
-     */
-    detect(doc2) {
+detect(doc2) {
       const results = [
         this.detectFromSelector(doc2),
         this.detectFromDocumentTitle(doc2),
@@ -2204,10 +2082,7 @@ var MyNovelReader = (function(exports) {
       }
       return best;
     }
-    /**
-     * Detect title using known selectors
-     */
-    detectFromSelector(doc2) {
+detectFromSelector(doc2) {
       for (const selector of KNOWN_TITLE_SELECTORS) {
         try {
           const el = doc2.querySelector(selector);
@@ -2228,10 +2103,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Detect title from document.title
-     */
-    detectFromDocumentTitle(doc2) {
+detectFromDocumentTitle(doc2) {
       const docTitle = doc2.title;
       if (!docTitle) return null;
       const match = docTitle.match(TITLE_PATTERN);
@@ -2261,10 +2133,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Detect title from h1/h2 headings
-     */
-    detectFromHeadings(doc2) {
+detectFromHeadings(doc2) {
       const h1s = doc2.querySelectorAll("h1");
       for (const h1 of h1s) {
         const text2 = this.cleanTitle(h1.textContent || "");
@@ -2291,10 +2160,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Detect book title
-     */
-    detectBookTitle(doc2) {
+detectBookTitle(doc2) {
       var _a, _b;
       const genericLabelPattern = /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節|最新章节|最新章節|正文|内容|內容|简介|簡介|作品信息|书籍信息|書籍信息|小说|小說|阅读|閱讀|catalog|toc|contents?)$/i;
       const breadcrumbIgnorePattern = /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節)$/i;
@@ -2329,7 +2195,7 @@ var MyNovelReader = (function(exports) {
         if (normalized.startsWith("⚡")) return false;
         return true;
       };
-      const candidates = /* @__PURE__ */ new Map();
+      const candidates = new Map();
       const addCandidate = (text2, weight = 1) => {
         if (!text2) return;
         const cleaned = this.cleanBookTitle(text2);
@@ -2533,10 +2399,7 @@ var MyNovelReader = (function(exports) {
       });
       return (_b = sorted[0]) == null ? void 0 : _b[0];
     }
-    /**
-     * Clean up title text
-     */
-    cleanTitle(text2) {
+cleanTitle(text2) {
       let cleaned = text2.trim();
       for (const pattern of TITLE_CLEANUP_PATTERNS) {
         cleaned = cleaned.replace(pattern, "");
@@ -2544,10 +2407,7 @@ var MyNovelReader = (function(exports) {
       cleaned = cleaned.replace(/\s+/g, " ").trim();
       return cleaned;
     }
-    /**
-     * Clean up book title
-     */
-    cleanBookTitle(text2) {
+cleanBookTitle(text2) {
       let cleaned = text2.trim();
       const bracketMatch = cleaned.match(/《([^》]+)》/);
       if (bracketMatch) {
@@ -2576,19 +2436,13 @@ var MyNovelReader = (function(exports) {
       cleaned = cleaned.replace(/\s+/g, " ").trim();
       return cleaned;
     }
-    /**
-     * Validate if text is a valid chapter title
-     */
-    isValidTitle(text2) {
+isValidTitle(text2) {
       if (!text2 || text2.length < 2) return false;
       if (text2.length > 100) return false;
       if (!/\S/.test(text2)) return false;
       return true;
     }
-    /**
-     * Generate a simple selector for an element
-     */
-    generateSelector(element) {
+generateSelector(element) {
       if (element.id) {
         return `#${cssEscape(element.id)}`;
       }
@@ -2600,10 +2454,7 @@ var MyNovelReader = (function(exports) {
       }
       return tagName;
     }
-    /**
-     * Create empty result when detection fails
-     */
-    createEmptyResult() {
+createEmptyResult() {
       return {
         chapterTitle: "",
         confidence: 0,
@@ -2618,10 +2469,7 @@ var MyNovelReader = (function(exports) {
       this.titleDetector = new TitleDetector();
       this.confidenceScorer = new ConfidenceScorer();
     }
-    /**
-     * Run full detection on the document
-     */
-    detect(doc2 = document, currentUrl = window.location.href) {
+detect(doc2 = document, currentUrl = window.location.href) {
       const content = this.contentDetector.detect(doc2);
       const navigation = this.navigationDetector.detect(doc2);
       const title = this.titleDetector.detect(doc2);
@@ -2636,35 +2484,25 @@ var MyNovelReader = (function(exports) {
       const confidence = this.confidenceScorer.score(results);
       return { results, confidence };
     }
-    /**
-     * Detect section only (for use when navigation is already known)
-     */
-    detectSection(doc2 = document, currentUrl = window.location.href) {
+detectSection(doc2 = document, currentUrl = window.location.href) {
       const navigation = this.navigationDetector.detect(doc2);
       return this.navigationDetector.detectSection(doc2, currentUrl, navigation);
     }
-    /**
-     * Quick check if page looks like a novel chapter
-     */
-    quickCheck(doc2 = document) {
+quickCheck(doc2 = document) {
       const indicators = [
-        // Check document title
-        () => {
+() => {
           const title = doc2.title;
           return /第.{1,10}章|chapter|小说|阅读/i.test(title);
         },
-        // Check for known content selectors
-        () => {
+() => {
           const selectors = ["#content", "#chapter_content", ".noveltext", "#BookText"];
           return selectors.some((s) => doc2.querySelector(s) !== null);
         },
-        // Check for navigation links
-        () => {
+() => {
           const links = Array.from(doc2.querySelectorAll("a"));
           return links.some((a) => /下一[章页]/.test(a.textContent || ""));
         },
-        // Check text content length
-        () => {
+() => {
           const body = doc2.body;
           const text2 = (body == null ? void 0 : body.textContent) || "";
           return text2.length > 3e3;
@@ -2679,22 +2517,13 @@ var MyNovelReader = (function(exports) {
       });
       return matches.length >= 2;
     }
-    /**
-     * Generate a selector for a given element
-     */
-    generateSelector(element) {
+generateSelector(element) {
       return this.contentDetector.generateSelector(element);
     }
-    /**
-     * Get confidence threshold
-     */
-    getThreshold() {
+getThreshold() {
       return this.confidenceScorer.getThreshold();
     }
-    /**
-     * Set confidence threshold
-     */
-    setThreshold(threshold) {
+setThreshold(threshold) {
       this.confidenceScorer.setThreshold(threshold);
     }
   }
@@ -2708,10 +2537,7 @@ var MyNovelReader = (function(exports) {
         ...options
       };
     }
-    /**
-     * Process content element and return cleaned HTML
-     */
-    process(element, doc2) {
+process(element, doc2) {
       if (this.options.useRawContent) {
         return sanitizeHtml(element.innerHTML);
       }
@@ -2741,10 +2567,7 @@ var MyNovelReader = (function(exports) {
       html2 = sanitizeHtml(html2);
       return html2;
     }
-    /**
-     * Process and return plain text
-     */
-    processToText(element) {
+processToText(element) {
       const clone2 = element.cloneNode(true);
       this.removeUnwantedElements(clone2);
       let text2 = clone2.textContent || "";
@@ -2756,10 +2579,7 @@ var MyNovelReader = (function(exports) {
       }
       return text2;
     }
-    /**
-     * Remove unwanted elements from content
-     */
-    removeUnwantedElements(element) {
+removeUnwantedElements(element) {
       for (const selector of REMOVE_SELECTORS) {
         try {
           const elements = this.smartQueryAll(element, selector);
@@ -2768,10 +2588,7 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
-    /**
-     * Remove elements by custom selector
-     */
-    removeBySelector(element, selectors) {
+removeBySelector(element, selectors) {
       const selectorList = selectors.split(",").map((s) => s.trim());
       for (const selector of selectorList) {
         try {
@@ -2781,11 +2598,7 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
-    /**
-     * Strip inline styles from all elements
-     * This prevents original page styles from overriding reader theme
-     */
-    stripInlineStyles(element) {
+stripInlineStyles(element) {
       element.removeAttribute("style");
       const elementsWithStyle = element.querySelectorAll("[style]");
       elementsWithStyle.forEach((el) => {
@@ -2797,10 +2610,7 @@ var MyNovelReader = (function(exports) {
         el.removeAttribute("bgcolor");
       });
     }
-    /**
-     * Apply custom replace rules
-     */
-    applyReplaceRules(html2, rules) {
+applyReplaceRules(html2, rules) {
       let result = html2;
       for (const rule of rules) {
         try {
@@ -2811,26 +2621,17 @@ var MyNovelReader = (function(exports) {
       }
       return result;
     }
-    /**
-     * Remove common ad patterns
-     */
-    removeAdPatterns(text2) {
+removeAdPatterns(text2) {
       let result = text2;
       for (const pattern of AD_PATTERNS) {
         result = result.replace(pattern, "");
       }
       return result;
     }
-    /**
-     * Normalize whitespace
-     */
-    normalizeWhitespace(html2) {
+normalizeWhitespace(html2) {
       return html2.replace(/<p>\s*<\/p>/gi, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").replace(/<p>\s+/gi, "<p>").replace(/\s+<\/p>/gi, "</p>");
     }
-    /**
-     * Fix and center images
-     */
-    fixImages(html2, doc2) {
+fixImages(html2, doc2) {
       const temp = doc2.createElement("div");
       temp.innerHTML = html2;
       const images = temp.querySelectorAll("img");
@@ -2845,10 +2646,7 @@ var MyNovelReader = (function(exports) {
       });
       return temp.innerHTML;
     }
-    /**
-     * Convert multiple br tags to paragraphs
-     */
-    convertBrToParagraphs(html2) {
+convertBrToParagraphs(html2) {
       let result = html2.replace(/(<br\s*\/?>\s*){2,}/gi, "</p><p>");
       if (!result.includes("<p>")) {
         result = "<p>" + result.replace(/<br\s*\/?>/gi, "</p><p>") + "</p>";
@@ -2856,16 +2654,10 @@ var MyNovelReader = (function(exports) {
       result = result.replace(/<p>\s*<\/p>/gi, "");
       return result;
     }
-    /**
-     * Set processing options
-     */
-    setOptions(options) {
+setOptions(options) {
       this.options = { ...this.options, ...options };
     }
-    /**
-     * Clean duplicate book/chapter/author info at start and end of content
-     */
-    cleanDuplicateInfo(html2, doc2) {
+cleanDuplicateInfo(html2, doc2) {
       var _a, _b;
       const { chapterTitle } = this.options;
       let result = html2;
@@ -2929,10 +2721,7 @@ var MyNovelReader = (function(exports) {
       result = result.replace(/<p>\s*<\/p>/gi, "").replace(/<div>\s*<\/div>/gi, "");
       return result;
     }
-    /**
-     * Check if text looks like a duplicate chapter title
-     */
-    looksLikeDuplicateTitle(text2) {
+looksLikeDuplicateTitle(text2) {
       const { chapterTitle, bookTitle } = this.options;
       const trimmed = text2.trim();
       if (chapterTitle) {
@@ -2959,10 +2748,7 @@ var MyNovelReader = (function(exports) {
       }
       return false;
     }
-    /**
-     * Fuzzy match two strings (check if they share significant overlap)
-     */
-    fuzzyMatch(text2, target) {
+fuzzyMatch(text2, target) {
       if (!text2 || !target) return false;
       const t1 = text2.replace(/\s+/g, "").toLowerCase();
       const t2 = target.replace(/\s+/g, "").toLowerCase();
@@ -2977,16 +2763,10 @@ var MyNovelReader = (function(exports) {
       }
       return false;
     }
-    /**
-     * Escape special regex characters
-     */
-    escapeRegExp(str) {
+escapeRegExp(str) {
       return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
-    /**
-     * Minimal jQuery-like selector support for content cleaning (:contains, :eq, :first, :last)
-     */
-    smartQueryAll(root, selector) {
+smartQueryAll(root, selector) {
       try {
         return Array.from(root.querySelectorAll(selector));
       } catch {
@@ -3057,8 +2837,7 @@ var MyNovelReader = (function(exports) {
   };
   const DEFAULT_COMMUNITY_RULES_URL = "https://raw.githubusercontent.com/JasonEX/MyNovelReader/master/rules/community.json";
   const specialRules = [
-    // Qidian (起点) - VIP chapters, dynamic content
-    {
+{
       id: "qidian",
       name: "起点中文网",
       version: 8,
@@ -3070,9 +2849,8 @@ var MyNovelReader = (function(exports) {
         remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]'
       },
       navigation: {
-        // #mnr-qidian-* are created by beforeParse hook from JSON data
-        // Fallback selectors for DOM-based navigation
-        prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
+
+prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
         index: "#mnr-qidian-index",
         next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")'
       },
@@ -3080,8 +2858,7 @@ var MyNovelReader = (function(exports) {
         selector: "h1.title, h1.text-1\\.3em, #r-nav-chapter-title"
       },
       hooks: {
-        // Build navigation links from pageContext JSON (SSR data)
-        beforeParse: `
+beforeParse: `
         // Remove review count from title
         try {
           const reviews = doc.querySelectorAll('h1 .review');
@@ -3136,8 +2913,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Chuangshi (创世) - Complex getContent
-    {
+{
       id: "chuangshi",
       name: "创世中文网",
       version: 1,
@@ -3165,61 +2941,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // JJWXC (晋江) - Font decoding, VIP
-    {
-      id: "jjwxc",
-      name: "晋江文学网",
-      version: 1,
-      match: {
-        pattern: "^https?://(www|my)\\.jjwxc\\.net/onebook(_vip)?\\.php"
-      },
-      content: {
-        selector: ".novelbody",
-        remove: "font[color], hr, div:has(>#yrt3), div:has(>h2), #six_list, #sendKingTickets, div[align=right], .readsmall, script"
-      },
-      navigation: {
-        index: ".noveltitle > h1 > a"
-      },
-      title: {
-        selector: "#chapter_list > option:first",
-        pattern: "《(.*?)》.*[ˇ^](.*?)[ˇ^].*"
-      },
-      processing: {
-        removeAds: false
-      },
-      advanced: {
-        useIframe: true,
-        mutationSelector: "div[id^=content]",
-        mutationChildCount: 0,
-        iframeSandbox: "allow-same-origin allow-scripts"
-      },
-      meta: { source: "builtin" }
-    },
-    // Quanben (全本) - iframe + mutation text
-    {
-      id: "quanben",
-      name: "全本小说网",
-      version: 1,
-      match: {
-        pattern: "^https?://www\\.quanben\\.io/.*?/.*?/\\d+\\.html"
-      },
-      content: {
-        selector: "#content"
-      },
-      title: {
-        bookSelector: ".name"
-      },
-      advanced: {
-        useIframe: true,
-        mutationSelector: "#content"
-      },
-      meta: {
-        source: "builtin",
-        exampleUrl: "http://www.quanben.io/n/wuxianwanxiangtongminglu/1.html"
-      }
-    },
-    // Ciweimao (刺猬猫)
-    {
+{
       id: "ciweimao",
       name: "刺猬猫",
       version: 1,
@@ -3228,20 +2950,21 @@ var MyNovelReader = (function(exports) {
       },
       content: {
         selector: "#J_BookRead",
-        remove: "i.J_Num, .chapter span"
+        remove: "i.J_Num, .chapter span, #J_BookRead_WaterMark, .watermark"
       },
       title: {
+        selector: ".read-hd .chapter",
         bookSelector: ".breadcrumb > a:last()"
       },
       advanced: {
         useIframe: true,
         mutationSelector: "#J_BookRead",
-        mutationChildCount: 1
+        mutationChildCount: 2,
+        timeout: 3e3
       },
       meta: { source: "builtin", exampleUrl: "https://www.ciweimao.com/chapter/102930784" }
     },
-    // Gongzicp (长佩)
-    {
+{
       id: "gongzicp",
       name: "长佩文学网",
       version: 1,
@@ -3262,8 +2985,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.gongzicp.com/read-246381.html" }
     },
-    // 69shu - iframe + referer
-    {
+{
       id: "69shu",
       name: "69书吧",
       version: 1,
@@ -3289,8 +3011,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/46867/31307961" }
     },
-    // Hetushu (和图书) - Content order scrambled
-    {
+{
       id: "hetushu",
       name: "和图书",
       version: 1,
@@ -3314,8 +3035,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "http://www.hetushu.com/book/1421/964983.html" }
     },
-    // Weread (微信读书) - Canvas rendering
-    {
+{
       id: "weread",
       name: "微信读书",
       version: 1,
@@ -3344,8 +3064,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Alafaxs (阿拉法) - iframe + mutation
-    {
+{
       id: "alafaxs",
       name: "阿拉法小说网",
       version: 1,
@@ -3365,8 +3084,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.alafaxs.com/du/80/856585.html" }
     },
-    // Bilinovel (哔哩轻小说) - Section pages
-    {
+{
       id: "bilinovel",
       name: "哔哩轻小说",
       version: 1,
@@ -3390,8 +3108,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.bilinovel.com/novel/4048/227859.html" }
     },
-    // 69shux - New domain
-    {
+{
       id: "69shux",
       name: "69shux",
       version: 1,
@@ -3416,8 +3133,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://69shux.com/txt/59608/41087519" }
     },
-    // 顶点小说 (ddxsmf) - AJAX + scroll lazy load
-    {
+{
       id: "ddxsmf",
       name: "顶点小说",
       version: 1,
@@ -3527,8 +3243,7 @@ var MyNovelReader = (function(exports) {
     }
   ];
   const simplifiedRules = [
-    // 我的书城网（章节正文存在混入的转义标签和反爬噪声）
-    {
+{
       id: "wodeshucheng",
       name: "我的书城网",
       version: 1,
@@ -3539,31 +3254,24 @@ var MyNovelReader = (function(exports) {
         selector: "#content",
         remove: ".appguide-wrap, .section-opt, .btn-addbs, .reader-fun",
         replace: [
-          // 清除正文内被转义的段落、换行标签
-          { pattern: "&lt;/?p&gt;", replacement: "", flags: "gi" },
+{ pattern: "&lt;/?p&gt;", replacement: "", flags: "gi" },
           { pattern: "&lt;br\\s*/?&gt;", replacement: "", flags: "gi" },
           { pattern: "&lt;script[^>]*&gt;.*?&lt;/script&gt;", replacement: "", flags: "gi" },
-          // 去掉夹杂的反爬噪声（包含反斜杠的乱码片段）
-          { pattern: "\\\\[^\\s<]{2,}", replacement: "", flags: "g" },
-          // 清理混杂符号的伪域名/反爬噪声
-          {
+{ pattern: "\\\\[^\\s<]{2,}", replacement: "", flags: "g" },
+{
             pattern: "[a-z0-9](?:[^\\u4e00-\\u9fff\\s]{1,3}[a-z0-9]){4,}",
             replacement: "",
             flags: "gi"
           },
-          // 常见的“更新最快”变体广告（带少量噪声）
-          {
+{
             pattern: "小[^\\u4e00-\\u9fff]{0,3}说[^\\u4e00-\\u9fff]{0,3}网[^\\u4e00-\\u9fff]{0,6}最[^\\u4e00-\\u9fff]{0,3}新[^\\u4e00-\\u9fff]{0,3}章[^\\u4e00-\\u9fff]{0,3}节[^\\u4e00-\\u9fff]{0,6}更[^\\u4e00-\\u9fff]{0,3}新[^\\u4e00-\\u9fff]{0,3}快",
             replacement: "",
             flags: "gi"
           },
-          // 特定噪声短语（稀有字形混入）
-          { pattern: "武\\d?墈书\\s*庚薪嶵筷", replacement: "", flags: "g" },
-          // 清理尾部插入的脚本标记或碎片
-          { pattern: "chapter_\\(\\);?", replacement: "", flags: "gi" },
+{ pattern: "武\\d?墈书\\s*庚薪嶵筷", replacement: "", flags: "g" },
+{ pattern: "chapter_\\(\\);?", replacement: "", flags: "gi" },
           { pattern: "script\\/script", replacement: "", flags: "gi" },
-          // 移除以“#?”开头的乱码提示
-          { pattern: "#\\?[^<\\n]{0,80}", replacement: "", flags: "g" }
+{ pattern: "#\\?[^<\\n]{0,80}", replacement: "", flags: "g" }
         ]
       },
       navigation: {
@@ -3583,11 +3291,10 @@ var MyNovelReader = (function(exports) {
         exampleUrl: "https://www.wodeshucheng.net/book_95122894/455913227.html"
       }
     },
-    // 零点看书 / 文库吧系（示例：23.225.121.247/ldks/111291/42509753_2.html）
-    // 特点：
-    // - 同一章分页：/42509753.html -> /42509753_2.html（下一页），最后一页才出现“下一章”
-    // - 目录页：/ldks/{bookId}/（章节列表）
-    {
+
+
+
+{
       id: "ldks-2baoe",
       name: "零点看书（ldks）",
       version: 1,
@@ -3596,8 +3303,7 @@ var MyNovelReader = (function(exports) {
       },
       content: {
         selector: "#content",
-        // 正文里不需要标题；导航/脚本也不需要
-        remove: "h1.title, script"
+remove: "h1.title, script"
       },
       navigation: {
         prev: '.section-opt a:contains("上一章"), .section-opt a:contains("上一页")',
@@ -3615,8 +3321,7 @@ var MyNovelReader = (function(exports) {
         exampleUrl: "http://23.225.121.247/ldks/111291/42509753_2.html"
       }
     },
-    // Zongheng (纵横中文网)
-    {
+{
       id: "zongheng-book",
       name: "纵横中文网",
       version: 1,
@@ -3655,8 +3360,7 @@ var MyNovelReader = (function(exports) {
         exampleUrl: "https://read.zongheng.com/chapter/1251858/72302352.html"
       }
     },
-    // JJWXC Mobile
-    {
+{
       id: "jjwxc-mobile",
       name: "晋江文学城_手机版",
       version: 1,
@@ -3672,8 +3376,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Xiaoxiang (潇湘书院)
-    {
+{
       id: "xxsy",
       name: "潇湘书院",
       version: 1,
@@ -3696,8 +3399,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Zhulang (逐浪)
-    {
+{
       id: "zhulang",
       name: "逐浪",
       version: 1,
@@ -3715,8 +3417,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Readnovel (小说阅读网)
-    {
+{
       id: "readnovel",
       name: "小说阅读网",
       version: 1,
@@ -3733,8 +3434,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Tieba (贴吧)
-    {
+{
       id: "tieba",
       name: "百度贴吧（手动启用）",
       version: 1,
@@ -3757,8 +3457,7 @@ var MyNovelReader = (function(exports) {
       style: ".clear { border-top:1px solid #cccccc; margin-bottom: 50px; visibility: visible !important;}",
       meta: { source: "builtin" }
     },
-    // 17k
-    {
+{
       id: "17k",
       name: "17k小说网",
       version: 1,
@@ -3774,8 +3473,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Tadu (塔读)
-    {
+{
       id: "tadu",
       name: "塔读文学",
       version: 1,
@@ -3796,8 +3494,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // SF
-    {
+{
       id: "sfacg",
       name: "SF 轻小说",
       version: 1,
@@ -3812,8 +3509,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://book.sfacg.com/Novel/601991/795722/7137683/" }
     },
-    // Piaotia (飘天)
-    {
+{
       id: "piaotia",
       name: "飘天文学",
       version: 1,
@@ -3832,8 +3528,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.piaotia.com/html/15/15083/10323993.html" }
     },
-    // Shuhai (书海)
-    {
+{
       id: "shuhai",
       name: "书海小说",
       version: 1,
@@ -3850,8 +3545,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "http://www.shuhai.com/read/110773/1.html" }
     },
-    // Lucifer Club
-    {
+{
       id: "lucifer-club",
       name: "露西弗俱乐部",
       version: 1,
@@ -3876,8 +3570,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.lucifer-club.com/chapter-83716-1.html" }
     },
-    // Shushan (书山中文网)
-    {
+{
       id: "shushan",
       name: "书山中文网",
       version: 1,
@@ -3894,8 +3587,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://shushan.zhangyue.net/book/105835/15038074/" }
     },
-    // ESJ Zone
-    {
+{
       id: "esjzone",
       name: "ESJ",
       version: 1,
@@ -3915,8 +3607,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.esjzone.cc/forum/1677032544/162585.html" }
     },
-    // Masiro (真白萌)
-    {
+{
       id: "masiro",
       name: "真白萌",
       version: 1,
@@ -3932,8 +3623,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // 123du
-    {
+{
       id: "123du",
       name: "123读",
       version: 1,
@@ -3951,8 +3641,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin" }
     },
-    // Dbxsc (独步)
-    {
+{
       id: "dbxsc",
       name: "独步小说网",
       version: 1,
@@ -3968,8 +3657,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.dbxsc.com/book/p1693/565590.html" }
     },
-    // Ixdzs (爱下电子书)
-    {
+{
       id: "ixdzs",
       name: "爱下电子书",
       version: 1,
@@ -3986,8 +3674,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://ixdzs8.com/read/42730/p1.html" }
     },
-    // Qisxs (奇书网)
-    {
+{
       id: "qisxs",
       name: "奇书网",
       version: 1,
@@ -4002,8 +3689,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.qisxs.com/shenhaiyujin/7570735.html" }
     },
-    // UUread
-    {
+{
       id: "uuread",
       name: "UU看书",
       version: 1,
@@ -4027,9 +3713,8 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/11681/3006418.html" }
     },
-    // ==================== Section-related rules (checkSection/noSection) ====================
-    // 小说321 - checkSection
-    {
+
+{
       id: "xs321",
       name: "小说321",
       version: 1,
@@ -4047,8 +3732,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "http://www.xs321.net/book/671/671539/1.html" }
     },
-    // 622中文
-    {
+{
       id: "622zw",
       name: "622中文",
       version: 1,
@@ -4066,8 +3750,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.622zw.com/books/175956/57627355.html" }
     },
-    // 逛笔趣阁
-    {
+{
       id: "fkxs",
       name: "逛笔趣阁小说网",
       version: 1,
@@ -4090,8 +3773,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.fkxs.net/241_241951/117822179.html" }
     },
-    // 永久看小说 (09kan.com - 原09k.net已重定向)
-    {
+{
       id: "09k",
       name: "永久看小说",
       version: 1,
@@ -4110,8 +3792,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://www.09k.net/kkb/021338893523/56870262.html" }
     },
-    // 语录书院
-    {
+{
       id: "yulusy",
       name: "语录书院",
       version: 1,
@@ -4133,8 +3814,7 @@ var MyNovelReader = (function(exports) {
         exampleUrl: "https://www.yulusy.com/yulus/17410287770/59700783-2.html"
       }
     },
-    // 乐文小说
-    {
+{
       id: "ilwxs",
       name: "乐文小说",
       version: 2,
@@ -4145,9 +3825,8 @@ var MyNovelReader = (function(exports) {
         selector: ".content"
       },
       navigation: {
-        // The chapter page contains both "书页" (book info) and "目录" (full chapter list).
-        // Ensure `indexUrl` points to the real TOC page (/shu/{bookId}/), not /info-{bookId}.html.
-        prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
+
+prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
         next: '.pager a:contains("下一章"), .pager a:contains("下一页")',
         index: '.pager a[href^="/shu/"][href$="/"], .pager a[href*="/shu/"][href$="/"], .pager a:contains("目 录"), .pager a:contains("目录")'
       },
@@ -4160,8 +3839,7 @@ var MyNovelReader = (function(exports) {
       },
       meta: { source: "builtin", exampleUrl: "https://m.ilwxs.com/shu/36354/171272950.html" }
     },
-    // 飞卢小说网
-    {
+{
       id: "faloo",
       name: "飞卢小说网",
       version: 1,
@@ -4172,21 +3850,17 @@ var MyNovelReader = (function(exports) {
         selector: ".noveContent"
       },
       navigation: {
-        // Faloo uses stable ids for pager buttons; keep :contains fallback for older layouts.
-        prev: '#pre_page, a:contains("上一章")',
+prev: '#pre_page, a:contains("上一章")',
         next: '#next_page, a:contains("下一章")',
         index: '#huimulu, a:contains("目录")'
       },
       toc: {
-        // Exclude "作品相关/小说相关" section in Faloo catalog sidebar.
-        excludeAncestors: ".c_con_relation"
+excludeAncestors: ".c_con_relation"
       },
       title: {
-        // Chapter title is in <h1>; <h2> is site-wide slogan.
-        selector: ".c_l_title > h1, h1",
+selector: ".c_l_title > h1, h1",
         bookSelector: "#novelName",
-        // Strip the leading book title token: "书名  1 章节名" -> "1 章节名"
-        replace: "^\\s*\\S+\\s+"
+replace: "^\\s*\\S+\\s+"
       },
       meta: {
         source: "builtin",
@@ -4194,8 +3868,7 @@ var MyNovelReader = (function(exports) {
         exampleUrl: "https://b.faloo.com/412421_1.html"
       }
     },
-    // 努努书坊 (kanunu8.com)
-    {
+{
       id: "kanunu8",
       name: "努努书坊",
       version: 1,
@@ -4203,12 +3876,10 @@ var MyNovelReader = (function(exports) {
         pattern: "^https?://www\\.kanunu8\\.com/.+/\\d+\\.html$"
       },
       content: {
-        // 内容在宽度为820的td中的p标签
-        selector: 'td[width="820"] > p, td[width="820"] p'
+selector: 'td[width="820"] > p, td[width="820"] p'
       },
       navigation: {
-        // 底部导航表格中的链接，使用 td 位置选择
-        prev: 'table[width="700"] td:first-child a',
+prev: 'table[width="700"] td:first-child a',
         index: 'table[width="700"] td:nth-child(2) a',
         next: 'table[width="700"] td:last-child a'
       },
@@ -4216,55 +3887,47 @@ var MyNovelReader = (function(exports) {
         selector: 'font[color="#dc143c"][size="4"]'
       },
       toc: {
-        // 排除顶部导航栏的分类链接
-        excludeAncestors: '#header, .nav, .nav2, td[bgcolor="#A5BDC6"], td[bgcolor="#CEDFE5"]'
+excludeAncestors: '#header, .nav, .nav2, td[bgcolor="#A5BDC6"], td[bgcolor="#CEDFE5"]'
       },
       advanced: {
-        // 该网站使用"上一页/下一页"作为章节导航文本，但实际上不是分页
-        // 禁用分页检测以避免误判
-        noSection: true
+
+noSection: true
       },
       meta: {
         source: "builtin",
         exampleUrl: "https://www.kanunu8.com/book3/7748/170164.html"
       }
     },
-    // 书海阁小说网 (m.shuhaige.net)
-    // 特点：
-    // - 目录页：/36354/（章节列表）
-    // - 章节页：/36354/55863782.html
-    // - 分页章节：/36354/55863791.html -> /36354/55863791_2.html（下一页）
-    // - 顶部导航有"书 页"链接，底部导航有"目 录"链接
-    // - 需要清洗正文末尾的广告文字和分页提示
-    {
+
+
+
+
+
+
+{
       id: "shuhaige-m",
       name: "书海阁小说网(手机版)",
       version: 1,
       match: {
-        // 匹配章节页和分页（如 55863791_2.html）
-        pattern: "^https?://m\\.shuhaige\\.net/\\d+/\\d+(?:_\\d+)?\\.html$"
+pattern: "^https?://m\\.shuhaige\\.net/\\d+/\\d+(?:_\\d+)?\\.html$"
       },
       content: {
         selector: ".content",
-        // 清洗正文末尾的广告文字和分页提示
-        replace: [
+replace: [
           {
-            // 分页提示：小主，这个章节后面还有哦，请点击下一页继续阅读，后面更精彩！
-            pattern: "小主，这个章节后面还有哦.*?后面更精彩！",
+pattern: "小主，这个章节后面还有哦.*?后面更精彩！",
             replacement: "",
             flags: "g"
           },
           {
-            // 收藏广告：喜欢XXX请大家收藏：(m.shuhaige.net)XXX更新速度全网最快。
-            pattern: "喜欢.*?请大家收藏：\\([^)]+\\).*?更新速度全网最快。",
+pattern: "喜欢.*?请大家收藏：\\([^)]+\\).*?更新速度全网最快。",
             replacement: "",
             flags: "g"
           }
         ]
       },
       navigation: {
-        // 优先匹配"上一章/下一章"，分页时会自动处理"上一页/下一页"
-        prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
+prev: '.pager a:contains("上一章"), .pager a:contains("上一页")',
         index: '.pager a[href$="/"]:contains("目"), .pager a:contains("目录")',
         next: '.pager a:contains("下一章"), .pager a:contains("下一页")'
       },
@@ -4272,8 +3935,7 @@ var MyNovelReader = (function(exports) {
         selector: "h1.headline"
       },
       advanced: {
-        // 启用分页检测，自动合并章节内的多个分页
-        checkSection: true
+checkSection: true
       },
       meta: {
         source: "builtin",
@@ -4301,7 +3963,7 @@ var MyNovelReader = (function(exports) {
       GM_deleteValue(this.prefix + key);
     }
     async getAll() {
-      const result = /* @__PURE__ */ new Map();
+      const result = new Map();
       const keys = await this.getAllKeys();
       for (const key of keys) {
         const rule = await this.get(key);
@@ -4384,7 +4046,7 @@ var MyNovelReader = (function(exports) {
         const request = store.getAll();
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
-          const result = /* @__PURE__ */ new Map();
+          const result = new Map();
           for (const rule of request.result) {
             result.set(rule.id, rule);
           }
@@ -4421,16 +4083,10 @@ var MyNovelReader = (function(exports) {
         this.driver = new GMStorageDriver();
       }
     }
-    /**
-     * Get a rule by domain
-     */
-    async getUserRule(domain) {
+async getUserRule(domain) {
       return this.driver.get(domain);
     }
-    /**
-     * Save a user rule for a domain
-     */
-    async saveUserRule(domain, rule) {
+async saveUserRule(domain, rule) {
       rule.meta = {
         ...rule.meta,
         source: "user",
@@ -4439,42 +4095,24 @@ var MyNovelReader = (function(exports) {
       rule.id = domain;
       await this.driver.set(domain, rule);
     }
-    /**
-     * Delete a user rule
-     */
-    async deleteUserRule(domain) {
+async deleteUserRule(domain) {
       await this.driver.delete(domain);
     }
-    /**
-     * Get all user rules
-     */
-    async getAllUserRules() {
+async getAllUserRules() {
       return this.driver.getAll();
     }
-    /**
-     * Get all rule domains
-     */
-    async getAllDomains() {
+async getAllDomains() {
       return this.driver.getAllKeys();
     }
-    /**
-     * Clear all user rules
-     */
-    async clearAllRules() {
+async clearAllRules() {
       await this.driver.clear();
     }
-    /**
-     * Export rules as JSON
-     */
-    async exportRules() {
+async exportRules() {
       const rules = await this.driver.getAll();
       const rulesArray = Array.from(rules.values());
       return JSON.stringify(rulesArray, null, 2);
     }
-    /**
-     * Import rules from JSON
-     */
-    async importRules(json, overwrite = false) {
+async importRules(json, overwrite = false) {
       const rules = JSON.parse(json);
       let count = 0;
       for (const rule of rules) {
@@ -4488,11 +4126,8 @@ var MyNovelReader = (function(exports) {
       }
       return count;
     }
-    // ========== Site Preferences (for auto-enable behavior) ==========
-    /**
-     * Get site preference for a domain
-     */
-    getSitePreference(domain) {
+
+getSitePreference(domain) {
       try {
         const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
         const prefs = typeof stored === "object" && stored !== null ? stored : {};
@@ -4501,10 +4136,7 @@ var MyNovelReader = (function(exports) {
         return null;
       }
     }
-    /**
-     * Set site preference for a domain
-     */
-    setSitePreference(domain, pref) {
+setSitePreference(domain, pref) {
       try {
         const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
         const prefs = typeof stored === "object" && stored !== null ? stored : {};
@@ -4514,10 +4146,7 @@ var MyNovelReader = (function(exports) {
         console.error("[MNR] Failed to save site preference:", e);
       }
     }
-    /**
-     * Delete site preference for a domain
-     */
-    deleteSitePreference(domain) {
+deleteSitePreference(domain) {
       try {
         const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
         const prefs = typeof stored === "object" && stored !== null ? stored : {};
@@ -4549,15 +4178,11 @@ var MyNovelReader = (function(exports) {
     constructor() {
       this.builtInRules = [];
       this.communityRules = [];
-      this.userRulesCache = /* @__PURE__ */ new Map();
+      this.userRulesCache = new Map();
       this.initialized = false;
       this.storage = new RuleStorage();
     }
-    /**
-     * Initialize the rule manager
-     * Loads all rules from various sources
-     */
-    async initialize() {
+async initialize() {
       if (this.initialized) return;
       this.userRulesCache = await this.storage.getAllUserRules();
       this.builtInRules = await this.loadBuiltInRules();
@@ -4565,11 +4190,7 @@ var MyNovelReader = (function(exports) {
       });
       this.initialized = true;
     }
-    /**
-     * Match a URL against all rules
-     * Priority: user > community > builtin
-     */
-    async matchRule(url) {
+async matchRule(url) {
       if (!this.initialized) {
         await this.initialize();
       }
@@ -4611,10 +4232,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Check if a rule matches a URL
-     */
-    matchesUrl(rule, url) {
+matchesUrl(rule, url) {
       try {
         const regex = toRegExp(rule.match.pattern, rule.match.type);
         if (!regex.test(url)) return false;
@@ -4630,55 +4248,30 @@ var MyNovelReader = (function(exports) {
         return false;
       }
     }
-    /**
-     * Save a user rule
-     */
-    async saveUserRule(domain, rule) {
+async saveUserRule(domain, rule) {
       await this.storage.saveUserRule(domain, rule);
       this.userRulesCache.set(domain, rule);
     }
-    /**
-     * Delete a user rule
-     */
-    async deleteUserRule(domain) {
+async deleteUserRule(domain) {
       await this.storage.deleteUserRule(domain);
       this.userRulesCache.delete(domain);
     }
-    /**
-     * Get a user rule by domain
-     */
-    getUserRule(domain) {
+getUserRule(domain) {
       return this.userRulesCache.get(domain);
     }
-    /**
-     * Get all user rules
-     */
-    getAllUserRules() {
+getAllUserRules() {
       return this.userRulesCache;
     }
-    /**
-     * Get all built-in rules
-     */
-    getBuiltInRules() {
+getBuiltInRules() {
       return this.builtInRules;
     }
-    /**
-     * Get the storage instance
-     */
-    getStorage() {
+getStorage() {
       return this.storage;
     }
-    /**
-     * Load built-in rules
-     * Uses curated rules from builtInRules.ts (already in v2 format)
-     */
-    async loadBuiltInRules() {
+async loadBuiltInRules() {
       return builtInRules;
     }
-    /**
-     * Load community rules from remote URL
-     */
-    async loadCommunityRules() {
+async loadCommunityRules() {
       try {
         const response = await fetch(DEFAULT_COMMUNITY_RULES_URL);
         if (!response.ok) return;
@@ -4687,48 +4280,30 @@ var MyNovelReader = (function(exports) {
       } catch {
       }
     }
-    /**
-     * Validate a rule has required fields
-     */
-    validateRule(rule) {
+validateRule(rule) {
       var _a, _b;
       return !!(rule.id && ((_a = rule.match) == null ? void 0 : _a.pattern) && ((_b = rule.content) == null ? void 0 : _b.selector));
     }
-    /**
-     * Extract domain from URL
-     */
-    extractDomain(url) {
+extractDomain(url) {
       try {
         return new URL(url).hostname;
       } catch {
         return url;
       }
     }
-    /**
-     * Export all user rules
-     */
-    async exportUserRules() {
+async exportUserRules() {
       return this.storage.exportRules();
     }
-    /**
-     * Import user rules
-     */
-    async importUserRules(json, overwrite = false) {
+async importUserRules(json, overwrite = false) {
       const count = await this.storage.importRules(json, overwrite);
       this.userRulesCache = await this.storage.getAllUserRules();
       return count;
     }
-    /**
-     * Clear all user rules
-     */
-    async clearUserRules() {
+async clearUserRules() {
       await this.storage.clearAllRules();
       this.userRulesCache.clear();
     }
-    /**
-     * Get statistics
-     */
-    getStats() {
+getStats() {
       return {
         user: this.userRulesCache.size,
         community: this.communityRules.length,
@@ -4755,10 +4330,7 @@ var MyNovelReader = (function(exports) {
       this.contentProcessor = new ContentProcessor(options.processing);
       this.options = options;
     }
-    /**
-     * Parse the current page
-     */
-    async parse(doc2 = document, explicitUrl) {
+async parse(doc2 = document, explicitUrl) {
       var _a;
       const url = explicitUrl || ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
       const ruleManager = getRuleManager();
@@ -4769,10 +4341,7 @@ var MyNovelReader = (function(exports) {
       }
       return await this.parseWithDetection(doc2, url);
     }
-    /**
-     * Parse using a matched rule
-     */
-    async parseWithRule(doc2, url, ruleMatch) {
+async parseWithRule(doc2, url, ruleMatch) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
       const rule = ruleMatch.rule;
       await this.runBeforeParseHook(rule, doc2, url);
@@ -4828,10 +4397,7 @@ var MyNovelReader = (function(exports) {
         method: "rule"
       };
     }
-    /**
-     * Parse using detection engine
-     */
-    async parseWithDetection(doc2, url, fallbackRule) {
+async parseWithDetection(doc2, url, fallbackRule) {
       var _a, _b, _c;
       let detection = this.detectionEngine.detect(doc2, url);
       if (this.shouldWaitForDetectionContent(detection.results.content.element)) {
@@ -4883,23 +4449,14 @@ var MyNovelReader = (function(exports) {
         method: fallbackRule ? "mixed" : "detection"
       };
     }
-    /**
-     * Quick check if page looks like a novel chapter
-     */
-    quickCheck(doc2 = document) {
+quickCheck(doc2 = document) {
       return this.detectionEngine.quickCheck(doc2);
     }
-    /**
-     * Get detection results without parsing
-     */
-    detect(doc2 = document, url) {
+detect(doc2 = document, url) {
       var _a;
       return this.detectionEngine.detect(doc2, url || ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href);
     }
-    /**
-     * Extract navigation links using rule
-     */
-    extractNavigation(doc2, rule) {
+extractNavigation(doc2, rule) {
       var _a, _b, _c;
       const result = {};
       if (((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false) {
@@ -4922,10 +4479,7 @@ var MyNovelReader = (function(exports) {
       }
       return result;
     }
-    /**
-     * Extract title using rule
-     */
-    extractTitle(doc2, rule) {
+extractTitle(doc2, rule) {
       var _a, _b, _c, _d, _e, _f;
       let chapter = "";
       let book;
@@ -4978,10 +4532,7 @@ var MyNovelReader = (function(exports) {
       }
       return { chapter, book };
     }
-    /**
-     * Select element with error handling
-     */
-    selectElement(doc2, selector) {
+selectElement(doc2, selector) {
       const selectors = selector.split(",").map((s) => s.trim()).filter(Boolean);
       for (const sel of selectors) {
         const el = this.smartSelect(doc2, sel);
@@ -5125,10 +4676,7 @@ var MyNovelReader = (function(exports) {
     sleep(ms) {
       return new Promise((resolve) => window.setTimeout(resolve, ms));
     }
-    /**
-     * Minimal jQuery-like selector support (:contains, :eq, :last)
-     */
-    smartSelect(doc2, selector) {
+smartSelect(doc2, selector) {
       try {
         const native = doc2.querySelector(selector);
         if (native) return native;
@@ -5190,10 +4738,7 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
-    /**
-     * Execute rule hooks
-     */
-    async executeHooks(rule, doc2, content) {
+async executeHooks(rule, doc2, content) {
       var _a, _b;
       let result = content;
       if ((_a = rule.hooks) == null ? void 0 : _a.beforeParse) {
@@ -5297,15 +4842,12 @@ var MyNovelReader = (function(exports) {
   };
   class SiteProtection {
     constructor(options = {}) {
-      this.originalHandlers = /* @__PURE__ */ new Map();
+      this.originalHandlers = new Map();
       this.cleanupFunctions = [];
       this.isActive = false;
       this.options = { ...DEFAULT_OPTIONS$1, ...options };
     }
-    /**
-     * Activate all protection measures
-     */
-    activate(options) {
+activate(options) {
       if (options) {
         this.options = { ...DEFAULT_OPTIONS$1, ...options };
       }
@@ -5342,19 +4884,13 @@ var MyNovelReader = (function(exports) {
         this.blockVisibilityDetection();
       }
     }
-    /**
-     * Deactivate all protection measures
-     */
-    deactivate() {
+deactivate() {
       if (!this.isActive) return;
       this.cleanupFunctions.forEach((cleanup) => cleanup());
       this.cleanupFunctions = [];
       this.isActive = false;
     }
-    /**
-     * Block unwanted redirects (meta refresh, location change, etc.)
-     */
-    blockRedirects() {
+blockRedirects() {
       const metaRefresh = document.querySelectorAll('meta[http-equiv="refresh"]');
       metaRefresh.forEach((meta) => meta.remove());
       const originalAssign = window.location.assign.bind(window.location);
@@ -5443,10 +4979,7 @@ var MyNovelReader = (function(exports) {
         window.setInterval = originalSetInterval;
       });
     }
-    /**
-     * Enable right-click context menu
-     */
-    enableRightClick() {
+enableRightClick() {
       const handler = (e) => {
         e.stopPropagation();
         return true;
@@ -5465,10 +4998,7 @@ var MyNovelReader = (function(exports) {
         document.oncontextmenu = originalOnContextMenu;
       });
     }
-    /**
-     * Enable text selection
-     */
-    enableSelection() {
+enableSelection() {
       const handler = (e) => {
         e.stopPropagation();
         return true;
@@ -5496,10 +5026,7 @@ var MyNovelReader = (function(exports) {
         style.remove();
       });
     }
-    /**
-     * Enable copy functionality
-     */
-    enableCopy() {
+enableCopy() {
       const handler = (e) => {
         e.stopPropagation();
         return true;
@@ -5515,10 +5042,7 @@ var MyNovelReader = (function(exports) {
         document.removeEventListener("cut", handler, true);
       });
     }
-    /**
-     * Intercept keyboard events to prevent sites from blocking keys
-     */
-    unlockKeyboard() {
+unlockKeyboard() {
       const handler = (e) => {
         if (this.isMnrEvent(e)) {
           return;
@@ -5602,10 +5126,7 @@ var MyNovelReader = (function(exports) {
       }
       return false;
     }
-    /**
-     * Block popup windows
-     */
-    blockPopups() {
+blockPopups() {
       const originalOpen = window.open;
       window.open = (url, target, features) => {
         var _a;
@@ -5626,10 +5147,7 @@ var MyNovelReader = (function(exports) {
         window.open = originalOpen;
       });
     }
-    /**
-     * Remove event hijacking (click interception, etc.)
-     */
-    removeEventHijacking() {
+removeEventHijacking() {
       const clickBlocker = (e) => {
         const target = e.target;
         const clickableParent = target.closest('a, button, [role="button"]');
@@ -5663,10 +5181,7 @@ var MyNovelReader = (function(exports) {
         document.removeEventListener("mouseup", mouseBlocker, true);
       });
     }
-    /**
-     * Block visibility change detection (prevents pausing/ads on tab switch)
-     */
-    blockVisibilityDetection() {
+blockVisibilityDetection() {
       Object.defineProperty(document, "hidden", {
         configurable: true,
         get: () => false
@@ -5692,13 +5207,9 @@ var MyNovelReader = (function(exports) {
         window.removeEventListener("focus", blurBlocker, true);
       });
     }
-    /**
-     * Remove all annoying overlays (ad overlays, modal blockers)
-     */
-    removeOverlays() {
+removeOverlays() {
       const overlaySelectors = [
-        // Common overlay classes/ids
-        '[class*="overlay"]',
+'[class*="overlay"]',
         '[class*="modal"]',
         '[class*="popup"]',
         '[class*="mask"]',
@@ -5706,8 +5217,7 @@ var MyNovelReader = (function(exports) {
         '[id*="overlay"]',
         '[id*="modal"]',
         '[id*="popup"]'
-        // Fixed/absolute position elements covering viewport
-      ];
+];
       document.querySelectorAll(overlaySelectors.join(", ")).forEach((el) => {
         const style = window.getComputedStyle(el);
         const rect = el.getBoundingClientRect();
@@ -5721,11 +5231,7 @@ var MyNovelReader = (function(exports) {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
     }
-    /**
-     * Clear all intervals and timeouts to reduce CPU usage
-     * Many novel sites use tracking scripts that create intervals causing high CPU/GC
-     */
-    clearTimers() {
+clearTimers() {
       const highestId = window.setInterval(() => {
       }, 0);
       for (let i = 0; i <= highestId; i++) {
@@ -5737,10 +5243,7 @@ var MyNovelReader = (function(exports) {
         window.clearTimeout(i);
       }
     }
-    /**
-     * Clean up suspicious scripts
-     */
-    cleanupScripts() {
+cleanupScripts() {
       const suspiciousPatterns = [
         /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i,
         /(^|[\\/._-])ads([\\/._-]|$)/i,
@@ -5888,22 +5391,13 @@ var MyNovelReader = (function(exports) {
         forceDetection: options.forceDetection
       });
     }
-    /**
-     * Set the callback for prompting user
-     */
-    setPromptCallback(callback) {
+setPromptCallback(callback) {
       this.promptCallback = callback;
     }
-    /**
-     * Set the callback for launching reader
-     */
-    setLaunchCallback(callback) {
+setLaunchCallback(callback) {
       this.launchCallback = callback;
     }
-    /**
-     * Run the auto-enable check
-     */
-    async check(doc2 = document) {
+async check(doc2 = document) {
       var _a, _b, _c, _d;
       const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
       const hostname = new URL(url).hostname;
@@ -5963,10 +5457,7 @@ var MyNovelReader = (function(exports) {
       this.currentDecision = decision;
       return decision;
     }
-    /**
-     * Execute the auto-enable flow
-     */
-    async execute(doc2 = document) {
+async execute(doc2 = document) {
       if (this.hasRun) {
         return;
       }
@@ -5995,10 +5486,7 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
-    /**
-     * Launch the reader
-     */
-    async launch(doc2, decision) {
+async launch(doc2, decision) {
       var _a, _b, _c, _d, _e;
       try {
         const chapter = await this.parser.parse(doc2);
@@ -6023,17 +5511,14 @@ var MyNovelReader = (function(exports) {
         console.error("[AutoEnableManager] Parse error:", e);
       }
     }
-    /**
-     * Merge all section pages into a single chapter
-     */
-    async mergeSectionPages(firstChapter, currentUrl) {
+async mergeSectionPages(firstChapter, currentUrl) {
       const parser = getParser();
       let mergedContent = firstChapter.content;
       let mergedRaw = firstChapter.rawContent;
       let nextSectionUrl = firstChapter.nextUrl;
       let nextChapterUrl = null;
       let lastUrl = currentUrl;
-      const seen = /* @__PURE__ */ new Set([currentUrl]);
+      const seen = new Set([currentUrl]);
       for (let i = 0; i < 10 && nextSectionUrl; i++) {
         const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
         if (seen.has(absNextSection)) break;
@@ -6067,10 +5552,7 @@ var MyNovelReader = (function(exports) {
         nextUrl: nextChapterUrl || firstChapter.nextUrl
       };
     }
-    /**
-     * Save detection result as user rule for current site
-     */
-    async saveRuleForCurrentSite(doc2, decision) {
+async saveRuleForCurrentSite(doc2, decision) {
       var _a;
       if (!decision.detection) return;
       const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
@@ -6079,10 +5561,7 @@ var MyNovelReader = (function(exports) {
       const ruleManager = getRuleManager();
       await ruleManager.saveUserRule(hostname, rule);
     }
-    /**
-     * Create a SiteRule from detection results
-     */
-    createRuleFromDetection(hostname, detection) {
+createRuleFromDetection(hostname, detection) {
       const content = detection.results.content;
       const navigation = detection.results.navigation;
       const title = detection.results.title;
@@ -6101,7 +5580,7 @@ var MyNovelReader = (function(exports) {
         meta: {
           source: "user",
           autoLaunch: true,
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          createdAt: ( new Date()).toISOString()
         }
       };
       if (navigation.next || navigation.prev || navigation.index) {
@@ -6123,29 +5602,17 @@ var MyNovelReader = (function(exports) {
       }
       return rule;
     }
-    /**
-     * Check if URL should be skipped
-     */
-    shouldSkip(url) {
+shouldSkip(url) {
       return (this.options.skipPatterns || []).some((pattern) => pattern.test(url));
     }
-    /**
-     * Get the current decision
-     */
-    getDecision() {
+getDecision() {
       return this.currentDecision;
     }
-    /**
-     * Reset manager state (for testing)
-     */
-    reset() {
+reset() {
       this.hasRun = false;
       this.currentDecision = void 0;
     }
-    /**
-     * Manual enable (force launch without detection)
-     */
-    async manualEnable(doc2 = document) {
+async manualEnable(doc2 = document) {
       var _a, _b, _c, _d, _e, _f;
       const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
       try {
@@ -6192,15 +5659,14 @@ var MyNovelReader = (function(exports) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  const BUILD_DATE = "2025-12-20";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
   * @license MIT
   **/
-  // @__NO_SIDE_EFFECTS__
-  function makeMap(str) {
-    const map = /* @__PURE__ */ Object.create(null);
+function makeMap(str) {
+    const map = Object.create(null);
     for (const key of str.split(",")) map[key] = 1;
     return (val) => val in map;
   }
@@ -6209,8 +5675,8 @@ var MyNovelReader = (function(exports) {
   const NOOP = () => {
   };
   const NO = () => false;
-  const isOn = (key) => key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && // uppercase letter
-  (key.charCodeAt(2) > 122 || key.charCodeAt(2) < 97);
+  const isOn = (key) => key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 &&
+(key.charCodeAt(2) > 122 || key.charCodeAt(2) < 97);
   const isModelListener = (key) => key.startsWith("onUpdate:");
   const extend = Object.assign;
   const remove = (arr, el) => {
@@ -6239,12 +5705,11 @@ var MyNovelReader = (function(exports) {
   };
   const isPlainObject$1 = (val) => toTypeString(val) === "[object Object]";
   const isIntegerKey = (key) => isString(key) && key !== "NaN" && key[0] !== "-" && "" + parseInt(key, 10) === key;
-  const isReservedProp = /* @__PURE__ */ makeMap(
-    // the leading comma is intentional so empty string "" is also included
-    ",key,ref,ref_for,ref_key,onVnodeBeforeMount,onVnodeMounted,onVnodeBeforeUpdate,onVnodeUpdated,onVnodeBeforeUnmount,onVnodeUnmounted"
+  const isReservedProp = makeMap(
+",key,ref,ref_for,ref_key,onVnodeBeforeMount,onVnodeMounted,onVnodeBeforeUpdate,onVnodeUpdated,onVnodeBeforeUnmount,onVnodeUnmounted"
   );
   const cacheStringFunction = (fn) => {
-    const cache = /* @__PURE__ */ Object.create(null);
+    const cache = Object.create(null);
     return ((str) => {
       const hit = cache[str];
       return hit || (cache[str] = fn(str));
@@ -6346,7 +5811,7 @@ var MyNovelReader = (function(exports) {
     return res.trim();
   }
   const specialBooleanAttrs = `itemscope,allowfullscreen,formnovalidate,ismap,nomodule,novalidate,readonly`;
-  const isSpecialBooleanAttr = /* @__PURE__ */ makeMap(specialBooleanAttrs);
+  const isSpecialBooleanAttr = makeMap(specialBooleanAttrs);
   function includeBooleanAttr(value) {
     return !!value || value === "";
   }
@@ -6432,9 +5897,8 @@ var MyNovelReader = (function(exports) {
   const stringifySymbol = (v, i = "") => {
     var _a;
     return (
-      // Symbol.description in es2019+ so we need to cast here to pass
-      // the lib: es2016 check
-      isSymbol(v) ? `Symbol(${(_a = v.description) != null ? _a : i})` : v
+
+isSymbol(v) ? `Symbol(${(_a = v.description) != null ? _a : i})` : v
     );
   };
   /**
@@ -6475,10 +5939,7 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
-    /**
-     * Resumes the effect scope, including all child scopes and effects.
-     */
-    resume() {
+resume() {
       if (this._active) {
         if (this._isPaused) {
           this._isPaused = false;
@@ -6505,21 +5966,13 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
-    /**
-     * This should only be called on non-detached scopes
-     * @internal
-     */
-    on() {
+on() {
       if (++this._on === 1) {
         this.prevScope = activeEffectScope;
         activeEffectScope = this;
       }
     }
-    /**
-     * This should only be called on non-detached scopes
-     * @internal
-     */
-    off() {
+off() {
       if (this._on > 0 && --this._on === 0) {
         activeEffectScope = this.prevScope;
         this.prevScope = void 0;
@@ -6566,7 +6019,7 @@ var MyNovelReader = (function(exports) {
     }
   }
   let activeSub;
-  const pausedQueueEffects = /* @__PURE__ */ new WeakSet();
+  const pausedQueueEffects = new WeakSet();
   class ReactiveEffect {
     constructor(fn) {
       this.fn = fn;
@@ -6592,10 +6045,7 @@ var MyNovelReader = (function(exports) {
         }
       }
     }
-    /**
-     * @internal
-     */
-    notify() {
+notify() {
       if (this.flags & 2 && !(this.flags & 32)) {
         return;
       }
@@ -6643,10 +6093,7 @@ var MyNovelReader = (function(exports) {
         this.runIfDirty();
       }
     }
-    /**
-     * @internal
-     */
-    runIfDirty() {
+runIfDirty() {
       if (isDirty(this)) {
         this.run();
       }
@@ -6847,8 +6294,7 @@ var MyNovelReader = (function(exports) {
     }
   }
   class Dep {
-    // TODO isolatedDeclarations "__v_skip"
-    constructor(computed2) {
+constructor(computed2) {
       this.computed = computed2;
       this.version = 0;
       this.activeLink = void 0;
@@ -6930,7 +6376,7 @@ var MyNovelReader = (function(exports) {
       link.dep.subs = link;
     }
   }
-  const targetMap = /* @__PURE__ */ new WeakMap();
+  const targetMap = new WeakMap();
   const ITERATE_KEY = Symbol(
     ""
   );
@@ -6944,7 +6390,7 @@ var MyNovelReader = (function(exports) {
     if (shouldTrack && activeSub) {
       let depsMap = targetMap.get(target);
       if (!depsMap) {
-        targetMap.set(target, depsMap = /* @__PURE__ */ new Map());
+        targetMap.set(target, depsMap = new Map());
       }
       let dep = depsMap.get(key);
       if (!dep) {
@@ -7094,8 +6540,7 @@ var MyNovelReader = (function(exports) {
     findLastIndex(fn, thisArg) {
       return apply(this, "findLastIndex", fn, thisArg, void 0, arguments);
     },
-    // flat, flatMap could benefit from ARRAY_ITERATE but are not straight-forward to implement
-    forEach(fn, thisArg) {
+forEach(fn, thisArg) {
       return apply(this, "forEach", fn, thisArg, void 0, arguments);
     },
     includes(...args) {
@@ -7107,8 +6552,7 @@ var MyNovelReader = (function(exports) {
     join(separator) {
       return reactiveReadArray(this).join(separator);
     },
-    // keys() iterator only reads `length`, no optimization required
-    lastIndexOf(...args) {
+lastIndexOf(...args) {
       return searchProxy(this, "lastIndexOf", args);
     },
     map(fn, thisArg) {
@@ -7129,8 +6573,7 @@ var MyNovelReader = (function(exports) {
     shift() {
       return noTracking(this, "shift");
     },
-    // slice could use ARRAY_ITERATE but also seems to beg for range tracking
-    some(fn, thisArg) {
+some(fn, thisArg) {
       return apply(this, "some", fn, thisArg, void 0, arguments);
     },
     splice(...args) {
@@ -7225,9 +6668,9 @@ var MyNovelReader = (function(exports) {
     resetTracking();
     return res;
   }
-  const isNonTrackableKeys = /* @__PURE__ */ makeMap(`__proto__,__v_isRef,__isVue`);
+  const isNonTrackableKeys = makeMap(`__proto__,__v_isRef,__isVue`);
   const builtInSymbols = new Set(
-    /* @__PURE__ */ Object.getOwnPropertyNames(Symbol).filter((key) => key !== "arguments" && key !== "caller").map((key) => Symbol[key]).filter(isSymbol)
+Object.getOwnPropertyNames(Symbol).filter((key) => key !== "arguments" && key !== "caller").map((key) => Symbol[key]).filter(isSymbol)
   );
   function hasOwnProperty(key) {
     if (!isSymbol(key)) key = String(key);
@@ -7250,9 +6693,9 @@ var MyNovelReader = (function(exports) {
       } else if (key === "__v_isShallow") {
         return isShallow2;
       } else if (key === "__v_raw") {
-        if (receiver === (isReadonly2 ? isShallow2 ? shallowReadonlyMap : readonlyMap : isShallow2 ? shallowReactiveMap : reactiveMap).get(target) || // receiver is not the reactive proxy, but has the same prototype
-        // this means the receiver is a user proxy of the reactive proxy
-        Object.getPrototypeOf(target) === Object.getPrototypeOf(receiver)) {
+        if (receiver === (isReadonly2 ? isShallow2 ? shallowReadonlyMap : readonlyMap : isShallow2 ? shallowReactiveMap : reactiveMap).get(target) ||
+
+Object.getPrototypeOf(target) === Object.getPrototypeOf(receiver)) {
           return target;
         }
         return;
@@ -7270,10 +6713,9 @@ var MyNovelReader = (function(exports) {
       const res = Reflect.get(
         target,
         key,
-        // if this is a proxy wrapping a ref, return methods using the raw ref
-        // as receiver so that we don't have to call `toRaw` on the ref in all
-        // its class methods
-        isRef(target) ? target : receiver
+
+
+isRef(target) ? target : receiver
       );
       if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
         return res;
@@ -7368,10 +6810,10 @@ var MyNovelReader = (function(exports) {
       return true;
     }
   }
-  const mutableHandlers = /* @__PURE__ */ new MutableReactiveHandler();
-  const readonlyHandlers = /* @__PURE__ */ new ReadonlyReactiveHandler();
-  const shallowReactiveHandlers = /* @__PURE__ */ new MutableReactiveHandler(true);
-  const shallowReadonlyHandlers = /* @__PURE__ */ new ReadonlyReactiveHandler(true);
+  const mutableHandlers = new MutableReactiveHandler();
+  const readonlyHandlers = new ReadonlyReactiveHandler();
+  const shallowReactiveHandlers = new MutableReactiveHandler(true);
+  const shallowReadonlyHandlers = new ReadonlyReactiveHandler(true);
   const toShallow = (value) => value;
   const getProto = (v) => Reflect.getPrototypeOf(v);
   function createIterableMethod(method, isReadonly2, isShallow2) {
@@ -7389,16 +6831,14 @@ var MyNovelReader = (function(exports) {
         isKeyOnly ? MAP_KEY_ITERATE_KEY : ITERATE_KEY
       );
       return {
-        // iterator protocol
-        next() {
+next() {
           const { value, done } = innerIterator.next();
           return done ? { value, done } : {
             value: isPair ? [wrap(value[0]), wrap(value[1])] : wrap(value),
             done
           };
         },
-        // iterable protocol
-        [Symbol.iterator]() {
+[Symbol.iterator]() {
           return this;
         }
       };
@@ -7560,21 +7000,21 @@ var MyNovelReader = (function(exports) {
     };
   }
   const mutableCollectionHandlers = {
-    get: /* @__PURE__ */ createInstrumentationGetter(false, false)
+    get: createInstrumentationGetter(false, false)
   };
   const shallowCollectionHandlers = {
-    get: /* @__PURE__ */ createInstrumentationGetter(false, true)
+    get: createInstrumentationGetter(false, true)
   };
   const readonlyCollectionHandlers = {
-    get: /* @__PURE__ */ createInstrumentationGetter(true, false)
+    get: createInstrumentationGetter(true, false)
   };
   const shallowReadonlyCollectionHandlers = {
-    get: /* @__PURE__ */ createInstrumentationGetter(true, true)
+    get: createInstrumentationGetter(true, true)
   };
-  const reactiveMap = /* @__PURE__ */ new WeakMap();
-  const shallowReactiveMap = /* @__PURE__ */ new WeakMap();
-  const readonlyMap = /* @__PURE__ */ new WeakMap();
-  const shallowReadonlyMap = /* @__PURE__ */ new WeakMap();
+  const reactiveMap = new WeakMap();
+  const shallowReactiveMap = new WeakMap();
+  const readonlyMap = new WeakMap();
+  const shallowReadonlyMap = new WeakMap();
   function targetTypeMap(rawType) {
     switch (rawType) {
       case "Object":
@@ -7802,13 +7242,10 @@ var MyNovelReader = (function(exports) {
       this["__v_isReadonly"] = !setter;
       this.isSSR = isSSR;
     }
-    /**
-     * @internal
-     */
-    notify() {
+notify() {
       this.flags |= 16;
-      if (!(this.flags & 8) && // avoid infinite self recursion
-      activeSub !== this) {
+      if (!(this.flags & 8) &&
+activeSub !== this) {
         batch(this, true);
         return true;
       }
@@ -7840,7 +7277,7 @@ var MyNovelReader = (function(exports) {
     return cRef;
   }
   const INITIAL_WATCHER_VALUE = {};
-  const cleanupMap = /* @__PURE__ */ new WeakMap();
+  const cleanupMap = new WeakMap();
   let activeWatcher = void 0;
   function onWatcherCleanup(cleanupFn, failSilently = false, owner = activeWatcher) {
     if (owner) {
@@ -7941,14 +7378,12 @@ var MyNovelReader = (function(exports) {
           try {
             const args = [
               newValue,
-              // pass undefined as the old value when it's changed for the first time
-              oldValue === INITIAL_WATCHER_VALUE ? void 0 : isMultiSource && oldValue[0] === INITIAL_WATCHER_VALUE ? [] : oldValue,
+oldValue === INITIAL_WATCHER_VALUE ? void 0 : isMultiSource && oldValue[0] === INITIAL_WATCHER_VALUE ? [] : oldValue,
               boundCleanup
             ];
             oldValue = newValue;
             call ? call(cb, 3, args) : (
-              // @ts-expect-error
-              cb(...args)
+cb(...args)
             );
           } finally {
             activeWatcher = currentWatcher;
@@ -7995,7 +7430,7 @@ var MyNovelReader = (function(exports) {
     if (depth <= 0 || !isObject(value) || value["__v_skip"]) {
       return value;
     }
-    seen = seen || /* @__PURE__ */ new Map();
+    seen = seen || new Map();
     if ((seen.get(value) || 0) >= depth) {
       return value;
     }
@@ -8043,8 +7478,7 @@ var MyNovelReader = (function(exports) {
         instance,
         11,
         [
-          // eslint-disable-next-line no-restricted-syntax
-          msg + args.map((a) => {
+msg + args.map((a) => {
             var _a, _b;
             return (_b = (_a = a.toString) == null ? void 0 : _a.call(a)) != null ? _b : JSON.stringify(a);
           }).join(""),
@@ -8057,8 +7491,8 @@ var MyNovelReader = (function(exports) {
       );
     } else {
       const warnArgs = [`[Vue warn]: ${msg}`, ...args];
-      if (trace.length && // avoid spamming console during tests
-      true) {
+      if (trace.length &&
+true) {
         warnArgs.push(`
 `, ...formatTrace(trace));
       }
@@ -8100,10 +7534,10 @@ var MyNovelReader = (function(exports) {
     const postfix = recurseCount > 0 ? `... (${recurseCount} recursive calls)` : ``;
     const isRoot = vnode.component ? vnode.component.parent == null : false;
     const open = ` at <${formatComponentName(
-      vnode.component,
-      vnode.type,
-      isRoot
-    )}`;
+    vnode.component,
+    vnode.type,
+    isRoot
+  )}`;
     const close = `>` + postfix;
     return vnode.props ? [open, ...formatProps(vnode.props), close] : [open + close];
   }
@@ -8202,7 +7636,7 @@ var MyNovelReader = (function(exports) {
   const pendingPostFlushCbs = [];
   let activePostFlushCbs = null;
   let postFlushIndex = 0;
-  const resolvedPromise = /* @__PURE__ */ Promise.resolve();
+  const resolvedPromise = Promise.resolve();
   let currentFlushPromise = null;
   function nextTick(fn) {
     const p2 = currentFlushPromise || resolvedPromise;
@@ -8227,8 +7661,8 @@ var MyNovelReader = (function(exports) {
     if (!(job.flags & 1)) {
       const jobId = getId(job);
       const lastJob = queue[queue.length - 1];
-      if (!lastJob || // fast path when the job id is larger than the tail
-      !(job.flags & 2) && jobId >= getId(lastJob)) {
+      if (!lastJob ||
+!(job.flags & 2) && jobId >= getId(lastJob)) {
         queue.push(job);
       } else {
         queue.splice(findInsertionIndex(jobId), 0, job);
@@ -8478,7 +7912,7 @@ var MyNovelReader = (function(exports) {
               namespace = "mathml";
             }
             if (parentComponent && parentComponent.isCE) {
-              (parentComponent.ce._teleportTargets || (parentComponent.ce._teleportTargets = /* @__PURE__ */ new Set())).add(target);
+              (parentComponent.ce._teleportTargets || (parentComponent.ce._teleportTargets = new Set())).add(target);
             }
             if (!disabled) {
               mount(target, targetAnchor);
@@ -8757,7 +8191,7 @@ var MyNovelReader = (function(exports) {
       isMounted: false,
       isLeaving: false,
       isUnmounting: false,
-      leavingVNodes: /* @__PURE__ */ new Map()
+      leavingVNodes: new Map()
     };
     onMounted(() => {
       state.isMounted = true;
@@ -8772,18 +8206,15 @@ var MyNovelReader = (function(exports) {
     mode: String,
     appear: Boolean,
     persisted: Boolean,
-    // enter
-    onBeforeEnter: TransitionHookValidator,
+onBeforeEnter: TransitionHookValidator,
     onEnter: TransitionHookValidator,
     onAfterEnter: TransitionHookValidator,
     onEnterCancelled: TransitionHookValidator,
-    // leave
-    onBeforeLeave: TransitionHookValidator,
+onBeforeLeave: TransitionHookValidator,
     onLeave: TransitionHookValidator,
     onAfterLeave: TransitionHookValidator,
     onLeaveCancelled: TransitionHookValidator,
-    // appear
-    onBeforeAppear: TransitionHookValidator,
+onBeforeAppear: TransitionHookValidator,
     onAppear: TransitionHookValidator,
     onAfterAppear: TransitionHookValidator,
     onAppearCancelled: TransitionHookValidator
@@ -8818,8 +8249,7 @@ var MyNovelReader = (function(exports) {
           rawProps,
           state,
           instance,
-          // #11061, ensure enterHooks is fresh after clone
-          (hooks) => enterHooks = hooks
+(hooks) => enterHooks = hooks
         );
         if (innerChild.type !== Comment) {
           setTransitionHooks(innerChild, enterHooks);
@@ -8890,7 +8320,7 @@ var MyNovelReader = (function(exports) {
     const { leavingVNodes } = state;
     let leavingVNodesCache = leavingVNodes.get(vnode.type);
     if (!leavingVNodesCache) {
-      leavingVNodesCache = /* @__PURE__ */ Object.create(null);
+      leavingVNodesCache = Object.create(null);
       leavingVNodes.set(vnode.type, leavingVNodesCache);
     }
     return leavingVNodesCache;
@@ -8947,8 +8377,7 @@ var MyNovelReader = (function(exports) {
         if (el[leaveCbKey]) {
           el[leaveCbKey](
             true
-            /* cancelled */
-          );
+);
         }
         const leavingVNode = leavingVNodesCache[key];
         if (leavingVNode && isSameVNodeType(vnode, leavingVNode) && leavingVNode.el[leaveCbKey]) {
@@ -8994,8 +8423,7 @@ var MyNovelReader = (function(exports) {
         if (el[enterCbKey]) {
           el[enterCbKey](
             true
-            /* cancelled */
-          );
+);
         }
         if (state.isUnmounting) {
           return remove2();
@@ -9097,18 +8525,17 @@ var MyNovelReader = (function(exports) {
     }
     return ret;
   }
-  // @__NO_SIDE_EFFECTS__
-  function defineComponent(options, extraOptions) {
+function defineComponent(options, extraOptions) {
     return isFunction(options) ? (
-      // #8236: extend call and options.name access are considered side-effects
-      // by Rollup, so we have to wrap it in a pure-annotated IIFE.
-      /* @__PURE__ */ (() => extend({ name: options.name }, extraOptions, { setup: options }))()
+
+
+(() => extend({ name: options.name }, extraOptions, { setup: options }))()
     ) : options;
   }
   function markAsyncBoundary(instance) {
     instance.ids = [instance.ids[0] + instance.ids[2]++ + "-", 0, 0];
   }
-  const pendingSetRefMap = /* @__PURE__ */ new WeakMap();
+  const pendingSetRefMap = new WeakMap();
   function setRef(rawRef, oldRawRef, parentSuspense, vnode, isUnmount = false) {
     if (isArray(rawRef)) {
       rawRef.forEach(
@@ -9254,8 +8681,7 @@ var MyNovelReader = (function(exports) {
       hook,
       keepAliveRoot,
       true
-      /* prepend */
-    );
+);
     onUnmounted(() => {
       remove(keepAliveRoot[type], injected);
     }, target);
@@ -9355,9 +8781,9 @@ var MyNovelReader = (function(exports) {
     return getPublicInstance(i.parent);
   };
   const publicPropertiesMap = (
-    // Move PURE marker to new line to workaround compiler discarding it
-    // due to type annotation
-    /* @__PURE__ */ extend(/* @__PURE__ */ Object.create(null), {
+
+
+extend( Object.create(null), {
       $: (i) => i,
       $el: (i) => i.vnode.el,
       $data: (i) => i.data,
@@ -9421,16 +8847,14 @@ var MyNovelReader = (function(exports) {
         }
         return publicGetter(instance);
       } else if (
-        // css module (injected by vue-loader)
-        (cssModule = type.__cssModules) && (cssModule = cssModule[key])
+(cssModule = type.__cssModules) && (cssModule = cssModule[key])
       ) {
         return cssModule;
       } else if (ctx !== EMPTY_OBJ && hasOwn(ctx, key)) {
         accessCache[key] = 4;
         return ctx[key];
       } else if (
-        // global properties
-        globalProperties = appContext.config.globalProperties, hasOwn(globalProperties, key)
+globalProperties = appContext.config.globalProperties, hasOwn(globalProperties, key)
       ) {
         {
           return globalProperties[key];
@@ -9488,15 +8912,13 @@ var MyNovelReader = (function(exports) {
       callHook$1(options.beforeCreate, instance, "bc");
     }
     const {
-      // state
-      data: dataOptions,
+data: dataOptions,
       computed: computedOptions,
       methods,
       watch: watchOptions,
       provide: provideOptions,
       inject: injectOptions,
-      // lifecycle
-      created,
+created,
       beforeMount,
       mounted,
       beforeUpdate,
@@ -9512,11 +8934,9 @@ var MyNovelReader = (function(exports) {
       renderTriggered,
       errorCaptured,
       serverPrefetch,
-      // public API
-      expose,
+expose,
       inheritAttrs,
-      // assets
-      components,
+components,
       directives,
       filters
     } = options;
@@ -9734,11 +9154,9 @@ var MyNovelReader = (function(exports) {
     data: mergeDataFn,
     props: mergeEmitsOrPropsOptions,
     emits: mergeEmitsOrPropsOptions,
-    // objects
-    methods: mergeObjectOptions,
+methods: mergeObjectOptions,
     computed: mergeObjectOptions,
-    // lifecycle
-    beforeCreate: mergeAsArray,
+beforeCreate: mergeAsArray,
     created: mergeAsArray,
     beforeMount: mergeAsArray,
     mounted: mergeAsArray,
@@ -9752,13 +9170,10 @@ var MyNovelReader = (function(exports) {
     deactivated: mergeAsArray,
     errorCaptured: mergeAsArray,
     serverPrefetch: mergeAsArray,
-    // assets
-    components: mergeObjectOptions,
+components: mergeObjectOptions,
     directives: mergeObjectOptions,
-    // watch
-    watch: mergeWatchOptions,
-    // provide / inject
-    provide: mergeDataFn,
+watch: mergeWatchOptions,
+provide: mergeDataFn,
     inject: mergeInject
   };
   function mergeDataFn(to, from) {
@@ -9792,15 +9207,15 @@ var MyNovelReader = (function(exports) {
     return to ? [...new Set([].concat(to, from))] : from;
   }
   function mergeObjectOptions(to, from) {
-    return to ? extend(/* @__PURE__ */ Object.create(null), to, from) : from;
+    return to ? extend( Object.create(null), to, from) : from;
   }
   function mergeEmitsOrPropsOptions(to, from) {
     if (to) {
       if (isArray(to) && isArray(from)) {
-        return [.../* @__PURE__ */ new Set([...to, ...from])];
+        return [... new Set([...to, ...from])];
       }
       return extend(
-        /* @__PURE__ */ Object.create(null),
+Object.create(null),
         normalizePropsOrEmits(to),
         normalizePropsOrEmits(from != null ? from : {})
       );
@@ -9811,7 +9226,7 @@ var MyNovelReader = (function(exports) {
   function mergeWatchOptions(to, from) {
     if (!to) return from;
     if (!from) return to;
-    const merged = extend(/* @__PURE__ */ Object.create(null), to);
+    const merged = extend( Object.create(null), to);
     for (const key in from) {
       merged[key] = mergeAsArray(to[key], from[key]);
     }
@@ -9832,10 +9247,10 @@ var MyNovelReader = (function(exports) {
       mixins: [],
       components: {},
       directives: {},
-      provides: /* @__PURE__ */ Object.create(null),
-      optionsCache: /* @__PURE__ */ new WeakMap(),
-      propsCache: /* @__PURE__ */ new WeakMap(),
-      emitsCache: /* @__PURE__ */ new WeakMap()
+      provides: Object.create(null),
+      optionsCache: new WeakMap(),
+      propsCache: new WeakMap(),
+      emitsCache: new WeakMap()
     };
   }
   let uid$1 = 0;
@@ -9848,7 +9263,7 @@ var MyNovelReader = (function(exports) {
         rootProps = null;
       }
       const context = createAppContext();
-      const installedPlugins = /* @__PURE__ */ new WeakSet();
+      const installedPlugins = new WeakSet();
       const pluginCleanupFns = [];
       let isMounted = false;
       const app2 = context.app = {
@@ -10081,8 +9496,8 @@ var MyNovelReader = (function(exports) {
       }
     }
     let handlerName;
-    let handler = props[handlerName = toHandlerKey(event)] || // also try camelCase event handler (#2249)
-    props[handlerName = toHandlerKey(camelize(event))];
+    let handler = props[handlerName = toHandlerKey(event)] ||
+props[handlerName = toHandlerKey(camelize(event))];
     if (!handler && isModelListener2) {
       handler = props[handlerName = toHandlerKey(hyphenate(event))];
     }
@@ -10110,7 +9525,7 @@ var MyNovelReader = (function(exports) {
       );
     }
   }
-  const mixinEmitsCache = /* @__PURE__ */ new WeakMap();
+  const mixinEmitsCache = new WeakMap();
   function normalizeEmitsOptions(comp, appContext, asMixin = false) {
     const cache = asMixin ? mixinEmitsCache : appContext.emitsCache;
     const cached = cache.get(comp);
@@ -10191,8 +9606,8 @@ var MyNovelReader = (function(exports) {
           get(target, key, receiver) {
             warn$1(
               `Property '${String(
-                key
-              )}' was accessed via 'this'. Avoid using 'this' in templates.`
+              key
+            )}' was accessed via 'this'. Avoid using 'this' in templates.`
             );
             return Reflect.get(target, key, receiver);
           }
@@ -10359,7 +9774,7 @@ var MyNovelReader = (function(exports) {
   function initProps(instance, rawProps, isStateful, isSSR = false) {
     const props = {};
     const attrs = createInternalObject();
-    instance.propsDefaults = /* @__PURE__ */ Object.create(null);
+    instance.propsDefaults = Object.create(null);
     setFullProps(instance, rawProps, props, attrs);
     for (const key in instance.propsOptions[0]) {
       if (!(key in props)) {
@@ -10387,10 +9802,9 @@ var MyNovelReader = (function(exports) {
     const [options] = instance.propsOptions;
     let hasAttrsChanged = false;
     if (
-      // always force full diff in dev
-      // - #1942 if hmr is enabled with sfc component
-      // - vite#872 non-sfc component used by sfc component
-      (optimized || patchFlag > 0) && !(patchFlag & 16)
+
+
+(optimized || patchFlag > 0) && !(patchFlag & 16)
     ) {
       if (patchFlag & 8) {
         const propsToUpdate = instance.vnode.dynamicProps;
@@ -10431,14 +9845,14 @@ var MyNovelReader = (function(exports) {
       }
       let kebabKey;
       for (const key in rawCurrentProps) {
-        if (!rawProps || // for camelCase
-        !hasOwn(rawProps, key) && // it's possible the original props was passed in as kebab-case
-        // and converted to camelCase (#955)
-        ((kebabKey = hyphenate(key)) === key || !hasOwn(rawProps, kebabKey))) {
+        if (!rawProps ||
+!hasOwn(rawProps, key) &&
+
+((kebabKey = hyphenate(key)) === key || !hasOwn(rawProps, kebabKey))) {
           if (options) {
-            if (rawPrevProps && // for camelCase
-            (rawPrevProps[key] !== void 0 || // for kebab-case
-            rawPrevProps[kebabKey] !== void 0)) {
+            if (rawPrevProps &&
+(rawPrevProps[key] !== void 0 ||
+rawPrevProps[kebabKey] !== void 0)) {
               props[key] = resolvePropValue(
                 options,
                 rawCurrentProps,
@@ -10535,21 +9949,19 @@ var MyNovelReader = (function(exports) {
       }
       if (opt[
         0
-        /* shouldCast */
-      ]) {
+]) {
         if (isAbsent && !hasDefault) {
           value = false;
         } else if (opt[
           1
-          /* shouldCastTrue */
-        ] && (value === "" || value === hyphenate(key))) {
+] && (value === "" || value === hyphenate(key))) {
           value = true;
         }
       }
     }
     return value;
   }
-  const mixinPropsCache = /* @__PURE__ */ new WeakMap();
+  const mixinPropsCache = new WeakMap();
   function normalizePropsOptions(comp, appContext, asMixin = false) {
     const cache = asMixin ? mixinPropsCache : appContext.propsCache;
     const cached = cache.get(comp);
@@ -10615,12 +10027,10 @@ var MyNovelReader = (function(exports) {
           }
           prop[
             0
-            /* shouldCast */
-          ] = shouldCast;
+] = shouldCast;
           prop[
             1
-            /* shouldCastTrue */
-          ] = shouldCastTrue;
+] = shouldCastTrue;
           if (shouldCast || hasOwn(prop, "default")) {
             needCastKeys.push(normalizedKey);
           }
@@ -11113,17 +10523,15 @@ var MyNovelReader = (function(exports) {
         const oldVNode = oldChildren[i];
         const newVNode = newChildren[i];
         const container = (
-          // oldVNode may be an errored async setup() component inside Suspense
-          // which will not have a mounted element
-          oldVNode.el && // - In the case of a Fragment, we need to provide the actual parent
-          // of the Fragment itself so it can move its children.
-          (oldVNode.type === Fragment || // - In the case of different nodes, there is going to be a replacement
-          // which also requires the correct parent container
-          !isSameVNodeType(oldVNode, newVNode) || // - In the case of a component, it could contain anything.
-          oldVNode.shapeFlag & (6 | 64 | 128)) ? hostParentNode(oldVNode.el) : (
-            // In other cases, the parent container is not actually used so we
-            // just pass the block element here to avoid a DOM parentNode call.
-            fallbackContainer
+
+oldVNode.el &&
+
+(oldVNode.type === Fragment ||
+
+!isSameVNodeType(oldVNode, newVNode) ||
+oldVNode.shapeFlag & (6 | 64 | 128)) ? hostParentNode(oldVNode.el) : (
+
+fallbackContainer
           )
         );
         patch(
@@ -11179,11 +10587,10 @@ var MyNovelReader = (function(exports) {
         hostInsert(fragmentStartAnchor, container, anchor);
         hostInsert(fragmentEndAnchor, container, anchor);
         mountChildren(
-          // #10007
-          // such fragment like `<></>` will be compiled into
-          // a fragment which doesn't have a children.
-          // In this case fallback to an empty array
-          n2.children || [],
+
+
+
+n2.children || [],
           container,
           fragmentEndAnchor,
           parentComponent,
@@ -11193,9 +10600,9 @@ var MyNovelReader = (function(exports) {
           optimized
         );
       } else {
-        if (patchFlag > 0 && patchFlag & 64 && dynamicChildren && // #2715 the previous fragment could've been a BAILed one as a result
-        // of renderSlot() with no valid children
-        n1.dynamicChildren) {
+        if (patchFlag > 0 && patchFlag & 64 && dynamicChildren &&
+
+n1.dynamicChildren) {
           patchBlockChildren(
             n1.dynamicChildren,
             dynamicChildren,
@@ -11206,18 +10613,16 @@ var MyNovelReader = (function(exports) {
             slotScopeIds
           );
           if (
-            // #2080 if the stable fragment has a key, it's a <template v-for> that may
-            //  get moved around. Make sure all root level vnodes inherit el.
-            // #2134 or if it's a component root, it may also get moved around
-            // as the component is being moved.
-            n2.key != null || parentComponent && n2 === parentComponent.subTree
+
+
+
+n2.key != null || parentComponent && n2 === parentComponent.subTree
           ) {
             traverseStaticChildren(
               n1,
               n2,
               true
-              /* shallow */
-            );
+);
           }
         } else {
           patchChildren(
@@ -11322,8 +10727,8 @@ var MyNovelReader = (function(exports) {
           }
           toggleRecurse(instance, true);
           {
-            if (root.ce && // @ts-expect-error _def is private
-            root.ce._def.shadowRoot !== false) {
+            if (root.ce &&
+root.ce._def.shadowRoot !== false) {
               root.ce._injectChildStyle(type);
             }
             const subTree = instance.subTree = renderComponentRoot(instance);
@@ -11392,10 +10797,8 @@ var MyNovelReader = (function(exports) {
           patch(
             prevTree,
             nextTree,
-            // parent may have changed if it's in a teleport
-            hostParentNode(prevTree.el),
-            // anchor may have changed if it's in a fragment
-            getNextHostNode(prevTree),
+hostParentNode(prevTree.el),
+getNextHostNode(prevTree),
             instance,
             parentSuspense,
             namespace
@@ -11631,7 +11034,7 @@ var MyNovelReader = (function(exports) {
       } else {
         const s1 = i;
         const s2 = i;
-        const keyToNewIndexMap = /* @__PURE__ */ new Map();
+        const keyToNewIndexMap = new Map();
         for (i = s2; i <= e2; i++) {
           const nextChild = c2[i] = optimized ? cloneIfMounted(c2[i]) : normalizeVNode(c2[i]);
           if (nextChild.key != null) {
@@ -11692,8 +11095,7 @@ var MyNovelReader = (function(exports) {
           const nextChild = c2[nextIndex];
           const anchorVNode = c2[nextIndex + 1];
           const anchor = nextIndex + 1 < l2 ? (
-            // #13559, fallback to el placeholder for unresolved async component
-            anchorVNode.el || anchorVNode.placeholder
+anchorVNode.el || anchorVNode.placeholder
           ) : parentAnchor;
           if (newIndexToOldIndexMap[i] === 0) {
             patch(
@@ -11762,8 +11164,7 @@ var MyNovelReader = (function(exports) {
             if (el._isLeaving) {
               el[leaveCbKey](
                 true
-                /* cancelled */
-              );
+);
             }
             leave(el, () => {
               remove22();
@@ -11831,13 +11232,13 @@ var MyNovelReader = (function(exports) {
             internals,
             doRemove
           );
-        } else if (dynamicChildren && // #5154
-        // when v-once is used inside a block, setBlockTracking(-1) marks the
-        // parent block with hasOnce: true
-        // so that it doesn't take the fast path during unmount - otherwise
-        // components nested in v-once are never unmounted.
-        !dynamicChildren.hasOnce && // #1153: fast path should not be taken for non-stable (v-for) fragments
-        (type !== Fragment || patchFlag > 0 && patchFlag & 64)) {
+        } else if (dynamicChildren &&
+
+
+
+
+!dynamicChildren.hasOnce &&
+(type !== Fragment || patchFlag > 0 && patchFlag & 64)) {
           unmountChildren(
             dynamicChildren,
             parentComponent,
@@ -12007,8 +11408,8 @@ var MyNovelReader = (function(exports) {
           if (!shallow && c2.patchFlag !== -2)
             traverseStaticChildren(c1, c2);
         }
-        if (c2.type === Text && // avoid cached text nodes retaining detached dom nodes
-        c2.patchFlag !== -1) {
+        if (c2.type === Text &&
+c2.patchFlag !== -1) {
           c2.el = c1.el;
         }
         if (c2.type === Comment && !c2.el) {
@@ -12193,15 +11594,15 @@ var MyNovelReader = (function(exports) {
     } else if (children) {
       vnode.shapeFlag |= isString(children) ? 8 : 16;
     }
-    if (isBlockTreeEnabled > 0 && // avoid a block node from tracking itself
-    !isBlockNode && // has current parent block
-    currentBlock && // presence of a patch flag indicates this node needs patching on updates.
-    // component nodes also should always be patched, because even if the
-    // component doesn't need to update, it needs to persist the instance on to
-    // the next vnode so that it can be properly unmounted later.
-    (vnode.patchFlag > 0 || shapeFlag & 6) && // the EVENTS flag is only for hydration and if it is the only flag, the
-    // vnode should not be considered dynamic due to handler caching.
-    vnode.patchFlag !== 32) {
+    if (isBlockTreeEnabled > 0 &&
+!isBlockNode &&
+currentBlock &&
+
+
+
+(vnode.patchFlag > 0 || shapeFlag & 6) &&
+
+vnode.patchFlag !== 32) {
       currentBlock.push(vnode);
     }
     return vnode;
@@ -12216,8 +11617,7 @@ var MyNovelReader = (function(exports) {
         type,
         props,
         true
-        /* mergeRef: true */
-      );
+);
       if (children) {
         normalizeChildren(cloned, children);
       }
@@ -12273,10 +11673,9 @@ var MyNovelReader = (function(exports) {
       props: mergedProps,
       key: mergedProps && normalizeKey(mergedProps),
       ref: extraProps && extraProps.ref ? (
-        // #2078 in the case of <component :is="vnode" ref="extra"/>
-        // if the vnode itself already has a ref, cloneVNode will need to merge
-        // the refs so the single vnode can be set on multiple refs
-        mergeRef && ref3 ? isArray(ref3) ? ref3.concat(normalizeRef(extraProps)) : [ref3, normalizeRef(extraProps)] : normalizeRef(extraProps)
+
+
+mergeRef && ref3 ? isArray(ref3) ? ref3.concat(normalizeRef(extraProps)) : [ref3, normalizeRef(extraProps)] : normalizeRef(extraProps)
       ) : ref3,
       scopeId: vnode.scopeId,
       slotScopeIds: vnode.slotScopeIds,
@@ -12286,21 +11685,19 @@ var MyNovelReader = (function(exports) {
       targetAnchor: vnode.targetAnchor,
       staticCount: vnode.staticCount,
       shapeFlag: vnode.shapeFlag,
-      // if the vnode is cloned with extra props, we can no longer assume its
-      // existing patch flag to be reliable and need to add the FULL_PROPS flag.
-      // note: preserve flag for fragments since they use the flag for children
-      // fast paths only.
-      patchFlag: extraProps && vnode.type !== Fragment ? patchFlag === -1 ? 16 : patchFlag | 16 : patchFlag,
+
+
+
+patchFlag: extraProps && vnode.type !== Fragment ? patchFlag === -1 ? 16 : patchFlag | 16 : patchFlag,
       dynamicProps: vnode.dynamicProps,
       dynamicChildren: vnode.dynamicChildren,
       appContext: vnode.appContext,
       dirs: vnode.dirs,
       transition,
-      // These should technically only be non-null on mounted VNodes. However,
-      // they *should* be copied for kept-alive vnodes. So we just always copy
-      // them since them being non-null during a mount doesn't affect the logic as
-      // they will simply be overwritten.
-      component: vnode.component,
+
+
+
+component: vnode.component,
       suspense: vnode.suspense,
       ssContent: vnode.ssContent && cloneVNode(vnode.ssContent),
       ssFallback: vnode.ssFallback && cloneVNode(vnode.ssFallback),
@@ -12331,8 +11728,7 @@ var MyNovelReader = (function(exports) {
       return createVNode(
         Fragment,
         null,
-        // #3666, avoid reference pollution when reusing vnode
-        child.slice()
+child.slice()
       );
     } else if (isVNode(child)) {
       return cloneIfMounted(child);
@@ -12430,18 +11826,14 @@ var MyNovelReader = (function(exports) {
       parent,
       appContext,
       root: null,
-      // to be immediately set
-      next: null,
+next: null,
       subTree: null,
-      // will be set synchronously right after creation
-      effect: null,
+effect: null,
       update: null,
-      // will be set synchronously right after creation
-      job: null,
+job: null,
       scope: new EffectScope(
         true
-        /* detached */
-      ),
+),
       render: null,
       proxy: null,
       exposed: null,
@@ -12451,22 +11843,15 @@ var MyNovelReader = (function(exports) {
       ids: parent ? parent.ids : ["", 0, 0],
       accessCache: null,
       renderCache: [],
-      // local resolved assets
-      components: null,
+components: null,
       directives: null,
-      // resolved props and emits options
-      propsOptions: normalizePropsOptions(type, appContext),
+propsOptions: normalizePropsOptions(type, appContext),
       emitsOptions: normalizeEmitsOptions(type, appContext),
-      // emit
-      emit: null,
-      // to be set immediately
-      emitted: null,
-      // props default value
-      propsDefaults: EMPTY_OBJ,
-      // inheritAttrs
-      inheritAttrs: type.inheritAttrs,
-      // state
-      ctx: EMPTY_OBJ,
+emit: null,
+emitted: null,
+propsDefaults: EMPTY_OBJ,
+inheritAttrs: type.inheritAttrs,
+ctx: EMPTY_OBJ,
       data: EMPTY_OBJ,
       props: EMPTY_OBJ,
       attrs: EMPTY_OBJ,
@@ -12474,14 +11859,12 @@ var MyNovelReader = (function(exports) {
       refs: EMPTY_OBJ,
       setupState: EMPTY_OBJ,
       setupContext: null,
-      // suspense related
-      suspense,
+suspense,
       suspenseId: suspense ? suspense.pendingId : 0,
       asyncDep: null,
       asyncResolved: false,
-      // lifecycle hooks
-      // not using enums here because it results in computed properties
-      isMounted: false,
+
+isMounted: false,
       isUnmounted: false,
       isDeactivated: false,
       bc: null,
@@ -12562,7 +11945,7 @@ var MyNovelReader = (function(exports) {
   }
   function setupStatefulComponent(instance, isSSR) {
     const Component = instance.type;
-    instance.accessCache = /* @__PURE__ */ Object.create(null);
+    instance.accessCache = Object.create(null);
     instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
     const { setup } = Component;
     if (setup) {
@@ -12736,7 +12119,7 @@ var MyNovelReader = (function(exports) {
   const tt = typeof window !== "undefined" && window.trustedTypes;
   if (tt) {
     try {
-      policy = /* @__PURE__ */ tt.createPolicy("vue", {
+      policy = tt.createPolicy("vue", {
         createHTML: (val) => val
       });
     } catch (e) {
@@ -12746,7 +12129,7 @@ var MyNovelReader = (function(exports) {
   const svgNS = "http://www.w3.org/2000/svg";
   const mathmlNS = "http://www.w3.org/1998/Math/MathML";
   const doc = typeof document !== "undefined" ? document : null;
-  const templateContainer = doc && /* @__PURE__ */ doc.createElement("template");
+  const templateContainer = doc && doc.createElement("template");
   const nodeOps = {
     insert: (child, parent, anchor) => {
       parent.insertBefore(child, anchor || null);
@@ -12778,11 +12161,10 @@ var MyNovelReader = (function(exports) {
     setScopeId(el, id) {
       el.setAttribute(id, "");
     },
-    // __UNSAFE__
-    // Reason: innerHTML.
-    // Static content here can only come from compiled templates.
-    // As long as the user only uses trusted templates, this is safe.
-    insertStaticContent(content, parent, anchor, namespace, start, end) {
+
+
+
+insertStaticContent(content, parent, anchor, namespace, start, end) {
       const before = anchor ? anchor.previousSibling : parent.lastChild;
       if (start && (start === end || start.nextSibling)) {
         while (true) {
@@ -12804,10 +12186,8 @@ var MyNovelReader = (function(exports) {
         parent.insertBefore(template, anchor);
       }
       return [
-        // first
-        before ? before.nextSibling : parent.firstChild,
-        // last
-        anchor ? anchor.previousSibling : parent.lastChild
+before ? before.nextSibling : parent.firstChild,
+anchor ? anchor.previousSibling : parent.lastChild
       ];
     }
   };
@@ -12832,7 +12212,7 @@ var MyNovelReader = (function(exports) {
     leaveActiveClass: String,
     leaveToClass: String
   };
-  const TransitionPropsValidators = /* @__PURE__ */ extend(
+  const TransitionPropsValidators = extend(
     {},
     BaseTransitionPropsValidators,
     DOMTransitionPropsValidators
@@ -12842,7 +12222,7 @@ var MyNovelReader = (function(exports) {
     t.props = TransitionPropsValidators;
     return t;
   };
-  const Transition = /* @__PURE__ */ decorate$1(
+  const Transition = decorate$1(
     (props, { slots }) => h(BaseTransition, resolveTransitionProps(props), slots)
   );
   const callHook = (hook, args = []) => {
@@ -12985,7 +12365,7 @@ var MyNovelReader = (function(exports) {
   }
   function addTransitionClass(el, cls) {
     cls.split(/\s+/).forEach((c) => c && el.classList.add(c));
-    (el[vtcKey] || (el[vtcKey] = /* @__PURE__ */ new Set())).add(cls);
+    (el[vtcKey] || (el[vtcKey] = new Set())).add(cls);
   }
   function removeTransitionClass(el, cls) {
     cls.split(/\s+/).forEach((c) => c && el.classList.remove(c));
@@ -13104,8 +12484,7 @@ var MyNovelReader = (function(exports) {
   const vShowOriginalDisplay = Symbol("_vod");
   const vShowHidden = Symbol("_vsh");
   const vShow = {
-    // used for prop mismatch check during hydration
-    name: "show",
+name: "show",
     beforeMount(el, { value }, { transition }) {
       el[vShowOriginalDisplay] = el.style.display === "none" ? "" : el.style.display;
       if (transition && value) {
@@ -13262,13 +12641,12 @@ var MyNovelReader = (function(exports) {
       return;
     }
     const tag = el.tagName;
-    if (key === "value" && tag !== "PROGRESS" && // custom elements may use _value internally
-    !tag.includes("-")) {
+    if (key === "value" && tag !== "PROGRESS" &&
+!tag.includes("-")) {
       const oldValue = tag === "OPTION" ? el.getAttribute("value") || "" : el.value;
       const newValue = value == null ? (
-        // #11647: value should be set as empty string for null and undefined,
-        // but <input type="checkbox"> should be set as 'on'.
-        el.type === "checkbox" ? "on" : ""
+
+el.type === "checkbox" ? "on" : ""
       ) : String(value);
       if (oldValue !== newValue || !("_value" in el)) {
         el.value = newValue;
@@ -13339,7 +12717,7 @@ var MyNovelReader = (function(exports) {
     return [event, options];
   }
   let cachedNow = 0;
-  const p = /* @__PURE__ */ Promise.resolve();
+  const p = Promise.resolve();
   const getNow = () => cachedNow || (p.then(() => cachedNow = 0), cachedNow = Date.now());
   function createInvoker(initialValue, instance) {
     const invoker = (e) => {
@@ -13373,8 +12751,8 @@ var MyNovelReader = (function(exports) {
       return value;
     }
   }
-  const isNativeOn = (key) => key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 && // lowercase letter
-  key.charCodeAt(2) > 96 && key.charCodeAt(2) < 123;
+  const isNativeOn = (key) => key.charCodeAt(0) === 111 && key.charCodeAt(1) === 110 &&
+key.charCodeAt(2) > 96 && key.charCodeAt(2) < 123;
   const patchProp = (el, key, prevValue, nextValue, namespace, parentComponent) => {
     const isSVG = namespace === "svg";
     if (key === "class") {
@@ -13391,8 +12769,7 @@ var MyNovelReader = (function(exports) {
         patchAttr(el, key, nextValue, isSVG, parentComponent, key !== "value");
       }
     } else if (
-      // #11081 force set props for possible async custom element
-      el._isVueCE && (/[A-Z]/.test(key) || !isString(nextValue))
+el._isVueCE && (/[A-Z]/.test(key) || !isString(nextValue))
     ) {
       patchDOMProp(el, camelize(key), nextValue, parentComponent, key);
     } else {
@@ -13479,8 +12856,7 @@ var MyNovelReader = (function(exports) {
         addEventListener(el, "change", onCompositionEnd);
       }
     },
-    // set value on mounted so it's after min/max for type="range"
-    mounted(el, { value }) {
+mounted(el, { value }) {
       el.value = value == null ? "" : value;
     },
     beforeUpdate(el, { value, oldValue, modifiers: { lazy, trim, number } }, vnode) {
@@ -13503,8 +12879,7 @@ var MyNovelReader = (function(exports) {
     }
   };
   const vModelCheckbox = {
-    // #4096 array checkboxes need to be deep traversed
-    deep: true,
+deep: true,
     created(el, _, vnode) {
       el[assignKey] = getModelAssigner(vnode);
       addEventListener(el, "change", () => {
@@ -13535,8 +12910,7 @@ var MyNovelReader = (function(exports) {
         }
       });
     },
-    // set initial checked on mount to wait for true-value/false-value
-    mounted: setChecked,
+mounted: setChecked,
     beforeUpdate(el, binding, vnode) {
       el[assignKey] = getModelAssigner(vnode);
       setChecked(el, binding, vnode);
@@ -13558,8 +12932,7 @@ var MyNovelReader = (function(exports) {
     }
   }
   const vModelSelect = {
-    // <select multiple> value need to be deep traversed
-    deep: true,
+deep: true,
     created(el, { value, modifiers: { number } }, vnode) {
       const isSetModel = isSet(value);
       addEventListener(el, "change", () => {
@@ -13576,9 +12949,8 @@ var MyNovelReader = (function(exports) {
       });
       el[assignKey] = getModelAssigner(vnode);
     },
-    // set value in mounted & updated because <select> relies on its children
-    // <option>s.
-    mounted(el, { value }) {
+
+mounted(el, { value }) {
       setSelected(el, value);
     },
     beforeUpdate(el, _binding, vnode) {
@@ -13651,7 +13023,7 @@ var MyNovelReader = (function(exports) {
       return fn(event, ...args);
     }));
   };
-  const rendererOptions = /* @__PURE__ */ extend({ patchProp }, nodeOps);
+  const rendererOptions = extend({ patchProp }, nodeOps);
   let renderer;
   function ensureRenderer() {
     return renderer || (renderer = createRenderer(rendererOptions));
@@ -19151,9 +18523,8 @@ var MyNovelReader = (function(exports) {
     "﹩": "＄",
     "﹪": "％",
     "﹫": "＠"
-    // '\u300C': '\u300C',
-    // '\u300D': '\u300D',
-  };
+
+};
   function sify(text2) {
     const isString2 = typeof text2 === "string";
     if (!isString2) {
@@ -19217,8 +18588,7 @@ var MyNovelReader = (function(exports) {
   let activePinia;
   const setActivePinia = (pinia2) => activePinia = pinia2;
   const piniaSymbol = (
-    /* istanbul ignore next */
-    Symbol()
+Symbol()
   );
   function isPlainObject(o) {
     return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
@@ -19254,11 +18624,10 @@ var MyNovelReader = (function(exports) {
         return this;
       },
       _p,
-      // it's actually undefined here
-      // @ts-expect-error
-      _a: null,
+
+_a: null,
       _e: scope,
-      _s: /* @__PURE__ */ new Map(),
+      _s: new Map(),
       state
     });
     return pinia2;
@@ -19307,8 +18676,7 @@ var MyNovelReader = (function(exports) {
     return target;
   }
   const skipHydrateSymbol = (
-    /* istanbul ignore next */
-    Symbol()
+Symbol()
   );
   function shouldHydrate(obj) {
     return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
@@ -19392,8 +18760,7 @@ var MyNovelReader = (function(exports) {
         assign($state, newState);
       });
     } : (
-      /* istanbul ignore next */
-      noop
+noop
     );
     function $dispose() {
       scope.stop();
@@ -19449,8 +18816,7 @@ var MyNovelReader = (function(exports) {
     };
     const partialStore = {
       _p: pinia2,
-      // _s: scope,
-      $id,
+$id,
       $onAction: addSubscription.bind(null, actionSubscriptions),
       $patch,
       $reset,
@@ -19525,9 +18891,8 @@ var MyNovelReader = (function(exports) {
     isSyncListening = true;
     return store;
   }
-  /*! #__NO_SIDE_EFFECTS__ */
-  // @__NO_SIDE_EFFECTS__
-  function defineStore(idOrOptions, setup, setupOptions) {
+
+function defineStore(idOrOptions, setup, setupOptions) {
     let id;
     let options;
     const isSetupStore = typeof setup === "function";
@@ -19540,9 +18905,9 @@ var MyNovelReader = (function(exports) {
     }
     function useStore(pinia2, hot) {
       const hasContext = hasInjectionContext();
-      pinia2 = // in test mode, ignore the argument provided as we can always retrieve a
-      // pinia instance with getActivePinia()
-      pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
+      pinia2 =
+
+pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       if (pinia2)
         setActivePinia(pinia2);
       pinia2 = activePinia;
@@ -19560,8 +18925,8 @@ var MyNovelReader = (function(exports) {
     return useStore;
   }
   const MAX_CACHED_CHAPTERS = 8;
-  const useReaderStore = /* @__PURE__ */ defineStore("reader", () => {
-    const isActive2 = ref(false);
+  const useReaderStore = defineStore("reader", () => {
+    const isActive = ref(false);
     const isLoading = ref(false);
     const isLoadingPrev = ref(false);
     const isLoadingNext = ref(false);
@@ -19572,9 +18937,9 @@ var MyNovelReader = (function(exports) {
     const toastTimer = ref(null);
     const scrollPercent = ref(0);
     const history = ref([]);
-    const loadedUrls = ref(/* @__PURE__ */ new Set());
-    const originalContents = ref(/* @__PURE__ */ new Map());
-    const originalTitles = ref(/* @__PURE__ */ new Map());
+    const loadedUrls = ref( new Set());
+    const originalContents = ref( new Map());
+    const originalTitles = ref( new Map());
     const currentConversionMode = ref("none");
     const pendingNextAbort = ref(null);
     const pendingPrevAbort = ref(null);
@@ -19585,8 +18950,8 @@ var MyNovelReader = (function(exports) {
     const tocOriginal = ref([]);
     const tocLoading = ref(false);
     const tocAbort = ref(null);
-    const cachedContents = ref(/* @__PURE__ */ new Map());
-    const persistedUrls = ref(/* @__PURE__ */ new Set());
+    const cachedContents = ref( new Map());
+    const persistedUrls = ref( new Set());
     const chapter = computed(() => {
       var _a;
       return ((_a = chapters.value[currentChapterIndex.value]) == null ? void 0 : _a.chapter) || null;
@@ -19642,11 +19007,11 @@ var MyNovelReader = (function(exports) {
       return ((_a = chapter.value) == null ? void 0 : _a.url) || "";
     });
     function activate() {
-      isActive2.value = true;
+      isActive.value = true;
       error.value = null;
     }
     function deactivate() {
-      isActive2.value = false;
+      isActive.value = false;
       chapters.value = [];
       currentChapterIndex.value = 0;
       error.value = null;
@@ -20076,37 +19441,25 @@ var MyNovelReader = (function(exports) {
       }
     }
     const CHAPTER_TITLE_PATTERNS = [
-      // Chinese chapter formats: 第X章/节/回/话/篇/集/卷
-      /^.{0,10}第.{1,10}[章节回话篇集卷]/,
-      // Numbered chapters: 1. xxx, 001 xxx, etc.
-      /^\d{1,4}[.、\s]/,
-      // Chapter keyword at start
-      /^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
-      // English format
-      /^chapter\s*\d+/i,
+/^.{0,10}第.{1,10}[章节回话篇集卷]/,
+/^\d{1,4}[.、\s]/,
+/^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
+/^chapter\s*\d+/i,
       /^(prologue|epilogue|preface)/i
     ];
     const NON_CHAPTER_TITLE_PATTERNS = [
-      // Announcements and notices
-      /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
+/^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
       /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更|上架通知|卷末感言/,
       /必看|必读|请务必阅读|读者必看/,
-      // Author-related
-      /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
-      // Promotional content
-      /求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
+/^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
+/求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
       /新书|推荐|安利|宣传|书单|书评/,
-      // Metadata pages
-      /^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
-      // Locked/VIP markers that are standalone entries (not part of chapter title)
-      /^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
-      // External links and community
-      /官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
-      // Common non-content links
-      /登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
+/^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
+/^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
+/官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
+/登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
       /首页|返回|上一页|下一页|翻页/,
-      // Volume/section labels only (e.g., "章节2", "卷一", not real chapter titles)
-      /^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
+/^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
       /^(正文|番外|VIP卷?|免费章节?)\s*$/
     ];
     function extractBookId(url) {
@@ -20116,8 +19469,7 @@ var MyNovelReader = (function(exports) {
           /\/book\/(\d+)/,
           /\/chapter\/(\d+)\//,
           /\/(\d+)\/\d+(?:\.html?)?$/,
-          // Faloo (飞卢): /{bookId}_{chapterId}.html
-          /\/(\d+)_\d+(?:\.html?)?$/,
+/\/(\d+)_\d+(?:\.html?)?$/,
           /[?&](?:book_?id|bid|id)=(\d+)/i
         ];
         for (const p2 of patterns) {
@@ -20139,7 +19491,7 @@ var MyNovelReader = (function(exports) {
     }
     function filterTocEntries(entries2) {
       if (entries2.length < 5) return entries2;
-      const bookIdCounts = /* @__PURE__ */ new Map();
+      const bookIdCounts = new Map();
       for (const entry of entries2) {
         const bookId = extractBookId(entry.url);
         if (bookId) {
@@ -20158,8 +19510,8 @@ var MyNovelReader = (function(exports) {
         const bookId = extractBookId(entry.url);
         return !bookId || bookId === dominantBookId;
       }) : entries2;
-      const patternCounts = /* @__PURE__ */ new Map();
-      const patternEntries = /* @__PURE__ */ new Map();
+      const patternCounts = new Map();
+      const patternEntries = new Map();
       for (const entry of sameBookEntries) {
         const pattern = extractUrlPattern(entry.url);
         patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
@@ -20169,7 +19521,7 @@ var MyNovelReader = (function(exports) {
         patternEntries.get(pattern).push(entry);
       }
       const sortedPatterns = Array.from(patternCounts.entries()).sort((a, b) => b[1] - a[1]);
-      const dominantPatterns = /* @__PURE__ */ new Set();
+      const dominantPatterns = new Set();
       const totalEntries = sameBookEntries.length;
       for (const [pattern, count] of sortedPatterns) {
         const ratio = count / totalEntries;
@@ -20213,8 +19565,7 @@ var MyNovelReader = (function(exports) {
       if (entries2.length < 5) return entries2;
       const entriesWithNum = entries2.map((entry, index) => ({
         index,
-        // Keep original index
-        entry,
+entry,
         num: extractChapterNumber(entry.title)
       })).filter((item) => item.num !== null);
       if (entriesWithNum.length < entries2.length * 0.3 || entriesWithNum.length < 3) {
@@ -20257,12 +19608,10 @@ var MyNovelReader = (function(exports) {
     function extractTocLinkTitle(a) {
       const titleSelectors = [
         '[class*="chapterItemTitle"]',
-        // Qidian mobile: _chapterItemTitle_xxx
-        '[class*="chapter-title"]',
+'[class*="chapter-title"]',
         '[class*="chapterTitle"]',
         "h2",
-        // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
-        "h3"
+"h3"
       ];
       for (const sel of titleSelectors) {
         const el = a.querySelector(sel);
@@ -20323,7 +19672,7 @@ var MyNovelReader = (function(exports) {
       return candidates;
     }
     function dedupeTocEntries(candidates) {
-      const seenUrls = /* @__PURE__ */ new Map();
+      const seenUrls = new Map();
       const results = [];
       for (let i = candidates.length - 1; i >= 0; i--) {
         const entry = candidates[i];
@@ -20423,8 +19772,8 @@ var MyNovelReader = (function(exports) {
       return candidates[0].url;
     }
     async function loadTocEntriesPaged(indexUrl, currentUrl, setAbort) {
-      const visitedPages = /* @__PURE__ */ new Set();
-      const seenChapterUrls = /* @__PURE__ */ new Set();
+      const visitedPages = new Set();
+      const seenChapterUrls = new Set();
       const allCandidates = [];
       const aborters = [];
       let aborted = false;
@@ -20494,7 +19843,7 @@ var MyNovelReader = (function(exports) {
       }
     }
     function $reset() {
-      isActive2.value = false;
+      isActive.value = false;
       isLoading.value = false;
       isLoadingPrev.value = false;
       isLoadingNext.value = false;
@@ -20642,8 +19991,7 @@ var MyNovelReader = (function(exports) {
       }
     }
     return {
-      // State
-      isActive: isActive2,
+isActive,
       isLoading,
       isLoadingPrev,
       isLoadingNext,
@@ -20660,8 +20008,7 @@ var MyNovelReader = (function(exports) {
       tocLoading,
       cachedContents,
       persistedUrls,
-      // Getters
-      title,
+title,
       bookTitle,
       content,
       hasNext,
@@ -20671,8 +20018,7 @@ var MyNovelReader = (function(exports) {
       method,
       tocWithStatus,
       currentChapterUrl,
-      // Actions
-      activate,
+activate,
       deactivate,
       setChapter,
       setCurrentChapter,
@@ -20764,7 +20110,7 @@ var MyNovelReader = (function(exports) {
         nextSectionUrl = first.nextUrl;
       }
     }
-    const seen = /* @__PURE__ */ new Set([startUrl]);
+    const seen = new Set([startUrl]);
     for (let i = 0; i < 10 && nextSectionUrl; i++) {
       const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
       if (seen.has(absNextSection)) break;
@@ -20880,13 +20226,10 @@ var MyNovelReader = (function(exports) {
       }
       const invalidPatterns = [
         /^https?:\/\/[^/]+\/?$/i,
-        // Root domain
-        /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
-        // Homepage variants
-        /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
+/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
+/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
         /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
-        // Book index without chapter
-        /\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
+/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
         /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i
       ];
       for (const pattern of invalidPatterns) {
@@ -20912,28 +20255,17 @@ var MyNovelReader = (function(exports) {
   function detectTocPage(content, pageUrl, currentChapterUrl) {
     const tocUrlPatterns = [
       /\/book\/\d+\.html?$/i,
-      // /book/123.htm
-      /\/book\/\d+\/?$/i,
-      // /book/123/ or /book/123
-      /\/novel\/\d+\/?$/i,
-      // /novel/123/
-      /\/xiaoshuo\/\d+\/?$/i,
-      // /xiaoshuo/123/
-      /\/info\/\d+\.html?$/i,
-      // /info/123.html
-      /\/\d+\/index\.html?$/i,
-      // /123/index.html
-      /\/booklist/i,
-      // /booklist
-      /\/catalog/i,
-      // /catalog
-      /\/contents?\.html?$/i,
-      // /content.html or /contents.html
-      /\/list\.html?$/i,
-      // /list.html
-      /\/toc\.html?$/i
-      // /toc.html
-    ];
+/\/book\/\d+\/?$/i,
+/\/novel\/\d+\/?$/i,
+/\/xiaoshuo\/\d+\/?$/i,
+/\/info\/\d+\.html?$/i,
+/\/\d+\/index\.html?$/i,
+/\/booklist/i,
+/\/catalog/i,
+/\/contents?\.html?$/i,
+/\/list\.html?$/i,
+/\/toc\.html?$/i
+];
     for (const pattern of tocUrlPatterns) {
       if (pattern.test(pageUrl)) {
         return true;
@@ -21098,7 +20430,7 @@ var MyNovelReader = (function(exports) {
     blockPopups: true
   };
   const STORAGE_KEY = "mnr-config";
-  const useConfigStore = /* @__PURE__ */ defineStore("config", () => {
+  const useConfigStore = defineStore("config", () => {
     const themeId = ref("light");
     const reading = ref({ ...DEFAULT_READING });
     const behavior = ref({ ...DEFAULT_BEHAVIOR });
@@ -21215,16 +20547,13 @@ var MyNovelReader = (function(exports) {
       save();
     }
     return {
-      // State
-      themeId,
+themeId,
       reading,
       behavior,
       protection,
       customCSS,
-      // Getters
-      theme,
-      // Actions
-      setTheme,
+theme,
+setTheme,
       updateReading,
       updateBehavior,
       updateProtection,
@@ -21237,8 +20566,8 @@ var MyNovelReader = (function(exports) {
       $reset
     };
   });
-  const useRuleStore = /* @__PURE__ */ defineStore("rule", () => {
-    const userRules = ref(/* @__PURE__ */ new Map());
+  const useRuleStore = defineStore("rule", () => {
+    const userRules = ref( new Map());
     const builtInRules2 = ref([]);
     const isLoading = ref(false);
     const currentRule = ref(null);
@@ -21360,7 +20689,7 @@ var MyNovelReader = (function(exports) {
       }
     }
     function $reset() {
-      userRules.value = /* @__PURE__ */ new Map();
+      userRules.value = new Map();
       builtInRules2.value = [];
       isLoading.value = false;
       currentRule.value = null;
@@ -21368,20 +20697,17 @@ var MyNovelReader = (function(exports) {
       editingRule.value = null;
     }
     return {
-      // State
-      userRules,
+userRules,
       builtInRules: builtInRules2,
       isLoading,
       currentRule,
       isEditing,
       editingRule,
-      // Getters
-      userRuleCount,
+userRuleCount,
       builtInRuleCount,
       totalRuleCount,
       userRuleList,
-      // Actions
-      initialize: initialize2,
+initialize: initialize2,
       matchRule,
       saveUserRule,
       deleteUserRule,
@@ -21509,7 +20835,7 @@ ul, ol {
   const _hoisted_4$7 = { class: "mnr-confidence-text" };
   const _hoisted_5$6 = { class: "mnr-results" };
   const _hoisted_6$5 = { class: "mnr-checkbox-label" };
-  const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$8 = defineComponent({
     __name: "DetectionPrompt",
     props: {
       decision: {},
@@ -21626,10 +20952,10 @@ ul, ol {
     }
     return target;
   };
-  const DetectionPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-91cf13cd"]]);
+  const DetectionPrompt = _export_sfc(_sfc_main$8, [["__scopeId", "data-v-91cf13cd"]]);
   function useVirtualChapters(chapters, options = {}) {
     const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
-    const heights = ref(/* @__PURE__ */ new Map());
+    const heights = ref( new Map());
     const virtualWindow = ref({ start: 0, end: windowSize });
     const totalHeight = computed(
       () => Array.from(heights.value.values()).reduce((sum, h2) => sum + h2, 0)
@@ -21717,17 +21043,14 @@ ul, ol {
       { immediate: true, flush: "sync" }
     );
     return {
-      // State
-      virtualWindow,
+virtualWindow,
       heights,
-      // Computed
-      visibleChapters,
+visibleChapters,
       topSpacer,
       bottomSpacer,
       totalHeight,
       averageHeight,
-      // Methods
-      setHeight,
+setHeight,
       getOffsetBefore,
       updateWindow,
       reset
@@ -21797,7 +21120,7 @@ ul, ol {
     key: 0,
     class: "mnr-progress-text"
   };
-  const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$7 = defineComponent({
     __name: "ProgressIndicator",
     props: {
       showText: { type: Boolean, default: false },
@@ -21850,7 +21173,7 @@ ul, ol {
       };
     }
   });
-  const ProgressIndicator = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__scopeId", "data-v-bc314d2a"]]);
+  const ProgressIndicator = _export_sfc(_sfc_main$7, [["__scopeId", "data-v-bc314d2a"]]);
   const _hoisted_1$6 = {
     key: 0,
     class: "mnr-floating-toolbar"
@@ -21862,7 +21185,7 @@ ul, ol {
     key: 0,
     class: "mnr-fab-badge"
   };
-  const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$6 = defineComponent({
     __name: "FloatingToolbar",
     props: {
       cacheRunning: { type: Boolean },
@@ -21912,7 +21235,7 @@ ul, ol {
       };
     }
   });
-  const FloatingToolbar = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__scopeId", "data-v-63e5b047"]]);
+  const FloatingToolbar = _export_sfc(_sfc_main$6, [["__scopeId", "data-v-63e5b047"]]);
   const _hoisted_1$5 = { class: "mnr-drawer-header" };
   const _hoisted_2$5 = { class: "mnr-drawer-title" };
   const _hoisted_3$5 = {
@@ -21953,7 +21276,7 @@ ul, ol {
     class: "mnr-cached-icon",
     title: "临时缓存"
   };
-  const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$5 = defineComponent({
     __name: "ChapterDrawer",
     props: {
       isOpen: { type: Boolean },
@@ -22095,7 +21418,7 @@ ul, ol {
       };
     }
   });
-  const ChapterDrawer = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-6d373c76"]]);
+  const ChapterDrawer = _export_sfc(_sfc_main$5, [["__scopeId", "data-v-6d373c76"]]);
   const _hoisted_1$4 = { class: "mnr-settings-panel" };
   const _hoisted_2$4 = { class: "mnr-settings-header" };
   const _hoisted_3$4 = { class: "mnr-settings-content" };
@@ -22137,7 +21460,7 @@ ul, ol {
     class: "mnr-cache-progress"
   };
   const _hoisted_35 = { class: "mnr-cache-count" };
-  const _sfc_main$4 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$4 = defineComponent({
     __name: "SettingsPanel",
     props: {
       visible: { type: Boolean },
@@ -22469,7 +21792,7 @@ ul, ol {
   const _hoisted_2$3 = { class: "mnr-picker-selector" };
   const _hoisted_3$3 = { class: "mnr-picker-controls" };
   const _hoisted_4$3 = { class: "mnr-picker-label" };
-  const _sfc_main$3 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$3 = defineComponent({
     __name: "ElementPicker",
     props: {
       mode: { default: "content" },
@@ -22479,7 +21802,7 @@ ul, ol {
     setup(__props, { expose: __expose, emit: __emit }) {
       const props = __props;
       const emit2 = __emit;
-      const isActive2 = ref(false);
+      const isActive = ref(false);
       const hoveredElement = ref(null);
       const highlightRect = ref(null);
       const overlayRef = ref(null);
@@ -22591,12 +21914,12 @@ ul, ol {
         return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1");
       }
       function handleMouseMove(e) {
-        if (!isActive2.value) return;
+        if (!isActive.value) return;
         mouseX.value = e.clientX;
         mouseY.value = e.clientY;
       }
       function tick() {
-        if (!isActive2.value) return;
+        if (!isActive.value) return;
         const overlay = overlayRef.value;
         if (overlay) {
           overlay.style.pointerEvents = "none";
@@ -22612,7 +21935,7 @@ ul, ol {
         rafId.value = globalThis.requestAnimationFrame(tick);
       }
       function handleClick(e) {
-        if (!isActive2.value) return;
+        if (!isActive.value) return;
         const overlay = overlayRef.value;
         if (overlay) {
           overlay.style.pointerEvents = "none";
@@ -22645,7 +21968,7 @@ ul, ol {
         deactivate();
       }
       function activate() {
-        isActive2.value = true;
+        isActive.value = true;
         document.addEventListener("mousemove", handleMouseMove, true);
         document.addEventListener("click", handleClick, true);
         window.addEventListener("keydown", handleKeyDown, true);
@@ -22654,7 +21977,7 @@ ul, ol {
         rafId.value = globalThis.requestAnimationFrame(tick);
       }
       function deactivate() {
-        isActive2.value = false;
+        isActive.value = false;
         hoveredElement.value = null;
         highlightRect.value = null;
         document.removeEventListener("mousemove", handleMouseMove, true);
@@ -22671,27 +21994,27 @@ ul, ol {
       watch(
         () => props.active,
         (newVal) => {
-          if (newVal && !isActive2.value) {
+          if (newVal && !isActive.value) {
             activate();
-          } else if (!newVal && isActive2.value) {
+          } else if (!newVal && isActive.value) {
             deactivate();
           }
         },
         { immediate: true }
       );
       onUnmounted(() => {
-        if (isActive2.value) {
+        if (isActive.value) {
           deactivate();
         }
       });
       __expose({
         activate,
         deactivate,
-        isActive: isActive2
+        isActive
       });
       return (_ctx, _cache) => {
         return openBlock(), createBlock(Teleport, { to: "body" }, [
-          isActive2.value ? (openBlock(), createElementBlock("div", {
+          isActive.value ? (openBlock(), createElementBlock("div", {
             key: 0,
             ref_key: "overlayRef",
             ref: overlayRef,
@@ -22723,7 +22046,7 @@ ul, ol {
       };
     }
   });
-  const ElementPicker = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-4e64cc86"]]);
+  const ElementPicker = _export_sfc(_sfc_main$3, [["__scopeId", "data-v-4e64cc86"]]);
   const _hoisted_1$2 = { class: "mnr-selector-preview" };
   const _hoisted_2$2 = { class: "mnr-preview-header" };
   const _hoisted_3$2 = { class: "mnr-preview-label" };
@@ -22748,7 +22071,7 @@ ul, ol {
     class: "mnr-highlight-overlay"
   };
   const _hoisted_15$1 = { class: "mnr-highlight-label" };
-  const _sfc_main$2 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$2 = defineComponent({
     __name: "SelectorPreview",
     props: {
       label: {},
@@ -22956,7 +22279,7 @@ ul, ol {
       };
     }
   });
-  const SelectorPreview = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-31cda065"]]);
+  const SelectorPreview = _export_sfc(_sfc_main$2, [["__scopeId", "data-v-31cda065"]]);
   const _hoisted_1$1 = { class: "mnr-editor-header" };
   const _hoisted_2$1 = { class: "mnr-editor-title" };
   const _hoisted_3$1 = { class: "mnr-editor-tabs" };
@@ -22987,7 +22310,7 @@ ul, ol {
   const _hoisted_25 = { class: "mnr-form-group" };
   const _hoisted_26 = { class: "mnr-editor-footer" };
   const _hoisted_27 = ["disabled"];
-  const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+  const _sfc_main$1 = defineComponent({
     __name: "RuleEditorPanel",
     props: {
       rule: {},
@@ -23463,7 +22786,7 @@ ${value}`;
       };
     }
   });
-  const RuleEditorPanel = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-15d78857"]]);
+  const RuleEditorPanel = _export_sfc(_sfc_main$1, [["__scopeId", "data-v-15d78857"]]);
   const _hoisted_1 = { class: "mnr-reader" };
   const _hoisted_2 = {
     key: 0,
@@ -23489,7 +22812,7 @@ ${value}`;
   };
   const SCROLL_THROTTLE_MS = 16;
   const INTERSECTION_ROOT_MARGIN = "800px";
-  const _sfc_main = /* @__PURE__ */ defineComponent({
+  const _sfc_main = defineComponent({
     __name: "ReaderView",
     setup(__props) {
       function throttle(fn, delay) {
@@ -23526,7 +22849,7 @@ ${value}`;
       const drawerOpen = ref(false);
       const isNavigating = ref(false);
       const showControls = ref(true);
-      const chapterRefs = /* @__PURE__ */ new Map();
+      const chapterRefs = new Map();
       let topObserver = null;
       let bottomObserver = null;
       let lastScrollTop = 0;
@@ -23827,20 +23150,17 @@ ${value}`;
       }
       useKeyboardShortcuts(
         [
-          // Escape - close panels (works in inputs too)
-          {
+{
             key: "escape",
             handler: handleEscape,
             allowInInputs: true
           },
-          // Tab - toggle chapter drawer
-          {
+{
             key: "tab",
             handler: toggleDrawer,
             preventDefault: true
           },
-          // Enter - go to index page
-          {
+{
             key: "enter",
             handler: () => {
               if (indexUrl.value) {
@@ -23849,53 +23169,45 @@ ${value}`;
             },
             preventDefault: true
           },
-          // S or , - toggle settings
-          {
+{
             key: ["s", ","],
             handler: toggleSettings,
             preventDefault: true
           },
-          // E - toggle rule editor
-          {
+{
             key: "e",
             handler: toggleRuleEditor,
             preventDefault: true
           },
-          // Q - exit reader
-          {
+{
             key: "q",
             handler: exitReader,
             preventDefault: true,
             stopPropagation: true
           },
-          // Left arrow or P - previous chapter
-          {
+{
             key: ["arrowleft", "p"],
             handler: () => navigateChapter("prev"),
             preventDefault: true,
             stopPropagation: true
           },
-          // Right arrow or N - next chapter
-          {
+{
             key: ["arrowright", "n"],
             handler: () => navigateChapter("next"),
             preventDefault: true,
             stopPropagation: true
           },
-          // Up arrow - scroll up
-          {
+{
             key: "arrowup",
             handler: () => scrollReader("up"),
             preventDefault: true
           },
-          // Down arrow - scroll down
-          {
+{
             key: "arrowdown",
             handler: () => scrollReader("down"),
             preventDefault: true
           },
-          // Space - page scroll
-          {
+{
             key: " ",
             handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"),
             preventDefault: true
@@ -24169,7 +23481,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-77ee432d"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-77ee432d"]]);
   const appState = {
     isInitialized: false,
     isActive: false,
@@ -24239,7 +23551,7 @@ ${value}`;
     return new Promise((resolve) => {
       const { mountPoint, cleanup } = createShadowMount("mnr-prompt-root");
       const showPrompt2 = ref(true);
-      const PromptWrapper = /* @__PURE__ */ defineComponent({
+      const PromptWrapper = defineComponent({
         setup() {
           const handleRespond = (response) => {
             showPrompt2.value = false;
@@ -24391,42 +23703,10 @@ ${value}`;
     manager.setLaunchCallback(launchReader);
     await manager.manualEnable(document);
   }
-  function isActive() {
-    return appState.isActive;
-  }
-  function getVersion() {
-    return { version: VERSION, buildDate: BUILD_DATE };
-  }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initialize);
   } else {
     initialize();
   }
-  exports.AutoEnableManager = AutoEnableManager;
-  exports.BUILD_DATE = BUILD_DATE;
-  exports.ConfidenceScorer = ConfidenceScorer;
-  exports.ContentDetector = ContentDetector;
-  exports.ContentProcessor = ContentProcessor;
-  exports.DetectionEngine = DetectionEngine;
-  exports.NavigationDetector = NavigationDetector;
-  exports.Parser = Parser;
-  exports.RuleStorage = RuleStorage;
-  exports.SiteProtection = SiteProtection;
-  exports.THEMES = THEMES;
-  exports.TitleDetector = TitleDetector;
-  exports.VERSION = VERSION;
-  exports.closeReader = closeReader;
-  exports.getAutoEnableManager = getAutoEnableManager;
-  exports.getParser = getParser;
-  exports.getRuleManager = getRuleManager;
-  exports.getSiteProtection = getSiteProtection;
-  exports.getVersion = getVersion;
-  exports.initialize = initialize;
-  exports.isActive = isActive;
-  exports.manualEnable = manualEnable;
-  exports.useConfigStore = useConfigStore;
-  exports.useReaderStore = useReaderStore;
-  exports.useRuleStore = useRuleStore;
-  Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-  return exports;
-})({});
+
+})();
