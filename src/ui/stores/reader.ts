@@ -4,7 +4,7 @@
 
 import { computed, ref } from 'vue';
 import { type ConversionMode, convertHTML, convertText } from '@/core/converter';
-import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
+import { joinHtml, normalizeAbsoluteUrl, normalizeCiwemaoChapterUrl } from '@/core/utils';
 import { defineStore } from 'pinia';
 import { getParser } from '@/core/parser';
 import type { ParsedChapter } from '@/core/parser';
@@ -279,10 +279,18 @@ export const useReaderStore = defineStore('reader', () => {
       return false;
     }
 
-    const targetUrl = isNext ? refChapter?.chapter.nextUrl : refChapter?.chapter.prevUrl;
-    if (!targetUrl) {
+    const rawTargetUrl = isNext ? refChapter?.chapter.nextUrl : refChapter?.chapter.prevUrl;
+    if (!rawTargetUrl) {
       showToast(endMessage, 'info');
       return false;
+    }
+    const targetUrl = normalizeCiwemaoChapterUrl(rawTargetUrl);
+    if (targetUrl !== rawTargetUrl) {
+      if (isNext) {
+        refChapter.chapter.nextUrl = targetUrl;
+      } else {
+        refChapter.chapter.prevUrl = targetUrl;
+      }
     }
 
     // Don't load if targetUrl is the index/TOC page
@@ -1776,6 +1784,7 @@ function fetchAndParseUrl(
   referer?: string
 ): { promise: Promise<Document | null>; abort: () => void } {
   const gmXhr = getGmXhr();
+  const normalizedUrl = normalizeCiwemaoChapterUrl(url);
 
   if (!gmXhr) {
     console.error('[MNR] GM_xmlhttpRequest not available');
@@ -1794,7 +1803,7 @@ function fetchAndParseUrl(
     }
     request = gmXhr({
       method: 'GET',
-      url,
+      url: normalizedUrl,
       headers,
       overrideMimeType: 'text/html;charset=' + document.characterSet,
       onload: response => {
@@ -1804,10 +1813,10 @@ function fetchAndParseUrl(
             const doc = parser.parseFromString(response.responseText, 'text/html');
             // Set base URL for relative links
             const base = doc.createElement('base');
-            base.href = url;
+            base.href = normalizedUrl;
             doc.head.insertBefore(base, doc.head.firstChild);
             // Store URL in a custom property (location may not be configurable)
-            (doc as Document & { _mnrUrl: string })._mnrUrl = url;
+            (doc as Document & { _mnrUrl: string })._mnrUrl = normalizedUrl;
             resolve(doc);
           } catch (e) {
             console.error('[MNR] Parse error:', e);
@@ -1849,7 +1858,8 @@ function fetchAndParseUrl(
  */
 function isInvalidChapterUrl(url: string, currentChapterUrl?: string): boolean {
   try {
-    const parsed = new URL(url);
+    const normalizedUrl = normalizeCiwemaoChapterUrl(url);
+    const parsed = new URL(normalizedUrl);
     const pathname = parsed.pathname;
 
     // Homepage/root path
@@ -1878,10 +1888,14 @@ function isInvalidChapterUrl(url: string, currentChapterUrl?: string): boolean {
       /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // Book index without chapter
       /\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
       /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+      // Ciweimao: non-chapter endpoints under /chapter/
+      /\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
+      /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
+      /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i,
     ];
 
     for (const pattern of invalidPatterns) {
-      if (pattern.test(url) || pattern.test(pathname)) {
+      if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
         return true;
       }
     }

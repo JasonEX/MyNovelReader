@@ -104,6 +104,23 @@ describe('NavigationDetector', () => {
       expect(result.next?.url).toContain('/chapter/5.html');
     });
 
+    it('should ignore ciweimao tsukkomi (get_par_tsu_list) links', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <a href="https://wap.ciweimao.com/chapter/get_par_tsu_list?chapter_id=113493242&data-pgid=0">
+              下一章
+            </a>
+            <a href="https://wap.ciweimao.com/chapter/113497985">下一章</a>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.next?.url).toContain('/chapter/113497985');
+    });
+
     it('should allow index/list URLs for index navigation', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

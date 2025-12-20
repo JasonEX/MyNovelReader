@@ -682,6 +682,7 @@ export class Parser {
   private async fetchText(url: string, options: HookFetchOptions = {}): Promise<string | null> {
     const timeoutMs = options.timeoutMs ?? 4000;
     const headers = options.headers ?? {};
+    const withCredentials = options.withCredentials ?? true;
     const gmXhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : null;
 
     if (gmXhr) {
@@ -691,6 +692,7 @@ export class Parser {
           url,
           headers,
           timeout: timeoutMs,
+          withCredentials,
           onload: resp => resolve(resp.responseText || null),
           onerror: () => resolve(null),
           ontimeout: () => resolve(null),
@@ -702,7 +704,7 @@ export class Parser {
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), timeoutMs);
       const resp = await fetch(url, {
-        credentials: 'include',
+        credentials: withCredentials ? 'include' : 'omit',
         headers,
         signal: controller.signal,
       });
@@ -718,6 +720,7 @@ export class Parser {
 type HookFetchOptions = {
   timeoutMs?: number;
   headers?: Record<string, string>;
+  withCredentials?: boolean;
 };
 
 type HookHelpers = {

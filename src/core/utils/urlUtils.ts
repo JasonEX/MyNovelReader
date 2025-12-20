@@ -29,3 +29,28 @@ export function joinHtml(a: string, b: string): string {
   if (!right) return left;
   return `${left}<p></p>${right}`;
 }
+
+/**
+ * Normalize Ciweimao "paragraph tsukkomi" pages back to chapter URL.
+ *
+ * Example:
+ * - https://wap.ciweimao.com/chapter/get_par_tsu_list?chapter_id=113493242&data-pgid=0
+ *   -> https://wap.ciweimao.com/chapter/113493242
+ */
+export function normalizeCiwemaoChapterUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    if (
+      (u.hostname === 'wap.ciweimao.com' || u.hostname === 'mip.ciweimao.com') &&
+      (u.pathname === '/chapter/get_par_tsu_list' || u.pathname === '/chapter/get_par_tsu_list/')
+    ) {
+      const chapterId = u.searchParams.get('chapter_id');
+      if (chapterId && /^\d+$/.test(chapterId)) {
+        return `${u.origin}/chapter/${chapterId}`;
+      }
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}

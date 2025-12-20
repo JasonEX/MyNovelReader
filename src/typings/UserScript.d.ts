@@ -71,6 +71,7 @@ interface xhrParams {
     synchronous?: boolean;
 
     timeout?: number;
+    withCredentials?: boolean;
 
     upload?: XhrUpload;
 

@@ -13,6 +13,10 @@ const INVALID_URL_PATTERNS = [
   /^javascript:/i,
   /BuyChapterUnLogin/i,
   /\/0\.html$/i,
+  // Ciweimao: non-chapter endpoints under /chapter/
+  /\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
+  /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
+  /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i,
   // Homepage/root path patterns
   /^https?:\/\/[^/]+\/?$/i, // Root domain only (e.g., https://www.qidian.com/)
   /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i, // /index.html, /home.php

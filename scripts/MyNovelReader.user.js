@@ -342,6 +342,20 @@ setThreshold(threshold) {
     if (!right) return left;
     return `${left}<p></p>${right}`;
   }
+  function normalizeCiwemaoChapterUrl(url) {
+    try {
+      const u = new URL(url);
+      if ((u.hostname === "wap.ciweimao.com" || u.hostname === "mip.ciweimao.com") && (u.pathname === "/chapter/get_par_tsu_list" || u.pathname === "/chapter/get_par_tsu_list/")) {
+        const chapterId = u.searchParams.get("chapter_id");
+        if (chapterId && /^\d+$/.test(chapterId)) {
+          return `${u.origin}/chapter/${chapterId}`;
+        }
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  }
   /*! @license DOMPurify 3.3.1 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.3.1/LICENSE */
   const {
     entries,
@@ -1672,6 +1686,9 @@ createEmptyResult() {
     /^javascript:/i,
     /BuyChapterUnLogin/i,
     /\/0\.html$/i,
+/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
+    /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
+    /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i,
 /^https?:\/\/[^/]+\/?$/i,
 /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i,
 /^https?:\/\/[^/]+\/\?/i
@@ -2836,6 +2853,246 @@ smartQueryAll(root, selector) {
     SITE_PREFERENCES: "mnr_site_prefs"
   };
   const DEFAULT_COMMUNITY_RULES_URL = "https://raw.githubusercontent.com/JasonEX/MyNovelReader/master/rules/community.json";
+  const CIWEIMAO_BEFORE_PARSE = `
+  try {
+    const contentEl = doc.querySelector('#J_BookRead');
+    if (!contentEl) return;
+
+    const pageUrl = url || doc.location?.href || window.location.href;
+    const normalizeUrl = value => {
+      if (!value) return '';
+      try {
+        return new URL(value, pageUrl).href;
+      } catch {
+        return value;
+      }
+    };
+
+    const fixNavHref = selector => {
+      const el = doc.querySelector(selector);
+      if (!el) return;
+      let href =
+        el.getAttribute('data-href') ||
+        el.getAttribute('data-url') ||
+        el.getAttribute('data-next') ||
+        el.getAttribute('data-prev') ||
+        el.getAttribute('data-link') ||
+        '';
+      if (!href) href = el.getAttribute('href') || '';
+      if (!href || href.startsWith('javascript')) {
+        const html = el.outerHTML || '';
+        const match = html.match(/https?:\\/\\/(?:www|wap)\\.ciweimao\\.com\\/chapter\\/\\d+/);
+        if (match) href = match[0];
+      }
+      if (href && !href.startsWith('javascript')) {
+        el.setAttribute('href', normalizeUrl(href));
+      } else {
+        el.removeAttribute('href');
+      }
+    };
+    fixNavHref('#J_BtnPagePrev');
+    fixNavHref('.J_BtnPagePrev');
+    fixNavHref('#J_BtnPageNext');
+    fixNavHref('.J_BtnPageNext');
+
+    const hasWatermark = !!contentEl.querySelector('#J_BookRead_WaterMark, .watermark');
+    const text = (contentEl.textContent || '').replace(/\\s+/g, '').trim();
+    const chapterParas = contentEl.querySelectorAll('p.chapter').length;
+    const shouldDecrypt = hasWatermark || text.length < 200 || chapterParas < 3;
+    const chapterId =
+      doc.querySelector('#J_BookCnt')?.getAttribute('data-id') ||
+      (pageUrl && (pageUrl.match(/chapter\\/(\\d+)/) || [])[1]);
+    if (!chapterId) return;
+
+    if (shouldDecrypt) {
+      const origin = pageUrl ? new URL(pageUrl).origin : window.location.origin;
+      const headers = pageUrl ? { Referer: pageUrl } : {};
+      const fetchJson = async target => {
+        try {
+          const fetcher =
+            (typeof unsafeWindow !== 'undefined' && unsafeWindow.fetch) ||
+            (typeof window !== 'undefined' && window.fetch) ||
+            (typeof fetch === 'function' ? fetch : null);
+          if (fetcher) {
+            const options = { credentials: 'include' };
+            if (pageUrl) options.referrer = pageUrl;
+            const resp = await fetcher(target, options);
+            if (resp && resp.ok) return await resp.json();
+          }
+        } catch {
+          // ignore
+        }
+        if (!helpers?.fetchJson) return null;
+        return helpers.fetchJson(target, { headers, withCredentials: true });
+      };
+
+      const session = await fetchJson(
+        origin + '/chapter/ajax_get_session_code?chapter_id=' + chapterId
+      );
+      if (!session || session.code !== 100000 || !session.chapter_access_key) return;
+      const accessKey = session.chapter_access_key;
+      const data = await fetchJson(
+        origin +
+          '/chapter/get_book_chapter_detail_info?chapter_id=' +
+          chapterId +
+          '&chapter_access_key=' +
+          accessKey
+      );
+      if (!data || data.code !== 100000 || !data.chapter_content || !data.encryt_keys) return;
+
+      const crypto =
+        (window && window.CryptoJS) ||
+        (typeof unsafeWindow !== 'undefined' ? unsafeWindow.CryptoJS : null);
+      if (!crypto) return;
+
+      const keys = Array.isArray(data.encryt_keys) ? data.encryt_keys : [];
+      const access = String(accessKey);
+      const chars = access.split('');
+      const total = keys.length;
+      if (!total) return;
+      const keyChain = [
+        keys[chars[chars.length - 1].charCodeAt(0) % total],
+        keys[chars[0].charCodeAt(0) % total],
+      ];
+      const decode = str => atob(str);
+      const encode = str => btoa(str);
+      let n = data.chapter_content;
+      for (let i = 0; i < keyChain.length; i++) {
+        n = decode(n);
+        const p = keyChain[i];
+        const j = encode(n.substr(0, 16));
+        const f = encode(n.substr(16));
+        const h = crypto.format.OpenSSL.parse(f);
+        n = crypto.AES.decrypt(h, crypto.enc.Base64.parse(p), {
+          iv: crypto.enc.Base64.parse(j),
+          format: crypto.format.OpenSSL,
+        });
+        if (i < keyChain.length - 1) {
+          n = n.toString(crypto.enc.Base64);
+          n = decode(n);
+        }
+      }
+      const html = n.toString(crypto.enc.Utf8);
+      if (html) {
+        contentEl.innerHTML = html;
+      }
+    }
+
+    const normalizeWatermarkText = value =>
+      value.replace(/\\s+/g, '').replace(/[\\u200b-\\u200d\\ufeff]/g, '').trim();
+    const isLikelyWatermarkToken = token => {
+      if (!/^[A-Za-z0-9]{4,12}$/.test(token)) return false;
+      const hasDigit = /\\d/.test(token);
+      const hasLower = /[a-z]/.test(token);
+      const hasUpper = /[A-Z]/.test(token);
+      return (hasDigit && (hasLower || hasUpper)) || (hasLower && hasUpper);
+    };
+    const isCjk = ch => /[\\u4e00-\\u9fff]/.test(ch);
+    const isCjkPunct = ch =>
+      /[，。！？、“”‘’（）()【】\\[\\]<>《》:：;；·~…—-]/.test(ch);
+    const getPrevNonSpace = (text, index) => {
+      for (let i = index - 1; i >= 0; i--) {
+        const ch = text[i];
+        if (!/\\s/.test(ch)) return ch;
+      }
+      return '';
+    };
+    const getNextNonSpace = (text, index) => {
+      for (let i = index; i < text.length; i++) {
+        const ch = text[i];
+        if (!/\\s/.test(ch)) return ch;
+      }
+      return '';
+    };
+    const shouldStripToken = (token, before, after) => {
+      if (!isLikelyWatermarkToken(token)) return false;
+      const beforeCjk = before && (isCjk(before) || isCjkPunct(before));
+      const afterCjk = after && (isCjk(after) || isCjkPunct(after));
+      if (!beforeCjk && !afterCjk) return false;
+      const beforeAscii = before && /[A-Za-z0-9]/.test(before);
+      const afterAscii = after && /[A-Za-z0-9]/.test(after);
+      if (beforeAscii && afterAscii) return false;
+      return true;
+    };
+    const stripWatermarkText = value => {
+      if (!value || !/[\\u4e00-\\u9fff]/.test(value)) return value;
+      let result = '';
+      let i = 0;
+      while (i < value.length) {
+        const ch = value[i];
+        if (/[A-Za-z0-9]/.test(ch)) {
+          let j = i + 1;
+          while (j < value.length && /[A-Za-z0-9]/.test(value[j])) j++;
+          const token = value.slice(i, j);
+          if (token.length >= 4 && token.length <= 12) {
+            const before = getPrevNonSpace(value, i);
+            const after = getNextNonSpace(value, j);
+            if (shouldStripToken(token, before, after)) {
+              i = j;
+              continue;
+            }
+          }
+          result += token;
+          i = j;
+          continue;
+        }
+        result += ch;
+        i += 1;
+      }
+      return result;
+    };
+
+    contentEl
+      .querySelectorAll('span, i, em, b, strong, font')
+      .forEach(node => {
+        const t = normalizeWatermarkText(node.textContent || '');
+        if (isLikelyWatermarkToken(t)) {
+          node.remove();
+        }
+      });
+    const walker = doc.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+    textNodes.forEach(node => {
+      const parent = node.parentElement;
+      if (!parent) return;
+      const tag = parent.tagName;
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return;
+      const text = node.nodeValue || '';
+      const cleaned = stripWatermarkText(text);
+      if (cleaned !== text) {
+        node.nodeValue = cleaned;
+      }
+    });
+    contentEl.querySelectorAll('p.chapter span').forEach(span => span.remove());
+    const paras = contentEl.querySelectorAll('p.chapter');
+    paras.forEach(p => {
+      const hasImg = p.querySelector('img');
+      const t = (p.textContent || '').replace(/\\s+/g, '').trim();
+      if (hasImg && t.length <= 6) {
+        p.remove();
+      }
+    });
+    const normalizeTailText = value =>
+      value
+        .replace(/\\s+/g, '')
+        .replace(/[\\u3000]/g, '')
+        .replace(/[，。！？、“”‘’（）()【】\\[\\]<>《》:：;；·~…—-]/g, '');
+    const textParas = Array.from(contentEl.querySelectorAll('p'))
+      .map(p => ({ p, text: normalizeTailText(p.textContent || '') }))
+      .filter(item => item.text);
+    const tailParas = textParas.slice(-8);
+    tailParas.forEach(({ p, text }) => {
+      if (text && /^[\\u4e00-\\u9fff]{2,6}$/.test(text)) {
+        p.remove();
+      }
+    });
+  } catch (e) {
+    console.warn('[MyNovelReader] Ciweimao beforeParse error:', e);
+  }
+`;
   const specialRules = [
 {
       id: "qidian",
@@ -2952,9 +3209,17 @@ beforeParse: `
         selector: "#J_BookRead",
         remove: "i.J_Num, .chapter span, #J_BookRead_WaterMark, .watermark"
       },
+      navigation: {
+        prev: '#J_BtnPagePrev[href^="http"]',
+        next: '#J_BtnPageNext[href^="http"]',
+        index: '.book-read-page a[href*="/chapter-list/"]'
+      },
       title: {
         selector: ".read-hd .chapter",
         bookSelector: ".breadcrumb > a:last()"
+      },
+      hooks: {
+        beforeParse: CIWEIMAO_BEFORE_PARSE
       },
       advanced: {
         useIframe: true,
@@ -2963,6 +3228,36 @@ beforeParse: `
         timeout: 3e3
       },
       meta: { source: "builtin", exampleUrl: "https://www.ciweimao.com/chapter/102930784" }
+    },
+{
+      id: "ciweimao-wap",
+      name: "刺猬猫(移动端)",
+      version: 1,
+      match: {
+        pattern: "^https?://wap\\.ciweimao\\.com/chapter/\\d+/?(?:[?#].*)?$"
+      },
+      content: {
+        selector: "#J_BookRead",
+        remove: "i.J_Num, .chapter span, #J_BookRead_WaterMark, .watermark"
+      },
+      navigation: {
+        prev: '.J_BtnPagePrev[href^="http"]',
+        next: '.J_BtnPageNext[href^="http"]',
+        index: '.book-read-page .btn-list[href*="/chapter/"]'
+      },
+      title: {
+        selector: "h1.read-hd"
+      },
+      hooks: {
+        beforeParse: CIWEIMAO_BEFORE_PARSE
+      },
+      advanced: {
+        useIframe: true,
+        mutationSelector: "#J_BookRead",
+        mutationChildCount: 2,
+        timeout: 3e3
+      },
+      meta: { source: "builtin", exampleUrl: "https://wap.ciweimao.com/chapter/113489050" }
     },
 {
       id: "gongzicp",
@@ -4791,6 +5086,7 @@ async executeHooks(rule, doc2, content) {
     async fetchText(url, options = {}) {
       const timeoutMs = options.timeoutMs ?? 4e3;
       const headers = options.headers ?? {};
+      const withCredentials = options.withCredentials ?? true;
       const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
       if (gmXhr) {
         return new Promise((resolve) => {
@@ -4799,6 +5095,7 @@ async executeHooks(rule, doc2, content) {
             url,
             headers,
             timeout: timeoutMs,
+            withCredentials,
             onload: (resp) => resolve(resp.responseText || null),
             onerror: () => resolve(null),
             ontimeout: () => resolve(null)
@@ -4809,7 +5106,7 @@ async executeHooks(rule, doc2, content) {
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), timeoutMs);
         const resp = await fetch(url, {
-          credentials: "include",
+          credentials: withCredentials ? "include" : "omit",
           headers,
           signal: controller.signal
         });
@@ -19112,10 +19409,18 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       if (isLoadingRef.value) {
         return false;
       }
-      const targetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
-      if (!targetUrl) {
+      const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
+      if (!rawTargetUrl) {
         showToast(endMessage, "info");
         return false;
+      }
+      const targetUrl = normalizeCiwemaoChapterUrl(rawTargetUrl);
+      if (targetUrl !== rawTargetUrl) {
+        if (isNext) {
+          refChapter.chapter.nextUrl = targetUrl;
+        } else {
+          refChapter.chapter.prevUrl = targetUrl;
+        }
       }
       if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
         showToast(endMessage, "info");
@@ -20151,6 +20456,7 @@ activate,
   }
   function fetchAndParseUrl(url, referer) {
     const gmXhr = getGmXhr();
+    const normalizedUrl = normalizeCiwemaoChapterUrl(url);
     if (!gmXhr) {
       console.error("[MNR] GM_xmlhttpRequest not available");
       return { promise: Promise.resolve(null), abort: () => {
@@ -20167,7 +20473,7 @@ activate,
       }
       request = gmXhr({
         method: "GET",
-        url,
+        url: normalizedUrl,
         headers,
         overrideMimeType: "text/html;charset=" + document.characterSet,
         onload: (response) => {
@@ -20176,9 +20482,9 @@ activate,
               const parser = new DOMParser();
               const doc2 = parser.parseFromString(response.responseText, "text/html");
               const base = doc2.createElement("base");
-              base.href = url;
+              base.href = normalizedUrl;
               doc2.head.insertBefore(base, doc2.head.firstChild);
-              doc2._mnrUrl = url;
+              doc2._mnrUrl = normalizedUrl;
               resolve(doc2);
             } catch (e) {
               console.error("[MNR] Parse error:", e);
@@ -20212,7 +20518,8 @@ activate,
   }
   function isInvalidChapterUrl(url, currentChapterUrl) {
     try {
-      const parsed = new URL(url);
+      const normalizedUrl = normalizeCiwemaoChapterUrl(url);
+      const parsed = new URL(normalizedUrl);
       const pathname = parsed.pathname;
       if (pathname === "/" || pathname === "") {
         return true;
@@ -20230,10 +20537,13 @@ activate,
 /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
         /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
 /\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
-        /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i
+        /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
+        /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
+        /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
       ];
       for (const pattern of invalidPatterns) {
-        if (pattern.test(url) || pattern.test(pathname)) {
+        if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
           return true;
         }
       }
