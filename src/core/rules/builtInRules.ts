@@ -132,62 +132,6 @@ const specialRules: SiteRule[] = [
     meta: { source: 'builtin' },
   },
 
-  // JJWXC (晋江) - Font decoding, VIP
-  {
-    id: 'jjwxc',
-    name: '晋江文学网',
-    version: 1,
-    match: {
-      pattern: '^https?://(www|my)\\.jjwxc\\.net/onebook(_vip)?\\.php',
-    },
-    content: {
-      selector: '.novelbody',
-      remove:
-        'font[color], hr, div:has(>#yrt3), div:has(>h2), #six_list, #sendKingTickets, div[align=right], .readsmall, script',
-    },
-    navigation: {
-      index: '.noveltitle > h1 > a',
-    },
-    title: {
-      selector: '#chapter_list > option:first',
-      pattern: '《(.*?)》.*[ˇ^](.*?)[ˇ^].*',
-    },
-    processing: {
-      removeAds: false,
-    },
-    advanced: {
-      useIframe: true,
-      mutationSelector: 'div[id^=content]',
-      mutationChildCount: 0,
-      iframeSandbox: 'allow-same-origin allow-scripts',
-    },
-    meta: { source: 'builtin' },
-  },
-
-  // Quanben (全本) - iframe + mutation text
-  {
-    id: 'quanben',
-    name: '全本小说网',
-    version: 1,
-    match: {
-      pattern: '^https?://www\\.quanben\\.io/.*?/.*?/\\d+\\.html',
-    },
-    content: {
-      selector: '#content',
-    },
-    title: {
-      bookSelector: '.name',
-    },
-    advanced: {
-      useIframe: true,
-      mutationSelector: '#content',
-    },
-    meta: {
-      source: 'builtin',
-      exampleUrl: 'http://www.quanben.io/n/wuxianwanxiangtongminglu/1.html',
-    },
-  },
-
   // Ciweimao (刺猬猫)
   {
     id: 'ciweimao',
