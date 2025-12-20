@@ -93,6 +93,8 @@ export interface AdvancedConfig {
   mutationChildCount?: number;
   /** Delay before processing (ms) */
   timeout?: number;
+  /** Trigger scroll to load lazy content */
+  lazyLoadScroll?: boolean;
   /**
    * Check for multi-page chapters (一章分多页)
    * When true, detects URL patterns like `_2.html` or `-2.html`

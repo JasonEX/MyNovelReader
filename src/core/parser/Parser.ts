@@ -7,6 +7,13 @@ import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
 import { RuleMatchResult, SiteRule } from '@/core/rules/types';
 import { getRuleManager } from '@/core/rules/RuleManager';
 
+const MIN_DYNAMIC_TEXT_LENGTH = 80;
+const GLOBAL_DYNAMIC_WAIT_MS = 600;
+const RULE_DYNAMIC_WAIT_MS = 1500;
+const DYNAMIC_SCROLL_STABLE_MS = 200;
+const DYNAMIC_SCROLL_DELAY_MS = 120;
+const DYNAMIC_SCROLL_MAX_STEPS = 10;
+
 /** Parsed chapter data */
 export interface ParsedChapter {
   /** Chapter title */
@@ -65,38 +72,36 @@ export class Parser {
 
     if (ruleMatch && !this.options.forceDetection) {
       // Use rule-based parsing
-      return this.parseWithRule(doc, url, ruleMatch);
+      return await this.parseWithRule(doc, url, ruleMatch);
     }
 
     // Use detection-based parsing
-    return this.parseWithDetection(doc, url);
+    return await this.parseWithDetection(doc, url);
   }
 
   /**
    * Parse using a matched rule
    */
-  private parseWithRule(
+  private async parseWithRule(
     doc: Document,
     url: string,
     ruleMatch: RuleMatchResult
-  ): ParsedChapter | null {
+  ): Promise<ParsedChapter | null> {
     const rule = ruleMatch.rule;
 
-    // Execute beforeParse hook if present
-    if (rule.hooks?.beforeParse) {
-      try {
-        const fn = new Function('doc', 'url', rule.hooks.beforeParse);
-        fn(doc, url);
-      } catch (e) {
-        console.warn('[Parser] beforeParse hook error:', e);
-      }
-    }
+    // Execute beforeParse hook if present (supports async)
+    await this.runBeforeParseHook(rule, doc, url);
 
     // Extract content
-    const contentElement = this.selectElement(doc, rule.content.selector);
+    let contentElement = this.selectElement(doc, rule.content.selector);
+
+    if (this.shouldWaitForRuleContent(rule, contentElement)) {
+      await this.waitForRuleContent(doc, rule);
+      contentElement = this.selectElement(doc, rule.content.selector);
+    }
     if (!contentElement) {
       // Fallback to detection if rule selector fails
-      return this.parseWithDetection(doc, url, rule);
+      return await this.parseWithDetection(doc, url, rule);
     }
 
     // Extract navigation from rule selectors
@@ -159,12 +164,22 @@ export class Parser {
   /**
    * Parse using detection engine
    */
-  private parseWithDetection(
+  private async parseWithDetection(
     doc: Document,
     url: string,
     fallbackRule?: SiteRule
-  ): ParsedChapter | null {
-    const detection = this.detectionEngine.detect(doc, url);
+  ): Promise<ParsedChapter | null> {
+    let detection = this.detectionEngine.detect(doc, url);
+
+    if (this.shouldWaitForDetectionContent(detection.results.content.element)) {
+      const selector = detection.results.content.selector || fallbackRule?.content.selector;
+      await this.waitForDynamicContent(doc, {
+        selector,
+        timeoutMs: GLOBAL_DYNAMIC_WAIT_MS,
+        minTextLength: MIN_DYNAMIC_TEXT_LENGTH,
+      });
+      detection = this.detectionEngine.detect(doc, url);
+    }
 
     if (!detection.results.content.element) {
       return null;
@@ -344,6 +359,174 @@ export class Parser {
     return null;
   }
 
+  private shouldWaitForRuleContent(rule: SiteRule, element: Element | null): boolean {
+    const advanced = rule.advanced;
+    if (advanced?.mutationSelector || advanced?.lazyLoadScroll) {
+      return true;
+    }
+    return this.isContentInsufficient(element);
+  }
+
+  private shouldWaitForDetectionContent(element: Element | null): boolean {
+    return this.isContentInsufficient(element);
+  }
+
+  private isContentInsufficient(element: Element | null): boolean {
+    if (!element) return true;
+    if (element instanceof Element && element.hasAttribute('data-mnr-loading')) return true;
+    const text = (element.textContent || '').replace(/\s+/g, '').trim();
+    if (!text) return true;
+    if (text.length < MIN_DYNAMIC_TEXT_LENGTH) return true;
+    if (this.isPlaceholderText(text)) return true;
+    return false;
+  }
+
+  private isPlaceholderText(text: string): boolean {
+    return /加载中|正在加载|内容加载|请稍候|请等待|点击加载|下滑|滚动加载/i.test(text);
+  }
+
+  private async waitForRuleContent(doc: Document, rule: SiteRule): Promise<void> {
+    const advanced = rule.advanced;
+    const selector = advanced?.mutationSelector || rule.content.selector;
+    const timeoutMs = advanced?.timeout ?? RULE_DYNAMIC_WAIT_MS;
+    const minChildCount = advanced?.mutationChildCount;
+    const shouldScroll = !!advanced?.lazyLoadScroll;
+
+    await this.waitForDynamicContent(doc, {
+      selector,
+      minChildCount,
+      timeoutMs,
+      minTextLength: MIN_DYNAMIC_TEXT_LENGTH,
+      scroll: shouldScroll,
+    });
+  }
+
+  private async waitForDynamicContent(
+    doc: Document,
+    options: {
+      selector?: string;
+      minChildCount?: number;
+      timeoutMs?: number;
+      minTextLength?: number;
+      scroll?: boolean;
+    }
+  ): Promise<boolean> {
+    const selector = options.selector?.trim();
+    const minTextLength = options.minTextLength ?? MIN_DYNAMIC_TEXT_LENGTH;
+    const timeoutMs = options.timeoutMs ?? GLOBAL_DYNAMIC_WAIT_MS;
+    const minChildCount =
+      typeof options.minChildCount === 'number' && options.minChildCount > 0
+        ? options.minChildCount
+        : undefined;
+    const target = doc.body || doc.documentElement;
+
+    if (!target) return false;
+
+    const getLength = () => {
+      if (!selector) {
+        return (doc.body?.textContent || '').replace(/\s+/g, '').length;
+      }
+      const el = this.selectElement(doc, selector);
+      if (!el) return 0;
+      return (el.textContent || '').replace(/\s+/g, '').length;
+    };
+
+    const isReady = (): boolean => {
+      if (selector) {
+        const el = this.selectElement(doc, selector);
+        if (!el) return false;
+        const length = (el.textContent || '').replace(/\s+/g, '').length;
+        if (length >= minTextLength && !this.isPlaceholderText(el.textContent || '')) {
+          return true;
+        }
+        if (minChildCount && el.children.length >= minChildCount) {
+          return true;
+        }
+        return false;
+      }
+      const length = (doc.body?.textContent || '').replace(/\s+/g, '').length;
+      return length >= minTextLength;
+    };
+
+    if (isReady()) return true;
+
+    let resolvePromise: (value: boolean) => void = () => {};
+    let observer: MutationObserver | null = null;
+    let timeoutId: number | undefined;
+    let resolved = false;
+
+    const done = (value: boolean) => {
+      if (resolved) return;
+      resolved = true;
+      if (observer) observer.disconnect();
+      if (timeoutId) window.clearTimeout(timeoutId);
+      resolvePromise(value);
+    };
+
+    const waitPromise = new Promise<boolean>(resolve => {
+      resolvePromise = resolve;
+      observer = new MutationObserver(() => {
+        if (isReady()) {
+          done(true);
+        }
+      });
+      observer.observe(target, { childList: true, subtree: true, characterData: true });
+      timeoutId = window.setTimeout(() => done(isReady()), timeoutMs);
+    });
+
+    let scrollPromise: Promise<void> | null = null;
+    if (options.scroll) {
+      scrollPromise = this.triggerLazyLoadScroll(getLength, timeoutMs);
+    }
+
+    const ready = await waitPromise;
+
+    if (scrollPromise) {
+      await scrollPromise;
+    }
+
+    return ready || isReady();
+  }
+
+  private async triggerLazyLoadScroll(getLength: () => number, timeoutMs: number): Promise<void> {
+    if (typeof window === 'undefined' || typeof window.scrollBy !== 'function') {
+      return;
+    }
+
+    const startY = window.scrollY;
+    if (startY > 5) {
+      return;
+    }
+
+    const step = Math.max(window.innerHeight * 0.8, 400);
+    const maxSteps = Math.min(
+      DYNAMIC_SCROLL_MAX_STEPS,
+      Math.max(3, Math.floor(timeoutMs / (DYNAMIC_SCROLL_DELAY_MS + 10)))
+    );
+    let lastLength = getLength();
+    let stableFor = 0;
+
+    for (let i = 0; i < maxSteps && stableFor < DYNAMIC_SCROLL_STABLE_MS; i++) {
+      window.scrollBy({ top: step, behavior: 'auto' });
+      await this.sleep(DYNAMIC_SCROLL_DELAY_MS);
+      const length = getLength();
+      if (length > lastLength) {
+        lastLength = length;
+        stableFor = 0;
+      } else {
+        stableFor += DYNAMIC_SCROLL_DELAY_MS;
+      }
+    }
+
+    if (window.scrollY !== startY) {
+      window.scrollTo({ top: startY, behavior: 'auto' });
+    }
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+  }
+
   /**
    * Minimal jQuery-like selector support (:contains, :eq, :last)
    */
@@ -431,8 +614,7 @@ export class Parser {
 
     if (rule.hooks?.beforeParse) {
       try {
-        const fn = new Function('doc', rule.hooks.beforeParse);
-        fn(doc);
+        await this.runBeforeParseHook(rule, doc);
       } catch (e) {
         console.warn('[Parser] beforeParse hook error:', e);
       }
@@ -449,7 +631,87 @@ export class Parser {
 
     return result;
   }
+
+  private async runBeforeParseHook(rule: SiteRule, doc: Document, url?: string): Promise<void> {
+    if (!rule.hooks?.beforeParse) return;
+    try {
+      const fn = new Function(
+        'doc',
+        'url',
+        'helpers',
+        `return (async () => { ${rule.hooks.beforeParse} })();`
+      ) as (doc: Document, url?: string, helpers?: HookHelpers) => Promise<void>;
+      await fn(doc, url, this.getHookHelpers());
+    } catch (e) {
+      console.warn('[Parser] beforeParse hook error:', e);
+    }
+  }
+
+  private getHookHelpers(): HookHelpers {
+    return {
+      fetchJson: (url: string, options?: HookFetchOptions) => this.fetchJson(url, options),
+      fetchText: (url: string, options?: HookFetchOptions) => this.fetchText(url, options),
+    };
+  }
+
+  private async fetchJson(
+    url: string,
+    options: HookFetchOptions = {}
+  ): Promise<Record<string, unknown> | null> {
+    const responseText = await this.fetchText(url, options);
+    if (!responseText) return null;
+    try {
+      return JSON.parse(responseText) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+
+  private async fetchText(url: string, options: HookFetchOptions = {}): Promise<string | null> {
+    const timeoutMs = options.timeoutMs ?? 4000;
+    const headers = options.headers ?? {};
+    const gmXhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : null;
+
+    if (gmXhr) {
+      return new Promise(resolve => {
+        gmXhr({
+          method: 'GET',
+          url,
+          headers,
+          timeout: timeoutMs,
+          onload: resp => resolve(resp.responseText || null),
+          onerror: () => resolve(null),
+          ontimeout: () => resolve(null),
+        });
+      });
+    }
+
+    try {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+      const resp = await fetch(url, {
+        credentials: 'include',
+        headers,
+        signal: controller.signal,
+      });
+      window.clearTimeout(timer);
+      if (!resp.ok) return null;
+      return await resp.text();
+    } catch {
+      return null;
+    }
+  }
 }
+
+type HookFetchOptions = {
+  timeoutMs?: number;
+  headers?: Record<string, string>;
+};
+
+type HookHelpers = {
+  fetchJson: (url: string, options?: HookFetchOptions) => Promise<Record<string, unknown> | null>;
+  fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
+};
 
 // Singleton instance
 let parserInstance: Parser | null = null;

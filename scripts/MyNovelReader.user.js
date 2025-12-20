@@ -3231,6 +3231,115 @@ var MyNovelReader = (function(exports) {
         iframeSandbox: "allow-same-origin allow-scripts"
       },
       meta: { source: "builtin", exampleUrl: "https://69shux.com/txt/59608/41087519" }
+    },
+    // 顶点小说 (ddxsmf) - AJAX + scroll lazy load
+    {
+      id: "ddxsmf",
+      name: "顶点小说",
+      version: 1,
+      match: {
+        pattern: "^https?://(?:www\\.)?ddxsmf\\.com/read/\\d+/\\d+\\.html(?:[?#].*)?$"
+      },
+      content: {
+        selector: "#chapter-content"
+      },
+      navigation: {
+        prev: ".page-prev",
+        next: ".page-next",
+        index: ".page-index"
+      },
+      title: {
+        selector: "h1"
+      },
+      hooks: {
+        beforeParse: `
+        try {
+          const contentEl = doc.querySelector('#chapter-content');
+          if (contentEl) {
+            contentEl.setAttribute('data-mnr-loading', '1');
+            const currentUrl = url || doc.location?.href || window.location.href;
+            const urlObj = new URL(currentUrl);
+            const parts = urlObj.pathname.split('/').filter(Boolean);
+            try {
+              if (parts[0] === 'read' && parts[1] && parts[2]) {
+                const aid = parseInt(parts[1], 10);
+                const cid = parseInt(parts[2].split('.')[0], 10);
+                if (aid && cid && helpers?.fetchJson) {
+                  const apiUrl = new URL('/modules/article/ajax_chapter.php', urlObj.origin);
+                  apiUrl.searchParams.set('aid', String(aid));
+                  apiUrl.searchParams.set('cid', String(cid));
+                  const headers = {
+                    'X-Requested-With': 'XMLHttpRequest',
+                  };
+                  if (currentUrl) {
+                    headers.Referer = currentUrl;
+                  }
+                  const payload = await helpers.fetchJson(apiUrl.toString(), {
+                    timeoutMs: 4000,
+                    headers,
+                  });
+                  const html = payload?.data?.content;
+                  if (html) {
+                    contentEl.innerHTML = html;
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('[MyNovelReader] ddxsmf content fetch error:', e);
+            } finally {
+              contentEl.removeAttribute('data-mnr-loading');
+            }
+          }
+          const scripts = Array.from(doc.querySelectorAll('script'))
+            .map(script => script.textContent || '')
+            .join('\\n');
+          const loadIndex = scripts.indexOf('function loadChapter');
+          if (loadIndex !== -1) {
+            const rest = scripts.slice(loadIndex);
+            const endIndex = rest.indexOf('function initPaginationButtons');
+            const block = endIndex !== -1 ? rest.slice(0, endIndex) : rest;
+            const prevMatch = block.match(
+              /direction\\s*===\\s*['"]prev['"][\\s\\S]*?chapterUrl\\s*=\\s*['"]([^'"]*)['"]/
+            );
+            const nextMatch = block.match(
+              /else\\s*\\{[\\s\\S]*?chapterUrl\\s*=\\s*['"]([^'"]*)['"]/
+            );
+            const normalize = value => {
+              try {
+                return new URL(value, doc.location?.href || window.location.href).href;
+              } catch {
+                return value;
+              }
+            };
+            const prevRaw = prevMatch?.[1] || '';
+            const nextRaw = nextMatch?.[1] || '';
+            const prevUrl = prevRaw && prevRaw !== '#' ? normalize(prevRaw) : '';
+            const nextUrl = nextRaw && nextRaw !== '#' ? normalize(nextRaw) : '';
+            const prevEl = doc.querySelector('.page-prev');
+            const nextEl = doc.querySelector('.page-next');
+            if (prevEl && prevUrl && prevUrl !== '#') prevEl.setAttribute('href', prevUrl);
+            if (nextEl && nextUrl && nextUrl !== '#') nextEl.setAttribute('href', nextUrl);
+          }
+          const indexEl = doc.querySelector('.page-index');
+          const indexHref = indexEl?.getAttribute('data-href');
+          if (indexEl && indexHref) {
+            indexEl.setAttribute('href', indexHref);
+          }
+        } catch (e) {
+          console.warn('[MyNovelReader] ddxsmf beforeParse error:', e);
+        }
+      `
+      },
+      advanced: {
+        mutationSelector: "#chapter-content",
+        mutationChildCount: 1,
+        timeout: 2e3,
+        noSection: true
+      },
+      meta: {
+        source: "builtin",
+        exampleUrl: "https://www.ddxsmf.com/read/27543/9719752.html"
+      }
     }
   ];
   const simplifiedRules = [
@@ -4450,6 +4559,12 @@ var MyNovelReader = (function(exports) {
     }
     return ruleManagerInstance;
   }
+  const MIN_DYNAMIC_TEXT_LENGTH = 80;
+  const GLOBAL_DYNAMIC_WAIT_MS = 600;
+  const RULE_DYNAMIC_WAIT_MS = 1500;
+  const DYNAMIC_SCROLL_STABLE_MS = 200;
+  const DYNAMIC_SCROLL_DELAY_MS = 120;
+  const DYNAMIC_SCROLL_MAX_STEPS = 10;
   class Parser {
     constructor(options = {}) {
       this.detectionEngine = new DetectionEngine();
@@ -4466,41 +4581,38 @@ var MyNovelReader = (function(exports) {
       await ruleManager.initialize();
       const ruleMatch = await ruleManager.matchRule(url);
       if (ruleMatch && !this.options.forceDetection) {
-        return this.parseWithRule(doc2, url, ruleMatch);
+        return await this.parseWithRule(doc2, url, ruleMatch);
       }
-      return this.parseWithDetection(doc2, url);
+      return await this.parseWithDetection(doc2, url);
     }
     /**
      * Parse using a matched rule
      */
-    parseWithRule(doc2, url, ruleMatch) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+    async parseWithRule(doc2, url, ruleMatch) {
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
       const rule = ruleMatch.rule;
-      if ((_a = rule.hooks) == null ? void 0 : _a.beforeParse) {
-        try {
-          const fn = new Function("doc", "url", rule.hooks.beforeParse);
-          fn(doc2, url);
-        } catch (e) {
-          console.warn("[Parser] beforeParse hook error:", e);
-        }
+      await this.runBeforeParseHook(rule, doc2, url);
+      let contentElement = this.selectElement(doc2, rule.content.selector);
+      if (this.shouldWaitForRuleContent(rule, contentElement)) {
+        await this.waitForRuleContent(doc2, rule);
+        contentElement = this.selectElement(doc2, rule.content.selector);
       }
-      const contentElement = this.selectElement(doc2, rule.content.selector);
       if (!contentElement) {
-        return this.parseWithDetection(doc2, url, rule);
+        return await this.parseWithDetection(doc2, url, rule);
       }
       let navigation = this.extractNavigation(doc2, rule);
-      const hasRulePrev = ((_b = rule.navigation) == null ? void 0 : _b.prev) && rule.navigation.prev !== false;
-      const hasRuleNext = ((_c = rule.navigation) == null ? void 0 : _c.next) && rule.navigation.next !== false;
-      const hasRuleIndex = ((_d = rule.navigation) == null ? void 0 : _d.index) && rule.navigation.index !== false;
+      const hasRulePrev = ((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false;
+      const hasRuleNext = ((_b = rule.navigation) == null ? void 0 : _b.next) && rule.navigation.next !== false;
+      const hasRuleIndex = ((_c = rule.navigation) == null ? void 0 : _c.index) && rule.navigation.index !== false;
       if (!navigation.next || !navigation.prev || !navigation.index) {
         const detectedNav = this.detectionEngine.detect(doc2, url).results.navigation;
-        if (!hasRuleNext && !navigation.next && ((_e = detectedNav.next) == null ? void 0 : _e.url)) {
+        if (!hasRuleNext && !navigation.next && ((_d = detectedNav.next) == null ? void 0 : _d.url)) {
           navigation.next = detectedNav.next.url;
         }
-        if (!hasRulePrev && !navigation.prev && ((_f = detectedNav.prev) == null ? void 0 : _f.url)) {
+        if (!hasRulePrev && !navigation.prev && ((_e = detectedNav.prev) == null ? void 0 : _e.url)) {
           navigation.prev = detectedNav.prev.url;
         }
-        if (!hasRuleIndex && !navigation.index && ((_g = detectedNav.index) == null ? void 0 : _g.url)) {
+        if (!hasRuleIndex && !navigation.index && ((_f = detectedNav.index) == null ? void 0 : _f.url)) {
           navigation.index = detectedNav.index.url;
         }
       }
@@ -4508,10 +4620,10 @@ var MyNovelReader = (function(exports) {
       const processingOptions = {
         removeSelectors: rule.content.remove,
         replaceRules: rule.content.replace,
-        removeAds: ((_h = rule.processing) == null ? void 0 : _h.removeAds) !== false,
-        normalizeWhitespace: ((_i = rule.processing) == null ? void 0 : _i.normalizeWhitespace) !== false,
-        fixImages: ((_j = rule.processing) == null ? void 0 : _j.fixImages) !== false,
-        useRawContent: (_k = rule.processing) == null ? void 0 : _k.useRawContent,
+        removeAds: ((_g = rule.processing) == null ? void 0 : _g.removeAds) !== false,
+        normalizeWhitespace: ((_h = rule.processing) == null ? void 0 : _h.normalizeWhitespace) !== false,
+        fixImages: ((_i = rule.processing) == null ? void 0 : _i.fixImages) !== false,
+        useRawContent: (_j = rule.processing) == null ? void 0 : _j.useRawContent,
         chapterTitle: title.chapter,
         bookTitle: title.book
       };
@@ -4535,9 +4647,18 @@ var MyNovelReader = (function(exports) {
     /**
      * Parse using detection engine
      */
-    parseWithDetection(doc2, url, fallbackRule) {
+    async parseWithDetection(doc2, url, fallbackRule) {
       var _a, _b, _c;
-      const detection = this.detectionEngine.detect(doc2, url);
+      let detection = this.detectionEngine.detect(doc2, url);
+      if (this.shouldWaitForDetectionContent(detection.results.content.element)) {
+        const selector = detection.results.content.selector || (fallbackRule == null ? void 0 : fallbackRule.content.selector);
+        await this.waitForDynamicContent(doc2, {
+          selector,
+          timeoutMs: GLOBAL_DYNAMIC_WAIT_MS,
+          minTextLength: MIN_DYNAMIC_TEXT_LENGTH
+        });
+        detection = this.detectionEngine.detect(doc2, url);
+      }
       if (!detection.results.content.element) {
         return null;
       }
@@ -4672,6 +4793,142 @@ var MyNovelReader = (function(exports) {
       }
       return null;
     }
+    shouldWaitForRuleContent(rule, element) {
+      const advanced = rule.advanced;
+      if ((advanced == null ? void 0 : advanced.mutationSelector) || (advanced == null ? void 0 : advanced.lazyLoadScroll)) {
+        return true;
+      }
+      return this.isContentInsufficient(element);
+    }
+    shouldWaitForDetectionContent(element) {
+      return this.isContentInsufficient(element);
+    }
+    isContentInsufficient(element) {
+      if (!element) return true;
+      if (element instanceof Element && element.hasAttribute("data-mnr-loading")) return true;
+      const text2 = (element.textContent || "").replace(/\s+/g, "").trim();
+      if (!text2) return true;
+      if (text2.length < MIN_DYNAMIC_TEXT_LENGTH) return true;
+      if (this.isPlaceholderText(text2)) return true;
+      return false;
+    }
+    isPlaceholderText(text2) {
+      return /加载中|正在加载|内容加载|请稍候|请等待|点击加载|下滑|滚动加载/i.test(text2);
+    }
+    async waitForRuleContent(doc2, rule) {
+      const advanced = rule.advanced;
+      const selector = (advanced == null ? void 0 : advanced.mutationSelector) || rule.content.selector;
+      const timeoutMs = (advanced == null ? void 0 : advanced.timeout) ?? RULE_DYNAMIC_WAIT_MS;
+      const minChildCount = advanced == null ? void 0 : advanced.mutationChildCount;
+      const shouldScroll = !!(advanced == null ? void 0 : advanced.lazyLoadScroll);
+      await this.waitForDynamicContent(doc2, {
+        selector,
+        minChildCount,
+        timeoutMs,
+        minTextLength: MIN_DYNAMIC_TEXT_LENGTH,
+        scroll: shouldScroll
+      });
+    }
+    async waitForDynamicContent(doc2, options) {
+      var _a;
+      const selector = (_a = options.selector) == null ? void 0 : _a.trim();
+      const minTextLength = options.minTextLength ?? MIN_DYNAMIC_TEXT_LENGTH;
+      const timeoutMs = options.timeoutMs ?? GLOBAL_DYNAMIC_WAIT_MS;
+      const minChildCount = typeof options.minChildCount === "number" && options.minChildCount > 0 ? options.minChildCount : void 0;
+      const target = doc2.body || doc2.documentElement;
+      if (!target) return false;
+      const getLength = () => {
+        var _a2;
+        if (!selector) {
+          return (((_a2 = doc2.body) == null ? void 0 : _a2.textContent) || "").replace(/\s+/g, "").length;
+        }
+        const el = this.selectElement(doc2, selector);
+        if (!el) return 0;
+        return (el.textContent || "").replace(/\s+/g, "").length;
+      };
+      const isReady = () => {
+        var _a2;
+        if (selector) {
+          const el = this.selectElement(doc2, selector);
+          if (!el) return false;
+          const length2 = (el.textContent || "").replace(/\s+/g, "").length;
+          if (length2 >= minTextLength && !this.isPlaceholderText(el.textContent || "")) {
+            return true;
+          }
+          if (minChildCount && el.children.length >= minChildCount) {
+            return true;
+          }
+          return false;
+        }
+        const length = (((_a2 = doc2.body) == null ? void 0 : _a2.textContent) || "").replace(/\s+/g, "").length;
+        return length >= minTextLength;
+      };
+      if (isReady()) return true;
+      let resolvePromise = () => {
+      };
+      let observer = null;
+      let timeoutId;
+      let resolved = false;
+      const done = (value) => {
+        if (resolved) return;
+        resolved = true;
+        if (observer) observer.disconnect();
+        if (timeoutId) window.clearTimeout(timeoutId);
+        resolvePromise(value);
+      };
+      const waitPromise = new Promise((resolve) => {
+        resolvePromise = resolve;
+        observer = new MutationObserver(() => {
+          if (isReady()) {
+            done(true);
+          }
+        });
+        observer.observe(target, { childList: true, subtree: true, characterData: true });
+        timeoutId = window.setTimeout(() => done(isReady()), timeoutMs);
+      });
+      let scrollPromise = null;
+      if (options.scroll) {
+        scrollPromise = this.triggerLazyLoadScroll(getLength, timeoutMs);
+      }
+      const ready = await waitPromise;
+      if (scrollPromise) {
+        await scrollPromise;
+      }
+      return ready || isReady();
+    }
+    async triggerLazyLoadScroll(getLength, timeoutMs) {
+      if (typeof window === "undefined" || typeof window.scrollBy !== "function") {
+        return;
+      }
+      const startY = window.scrollY;
+      if (startY > 5) {
+        return;
+      }
+      const step = Math.max(window.innerHeight * 0.8, 400);
+      const maxSteps = Math.min(
+        DYNAMIC_SCROLL_MAX_STEPS,
+        Math.max(3, Math.floor(timeoutMs / (DYNAMIC_SCROLL_DELAY_MS + 10)))
+      );
+      let lastLength = getLength();
+      let stableFor = 0;
+      for (let i = 0; i < maxSteps && stableFor < DYNAMIC_SCROLL_STABLE_MS; i++) {
+        window.scrollBy({ top: step, behavior: "auto" });
+        await this.sleep(DYNAMIC_SCROLL_DELAY_MS);
+        const length = getLength();
+        if (length > lastLength) {
+          lastLength = length;
+          stableFor = 0;
+        } else {
+          stableFor += DYNAMIC_SCROLL_DELAY_MS;
+        }
+      }
+      if (window.scrollY !== startY) {
+        window.scrollTo({ top: startY, behavior: "auto" });
+      }
+    }
+    sleep(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
     /**
      * Minimal jQuery-like selector support (:contains, :eq, :last)
      */
@@ -4745,8 +5002,7 @@ var MyNovelReader = (function(exports) {
       let result = content;
       if ((_a = rule.hooks) == null ? void 0 : _a.beforeParse) {
         try {
-          const fn = new Function("doc", rule.hooks.beforeParse);
-          fn(doc2);
+          await this.runBeforeParseHook(rule, doc2);
         } catch (e) {
           console.warn("[Parser] beforeParse hook error:", e);
         }
@@ -4760,6 +5016,68 @@ var MyNovelReader = (function(exports) {
         }
       }
       return result;
+    }
+    async runBeforeParseHook(rule, doc2, url) {
+      var _a;
+      if (!((_a = rule.hooks) == null ? void 0 : _a.beforeParse)) return;
+      try {
+        const fn = new Function(
+          "doc",
+          "url",
+          "helpers",
+          `return (async () => { ${rule.hooks.beforeParse} })();`
+        );
+        await fn(doc2, url, this.getHookHelpers());
+      } catch (e) {
+        console.warn("[Parser] beforeParse hook error:", e);
+      }
+    }
+    getHookHelpers() {
+      return {
+        fetchJson: (url, options) => this.fetchJson(url, options),
+        fetchText: (url, options) => this.fetchText(url, options)
+      };
+    }
+    async fetchJson(url, options = {}) {
+      const responseText = await this.fetchText(url, options);
+      if (!responseText) return null;
+      try {
+        return JSON.parse(responseText);
+      } catch {
+        return null;
+      }
+    }
+    async fetchText(url, options = {}) {
+      const timeoutMs = options.timeoutMs ?? 4e3;
+      const headers = options.headers ?? {};
+      const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
+      if (gmXhr) {
+        return new Promise((resolve) => {
+          gmXhr({
+            method: "GET",
+            url,
+            headers,
+            timeout: timeoutMs,
+            onload: (resp) => resolve(resp.responseText || null),
+            onerror: () => resolve(null),
+            ontimeout: () => resolve(null)
+          });
+        });
+      }
+      try {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+        const resp = await fetch(url, {
+          credentials: "include",
+          headers,
+          signal: controller.signal
+        });
+        window.clearTimeout(timer);
+        if (!resp.ok) return null;
+        return await resp.text();
+      } catch {
+        return null;
+      }
     }
   }
   let parserInstance = null;
