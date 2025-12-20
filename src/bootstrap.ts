@@ -12,11 +12,12 @@ import {
   type AutoEnableDecision,
   getAutoEnableManager,
   type ParsedChapter,
+  type ProtectionOptions,
   type SiteRule,
 } from '@/core';
 import { BUILD_DATE, VERSION } from '@/version';
 import { createApp, defineComponent, h, ref } from 'vue';
-import { useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
+import { type ProtectionSettings, useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
@@ -43,6 +44,18 @@ const appState: AppState = {
 let app: ReturnType<typeof createApp> | null = null;
 let pinia: ReturnType<typeof createPinia> | null = null;
 let readerCleanup: (() => void) | null = null;
+
+function buildProtectionOptions(settings: ProtectionSettings): ProtectionOptions {
+  return {
+    blockRedirects: settings.blockRedirects,
+    enableRightClick: settings.enableRightClick,
+    enableSelection: settings.enableSelection,
+    blockPopups: settings.blockPopups,
+    clearTimers: true,
+    unlockKeyboard: true,
+    cleanupScripts: settings.mode === 'aggressive',
+  };
+}
 
 /**
  * Initialize the application
@@ -92,8 +105,12 @@ async function runAutoEnable(): Promise<void> {
     }
   }
 
+  const configStore = useConfigStore(pinia!);
+  const protectionOptions = buildProtectionOptions(configStore.protection);
+
   const manager = getAutoEnableManager({
     enableProtection: true,
+    protectionOptions,
   });
 
   // First, check the decision to handle user-disabled case

@@ -19,6 +19,8 @@ export interface ProtectionOptions {
   enableSelection?: boolean;
   /** Restore copy functionality */
   enableCopy?: boolean;
+  /** Intercept keyboard listeners to prevent key blocking */
+  unlockKeyboard?: boolean;
   /** Block popup windows */
   blockPopups?: boolean;
   /** Remove event hijacking */
@@ -27,6 +29,8 @@ export interface ProtectionOptions {
   blockVisibilityDetection?: boolean;
   /** Clear all timers (setInterval/setTimeout) to reduce CPU usage */
   clearTimers?: boolean;
+  /** Clean up suspicious scripts (aggressive) */
+  cleanupScripts?: boolean;
 }
 
 const DEFAULT_OPTIONS: ProtectionOptions = {
@@ -34,10 +38,12 @@ const DEFAULT_OPTIONS: ProtectionOptions = {
   enableRightClick: true,
   enableSelection: true,
   enableCopy: true,
+  unlockKeyboard: true,
   blockPopups: true,
   removeEventHijacking: true,
   blockVisibilityDetection: true,
   clearTimers: true,
+  cleanupScripts: false,
 };
 
 export class SiteProtection {
@@ -53,7 +59,10 @@ export class SiteProtection {
   /**
    * Activate all protection measures
    */
-  activate(): void {
+  activate(options?: ProtectionOptions): void {
+    if (options) {
+      this.options = { ...DEFAULT_OPTIONS, ...options };
+    }
     if (this.isActive) return;
     this.isActive = true;
 
@@ -78,8 +87,16 @@ export class SiteProtection {
       this.enableCopy();
     }
 
+    if (this.options.unlockKeyboard) {
+      this.unlockKeyboard();
+    }
+
     if (this.options.blockPopups) {
       this.blockPopups();
+    }
+
+    if (this.options.cleanupScripts) {
+      this.cleanupScripts();
     }
 
     if (this.options.removeEventHijacking) {
@@ -319,6 +336,106 @@ export class SiteProtection {
   }
 
   /**
+   * Intercept keyboard events to prevent sites from blocking keys
+   */
+  private unlockKeyboard(): void {
+    const handler = (e: KeyboardEvent) => {
+      if (this.isMnrEvent(e)) {
+        return;
+      }
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+    };
+
+    const types: Array<keyof DocumentEventMap> = ['keydown', 'keyup', 'keypress'];
+    types.forEach(type => document.addEventListener(type, handler, true));
+
+    const originalDocumentHandlers = {
+      keydown: document.onkeydown,
+      keyup: document.onkeyup,
+      keypress: document.onkeypress,
+    };
+
+    const originalWindowHandlers = {
+      keydown: window.onkeydown,
+      keyup: window.onkeyup,
+      keypress: window.onkeypress,
+    };
+
+    const originalBodyHandlers = document.body
+      ? {
+          keydown: document.body.onkeydown,
+          keyup: document.body.onkeyup,
+          keypress: document.body.onkeypress,
+        }
+      : null;
+
+    const originalHtmlHandlers = {
+      keydown: document.documentElement.onkeydown,
+      keyup: document.documentElement.onkeyup,
+      keypress: document.documentElement.onkeypress,
+    };
+
+    document.onkeydown = null;
+    document.onkeyup = null;
+    document.onkeypress = null;
+    window.onkeydown = null;
+    window.onkeyup = null;
+    window.onkeypress = null;
+    document.documentElement.onkeydown = null;
+    document.documentElement.onkeyup = null;
+    document.documentElement.onkeypress = null;
+
+    if (document.body) {
+      document.body.onkeydown = null;
+      document.body.onkeyup = null;
+      document.body.onkeypress = null;
+    }
+
+    // Remove inline handlers
+    document.querySelectorAll('[onkeydown], [onkeyup], [onkeypress]').forEach(el => {
+      el.removeAttribute('onkeydown');
+      el.removeAttribute('onkeyup');
+      el.removeAttribute('onkeypress');
+    });
+
+    this.cleanupFunctions.push(() => {
+      types.forEach(type => document.removeEventListener(type, handler, true));
+      document.onkeydown = originalDocumentHandlers.keydown;
+      document.onkeyup = originalDocumentHandlers.keyup;
+      document.onkeypress = originalDocumentHandlers.keypress;
+      window.onkeydown = originalWindowHandlers.keydown;
+      window.onkeyup = originalWindowHandlers.keyup;
+      window.onkeypress = originalWindowHandlers.keypress;
+      document.documentElement.onkeydown = originalHtmlHandlers.keydown;
+      document.documentElement.onkeyup = originalHtmlHandlers.keyup;
+      document.documentElement.onkeypress = originalHtmlHandlers.keypress;
+      if (document.body && originalBodyHandlers) {
+        document.body.onkeydown = originalBodyHandlers.keydown;
+        document.body.onkeyup = originalBodyHandlers.keyup;
+        document.body.onkeypress = originalBodyHandlers.keypress;
+      }
+    });
+  }
+
+  private isMnrEvent(e: Event): boolean {
+    const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    for (const node of path) {
+      if (node instanceof ShadowRoot) {
+        const host = node.host as HTMLElement | null;
+        if (host?.id?.startsWith('mnr-')) return true;
+      }
+      if (node instanceof Element) {
+        if (node.id?.startsWith('mnr-')) return true;
+        for (const cls of Array.from(node.classList)) {
+          if (cls.startsWith('mnr-')) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Block popup windows
    */
   private blockPopups(): void {
@@ -504,11 +621,38 @@ export class SiteProtection {
    * Clean up suspicious scripts
    */
   cleanupScripts(): void {
-    const suspiciousPatterns = [/ad[s]?\./i, /track(er|ing)/i, /analytics/i, /popup/i, /redirect/i];
+    const suspiciousPatterns = [
+      /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i,
+      /(^|[\\/._-])ads([\\/._-]|$)/i,
+      /doubleclick/i,
+      /googlesyndication|googletagmanager|gtag/i,
+      /google-analytics/i,
+      /(^|[\\/._-])(analytics|track(er|ing)?|pixel|beacon|telemetry)([\\/._-]|$)/i,
+    ];
+
+    const siteHost = window.location.hostname;
+    const isSameSite = (host: string): boolean => {
+      return host === siteHost || host.endsWith(`.${siteHost}`);
+    };
 
     document.querySelectorAll('script[src]').forEach(script => {
       const src = script.getAttribute('src') || '';
-      if (suspiciousPatterns.some(p => p.test(src))) {
+      let url: URL;
+      try {
+        url = new URL(src, window.location.href);
+      } catch {
+        return;
+      }
+
+      const target = `${url.hostname}${url.pathname}`;
+      const isSuspicious = suspiciousPatterns.some(p => p.test(target));
+      if (!isSuspicious) return;
+
+      const isThirdParty = !isSameSite(url.hostname);
+      const isHighConfidence =
+        /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i.test(target);
+
+      if (isThirdParty || isHighConfidence) {
         script.remove();
       }
     });

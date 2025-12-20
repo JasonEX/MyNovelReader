@@ -15,6 +15,7 @@ import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { getSiteProtection } from '@/core/protection';
+import type { ProtectionOptions } from '@/core/protection';
 import { SiteRule } from '@/core/rules/types';
 
 /** Get GM_xmlhttpRequest function */
@@ -173,6 +174,8 @@ export interface AutoEnableOptions {
   autoLaunchThreshold?: number;
   /** Enable site protection measures */
   enableProtection?: boolean;
+  /** Options for site protection */
+  protectionOptions?: ProtectionOptions;
   /** Skip detection if URL matches these patterns */
   skipPatterns?: RegExp[];
   /** Force detection mode (ignore rules) */
@@ -320,7 +323,7 @@ export class AutoEnableManager {
     // Enable site protection first
     if (this.options.enableProtection) {
       const protection = getSiteProtection();
-      protection.activate();
+      protection.activate(this.options.protectionOptions);
       protection.removeOverlays();
     }
 
@@ -556,7 +559,7 @@ export class AutoEnableManager {
     // Enable protection
     if (this.options.enableProtection) {
       const protection = getSiteProtection();
-      protection.activate();
+      protection.activate(this.options.protectionOptions);
       protection.removeOverlays();
     }
 

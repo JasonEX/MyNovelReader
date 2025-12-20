@@ -276,7 +276,7 @@ function activate() {
   isActive.value = true;
   document.addEventListener('mousemove', handleMouseMove, true);
   document.addEventListener('click', handleClick, true);
-  document.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keydown', handleKeyDown, true);
   window.addEventListener('scroll', handleScroll, true);
   document.body.style.cursor = 'crosshair';
   // Start animation loop
@@ -289,7 +289,7 @@ function deactivate() {
   highlightRect.value = null;
   document.removeEventListener('mousemove', handleMouseMove, true);
   document.removeEventListener('click', handleClick, true);
-  document.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('keydown', handleKeyDown, true);
   window.removeEventListener('scroll', handleScroll, true);
   document.body.style.cursor = '';
   // Stop animation loop

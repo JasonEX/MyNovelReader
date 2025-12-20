@@ -173,6 +173,28 @@
             </label>
           </section>
 
+          <!-- Protection -->
+          <section class="mnr-settings-section">
+            <h4>页面防护</h4>
+            <div class="mnr-segmented-control">
+              <button
+                class="mnr-segment"
+                :class="{ active: protectionMode === 'standard' }"
+                @click="updateProtectionMode('standard')"
+              >
+                标准
+              </button>
+              <button
+                class="mnr-segment"
+                :class="{ active: protectionMode === 'aggressive' }"
+                @click="updateProtectionMode('aggressive')"
+              >
+                激进
+              </button>
+            </div>
+            <p class="mnr-hint">激进模式会尝试清理可疑脚本，可能影响站点功能。</p>
+          </section>
+
           <!-- Actions -->
           <section class="mnr-settings-section">
             <h4>操作</h4>
@@ -226,6 +248,7 @@ import { useConfigStore, THEMES } from '@/ui/stores/config';
 import { useReaderStore } from '@/ui/stores/reader';
 import { useRuleStore } from '@/ui/stores/rule';
 import { closeReader } from '@/bootstrap';
+import { getSiteProtection } from '@/core/protection';
 
 const props = defineProps<{
   visible: boolean;
@@ -263,6 +286,7 @@ const keyboardNav = ref(configStore.behavior.keyboardNavigation);
 const swipeGestures = ref(configStore.behavior.swipeGestures);
 const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 const showProgress = ref(configStore.behavior.showProgress);
+const protectionMode = ref(configStore.protection.mode);
 const cacheProgress = computed(() => readerStore.cacheProgress);
 const persistedCount = computed(() => readerStore.persistedUrls.size);
 
@@ -308,6 +332,14 @@ function updateBehavior(key: string, value: boolean) {
   configStore.updateBehavior({ [key]: value });
 }
 
+function updateProtectionMode(mode: 'standard' | 'aggressive') {
+  protectionMode.value = mode;
+  configStore.updateProtection({ mode });
+  if (mode === 'aggressive') {
+    getSiteProtection().cleanupScripts();
+  }
+}
+
 async function handleClearCache() {
   if (window.confirm('确定要清除本书的缓存吗？')) {
     await readerStore.clearPersistedCache();
@@ -337,6 +369,7 @@ watch(
       swipeGestures.value = configStore.behavior.swipeGestures;
       autoHideHeader.value = configStore.behavior.autoHideHeader;
       showProgress.value = configStore.behavior.showProgress;
+      protectionMode.value = configStore.protection.mode;
     }
   }
 );

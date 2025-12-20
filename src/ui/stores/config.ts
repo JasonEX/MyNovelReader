@@ -52,7 +52,11 @@ export interface BehaviorSettings {
 }
 
 /** Protection settings */
+export type ProtectionMode = 'standard' | 'aggressive';
+
 export interface ProtectionSettings {
+  /** Protection mode */
+  mode: ProtectionMode;
   /** Block redirects */
   blockRedirects: boolean;
   /** Enable right-click */
@@ -137,6 +141,7 @@ const DEFAULT_BEHAVIOR: BehaviorSettings = {
 };
 
 const DEFAULT_PROTECTION: ProtectionSettings = {
+  mode: 'standard',
   blockRedirects: true,
   enableRightClick: true,
   enableSelection: true,
