@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { NavigationDetector } from '../../src/core/detection/NavigationDetector';
+import { NavigationDetector } from '@/core/detection/NavigationDetector';
 
 describe('NavigationDetector', () => {
   let detector: NavigationDetector;

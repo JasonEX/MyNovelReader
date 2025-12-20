@@ -13,7 +13,7 @@ vi.stubGlobal('GM_setValue', vi.fn());
 vi.stubGlobal('GM_deleteValue', vi.fn());
 vi.stubGlobal('GM_listValues', vi.fn().mockReturnValue([]));
 
-import { AutoEnableManager, getAutoEnableManager } from '../../src/core/AutoEnableManager';
+import { AutoEnableManager, getAutoEnableManager } from '@/core/AutoEnableManager';
 
 describe('AutoEnableManager', () => {
   let manager: AutoEnableManager;
@@ -38,9 +38,9 @@ describe('AutoEnableManager', () => {
       }
     );
 
-    global.document = dom.window.document;
-    global.window = dom.window as unknown as Window & typeof globalThis;
-    global.location = dom.window.location;
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.location = dom.window.location;
 
     manager = new AutoEnableManager();
   });
@@ -137,7 +137,7 @@ describe('AutoEnableManager', () => {
       if (decision?.detection) {
         const rule = manager.createRuleFromDetection(
           'example.com',
-          decision.detection as unknown as import('../../src/core/detection').DetectionEngine
+          decision.detection as unknown as import('@/core/detection').DetectionEngine
         );
 
         if (rule) {
@@ -254,9 +254,9 @@ describe('AutoEnableManager utility functions', () => {
       }
     );
 
-    global.document = dom.window.document;
-    global.window = dom.window as unknown as Window & typeof globalThis;
-    global.location = dom.window.location;
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.location = dom.window.location;
   });
 
   describe('isSectionLikeUrl', () => {
@@ -312,9 +312,9 @@ describe('AutoEnableManager with different page types', () => {
       }
     );
 
-    global.document = dom.window.document;
-    global.window = dom.window as unknown as Window & typeof globalThis;
-    global.location = dom.window.location;
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.location = dom.window.location;
 
     manager = new AutoEnableManager();
     const decision = await manager.check();
@@ -336,9 +336,9 @@ describe('AutoEnableManager with different page types', () => {
       }
     );
 
-    global.document = dom.window.document;
-    global.window = dom.window as unknown as Window & typeof globalThis;
-    global.location = dom.window.location;
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.location = dom.window.location;
 
     manager = new AutoEnableManager();
     const decision = await manager.check();
@@ -364,9 +364,9 @@ describe('AutoEnableManager with different page types', () => {
       }
     );
 
-    global.document = dom.window.document;
-    global.window = dom.window as unknown as Window & typeof globalThis;
-    global.location = dom.window.location;
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.location = dom.window.location;
 
     manager = new AutoEnableManager();
     const decision = await manager.check();

@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { TitleDetector } from '../../src/core/detection/TitleDetector';
+import { TitleDetector } from '@/core/detection/TitleDetector';
 
 describe('TitleDetector', () => {
   let detector: TitleDetector;

@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { SiteProtection } from '../../src/core/protection/SiteProtection';
+import { SiteProtection } from '@/core/protection/SiteProtection';
 
 describe('SiteProtection', () => {
   let protection: SiteProtection;
@@ -17,8 +17,8 @@ describe('SiteProtection', () => {
     });
 
     // Set up global environment
-    global.document = dom.window.document;
-    global.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
 
     protection = new SiteProtection();
   });
@@ -269,8 +269,8 @@ describe('SiteProtection', () => {
     it('should handle document without head element', () => {
       // Create a minimal DOM without head
       const minimalDom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-      global.document = minimalDom.window.document;
-      global.window = minimalDom.window as unknown as Window & typeof globalThis;
+      globalThis.document = minimalDom.window.document;
+      globalThis.window = minimalDom.window as unknown as Window & typeof globalThis;
 
       const p = new SiteProtection();
       // Should not throw
@@ -281,8 +281,8 @@ describe('SiteProtection', () => {
     it('should handle document without body element', () => {
       // Create a document without body
       const minimalDom = new JSDOM('<!DOCTYPE html><html></html>');
-      global.document = minimalDom.window.document;
-      global.window = minimalDom.window as unknown as Window & typeof globalThis;
+      globalThis.document = minimalDom.window.document;
+      globalThis.window = minimalDom.window as unknown as Window & typeof globalThis;
 
       const p = new SiteProtection();
       // Should not throw even without body

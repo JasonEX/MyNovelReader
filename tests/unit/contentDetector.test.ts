@@ -3,7 +3,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ContentDetector } from '../../src/core/detection/ContentDetector';
+import { ContentDetector } from '@/core/detection/ContentDetector';
 import { JSDOM } from 'jsdom';
 
 describe('ContentDetector', () => {

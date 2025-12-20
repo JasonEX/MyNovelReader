@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { normalizeCiwemaoChapterUrl } from '../../src/core/utils/urlUtils';
+import { normalizeCiwemaoChapterUrl } from '@/core/utils/urlUtils';
 
 describe('normalizeCiwemaoChapterUrl', () => {
   it('should rewrite get_par_tsu_list to chapter URL', () => {

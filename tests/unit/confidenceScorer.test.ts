@@ -3,8 +3,8 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ConfidenceScorer } from '../../src/core/detection/ConfidenceScorer';
-import { DetectionResults } from '../../src/core/detection/types';
+import { ConfidenceScorer } from '@/core/detection/ConfidenceScorer';
+import { DetectionResults } from '@/core/detection/types';
 
 describe('ConfidenceScorer', () => {
   let scorer: ConfidenceScorer;

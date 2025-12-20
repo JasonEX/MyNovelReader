@@ -3,7 +3,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ContentProcessor } from '../../src/core/parser/ContentProcessor';
+import { ContentProcessor } from '@/core/parser/ContentProcessor';
 import { JSDOM } from 'jsdom';
 
 describe('ContentProcessor', () => {
@@ -16,7 +16,7 @@ describe('ContentProcessor', () => {
     dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
     doc = dom.window.document;
     // Set global document for tests that need it
-    global.document = doc;
+    globalThis.document = doc;
   });
 
   describe('constructor', () => {
