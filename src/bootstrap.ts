@@ -11,6 +11,7 @@
 import {
   type AutoEnableDecision,
   getAutoEnableManager,
+  getSiteProtection,
   type ParsedChapter,
   type ProtectionOptions,
   type SiteRule,
@@ -55,6 +56,54 @@ function buildProtectionOptions(settings: ProtectionSettings): ProtectionOptions
     unlockKeyboard: true,
     cleanupScripts: settings.mode === 'aggressive',
   };
+}
+
+function shouldEnableEarlyProtection(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+
+    const path = u.pathname.toLowerCase();
+    // Exclude common non-reading pages
+    if (/(login|register|signup|search|rank|category|tag|author|help|about|contact)/.test(path)) {
+      return false;
+    }
+    if (/(index|list|catalog|toc|contents?)\.html?$/.test(path) || /\/(catalog|toc)\//.test(path)) {
+      return false;
+    }
+
+    // Common chapter-ish patterns
+    if (/\/(chapter|txt|read|article)\//.test(path) && /\d/.test(path)) return true;
+    if (/\/(book|novel|xiaoshuo)\//.test(path) && /\d/.test(path) && /\.html?$/.test(path)) {
+      return true;
+    }
+    if (/\d{3,}[^/]*\.html?$/.test(path)) return true;
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// Activate minimal protection as early as possible to block mobile ad-tech redirects.
+// This is intentionally conservative and will be reconfigured after settings are loaded.
+try {
+  if (shouldEnableEarlyProtection(window.location.href)) {
+    getSiteProtection().activate({
+      blockRedirects: true,
+      blockPopups: true,
+      clearTimers: true,
+      enableRightClick: false,
+      enableSelection: false,
+      enableCopy: false,
+      unlockKeyboard: false,
+      removeEventHijacking: false,
+      blockVisibilityDetection: false,
+      cleanupScripts: false,
+    });
+  }
+} catch (e) {
+  console.error('[MNR] Early protection error:', e);
 }
 
 /**

@@ -208,6 +208,8 @@ export function toUserscriptConfig(meta: UserscriptMeta = META): Record<string, 
     license: meta.license,
     homepageURL: meta.homepageURL,
     supportURL: meta.supportURL,
+    // Run as early as possible to block mobile ad-tech redirects (common on some novel sites).
+    'run-at': 'document-start',
     match: meta.matches,
     exclude: meta.excludes,
     grant: meta.grants,

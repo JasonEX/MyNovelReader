@@ -61,6 +61,7 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
+// @run-at       document-start
 // ==/UserScript==
 
 (function () {
@@ -5148,7 +5149,10 @@ activate(options) {
       if (options) {
         this.options = { ...DEFAULT_OPTIONS$1, ...options };
       }
-      if (this.isActive) return;
+      if (this.isActive) {
+        if (!options) return;
+        this.deactivate();
+      }
       this.isActive = true;
       if (this.options.clearTimers) {
         this.clearTimers();
@@ -5188,6 +5192,7 @@ deactivate() {
       this.isActive = false;
     }
 blockRedirects() {
+      var _a, _b;
       const metaRefresh = document.querySelectorAll('meta[http-equiv="refresh"]');
       metaRefresh.forEach((meta) => meta.remove());
       const originalAssign = window.location.assign.bind(window.location);
@@ -5213,25 +5218,38 @@ blockRedirects() {
         }
       };
       let locationOverrideSucceeded = false;
+      const locationProto = Object.getPrototypeOf(window.location);
+      const originalHrefDesc = locationProto ? Object.getOwnPropertyDescriptor(locationProto, "href") : null;
       try {
-        Object.defineProperty(window.location, "assign", {
+        const target = locationProto || window.location;
+        Object.defineProperty(target, "assign", {
           value: (url) => {
-            if (isAllowedNavigation(url)) {
-              originalAssign(url);
-            }
+            if (isAllowedNavigation(url)) originalAssign(url);
           },
           writable: true,
           configurable: true
         });
-        Object.defineProperty(window.location, "replace", {
+        Object.defineProperty(target, "replace", {
           value: (url) => {
-            if (isAllowedNavigation(url)) {
-              originalReplace(url);
-            }
+            if (isAllowedNavigation(url)) originalReplace(url);
           },
           writable: true,
           configurable: true
         });
+        if (locationProto) {
+          if ((originalHrefDesc == null ? void 0 : originalHrefDesc.set) && originalHrefDesc.get) {
+            Object.defineProperty(locationProto, "href", {
+              get: originalHrefDesc.get,
+              set: function(url) {
+                var _a2;
+                if (isAllowedNavigation(url)) {
+                  (_a2 = originalHrefDesc.set) == null ? void 0 : _a2.call(this, url);
+                }
+              },
+              configurable: true
+            });
+          }
+        }
         locationOverrideSucceeded = true;
       } catch {
       }
@@ -5256,24 +5274,153 @@ blockRedirects() {
         }
         return originalSetInterval(callback, delay, ...args);
       };
+      const isBlockedExternalUrl = (url, kind) => {
+        if (url.protocol !== "http:" && url.protocol !== "https:") return true;
+        if (url.origin === window.location.origin) return false;
+        return kind === "script" || kind === "iframe";
+      };
+      const isHighEntropyPath = (pathname) => {
+        return /^\/[A-Za-z0-9]{6,12}\/[A-Za-z0-9]{6,24}\.js(?:$|[?#])/.test(pathname);
+      };
+      const isLikelyAdScriptPath = (srcUrl) => {
+        if (srcUrl.origin !== window.location.origin) return true;
+        const path = srcUrl.pathname || "";
+        if (path.startsWith("/static/") || path.startsWith("/js/") || path.startsWith("/assets/")) {
+          return false;
+        }
+        return isHighEntropyPath(path);
+      };
+      const NodeCtor = window.Node;
+      const ScriptCtor = window.HTMLScriptElement;
+      const IFrameCtor = window.HTMLIFrameElement;
+      const ElementCtor = window.Element;
+      const DocumentFragmentCtor = window.DocumentFragment;
+      const originalAppendChild = NodeCtor.prototype.appendChild;
+      const originalInsertBefore = NodeCtor.prototype.insertBefore;
+      const shouldBlockNode = (node) => {
+        const checkScript = (script) => {
+          const src = script.getAttribute("src") || script.src || "";
+          if (!src) return false;
+          let u;
+          try {
+            u = new URL(src, window.location.href);
+          } catch {
+            return false;
+          }
+          if (isBlockedExternalUrl(u, "script")) return true;
+          if (this.options.cleanupScripts && isLikelyAdScriptPath(u)) return true;
+          return false;
+        };
+        const checkIFrame = (iframe) => {
+          const src = iframe.getAttribute("src") || iframe.src || "";
+          if (!src) return false;
+          let u;
+          try {
+            u = new URL(src, window.location.href);
+          } catch {
+            return false;
+          }
+          if (isBlockedExternalUrl(u, "iframe")) return true;
+          return false;
+        };
+        if (ScriptCtor && node instanceof ScriptCtor) return checkScript(node);
+        if (IFrameCtor && node instanceof IFrameCtor) return checkIFrame(node);
+        if (DocumentFragmentCtor && node instanceof DocumentFragmentCtor || ElementCtor && node instanceof ElementCtor) {
+          const scripts = node.querySelectorAll("script[src]");
+          for (const s of Array.from(scripts)) {
+            if (ScriptCtor && s instanceof ScriptCtor && checkScript(s)) return true;
+          }
+          const iframes = node.querySelectorAll("iframe[src]");
+          for (const f of Array.from(iframes)) {
+            if (IFrameCtor && f instanceof IFrameCtor && checkIFrame(f)) return true;
+          }
+        }
+        return false;
+      };
+      NodeCtor.prototype.appendChild = function(node) {
+        if (shouldBlockNode(node)) return node;
+        return originalAppendChild.call(this, node);
+      };
+      NodeCtor.prototype.insertBefore = function(newNode, referenceNode) {
+        if (shouldBlockNode(newNode)) return newNode;
+        return originalInsertBefore.call(this, newNode, referenceNode);
+      };
+      const originalWrite = (_a = document.write) == null ? void 0 : _a.bind(document);
+      const originalWriteln = (_b = document.writeln) == null ? void 0 : _b.bind(document);
+      let writeBuffer = "";
+      let isBufferingWrite = false;
+      const MAX_BUFFER_LEN = 4096;
+      const bufferLooksLikeScriptTag = (buf) => /<script/i.test(buf);
+      const bufferIsClosed = (buf) => /<\/script>/i.test(buf) || /<\\\/script>/i.test(buf);
+      const maybeExtractScriptSrc = (buf) => {
+        const m = buf.match(/<script[^>]*\ssrc\s*=\s*['"]([^'"]+)['"][^>]*>/i);
+        return (m == null ? void 0 : m[1]) || null;
+      };
+      const flushWriteBuffer = (writer) => {
+        if (!writeBuffer) return;
+        writer(writeBuffer);
+        writeBuffer = "";
+        isBufferingWrite = false;
+      };
+      const handleWriteLike = (writer, args) => {
+        if (!originalWrite || !originalWriteln) return writer(String(args.join("")));
+        const chunk = args.map((a) => String(a)).join("");
+        const startsScriptLike = /<script/i.test(chunk) || isBufferingWrite && bufferLooksLikeScriptTag(writeBuffer);
+        if (!isBufferingWrite && startsScriptLike) {
+          isBufferingWrite = true;
+          writeBuffer = "";
+        }
+        if (!isBufferingWrite) {
+          writer(chunk);
+          return;
+        }
+        writeBuffer += chunk;
+        if (writeBuffer.length > MAX_BUFFER_LEN) {
+          flushWriteBuffer(writer);
+          return;
+        }
+        if (!bufferIsClosed(writeBuffer)) return;
+        const src = maybeExtractScriptSrc(writeBuffer);
+        if (src) {
+          try {
+            const u = new URL(src, window.location.href);
+            const shouldBlock = isBlockedExternalUrl(u, "script") || isLikelyAdScriptPath(u);
+            if (shouldBlock) {
+              writeBuffer = "";
+              isBufferingWrite = false;
+              return;
+            }
+          } catch {
+          }
+        }
+        flushWriteBuffer(writer);
+      };
+      if (this.options.cleanupScripts && originalWrite && originalWriteln) {
+        document.write = (...args) => handleWriteLike(originalWrite, args);
+        document.writeln = (...args) => handleWriteLike(originalWriteln, args);
+      }
       this.cleanupFunctions.push(() => {
         if (locationOverrideSucceeded) {
           try {
-            Object.defineProperty(window.location, "assign", {
-              value: originalAssign,
-              writable: true,
-              configurable: true
-            });
-            Object.defineProperty(window.location, "replace", {
-              value: originalReplace,
-              writable: true,
-              configurable: true
-            });
+            const target = locationProto || window.location;
+            Object.defineProperty(target, "assign", { value: originalAssign, configurable: true });
+            Object.defineProperty(target, "replace", { value: originalReplace, configurable: true });
+            if (locationProto && originalHrefDesc) {
+              Object.defineProperty(locationProto, "href", originalHrefDesc);
+            }
           } catch {
           }
         }
         window.setTimeout = originalSetTimeout;
         window.setInterval = originalSetInterval;
+        NodeCtor.prototype.appendChild = originalAppendChild;
+        NodeCtor.prototype.insertBefore = originalInsertBefore;
+        if (originalWrite) {
+          document.write = originalWrite;
+        }
+        if (originalWriteln) {
+          document.writeln = originalWriteln;
+        }
       });
     }
 enableRightClick() {
@@ -23880,6 +24027,45 @@ ${value}`;
       unlockKeyboard: true,
       cleanupScripts: settings.mode === "aggressive"
     };
+  }
+  function shouldEnableEarlyProtection(url) {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+      const path = u.pathname.toLowerCase();
+      if (/(login|register|signup|search|rank|category|tag|author|help|about|contact)/.test(path)) {
+        return false;
+      }
+      if (/(index|list|catalog|toc|contents?)\.html?$/.test(path) || /\/(catalog|toc)\//.test(path)) {
+        return false;
+      }
+      if (/\/(chapter|txt|read|article)\//.test(path) && /\d/.test(path)) return true;
+      if (/\/(book|novel|xiaoshuo)\//.test(path) && /\d/.test(path) && /\.html?$/.test(path)) {
+        return true;
+      }
+      if (/\d{3,}[^/]*\.html?$/.test(path)) return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  try {
+    if (shouldEnableEarlyProtection(window.location.href)) {
+      getSiteProtection().activate({
+        blockRedirects: true,
+        blockPopups: true,
+        clearTimers: true,
+        enableRightClick: false,
+        enableSelection: false,
+        enableCopy: false,
+        unlockKeyboard: false,
+        removeEventHijacking: false,
+        blockVisibilityDetection: false,
+        cleanupScripts: false
+      });
+    }
+  } catch (e) {
+    console.error("[MNR] Early protection error:", e);
   }
   async function initialize() {
     if (appState.isInitialized) {

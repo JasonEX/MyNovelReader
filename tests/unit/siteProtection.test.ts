@@ -155,6 +155,45 @@ describe('SiteProtection', () => {
       const refreshTags = dom.window.document.querySelectorAll('meta[http-equiv="refresh"]');
       expect(refreshTags.length).toBe(0);
     });
+
+    it('should block dynamically injected cross-origin scripts', () => {
+      protection.activate();
+
+      const script = dom.window.document.createElement('script');
+      script.setAttribute('src', 'https://evil.example/x.js');
+      dom.window.document.body.appendChild(script);
+
+      const injected = dom.window.document.querySelector('script[src="https://evil.example/x.js"]');
+      expect(injected).toBeNull();
+    });
+
+    it('should block suspicious document.writeln script injection in aggressive mode', () => {
+      const doc = dom.window.document as unknown as Document & {
+        writeln: (...args: unknown[]) => void;
+      };
+
+      const originalWriteln = vi.fn();
+      // @ts-expect-error - test env: override document.writeln
+      doc.writeln = originalWriteln;
+
+      const p = new SiteProtection({ cleanupScripts: true });
+      p.activate();
+
+      // Simulate common ad-tech pattern: build a script tag in pieces via writeln()
+      doc.writeln('<script src="/');
+      doc.writeln('Ab12Cd34');
+      doc.writeln('/EFgh5678iJ.js');
+      doc.writeln('"><\\/script>');
+
+      // Should be blocked entirely (not forwarded to original writeln)
+      expect(originalWriteln).toHaveBeenCalledTimes(0);
+
+      // Allow typical same-site scripts
+      doc.writeln('<script src="/js/app.js"></script>');
+      expect(originalWriteln).toHaveBeenCalledTimes(1);
+
+      p.deactivate();
+    });
   });
 
   describe('blockPopups', () => {
