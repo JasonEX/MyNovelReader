@@ -547,7 +547,7 @@ async function loadPrevWithScrollAdjust(jumpToStart = false) {
   const oldScrollTop = mainEl.scrollTop;
   const oldTopSpacer = topSpacer.value;
 
-  const success = await readerStore.loadPrevChapter();
+  const success = await readerStore.loadPrevChapter('manual');
 
   if (success) {
     // 2. Wait for Vue to update DOM
@@ -883,7 +883,7 @@ async function navigateChapter(direction: 'prev' | 'next') {
     if (currentIdx > 0) {
       jumpToChapter(currentIdx - 1);
     } else if (hasPrev.value && !isLoadingPrev.value) {
-      const success = await readerStore.loadPrevChapter();
+      const success = await readerStore.loadPrevChapter('manual');
       if (success) {
         // Use auto scroll to prevent bounce/race condition with top observer
         globalThis.requestAnimationFrame(() => jumpToChapter(0, 'auto'));
@@ -896,7 +896,7 @@ async function navigateChapter(direction: 'prev' | 'next') {
     if (currentIdx < chaptersCount - 1) {
       jumpToChapter(currentIdx + 1);
     } else if (hasNext.value && !isLoadingNext.value) {
-      const success = await readerStore.loadNextChapter();
+      const success = await readerStore.loadNextChapter('manual');
       if (success) {
         globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
       }
@@ -993,7 +993,7 @@ onMounted(async () => {
   // Bottom sentinel - load next chapter
   bottomObserver = new globalThis.IntersectionObserver(entries => {
     if (entries[0].isIntersecting && hasNext.value && !isLoadingNext.value && !isNavigating.value) {
-      readerStore.loadNextChapter();
+      readerStore.loadNextChapter('auto');
     }
   }, observerOptions);
 

@@ -17,6 +17,8 @@ type SectionInfo = {
   confidence: number;
 };
 
+type LoadSource = 'auto' | 'manual';
+
 export interface ReadingProgress {
   /** Chapter URL */
   url: string;
@@ -75,6 +77,17 @@ const MAX_CACHED_CHAPTERS = 8;
 // MAX_CACHE_TASKS removed - now unlimited
 const VIP_BLOCK_TOAST = '该章节为VIP/付费内容，无法加载';
 
+function normalizeUrlForFetch(url: string): string {
+  const normalized = normalizeCiwemaoChapterUrl(url);
+  try {
+    const u = new URL(normalized);
+    u.hash = '';
+    return u.toString();
+  } catch {
+    return normalized.replace(/#.*$/, '');
+  }
+}
+
 export const useReaderStore = defineStore('reader', () => {
   // State
   const isActive = ref(false);
@@ -91,11 +104,14 @@ export const useReaderStore = defineStore('reader', () => {
   const loadedUrls = ref<Set<string>>(new Set());
   // VIP/locked chapters should not be loaded when paging
   const vipBlockedUrls = ref<Set<string>>(new Set());
+  // URLs that were determined to be non-chapter for navigation (e.g. TOC, invalid links)
+  const blockedNavUrls = ref<Set<string>>(new Set());
   const originalContents = ref<Map<string, string>>(new Map()); // id -> original HTML
   const originalTitles = ref<Map<string, { title: string; bookTitle?: string }>>(new Map());
   const currentConversionMode = ref<ConversionMode>('none');
   const pendingNextAbort = ref<(() => void) | null>(null);
   const pendingPrevAbort = ref<(() => void) | null>(null);
+  const navFailures = new Map<string, { count: number; nextRetryAt: number }>();
   const cacheProgress = ref<CacheProgressState>({ done: 0, total: 0, running: false });
   const cacheQueue = ref<string[]>([]);
   const cacheAbort = ref<(() => void) | null>(null);
@@ -145,12 +161,14 @@ export const useReaderStore = defineStore('reader', () => {
     const lastChapter = chapters.value[chapters.value.length - 1];
     const nextUrl = lastChapter?.chapter.nextUrl;
     if (!nextUrl) return false;
+    if (blockedNavUrls.value.has(normalizeUrlForBlock(nextUrl))) return false;
     return !isVipBlockedUrl(nextUrl);
   });
   const hasPrev = computed(() => {
     const firstChapter = chapters.value[0];
     const prevUrl = firstChapter?.chapter.prevUrl;
     if (!prevUrl) return false;
+    if (blockedNavUrls.value.has(normalizeUrlForBlock(prevUrl))) return false;
     return !isVipBlockedUrl(prevUrl);
   });
   const hasIndex = computed(() => !!chapter.value?.indexUrl);
@@ -184,6 +202,8 @@ export const useReaderStore = defineStore('reader', () => {
     error.value = null;
     loadedUrls.value.clear();
     vipBlockedUrls.value.clear();
+    blockedNavUrls.value.clear();
+    navFailures.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
     cachedContents.value.clear();
@@ -191,6 +211,20 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function setChapter(newChapter: ParsedChapter, newRule?: SiteRule) {
+    // Canonicalize URLs (strip hashes etc.) to stabilize caching and navigation.
+    if (newChapter.url) {
+      newChapter.url = normalizeUrlForFetch(newChapter.url);
+    }
+    if (newChapter.prevUrl) {
+      newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
+    }
+    if (newChapter.nextUrl) {
+      newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
+    }
+    if (newChapter.indexUrl) {
+      newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
+    }
+
     const id = `chapter-${Date.now()}-0`;
     // Clear existing chapters and set the initial one
     chapters.value = [
@@ -206,6 +240,8 @@ export const useReaderStore = defineStore('reader', () => {
     loadedUrls.value.clear();
     loadedUrls.value.add(newChapter.url);
     vipBlockedUrls.value.clear();
+    blockedNavUrls.value.clear();
+    navFailures.clear();
     cachedContents.value.clear();
     persistedUrls.value.clear();
 
@@ -300,7 +336,7 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   /** Unified chapter loading function */
-  async function loadChapter(direction: 'next' | 'prev'): Promise<boolean> {
+  async function loadChapter(direction: 'next' | 'prev', source: LoadSource): Promise<boolean> {
     const isNext = direction === 'next';
     const refChapter = isNext ? chapters.value[chapters.value.length - 1] : chapters.value[0];
     const isLoadingRef = isNext ? isLoadingNext : isLoadingPrev;
@@ -314,10 +350,13 @@ export const useReaderStore = defineStore('reader', () => {
 
     const rawTargetUrl = isNext ? refChapter?.chapter.nextUrl : refChapter?.chapter.prevUrl;
     if (!rawTargetUrl) {
-      showToast(endMessage, 'info');
+      if (source === 'manual') {
+        showToast(endMessage, 'info');
+      }
       return false;
     }
-    const targetUrl = normalizeCiwemaoChapterUrl(rawTargetUrl);
+
+    const targetUrl = normalizeUrlForFetch(rawTargetUrl);
     if (targetUrl !== rawTargetUrl) {
       if (isNext) {
         refChapter.chapter.nextUrl = targetUrl;
@@ -331,7 +370,10 @@ export const useReaderStore = defineStore('reader', () => {
       refChapter.chapter.indexUrl &&
       normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)
     ) {
-      showToast(endMessage, 'info');
+      blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+      if (source === 'manual') {
+        showToast(endMessage, 'info');
+      }
       return false;
     }
 
@@ -341,12 +383,28 @@ export const useReaderStore = defineStore('reader', () => {
       return false;
     }
 
-    // Check if already in cachedContents
-    if (loadedUrls.value.has(targetUrl)) {
-      const cached = cachedContents.value.get(targetUrl);
-      if (cached) {
-        return insertCachedChapter(cached, isNext ? 'append' : 'prepend');
+    const navKey = normalizeUrlForBlock(targetUrl);
+    if (blockedNavUrls.value.has(navKey)) {
+      if (source === 'manual') {
+        showToast(endMessage, 'info');
       }
+      return false;
+    }
+
+    const failure = navFailures.get(navKey);
+    if (failure && Date.now() < failure.nextRetryAt) {
+      if (source === 'manual') {
+        showToast('加载失败过于频繁，请稍后重试', 'info', 2000);
+      }
+      return false;
+    }
+
+    // Prefer cached content if available (avoid refetching on race/abort failures).
+    const cached = cachedContents.value.get(targetUrl);
+    if (cached) {
+      return insertCachedChapter(cached, isNext ? 'append' : 'prepend');
+    }
+    if (loadedUrls.value.has(targetUrl)) {
       return false;
     }
 
@@ -360,9 +418,11 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Pre-fetch validation: check if URL looks like a valid chapter page
     if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
-      loadedUrls.value.add(targetUrl);
       isLoadingRef.value = false;
-      showToast(endMessage, 'info');
+      blockedNavUrls.value.add(navKey);
+      if (source === 'manual') {
+        showToast(endMessage, 'info');
+      }
       return false;
     }
 
@@ -371,34 +431,53 @@ export const useReaderStore = defineStore('reader', () => {
       const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
       pendingAbortRef.value = abort;
 
-      const doc = await promise;
+      const result = await promise;
       pendingAbortRef.value = null;
-      if (!doc) {
-        loadedUrls.value.add(targetUrl);
-        showToast(endMessage, 'info');
+      if (result.error === 'abort') {
+        return false;
+      }
+      if (!result.doc) {
+        const prev = navFailures.get(navKey);
+        const count = (prev?.count || 0) + 1;
+        const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 30000);
+        navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+        if (source === 'manual' || count === 1) {
+          showToast(errorMessage, 'error', 2500);
+        }
         return false;
       }
 
       // VIP page detection: do not parse / load, just toast and block it for this session
-      if (isVipChapterPage(doc)) {
+      if (isVipChapterPage(result.doc)) {
         vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
         showToast(VIP_BLOCK_TOAST, 'info', 3000);
         return false;
       }
 
       const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, doc, targetUrl, referer);
+      const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
       if (!parsed) {
-        loadedUrls.value.add(targetUrl);
-        showToast(endMessage, 'info');
+        const prev = navFailures.get(navKey);
+        const count = (prev?.count || 0) + 1;
+        const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 30000);
+        navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+        if (source === 'manual' || count === 1) {
+          showToast(errorMessage, 'error', 2500);
+        }
         return false;
       }
+
+      if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+      if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+      if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
 
       // Check if this is a TOC page
       const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
       if (isTocPage) {
-        loadedUrls.value.add(targetUrl);
-        showToast(endMessage, 'info');
+        blockedNavUrls.value.add(navKey);
+        if (source === 'manual') {
+          showToast(endMessage, 'info');
+        }
         return false;
       }
 
@@ -411,7 +490,7 @@ export const useReaderStore = defineStore('reader', () => {
           // This is fine, it's actually the previous chapter
         } else if (parsed.prevUrl && !parsed.nextUrl) {
           // Page has prev but no next - likely a TOC or non-chapter page
-          loadedUrls.value.add(targetUrl);
+          blockedNavUrls.value.add(navKey);
           return false;
         }
       }
@@ -431,6 +510,7 @@ export const useReaderStore = defineStore('reader', () => {
         chapters.value.unshift(entry);
         currentChapterIndex.value++;
       }
+      navFailures.delete(navKey);
       loadedUrls.value.add(parsed.url);
 
       // Store original content for text conversion
@@ -489,13 +569,13 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   /** Load next chapter and append to list */
-  async function loadNextChapter(): Promise<boolean> {
-    return loadChapter('next');
+  async function loadNextChapter(source: LoadSource = 'auto'): Promise<boolean> {
+    return loadChapter('next', source);
   }
 
   /** Load previous chapter and prepend to list */
-  async function loadPrevChapter(): Promise<boolean> {
-    return loadChapter('prev');
+  async function loadPrevChapter(source: LoadSource = 'manual'): Promise<boolean> {
+    return loadChapter('prev', source);
   }
 
   function setLoading(loading: boolean) {
@@ -686,24 +766,29 @@ export const useReaderStore = defineStore('reader', () => {
     let referer = chapters.value[chapters.value.length - 1]?.chapter.url || chapter.value?.url;
 
     while (cacheProgress.value.running && nextUrl) {
+      const targetUrl = normalizeUrlForFetch(nextUrl);
+
       // 去重 - check both loadedUrls and cachedContents
-      if (loadedUrls.value.has(nextUrl) || cachedContents.value.has(nextUrl)) {
+      if (loadedUrls.value.has(targetUrl) || cachedContents.value.has(targetUrl)) {
         cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
         nextUrl = taskList.shift() ?? null;
         continue;
       }
 
-      const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
+      const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
       cacheAbort.value = abort;
-      const doc = await promise;
+      const result = await promise;
       cacheAbort.value = null;
-      if (!doc) {
+      if (result.error === 'abort') {
+        break;
+      }
+      if (!result.doc) {
         nextUrl = taskList.shift() ?? null;
         continue;
       }
 
       const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, doc, nextUrl, referer);
+      const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
       if (!parsed) {
         nextUrl = taskList.shift() ?? null;
         continue;
@@ -723,7 +808,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl（分页合并后 nextUrl 已指向下一章）
       referer = parsed.url;
-      nextUrl = taskList.shift() ?? parsed.nextUrl ?? null;
+      nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
 
       // If following nextUrl chain, update total estimate
       if (!cacheQueue.value.length && nextUrl && !loadedUrls.value.has(nextUrl)) {
@@ -1159,6 +1244,7 @@ export const useReaderStore = defineStore('reader', () => {
       const href = a.getAttribute('href') || '';
       const abs = resolveUrl(href, base);
       if (!abs) continue;
+      const url = normalizeUrlForFetch(abs);
 
       // Only keep links that look like chapters
       if (!(textPattern.test(text) || urlPattern.test(href))) {
@@ -1166,7 +1252,7 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       const title = text || `章节 ${candidates.length + 1}`;
-      candidates.push({ title, url: abs });
+      candidates.push({ title, url });
     }
 
     return candidates;
@@ -1344,11 +1430,12 @@ export const useReaderStore = defineStore('reader', () => {
         const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
         aborters.push(abort);
 
-        const doc = await promise;
+        const result = await promise;
         if (aborted) break;
-        if (!doc) break;
+        if (result.error === 'abort') break;
+        if (!result.doc) break;
 
-        const pageCandidates = collectTocCandidates(doc, pageUrl);
+        const pageCandidates = collectTocCandidates(result.doc, pageUrl);
         allCandidates.push(...pageCandidates);
 
         let newCount = 0;
@@ -1362,7 +1449,7 @@ export const useReaderStore = defineStore('reader', () => {
         // If we are "turning pages" but keep seeing the same set, stop to avoid loops.
         if (visitedPages.size >= 2 && newCount === 0) break;
 
-        const nextPageUrl = findNextTocPageUrl(doc, pageUrl, indexUrl);
+        const nextPageUrl = findNextTocPageUrl(result.doc, pageUrl, indexUrl);
         if (!nextPageUrl) break;
 
         referer = pageUrl;
@@ -1384,20 +1471,81 @@ export const useReaderStore = defineStore('reader', () => {
     await applyTocConversion(currentConversionMode.value);
   }
 
-  async function loadToc(): Promise<void> {
-    const indexUrl = chapter.value?.indexUrl;
-    if (!indexUrl || toc.value.length > 0 || tocLoading.value) return;
+  async function ensureIndexUrl(): Promise<string | null> {
+    const current = chapter.value;
+    const currentUrl = current?.url || '';
+    const existing = current?.indexUrl;
 
-    tocLoading.value = true;
-    const currentUrl = chapter.value?.url || '';
+    // If we already have an indexUrl and it doesn't look like the current chapter URL, keep it.
+    if (
+      existing &&
+      (!currentUrl || normalizeUrlForBlock(existing) !== normalizeUrlForBlock(currentUrl))
+    ) {
+      return existing;
+    }
+
+    if (!currentUrl) return null;
 
     try {
-      const entries = await loadTocEntriesPaged(indexUrl, currentUrl, abort => {
+      const parser = getParser();
+      const detected = parser.detect(document, currentUrl).results.navigation.index?.url;
+      if (!detected) return null;
+
+      const normalized = normalizeUrlForFetch(detected);
+      for (const entry of chapters.value) {
+        const existingIndex = entry.chapter.indexUrl;
+        const entryUrl = entry.chapter.url;
+        const looksLikeSelf =
+          existingIndex && entryUrl
+            ? normalizeUrlForBlock(existingIndex) === normalizeUrlForBlock(entryUrl)
+            : false;
+        if (!existingIndex || looksLikeSelf) {
+          entry.chapter.indexUrl = normalized;
+        }
+      }
+      return normalized;
+    } catch (e) {
+      console.error('[MNR] Failed to detect indexUrl:', e);
+      return null;
+    }
+  }
+
+  async function loadToc(): Promise<void> {
+    if (toc.value.length > 0 || tocLoading.value) return;
+
+    const currentUrl = chapter.value?.url || '';
+    let indexUrl = chapter.value?.indexUrl;
+    if (
+      !indexUrl ||
+      (currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl))
+    ) {
+      indexUrl = await ensureIndexUrl();
+    }
+    if (!indexUrl) {
+      showToast('未检测到目录链接', 'info', 2500);
+      return;
+    }
+
+    tocLoading.value = true;
+
+    try {
+      let entries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, abort => {
         tocAbort.value = abort;
       });
+      if (entries.length === 0) {
+        // Retry once for transient request failures / slow dynamic pages.
+        await new Promise<void>(resolve => window.setTimeout(resolve, 400));
+        entries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, abort => {
+          tocAbort.value = abort;
+        });
+      }
       await setTocEntries(entries);
+      if (entries.length === 0) {
+        showToast('目录解析为空，可稍后重试或刷新页面', 'info', 2500);
+      }
     } catch (e) {
       console.error('[MNR] Failed to load TOC:', e);
+      showToast('目录加载失败，可稍后重试', 'error', 2500);
     } finally {
       tocLoading.value = false;
       tocAbort.value = null;
@@ -1416,6 +1564,8 @@ export const useReaderStore = defineStore('reader', () => {
     loadedUrls.value.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
+    blockedNavUrls.value.clear();
+    navFailures.clear();
     cachedContents.value.clear();
     persistedUrls.value.clear();
     currentConversionMode.value = 'none';
@@ -1484,17 +1634,21 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Refetch the page
     const { promise } = fetchAndParseUrl(url, url);
-    const doc = await promise;
-    if (!doc) {
+    const result = await promise;
+    if (!result.doc) {
       showToast('重新加载失败', 'error');
       return;
     }
 
     // Parse with new rules (will pick up updated rules from RuleManager)
     const parser = getParser();
-    const parsed = await parseWithSectionMerge(parser, doc, url, url);
+    const parsed = await parseWithSectionMerge(parser, result.doc, url, url);
 
     if (parsed) {
+      if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+      if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+      if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
+
       // Update current chapter
       current.chapter = parsed;
       current.rule = parsed.rule;
@@ -1759,10 +1913,10 @@ async function parseWithSectionMerge(
   let startDoc = initialDoc;
   if (baseUrl && baseUrl !== resolvedUrl) {
     const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
-    const doc = await promise;
-    if (doc) {
+    const result = await promise;
+    if (result.doc) {
       startUrl = baseUrl;
-      startDoc = doc;
+      startDoc = result.doc;
     }
   }
 
@@ -1810,16 +1964,16 @@ async function parseWithSectionMerge(
     seen.add(absNextSection);
 
     const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
-    const nextDoc = await promise;
-    if (!nextDoc) break;
+    const nextResult = await promise;
+    if (!nextResult.doc) break;
 
-    const nextParsed = await parser.parse(nextDoc, absNextSection);
+    const nextParsed = await parser.parse(nextResult.doc, absNextSection);
     if (!nextParsed) break;
 
     mergedContent = joinHtml(mergedContent, nextParsed.content);
     mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
 
-    const nextDet = parser.detect(nextDoc, absNextSection);
+    const nextDet = parser.detect(nextResult.doc, absNextSection);
     const s = nextDet.results.section;
     if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
 
@@ -1856,69 +2010,138 @@ function getGmXhr(): typeof GM_xmlhttpRequest | null {
 }
 
 /** Fetch URL and return parsed Document with abort handle */
+type FetchAndParseError = 'missing-gm-xhr' | 'http' | 'parse' | 'network' | 'timeout' | 'abort';
+
+type FetchAndParseResult = {
+  doc: Document | null;
+  status: number | null;
+  finalUrl: string | null;
+  error: FetchAndParseError | null;
+};
+
 function fetchAndParseUrl(
   url: string,
-  referer?: string
-): { promise: Promise<Document | null>; abort: () => void } {
+  referer?: string,
+  options: { timeoutMs?: number; retries?: number } = {}
+): { promise: Promise<FetchAndParseResult>; abort: () => void } {
   const gmXhr = getGmXhr();
-  const normalizedUrl = normalizeCiwemaoChapterUrl(url);
+  const normalizedUrl = normalizeUrlForFetch(url);
 
   if (!gmXhr) {
     console.error('[MNR] GM_xmlhttpRequest not available');
-    return { promise: Promise.resolve(null), abort: () => {} };
+    return {
+      promise: Promise.resolve({
+        doc: null,
+        status: null,
+        finalUrl: null,
+        error: 'missing-gm-xhr',
+      }),
+      abort: () => {},
+    };
   }
 
   let request: GmXhrReturn | null = null;
+  let aborted = false;
+  const timeoutMs = options.timeoutMs ?? 15000;
+  const maxRetries = Math.max(0, options.retries ?? 1);
 
-  const promise = new Promise<Document | null>(resolve => {
-    const headers: Record<string, string> = {
-      Accept: 'text/html,application/xhtml+xml,application/xml',
-      'Accept-Language': 'zh-CN,zh;q=0.9',
-    };
-    if (referer) {
-      headers['Referer'] = referer;
-    }
-    request = gmXhr({
-      method: 'GET',
-      url: normalizedUrl,
-      headers,
-      overrideMimeType: 'text/html;charset=' + document.characterSet,
-      onload: response => {
-        if (response.status >= 200 && response.status < 300) {
-          try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(response.responseText, 'text/html');
-            // Set base URL for relative links
-            const base = doc.createElement('base');
-            base.href = normalizedUrl;
-            doc.head.insertBefore(base, doc.head.firstChild);
-            // Store URL in a custom property (location may not be configurable)
-            (doc as Document & { _mnrUrl: string })._mnrUrl = normalizedUrl;
-            resolve(doc);
-          } catch (e) {
-            console.error('[MNR] Parse error:', e);
-            resolve(null);
+  const doRequest = (): Promise<FetchAndParseResult> =>
+    new Promise(resolve => {
+      const headers: Record<string, string> = {
+        Accept: 'text/html,application/xhtml+xml,application/xml',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+      };
+      if (referer) {
+        headers['Referer'] = normalizeUrlForFetch(referer);
+      }
+      request = gmXhr({
+        method: 'GET',
+        url: normalizedUrl,
+        headers,
+        timeout: timeoutMs,
+        overrideMimeType: 'text/html;charset=' + document.characterSet,
+        onload: response => {
+          if (response.status >= 200 && response.status < 300) {
+            try {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(response.responseText, 'text/html');
+              // Set base URL for relative links
+              const base = doc.createElement('base');
+              base.href = normalizedUrl;
+              if (doc.head) {
+                doc.head.insertBefore(base, doc.head.firstChild);
+              } else {
+                doc.documentElement?.insertBefore(base, doc.documentElement.firstChild);
+              }
+              // Store URL in a custom property (location may not be configurable)
+              (doc as Document & { _mnrUrl: string })._mnrUrl = normalizedUrl;
+              resolve({
+                doc,
+                status: response.status,
+                finalUrl: response.finalUrl || null,
+                error: null,
+              });
+            } catch (e) {
+              console.error('[MNR] Parse error:', e);
+              resolve({
+                doc: null,
+                status: response.status,
+                finalUrl: response.finalUrl || null,
+                error: 'parse',
+              });
+            }
+          } else {
+            console.error('[MNR] HTTP error:', response.status);
+            resolve({
+              doc: null,
+              status: response.status,
+              finalUrl: response.finalUrl || null,
+              error: 'http',
+            });
           }
-        } else {
-          console.error('[MNR] HTTP error:', response.status);
-          resolve(null);
-        }
-      },
-      onerror: err => {
-        console.error('[MNR] Request error:', err);
-        resolve(null);
-      },
-      onabort: () => {
-        resolve(null);
-      },
-      ontimeout: () => {
-        console.error('[MNR] Request timeout');
-        resolve(null);
-      },
+        },
+        onerror: err => {
+          console.error('[MNR] Request error:', err);
+          resolve({ doc: null, status: null, finalUrl: null, error: 'network' });
+        },
+        onabort: () => {
+          resolve({ doc: null, status: null, finalUrl: null, error: 'abort' });
+        },
+        ontimeout: () => {
+          console.error('[MNR] Request timeout');
+          resolve({ doc: null, status: null, finalUrl: null, error: 'timeout' });
+        },
+      });
     });
-  });
+
+  const shouldRetry = (res: FetchAndParseResult): boolean => {
+    if (aborted) return false;
+    if (res.error === 'timeout' || res.error === 'network') return true;
+    if (res.error === 'http' && res.status && (res.status >= 500 || res.status === 429)) {
+      return true;
+    }
+    return false;
+  };
+
+  const promise = (async (): Promise<FetchAndParseResult> => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (aborted) return { doc: null, status: null, finalUrl: null, error: 'abort' };
+
+      const res = await doRequest();
+      if (!shouldRetry(res) || attempt === maxRetries) {
+        return res;
+      }
+
+      // Exponential backoff with a small cap (avoid hammering on transient failures)
+      const delay = Math.min(400 * Math.pow(2, attempt), 2000);
+      await new Promise<void>(resolve => window.setTimeout(resolve, delay));
+    }
+
+    return { doc: null, status: null, finalUrl: null, error: 'network' };
+  })();
 
   const abort = () => {
+    aborted = true;
     try {
       request?.abort();
     } catch {

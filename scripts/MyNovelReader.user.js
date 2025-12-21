@@ -95,7 +95,7 @@
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-8343e40e]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-8343e40e]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-8343e40e]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-8343e40e] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-8343e40e] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-8343e40e] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-8343e40e]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-8343e40e]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-8343e40e]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-8343e40e]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-8343e40e]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-8343e40e]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-8343e40e]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-8343e40e],.mnr-loading-next[data-v-8343e40e]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-8343e40e]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-8343e40e 1s linear infinite}.mnr-loading-overlay[data-v-8343e40e]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-8343e40e]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-8343e40e]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-8343e40e .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-8343e40e{to{transform:rotate(360deg)}}.mnr-toast[data-v-8343e40e]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-8343e40e]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-8343e40e],.mnr-toast-leave-active[data-v-8343e40e]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-8343e40e],.mnr-toast-leave-to[data-v-8343e40e]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-8343e40e]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-8343e40e]{padding:40px}}.mnr-rule-editor-overlay[data-v-8343e40e]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-8343e40e]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-8343e40e]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-ab06d920]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-ab06d920]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-ab06d920]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-ab06d920] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-ab06d920] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-ab06d920] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-ab06d920]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-ab06d920]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-ab06d920]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-ab06d920]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-ab06d920]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-ab06d920]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-ab06d920]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-ab06d920],.mnr-loading-next[data-v-ab06d920]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-ab06d920]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-ab06d920 1s linear infinite}.mnr-loading-overlay[data-v-ab06d920]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-ab06d920]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-ab06d920]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-ab06d920 .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-ab06d920{to{transform:rotate(360deg)}}.mnr-toast[data-v-ab06d920]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-ab06d920]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-ab06d920],.mnr-toast-leave-active[data-v-ab06d920]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-ab06d920],.mnr-toast-leave-to[data-v-ab06d920]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-ab06d920]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-ab06d920]{padding:40px}}.mnr-rule-editor-overlay[data-v-ab06d920]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-ab06d920]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-ab06d920]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -1718,19 +1718,21 @@ createEmptyResult() {
 /^https?:\/\/[^/]+\/\?/i
 ];
   class NavigationDetector {
-detect(doc2) {
+detect(doc2, currentUrl) {
+      var _a;
+      const resolvedCurrentUrl = currentUrl || ((_a = doc2.location) == null ? void 0 : _a.href) || doc2._mnrUrl || window.location.href;
       return {
-        next: this.findNavLink(doc2, "next"),
-        prev: this.findNavLink(doc2, "prev"),
-        index: this.findNavLink(doc2, "index")
+        next: this.findNavLink(doc2, "next", resolvedCurrentUrl),
+        prev: this.findNavLink(doc2, "prev", resolvedCurrentUrl),
+        index: this.findNavLink(doc2, "index", resolvedCurrentUrl)
       };
     }
-findNavLink(doc2, type) {
+findNavLink(doc2, type, currentUrl) {
       var _a, _b;
       const patterns = NAV_PATTERNS[type];
       if (type !== "index") {
         const relLink = doc2.querySelector(`a[rel="${type}"]`);
-        if (relLink && this.isValidLink(relLink, type)) {
+        if (relLink && this.isValidLink(relLink, type, currentUrl)) {
           return {
             element: relLink,
             url: relLink.href,
@@ -1746,7 +1748,7 @@ findNavLink(doc2, type) {
       for (const link of links) {
         const anchor = link;
         const text2 = ((_b = anchor.textContent) == null ? void 0 : _b.trim()) || "";
-        if (!this.isValidLink(anchor, type)) continue;
+        if (!this.isValidLink(anchor, type, currentUrl)) continue;
         let score = 0;
         for (const pattern of patterns) {
           if (pattern.test(text2)) {
@@ -1801,7 +1803,7 @@ findNavLink(doc2, type) {
         text: best.text
       };
     }
-isValidLink(anchor, purpose) {
+isValidLink(anchor, purpose, currentUrl) {
       var _a;
       const href = anchor.href;
       const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
@@ -1818,9 +1820,13 @@ isValidLink(anchor, purpose) {
         }
       }
       if (href.includes("#") && !href.includes("#chapter")) {
-        const url = new URL(href);
-        if (url.pathname === window.location.pathname) {
-          return false;
+        try {
+          const url = new URL(href);
+          const currentPathname = new URL(currentUrl).pathname;
+          if (url.pathname === currentPathname) {
+            return false;
+          }
+        } catch {
         }
       }
       try {
@@ -2599,7 +2605,7 @@ createEmptyResult() {
     }
 detect(doc2 = document, currentUrl = window.location.href) {
       const content = this.contentDetector.detect(doc2);
-      const navigation = this.navigationDetector.detect(doc2);
+      const navigation = this.navigationDetector.detect(doc2, currentUrl);
       const title = this.titleDetector.detect(doc2);
       const validatedNav = this.navigationDetector.validateNavigation(currentUrl, navigation);
       const section = this.navigationDetector.detectSection(doc2, currentUrl, validatedNav);
@@ -2613,7 +2619,7 @@ detect(doc2 = document, currentUrl = window.location.href) {
       return { results, confidence };
     }
 detectSection(doc2 = document, currentUrl = window.location.href) {
-      const navigation = this.navigationDetector.detect(doc2);
+      const navigation = this.navigationDetector.detect(doc2, currentUrl);
       return this.navigationDetector.detectSection(doc2, currentUrl, navigation);
     }
 quickCheck(doc2 = document) {
@@ -19780,6 +19786,16 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
   }
   const MAX_CACHED_CHAPTERS = 8;
   const VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
+  function normalizeUrlForFetch(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return normalized.replace(/#.*$/, "");
+    }
+  }
   const useReaderStore = defineStore("reader", () => {
     const isActive = ref(false);
     const isLoading = ref(false);
@@ -19794,11 +19810,13 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     const history = ref([]);
     const loadedUrls = ref( new Set());
     const vipBlockedUrls = ref( new Set());
+    const blockedNavUrls = ref( new Set());
     const originalContents = ref( new Map());
     const originalTitles = ref( new Map());
     const currentConversionMode = ref("none");
     const pendingNextAbort = ref(null);
     const pendingPrevAbort = ref(null);
+    const navFailures = new Map();
     const cacheProgress = ref({ done: 0, total: 0, running: false });
     const cacheQueue = ref([]);
     const cacheAbort = ref(null);
@@ -19851,12 +19869,14 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       const lastChapter = chapters.value[chapters.value.length - 1];
       const nextUrl = lastChapter == null ? void 0 : lastChapter.chapter.nextUrl;
       if (!nextUrl) return false;
+      if (blockedNavUrls.value.has(normalizeUrlForBlock(nextUrl))) return false;
       return !isVipBlockedUrl(nextUrl);
     });
     const hasPrev = computed(() => {
       const firstChapter = chapters.value[0];
       const prevUrl = firstChapter == null ? void 0 : firstChapter.chapter.prevUrl;
       if (!prevUrl) return false;
+      if (blockedNavUrls.value.has(normalizeUrlForBlock(prevUrl))) return false;
       return !isVipBlockedUrl(prevUrl);
     });
     const hasIndex = computed(() => {
@@ -19896,12 +19916,26 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       error.value = null;
       loadedUrls.value.clear();
       vipBlockedUrls.value.clear();
+      blockedNavUrls.value.clear();
+      navFailures.clear();
       originalContents.value.clear();
       originalTitles.value.clear();
       cachedContents.value.clear();
       persistedUrls.value.clear();
     }
     function setChapter(newChapter, newRule) {
+      if (newChapter.url) {
+        newChapter.url = normalizeUrlForFetch(newChapter.url);
+      }
+      if (newChapter.prevUrl) {
+        newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
+      }
+      if (newChapter.nextUrl) {
+        newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
+      }
+      if (newChapter.indexUrl) {
+        newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
+      }
       const id = `chapter-${Date.now()}-0`;
       chapters.value = [
         {
@@ -19916,6 +19950,8 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       loadedUrls.value.clear();
       loadedUrls.value.add(newChapter.url);
       vipBlockedUrls.value.clear();
+      blockedNavUrls.value.clear();
+      navFailures.clear();
       cachedContents.value.clear();
       persistedUrls.value.clear();
       originalContents.value.clear();
@@ -19983,7 +20019,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     function normalizeUrl(url) {
       return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
     }
-    async function loadChapter(direction) {
+    async function loadChapter(direction, source) {
       const isNext = direction === "next";
       const refChapter = isNext ? chapters.value[chapters.value.length - 1] : chapters.value[0];
       const isLoadingRef = isNext ? isLoadingNext : isLoadingPrev;
@@ -19995,10 +20031,12 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
       const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
       if (!rawTargetUrl) {
-        showToast(endMessage, "info");
+        if (source === "manual") {
+          showToast(endMessage, "info");
+        }
         return false;
       }
-      const targetUrl = normalizeCiwemaoChapterUrl(rawTargetUrl);
+      const targetUrl = normalizeUrlForFetch(rawTargetUrl);
       if (targetUrl !== rawTargetUrl) {
         if (isNext) {
           refChapter.chapter.nextUrl = targetUrl;
@@ -20007,18 +20045,35 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         }
       }
       if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
-        showToast(endMessage, "info");
+        blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+        if (source === "manual") {
+          showToast(endMessage, "info");
+        }
         return false;
       }
       if (vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
         showToast(VIP_BLOCK_TOAST, "info", 3e3);
         return false;
       }
-      if (loadedUrls.value.has(targetUrl)) {
-        const cached = cachedContents.value.get(targetUrl);
-        if (cached) {
-          return insertCachedChapter(cached, isNext ? "append" : "prepend");
+      const navKey = normalizeUrlForBlock(targetUrl);
+      if (blockedNavUrls.value.has(navKey)) {
+        if (source === "manual") {
+          showToast(endMessage, "info");
         }
+        return false;
+      }
+      const failure = navFailures.get(navKey);
+      if (failure && Date.now() < failure.nextRetryAt) {
+        if (source === "manual") {
+          showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
+        }
+        return false;
+      }
+      const cached = cachedContents.value.get(targetUrl);
+      if (cached) {
+        return insertCachedChapter(cached, isNext ? "append" : "prepend");
+      }
+      if (loadedUrls.value.has(targetUrl)) {
         return false;
       }
       isLoadingRef.value = true;
@@ -20027,44 +20082,64 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         pendingAbortRef.value = null;
       }
       if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
-        loadedUrls.value.add(targetUrl);
         isLoadingRef.value = false;
-        showToast(endMessage, "info");
+        blockedNavUrls.value.add(navKey);
+        if (source === "manual") {
+          showToast(endMessage, "info");
+        }
         return false;
       }
       try {
         const referer = refChapter.chapter.url;
         const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
         pendingAbortRef.value = abort;
-        const doc2 = await promise;
+        const result = await promise;
         pendingAbortRef.value = null;
-        if (!doc2) {
-          loadedUrls.value.add(targetUrl);
-          showToast(endMessage, "info");
+        if (result.error === "abort") {
           return false;
         }
-        if (isVipChapterPage(doc2)) {
+        if (!result.doc) {
+          const prev = navFailures.get(navKey);
+          const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
+          const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
+          navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+          if (source === "manual" || count === 1) {
+            showToast(errorMessage, "error", 2500);
+          }
+          return false;
+        }
+        if (isVipChapterPage(result.doc)) {
           vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
           showToast(VIP_BLOCK_TOAST, "info", 3e3);
           return false;
         }
         const parser = getParser();
-        const parsed = await parseWithSectionMerge(parser, doc2, targetUrl, referer);
+        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
         if (!parsed) {
-          loadedUrls.value.add(targetUrl);
-          showToast(endMessage, "info");
+          const prev = navFailures.get(navKey);
+          const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
+          const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
+          navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+          if (source === "manual" || count === 1) {
+            showToast(errorMessage, "error", 2500);
+          }
           return false;
         }
+        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
         const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
         if (isTocPage) {
-          loadedUrls.value.add(targetUrl);
-          showToast(endMessage, "info");
+          blockedNavUrls.value.add(navKey);
+          if (source === "manual") {
+            showToast(endMessage, "info");
+          }
           return false;
         }
         if (!isNext) {
           if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)) {
           } else if (parsed.prevUrl && !parsed.nextUrl) {
-            loadedUrls.value.add(targetUrl);
+            blockedNavUrls.value.add(navKey);
             return false;
           }
         }
@@ -20081,6 +20156,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           chapters.value.unshift(entry);
           currentChapterIndex.value++;
         }
+        navFailures.delete(navKey);
         loadedUrls.value.add(parsed.url);
         originalContents.value.set(id, parsed.content);
         originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
@@ -20126,11 +20202,11 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         isLoadingRef.value = false;
       }
     }
-    async function loadNextChapter() {
-      return loadChapter("next");
+    async function loadNextChapter(source = "auto") {
+      return loadChapter("next", source);
     }
-    async function loadPrevChapter() {
-      return loadChapter("prev");
+    async function loadPrevChapter(source = "manual") {
+      return loadChapter("prev", source);
     }
     function setLoading(loading) {
       isLoading.value = loading;
@@ -20276,21 +20352,25 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       let nextUrl = taskList.shift();
       let referer = ((_c = chapters.value[chapters.value.length - 1]) == null ? void 0 : _c.chapter.url) || ((_d = chapter.value) == null ? void 0 : _d.url);
       while (cacheProgress.value.running && nextUrl) {
-        if (loadedUrls.value.has(nextUrl) || cachedContents.value.has(nextUrl)) {
+        const targetUrl = normalizeUrlForFetch(nextUrl);
+        if (loadedUrls.value.has(targetUrl) || cachedContents.value.has(targetUrl)) {
           cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
           nextUrl = taskList.shift() ?? null;
           continue;
         }
-        const { promise, abort } = fetchAndParseUrl(nextUrl, referer);
+        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
         cacheAbort.value = abort;
-        const doc2 = await promise;
+        const result = await promise;
         cacheAbort.value = null;
-        if (!doc2) {
+        if (result.error === "abort") {
+          break;
+        }
+        if (!result.doc) {
           nextUrl = taskList.shift() ?? null;
           continue;
         }
         const parser = getParser();
-        const parsed = await parseWithSectionMerge(parser, doc2, nextUrl, referer);
+        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
         if (!parsed) {
           nextUrl = taskList.shift() ?? null;
           continue;
@@ -20303,7 +20383,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         loadedUrls.value.add(parsed.url);
         cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
         referer = parsed.url;
-        nextUrl = taskList.shift() ?? parsed.nextUrl ?? null;
+        nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
         if (!cacheQueue.value.length && nextUrl && !loadedUrls.value.has(nextUrl)) {
           cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done + 1 };
         }
@@ -20561,11 +20641,12 @@ entry,
         const href = a.getAttribute("href") || "";
         const abs = resolveUrl(href, base);
         if (!abs) continue;
+        const url = normalizeUrlForFetch(abs);
         if (!(textPattern.test(text2) || urlPattern.test(href))) {
           continue;
         }
         const title2 = text2 || `章节 ${candidates.length + 1}`;
-        candidates.push({ title: title2, url: abs });
+        candidates.push({ title: title2, url });
       }
       return candidates;
     }
@@ -20694,10 +20775,11 @@ entry,
           visitedPages.add(pageKey);
           const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
           aborters.push(abort);
-          const doc2 = await promise;
+          const result = await promise;
           if (aborted) break;
-          if (!doc2) break;
-          const pageCandidates = collectTocCandidates(doc2, pageUrl);
+          if (result.error === "abort") break;
+          if (!result.doc) break;
+          const pageCandidates = collectTocCandidates(result.doc, pageUrl);
           allCandidates.push(...pageCandidates);
           let newCount = 0;
           for (const entry of pageCandidates) {
@@ -20707,7 +20789,7 @@ entry,
             }
           }
           if (visitedPages.size >= 2 && newCount === 0) break;
-          const nextPageUrl = findNextTocPageUrl(doc2, pageUrl, indexUrl);
+          const nextPageUrl = findNextTocPageUrl(result.doc, pageUrl, indexUrl);
           if (!nextPageUrl) break;
           referer = pageUrl;
           pageUrl = nextPageUrl;
@@ -20722,19 +20804,64 @@ entry,
       tocOriginal.value = entries2;
       await applyTocConversion(currentConversionMode.value);
     }
+    async function ensureIndexUrl() {
+      var _a;
+      const current = chapter.value;
+      const currentUrl = (current == null ? void 0 : current.url) || "";
+      const existing = current == null ? void 0 : current.indexUrl;
+      if (existing && (!currentUrl || normalizeUrlForBlock(existing) !== normalizeUrlForBlock(currentUrl))) {
+        return existing;
+      }
+      if (!currentUrl) return null;
+      try {
+        const parser = getParser();
+        const detected = (_a = parser.detect(document, currentUrl).results.navigation.index) == null ? void 0 : _a.url;
+        if (!detected) return null;
+        const normalized = normalizeUrlForFetch(detected);
+        for (const entry of chapters.value) {
+          const existingIndex = entry.chapter.indexUrl;
+          const entryUrl = entry.chapter.url;
+          const looksLikeSelf = existingIndex && entryUrl ? normalizeUrlForBlock(existingIndex) === normalizeUrlForBlock(entryUrl) : false;
+          if (!existingIndex || looksLikeSelf) {
+            entry.chapter.indexUrl = normalized;
+          }
+        }
+        return normalized;
+      } catch (e) {
+        console.error("[MNR] Failed to detect indexUrl:", e);
+        return null;
+      }
+    }
     async function loadToc() {
       var _a, _b;
-      const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
-      if (!indexUrl || toc.value.length > 0 || tocLoading.value) return;
+      if (toc.value.length > 0 || tocLoading.value) return;
+      const currentUrl = ((_a = chapter.value) == null ? void 0 : _a.url) || "";
+      let indexUrl = (_b = chapter.value) == null ? void 0 : _b.indexUrl;
+      if (!indexUrl || currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl)) {
+        indexUrl = await ensureIndexUrl();
+      }
+      if (!indexUrl) {
+        showToast("未检测到目录链接", "info", 2500);
+        return;
+      }
       tocLoading.value = true;
-      const currentUrl = ((_b = chapter.value) == null ? void 0 : _b.url) || "";
       try {
-        const entries2 = await loadTocEntriesPaged(indexUrl, currentUrl, (abort) => {
+        let entries2 = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, (abort) => {
           tocAbort.value = abort;
         });
+        if (entries2.length === 0) {
+          await new Promise((resolve) => window.setTimeout(resolve, 400));
+          entries2 = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, (abort) => {
+            tocAbort.value = abort;
+          });
+        }
         await setTocEntries(entries2);
+        if (entries2.length === 0) {
+          showToast("目录解析为空，可稍后重试或刷新页面", "info", 2500);
+        }
       } catch (e) {
         console.error("[MNR] Failed to load TOC:", e);
+        showToast("目录加载失败，可稍后重试", "error", 2500);
       } finally {
         tocLoading.value = false;
         tocAbort.value = null;
@@ -20752,6 +20879,8 @@ entry,
       loadedUrls.value.clear();
       originalContents.value.clear();
       originalTitles.value.clear();
+      blockedNavUrls.value.clear();
+      navFailures.clear();
       cachedContents.value.clear();
       persistedUrls.value.clear();
       currentConversionMode.value = "none";
@@ -20795,14 +20924,17 @@ entry,
       const url = current.chapter.url;
       showToast("正在重新加载...", "info");
       const { promise } = fetchAndParseUrl(url, url);
-      const doc2 = await promise;
-      if (!doc2) {
+      const result = await promise;
+      if (!result.doc) {
         showToast("重新加载失败", "error");
         return;
       }
       const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, doc2, url, url);
+      const parsed = await parseWithSectionMerge(parser, result.doc, url, url);
       if (parsed) {
+        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
         current.chapter = parsed;
         current.rule = parsed.rule;
         originalContents.value.set(current.id, parsed.content);
@@ -20996,10 +21128,10 @@ activate,
     let startDoc = initialDoc;
     if (baseUrl && baseUrl !== resolvedUrl) {
       const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
-      const doc2 = await promise;
-      if (doc2) {
+      const result = await promise;
+      if (result.doc) {
         startUrl = baseUrl;
-        startDoc = doc2;
+        startDoc = result.doc;
       }
     }
     const first = await parser.parse(startDoc, startUrl);
@@ -21033,13 +21165,13 @@ activate,
       if (seen.has(absNextSection)) break;
       seen.add(absNextSection);
       const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
-      const nextDoc = await promise;
-      if (!nextDoc) break;
-      const nextParsed = await parser.parse(nextDoc, absNextSection);
+      const nextResult = await promise;
+      if (!nextResult.doc) break;
+      const nextParsed = await parser.parse(nextResult.doc, absNextSection);
       if (!nextParsed) break;
       mergedContent = joinHtml(mergedContent, nextParsed.content);
       mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-      const nextDet = parser.detect(nextDoc, absNextSection);
+      const nextDet = parser.detect(nextResult.doc, absNextSection);
       const s = nextDet.results.section;
       if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
       nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
@@ -21066,61 +21198,114 @@ activate,
     }
     return null;
   }
-  function fetchAndParseUrl(url, referer) {
+  function fetchAndParseUrl(url, referer, options = {}) {
     const gmXhr = getGmXhr();
-    const normalizedUrl = normalizeCiwemaoChapterUrl(url);
+    const normalizedUrl = normalizeUrlForFetch(url);
     if (!gmXhr) {
       console.error("[MNR] GM_xmlhttpRequest not available");
-      return { promise: Promise.resolve(null), abort: () => {
-      } };
+      return {
+        promise: Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "missing-gm-xhr"
+        }),
+        abort: () => {
+        }
+      };
     }
     let request = null;
-    const promise = new Promise((resolve) => {
+    let aborted = false;
+    const timeoutMs = options.timeoutMs ?? 15e3;
+    const maxRetries = Math.max(0, options.retries ?? 1);
+    const doRequest = () => new Promise((resolve) => {
       const headers = {
         Accept: "text/html,application/xhtml+xml,application/xml",
         "Accept-Language": "zh-CN,zh;q=0.9"
       };
       if (referer) {
-        headers["Referer"] = referer;
+        headers["Referer"] = normalizeUrlForFetch(referer);
       }
       request = gmXhr({
         method: "GET",
         url: normalizedUrl,
         headers,
+        timeout: timeoutMs,
         overrideMimeType: "text/html;charset=" + document.characterSet,
         onload: (response) => {
+          var _a;
           if (response.status >= 200 && response.status < 300) {
             try {
               const parser = new DOMParser();
               const doc2 = parser.parseFromString(response.responseText, "text/html");
               const base = doc2.createElement("base");
               base.href = normalizedUrl;
-              doc2.head.insertBefore(base, doc2.head.firstChild);
+              if (doc2.head) {
+                doc2.head.insertBefore(base, doc2.head.firstChild);
+              } else {
+                (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
+              }
               doc2._mnrUrl = normalizedUrl;
-              resolve(doc2);
+              resolve({
+                doc: doc2,
+                status: response.status,
+                finalUrl: response.finalUrl || null,
+                error: null
+              });
             } catch (e) {
               console.error("[MNR] Parse error:", e);
-              resolve(null);
+              resolve({
+                doc: null,
+                status: response.status,
+                finalUrl: response.finalUrl || null,
+                error: "parse"
+              });
             }
           } else {
             console.error("[MNR] HTTP error:", response.status);
-            resolve(null);
+            resolve({
+              doc: null,
+              status: response.status,
+              finalUrl: response.finalUrl || null,
+              error: "http"
+            });
           }
         },
         onerror: (err) => {
           console.error("[MNR] Request error:", err);
-          resolve(null);
+          resolve({ doc: null, status: null, finalUrl: null, error: "network" });
         },
         onabort: () => {
-          resolve(null);
+          resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
         },
         ontimeout: () => {
           console.error("[MNR] Request timeout");
-          resolve(null);
+          resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
         }
       });
     });
+    const shouldRetry = (res) => {
+      if (aborted) return false;
+      if (res.error === "timeout" || res.error === "network") return true;
+      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
+        return true;
+      }
+      return false;
+    };
+    const promise = (async () => {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
+        const res = await doRequest();
+        if (!shouldRetry(res) || attempt === maxRetries) {
+          return res;
+        }
+        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
+        await new Promise((resolve) => window.setTimeout(resolve, delay));
+      }
+      return { doc: null, status: null, finalUrl: null, error: "network" };
+    })();
     const abort = () => {
+      aborted = true;
       try {
         request == null ? void 0 : request.abort();
       } catch {
@@ -24057,7 +24242,7 @@ ${value}`;
         if (!mainEl || isLoadingPrev.value) return;
         const oldScrollTop = mainEl.scrollTop;
         const oldTopSpacer = topSpacer.value;
-        const success = await readerStore.loadPrevChapter();
+        const success = await readerStore.loadPrevChapter("manual");
         if (success) {
           await nextTick();
           updateWindow(readerStore.currentChapterIndex);
@@ -24281,7 +24466,7 @@ ${value}`;
           if (currentIdx > 0) {
             jumpToChapter(currentIdx - 1);
           } else if (hasPrev.value && !isLoadingPrev.value) {
-            const success = await readerStore.loadPrevChapter();
+            const success = await readerStore.loadPrevChapter("manual");
             if (success) {
               globalThis.requestAnimationFrame(() => jumpToChapter(0, "auto"));
             }
@@ -24292,7 +24477,7 @@ ${value}`;
           if (currentIdx < chaptersCount - 1) {
             jumpToChapter(currentIdx + 1);
           } else if (hasNext.value && !isLoadingNext.value) {
-            const success = await readerStore.loadNextChapter();
+            const success = await readerStore.loadNextChapter("manual");
             if (success) {
               globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
             }
@@ -24357,7 +24542,7 @@ ${value}`;
         };
         bottomObserver = new globalThis.IntersectionObserver((entries2) => {
           if (entries2[0].isIntersecting && hasNext.value && !isLoadingNext.value && !isNavigating.value) {
-            readerStore.loadNextChapter();
+            readerStore.loadNextChapter("auto");
           }
         }, observerOptions);
         topObserver = new globalThis.IntersectionObserver(() => {
@@ -24518,7 +24703,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-8343e40e"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-ab06d920"]]);
   const appState = {
     isInitialized: false,
     isActive: false,

@@ -35,7 +35,7 @@ export class DetectionEngine {
   ): DetectionEngineResult {
     // Run all detectors
     const content = this.contentDetector.detect(doc);
-    const navigation = this.navigationDetector.detect(doc);
+    const navigation = this.navigationDetector.detect(doc, currentUrl);
     const title = this.titleDetector.detect(doc);
 
     // Validate navigation against current URL
@@ -64,7 +64,7 @@ export class DetectionEngine {
     doc: Document = document,
     currentUrl: string = window.location.href
   ): SectionDetectionResult {
-    const navigation = this.navigationDetector.detect(doc);
+    const navigation = this.navigationDetector.detect(doc, currentUrl);
     return this.navigationDetector.detectSection(doc, currentUrl, navigation);
   }
 

@@ -87,6 +87,25 @@ describe('NavigationDetector', () => {
       expect(result.next?.url).toContain('/real-next.html');
     });
 
+    it('should ignore anchor-only hash links (href="#")', () => {
+      const dom = new JSDOM(
+        `
+          <!DOCTYPE html>
+          <html>
+            <body>
+              <a href="#">下一章</a>
+              <a href="/chapter/2.html">下一页</a>
+            </body>
+          </html>
+        `,
+        { url: 'http://example.com/chapter/1.html' }
+      );
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.next?.url).toContain('/chapter/2.html');
+    });
+
     it('should ignore invalid URL patterns like index/list', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

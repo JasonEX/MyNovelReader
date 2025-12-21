@@ -34,24 +34,33 @@ export class NavigationDetector {
   /**
    * Detect all navigation links in the document
    */
-  detect(doc: Document): NavigationResult {
+  detect(doc: Document, currentUrl?: string): NavigationResult {
+    const resolvedCurrentUrl =
+      currentUrl ||
+      doc.location?.href ||
+      (doc as Document & { _mnrUrl?: string })._mnrUrl ||
+      window.location.href;
     return {
-      next: this.findNavLink(doc, 'next'),
-      prev: this.findNavLink(doc, 'prev'),
-      index: this.findNavLink(doc, 'index'),
+      next: this.findNavLink(doc, 'next', resolvedCurrentUrl),
+      prev: this.findNavLink(doc, 'prev', resolvedCurrentUrl),
+      index: this.findNavLink(doc, 'index', resolvedCurrentUrl),
     };
   }
 
   /**
    * Find a specific navigation link
    */
-  private findNavLink(doc: Document, type: 'next' | 'prev' | 'index'): NavLinkResult | null {
+  private findNavLink(
+    doc: Document,
+    type: 'next' | 'prev' | 'index',
+    currentUrl: string
+  ): NavLinkResult | null {
     const patterns = NAV_PATTERNS[type];
 
     // Strategy 1: rel attribute (highest confidence)
     if (type !== 'index') {
       const relLink = doc.querySelector(`a[rel="${type}"]`);
-      if (relLink && this.isValidLink(relLink as HTMLAnchorElement, type)) {
+      if (relLink && this.isValidLink(relLink as HTMLAnchorElement, type, currentUrl)) {
         return {
           element: relLink as HTMLAnchorElement,
           url: (relLink as HTMLAnchorElement).href,
@@ -76,7 +85,7 @@ export class NavigationDetector {
       const text = anchor.textContent?.trim() || '';
 
       // Skip invalid hrefs
-      if (!this.isValidLink(anchor, type)) continue;
+      if (!this.isValidLink(anchor, type, currentUrl)) continue;
 
       // Score based on text matching
       let score = 0;
@@ -158,7 +167,11 @@ export class NavigationDetector {
   /**
    * Check if a link is valid for navigation
    */
-  private isValidLink(anchor: HTMLAnchorElement, purpose: 'next' | 'prev' | 'index'): boolean {
+  private isValidLink(
+    anchor: HTMLAnchorElement,
+    purpose: 'next' | 'prev' | 'index',
+    currentUrl: string
+  ): boolean {
     const href = anchor.href;
     const text = anchor.textContent?.trim() || '';
 
@@ -184,9 +197,14 @@ export class NavigationDetector {
 
     // Skip anchor-only links (unless they contain chapter info)
     if (href.includes('#') && !href.includes('#chapter')) {
-      const url = new URL(href);
-      if (url.pathname === window.location.pathname) {
-        return false;
+      try {
+        const url = new URL(href);
+        const currentPathname = new URL(currentUrl).pathname;
+        if (url.pathname === currentPathname) {
+          return false;
+        }
+      } catch {
+        // If URL parsing fails, fall through and treat as potentially valid.
       }
     }
 
