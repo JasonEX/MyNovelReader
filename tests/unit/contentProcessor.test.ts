@@ -170,6 +170,55 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('加载更多');
       expect(result).not.toContain('无法显示本章节全部内容');
     });
+
+    it('should remove common reader toolbars/navigation mixed into content', () => {
+      processor.setOptions({ chapterTitle: '第1256章 万宝' });
+      const element = doc.createElement('div');
+      element.innerHTML = `
+        <h1>第1256章 万宝</h1>
+        <div class="toolbar">
+          <a href="#">投票推荐</a>
+          <a href="#">加入书签</a>
+          <a href="#">小说报错</a>
+          <a href="#">关灯</a>
+          <a href="#">字体-</a>
+          <a href="#">字体+</a>
+        </div>
+        <div class="nav">
+          <a href="#">上一章</a>
+          <a href="#">目录</a>
+          <a href="#">下一章</a>
+        </div>
+        <p>&emsp;&emsp;第1256章 万宝</p>
+        <p>话音落下，天幕并没有丝毫变动。</p>
+        <p>许久过后，他才微微点头：“善！”</p>
+        <p>></p>
+        <div class="nav">
+          <a href="#">上一章</a>
+          <a href="#">章节目录</a>
+          <a href="#">下一章</a>
+        </div>
+        <div class="tips">
+          温馨提示：按 回车[Enter]键 返回书目，按 ←键 返回上一页，按 →键 进入下一页，加入书签方便您下次继续阅读。
+        </div>
+      `;
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('话音落下');
+      expect(result).toContain('微微点头');
+      expect(result).not.toContain('投票推荐');
+      expect(result).not.toContain('加入书签');
+      expect(result).not.toContain('小说报错');
+      expect(result).not.toContain('关灯');
+      expect(result).not.toContain('字体-');
+      expect(result).not.toContain('字体+');
+      expect(result).not.toContain('上一章');
+      expect(result).not.toContain('下一章');
+      expect(result).not.toContain('温馨提示');
+      expect(result).not.toContain('第1256章');
+      expect(result).not.toMatch(/<p>\s*(?:&gt;|>)\s*<\/p>/i);
+    });
   });
 
   describe('processToText', () => {

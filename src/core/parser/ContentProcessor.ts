@@ -65,6 +65,9 @@ export class ContentProcessor {
       this.removeBySelector(clone, this.options.removeSelectors);
     }
 
+    // Remove common reader UI toolbars/navigation blocks mixed into正文
+    this.removeReaderUiNoise(clone);
+
     // Strip inline styles
     if (this.options.stripInlineStyles) {
       this.stripInlineStyles(clone);
@@ -103,6 +106,123 @@ export class ContentProcessor {
     html = sanitizeHtml(html);
 
     return html;
+  }
+
+  /**
+   * Remove common reader UI toolbars/navigation that are often embedded near正文.
+   * This is intentionally conservative (short text + strong UI keyword signals) to avoid false positives.
+   */
+  private removeReaderUiNoise(container: Element): void {
+    const normalize = (text: string): string => text.replace(/\s+/g, '').trim();
+
+    const uiLabelSet = new Set([
+      '投票推荐',
+      '投票推薦',
+      '加入书签',
+      '加入書籤',
+      '添加书签',
+      '添加書籤',
+      '小说报错',
+      '小說報錯',
+      '章节报错',
+      '章節報錯',
+      '关灯',
+      '關燈',
+      '字体-',
+      '字体+',
+      '字體-',
+      '字體+',
+      '上一章',
+      '下一章',
+      '上一页',
+      '下一页',
+      '上一頁',
+      '下一頁',
+      '目录',
+      '目錄',
+      '章节目录',
+      '章節目錄',
+      '章节列表',
+      '章節列表',
+      '返回书目',
+      '返回書目',
+      '返回目录',
+      '返回目錄',
+      '加入收藏',
+      '加入收藏夹',
+    ]);
+
+    const isUiLabel = (text: string): boolean => {
+      const t = normalize(text);
+      if (!t) return false;
+      if (uiLabelSet.has(t)) return true;
+      if (/^字体[+-]$/.test(t) || /^字體[+-]$/.test(t)) return true;
+      if (/^(?:上一|下一)(?:章|页|頁)$/.test(t)) return true;
+      if (/^(?:章?节|章節)?(?:目录|目錄|列表)$/.test(t)) return true;
+      return false;
+    };
+
+    // 1) Remove single UI links/buttons by exact label (safe and common)
+    const clickables = Array.from(container.querySelectorAll('a, button, label')) as Element[];
+    for (const el of clickables) {
+      const rawText = (el.textContent || '').trim();
+      const t = normalize(rawText);
+      if (!t) continue;
+      // Keep it strict: only very short labels are treated as UI.
+      if (t.length > 12) continue;
+      if (isUiLabel(t)) {
+        el.remove();
+      }
+    }
+
+    // 2) Remove small blocks that look like toolbars / navigation / keyboard tips
+    const blocks = Array.from(
+      container.querySelectorAll('div, p, span, li, section, nav, header, footer')
+    ) as Element[];
+
+    for (const el of blocks) {
+      const text = normalize(el.textContent || '');
+      if (!text) continue;
+
+      // Never delete large blocks (likely正文)
+      if (text.length > 240) continue;
+
+      const hasPrevNext =
+        (text.includes('上一章') || text.includes('上一頁') || text.includes('上一页')) &&
+        (text.includes('下一章') || text.includes('下一頁') || text.includes('下一页'));
+      const hasCatalog =
+        text.includes('目录') || text.includes('目錄') || text.includes('章节目录');
+      const hasBookmark = text.includes('书签') || text.includes('書籤');
+      const hasVote = text.includes('投票推荐') || text.includes('投票推薦');
+      const hasReport = text.includes('报错') || text.includes('報錯');
+      const hasLight = text.includes('关灯') || text.includes('關燈');
+      const hasFont = text.includes('字体') || text.includes('字體');
+
+      const isNavBar = hasPrevNext && (hasCatalog || text.includes('章節目錄'));
+      const isTopBar = (hasVote && hasBookmark) || (hasBookmark && hasReport);
+      const isFontBar = hasLight && hasFont;
+      const isKeyboardTip =
+        (text.includes('温馨提示') || text.includes('溫馨提示')) &&
+        (text.toLowerCase().includes('enter') ||
+          text.includes('回车') ||
+          text.includes('回車') ||
+          text.includes('←') ||
+          text.includes('→') ||
+          text.includes('按'));
+
+      if (isKeyboardTip) {
+        el.remove();
+        continue;
+      }
+      if (isNavBar && text.length <= 120) {
+        el.remove();
+        continue;
+      }
+      if ((isTopBar || isFontBar) && text.length <= 160) {
+        el.remove();
+        continue;
+      }
+    }
   }
 
   /**
@@ -360,6 +480,26 @@ export class ContentProcessor {
       if (text.length > 50 && !this.looksLikeDuplicateTitle(text)) {
         break;
       }
+    }
+
+    // Strategy 2.5: Remove trailing standalone garbage markers (e.g. a lone ">")
+    const tailNodes = Array.from(tempDiv.childNodes);
+    let tailRemoved = 0;
+    const maxTailRemove = 3;
+    for (let i = tailNodes.length - 1; i >= 0 && tailRemoved < maxTailRemove; i--) {
+      const node = tailNodes[i];
+      const text = (node.textContent || '').trim();
+      if (!text) {
+        node.parentNode?.removeChild(node);
+        tailRemoved++;
+        continue;
+      }
+      if (/^>+$/.test(text)) {
+        node.parentNode?.removeChild(node);
+        tailRemoved++;
+        continue;
+      }
+      break;
     }
 
     // Strategy 3: Clean trailing content

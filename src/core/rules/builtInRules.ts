@@ -830,6 +830,24 @@ const simplifiedRules: SiteRule[] = [
     },
   },
 
+  // UU看书（uukanshu.cc）
+  // - 常见问题：工具栏/导航/提示文本混入正文
+  {
+    id: 'uukanshu-cc',
+    name: 'UU看书（uukanshu.cc）',
+    version: 1,
+    match: {
+      pattern: '^https?://(?:www\\.)?uukanshu\\.cc/book/\\d+/\\d+\\.html(?:\\?.*)?$',
+    },
+    content: {
+      selector: '#contentbox, #content, #chaptercontent, #chapter_content, .content',
+    },
+    meta: {
+      source: 'builtin',
+      exampleUrl: 'https://uukanshu.cc/book/26185/17096360.html',
+    },
+  },
+
   // Zongheng (纵横中文网)
   {
     id: 'zongheng-book',

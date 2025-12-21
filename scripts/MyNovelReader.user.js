@@ -2675,6 +2675,7 @@ process(element, doc2) {
       if (this.options.removeSelectors) {
         this.removeBySelector(clone2, this.options.removeSelectors);
       }
+      this.removeReaderUiNoise(clone2);
       if (this.options.stripInlineStyles) {
         this.stripInlineStyles(clone2);
       }
@@ -2695,6 +2696,95 @@ process(element, doc2) {
       html2 = this.cleanDuplicateInfo(html2, doc2);
       html2 = sanitizeHtml(html2);
       return html2;
+    }
+removeReaderUiNoise(container) {
+      const normalize = (text2) => text2.replace(/\s+/g, "").trim();
+      const uiLabelSet = new Set([
+        "投票推荐",
+        "投票推薦",
+        "加入书签",
+        "加入書籤",
+        "添加书签",
+        "添加書籤",
+        "小说报错",
+        "小說報錯",
+        "章节报错",
+        "章節報錯",
+        "关灯",
+        "關燈",
+        "字体-",
+        "字体+",
+        "字體-",
+        "字體+",
+        "上一章",
+        "下一章",
+        "上一页",
+        "下一页",
+        "上一頁",
+        "下一頁",
+        "目录",
+        "目錄",
+        "章节目录",
+        "章節目錄",
+        "章节列表",
+        "章節列表",
+        "返回书目",
+        "返回書目",
+        "返回目录",
+        "返回目錄",
+        "加入收藏",
+        "加入收藏夹"
+      ]);
+      const isUiLabel = (text2) => {
+        const t = normalize(text2);
+        if (!t) return false;
+        if (uiLabelSet.has(t)) return true;
+        if (/^字体[+-]$/.test(t) || /^字體[+-]$/.test(t)) return true;
+        if (/^(?:上一|下一)(?:章|页|頁)$/.test(t)) return true;
+        if (/^(?:章?节|章節)?(?:目录|目錄|列表)$/.test(t)) return true;
+        return false;
+      };
+      const clickables = Array.from(container.querySelectorAll("a, button, label"));
+      for (const el of clickables) {
+        const rawText = (el.textContent || "").trim();
+        const t = normalize(rawText);
+        if (!t) continue;
+        if (t.length > 12) continue;
+        if (isUiLabel(t)) {
+          el.remove();
+        }
+      }
+      const blocks = Array.from(
+        container.querySelectorAll("div, p, span, li, section, nav, header, footer")
+      );
+      for (const el of blocks) {
+        const text2 = normalize(el.textContent || "");
+        if (!text2) continue;
+        if (text2.length > 240) continue;
+        const hasPrevNext = (text2.includes("上一章") || text2.includes("上一頁") || text2.includes("上一页")) && (text2.includes("下一章") || text2.includes("下一頁") || text2.includes("下一页"));
+        const hasCatalog = text2.includes("目录") || text2.includes("目錄") || text2.includes("章节目录");
+        const hasBookmark = text2.includes("书签") || text2.includes("書籤");
+        const hasVote = text2.includes("投票推荐") || text2.includes("投票推薦");
+        const hasReport = text2.includes("报错") || text2.includes("報錯");
+        const hasLight = text2.includes("关灯") || text2.includes("關燈");
+        const hasFont = text2.includes("字体") || text2.includes("字體");
+        const isNavBar = hasPrevNext && (hasCatalog || text2.includes("章節目錄"));
+        const isTopBar = hasVote && hasBookmark || hasBookmark && hasReport;
+        const isFontBar = hasLight && hasFont;
+        const isKeyboardTip = (text2.includes("温馨提示") || text2.includes("溫馨提示")) && (text2.toLowerCase().includes("enter") || text2.includes("回车") || text2.includes("回車") || text2.includes("←") || text2.includes("→") || text2.includes("按"));
+        if (isKeyboardTip) {
+          el.remove();
+          continue;
+        }
+        if (isNavBar && text2.length <= 120) {
+          el.remove();
+          continue;
+        }
+        if ((isTopBar || isFontBar) && text2.length <= 160) {
+          el.remove();
+          continue;
+        }
+      }
     }
 processToText(element) {
       const clone2 = element.cloneNode(true);
@@ -2787,7 +2877,7 @@ setOptions(options) {
       this.options = { ...this.options, ...options };
     }
 cleanDuplicateInfo(html2, doc2) {
-      var _a, _b;
+      var _a, _b, _c, _d;
       const { chapterTitle } = this.options;
       let result = html2;
       if (chapterTitle && chapterTitle.length > 2) {
@@ -2835,6 +2925,24 @@ cleanDuplicateInfo(html2, doc2) {
         if (text2.length > 50 && !this.looksLikeDuplicateTitle(text2)) {
           break;
         }
+      }
+      const tailNodes = Array.from(tempDiv.childNodes);
+      let tailRemoved = 0;
+      const maxTailRemove = 3;
+      for (let i = tailNodes.length - 1; i >= 0 && tailRemoved < maxTailRemove; i--) {
+        const node = tailNodes[i];
+        const text2 = (node.textContent || "").trim();
+        if (!text2) {
+          (_c = node.parentNode) == null ? void 0 : _c.removeChild(node);
+          tailRemoved++;
+          continue;
+        }
+        if (/^>+$/.test(text2)) {
+          (_d = node.parentNode) == null ? void 0 : _d.removeChild(node);
+          tailRemoved++;
+          continue;
+        }
+        break;
       }
       const trailingPatterns = [
         /\s*本章完\s*$/i,
@@ -3810,6 +3918,22 @@ remove: "h1.title, script"
       meta: {
         source: "builtin",
         exampleUrl: "http://23.225.121.247/ldks/111291/42509753_2.html"
+      }
+    },
+
+{
+      id: "uukanshu-cc",
+      name: "UU看书（uukanshu.cc）",
+      version: 1,
+      match: {
+        pattern: "^https?://(?:www\\.)?uukanshu\\.cc/book/\\d+/\\d+\\.html(?:\\?.*)?$"
+      },
+      content: {
+        selector: "#contentbox, #content, #chaptercontent, #chapter_content, .content"
+      },
+      meta: {
+        source: "builtin",
+        exampleUrl: "https://uukanshu.cc/book/26185/17096360.html"
       }
     },
 {
