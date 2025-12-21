@@ -211,7 +211,7 @@ describe('SiteProtection', () => {
   });
 
   describe('removeOverlays', () => {
-    it('should remove fixed position overlays', () => {
+    it('should remove fixed position full-page overlays', () => {
       // Create a fixed overlay element
       const overlay = dom.window.document.createElement('div');
       overlay.style.position = 'fixed';
@@ -221,13 +221,74 @@ describe('SiteProtection', () => {
       overlay.style.height = '100%';
       overlay.style.zIndex = '9999';
       overlay.id = 'test-overlay';
+      overlay.getBoundingClientRect = () =>
+        ({
+          width: dom.window.innerWidth,
+          height: dom.window.innerHeight,
+          top: 0,
+          left: 0,
+          bottom: dom.window.innerHeight,
+          right: dom.window.innerWidth,
+        }) as DOMRect;
       dom.window.document.body.appendChild(overlay);
 
       protection.removeOverlays();
 
-      // Overlay should be removed or hidden
-      const _remainingOverlay = dom.window.document.getElementById('test-overlay');
-      // Note: The actual removal logic depends on additional criteria like opacity
+      // Overlay should be hidden
+      expect(overlay.style.display).toBe('none');
+    });
+
+    it('should remove invisible fixed click layers near top', () => {
+      const layer = dom.window.document.createElement('a');
+      layer.href = 'https://evil.example/';
+      layer.style.position = 'fixed';
+      layer.style.top = '0';
+      layer.style.left = '0';
+      layer.style.width = '100%';
+      layer.style.height = '80px';
+      layer.style.zIndex = '2147483647';
+      layer.style.opacity = '0';
+      layer.id = 'test-click-layer';
+      layer.getBoundingClientRect = () =>
+        ({
+          width: dom.window.innerWidth,
+          height: 80,
+          top: 0,
+          left: 0,
+          bottom: 80,
+          right: dom.window.innerWidth,
+        }) as DOMRect;
+      dom.window.document.body.appendChild(layer);
+
+      protection.removeOverlays();
+      expect(layer.style.display).toBe('none');
+    });
+
+    it('should not remove visible fixed headers', () => {
+      const header = dom.window.document.createElement('div');
+      header.textContent = 'Menu';
+      header.style.position = 'fixed';
+      header.style.top = '0';
+      header.style.left = '0';
+      header.style.width = '100%';
+      header.style.height = '60px';
+      header.style.zIndex = '9999';
+      header.style.opacity = '1';
+      header.style.backgroundColor = 'rgb(255, 255, 255)';
+      header.id = 'test-header';
+      header.getBoundingClientRect = () =>
+        ({
+          width: dom.window.innerWidth,
+          height: 60,
+          top: 0,
+          left: 0,
+          bottom: 60,
+          right: dom.window.innerWidth,
+        }) as DOMRect;
+      dom.window.document.body.appendChild(header);
+
+      protection.removeOverlays();
+      expect(header.style.display).not.toBe('none');
     });
   });
 

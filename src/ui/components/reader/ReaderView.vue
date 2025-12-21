@@ -1,5 +1,14 @@
 <template>
-  <div class="mnr-reader">
+  <div
+    class="mnr-reader"
+    @click="shieldEvent"
+    @mousedown="shieldEvent"
+    @mouseup="shieldEvent"
+    @touchstart="shieldEvent"
+    @touchend="shieldEvent"
+    @pointerdown="shieldEvent"
+    @pointerup="shieldEvent"
+  >
     <!-- Progress indicator -->
     <ProgressIndicator v-if="showProgress" :auto-hide="true" />
 
@@ -265,6 +274,10 @@ const toastType = computed(() => readerStore.toastType);
 const showProgress = computed(() => configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
 const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
+
+function shieldEvent(event: Event) {
+  event.stopPropagation();
+}
 
 // Keyboard shortcuts enabled state
 const keyboardEnabled = computed(
@@ -915,7 +928,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 99999;
+  z-index: 2147483647;
   background: var(--mnr-bg, #ffffff);
   color: var(--mnr-text, #1a1a1a);
   overflow: hidden;

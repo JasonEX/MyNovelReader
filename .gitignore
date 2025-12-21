@@ -20,6 +20,7 @@ scripts/*.user.js.backup
 
 # Temp and cache
 tmp/
+.tmp/
 temp/
 .test/
 *.cache
