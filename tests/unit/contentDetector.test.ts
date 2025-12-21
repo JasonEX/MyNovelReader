@@ -57,6 +57,29 @@ describe('ContentDetector', () => {
       expect(result.confidence).toBeGreaterThan(0.8);
     });
 
+    it('should detect truncated .content when p_key + 加载更多 pattern exists', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>这是一段较短的正文内容。</p>
+              <p>阅|读|模|式|下，无|法|显|示|本|章|节|全|部|内|容，请|返|回|原|网|页阅|读。</p>
+              <p><button>加|载|更|多</button></p>
+            </div>
+            <script>const p_key='${'A'.repeat(120)}';</script>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element).not.toBeNull();
+      expect(result.selector).toBe('.content');
+      expect(result.method).toBe('selector');
+      expect(result.confidence).toBeGreaterThan(0.7);
+    });
+
     it('should use heuristic detection when no known selector matches', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

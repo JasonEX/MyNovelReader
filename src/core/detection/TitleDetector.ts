@@ -49,6 +49,7 @@ const TITLE_CLEANUP_PATTERNS = [
   /^正文卷?/,
   /全文免费阅读$/,
   /最新章节$/,
+  /[（(]\s*\d+\s*[/／]\s*\d+\s*[）)]\s*$/, // (1/3) pagination suffix
   /\(文\)$/,
   /_.*$/, // Remove trailing "_sitename"
   /-.*小说.*$/i,

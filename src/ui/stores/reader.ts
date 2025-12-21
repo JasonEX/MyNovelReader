@@ -1130,7 +1130,8 @@ export const useReaderStore = defineStore('reader', () => {
     // Match chapter titles: 第X章/节/回/话/篇/集/卷/幕, or standalone 章/回/节/話/幕
     const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
     // Match chapter URLs: /chapter_1, /read/1, /123.html (pure numeric filename)
-    const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$/i;
+    const urlPattern =
+      /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
     const excludeAncestors = (rule.value?.toc?.excludeAncestors || '')
       .split(',')
       .map(s => s.trim())
@@ -1677,6 +1678,11 @@ function getSectionBaseUrl(url: string): string | null {
   // /123_2.html -> /123.html
   const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
   if (m) return `${m[1]}${m[2]}`;
+
+  // /{chapterId}/{page} -> /{chapterId}/1 (extensionless, e.g. /1358/2 -> /1358/1)
+  const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
+  if (m2) return `${m2[1]}/1`;
+
   return null;
 }
 
@@ -1693,20 +1699,44 @@ function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
     const currentPath = current.pathname;
     const nextPath = next.pathname;
 
-    // Pattern 1: /123.html -> /123_2.html (first page to second page)
-    const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
-    const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
-    if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
-      return true;
-    }
+    const parse = (pathname: string): { chapterId: string; section: number } | null => {
+      // /123_2.html or /123-2.html
+      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: match[1], section };
+        }
+      }
 
-    // Pattern 2: /123_2.html -> /123_3.html (consecutive sections)
-    const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-    const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-    if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
-      const s1 = parseInt(sectionMatch1[2], 10);
-      const s2 = parseInt(sectionMatch2[2], 10);
-      if (s2 === s1 + 1) return true;
+      // /123/2.html
+      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: match[1], section };
+        }
+      }
+
+      // /123.html
+      match = pathname.match(/\/(\d+)\.html?$/i);
+      if (match) return { chapterId: match[1], section: 1 };
+
+      // /{chapterId}/{page} (extensionless)
+      match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
+      if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
+
+      // /{chapterId} (extensionless)
+      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+      if (match) return { chapterId: match[1], section: 1 };
+
+      return null;
+    };
+
+    const c = parse(currentPath);
+    const n = parse(nextPath);
+    if (c && n && c.chapterId === n.chapterId) {
+      if (n.section === c.section + 1 && n.section > 1) return true;
     }
 
     return false;
@@ -2086,7 +2116,8 @@ function detectTocPage(content: string, pageUrl: string, currentChapterUrl: stri
   }
 
   // Heuristic 3: Many links pointing to chapter-like URLs
-  const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$/i;
+  const chapterLinkPattern =
+    /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
   const chapterLinks = Array.from(links).filter(a => {
     const href = a.getAttribute('href') || '';
     return chapterLinkPattern.test(href);

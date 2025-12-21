@@ -22,6 +22,8 @@
 // @match        *://*/read/*/*
 // @match        *://*/chapter/*/*
 // @match        *://*/novel/*/*
+// @match        *://*/xs_*/*/*
+// @match        *://*/xs_*/*/*/*
 // @match        *://www.qidian.com/chapter/*/*
 // @match        *://m.qidian.com/chapter/*/*
 // @match        *://read.qidian.com/chapter/*
@@ -1445,11 +1447,11 @@ tryKnownSelectors(doc2) {
       for (const selector of KNOWN_CONTENT_SELECTORS) {
         try {
           const el = doc2.querySelector(selector);
-          if (el && this.isValidContent(el)) {
+          if (el && (this.isValidContent(el) || this.isPKeyLoadMoreContent(el, doc2))) {
             return {
               element: el,
               selector,
-              confidence: 0.9,
+              confidence: this.isValidContent(el) ? 0.9 : 0.78,
               method: "selector",
               preview: this.getPreview(el)
             };
@@ -1458,6 +1460,24 @@ tryKnownSelectors(doc2) {
         }
       }
       return null;
+    }
+isPKeyLoadMoreContent(element, doc2) {
+      const rawText = (element.textContent || "").replace(/\s+/g, "").trim();
+      if (!rawText) return false;
+      const normalized = rawText.replace(/[|｜]/g, "");
+      const hasLoadMore = normalized.includes("加载更多");
+      const hasBlockedHint = normalized.includes("无法显示本章节全部内容") || normalized.includes("阅读模式") && normalized.includes("无法显示");
+      if (!hasLoadMore && !hasBlockedHint) return false;
+      return this.hasInlinePKey(doc2);
+    }
+    hasInlinePKey(doc2) {
+      const scripts = Array.from(doc2.querySelectorAll("script"));
+      for (const script of scripts) {
+        const text2 = script.textContent || "";
+        if (!text2 || !text2.includes("p_key")) continue;
+        if (/p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(text2)) return true;
+      }
+      return false;
     }
 findCandidates(doc2) {
       const containers = doc2.querySelectorAll("div, article, section, main, td");
@@ -1673,6 +1693,9 @@ createEmptyResult() {
     /添加書籤\s*返回目錄\s*章節報錯\s*分享給朋友[:：]?\s*/gi,
     /由於[緩缓存]原因[^<\n]{0,120}(?:更新|網站|网站|站)/gi,
     /[请請][用戶用户]直接[瀏覽浏览]器[訪访]問[^<\n]{0,120}/gi,
+/(?:阅[|｜\s]*读[|｜\s]*模[|｜\s]*式|畅[|｜\s]*读[|｜\s]*模[|｜\s]*式)[^<\n]{0,60}无[|｜\s]*法[|｜\s]*显[|｜\s]*示[|｜\s]*本[|｜\s]*章[|｜\s]*节[|｜\s]*全[|｜\s]*部[|｜\s]*内[|｜\s]*容[^<\n]{0,120}/gi,
+    /请[|｜\s]*返[|｜\s]*回[|｜\s]*原[|｜\s]*网[|｜\s]*页[|｜\s]*阅[|｜\s]*读/gi,
+    /加[|｜\s]*载[|｜\s]*更[|｜\s]*多/gi,
 /小[^\u4e00-\u9fff]{0,3}说[^\u4e00-\u9fff]{0,3}网[^\u4e00-\u9fff]{0,6}最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
     /最[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}章[^\u4e00-\u9fff]{0,3}节[^\u4e00-\u9fff]{0,6}更[^\u4e00-\u9fff]{0,3}新[^\u4e00-\u9fff]{0,3}快/gi,
     /幻[^\u4e00-\u9fff]{0,3}想[^\u4e00-\u9fff]{0,3}姬[^\u4e00-\u9fff]{0,6}免[^\u4e00-\u9fff]{0,3}费[^\u4e00-\u9fff]{0,3}(?:阅|讀)[^\u4e00-\u9fff]{0,3}(?:读|讀)/gi,
@@ -1865,7 +1888,40 @@ extractChapterNumber(url) {
       }
       return null;
     }
+    parseChapterSectionFromPath(pathname) {
+      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: parseInt(match[1], 10), section };
+        }
+      }
+      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: parseInt(match[1], 10), section };
+        }
+      }
+      match = pathname.match(/\/(\d+)\.html?$/i);
+      if (match) {
+        return { chapterId: parseInt(match[1], 10), section: 1 };
+      }
+      match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: parseInt(match[1], 10), section };
+        }
+      }
+      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+      if (match) {
+        return { chapterId: parseInt(match[1], 10), section: 1 };
+      }
+      return null;
+    }
 detectSection(doc2, currentUrl, navigation) {
+      var _a;
       const result = {
         isSection: false,
         currentSection: null,
@@ -1886,10 +1942,16 @@ detectSection(doc2, currentUrl, navigation) {
         const isNextSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(nextText));
         const isNextChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(nextText));
         if (isNextSection && !isNextChapter) {
-          result.isSection = true;
-          result.nextSectionUrl = navigation.next.url;
-          result.confidence = Math.max(result.confidence, 0.9);
-          result.method = "link-text";
+          const nextUrl = navigation.next.url;
+          const comparison = this.compareUrlsForSection(currentUrl, nextUrl);
+          if (comparison.isSection) {
+            result.isSection = true;
+            result.nextSectionUrl = nextUrl;
+            result.confidence = Math.max(result.confidence, 0.9);
+            result.method = "link-text";
+          } else {
+            result.nextChapterUrl = result.nextChapterUrl || nextUrl;
+          }
         } else if (isNextChapter) {
           result.nextChapterUrl = navigation.next.url;
         }
@@ -1908,9 +1970,23 @@ detectSection(doc2, currentUrl, navigation) {
         const prevText = navigation.prev.text || "";
         const isPrevSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(prevText));
         if (isPrevSection) {
+          const prevUrl = navigation.prev.url;
+          const comparison = this.compareUrlsForSection(prevUrl, currentUrl);
+          if (comparison.isSection) {
+            result.isSection = true;
+            result.currentSection = ((_a = this.extractSectionFromUrl(currentUrl)) == null ? void 0 : _a.section) ?? null;
+            result.confidence = Math.max(result.confidence, 0.85);
+            result.method = "link-text";
+          }
+        }
+      }
+      if (!result.nextSectionUrl) {
+        const nextSectionUrl = this.findNextSectionUrl(doc2, currentUrl);
+        if (nextSectionUrl) {
           result.isSection = true;
-          result.confidence = Math.max(result.confidence, 0.85);
-          result.method = "link-text";
+          result.nextSectionUrl = nextSectionUrl;
+          result.confidence = Math.max(result.confidence, 0.9);
+          if (result.method === "none") result.method = "link-text";
         }
       }
       if (result.isSection && !result.nextChapterUrl) {
@@ -1919,20 +1995,17 @@ detectSection(doc2, currentUrl, navigation) {
       return result;
     }
 extractSectionFromUrl(url) {
-      const patterns = [/\/(\d+)[_-](\d+)\.html?$/i, /\/(\d+)\/(\d+)\.html?$/i];
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section > 1) {
-            return {
-              chapter: parseInt(match[1], 10),
-              section
-            };
-          }
+      try {
+        const parsed = new URL(url);
+        const info = this.parseChapterSectionFromPath(parsed.pathname);
+        if (!info) return null;
+        if (info.section > 1) {
+          return { chapter: info.chapterId, section: info.section };
         }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
     }
 compareUrlsForSection(currentUrl, nextUrl) {
       try {
@@ -1943,20 +2016,14 @@ compareUrlsForSection(currentUrl, nextUrl) {
         }
         const currentPath = current.pathname;
         const nextPath = next.pathname;
-        const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
-        const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
-        if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
-          return { isSection: true, confidence: 0.9 };
-        }
-        const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-        const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-        if (sectionMatch1 && sectionMatch2) {
-          if (sectionMatch1[1] === sectionMatch2[1]) {
-            const s1 = parseInt(sectionMatch1[2], 10);
-            const s2 = parseInt(sectionMatch2[2], 10);
-            if (s2 === s1 + 1) {
-              return { isSection: true, confidence: 0.95 };
-            }
+        const currentInfo = this.parseChapterSectionFromPath(currentPath);
+        const nextInfo = this.parseChapterSectionFromPath(nextPath);
+        if (currentInfo && nextInfo) {
+          if (currentInfo.chapterId !== nextInfo.chapterId) {
+            return { isSection: false, confidence: 0 };
+          }
+          if (nextInfo.section === currentInfo.section + 1 && nextInfo.section > 1) {
+            return { isSection: true, confidence: 0.95 };
           }
         }
         const similarity = this.calculateUrlSimilarity(currentPath, nextPath);
@@ -1982,12 +2049,54 @@ calculateUrlSimilarity(path1, path2) {
       }
       return matches / longer.length;
     }
+    findNextSectionUrl(doc2, currentUrl) {
+      const links = Array.from(doc2.querySelectorAll("a[href]"));
+      const normalizeText = (text2) => text2.replace(/\s+/g, "").trim();
+      const isNextSectionText = (text2) => {
+        const t = normalizeText(text2);
+        if (!t) return false;
+        if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
+          return true;
+        }
+        if (t.toLowerCase().includes("next") && !t.toLowerCase().includes("chapter")) {
+          return true;
+        }
+        return false;
+      };
+      const candidates = [];
+      for (const a of links) {
+        const text2 = (a.textContent || "").trim();
+        if (!text2) continue;
+        const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
+        const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
+        if (!isSection || isChapter) continue;
+        if (!isNextSectionText(text2)) continue;
+        if (!this.isValidLink(a, "next")) continue;
+        const href = a.href;
+        if (!href) continue;
+        const comparison = this.compareUrlsForSection(currentUrl, href);
+        if (!comparison.isSection) continue;
+        let score = 50;
+        if (text2.length <= 5) score += 5;
+        const rel = (a.getAttribute("rel") || "").toLowerCase();
+        if (rel.includes("next")) score += 5;
+        if (a.closest(".pager, .pagination, .page, nav, footer")) score += 2;
+        score += Math.round(comparison.confidence * 10);
+        candidates.push({ url: href, score });
+      }
+      if (candidates.length === 0) return null;
+      candidates.sort((a, b) => b.score - a.score);
+      return candidates[0].url;
+    }
 findNextChapterUrl(doc2, currentUrl, _navigation) {
       var _a;
       const links = doc2.querySelectorAll("a[href]");
       for (const link of links) {
         const anchor = link;
         const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
+        const normalizedText = text2.replace(/\s+/g, "").trim();
+        const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /next/i.test(normalizedText);
+        if (!isForward) continue;
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
         const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
         if (isChapter && !isSection && this.isValidLink(anchor, "next")) {
@@ -2078,7 +2187,8 @@ generatePathSelector(element) {
     /^正文卷?/,
     /全文免费阅读$/,
     /最新章节$/,
-    /\(文\)$/,
+    /[（(]\s*\d+\s*[/／]\s*\d+\s*[）)]\s*$/,
+/\(文\)$/,
     /_.*$/,
 /-.*小说.*$/i
   ];
@@ -2560,6 +2670,7 @@ process(element, doc2) {
         return sanitizeHtml(element.innerHTML);
       }
       const clone2 = element.cloneNode(true);
+      this.expandEncodedLoadMoreContent(clone2, doc2);
       this.removeUnwantedElements(clone2);
       if (this.options.removeSelectors) {
         this.removeBySelector(clone2, this.options.removeSelectors);
@@ -2844,6 +2955,90 @@ smartQueryAll(root, selector) {
         }
       }
       return [];
+    }
+    expandEncodedLoadMoreContent(container, doc2) {
+      const normalizedText = this.normalizeObfuscatedText(container.textContent || "");
+      const hasLoadMore = normalizedText.includes("加载更多");
+      const hasBlockedHint = normalizedText.includes("无法显示本章节全部内容") || normalizedText.includes("阅读模式") && normalizedText.includes("无法显示");
+      if (!hasLoadMore && !hasBlockedHint) return;
+      const pKey = this.extractInlinePKey(doc2);
+      if (!pKey) return;
+      const decoded = this.decodeBase64Utf8(pKey);
+      if (!decoded) return;
+      if (!decoded.includes("<p") || !/[\u4e00-\u9fff]/.test(decoded)) return;
+      const decodedPlain = this.normalizeObfuscatedText(decoded.replace(/<[^>]+>/g, ""));
+      const decodedTextHead = decodedPlain.slice(0, 60);
+      const decodedTextTail = decodedPlain.slice(-60);
+      if (decodedTextHead && normalizedText.includes(decodedTextHead)) {
+        this.removeLoadMoreUi(container);
+        if (decodedTextTail && !normalizedText.includes(decodedTextTail)) {
+          container.innerHTML = decoded;
+        }
+        return;
+      }
+      this.removeLoadMoreUi(container);
+      try {
+        container.insertAdjacentHTML("beforeend", decoded);
+      } catch {
+        const p2 = doc2.createElement("p");
+        p2.textContent = decoded.replace(/<[^>]+>/g, "");
+        container.appendChild(p2);
+      }
+    }
+    removeLoadMoreUi(container) {
+      for (const p2 of Array.from(container.querySelectorAll("p"))) {
+        const t = this.normalizeObfuscatedText(p2.textContent || "");
+        if (t.includes("无法显示本章节全部内容") || t.includes("阅读模式") && t.includes("无法显示") || t.includes("请返回原网页阅读")) {
+          p2.remove();
+        }
+      }
+      const candidates = Array.from(container.querySelectorAll("button, a"));
+      for (const el of candidates) {
+        const t = this.normalizeObfuscatedText(el.textContent || "");
+        if (!t) continue;
+        if (t.includes("加载更多") || t.includes("展开更多") || t.includes("查看更多")) {
+          const wrapper = el.closest("p");
+          if (wrapper) wrapper.remove();
+          else el.remove();
+        }
+      }
+    }
+    normalizeObfuscatedText(text2) {
+      return text2.replace(/\s+/g, "").replace(/[|｜]/g, "").trim();
+    }
+    extractInlinePKey(doc2) {
+      const scripts = Array.from(doc2.querySelectorAll("script"));
+      for (const script of scripts) {
+        const text2 = script.textContent || "";
+        if (!text2 || !text2.includes("p_key")) continue;
+        const match = text2.match(/p_key\s*=\s*'([^']+)'/);
+        if (match == null ? void 0 : match[1]) return match[1];
+        const match2 = text2.match(/p_key\s*=\s*"([^"]+)"/);
+        if (match2 == null ? void 0 : match2[1]) return match2[1];
+      }
+      return null;
+    }
+    decodeBase64Utf8(input) {
+      const value = (input || "").trim();
+      if (!value) return null;
+      try {
+        if (typeof atob === "function" && typeof TextDecoder !== "undefined") {
+          const binary = atob(value);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          return new TextDecoder("utf-8").decode(bytes);
+        }
+      } catch {
+      }
+      try {
+        const B = globalThis.Buffer;
+        if (!B || typeof B.from !== "function") return null;
+        return String(B.from(value, "base64").toString("utf8"));
+      } catch {
+        return null;
+      }
     }
   }
   const STORAGE_KEYS = {
@@ -4755,23 +4950,26 @@ detect(doc2 = document, url) {
 extractNavigation(doc2, rule) {
       var _a, _b, _c;
       const result = {};
+      const asAnchor = (el) => {
+        var _a2;
+        if (!el) return null;
+        if (((_a2 = el.tagName) == null ? void 0 : _a2.toLowerCase()) === "a") return el;
+        return null;
+      };
       if (((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false) {
         const el = this.selectElement(doc2, rule.navigation.prev);
-        if (el instanceof HTMLAnchorElement) {
-          result.prev = el.href;
-        }
+        const anchor = asAnchor(el);
+        if (anchor) result.prev = anchor.href;
       }
       if (((_b = rule.navigation) == null ? void 0 : _b.next) && rule.navigation.next !== false) {
         const el = this.selectElement(doc2, rule.navigation.next);
-        if (el instanceof HTMLAnchorElement) {
-          result.next = el.href;
-        }
+        const anchor = asAnchor(el);
+        if (anchor) result.next = anchor.href;
       }
       if (((_c = rule.navigation) == null ? void 0 : _c.index) && rule.navigation.index !== false) {
         const el = this.selectElement(doc2, rule.navigation.index);
-        if (el instanceof HTMLAnchorElement) {
-          result.index = el.href;
-        }
+        const anchor = asAnchor(el);
+        if (anchor) result.index = anchor.href;
       }
       return result;
     }
@@ -5772,6 +5970,13 @@ cleanupScripts() {
       });
     });
   }
+  function getSectionBaseUrl$1(url) {
+    const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
+    if (m) return `${m[1]}${m[2]}`;
+    const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
+    if (m2) return `${m2[1]}/1`;
+    return null;
+  }
   function isSectionLikeUrl$1(currentUrl, nextUrl) {
     try {
       const current = new URL(currentUrl);
@@ -5779,17 +5984,33 @@ cleanupScripts() {
       if (current.host !== next.host) return false;
       const currentPath = current.pathname;
       const nextPath = next.pathname;
-      const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
-      const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
-      if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
-        return true;
-      }
-      const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
-        const s1 = parseInt(sectionMatch1[2], 10);
-        const s2 = parseInt(sectionMatch2[2], 10);
-        if (s2 === s1 + 1) return true;
+      const parse = (pathname) => {
+        let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+        if (match) {
+          const section = parseInt(match[2], 10);
+          if (section >= 1 && section <= 99) {
+            return { chapterId: match[1], section };
+          }
+        }
+        match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+        if (match) {
+          const section = parseInt(match[2], 10);
+          if (section >= 1 && section <= 99) {
+            return { chapterId: match[1], section };
+          }
+        }
+        match = pathname.match(/\/(\d+)\.html?$/i);
+        if (match) return { chapterId: match[1], section: 1 };
+        match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
+        if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
+        match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+        if (match) return { chapterId: match[1], section: 1 };
+        return null;
+      };
+      const c = parse(currentPath);
+      const n = parse(nextPath);
+      if (c && n && c.chapterId === n.chapterId) {
+        if (n.section === c.section + 1 && n.section > 1) return true;
       }
       return false;
     } catch {
@@ -5802,6 +6023,9 @@ cleanupScripts() {
     for (const link of links) {
       const anchor = link;
       const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
+      const normalizedText = text2.replace(/\s+/g, "").trim();
+      const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /next/i.test(normalizedText);
+      if (!isForward) continue;
       const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
       const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
       if (isChapter && !isSection) {
@@ -5931,69 +6155,85 @@ async execute(doc2 = document) {
       }
     }
 async launch(doc2, decision) {
-      var _a, _b, _c, _d, _e;
+      var _a;
       try {
-        const chapter = await this.parser.parse(doc2);
+        const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
+        const chapter = await this.parseWithSectionMerge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
-          const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-          const enableByRule = !!((_c = (_b = chapter.rule) == null ? void 0 : _b.advanced) == null ? void 0 : _c.checkSection) && !((_e = (_d = chapter.rule) == null ? void 0 : _d.advanced) == null ? void 0 : _e.noSection);
-          const shouldMerge = enableByRule && chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl);
-          if (shouldMerge) {
-            const merged = await this.mergeSectionPages(chapter, currentUrl);
-            this.launchCallback(merged, decision.rule);
-          } else {
-            if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
-              const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
-              if (realNextChapterUrl) {
-                chapter.nextUrl = realNextChapterUrl;
-              }
-            }
-            this.launchCallback(chapter, decision.rule);
-          }
+          this.launchCallback(chapter, decision.rule);
         }
       } catch (e) {
         console.error("[AutoEnableManager] Parse error:", e);
       }
     }
-async mergeSectionPages(firstChapter, currentUrl) {
-      const parser = getParser();
-      let mergedContent = firstChapter.content;
-      let mergedRaw = firstChapter.rawContent;
-      let nextSectionUrl = firstChapter.nextUrl;
-      let nextChapterUrl = null;
-      let lastUrl = currentUrl;
-      const seen = new Set([currentUrl]);
+async parseWithSectionMerge(doc2, url) {
+      var _a, _b, _c, _d;
+      const resolvedUrl = url;
+      const baseUrl = getSectionBaseUrl$1(resolvedUrl);
+      let startUrl = resolvedUrl;
+      let startDoc = doc2;
+      if (baseUrl && baseUrl !== resolvedUrl) {
+        const baseDoc = await fetchUrl(baseUrl, resolvedUrl);
+        if (baseDoc) {
+          startUrl = baseUrl;
+          startDoc = baseDoc;
+        }
+      }
+      const first = await this.parser.parse(startDoc, startUrl);
+      if (!first) return null;
+      const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
+      if (disableByRule) return first;
+      const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
+      const detection = this.parser.detect(startDoc, startUrl);
+      const section = detection.results.section;
+      const shouldMerge = enableByRule || !!(section == null ? void 0 : section.isSection) && ((section == null ? void 0 : section.confidence) || 0) >= 0.8;
+      if (!shouldMerge) {
+        if (first.nextUrl && isSectionLikeUrl$1(startUrl, first.nextUrl)) {
+          const realNextChapterUrl = findNextChapterUrl(startDoc, startUrl);
+          if (realNextChapterUrl) {
+            first.nextUrl = realNextChapterUrl;
+          }
+        }
+        return first;
+      }
+      let mergedContent = first.content;
+      let mergedRaw = first.rawContent;
+      let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
+      let nextChapterUrl = (section == null ? void 0 : section.nextChapterUrl) || null;
+      let lastUrl = startUrl;
+      if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl$1(startUrl, first.nextUrl)) {
+        nextSectionUrl = first.nextUrl;
+      }
+      const seen = new Set([startUrl]);
       for (let i = 0; i < 10 && nextSectionUrl; i++) {
         const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
         if (seen.has(absNextSection)) break;
         seen.add(absNextSection);
-        if (!isSectionLikeUrl$1(lastUrl, absNextSection)) {
-          nextChapterUrl = absNextSection;
-          break;
-        }
         const nextDoc = await fetchUrl(absNextSection, lastUrl);
         if (!nextDoc) break;
-        const nextParsed = await parser.parse(nextDoc, absNextSection);
+        const nextParsed = await this.parser.parse(nextDoc, absNextSection);
         if (!nextParsed) break;
         mergedContent = joinHtml(mergedContent, nextParsed.content);
         mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-        if (nextParsed.nextUrl) {
+        const nextDet = this.parser.detect(nextDoc, absNextSection);
+        const s = nextDet.results.section;
+        if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+        nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
+        if (!nextSectionUrl && nextParsed.nextUrl) {
           if (isSectionLikeUrl$1(absNextSection, nextParsed.nextUrl)) {
             nextSectionUrl = nextParsed.nextUrl;
-          } else {
+          } else if (!nextChapterUrl) {
             nextChapterUrl = nextParsed.nextUrl;
-            nextSectionUrl = null;
           }
-        } else {
-          nextSectionUrl = null;
         }
         lastUrl = absNextSection;
       }
       return {
-        ...firstChapter,
+        ...first,
+        url: startUrl,
         content: mergedContent,
         rawContent: mergedRaw,
-        nextUrl: nextChapterUrl || firstChapter.nextUrl
+        nextUrl: nextChapterUrl || first.nextUrl
       };
     }
 async saveRuleForCurrentSite(doc2, decision) {
@@ -6009,6 +6249,7 @@ createRuleFromDetection(hostname, detection) {
       const content = detection.results.content;
       const navigation = detection.results.navigation;
       const title = detection.results.title;
+      const section = detection.results.section;
       const hostPattern = hostname.replace(/\./g, "\\.");
       const rule = {
         id: `user-${hostname}-${Date.now()}`,
@@ -6027,6 +6268,9 @@ createRuleFromDetection(hostname, detection) {
           createdAt: ( new Date()).toISOString()
         }
       };
+      if ((section == null ? void 0 : section.isSection) && (section.confidence || 0) >= 0.8) {
+        rule.advanced = { checkSection: true };
+      }
       if (navigation.next || navigation.prev || navigation.index) {
         rule.navigation = {};
         if (navigation.next) {
@@ -6057,7 +6301,7 @@ reset() {
       this.currentDecision = void 0;
     }
 async manualEnable(doc2 = document) {
-      var _a, _b, _c, _d, _e, _f;
+      var _a, _b;
       const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
       try {
         const hostname = new URL(url).hostname;
@@ -6072,23 +6316,10 @@ async manualEnable(doc2 = document) {
         protection.removeOverlays();
       }
       try {
-        const chapter = await this.parser.parse(doc2);
+        const currentUrl = ((_b = doc2.location) == null ? void 0 : _b.href) || window.location.href;
+        const chapter = await this.parseWithSectionMerge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
-          const currentUrl = ((_b = doc2.location) == null ? void 0 : _b.href) || window.location.href;
-          const enableByRule = !!((_d = (_c = chapter.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection) && !((_f = (_e = chapter.rule) == null ? void 0 : _e.advanced) == null ? void 0 : _f.noSection);
-          const shouldMerge = enableByRule && chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl);
-          if (shouldMerge) {
-            const merged = await this.mergeSectionPages(chapter, currentUrl);
-            this.launchCallback(merged, void 0);
-          } else {
-            if (chapter.nextUrl && isSectionLikeUrl$1(currentUrl, chapter.nextUrl)) {
-              const realNextChapterUrl = findNextChapterUrl(doc2, currentUrl);
-              if (realNextChapterUrl) {
-                chapter.nextUrl = realNextChapterUrl;
-              }
-            }
-            this.launchCallback(chapter, void 0);
-          }
+          this.launchCallback(chapter, void 0);
         }
       } catch (e) {
         console.error("[AutoEnableManager] Manual enable error:", e);
@@ -20130,7 +20361,7 @@ entry,
       var _a, _b;
       const links = Array.from(doc2.querySelectorAll("a[href]"));
       const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
-      const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$/i;
+      const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
       const excludeAncestors = (((_b = (_a = rule.value) == null ? void 0 : _a.toc) == null ? void 0 : _b.excludeAncestors) || "").split(",").map((s) => s.trim()).filter(Boolean);
       const candidates = [];
       for (const a of links) {
@@ -20534,6 +20765,8 @@ activate,
   function getSectionBaseUrl(url) {
     const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
     if (m) return `${m[1]}${m[2]}`;
+    const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
+    if (m2) return `${m2[1]}/1`;
     return null;
   }
   function isSectionLikeUrl(currentUrl, nextUrl) {
@@ -20543,17 +20776,33 @@ activate,
       if (current.host !== next.host) return false;
       const currentPath = current.pathname;
       const nextPath = next.pathname;
-      const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
-      const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
-      if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
-        return true;
-      }
-      const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
-        const s1 = parseInt(sectionMatch1[2], 10);
-        const s2 = parseInt(sectionMatch2[2], 10);
-        if (s2 === s1 + 1) return true;
+      const parse = (pathname) => {
+        let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+        if (match) {
+          const section = parseInt(match[2], 10);
+          if (section >= 1 && section <= 99) {
+            return { chapterId: match[1], section };
+          }
+        }
+        match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+        if (match) {
+          const section = parseInt(match[2], 10);
+          if (section >= 1 && section <= 99) {
+            return { chapterId: match[1], section };
+          }
+        }
+        match = pathname.match(/\/(\d+)\.html?$/i);
+        if (match) return { chapterId: match[1], section: 1 };
+        match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
+        if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
+        match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+        if (match) return { chapterId: match[1], section: 1 };
+        return null;
+      };
+      const c = parse(currentPath);
+      const n = parse(nextPath);
+      if (c && n && c.chapterId === n.chapterId) {
+        if (n.section === c.section + 1 && n.section > 1) return true;
       }
       return false;
     } catch {
@@ -20827,7 +21076,7 @@ activate,
     if (linkRatio > 0.6 && linkCount > 8) {
       return true;
     }
-    const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$/i;
+    const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
     const chapterLinks = Array.from(links).filter((a) => {
       const href = a.getAttribute("href") || "";
       return chapterLinkPattern.test(href);

@@ -76,11 +76,11 @@ export class ContentDetector {
     for (const selector of KNOWN_CONTENT_SELECTORS) {
       try {
         const el = doc.querySelector(selector);
-        if (el && this.isValidContent(el)) {
+        if (el && (this.isValidContent(el) || this.isPKeyLoadMoreContent(el, doc))) {
           return {
             element: el,
             selector,
-            confidence: 0.9,
+            confidence: this.isValidContent(el) ? 0.9 : 0.78,
             method: 'selector',
             preview: this.getPreview(el),
           };
@@ -90,6 +90,37 @@ export class ContentDetector {
       }
     }
     return null;
+  }
+
+  /**
+   * Some templates intentionally truncate正文 in HTML and hide the rest in an encoded `p_key` blob,
+   * only revealing it after clicking "加载更多".
+   *
+   * In this case the visible `.content` is often <500 chars (fails MIN_TEXT_LENGTH), so treat it as
+   * valid content when we can reliably detect the pattern.
+   */
+  private isPKeyLoadMoreContent(element: Element, doc: Document): boolean {
+    const rawText = (element.textContent || '').replace(/\s+/g, '').trim();
+    if (!rawText) return false;
+
+    const normalized = rawText.replace(/[|｜]/g, '');
+    const hasLoadMore = normalized.includes('加载更多');
+    const hasBlockedHint =
+      normalized.includes('无法显示本章节全部内容') ||
+      (normalized.includes('阅读模式') && normalized.includes('无法显示'));
+    if (!hasLoadMore && !hasBlockedHint) return false;
+
+    return this.hasInlinePKey(doc);
+  }
+
+  private hasInlinePKey(doc: Document): boolean {
+    const scripts = Array.from(doc.querySelectorAll('script'));
+    for (const script of scripts) {
+      const text = script.textContent || '';
+      if (!text || !text.includes('p_key')) continue;
+      if (/p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(text)) return true;
+    }
+    return false;
   }
 
   /**

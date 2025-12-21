@@ -53,6 +53,10 @@ export class ContentProcessor {
     // Clone to avoid modifying original
     const clone = element.cloneNode(true) as Element;
 
+    // Some sites hide正文 in an encoded blob (e.g. `p_key`) and require clicking "加载更多".
+    // Expand it before running generic cleaning so detection/processing can work normally.
+    this.expandEncodedLoadMoreContent(clone, doc);
+
     // Remove unwanted elements
     this.removeUnwantedElements(clone);
 
@@ -537,5 +541,126 @@ export class ContentProcessor {
     }
 
     return [];
+  }
+
+  private expandEncodedLoadMoreContent(container: Element, doc: Document): void {
+    const normalizedText = this.normalizeObfuscatedText(container.textContent || '');
+    const hasLoadMore = normalizedText.includes('加载更多');
+    const hasBlockedHint =
+      normalizedText.includes('无法显示本章节全部内容') ||
+      (normalizedText.includes('阅读模式') && normalizedText.includes('无法显示'));
+
+    if (!hasLoadMore && !hasBlockedHint) return;
+
+    const pKey = this.extractInlinePKey(doc);
+    if (!pKey) return;
+
+    const decoded = this.decodeBase64Utf8(pKey);
+    if (!decoded) return;
+
+    // Basic sanity checks to avoid corrupting content on unrelated pages.
+    if (!decoded.includes('<p') || !/[\u4e00-\u9fff]/.test(decoded)) return;
+
+    // Avoid double-append if site already expanded it.
+    // Some sites embed full正文 in p_key but only render a short prefix; in that case
+    // the decoded head will appear in the visible text but the tail won't — replace instead.
+    const decodedPlain = this.normalizeObfuscatedText(decoded.replace(/<[^>]+>/g, ''));
+    const decodedTextHead = decodedPlain.slice(0, 60);
+    const decodedTextTail = decodedPlain.slice(-60);
+    if (decodedTextHead && normalizedText.includes(decodedTextHead)) {
+      this.removeLoadMoreUi(container);
+
+      if (decodedTextTail && !normalizedText.includes(decodedTextTail)) {
+        // Visible正文 is a truncated prefix; decoded likely contains the full chapter.
+        container.innerHTML = decoded;
+      }
+      return;
+    }
+
+    this.removeLoadMoreUi(container);
+
+    try {
+      container.insertAdjacentHTML('beforeend', decoded);
+    } catch {
+      // Fallback: append as text (better than nothing)
+      const p = doc.createElement('p');
+      p.textContent = decoded.replace(/<[^>]+>/g, '');
+      container.appendChild(p);
+    }
+  }
+
+  private removeLoadMoreUi(container: Element): void {
+    // Remove the "无法显示..." hint paragraph(s)
+    for (const p of Array.from(container.querySelectorAll('p'))) {
+      const t = this.normalizeObfuscatedText(p.textContent || '');
+      if (
+        t.includes('无法显示本章节全部内容') ||
+        (t.includes('阅读模式') && t.includes('无法显示')) ||
+        t.includes('请返回原网页阅读')
+      ) {
+        p.remove();
+      }
+    }
+
+    // Remove "加载更多" buttons/links (often wrapped in a <p>)
+    const candidates = Array.from(container.querySelectorAll('button, a'));
+    for (const el of candidates) {
+      const t = this.normalizeObfuscatedText(el.textContent || '');
+      if (!t) continue;
+      if (t.includes('加载更多') || t.includes('展开更多') || t.includes('查看更多')) {
+        const wrapper = el.closest('p');
+        if (wrapper) wrapper.remove();
+        else el.remove();
+      }
+    }
+  }
+
+  private normalizeObfuscatedText(text: string): string {
+    return text.replace(/\s+/g, '').replace(/[|｜]/g, '').trim();
+  }
+
+  private extractInlinePKey(doc: Document): string | null {
+    const scripts = Array.from(doc.querySelectorAll('script'));
+    for (const script of scripts) {
+      const text = script.textContent || '';
+      if (!text || !text.includes('p_key')) continue;
+
+      const match = text.match(/p_key\s*=\s*'([^']+)'/);
+      if (match?.[1]) return match[1];
+
+      const match2 = text.match(/p_key\s*=\s*"([^"]+)"/);
+      if (match2?.[1]) return match2[1];
+    }
+    return null;
+  }
+
+  private decodeBase64Utf8(input: string): string | null {
+    const value = (input || '').trim();
+    if (!value) return null;
+
+    // Browser path: atob + TextDecoder
+    try {
+      if (typeof atob === 'function' && typeof TextDecoder !== 'undefined') {
+        const binary = atob(value);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+    } catch {
+      // fall through
+    }
+
+    // Node/test fallback
+    try {
+      type BufferLike = { toString: (encoding: string) => string };
+      type BufferFactory = { from: (value: string, encoding: string) => BufferLike };
+      const B = (globalThis as unknown as { Buffer?: BufferFactory }).Buffer;
+      if (!B || typeof B.from !== 'function') return null;
+      return String(B.from(value, 'base64').toString('utf8'));
+    } catch {
+      return null;
+    }
   }
 }

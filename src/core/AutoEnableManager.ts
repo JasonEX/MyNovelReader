@@ -10,8 +10,8 @@
 
 import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
 import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
-import { getParser, ParsedChapter, Parser } from '@/core/parser';
 import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
+import { ParsedChapter, Parser } from '@/core/parser';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { getSiteProtection } from '@/core/protection';
@@ -72,6 +72,18 @@ function fetchUrl(url: string, referer?: string): Promise<Document | null> {
   });
 }
 
+function getSectionBaseUrl(url: string): string | null {
+  // /123_2.html or /123-2.html -> /123.html
+  const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
+  if (m) return `${m[1]}${m[2]}`;
+
+  // /{chapterId}/{page} -> /{chapterId}/1 (extensionless, e.g. /1358/2 -> /1358/1)
+  const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
+  if (m2) return `${m2[1]}/1`;
+
+  return null;
+}
+
 /**
  * Check if nextUrl looks like a section URL relative to currentUrl
  * E.g., /123.html -> /123_2.html or /123_2.html -> /123_3.html
@@ -85,20 +97,44 @@ function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
     const currentPath = current.pathname;
     const nextPath = next.pathname;
 
-    // Pattern 1: /123.html -> /123_2.html (first page to second page)
-    const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
-    const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
-    if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
-      return true;
-    }
+    const parse = (pathname: string): { chapterId: string; section: number } | null => {
+      // /123_2.html or /123-2.html
+      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: match[1], section };
+        }
+      }
 
-    // Pattern 2: /123_2.html -> /123_3.html (consecutive sections)
-    const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-    const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-    if (sectionMatch1 && sectionMatch2 && sectionMatch1[1] === sectionMatch2[1]) {
-      const s1 = parseInt(sectionMatch1[2], 10);
-      const s2 = parseInt(sectionMatch2[2], 10);
-      if (s2 === s1 + 1) return true;
+      // /123/2.html
+      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+      if (match) {
+        const section = parseInt(match[2], 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterId: match[1], section };
+        }
+      }
+
+      // /123.html
+      match = pathname.match(/\/(\d+)\.html?$/i);
+      if (match) return { chapterId: match[1], section: 1 };
+
+      // /{chapterId}/{page} (extensionless)
+      match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
+      if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
+
+      // /{chapterId} (extensionless)
+      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+      if (match) return { chapterId: match[1], section: 1 };
+
+      return null;
+    };
+
+    const c = parse(currentPath);
+    const n = parse(nextPath);
+    if (c && n && c.chapterId === n.chapterId) {
+      if (n.section === c.section + 1 && n.section > 1) return true;
     }
 
     return false;
@@ -117,6 +153,13 @@ function findNextChapterUrl(doc: Document, currentUrl: string): string | null {
   for (const link of links) {
     const anchor = link as HTMLAnchorElement;
     const text = anchor.textContent?.trim() || '';
+    const normalizedText = text.replace(/\s+/g, '').trim();
+    const isForward =
+      /下一/.test(normalizedText) ||
+      /下[章节篇话]/.test(normalizedText) ||
+      /后一章/.test(normalizedText) ||
+      /next/i.test(normalizedText);
+    if (!isForward) continue;
 
     // Must match chapter pattern, not section pattern
     const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
@@ -358,31 +401,11 @@ export class AutoEnableManager {
    */
   private async launch(doc: Document, decision: AutoEnableDecision): Promise<void> {
     try {
-      const chapter = await this.parser.parse(doc);
+      const currentUrl = doc.location?.href || window.location.href;
+      const chapter = await this.parseWithSectionMerge(doc, currentUrl);
 
       if (chapter && this.launchCallback) {
-        const currentUrl = doc.location?.href || window.location.href;
-
-        // Check if we need to merge sections
-        const enableByRule =
-          !!chapter.rule?.advanced?.checkSection && !chapter.rule?.advanced?.noSection;
-        const shouldMerge =
-          enableByRule && chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl);
-
-        if (shouldMerge) {
-          // Merge all section pages
-          const merged = await this.mergeSectionPages(chapter, currentUrl);
-          this.launchCallback(merged, decision.rule);
-        } else {
-          // No section merge needed, but still fix nextUrl if it points to a section
-          if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
-            const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
-            if (realNextChapterUrl) {
-              chapter.nextUrl = realNextChapterUrl;
-            }
-          }
-          this.launchCallback(chapter, decision.rule);
-        }
+        this.launchCallback(chapter, decision.rule);
       }
     } catch (e) {
       console.error('[AutoEnableManager] Parse error:', e);
@@ -390,63 +413,98 @@ export class AutoEnableManager {
   }
 
   /**
-   * Merge all section pages into a single chapter
+   * Parse current doc and merge multi-page sections (一章分多页).
+   * Normalizes later section URLs back to the first page for stable chapter URL.
    */
-  private async mergeSectionPages(
-    firstChapter: ParsedChapter,
-    currentUrl: string
-  ): Promise<ParsedChapter> {
-    const parser = getParser();
-    let mergedContent = firstChapter.content;
-    let mergedRaw = firstChapter.rawContent;
-    let nextSectionUrl = firstChapter.nextUrl;
-    let nextChapterUrl: string | null = null;
-    let lastUrl = currentUrl;
+  private async parseWithSectionMerge(doc: Document, url: string): Promise<ParsedChapter | null> {
+    const resolvedUrl = url;
 
-    // Merge up to 10 pages to avoid infinite loops
-    const seen = new Set<string>([currentUrl]);
+    // If user opens a later section page, normalize to the first page for stable URLs and nav.
+    const baseUrl = getSectionBaseUrl(resolvedUrl);
+    let startUrl = resolvedUrl;
+    let startDoc = doc;
+    if (baseUrl && baseUrl !== resolvedUrl) {
+      const baseDoc = await fetchUrl(baseUrl, resolvedUrl);
+      if (baseDoc) {
+        startUrl = baseUrl;
+        startDoc = baseDoc;
+      }
+    }
+
+    const first = await this.parser.parse(startDoc, startUrl);
+    if (!first) return null;
+
+    // If rule explicitly disables section merge, respect it.
+    const disableByRule = !!first.rule?.advanced?.noSection;
+    if (disableByRule) return first;
+
+    const enableByRule = !!first.rule?.advanced?.checkSection;
+    const detection = this.parser.detect(startDoc, startUrl);
+    const section = detection.results.section;
+    const shouldMerge = enableByRule || (!!section?.isSection && (section?.confidence || 0) >= 0.8);
+
+    if (!shouldMerge) {
+      // Best-effort: if nextUrl is a section-like URL but we don't merge, try to resolve to real next chapter.
+      if (first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
+        const realNextChapterUrl = findNextChapterUrl(startDoc, startUrl);
+        if (realNextChapterUrl) {
+          first.nextUrl = realNextChapterUrl;
+        }
+      }
+      return first;
+    }
+
+    let mergedContent = first.content;
+    let mergedRaw = first.rawContent;
+    let nextSectionUrl = section?.nextSectionUrl || null;
+    let nextChapterUrl: string | null = section?.nextChapterUrl || null;
+    let lastUrl = startUrl;
+
+    // If auto-detection didn't find nextSectionUrl, fall back to parsed nextUrl if it looks like a section.
+    if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
+      nextSectionUrl = first.nextUrl;
+    }
+
+    // Merge up to 10 pages to avoid infinite loops.
+    const seen = new Set<string>([startUrl]);
     for (let i = 0; i < 10 && nextSectionUrl; i++) {
       const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
       if (seen.has(absNextSection)) break;
       seen.add(absNextSection);
 
-      // Check if this is still a section URL
-      if (!isSectionLikeUrl(lastUrl, absNextSection)) {
-        // This is the next chapter, not a section
-        nextChapterUrl = absNextSection;
-        break;
-      }
-
       const nextDoc = await fetchUrl(absNextSection, lastUrl);
       if (!nextDoc) break;
 
-      const nextParsed = await parser.parse(nextDoc, absNextSection);
+      const nextParsed = await this.parser.parse(nextDoc, absNextSection);
       if (!nextParsed) break;
 
       mergedContent = joinHtml(mergedContent, nextParsed.content);
       mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
 
-      // Check if next page's nextUrl is a section or chapter
-      if (nextParsed.nextUrl) {
+      const nextDet = this.parser.detect(nextDoc, absNextSection);
+      const s = nextDet.results.section;
+      if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+
+      // Prefer auto-detected nextSectionUrl; fall back to parsed nextUrl if it looks like a section.
+      nextSectionUrl = s?.nextSectionUrl || null;
+      if (!nextSectionUrl && nextParsed.nextUrl) {
         if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
           nextSectionUrl = nextParsed.nextUrl;
-        } else {
-          // Next page's nextUrl is the next chapter
+        } else if (!nextChapterUrl) {
+          // nextParsed.nextUrl is not a section URL, treat it as next chapter.
           nextChapterUrl = nextParsed.nextUrl;
-          nextSectionUrl = null;
         }
-      } else {
-        nextSectionUrl = null;
       }
 
       lastUrl = absNextSection;
     }
 
     return {
-      ...firstChapter,
+      ...first,
+      url: startUrl,
       content: mergedContent,
       rawContent: mergedRaw,
-      nextUrl: nextChapterUrl || firstChapter.nextUrl,
+      nextUrl: nextChapterUrl || first.nextUrl,
     };
   }
 
@@ -473,6 +531,7 @@ export class AutoEnableManager {
     const content = detection.results.content;
     const navigation = detection.results.navigation;
     const title = detection.results.title;
+    const section = detection.results.section;
 
     // Generate URL pattern from hostname
     const hostPattern = hostname.replace(/\./g, '\\.');
@@ -494,6 +553,11 @@ export class AutoEnableManager {
         createdAt: new Date().toISOString(),
       },
     };
+
+    // Enable section merge if auto-detection indicates multi-page chapter.
+    if (section?.isSection && (section.confidence || 0) >= 0.8) {
+      rule.advanced = { checkSection: true };
+    }
 
     // Add navigation if detected
     if (navigation.next || navigation.prev || navigation.index) {
@@ -565,31 +629,11 @@ export class AutoEnableManager {
 
     // Parse and launch
     try {
-      const chapter = await this.parser.parse(doc);
+      const currentUrl = doc.location?.href || window.location.href;
+      const chapter = await this.parseWithSectionMerge(doc, currentUrl);
 
       if (chapter && this.launchCallback) {
-        const currentUrl = doc.location?.href || window.location.href;
-
-        // Check if we need to merge sections
-        const enableByRule =
-          !!chapter.rule?.advanced?.checkSection && !chapter.rule?.advanced?.noSection;
-        const shouldMerge =
-          enableByRule && chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl);
-
-        if (shouldMerge) {
-          // Merge all section pages
-          const merged = await this.mergeSectionPages(chapter, currentUrl);
-          this.launchCallback(merged, undefined);
-        } else {
-          // No section merge needed, but still fix nextUrl if it points to a section
-          if (chapter.nextUrl && isSectionLikeUrl(currentUrl, chapter.nextUrl)) {
-            const realNextChapterUrl = findNextChapterUrl(doc, currentUrl);
-            if (realNextChapterUrl) {
-              chapter.nextUrl = realNextChapterUrl;
-            }
-          }
-          this.launchCallback(chapter, undefined);
-        }
+        this.launchCallback(chapter, undefined);
       }
     } catch (e) {
       console.error('[AutoEnableManager] Manual enable error:', e);

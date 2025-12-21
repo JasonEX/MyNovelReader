@@ -256,25 +256,29 @@ export class Parser {
   ): { prev?: string; next?: string; index?: string } {
     const result: { prev?: string; next?: string; index?: string } = {};
 
+    const asAnchor = (el: Element | null): HTMLAnchorElement | null => {
+      if (!el) return null;
+      // Avoid cross-realm `instanceof` issues in tests / DOMParser documents.
+      if (el.tagName?.toLowerCase() === 'a') return el as HTMLAnchorElement;
+      return null;
+    };
+
     if (rule.navigation?.prev && rule.navigation.prev !== false) {
       const el = this.selectElement(doc, rule.navigation.prev);
-      if (el instanceof HTMLAnchorElement) {
-        result.prev = el.href;
-      }
+      const anchor = asAnchor(el);
+      if (anchor) result.prev = anchor.href;
     }
 
     if (rule.navigation?.next && rule.navigation.next !== false) {
       const el = this.selectElement(doc, rule.navigation.next);
-      if (el instanceof HTMLAnchorElement) {
-        result.next = el.href;
-      }
+      const anchor = asAnchor(el);
+      if (anchor) result.next = anchor.href;
     }
 
     if (rule.navigation?.index && rule.navigation.index !== false) {
       const el = this.selectElement(doc, rule.navigation.index);
-      if (el instanceof HTMLAnchorElement) {
-        result.index = el.href;
-      }
+      const anchor = asAnchor(el);
+      if (anchor) result.index = anchor.href;
     }
 
     return result;

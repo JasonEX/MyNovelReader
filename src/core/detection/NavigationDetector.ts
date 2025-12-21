@@ -292,6 +292,53 @@ export class NavigationDetector {
     return null;
   }
 
+  private parseChapterSectionFromPath(
+    pathname: string
+  ): { chapterId: number; section: number } | null {
+    // 1) /123_2.html or /123-2.html
+    let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+    if (match) {
+      const section = parseInt(match[2], 10);
+      // Section/page number should be small; ignore patterns like /{bookId}/{chapterId}.html.
+      if (section >= 1 && section <= 99) {
+        return { chapterId: parseInt(match[1], 10), section };
+      }
+    }
+
+    // 2) /123/2.html
+    match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+    if (match) {
+      const section = parseInt(match[2], 10);
+      // Many sites use /{bookId}/{chapterId}.html; treat as section only when page number is small.
+      if (section >= 1 && section <= 99) {
+        return { chapterId: parseInt(match[1], 10), section };
+      }
+    }
+
+    // 3) /123.html
+    match = pathname.match(/\/(\d+)\.html?$/i);
+    if (match) {
+      return { chapterId: parseInt(match[1], 10), section: 1 };
+    }
+
+    // 4) Extensionless pagination: /{chapterId}/{page} (page is usually small: 1-2 digits)
+    match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
+    if (match) {
+      const section = parseInt(match[2], 10);
+      if (section >= 1 && section <= 99) {
+        return { chapterId: parseInt(match[1], 10), section };
+      }
+    }
+
+    // 5) Extensionless chapter: /{chapterId}
+    match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+    if (match) {
+      return { chapterId: parseInt(match[1], 10), section: 1 };
+    }
+
+    return null;
+  }
+
   /**
    * Detect if current page is part of a multi-page chapter (分页章节)
    * This enables automatic section merging without manual rule configuration
@@ -326,11 +373,19 @@ export class NavigationDetector {
       const isNextChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(nextText));
 
       if (isNextSection && !isNextChapter) {
-        // "下一页" type link - this is a section navigation
-        result.isSection = true;
-        result.nextSectionUrl = navigation.next.url;
-        result.confidence = Math.max(result.confidence, 0.9);
-        result.method = 'link-text';
+        const nextUrl = navigation.next.url;
+        const comparison = this.compareUrlsForSection(currentUrl, nextUrl);
+        if (comparison.isSection) {
+          // "下一页" type link - this is a section navigation within the same chapter
+          result.isSection = true;
+          result.nextSectionUrl = nextUrl;
+          result.confidence = Math.max(result.confidence, 0.9);
+          result.method = 'link-text';
+        } else {
+          // Some templates use "下一页" as cross-chapter navigation (上一页/下一页 across chapters).
+          // Treat it as next chapter candidate, not a section page.
+          result.nextChapterUrl = result.nextChapterUrl || nextUrl;
+        }
       } else if (isNextChapter) {
         // "下一章" type link - this is chapter navigation
         result.nextChapterUrl = navigation.next.url;
@@ -356,9 +411,28 @@ export class NavigationDetector {
       const isPrevSection = SECTION_TEXT_PATTERNS.some(p => p.test(prevText));
 
       if (isPrevSection) {
+        const prevUrl = navigation.prev.url;
+        // Validate it's the previous section within the same chapter.
+        // compareUrlsForSection expects current->next, so use prev as current and currentUrl as next.
+        const comparison = this.compareUrlsForSection(prevUrl, currentUrl);
+        if (comparison.isSection) {
+          result.isSection = true;
+          result.currentSection = this.extractSectionFromUrl(currentUrl)?.section ?? null;
+          result.confidence = Math.max(result.confidence, 0.85);
+          result.method = 'link-text';
+        }
+      }
+    }
+
+    // Strategy 5: Even if navigation.next prefers "下一章", still try to find an explicit "下一页" link.
+    // Some templates show both links, and we must not stop merging early.
+    if (!result.nextSectionUrl) {
+      const nextSectionUrl = this.findNextSectionUrl(doc, currentUrl);
+      if (nextSectionUrl) {
         result.isSection = true;
-        result.confidence = Math.max(result.confidence, 0.85);
-        result.method = 'link-text';
+        result.nextSectionUrl = nextSectionUrl;
+        result.confidence = Math.max(result.confidence, 0.9);
+        if (result.method === 'none') result.method = 'link-text';
       }
     }
 
@@ -375,24 +449,17 @@ export class NavigationDetector {
    * Returns { chapter, section } or null
    */
   private extractSectionFromUrl(url: string): { chapter: number; section: number } | null {
-    // Pattern: /123_2.html -> chapter 123, section 2
-    const patterns = [/\/(\d+)[_-](\d+)\.html?$/i, /\/(\d+)\/(\d+)\.html?$/i];
-
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        // Section number > 1 indicates this is not the first page
-        if (section > 1) {
-          return {
-            chapter: parseInt(match[1], 10),
-            section,
-          };
-        }
+    try {
+      const parsed = new URL(url);
+      const info = this.parseChapterSectionFromPath(parsed.pathname);
+      if (!info) return null;
+      if (info.section > 1) {
+        return { chapter: info.chapterId, section: info.section };
       }
+      return null;
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   /**
@@ -414,23 +481,16 @@ export class NavigationDetector {
       const currentPath = current.pathname;
       const nextPath = next.pathname;
 
-      // Pattern 1: /123.html -> /123_2.html (first page to second page)
-      const firstPageMatch = currentPath.match(/\/(\d+)\.html?$/i);
-      const secondPageMatch = nextPath.match(/\/(\d+)[_-]2\.html?$/i);
-      if (firstPageMatch && secondPageMatch && firstPageMatch[1] === secondPageMatch[1]) {
-        return { isSection: true, confidence: 0.9 };
-      }
-
-      // Pattern 2: /123_2.html -> /123_3.html (consecutive sections)
-      const sectionMatch1 = currentPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      const sectionMatch2 = nextPath.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (sectionMatch1 && sectionMatch2) {
-        if (sectionMatch1[1] === sectionMatch2[1]) {
-          const s1 = parseInt(sectionMatch1[2], 10);
-          const s2 = parseInt(sectionMatch2[2], 10);
-          if (s2 === s1 + 1) {
-            return { isSection: true, confidence: 0.95 };
-          }
+      const currentInfo = this.parseChapterSectionFromPath(currentPath);
+      const nextInfo = this.parseChapterSectionFromPath(nextPath);
+      if (currentInfo && nextInfo) {
+        // Different chapter IDs => not a section transition
+        if (currentInfo.chapterId !== nextInfo.chapterId) {
+          return { isSection: false, confidence: 0 };
+        }
+        // Same chapter, consecutive page number => section transition
+        if (nextInfo.section === currentInfo.section + 1 && nextInfo.section > 1) {
+          return { isSection: true, confidence: 0.95 };
         }
       }
 
@@ -470,6 +530,61 @@ export class NavigationDetector {
     return matches / longer.length;
   }
 
+  private findNextSectionUrl(doc: Document, currentUrl: string): string | null {
+    const links = Array.from(doc.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+
+    const normalizeText = (text: string): string => text.replace(/\s+/g, '').trim();
+    const isNextSectionText = (text: string): boolean => {
+      const t = normalizeText(text);
+      if (!t) return false;
+      // Only accept forward paging labels ("下一页/下页"), avoid picking "上一页".
+      if (
+        t.includes('下一页') ||
+        t.includes('下页') ||
+        t.includes('下一頁') ||
+        t.includes('下頁')
+      ) {
+        return true;
+      }
+      // Conservative English fallback
+      if (t.toLowerCase().includes('next') && !t.toLowerCase().includes('chapter')) {
+        return true;
+      }
+      return false;
+    };
+
+    const candidates: Array<{ url: string; score: number }> = [];
+    for (const a of links) {
+      const text = (a.textContent || '').trim();
+      if (!text) continue;
+
+      const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
+      const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
+      if (!isSection || isChapter) continue;
+      if (!isNextSectionText(text)) continue;
+      if (!this.isValidLink(a, 'next')) continue;
+
+      const href = a.href;
+      if (!href) continue;
+
+      const comparison = this.compareUrlsForSection(currentUrl, href);
+      if (!comparison.isSection) continue;
+
+      let score = 50;
+      if (text.length <= 5) score += 5;
+      const rel = (a.getAttribute('rel') || '').toLowerCase();
+      if (rel.includes('next')) score += 5;
+      if (a.closest('.pager, .pagination, .page, nav, footer')) score += 2;
+      score += Math.round(comparison.confidence * 10);
+
+      candidates.push({ url: href, score });
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].url;
+  }
+
   /**
    * Try to find the next chapter URL (skipping remaining sections)
    */
@@ -478,12 +593,19 @@ export class NavigationDetector {
     currentUrl: string,
     _navigation: NavigationResult
   ): string | null {
-    // Look for links with "下一章" text
+    // Look for links with "下一章/下一节/后一章/next" text (forward only)
     const links = doc.querySelectorAll('a[href]');
 
     for (const link of links) {
       const anchor = link as HTMLAnchorElement;
       const text = anchor.textContent?.trim() || '';
+      const normalizedText = text.replace(/\s+/g, '').trim();
+      const isForward =
+        /下一/.test(normalizedText) ||
+        /下[章节篇话]/.test(normalizedText) ||
+        /后一章/.test(normalizedText) ||
+        /next/i.test(normalizedText);
+      if (!isForward) continue;
 
       // Must match chapter pattern, not section pattern
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));

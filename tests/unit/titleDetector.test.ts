@@ -91,6 +91,21 @@ describe('TitleDetector', () => {
       expect(result.chapterTitle).not.toContain('小说阅读网');
     });
 
+    it('should strip pagination suffix like (1/3) from h1', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>第一章 测试 - 小说</title></head>
+          <body>
+            <h1>第一章 测试(1/3)</h1>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.chapterTitle).toBe('第一章 测试');
+    });
+
     it('should detect book title from breadcrumb', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

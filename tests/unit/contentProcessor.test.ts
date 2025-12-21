@@ -131,6 +131,45 @@ describe('ContentProcessor', () => {
 
       expect(result).toContain('style=');
     });
+
+    it('should expand p_key encoded content and remove 加载更多 blockers', () => {
+      const encodeBase64Utf8 = (value: string): string => {
+        const bytes = new TextEncoder().encode(value);
+        let binary = '';
+        for (const b of bytes) binary += String.fromCharCode(b);
+        return dom.window.btoa(binary);
+      };
+
+      const hidden = '<p>隐藏正文一。</p><p>隐藏正文二。</p>';
+      const pKey = encodeBase64Utf8(hidden);
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <p>阅|读|模|式|下，无|法|显|示|本|章|节|全|部|内|容，请|返|回|原|网|页阅|读。</p>
+              <p style="text-align:center;"><button>加|载|更|多</button></p>
+            </div>
+            <script>const p_key='${pKey}';</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html);
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('开头正文');
+      expect(result).toContain('隐藏正文一');
+      expect(result).toContain('隐藏正文二');
+      expect(result).not.toContain('加载更多');
+      expect(result).not.toContain('无法显示本章节全部内容');
+    });
   });
 
   describe('processToText', () => {
