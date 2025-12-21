@@ -3929,7 +3929,7 @@ remove: "h1.title, script"
         pattern: "^https?://(?:www\\.)?uukanshu\\.cc/book/\\d+/\\d+\\.html(?:\\?.*)?$"
       },
       content: {
-        selector: "#contentbox, #content, #chaptercontent, #chapter_content, .content"
+selector: ".readcotent, #contentbox, #content, #chaptercontent, #chapter_content, .content"
       },
       meta: {
         source: "builtin",

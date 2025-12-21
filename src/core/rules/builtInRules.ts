@@ -840,7 +840,8 @@ const simplifiedRules: SiteRule[] = [
       pattern: '^https?://(?:www\\.)?uukanshu\\.cc/book/\\d+/\\d+\\.html(?:\\?.*)?$',
     },
     content: {
-      selector: '#contentbox, #content, #chaptercontent, #chapter_content, .content',
+      // Prefer the actual chapter container to avoid mixing breadcrumbs/toolbars into正文
+      selector: '.readcotent, #contentbox, #content, #chaptercontent, #chapter_content, .content',
     },
     meta: {
       source: 'builtin',
