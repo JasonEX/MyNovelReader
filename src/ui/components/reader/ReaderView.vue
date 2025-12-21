@@ -10,7 +10,7 @@
     @pointerup="shieldEvent"
   >
     <!-- Progress indicator -->
-    <ProgressIndicator v-if="showProgress" :auto-hide="true" />
+    <ProgressIndicator v-if="showProgress" :percent="scrollPercent" :auto-hide="true" />
 
     <!-- Floating toolbar -->
     <FloatingToolbar
@@ -271,6 +271,7 @@ const hasNext = computed(() => readerStore.hasNext);
 const hasPrev = computed(() => readerStore.hasPrev);
 const error = computed(() => readerStore.error);
 const toastType = computed(() => readerStore.toastType);
+const scrollPercent = computed(() => readerStore.scrollPercent);
 const showProgress = computed(() => configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
 const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
@@ -283,6 +284,9 @@ function shieldEvent(event: Event) {
 const keyboardEnabled = computed(
   () => configStore.behavior.keyboardNavigation && !isPickerActive.value
 );
+
+// Swipe gestures enabled state
+const swipeEnabled = computed(() => configStore.behavior.swipeGestures && !isPickerActive.value);
 
 // Navigation
 function navigate(direction: 'index') {
@@ -510,10 +514,9 @@ function handleScrollCore() {
     if (estimatedIdx !== -1) {
       readerStore.setCurrentChapter(estimatedIdx);
       updateWindow(estimatedIdx);
-      if (scrollHeight > 0) {
-        const overallPercent = Math.round((currentScrollY / scrollHeight) * 100);
-        readerStore.updateScroll(overallPercent);
-      }
+      const overallPercent =
+        scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
+      readerStore.updateScroll(overallPercent);
     }
     return;
   }
@@ -525,10 +528,8 @@ function handleScrollCore() {
   updateWindow(currentChapterIdx);
 
   // Update overall scroll progress for UI
-  if (scrollHeight > 0) {
-    const overallPercent = Math.round((currentScrollY / scrollHeight) * 100);
-    readerStore.updateScroll(overallPercent);
-  }
+  const overallPercent = scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
+  readerStore.updateScroll(overallPercent);
 
   // Note: Chapter loading is now handled by IntersectionObserver, not scroll percentage
 }
@@ -602,6 +603,114 @@ function handleWheel(e: WheelEvent) {
   ) {
     loadPrevWithScrollAdjust();
   }
+}
+
+// === Swipe gestures (touch) ===
+
+type SwipeStartState = {
+  id: number;
+  x: number;
+  y: number;
+  time: number;
+  cancelled: boolean;
+};
+
+const SWIPE_THRESHOLD_PX = 80;
+const SWIPE_MAX_DURATION_MS = 700;
+const SWIPE_CANCEL_VERTICAL_PX = 28;
+const SWIPE_AXIS_RATIO = 1.5;
+
+let swipeStart: SwipeStartState | null = null;
+
+type TouchPoint = {
+  identifier: number;
+  clientX: number;
+  clientY: number;
+};
+
+type TouchEventLike = {
+  touches: ArrayLike<TouchPoint>;
+  changedTouches: ArrayLike<TouchPoint>;
+  target: unknown;
+};
+
+function isTouchEvent(e: Event): e is Event & TouchEventLike {
+  const candidate = e as unknown as Partial<TouchEventLike>;
+  return Boolean(candidate.touches && candidate.changedTouches);
+}
+
+function isInteractiveElement(target: unknown): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return Boolean(target.closest('a, button, input, textarea, select, label'));
+}
+
+function handleTouchStart(e: Event) {
+  if (!swipeEnabled.value) return;
+  if (!isTouchEvent(e)) return;
+  if (e.touches.length !== 1) return;
+  if (isInteractiveElement(e.target)) return;
+
+  const touch = e.touches[0];
+  swipeStart = {
+    id: touch.identifier,
+    x: touch.clientX,
+    y: touch.clientY,
+    time: Date.now(),
+    cancelled: false,
+  };
+}
+
+function handleTouchMove(e: Event) {
+  if (!swipeStart) return;
+  if (!isTouchEvent(e)) return;
+  if (e.touches.length !== 1) {
+    swipeStart = null;
+    return;
+  }
+
+  const touch = Array.from(e.touches).find(t => t.identifier === swipeStart?.id);
+  if (!touch) return;
+
+  const dx = touch.clientX - swipeStart.x;
+  const dy = touch.clientY - swipeStart.y;
+
+  // Cancel if it's clearly a vertical scroll gesture.
+  if (Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX && Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO) {
+    swipeStart.cancelled = true;
+  }
+}
+
+function handleTouchEnd(e: Event) {
+  if (!swipeStart) return;
+  if (!isTouchEvent(e)) return;
+
+  const start = swipeStart;
+  swipeStart = null;
+
+  if (start.cancelled) return;
+  if (!swipeEnabled.value) return;
+
+  const selection = window.getSelection();
+  if (selection && selection.toString().length > 0) return;
+
+  const touch = Array.from(e.changedTouches).find(t => t.identifier === start.id);
+  if (!touch) return;
+
+  const dt = Date.now() - start.time;
+  if (dt > SWIPE_MAX_DURATION_MS) return;
+
+  const dx = touch.clientX - start.x;
+  const dy = touch.clientY - start.y;
+
+  if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+  if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
+
+  // Reader UX: swipe left => next, swipe right => prev
+  void navigateChapter(dx < 0 ? 'next' : 'prev');
+}
+
+function handleTouchCancel() {
+  swipeStart = null;
 }
 
 // === Keyboard shortcuts ===
@@ -867,6 +976,10 @@ onMounted(async () => {
   if (mainRef.value) {
     mainRef.value.addEventListener('scroll', handleScroll, { passive: true });
     mainRef.value.addEventListener('wheel', handleWheel, { passive: true });
+    mainRef.value.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainRef.value.addEventListener('touchmove', handleTouchMove, { passive: true });
+    mainRef.value.addEventListener('touchend', handleTouchEnd, { passive: true });
+    mainRef.value.addEventListener('touchcancel', handleTouchCancel, { passive: true });
   }
   // Keyboard shortcuts are handled by useKeyboardShortcuts composable
 
@@ -910,6 +1023,10 @@ onUnmounted(() => {
   if (mainRef.value) {
     mainRef.value.removeEventListener('scroll', handleScroll);
     mainRef.value.removeEventListener('wheel', handleWheel);
+    mainRef.value.removeEventListener('touchstart', handleTouchStart);
+    mainRef.value.removeEventListener('touchmove', handleTouchMove);
+    mainRef.value.removeEventListener('touchend', handleTouchEnd);
+    mainRef.value.removeEventListener('touchcancel', handleTouchCancel);
   }
   // Keyboard shortcuts cleanup is handled by useKeyboardShortcuts composable
 

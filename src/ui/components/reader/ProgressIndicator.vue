@@ -6,10 +6,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
+    /** Progress percent (0-100). */
+    percent?: number;
     /** Show percentage text */
     showText?: boolean;
     /** Auto-hide when not scrolling */
@@ -18,6 +20,7 @@ const props = withDefaults(
     hideDelay?: number;
   }>(),
   {
+    percent: 0,
     showText: false,
     autoHide: true,
     hideDelay: 2000,
@@ -25,48 +28,41 @@ const props = withDefaults(
 );
 
 // State
-const percent = ref(0);
+const percent = computed(() => {
+  const value = Number(props.percent ?? 0);
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+});
 const visible = ref(true);
 let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
-// Methods
-function updateProgress() {
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-
-  if (scrollHeight > 0) {
-    percent.value = Math.round((scrollTop / scrollHeight) * 100);
-  } else {
-    percent.value = 100;
+function scheduleAutoHide() {
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
   }
 
-  // Show progress bar
-  visible.value = true;
-
-  // Auto-hide logic
-  if (props.autoHide) {
-    if (hideTimeout) clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(() => {
-      visible.value = false;
-    }, props.hideDelay);
+  if (!props.autoHide) {
+    visible.value = true;
+    return;
   }
+
+  hideTimeout = setTimeout(() => {
+    visible.value = false;
+  }, props.hideDelay);
 }
 
-// Lifecycle
-onMounted(() => {
-  window.addEventListener('scroll', updateProgress, { passive: true });
-  updateProgress();
-});
+watch(
+  percent,
+  () => {
+    visible.value = true;
+    scheduleAutoHide();
+  },
+  { immediate: true }
+);
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', updateProgress);
   if (hideTimeout) clearTimeout(hideTimeout);
-});
-
-// Expose for parent
-defineExpose({
-  percent,
-  updateProgress,
 });
 </script>
 
