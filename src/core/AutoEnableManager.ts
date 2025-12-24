@@ -8,174 +8,14 @@
  * 4. User confirms → optionally save rule → launch reader
  */
 
-import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
-import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
-import { joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
-import { ParsedChapter, Parser } from '@/core/parser';
+import { DetectionEngine, type DetectionEngineResult } from '@/core/detection';
+import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
+import { type ParsedChapter, Parser } from '@/core/parser';
+import { createRuleSaver } from '@/core/auto-enable/RuleSaver';
+import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
-import { getSiteProtection } from '@/core/protection';
-import type { ProtectionOptions } from '@/core/protection';
-import { SiteRule } from '@/core/rules/types';
-
-/** Get GM_xmlhttpRequest function */
-function getGmXhr(): typeof GM_xmlhttpRequest | null {
-  if (typeof GM_xmlhttpRequest === 'function') {
-    return GM_xmlhttpRequest;
-  }
-  return null;
-}
-
-/** Fetch URL and return parsed Document */
-function fetchUrl(url: string, referer?: string): Promise<Document | null> {
-  const gmXhr = getGmXhr();
-
-  if (!gmXhr) {
-    return Promise.resolve(null);
-  }
-
-  return new Promise<Document | null>(resolve => {
-    const headers: Record<string, string> = {
-      Accept: 'text/html,application/xhtml+xml,application/xml',
-      'Accept-Language': 'zh-CN,zh;q=0.9',
-    };
-    if (referer) {
-      headers['Referer'] = referer;
-    }
-    gmXhr({
-      method: 'GET',
-      url,
-      headers,
-      overrideMimeType: 'text/html;charset=' + document.characterSet,
-      onload: response => {
-        if (response.status >= 200 && response.status < 300) {
-          try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(response.responseText, 'text/html');
-            // Set base URL for relative links
-            const base = doc.createElement('base');
-            base.href = url;
-            doc.head.insertBefore(base, doc.head.firstChild);
-            // Store URL in a custom property
-            (doc as Document & { _mnrUrl: string })._mnrUrl = url;
-            resolve(doc);
-          } catch {
-            resolve(null);
-          }
-        } else {
-          resolve(null);
-        }
-      },
-      onerror: () => resolve(null),
-      ontimeout: () => resolve(null),
-    });
-  });
-}
-
-function getSectionBaseUrl(url: string): string | null {
-  // /123_2.html or /123-2.html -> /123.html
-  const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
-  if (m) return `${m[1]}${m[2]}`;
-
-  // /{chapterId}/{page} -> /{chapterId}/1 (extensionless, e.g. /1358/2 -> /1358/1)
-  const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
-  if (m2) return `${m2[1]}/1`;
-
-  return null;
-}
-
-/**
- * Check if nextUrl looks like a section URL relative to currentUrl
- * E.g., /123.html -> /123_2.html or /123_2.html -> /123_3.html
- */
-function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
-  try {
-    const current = new URL(currentUrl);
-    const next = new URL(nextUrl);
-    if (current.host !== next.host) return false;
-
-    const currentPath = current.pathname;
-    const nextPath = next.pathname;
-
-    const parse = (pathname: string): { chapterId: string; section: number } | null => {
-      // /123_2.html or /123-2.html
-      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: match[1], section };
-        }
-      }
-
-      // /123/2.html
-      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: match[1], section };
-        }
-      }
-
-      // /123.html
-      match = pathname.match(/\/(\d+)\.html?$/i);
-      if (match) return { chapterId: match[1], section: 1 };
-
-      // /{chapterId}/{page} (extensionless)
-      match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
-      if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
-
-      // /{chapterId} (extensionless)
-      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-      if (match) return { chapterId: match[1], section: 1 };
-
-      return null;
-    };
-
-    const c = parse(currentPath);
-    const n = parse(nextPath);
-    if (c && n && c.chapterId === n.chapterId) {
-      if (n.section === c.section + 1 && n.section > 1) return true;
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Find the real next chapter URL from a document
- * Looks for links with "下一章" text that are not section links
- */
-function findNextChapterUrl(doc: Document, currentUrl: string): string | null {
-  const links = doc.querySelectorAll('a[href]');
-
-  for (const link of links) {
-    const anchor = link as HTMLAnchorElement;
-    const text = anchor.textContent?.trim() || '';
-    const normalizedText = text.replace(/\s+/g, '').trim();
-    const isForward =
-      /下一/.test(normalizedText) ||
-      /下[章节篇话]/.test(normalizedText) ||
-      /后一章/.test(normalizedText) ||
-      /next/i.test(normalizedText);
-    if (!isForward) continue;
-
-    // Must match chapter pattern, not section pattern
-    const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
-    const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
-
-    if (isChapter && !isSection) {
-      const href = anchor.href;
-      // Verify it's not a section URL
-      if (!isSectionLikeUrl(currentUrl, href)) {
-        return href;
-      }
-    }
-  }
-
-  return null;
-}
+import type { SiteRule } from '@/core/rules/types';
 
 /** Auto-enable decision result */
 export interface AutoEnableDecision {
@@ -243,6 +83,8 @@ export class AutoEnableManager {
   private options: AutoEnableOptions;
   private detectionEngine: DetectionEngine;
   private parser: Parser;
+  private sectionMerger: ReturnType<typeof createSectionMerger>;
+  private ruleSaver: ReturnType<typeof createRuleSaver>;
   private promptCallback?: PromptCallback;
   private launchCallback?: LaunchCallback;
   private hasRun = false;
@@ -254,6 +96,8 @@ export class AutoEnableManager {
     this.parser = new Parser({
       forceDetection: options.forceDetection,
     });
+    this.sectionMerger = createSectionMerger(this.parser);
+    this.ruleSaver = createRuleSaver();
   }
 
   /**
@@ -402,7 +246,7 @@ export class AutoEnableManager {
   private async launch(doc: Document, decision: AutoEnableDecision): Promise<void> {
     try {
       const currentUrl = doc.location?.href || window.location.href;
-      const chapter = await this.parseWithSectionMerge(doc, currentUrl);
+      const chapter = await this.sectionMerger.merge(doc, currentUrl);
 
       if (chapter && this.launchCallback) {
         this.launchCallback(chapter, decision.rule);
@@ -413,175 +257,12 @@ export class AutoEnableManager {
   }
 
   /**
-   * Parse current doc and merge multi-page sections (一章分多页).
-   * Normalizes later section URLs back to the first page for stable chapter URL.
-   */
-  private async parseWithSectionMerge(doc: Document, url: string): Promise<ParsedChapter | null> {
-    const resolvedUrl = url;
-
-    // If user opens a later section page, normalize to the first page for stable URLs and nav.
-    const baseUrl = getSectionBaseUrl(resolvedUrl);
-    let startUrl = resolvedUrl;
-    let startDoc = doc;
-    if (baseUrl && baseUrl !== resolvedUrl) {
-      const baseDoc = await fetchUrl(baseUrl, resolvedUrl);
-      if (baseDoc) {
-        startUrl = baseUrl;
-        startDoc = baseDoc;
-      }
-    }
-
-    const first = await this.parser.parse(startDoc, startUrl);
-    if (!first) return null;
-
-    // If rule explicitly disables section merge, respect it.
-    const disableByRule = !!first.rule?.advanced?.noSection;
-    if (disableByRule) return first;
-
-    const enableByRule = !!first.rule?.advanced?.checkSection;
-    const detection = this.parser.detect(startDoc, startUrl);
-    const section = detection.results.section;
-    const shouldMerge = enableByRule || (!!section?.isSection && (section?.confidence || 0) >= 0.8);
-
-    if (!shouldMerge) {
-      // Best-effort: if nextUrl is a section-like URL but we don't merge, try to resolve to real next chapter.
-      if (first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
-        const realNextChapterUrl = findNextChapterUrl(startDoc, startUrl);
-        if (realNextChapterUrl) {
-          first.nextUrl = realNextChapterUrl;
-        }
-      }
-      return first;
-    }
-
-    let mergedContent = first.content;
-    let mergedRaw = first.rawContent;
-    let nextSectionUrl = section?.nextSectionUrl || null;
-    let nextChapterUrl: string | null = section?.nextChapterUrl || null;
-    let lastUrl = startUrl;
-
-    // If auto-detection didn't find nextSectionUrl, fall back to parsed nextUrl if it looks like a section.
-    if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
-      nextSectionUrl = first.nextUrl;
-    }
-
-    // Merge up to 10 pages to avoid infinite loops.
-    const seen = new Set<string>([startUrl]);
-    for (let i = 0; i < 10 && nextSectionUrl; i++) {
-      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-      if (seen.has(absNextSection)) break;
-      seen.add(absNextSection);
-
-      const nextDoc = await fetchUrl(absNextSection, lastUrl);
-      if (!nextDoc) break;
-
-      const nextParsed = await this.parser.parse(nextDoc, absNextSection);
-      if (!nextParsed) break;
-
-      mergedContent = joinHtml(mergedContent, nextParsed.content);
-      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-
-      const nextDet = this.parser.detect(nextDoc, absNextSection);
-      const s = nextDet.results.section;
-      if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-
-      // Prefer auto-detected nextSectionUrl; fall back to parsed nextUrl if it looks like a section.
-      nextSectionUrl = s?.nextSectionUrl || null;
-      if (!nextSectionUrl && nextParsed.nextUrl) {
-        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
-          nextSectionUrl = nextParsed.nextUrl;
-        } else if (!nextChapterUrl) {
-          // nextParsed.nextUrl is not a section URL, treat it as next chapter.
-          nextChapterUrl = nextParsed.nextUrl;
-        }
-      }
-
-      lastUrl = absNextSection;
-    }
-
-    return {
-      ...first,
-      url: startUrl,
-      content: mergedContent,
-      rawContent: mergedRaw,
-      nextUrl: nextChapterUrl || first.nextUrl,
-    };
-  }
-
-  /**
    * Save detection result as user rule for current site
    */
   private async saveRuleForCurrentSite(doc: Document, decision: AutoEnableDecision): Promise<void> {
     if (!decision.detection) return;
 
-    const url = doc.location?.href || window.location.href;
-    const hostname = new URL(url).hostname;
-
-    // Create rule from detection results
-    const rule = this.createRuleFromDetection(hostname, decision.detection);
-
-    const ruleManager = getRuleManager();
-    await ruleManager.saveUserRule(hostname, rule);
-  }
-
-  /**
-   * Create a SiteRule from detection results
-   */
-  createRuleFromDetection(hostname: string, detection: DetectionEngineResult): SiteRule {
-    const content = detection.results.content;
-    const navigation = detection.results.navigation;
-    const title = detection.results.title;
-    const section = detection.results.section;
-
-    // Generate URL pattern from hostname
-    const hostPattern = hostname.replace(/\./g, '\\.');
-
-    const rule: SiteRule = {
-      id: `user-${hostname}-${Date.now()}`,
-      name: `Auto-generated rule for ${hostname}`,
-      version: 1,
-      match: {
-        pattern: `^https?://${hostPattern}/`,
-        type: 'regex',
-      },
-      content: {
-        selector: content.selector || '#content',
-      },
-      meta: {
-        source: 'user',
-        autoLaunch: true,
-        createdAt: new Date().toISOString(),
-      },
-    };
-
-    // Enable section merge if auto-detection indicates multi-page chapter.
-    if (section?.isSection && (section.confidence || 0) >= 0.8) {
-      rule.advanced = { checkSection: true };
-    }
-
-    // Add navigation if detected
-    if (navigation.next || navigation.prev || navigation.index) {
-      rule.navigation = {};
-
-      if (navigation.next) {
-        rule.navigation.next = navigation.next.selector || navigation.next.url;
-      }
-      if (navigation.prev) {
-        rule.navigation.prev = navigation.prev.selector || navigation.prev.url;
-      }
-      if (navigation.index) {
-        rule.navigation.index = navigation.index.selector || navigation.index.url;
-      }
-    }
-
-    // Add title selector if detected
-    if (title.selector) {
-      rule.title = {
-        selector: title.selector,
-      };
-    }
-
-    return rule;
+    await this.ruleSaver.saveFromDetection(doc, decision.detection);
   }
 
   /**
@@ -630,7 +311,7 @@ export class AutoEnableManager {
     // Parse and launch
     try {
       const currentUrl = doc.location?.href || window.location.href;
-      const chapter = await this.parseWithSectionMerge(doc, currentUrl);
+      const chapter = await this.sectionMerger.merge(doc, currentUrl);
 
       if (chapter && this.launchCallback) {
         this.launchCallback(chapter, undefined);

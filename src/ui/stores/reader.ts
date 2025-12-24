@@ -4,10 +4,16 @@
 
 import { computed, ref } from 'vue';
 import { type ConversionMode, convertHTML, convertText } from '@/core/converter';
-import { joinHtml, normalizeAbsoluteUrl, normalizeCiwemaoChapterUrl } from '@/core/utils';
+import { getParser, type ParsedChapter } from '@/core/parser';
+import {
+  getSectionBaseUrl,
+  isSectionLikeUrl,
+  joinHtml,
+  normalizeAbsoluteUrl,
+  normalizeCiwemaoChapterUrl,
+} from '@/core/utils';
 import { defineStore } from 'pinia';
-import { getParser } from '@/core/parser';
-import type { ParsedChapter } from '@/core/parser';
+import { fetchAndParseUrl } from '@/core/utils/network';
 import type { SiteRule } from '@/core/rules/types';
 
 type SectionInfo = {
@@ -1435,7 +1441,8 @@ export const useReaderStore = defineStore('reader', () => {
         if (result.error === 'abort') break;
         if (!result.doc) break;
 
-        const pageCandidates = collectTocCandidates(result.doc, pageUrl);
+        const effectivePageUrl = result.finalUrl || pageUrl;
+        const pageCandidates = collectTocCandidates(result.doc, effectivePageUrl);
         allCandidates.push(...pageCandidates);
 
         let newCount = 0;
@@ -1449,10 +1456,10 @@ export const useReaderStore = defineStore('reader', () => {
         // If we are "turning pages" but keep seeing the same set, stop to avoid loops.
         if (visitedPages.size >= 2 && newCount === 0) break;
 
-        const nextPageUrl = findNextTocPageUrl(result.doc, pageUrl, indexUrl);
+        const nextPageUrl = findNextTocPageUrl(result.doc, effectivePageUrl, indexUrl);
         if (!nextPageUrl) break;
 
-        referer = pageUrl;
+        referer = effectivePageUrl;
         pageUrl = nextPageUrl;
       }
     } finally {
@@ -1828,77 +1835,6 @@ export const useReaderStore = defineStore('reader', () => {
   };
 });
 
-function getSectionBaseUrl(url: string): string | null {
-  // /123_2.html -> /123.html
-  const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
-  if (m) return `${m[1]}${m[2]}`;
-
-  // /{chapterId}/{page} -> /{chapterId}/1 (extensionless, e.g. /1358/2 -> /1358/1)
-  const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
-  if (m2) return `${m2[1]}/1`;
-
-  return null;
-}
-
-/**
- * Check if nextUrl looks like a section/page URL relative to currentUrl.
- * E.g., /123.html -> /123_2.html or /123_2.html -> /123_3.html
- */
-function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
-  try {
-    const current = new URL(currentUrl);
-    const next = new URL(nextUrl);
-    if (current.host !== next.host) return false;
-
-    const currentPath = current.pathname;
-    const nextPath = next.pathname;
-
-    const parse = (pathname: string): { chapterId: string; section: number } | null => {
-      // /123_2.html or /123-2.html
-      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: match[1], section };
-        }
-      }
-
-      // /123/2.html
-      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: match[1], section };
-        }
-      }
-
-      // /123.html
-      match = pathname.match(/\/(\d+)\.html?$/i);
-      if (match) return { chapterId: match[1], section: 1 };
-
-      // /{chapterId}/{page} (extensionless)
-      match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
-      if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
-
-      // /{chapterId} (extensionless)
-      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-      if (match) return { chapterId: match[1], section: 1 };
-
-      return null;
-    };
-
-    const c = parse(currentPath);
-    const n = parse(nextPath);
-    if (c && n && c.chapterId === n.chapterId) {
-      if (n.section === c.section + 1 && n.section > 1) return true;
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-}
-
 async function parseWithSectionMerge(
   parser: ReturnType<typeof getParser>,
   initialDoc: Document,
@@ -1956,9 +1892,12 @@ async function parseWithSectionMerge(
     }
   }
 
-  // Best-effort: merge up to 10 pages to avoid infinite loops.
+  // Best-effort: merge up to 10 pages (including the first page) to avoid infinite loops.
+  const maxPages = 10;
+  const maxAdditionalPages = Math.max(0, maxPages - 1);
+
   const seen = new Set<string>([startUrl]);
-  for (let i = 0; i < 10 && nextSectionUrl; i++) {
+  for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
     const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
     if (seen.has(absNextSection)) break;
     seen.add(absNextSection);
@@ -1999,157 +1938,6 @@ async function parseWithSectionMerge(
     rawContent: mergedRaw,
     nextUrl: nextChapterUrl || first.nextUrl,
   };
-}
-
-/** Get GM_xmlhttpRequest function */
-function getGmXhr(): typeof GM_xmlhttpRequest | null {
-  if (typeof GM_xmlhttpRequest === 'function') {
-    return GM_xmlhttpRequest;
-  }
-  return null;
-}
-
-/** Fetch URL and return parsed Document with abort handle */
-type FetchAndParseError = 'missing-gm-xhr' | 'http' | 'parse' | 'network' | 'timeout' | 'abort';
-
-type FetchAndParseResult = {
-  doc: Document | null;
-  status: number | null;
-  finalUrl: string | null;
-  error: FetchAndParseError | null;
-};
-
-function fetchAndParseUrl(
-  url: string,
-  referer?: string,
-  options: { timeoutMs?: number; retries?: number } = {}
-): { promise: Promise<FetchAndParseResult>; abort: () => void } {
-  const gmXhr = getGmXhr();
-  const normalizedUrl = normalizeUrlForFetch(url);
-
-  if (!gmXhr) {
-    console.error('[MNR] GM_xmlhttpRequest not available');
-    return {
-      promise: Promise.resolve({
-        doc: null,
-        status: null,
-        finalUrl: null,
-        error: 'missing-gm-xhr',
-      }),
-      abort: () => {},
-    };
-  }
-
-  let request: GmXhrReturn | null = null;
-  let aborted = false;
-  const timeoutMs = options.timeoutMs ?? 15000;
-  const maxRetries = Math.max(0, options.retries ?? 1);
-
-  const doRequest = (): Promise<FetchAndParseResult> =>
-    new Promise(resolve => {
-      const headers: Record<string, string> = {
-        Accept: 'text/html,application/xhtml+xml,application/xml',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-      };
-      if (referer) {
-        headers['Referer'] = normalizeUrlForFetch(referer);
-      }
-      request = gmXhr({
-        method: 'GET',
-        url: normalizedUrl,
-        headers,
-        timeout: timeoutMs,
-        overrideMimeType: 'text/html;charset=' + document.characterSet,
-        onload: response => {
-          if (response.status >= 200 && response.status < 300) {
-            try {
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(response.responseText, 'text/html');
-              // Set base URL for relative links
-              const base = doc.createElement('base');
-              base.href = normalizedUrl;
-              if (doc.head) {
-                doc.head.insertBefore(base, doc.head.firstChild);
-              } else {
-                doc.documentElement?.insertBefore(base, doc.documentElement.firstChild);
-              }
-              // Store URL in a custom property (location may not be configurable)
-              (doc as Document & { _mnrUrl: string })._mnrUrl = normalizedUrl;
-              resolve({
-                doc,
-                status: response.status,
-                finalUrl: response.finalUrl || null,
-                error: null,
-              });
-            } catch (e) {
-              console.error('[MNR] Parse error:', e);
-              resolve({
-                doc: null,
-                status: response.status,
-                finalUrl: response.finalUrl || null,
-                error: 'parse',
-              });
-            }
-          } else {
-            console.error('[MNR] HTTP error:', response.status);
-            resolve({
-              doc: null,
-              status: response.status,
-              finalUrl: response.finalUrl || null,
-              error: 'http',
-            });
-          }
-        },
-        onerror: err => {
-          console.error('[MNR] Request error:', err);
-          resolve({ doc: null, status: null, finalUrl: null, error: 'network' });
-        },
-        onabort: () => {
-          resolve({ doc: null, status: null, finalUrl: null, error: 'abort' });
-        },
-        ontimeout: () => {
-          console.error('[MNR] Request timeout');
-          resolve({ doc: null, status: null, finalUrl: null, error: 'timeout' });
-        },
-      });
-    });
-
-  const shouldRetry = (res: FetchAndParseResult): boolean => {
-    if (aborted) return false;
-    if (res.error === 'timeout' || res.error === 'network') return true;
-    if (res.error === 'http' && res.status && (res.status >= 500 || res.status === 429)) {
-      return true;
-    }
-    return false;
-  };
-
-  const promise = (async (): Promise<FetchAndParseResult> => {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      if (aborted) return { doc: null, status: null, finalUrl: null, error: 'abort' };
-
-      const res = await doRequest();
-      if (!shouldRetry(res) || attempt === maxRetries) {
-        return res;
-      }
-
-      // Exponential backoff with a small cap (avoid hammering on transient failures)
-      const delay = Math.min(400 * Math.pow(2, attempt), 2000);
-      await new Promise<void>(resolve => window.setTimeout(resolve, delay));
-    }
-
-    return { doc: null, status: null, finalUrl: null, error: 'network' };
-  })();
-
-  const abort = () => {
-    aborted = true;
-    try {
-      request?.abort();
-    } catch {
-      // ignore
-    }
-  };
-
-  return { promise, abort };
 }
 
 /**

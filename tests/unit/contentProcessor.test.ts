@@ -56,6 +56,42 @@ describe('ContentProcessor', () => {
       expect(result).toContain('Content');
     });
 
+    it('should fix common lazy-loaded images in raw content mode', () => {
+      processor.setOptions({ useRawContent: true, fixImages: true });
+      const element = doc.createElement('div');
+      element.innerHTML =
+        '<p>Text</p><img data-lazy-src="https://example.com/a.jpg" alt="a" /><img src="about:blank" data-original="https://example.com/b.jpg" alt="b" />';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('src="https://example.com/a.jpg"');
+      expect(result).toContain('src="https://example.com/b.jpg"');
+      expect(result).not.toContain('margin: 10px auto');
+    });
+
+    it('should keep protocol-relative and data:image lazy-loaded images in raw content mode', () => {
+      processor.setOptions({ useRawContent: true, fixImages: true });
+      const element = doc.createElement('div');
+      element.innerHTML =
+        '<img src="about:blank" data-original="//cdn.example.com/a.jpg" alt="a" />' +
+        '<img src="about:blank" data-original="data:image/png;base64,AA==" alt="b" />';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('src="//cdn.example.com/a.jpg"');
+      expect(result).toContain('src="data:image/png;base64,AA=="');
+    });
+
+    it('should keep content inside forbidden tags (e.g., unwrap form)', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = '<form action="/submit"><p>Form content</p></form>';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('Form content');
+      expect(result).not.toContain('<form');
+    });
+
     it('should remove unwanted elements like script and style', () => {
       const element = doc.createElement('div');
       element.innerHTML = `

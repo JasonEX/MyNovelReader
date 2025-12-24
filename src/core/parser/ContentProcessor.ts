@@ -3,8 +3,8 @@
  */
 
 import { AD_PATTERNS, REMOVE_SELECTORS } from '@/core/constants';
+import { sanitizeHtml, sanitizeUrl } from '@/core/utils';
 import { ReplaceRule } from '@/core/rules/types';
-import { sanitizeHtml } from '@/core/utils';
 
 export interface ProcessingOptions {
   /** Remove common ad patterns */
@@ -47,7 +47,11 @@ export class ContentProcessor {
    */
   process(element: Element, doc: Document): string {
     if (this.options.useRawContent) {
-      return sanitizeHtml(element.innerHTML);
+      let html = element.innerHTML;
+      if (this.options.fixImages) {
+        html = this.fixImages(html, doc, { center: false });
+      }
+      return sanitizeHtml(html);
     }
 
     // Clone to avoid modifying original
@@ -348,23 +352,62 @@ export class ContentProcessor {
   /**
    * Fix and center images
    */
-  private fixImages(html: string, doc: Document): string {
+  private fixImages(html: string, doc: Document): string;
+  private fixImages(html: string, doc: Document, options: { center: boolean }): string;
+  private fixImages(
+    html: string,
+    doc: Document,
+    options: { center: boolean } = { center: true }
+  ): string {
     // Create a temporary container
     const temp = doc.createElement('div');
     temp.innerHTML = html;
 
     const images = temp.querySelectorAll('img');
     images.forEach(img => {
-      // Fix lazy load
-      const dataSrc = img.getAttribute('data-src') || img.getAttribute('data-original');
-      if (dataSrc && !img.src) {
-        img.src = dataSrc;
+      const srcAttr = img.getAttribute('src')?.trim() || '';
+      const looksPlaceholder =
+        !srcAttr ||
+        srcAttr === '#' ||
+        srcAttr === 'about:blank' ||
+        srcAttr.startsWith('data:') ||
+        srcAttr.startsWith('javascript:') ||
+        srcAttr.startsWith('vbscript:');
+
+      // Fix lazy load - normalize common attribute names used by novel sites.
+      if (looksPlaceholder) {
+        const candidates = [
+          'data-src',
+          'data-original',
+          'data-lazy-src',
+          'data-original-src',
+          'data-url',
+          'data-actualsrc',
+          'data-echo',
+          'data-srcset',
+        ];
+
+        for (const attrName of candidates) {
+          const rawValue = img.getAttribute(attrName)?.trim();
+          if (!rawValue) continue;
+
+          const value =
+            attrName === 'data-srcset' ? rawValue.split(',')[0]?.trim().split(/\s+/)[0] : rawValue;
+
+          const safeUrl = sanitizeUrl(value, { allowDataImage: true, mode: 'strict' });
+          if (!safeUrl) continue;
+
+          img.setAttribute('src', safeUrl);
+          break;
+        }
       }
 
-      // Add centering style
-      img.style.display = 'block';
-      img.style.maxWidth = '100%';
-      img.style.margin = '10px auto';
+      if (options.center) {
+        // Add centering style
+        img.style.display = 'block';
+        img.style.maxWidth = '100%';
+        img.style.margin = '10px auto';
+      }
     });
 
     return temp.innerHTML;

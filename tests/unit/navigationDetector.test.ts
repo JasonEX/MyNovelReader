@@ -87,6 +87,26 @@ describe('NavigationDetector', () => {
       expect(result.next?.url).toContain('/real-next.html');
     });
 
+    it('should ignore non-http(s) links (data/mailto)', () => {
+      const dom = new JSDOM(
+        `
+          <!DOCTYPE html>
+          <html>
+            <body>
+              <a href="data:text/html,<p>x</p>">下一章</a>
+              <a href="mailto:test@example.com">下一章</a>
+              <a href="/chapter/2.html">下一章</a>
+            </body>
+          </html>
+        `,
+        { url: 'http://example.com/chapter/1.html' }
+      );
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.next?.url).toContain('/chapter/2.html');
+    });
+
     it('should ignore anchor-only hash links (href="#")', () => {
       const dom = new JSDOM(
         `

@@ -51,7 +51,7 @@
 
       <template v-for="entry in visibleChapters" :key="entry.id">
         <article
-          :ref="setChapterRef(entry.index)"
+          :ref="setChapterRef(entry.chapter.url)"
           class="mnr-reader-content"
           :data-chapter-url="entry.chapter.url"
           @click="handleContentClick"
@@ -153,7 +153,12 @@ import type { SiteRule } from '@/core/rules/types';
 
 // === Constants ===
 const SCROLL_THROTTLE_MS = 16; // ~60fps
-const INTERSECTION_ROOT_MARGIN = '800px';
+const INTERSECTION_ROOT_MARGIN_PX = 800;
+const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
+const AUTO_LOAD_COOLDOWN_MIN_MS = 3000;
+const AUTO_LOAD_COOLDOWN_MAX_MS = 5000;
+const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
+const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
 
 // === Utility: Throttle function ===
 type AnyFn = (...args: unknown[]) => void; // eslint-disable-line no-unused-vars
@@ -188,6 +193,15 @@ const readerStore = useReaderStore();
 const configStore = useConfigStore();
 const ruleStore = useRuleStore();
 
+// Auto-load safety gate:
+// - Avoid request storms when the sentinel stays intersecting (e.g. short chapters / large rootMargin).
+// - Require some user scrolling after each append before allowing the next auto-load.
+const autoLoadArmed = ref(false);
+let lastAutoLoadScrollTop = 0;
+let autoLoadShortChainCount = 0;
+let nextAutoLoadAt = 0;
+let autoLoadTimer: ReturnType<typeof setTimeout> | null = null;
+
 // State
 const mainRef = ref<HTMLElement | null>(null);
 const topSentinel = ref<HTMLElement | null>(null);
@@ -198,12 +212,84 @@ const isPickerActive = ref(false);
 const drawerOpen = ref(false);
 const isNavigating = ref(false);
 const showControls = ref(true);
-const chapterRefs = new Map<number, HTMLElement>();
+const chapterRefs = new Map<string, HTMLElement>();
+let isLoadingPrevLocal = false;
 
 // IntersectionObserver instances
 let topObserver: globalThis.IntersectionObserver | null = null;
 let bottomObserver: globalThis.IntersectionObserver | null = null;
 let lastScrollTop = 0; // For scroll direction detection
+
+function getRandomDelayMs(min: number, max: number): number {
+  const a = Math.min(min, max);
+  const b = Math.max(min, max);
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
+
+function getDistanceToBottom(mainEl: HTMLElement): number {
+  return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
+}
+
+function isNearBottom(mainEl: HTMLElement): boolean {
+  return getDistanceToBottom(mainEl) <= INTERSECTION_ROOT_MARGIN_PX;
+}
+
+function isShortScrollableContent(mainEl: HTMLElement): boolean {
+  const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
+  return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
+}
+
+function clearAutoLoadTimer(): void {
+  if (!autoLoadTimer) return;
+  clearTimeout(autoLoadTimer);
+  autoLoadTimer = null;
+}
+
+function scheduleAutoLoadNext(): void {
+  const mainEl = mainRef.value;
+  if (!mainEl) return;
+  if (!configStore.behavior.preloadNext) return;
+  if (!hasNext.value) return;
+  if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
+  if (!isNearBottom(mainEl)) return;
+
+  const fillMode = isShortScrollableContent(mainEl);
+  const canAutoLoad = autoLoadArmed.value || fillMode;
+  if (!canAutoLoad) return;
+
+  // Prevent endless auto-loading when content stays extremely short.
+  if (fillMode && autoLoadShortChainCount >= AUTO_LOAD_SHORT_CHAIN_LIMIT) return;
+
+  const now = Date.now();
+  if (nextAutoLoadAt === 0) {
+    nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+  }
+  const delayMs = Math.max(0, nextAutoLoadAt - now);
+  if (delayMs > 0) {
+    if (!autoLoadTimer) {
+      autoLoadTimer = setTimeout(() => {
+        autoLoadTimer = null;
+        scheduleAutoLoadNext();
+      }, delayMs);
+    }
+    return;
+  }
+
+  // Commit auto-load
+  clearAutoLoadTimer();
+  nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+  lastAutoLoadScrollTop = mainEl.scrollTop;
+  autoLoadArmed.value = false;
+  autoLoadShortChainCount = fillMode ? autoLoadShortChainCount + 1 : 0;
+
+  void readerStore.loadNextChapter('auto').then(ok => {
+    if (!ok) {
+      // On failures, slow down a bit more to avoid triggering anti-crawler rules.
+      nextAutoLoadAt =
+        Date.now() + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MAX_MS, AUTO_LOAD_COOLDOWN_MAX_MS * 2);
+    }
+  });
+}
 
 // Watch picker state to show/hide original page
 watch(isPickerActive, active => {
@@ -347,7 +433,10 @@ async function jumpToCachedChapter(url: string) {
  * Scroll to a specific chapter in the view
  */
 function scrollToChapter(index: number) {
-  const chapterEl = chapterRefs.get(index);
+  const url = chapters.value[index]?.chapter.url;
+  if (!url) return;
+
+  const chapterEl = chapterRefs.get(url);
   if (chapterEl) {
     chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -428,17 +517,14 @@ function toggleCacheAll() {
 }
 
 // Ref setter for virtualized chapters
-function setChapterRef(index: number) {
+function setChapterRef(url: string) {
   return (el: HTMLElement | null) => {
     if (!el) {
-      chapterRefs.delete(index);
+      chapterRefs.delete(url);
       return;
     }
-    chapterRefs.set(index, el);
-    const entry = visibleChapters.value.find(c => c.index === index);
-    if (entry) {
-      setChapterHeight(entry.chapter.url, el.offsetHeight);
-    }
+    chapterRefs.set(url, el);
+    setChapterHeight(url, el.offsetHeight);
   };
 }
 
@@ -465,6 +551,16 @@ function handleScrollCore() {
   const currentScrollY = mainEl.scrollTop;
   const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
 
+  // Arm auto-load only after user has actually scrolled down a bit.
+  if (
+    !isNavigating.value &&
+    !autoLoadArmed.value &&
+    currentScrollY - lastAutoLoadScrollTop >= AUTO_LOAD_ARM_SCROLL_DELTA_PX
+  ) {
+    autoLoadArmed.value = true;
+    autoLoadShortChainCount = 0;
+  }
+
   // Auto-hide controls on scroll down
   if (autoHideHeader.value) {
     if (currentScrollY > lastScrollTop && currentScrollY > 100) {
@@ -486,7 +582,7 @@ function handleScrollCore() {
   const viewportBottom = currentScrollY + mainEl.clientHeight;
 
   for (const entry of visibleChapters.value) {
-    const el = chapterRefs.get(entry.index);
+    const el = chapterRefs.get(entry.chapter.url);
     if (!el) continue;
 
     const elTop = el.offsetTop;
@@ -531,7 +627,8 @@ function handleScrollCore() {
   const overallPercent = scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
   readerStore.updateScroll(overallPercent);
 
-  // Note: Chapter loading is now handled by IntersectionObserver, not scroll percentage
+  // Note: Chapter loading is triggered by sentinel + this scroll gate.
+  scheduleAutoLoadNext();
 }
 
 // Throttled scroll handler
@@ -541,50 +638,56 @@ const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
 // jumpToStart: true => snap to the start (title) of the newly loaded chapter to avoid bounce
 async function loadPrevWithScrollAdjust(jumpToStart = false) {
   const mainEl = mainRef.value;
-  if (!mainEl || isLoadingPrev.value) return;
+  if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return;
 
-  // 1. Remember current scroll position and topSpacer
-  const oldScrollTop = mainEl.scrollTop;
-  const oldTopSpacer = topSpacer.value;
+  isLoadingPrevLocal = true;
 
-  const success = await readerStore.loadPrevChapter('manual');
+  try {
+    // 1. Remember current scroll position and topSpacer
+    const oldScrollTop = mainEl.scrollTop;
+    const oldTopSpacer = topSpacer.value;
 
-  if (success) {
-    // 2. Wait for Vue to update DOM
-    await nextTick();
+    const success = await readerStore.loadPrevChapter('manual');
 
-    // 3. Update virtual window to include new chapter (critical!)
-    updateWindow(readerStore.currentChapterIndex);
-
-    // 4. Wait for window change to trigger re-render
-    await nextTick();
-    await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
-
-    if (jumpToStart) {
-      // When user explicitly wants to go to previous chapter, snap to its title
-      await jumpToChapter(0, 'auto');
-      return;
-    }
-
-    // 5. Get new chapter height and cache it
-    const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
-    if (chapterEls.length > 0) {
-      const newChapterEl = chapterEls[0] as HTMLElement;
-      const newChapterHeight = newChapterEl.offsetHeight;
-
-      // 6. Ensure new chapter height is cached
-      const newEntry = readerStore.chapters[0];
-      if (newEntry) {
-        setChapterHeight(newEntry.chapter.url, newChapterHeight);
-      }
-
-      // 7. Wait for heights update to trigger reactive updates
+    if (success) {
+      // 2. Wait for Vue to update DOM
       await nextTick();
 
-      // 8. Calculate scroll adjustment including spacer delta
-      const spacerDelta = topSpacer.value - oldTopSpacer;
-      mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
+      // 3. Update virtual window to include new chapter (critical!)
+      updateWindow(readerStore.currentChapterIndex);
+
+      // 4. Wait for window change to trigger re-render
+      await nextTick();
+      await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
+
+      if (jumpToStart) {
+        // When user explicitly wants to go to previous chapter, snap to its title
+        await jumpToChapter(0, 'auto');
+        return;
+      }
+
+      // 5. Get new chapter height and cache it
+      const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
+      if (chapterEls.length > 0) {
+        const newChapterEl = chapterEls[0] as HTMLElement;
+        const newChapterHeight = newChapterEl.offsetHeight;
+
+        // 6. Ensure new chapter height is cached
+        const newEntry = readerStore.chapters[0];
+        if (newEntry) {
+          setChapterHeight(newEntry.chapter.url, newChapterHeight);
+        }
+
+        // 7. Wait for heights update to trigger reactive updates
+        await nextTick();
+
+        // 8. Calculate scroll adjustment including spacer delta
+        const spacerDelta = topSpacer.value - oldTopSpacer;
+        mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
+      }
     }
+  } finally {
+    isLoadingPrevLocal = false;
   }
 }
 
@@ -923,7 +1026,13 @@ async function jumpToChapter(index: number, behavior: 'auto' | 'smooth' = 'smoot
   // Wait a frame so layout/offsets are correct
   await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
 
-  const targetEl = chapterRefs.get(index);
+  const url = chapters.value[index]?.chapter.url;
+  if (!url) {
+    isNavigating.value = false;
+    return;
+  }
+
+  const targetEl = chapterRefs.get(url);
   if (!targetEl) {
     isNavigating.value = false;
     return;
@@ -992,9 +1101,8 @@ onMounted(async () => {
 
   // Bottom sentinel - load next chapter
   bottomObserver = new globalThis.IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && hasNext.value && !isLoadingNext.value && !isNavigating.value) {
-      readerStore.loadNextChapter('auto');
-    }
+    if (!entries[0]?.isIntersecting) return;
+    scheduleAutoLoadNext();
   }, observerOptions);
 
   // Top sentinel - NO auto-load for previous chapter
@@ -1017,7 +1125,39 @@ onMounted(async () => {
   // Auto-focus main content for keyboard shortcuts
   await nextTick();
   mainRef.value?.focus();
+
+  // Initial scheduling for very short chapters (no scroll possible).
+  scheduleAutoLoadNext();
 });
+
+// Any chapter list change (append/prepend) should re-arm only after user scrolls again.
+watch(
+  () => readerStore.chapters.length,
+  () => {
+    const mainEl = mainRef.value;
+    if (!mainEl) return;
+    lastAutoLoadScrollTop = mainEl.scrollTop;
+    autoLoadArmed.value = false;
+    // Allow a few consecutive auto-loads when content is too short to scroll.
+    if (!isShortScrollableContent(mainEl)) {
+      autoLoadShortChainCount = 0;
+    }
+    scheduleAutoLoadNext();
+  }
+);
+
+watch(
+  () => configStore.behavior.preloadNext,
+  enabled => {
+    if (!enabled) {
+      clearAutoLoadTimer();
+      nextAutoLoadAt = 0;
+      autoLoadShortChainCount = 0;
+      return;
+    }
+    scheduleAutoLoadNext();
+  }
+);
 
 onUnmounted(() => {
   if (mainRef.value) {
@@ -1035,6 +1175,7 @@ onUnmounted(() => {
   bottomObserver?.disconnect();
   topObserver = null;
   bottomObserver = null;
+  clearAutoLoadTimer();
 });
 </script>
 

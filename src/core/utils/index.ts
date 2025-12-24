@@ -3,5 +3,11 @@
  */
 
 export { cssEscape } from './cssEscape';
-export { normalizeAbsoluteUrl, joinHtml, normalizeCiwemaoChapterUrl } from './urlUtils';
-export { sanitizeHtml } from './sanitizeHtml';
+export {
+  normalizeAbsoluteUrl,
+  joinHtml,
+  normalizeCiwemaoChapterUrl,
+  isSectionLikeUrl,
+  getSectionBaseUrl,
+} from './urlUtils';
+export { sanitizeHtml, sanitizeUrl } from './sanitizeHtml';

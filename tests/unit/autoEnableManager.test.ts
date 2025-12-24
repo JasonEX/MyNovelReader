@@ -132,12 +132,15 @@ describe('AutoEnableManager', () => {
 
   describe('createRuleFromDetection', () => {
     it('should create rule from detection results when available', async () => {
+      const { createRuleSaver } = await import('@/core/auto-enable/RuleSaver');
+      const ruleSaver = createRuleSaver();
+
       const decision = await manager.check();
 
       if (decision?.detection) {
-        const rule = manager.createRuleFromDetection(
+        const rule = ruleSaver.createRuleFromDetection(
           'example.com',
-          decision.detection as unknown as import('@/core/detection').DetectionEngine
+          decision.detection as unknown as import('@/core/detection').DetectionEngineResult
         );
 
         if (rule) {

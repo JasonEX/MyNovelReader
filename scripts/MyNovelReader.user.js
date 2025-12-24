@@ -95,7 +95,7 @@
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-ab06d920]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-ab06d920]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-ab06d920]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-ab06d920] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-ab06d920] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-ab06d920] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-ab06d920]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-ab06d920]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-ab06d920]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-ab06d920]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-ab06d920]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-ab06d920]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-ab06d920]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-ab06d920],.mnr-loading-next[data-v-ab06d920]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-ab06d920]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-ab06d920 1s linear infinite}.mnr-loading-overlay[data-v-ab06d920]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-ab06d920]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-ab06d920]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-ab06d920 .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-ab06d920{to{transform:rotate(360deg)}}.mnr-toast[data-v-ab06d920]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-ab06d920]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-ab06d920],.mnr-toast-leave-active[data-v-ab06d920]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-ab06d920],.mnr-toast-leave-to[data-v-ab06d920]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-ab06d920]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-ab06d920]{padding:40px}}.mnr-rule-editor-overlay[data-v-ab06d920]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-ab06d920]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-ab06d920]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-2e203e2d]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-2e203e2d]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-2e203e2d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-2e203e2d] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-2e203e2d] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-2e203e2d] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-2e203e2d]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-2e203e2d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-2e203e2d]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-2e203e2d]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-2e203e2d]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-2e203e2d]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-2e203e2d]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-2e203e2d],.mnr-loading-next[data-v-2e203e2d]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-2e203e2d]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-2e203e2d 1s linear infinite}.mnr-loading-overlay[data-v-2e203e2d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-2e203e2d]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-2e203e2d]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-2e203e2d .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-2e203e2d{to{transform:rotate(360deg)}}.mnr-toast[data-v-2e203e2d]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-2e203e2d]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-2e203e2d],.mnr-toast-leave-active[data-v-2e203e2d]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-2e203e2d],.mnr-toast-leave-to[data-v-2e203e2d]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-2e203e2d]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-2e203e2d]{padding:40px}}.mnr-rule-editor-overlay[data-v-2e203e2d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-2e203e2d]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-2e203e2d]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -331,11 +331,154 @@ setThreshold(threshold) {
     }
     return str.replace(/([!"#$%&'()*+,.:;<=>?@[\\\]^`{|}~])/g, "\\$1");
   }
-  function normalizeAbsoluteUrl(url, base) {
+  function normalizeAbsoluteUrl(href, base) {
+    const baseCandidates = [base];
+    if (typeof document !== "undefined") baseCandidates.push(document.baseURI);
+    if (typeof location !== "undefined") baseCandidates.push(location.href);
+    for (const candidate of baseCandidates) {
+      if (!candidate) continue;
+      try {
+        return new URL(href, candidate).toString();
+      } catch {
+      }
+    }
     try {
-      return new URL(url, base || window.location.href).toString();
+      return new URL(href).toString();
     } catch {
-      return url;
+      return href;
+    }
+  }
+  function getSectionBaseUrl(url) {
+    const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
+    if (m) return `${m[1]}${m[2]}`;
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split("/").filter(Boolean);
+      const hasTrailingSlash = u.pathname.endsWith("/");
+      if (parts.length >= 3) {
+        const pagePart = parts[parts.length - 1];
+        const chapterPart = parts[parts.length - 2];
+        if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
+          const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
+          if (numericSegments.length >= 2) {
+            parts[parts.length - 1] = "1";
+            u.pathname = `/${parts.join("/")}${hasTrailingSlash ? "/" : ""}`;
+            return u.toString();
+          }
+        }
+      }
+    } catch {
+    }
+    try {
+      const u = new URL(url);
+      const PAGE_PARAM_KEYS = ["page", "p", "pg", "pageno", "page_no", "pagenum", "pageindex", "pn"];
+      for (const [name, value] of u.searchParams) {
+        const keyLower = name.toLowerCase();
+        if (!PAGE_PARAM_KEYS.includes(keyLower)) continue;
+        if (!/^\d+$/.test(value)) continue;
+        const page = parseInt(value, 10);
+        if (page <= 1) continue;
+        u.searchParams.set(name, "1");
+        return u.toString();
+      }
+    } catch {
+    }
+    return null;
+  }
+  function isSectionLikeUrl(currentUrl, nextUrl) {
+    try {
+      const current = new URL(currentUrl);
+      const next = new URL(nextUrl, current);
+      if (current.host !== next.host) return false;
+      const currentPath = current.pathname;
+      const nextPath = next.pathname;
+      const parse = (pathname) => {
+        let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
+        if (match) {
+          const section = parseInt(match[2], 10);
+          if (section >= 1 && section <= 99) {
+            return { chapterId: match[1], section };
+          }
+        }
+        match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
+        if (match) {
+          const section = parseInt(match[2], 10);
+          if (section >= 1 && section <= 99) {
+            return { chapterId: match[1], section };
+          }
+        }
+        match = pathname.match(/\/(\d+)\.html?$/i);
+        if (match) return { chapterId: match[1], section: 1 };
+        const parts = pathname.split("/").filter(Boolean);
+        if (parts.length >= 3) {
+          const pagePart = parts[parts.length - 1];
+          const chapterPart = parts[parts.length - 2];
+          if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
+            const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
+            if (numericSegments.length >= 2) {
+              return { chapterId: parts.slice(0, -1).join("/"), section: parseInt(pagePart, 10) };
+            }
+          }
+        }
+        match = pathname.match(/\/(\d{3,})(?:\/)?$/);
+        if (match) return { chapterId: match[1], section: 1 };
+        return null;
+      };
+      const c = parse(currentPath);
+      const n = parse(nextPath);
+      if (c && n && c.chapterId === n.chapterId) {
+        if (n.section === c.section + 1 && n.section > 1) return true;
+      }
+      if (currentPath === nextPath) {
+        const PAGE_PARAM_KEYS = [
+          "page",
+          "p",
+          "pg",
+          "pageno",
+          "page_no",
+          "pagenum",
+          "pageindex",
+          "pn"
+        ];
+        const getParamValueCI = (params, keyLower) => {
+          for (const [name, value] of params) {
+            if (name.toLowerCase() === keyLower) return value;
+          }
+          return null;
+        };
+        const extractPageInfo = (u) => {
+          for (const keyLower of PAGE_PARAM_KEYS) {
+            const raw = getParamValueCI(u.searchParams, keyLower);
+            if (!raw || !/^\d+$/.test(raw)) continue;
+            const page = parseInt(raw, 10);
+            if (page >= 1 && page <= 99) return { keyLower, page };
+          }
+          return null;
+        };
+        const nextPageInfo = extractPageInfo(next);
+        if (nextPageInfo) {
+          const rawCurrentPage = getParamValueCI(current.searchParams, nextPageInfo.keyLower);
+          const currentPage = rawCurrentPage && /^\d+$/.test(rawCurrentPage) ? parseInt(rawCurrentPage, 10) : 1;
+          const normalizeNonPageParams = (u, pageKeyLower) => {
+            const items = [];
+            for (const [name, value] of u.searchParams) {
+              if (name.toLowerCase() === pageKeyLower) continue;
+              items.push(`${name.toLowerCase()}=${value}`);
+            }
+            items.sort();
+            return items;
+          };
+          const currentRest = normalizeNonPageParams(current, nextPageInfo.keyLower);
+          const nextRest = normalizeNonPageParams(next, nextPageInfo.keyLower);
+          const onlyPageDiff = currentRest.length === nextRest.length && currentRest.every((v, i) => v === nextRest[i]);
+          if (onlyPageDiff && nextPageInfo.page === currentPage + 1 && nextPageInfo.page > 1) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch {
+      return false;
     }
   }
   function joinHtml(a, b) {
@@ -1363,46 +1506,295 @@ dirty.indexOf("<") === -1) {
     return DOMPurify;
   }
   var purify = createDOMPurify();
-  const DEFAULT_CONFIG = {
+  const SAFE_DATA_ATTR = [
+    "data-src",
+    "data-original",
+    "data-lazy-src",
+    "data-original-src",
+    "data-srcset",
+    "data-url",
+    "data-actualsrc",
+    "data-echo"
+  ];
+  const ENHANCED_CONFIG = {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ["data-src", "data-original", "data-lazy-src", "data-url"],
-    ALLOW_DATA_ATTR: true
+ADD_DATA_URI_TAGS: ["img"],
+ADD_ATTR: SAFE_DATA_ATTR,
+ALLOW_DATA_ATTR: false,
+FORBID_TAGS: [
+      "script",
+      "iframe",
+      "object",
+      "embed",
+      "link",
+      "meta",
+      "style",
+      "form",
+      "input",
+      "button"
+    ],
+FORBID_ATTR: [
+      "onload",
+      "onclick",
+      "onerror",
+      "onmouseover",
+      "onfocus",
+      "onmouseenter",
+      "onmouseleave",
+      "onkeydown",
+      "onkeyup",
+      "onkeypress",
+      "onmousedown",
+      "onmouseup",
+      "onmousemove",
+      "ontouchstart",
+      "ontouchend",
+      "onfocusin",
+      "onfocusout",
+      "onblur",
+      "onscroll",
+      "onresize",
+      "onsubmit",
+      "onreset",
+      "onchange",
+      "oninput"
+    ],
+SANITIZE_DOM: true,
+KEEP_CONTENT: true,
+SAFE_FOR_TEMPLATES: true,
+ALLOWED_TAGS: [
+"p",
+      "br",
+      "hr",
+      "div",
+      "span",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "s",
+      "strike",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "pre",
+      "code",
+      "a",
+      "img",
+      "table",
+      "thead",
+      "tbody",
+      "tfoot",
+      "tr",
+      "th",
+      "td",
+      "sub",
+      "sup",
+      "small",
+      "big",
+"svg",
+      "g",
+      "path",
+      "circle",
+      "rect",
+      "line",
+      "polygon",
+      "text",
+      "tspan",
+      "textPath",
+      "use",
+      "symbol",
+      "defs"
+    ],
+ALLOWED_ATTR: [
+      "href",
+      "title",
+      "alt",
+      "src",
+      "width",
+      "height",
+      "class",
+      "id",
+      "style",
+      "dir",
+      ...SAFE_DATA_ATTR,
+      "rowspan",
+      "colspan",
+      "viewBox",
+      "xmlns",
+      "fill",
+      "stroke",
+      "d",
+      "cx",
+      "cy",
+      "r",
+      "x",
+      "y",
+      "width",
+      "height"
+]
   };
+  const DEFAULT_CONFIG = ENHANCED_CONFIG;
+  let domPurifyHooksInstalled = false;
+  function sanitizeSvgContent(html2) {
+    return html2.replace(/<svg[^>]*>/gi, (match) => {
+      return match.replace(/\s+on\w+\s*=\s*(["'][^"']*["']|[^\s>]*)/gi, "");
+    }).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/javascript:/gi, "").replace(/vbscript:/gi, "").replace(/\s+href\s*=\s*["']\s*data:[^"']*["']/gi, "").replace(/expression\([^)]*\)/gi, "");
+  }
   function basicSanitize(html2) {
     if (typeof document === "undefined") return html2;
+    html2 = sanitizeSvgContent(html2);
     const container = document.createElement("div");
     container.innerHTML = html2;
-    const blockedTags = ["script", "iframe", "object", "embed", "link", "meta", "style"];
+    const blockedTags = [
+      "script",
+      "iframe",
+      "object",
+      "embed",
+      "link",
+      "meta",
+      "style",
+      "input",
+      "button",
+      "textarea",
+      "select"
+    ];
     blockedTags.forEach((tag) => {
       container.querySelectorAll(tag).forEach((el) => el.remove());
+    });
+    container.querySelectorAll("form").forEach((form) => {
+      const parent = form.parentNode;
+      if (!parent) {
+        form.remove();
+        return;
+      }
+      while (form.firstChild) {
+        parent.insertBefore(form.firstChild, form);
+      }
+      form.remove();
     });
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT);
     while (walker.nextNode()) {
       const el = walker.currentNode;
+      const attrsToRemove = [];
       for (const attr of Array.from(el.attributes)) {
         const name = attr.name.toLowerCase();
         const value = attr.value.trim().toLowerCase();
         if (name.startsWith("on")) {
-          el.removeAttribute(attr.name);
+          attrsToRemove.push(attr.name);
           continue;
         }
-        if ((name === "href" || name === "src") && value.startsWith("javascript:")) {
-          el.removeAttribute(attr.name);
+        if (name === "href") {
+          if (value.startsWith("javascript:") || value.startsWith("vbscript:") || value.startsWith("data:")) {
+            attrsToRemove.push(attr.name);
+            continue;
+          }
+        }
+        if (name === "src") {
+          if (value.startsWith("javascript:") || value.startsWith("vbscript:")) {
+            attrsToRemove.push(attr.name);
+            continue;
+          }
+          if (value.startsWith("data:")) {
+            const tag = el.tagName.toLowerCase();
+            if (tag !== "img" || !isSafeDataImageUrl(attr.value)) {
+              attrsToRemove.push(attr.name);
+              continue;
+            }
+          }
+        }
+        if (name === "style") {
+          attrsToRemove.push(attr.name);
+          continue;
         }
       }
+      attrsToRemove.forEach((attrName) => el.removeAttribute(attrName));
     }
     return container.innerHTML;
   }
   function sanitizeHtml(html2, config = DEFAULT_CONFIG) {
     if (!html2) return html2;
     try {
+      html2 = sanitizeSvgContent(html2);
       if (typeof window === "undefined" || typeof (purify == null ? void 0 : purify.sanitize) !== "function") {
         return basicSanitize(html2);
+      }
+      if (!domPurifyHooksInstalled && typeof (purify == null ? void 0 : purify.addHook) === "function") {
+        purify.addHook("afterSanitizeAttributes", (node) => {
+          const el = node;
+          if (!el || el.nodeType !== 1) return;
+          if (el.tagName.toLowerCase() !== "img") return;
+          const src = el.getAttribute("src");
+          if (!src || !src.trim().toLowerCase().startsWith("data:")) return;
+          if (!isSafeDataImageUrl(src)) {
+            el.removeAttribute("src");
+          }
+        });
+        domPurifyHooksInstalled = true;
       }
       return purify.sanitize(html2, config);
     } catch {
       return basicSanitize(html2);
     }
+  }
+  const SAFE_DATA_IMAGE_MIME_TYPES = new Set([
+    "image/apng",
+    "image/avif",
+    "image/bmp",
+    "image/gif",
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp"
+  ]);
+  function isSafeDataImageUrl(url) {
+    const trimmed = url.trim();
+    const lower = trimmed.toLowerCase();
+    if (!lower.startsWith("data:image/")) return false;
+    const commaIndex = trimmed.indexOf(",");
+    if (commaIndex === -1) return false;
+    const meta = lower.slice("data:".length, commaIndex);
+    const mime = meta.split(";")[0] || "";
+    if (!SAFE_DATA_IMAGE_MIME_TYPES.has(mime)) return false;
+    if (!meta.includes(";base64")) return false;
+    return true;
+  }
+  function sanitizeUrl(url, options = {}) {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    const lower = trimmed.toLowerCase();
+    if (options.allowDataImage && isSafeDataImageUrl(trimmed)) {
+      return trimmed;
+    }
+    const blockedProtocols = ["javascript:", "vbscript:", "data:", "file:"];
+    if (blockedProtocols.some((protocol) => lower.startsWith(protocol))) {
+      return "";
+    }
+    if (lower.startsWith("http://") || lower.startsWith("https://")) {
+      return trimmed;
+    }
+    if (lower.startsWith("//")) {
+      return trimmed;
+    }
+    const hasExplicitScheme = /^[a-z][a-z0-9+.-]*:/i.test(lower);
+    if (hasExplicitScheme) {
+      const mode = options.mode ?? "relaxed";
+      if (mode === "strict") return "";
+      const allowedProtocols = ["mailto:", "tel:", "blob:", "ftp:"];
+      if (allowedProtocols.some((protocol) => lower.startsWith(protocol))) {
+        return trimmed;
+      }
+      return "";
+    }
+    return trimmed;
   }
   const WEIGHTS = {
 CONTENT_ID_CLASS: 25,
@@ -1718,9 +2110,42 @@ createEmptyResult() {
 /^https?:\/\/[^/]+\/\?/i
 ];
   class NavigationDetector {
-detect(doc2, currentUrl) {
+    resolveBaseUrl(doc2, currentUrl) {
       var _a;
-      const resolvedCurrentUrl = currentUrl || ((_a = doc2.location) == null ? void 0 : _a.href) || doc2._mnrUrl || window.location.href;
+      const candidates = [
+        currentUrl,
+        (_a = doc2.location) == null ? void 0 : _a.href,
+        doc2._mnrUrl,
+        typeof window !== "undefined" ? window.location.href : void 0
+      ];
+      for (const candidate of candidates) {
+        if (!candidate) continue;
+        try {
+          const u = new URL(candidate);
+          if (u.protocol === "http:" || u.protocol === "https:") {
+            return u.toString();
+          }
+        } catch {
+        }
+      }
+      return candidates.find(Boolean) || "";
+    }
+    resolveLinkUrl(anchor, baseUrl) {
+      const rawHref = anchor.getAttribute("href");
+      if (!rawHref) return null;
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(rawHref, baseUrl);
+      } catch {
+        return null;
+      }
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        return null;
+      }
+      return parsedUrl.toString();
+    }
+detect(doc2, currentUrl) {
+      const resolvedCurrentUrl = this.resolveBaseUrl(doc2, currentUrl);
       return {
         next: this.findNavLink(doc2, "next", resolvedCurrentUrl),
         prev: this.findNavLink(doc2, "prev", resolvedCurrentUrl),
@@ -1732,10 +2157,11 @@ findNavLink(doc2, type, currentUrl) {
       const patterns = NAV_PATTERNS[type];
       if (type !== "index") {
         const relLink = doc2.querySelector(`a[rel="${type}"]`);
-        if (relLink && this.isValidLink(relLink, type, currentUrl)) {
+        const href = relLink ? this.resolveLinkUrl(relLink, currentUrl) : null;
+        if (relLink && href && this.isValidLink(relLink, type, currentUrl, href)) {
           return {
             element: relLink,
-            url: relLink.href,
+            url: href,
             selector: this.generateSelector(relLink),
             confidence: 0.95,
             method: "rel-attribute",
@@ -1748,7 +2174,8 @@ findNavLink(doc2, type, currentUrl) {
       for (const link of links) {
         const anchor = link;
         const text2 = ((_b = anchor.textContent) == null ? void 0 : _b.trim()) || "";
-        if (!this.isValidLink(anchor, type, currentUrl)) continue;
+        const href = this.resolveLinkUrl(anchor, currentUrl);
+        if (!href || !this.isValidLink(anchor, type, currentUrl, href)) continue;
         let score = 0;
         for (const pattern of patterns) {
           if (pattern.test(text2)) {
@@ -1766,8 +2193,8 @@ findNavLink(doc2, type, currentUrl) {
           if (/^《.+》$/.test(text2)) {
             score += 8;
           }
-          const href = anchor.href;
-          if (href.endsWith("/") || /\/index\.html?$/i.test(href)) {
+          const href2 = anchor.href;
+          if (href2.endsWith("/") || /\/index\.html?$/i.test(href2)) {
             score += 3;
           }
         }
@@ -1788,7 +2215,7 @@ findNavLink(doc2, type, currentUrl) {
           score -= 5;
         }
         if (score > 0) {
-          candidates.push({ element: anchor, score, text: text2 });
+          candidates.push({ element: anchor, score, text: text2, href });
         }
       }
       if (candidates.length === 0) return null;
@@ -1796,19 +2223,26 @@ findNavLink(doc2, type, currentUrl) {
       const best = candidates[0];
       return {
         element: best.element,
-        url: best.element.href,
+        url: best.href,
         selector: this.generateSelector(best.element),
         confidence: Math.min(best.score / 15, 0.9),
         method: "text-matching",
         text: best.text
       };
     }
-isValidLink(anchor, purpose, currentUrl) {
+isValidLink(anchor, purpose, currentUrl, href) {
       var _a;
-      const href = anchor.href;
       const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
       if (!href) return false;
-      if (href.startsWith("javascript:")) return false;
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(href);
+      } catch {
+        return false;
+      }
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        return false;
+      }
       for (const pattern of INVALID_URL_PATTERNS) {
         if (pattern.test(href)) {
           if (purpose === "index") {
@@ -1821,17 +2255,15 @@ isValidLink(anchor, purpose, currentUrl) {
       }
       if (href.includes("#") && !href.includes("#chapter")) {
         try {
-          const url = new URL(href);
           const currentPathname = new URL(currentUrl).pathname;
-          if (url.pathname === currentPathname) {
+          if (parsedUrl.pathname === currentPathname) {
             return false;
           }
         } catch {
         }
       }
       try {
-        const url = new URL(href);
-        const pathname = url.pathname;
+        const pathname = parsedUrl.pathname;
         if (pathname === "/" || pathname.length < 3) {
           if (purpose === "index" && pathname.length >= 3) {
             const looksLikeBookTitle = /^《.+》$/.test(text2);
@@ -1845,7 +2277,10 @@ isValidLink(anchor, purpose, currentUrl) {
         if (pathParts.length < 2) {
           const part = pathParts[0] || "";
           if (!/\d/.test(part)) {
-            return false;
+            const looksLikeNav = NAV_PATTERNS[purpose].some((p2) => p2.test(text2)) || CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2)) || SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
+            if (!looksLikeNav) {
+              return false;
+            }
           }
         }
         if (purpose === "index" && pathname.endsWith("/")) {
@@ -1913,11 +2348,16 @@ extractChapterNumber(url) {
       if (match) {
         return { chapterId: parseInt(match[1], 10), section: 1 };
       }
-      match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: parseInt(match[1], 10), section };
+      const parts = pathname.split("/").filter(Boolean);
+      if (parts.length >= 3) {
+        const pagePart = parts[parts.length - 1];
+        const chapterPart = parts[parts.length - 2];
+        if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
+          const section = parseInt(pagePart, 10);
+          const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
+          if (numericSegments.length >= 2 && section >= 1 && section <= 99) {
+            return { chapterId: parseInt(chapterPart, 10), section };
+          }
         }
       }
       match = pathname.match(/\/(\d{3,})(?:\/)?$/);
@@ -2073,13 +2513,13 @@ calculateUrlSimilarity(path1, path2) {
       for (const a of links) {
         const text2 = (a.textContent || "").trim();
         if (!text2) continue;
+        const href = this.resolveLinkUrl(a, currentUrl);
+        if (!href) continue;
         const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
         if (!isSection || isChapter) continue;
         if (!isNextSectionText(text2)) continue;
-        if (!this.isValidLink(a, "next")) continue;
-        const href = a.href;
-        if (!href) continue;
+        if (!this.isValidLink(a, "next", currentUrl, href)) continue;
         const comparison = this.compareUrlsForSection(currentUrl, href);
         if (!comparison.isSection) continue;
         let score = 50;
@@ -2100,15 +2540,17 @@ findNextChapterUrl(doc2, currentUrl, _navigation) {
       for (const link of links) {
         const anchor = link;
         const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
+        const href = this.resolveLinkUrl(anchor, currentUrl);
+        if (!href) continue;
         const normalizedText = text2.replace(/\s+/g, "").trim();
         const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /next/i.test(normalizedText);
         if (!isForward) continue;
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
         const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
-        if (isChapter && !isSection && this.isValidLink(anchor, "next")) {
-          const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
+        if (isChapter && !isSection && this.isValidLink(anchor, "next", currentUrl, href)) {
+          const comparison = this.compareUrlsForSection(currentUrl, href);
           if (!comparison.isSection) {
-            return anchor.href;
+            return href;
           }
         }
       }
@@ -2673,7 +3115,11 @@ setThreshold(threshold) {
     }
 process(element, doc2) {
       if (this.options.useRawContent) {
-        return sanitizeHtml(element.innerHTML);
+        let html22 = element.innerHTML;
+        if (this.options.fixImages) {
+          html22 = this.fixImages(html22, doc2, { center: false });
+        }
+        return sanitizeHtml(html22);
       }
       const clone2 = element.cloneNode(true);
       this.expandEncodedLoadMoreContent(clone2, doc2);
@@ -2856,18 +3302,40 @@ removeAdPatterns(text2) {
 normalizeWhitespace(html2) {
       return html2.replace(/<p>\s*<\/p>/gi, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").replace(/<p>\s+/gi, "<p>").replace(/\s+<\/p>/gi, "</p>");
     }
-fixImages(html2, doc2) {
+    fixImages(html2, doc2, options = { center: true }) {
       const temp = doc2.createElement("div");
       temp.innerHTML = html2;
       const images = temp.querySelectorAll("img");
       images.forEach((img) => {
-        const dataSrc = img.getAttribute("data-src") || img.getAttribute("data-original");
-        if (dataSrc && !img.src) {
-          img.src = dataSrc;
+        var _a, _b, _c;
+        const srcAttr = ((_a = img.getAttribute("src")) == null ? void 0 : _a.trim()) || "";
+        const looksPlaceholder = !srcAttr || srcAttr === "#" || srcAttr === "about:blank" || srcAttr.startsWith("data:") || srcAttr.startsWith("javascript:") || srcAttr.startsWith("vbscript:");
+        if (looksPlaceholder) {
+          const candidates = [
+            "data-src",
+            "data-original",
+            "data-lazy-src",
+            "data-original-src",
+            "data-url",
+            "data-actualsrc",
+            "data-echo",
+            "data-srcset"
+          ];
+          for (const attrName of candidates) {
+            const rawValue = (_b = img.getAttribute(attrName)) == null ? void 0 : _b.trim();
+            if (!rawValue) continue;
+            const value = attrName === "data-srcset" ? (_c = rawValue.split(",")[0]) == null ? void 0 : _c.trim().split(/\s+/)[0] : rawValue;
+            const safeUrl = sanitizeUrl(value, { allowDataImage: true, mode: "strict" });
+            if (!safeUrl) continue;
+            img.setAttribute("src", safeUrl);
+            break;
+          }
         }
-        img.style.display = "block";
-        img.style.maxWidth = "100%";
-        img.style.margin = "10px auto";
+        if (options.center) {
+          img.style.display = "block";
+          img.style.maxWidth = "100%";
+          img.style.margin = "10px auto";
+        }
       });
       return temp.innerHTML;
     }
@@ -4897,7 +5365,19 @@ async loadCommunityRules() {
         const response = await fetch(DEFAULT_COMMUNITY_RULES_URL);
         if (!response.ok) return;
         const rules = await response.json();
-        this.communityRules = rules.filter(this.validateRule);
+        this.communityRules = rules.filter(this.validateRule).map((rule) => {
+          if (rule.hooks && Object.values(rule.hooks).some((v) => typeof v === "string" && v.trim().length > 0)) {
+            console.warn("[RuleManager] Ignoring hooks in community rule for safety:", rule.id);
+          }
+          return {
+            ...rule,
+            hooks: void 0,
+            meta: {
+              ...rule.meta,
+              source: "community"
+            }
+          };
+        });
       } catch {
       }
     }
@@ -5453,6 +5933,463 @@ async executeHooks(rule, doc2, content) {
       parserInstance = new Parser();
     }
     return parserInstance;
+  }
+  function getGmXhr() {
+    if (typeof GM_xmlhttpRequest === "function") {
+      return GM_xmlhttpRequest;
+    }
+    return null;
+  }
+  function normalizeUrlForFetch$1(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return normalized.replace(/#.*$/, "");
+    }
+  }
+  function getDefaultBaseUrl() {
+    if (typeof location !== "undefined" && typeof location.href === "string") {
+      return location.href;
+    }
+    if (typeof document !== "undefined" && typeof document.baseURI === "string") {
+      return document.baseURI;
+    }
+    return void 0;
+  }
+  function normalizeHostname(hostname) {
+    const trimmed = hostname.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      return trimmed.slice(1, -1).toLowerCase();
+    }
+    return trimmed.toLowerCase();
+  }
+  function isPrivateNetworkHost(hostname) {
+    const host = normalizeHostname(hostname);
+    if (!host) return true;
+    if (host === "localhost") return true;
+    if (host === "0.0.0.0") return true;
+    const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4) {
+      const parts = ipv4.slice(1).map((n) => parseInt(n, 10));
+      if (parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return true;
+      const [a, b] = parts;
+      if (a === 10) return true;
+      if (a === 127) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+      return false;
+    }
+    if (host === "::1") return true;
+    if (host.startsWith("fe80:")) return true;
+    if (host.startsWith("fc") || host.startsWith("fd")) return true;
+    return false;
+  }
+  function parseHttpUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      return u;
+    } catch {
+      return null;
+    }
+  }
+  function resolveAndValidateHttpUrl(url, base) {
+    const normalized = normalizeUrlForFetch$1(url);
+    let resolved = null;
+    try {
+      resolved = base ? new URL(normalized, base).toString() : new URL(normalized).toString();
+    } catch {
+      try {
+        const fallbackBase = getDefaultBaseUrl();
+        if (!fallbackBase) return null;
+        resolved = new URL(normalized, fallbackBase).toString();
+      } catch {
+        return null;
+      }
+    }
+    try {
+      const u = new URL(resolved);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      if (isPrivateNetworkHost(u.hostname)) {
+        const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
+        if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
+          return null;
+        }
+      }
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return null;
+    }
+  }
+  function fetchAndParseUrl(url, referer, options = {}) {
+    const gmXhr = getGmXhr();
+    const requestUrl = resolveAndValidateHttpUrl(url, referer);
+    const timeoutMs = options.timeoutMs ?? 15e3;
+    const maxRetries = Math.max(0, options.retries ?? 1);
+    if (!requestUrl) {
+      console.error("[MNR] Invalid or unsupported URL:", url);
+      return {
+        promise: Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "invalid-url"
+        }),
+        abort: () => {
+        }
+      };
+    }
+    const parseHtmlToDoc = (html2, finalUrl) => {
+      var _a;
+      try {
+        const parser = new DOMParser();
+        const doc2 = parser.parseFromString(html2, "text/html");
+        const base = doc2.createElement("base");
+        base.href = finalUrl || requestUrl;
+        if (doc2.head) {
+          doc2.head.insertBefore(base, doc2.head.firstChild);
+        } else {
+          (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
+        }
+        doc2._mnrUrl = finalUrl || requestUrl;
+        return {
+          doc: doc2,
+          status: 200,
+          finalUrl,
+          error: null
+        };
+      } catch (e) {
+        console.error("[MNR] Parse error:", e);
+        return {
+          doc: null,
+          status: null,
+          finalUrl,
+          error: "parse"
+        };
+      }
+    };
+    let request = null;
+    let aborted = false;
+    let fetchAbortController = null;
+    let timeoutTimer = null;
+    let timedOut = false;
+    const doRequest = () => {
+      const headers = {
+        Accept: "text/html,application/xhtml+xml,application/xml"
+      };
+      const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : void 0;
+      if (gmXhr) {
+        headers["Accept-Language"] = "zh-CN,zh;q=0.9";
+        if (normalizedReferer) {
+          headers["Referer"] = normalizedReferer;
+        }
+        return new Promise((resolve) => {
+          request = gmXhr({
+            method: "GET",
+            url: requestUrl,
+            headers,
+            timeout: timeoutMs,
+            overrideMimeType: "text/html;charset=" + document.characterSet,
+            onload: (response) => {
+              const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
+              if (response.status >= 200 && response.status < 300) {
+                const parsed = parseHtmlToDoc(response.responseText, finalUrl);
+                resolve({
+                  ...parsed,
+                  status: response.status,
+                  finalUrl
+                });
+                return;
+              }
+              console.error("[MNR] HTTP error:", response.status);
+              resolve({
+                doc: null,
+                status: response.status,
+                finalUrl,
+                error: "http"
+              });
+            },
+            onerror: () => {
+              resolve({ doc: null, status: null, finalUrl: null, error: "network" });
+            },
+            onabort: () => {
+              resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
+            },
+            ontimeout: () => {
+              console.error("[MNR] Request timeout");
+              resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
+            }
+          });
+        });
+      }
+      if (typeof fetch !== "function") {
+        console.error("[MNR] GM_xmlhttpRequest not available and fetch is missing");
+        return Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "missing-gm-xhr"
+        });
+      }
+      fetchAbortController = new AbortController();
+      timedOut = false;
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+      timeoutTimer = setTimeout(() => {
+        timedOut = true;
+        fetchAbortController == null ? void 0 : fetchAbortController.abort();
+      }, timeoutMs);
+      const fetchInit = {
+        method: "GET",
+        headers,
+        signal: fetchAbortController.signal,
+        credentials: "include",
+        redirect: "follow"
+      };
+      if (normalizedReferer) {
+        try {
+          fetchInit.referrer = normalizedReferer;
+        } catch {
+        }
+      }
+      return fetch(requestUrl, fetchInit).then(async (response) => {
+        const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
+        const status = response.status;
+        if (status >= 200 && status < 300) {
+          const html2 = await response.text();
+          const parsed = parseHtmlToDoc(html2, finalUrl);
+          return { ...parsed, status, finalUrl };
+        }
+        console.error("[MNR] HTTP error:", status);
+        return {
+          doc: null,
+          status,
+          finalUrl,
+          error: "http"
+        };
+      }).catch((err) => {
+        if (aborted) {
+          return { doc: null, status: null, finalUrl: null, error: "abort" };
+        }
+        if (timedOut) {
+          console.error("[MNR] Request timeout");
+          return { doc: null, status: null, finalUrl: null, error: "timeout" };
+        }
+        console.error("[MNR] Network error:", err);
+        return { doc: null, status: null, finalUrl: null, error: "network" };
+      }).finally(() => {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+          timeoutTimer = null;
+        }
+      });
+    };
+    const shouldRetry = (res) => {
+      if (aborted) return false;
+      if (res.error === "timeout" || res.error === "network") return true;
+      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
+        return true;
+      }
+      return false;
+    };
+    const promise = (async () => {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
+        const res = await doRequest();
+        if (!shouldRetry(res) || attempt === maxRetries) {
+          return res;
+        }
+        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
+        await new Promise((resolve) => globalThis.setTimeout(resolve, delay));
+      }
+      return { doc: null, status: null, finalUrl: null, error: "network" };
+    })();
+    const abort = () => {
+      aborted = true;
+      try {
+        request == null ? void 0 : request.abort();
+      } catch {
+      }
+      try {
+        fetchAbortController == null ? void 0 : fetchAbortController.abort();
+      } catch {
+      }
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+    };
+    return { promise, abort };
+  }
+  class SectionMerger {
+    constructor(parser) {
+      this.parser = parser;
+    }
+async merge(doc2, url, options = {}) {
+      var _a, _b, _c, _d;
+      const maxPages = Math.max(1, options.maxPages ?? 10);
+      const confidenceThreshold = options.confidenceThreshold ?? 0.8;
+      const baseUrl = getSectionBaseUrl(url);
+      let startUrl = url;
+      let startDoc = doc2;
+      if (baseUrl && baseUrl !== url) {
+        const baseDoc = await this.fetchUrl(baseUrl, url, options.fetcher, options.signal);
+        if (baseDoc) {
+          startUrl = baseUrl;
+          startDoc = baseDoc;
+        }
+      }
+      const first = await this.parser.parse(startDoc, startUrl);
+      if (!first) return null;
+      const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
+      if (disableByRule) return first;
+      const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
+      const detection = this.parser.detect(startDoc, startUrl);
+      const section = detection.results.section;
+      const hasNextSectionUrl = !!(section == null ? void 0 : section.isSection) && !!(section == null ? void 0 : section.nextSectionUrl);
+      const shouldMerge = enableByRule || !!(section == null ? void 0 : section.isSection) && ((section == null ? void 0 : section.confidence) || 0) >= confidenceThreshold;
+      if (!shouldMerge) {
+        if (!hasNextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
+          const realNextChapterUrl = this.findNextChapterUrl(startDoc, startUrl);
+          if (realNextChapterUrl) {
+            first.nextUrl = realNextChapterUrl;
+          }
+        }
+        return first;
+      }
+      return this.mergeSections(
+        startDoc,
+        startUrl,
+        first,
+        section,
+        maxPages,
+        options.fetcher,
+        options.signal
+      );
+    }
+async mergeSections(startDoc, startUrl, first, section, maxPages, fetcher, signal) {
+      let mergedContent = first.content;
+      let mergedRaw = first.rawContent;
+      let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
+      let nextChapterUrl = (section == null ? void 0 : section.nextChapterUrl) || null;
+      let lastUrl = startUrl;
+      if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
+        nextSectionUrl = first.nextUrl;
+      }
+      const maxAdditionalPages = Math.max(0, maxPages - 1);
+      const seen = new Set([startUrl]);
+      for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
+        if (signal == null ? void 0 : signal.aborted) break;
+        const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
+        if (seen.has(absNextSection)) break;
+        seen.add(absNextSection);
+        const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
+        if (!nextDoc) break;
+        const nextParsed = await this.parser.parse(nextDoc, absNextSection);
+        if (!nextParsed) break;
+        mergedContent = joinHtml(mergedContent, nextParsed.content);
+        mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
+        const nextDet = this.parser.detect(nextDoc, absNextSection);
+        const s = nextDet.results.section;
+        if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+        nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
+        if (!nextSectionUrl && nextParsed.nextUrl) {
+          if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
+            nextSectionUrl = nextParsed.nextUrl;
+          } else if (!nextChapterUrl) {
+            nextChapterUrl = nextParsed.nextUrl;
+          }
+        }
+        lastUrl = absNextSection;
+      }
+      return {
+        ...first,
+        url: startUrl,
+        content: mergedContent,
+        rawContent: mergedRaw,
+        nextUrl: nextChapterUrl || first.nextUrl
+      };
+    }
+async fetchUrl(url, referrer, customFetcher, signal) {
+      if (signal == null ? void 0 : signal.aborted) {
+        return null;
+      }
+      if (customFetcher) {
+        return await customFetcher(url, referrer);
+      }
+      const { promise, abort } = fetchAndParseUrl(url, referrer);
+      if (!signal) {
+        const result = await promise;
+        return result.doc;
+      }
+      if (signal.aborted) {
+        abort();
+        return null;
+      }
+      let abortListener = null;
+      const abortPromise = new Promise((resolve) => {
+        abortListener = () => {
+          abort();
+          resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
+        };
+        signal.addEventListener("abort", abortListener, { once: true });
+      });
+      try {
+        const result = await Promise.race([promise, abortPromise]);
+        return result.doc;
+      } finally {
+        if (abortListener) {
+          signal.removeEventListener("abort", abortListener);
+        }
+      }
+    }
+findNextChapterUrl(doc2, currentUrl) {
+      var _a;
+      const links = doc2.querySelectorAll("a[href]");
+      const candidates = [];
+      for (const link of links) {
+        const anchor = link;
+        const href = anchor.getAttribute("href");
+        if (!href) continue;
+        const absUrl = normalizeAbsoluteUrl(href, currentUrl);
+        if (absUrl === currentUrl || isSectionLikeUrl(currentUrl, absUrl)) continue;
+        const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
+        if (!text2) continue;
+        const normalizedText = text2.replace(/\s+/g, "").trim();
+        if (!normalizedText) continue;
+        const lowerText = normalizedText.toLowerCase();
+        const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /继续阅读/.test(normalizedText) || /next/i.test(normalizedText);
+        if (!isForward) continue;
+        const isChapterText = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
+        const isSectionText = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2)) || lowerText.includes("next") && lowerText.includes("page") && !lowerText.includes("chapter");
+        const isEnglishNextChapter = lowerText.includes("next") && lowerText.includes("chapter");
+        if (isSectionText && !isChapterText && !isEnglishNextChapter) continue;
+        let score = 0;
+        if (isChapterText) score += 50;
+        if (isEnglishNextChapter) score += 45;
+        if (lowerText === "next" || lowerText === ">" || lowerText === "»") score += 10;
+        if (lowerText.includes("next")) score += 2;
+        if (normalizedText.length <= 5) score += 1;
+        const rel = (anchor.getAttribute("rel") || "").toLowerCase();
+        if (rel.includes("next")) score += 2;
+        if (score > 0) {
+          candidates.push({ url: absUrl, score });
+        }
+      }
+      if (candidates.length === 0) return null;
+      candidates.sort((a, b) => b.score - a.score);
+      return candidates[0].url;
+    }
+  }
+  function createSectionMerger(parser) {
+    return new SectionMerger(parser);
   }
   const DEFAULT_OPTIONS$1 = {
     blockRedirects: true,
@@ -6109,118 +7046,115 @@ cleanupScripts() {
     }
     return protectionInstance;
   }
-  function getGmXhr$1() {
-    if (typeof GM_xmlhttpRequest === "function") {
-      return GM_xmlhttpRequest;
-    }
-    return null;
-  }
-  function fetchUrl(url, referer) {
-    const gmXhr = getGmXhr$1();
-    if (!gmXhr) {
-      return Promise.resolve(null);
-    }
-    return new Promise((resolve) => {
-      const headers = {
-        Accept: "text/html,application/xhtml+xml,application/xml",
-        "Accept-Language": "zh-CN,zh;q=0.9"
-      };
-      if (referer) {
-        headers["Referer"] = referer;
-      }
-      gmXhr({
-        method: "GET",
-        url,
-        headers,
-        overrideMimeType: "text/html;charset=" + document.characterSet,
-        onload: (response) => {
-          if (response.status >= 200 && response.status < 300) {
-            try {
-              const parser = new DOMParser();
-              const doc2 = parser.parseFromString(response.responseText, "text/html");
-              const base = doc2.createElement("base");
-              base.href = url;
-              doc2.head.insertBefore(base, doc2.head.firstChild);
-              doc2._mnrUrl = url;
-              resolve(doc2);
-            } catch {
-              resolve(null);
-            }
-          } else {
-            resolve(null);
-          }
+  class RuleSaver {
+createRuleFromDetection(hostname, detection) {
+      const content = detection.results.content;
+      const navigation = detection.results.navigation;
+      const title = detection.results.title;
+      const section = detection.results.section;
+      const hostPattern = hostname.replace(/\./g, "\\\\.");
+      const rule = {
+        id: `user-${hostname}-${Date.now()}`,
+        name: `Auto-generated rule for ${hostname}`,
+        version: 1,
+        match: {
+          pattern: `^https?://${hostPattern}/`,
+          type: "regex"
         },
-        onerror: () => resolve(null),
-        ontimeout: () => resolve(null)
-      });
-    });
-  }
-  function getSectionBaseUrl$1(url) {
-    const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
-    if (m) return `${m[1]}${m[2]}`;
-    const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
-    if (m2) return `${m2[1]}/1`;
-    return null;
-  }
-  function isSectionLikeUrl$1(currentUrl, nextUrl) {
-    try {
-      const current = new URL(currentUrl);
-      const next = new URL(nextUrl);
-      if (current.host !== next.host) return false;
-      const currentPath = current.pathname;
-      const nextPath = next.pathname;
-      const parse = (pathname) => {
-        let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section >= 1 && section <= 99) {
-            return { chapterId: match[1], section };
-          }
+        content: {
+          selector: content.selector || "#content"
+        },
+        meta: {
+          source: "user",
+          autoLaunch: true,
+          createdAt: ( new Date()).toISOString()
         }
-        match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section >= 1 && section <= 99) {
-            return { chapterId: match[1], section };
-          }
-        }
-        match = pathname.match(/\/(\d+)\.html?$/i);
-        if (match) return { chapterId: match[1], section: 1 };
-        match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
-        if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
-        match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-        if (match) return { chapterId: match[1], section: 1 };
-        return null;
       };
-      const c = parse(currentPath);
-      const n = parse(nextPath);
-      if (c && n && c.chapterId === n.chapterId) {
-        if (n.section === c.section + 1 && n.section > 1) return true;
+      if ((section == null ? void 0 : section.isSection) && (section.confidence || 0) >= 0.8) {
+        rule.advanced = { checkSection: true };
       }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-  function findNextChapterUrl(doc2, currentUrl) {
-    var _a;
-    const links = doc2.querySelectorAll("a[href]");
-    for (const link of links) {
-      const anchor = link;
-      const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
-      const normalizedText = text2.replace(/\s+/g, "").trim();
-      const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /next/i.test(normalizedText);
-      if (!isForward) continue;
-      const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
-      const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
-      if (isChapter && !isSection) {
-        const href = anchor.href;
-        if (!isSectionLikeUrl$1(currentUrl, href)) {
-          return href;
+      if (navigation.next || navigation.prev || navigation.index) {
+        rule.navigation = {};
+        if (navigation.next) {
+          rule.navigation.next = navigation.next.selector || navigation.next.url;
+        }
+        if (navigation.prev) {
+          rule.navigation.prev = navigation.prev.selector || navigation.prev.url;
+        }
+        if (navigation.index) {
+          rule.navigation.index = navigation.index.selector || navigation.index.url;
         }
       }
+      if (title.selector) {
+        rule.title = {
+          selector: title.selector
+        };
+      }
+      return rule;
     }
-    return null;
+async saveFromDetection(doc2, detection) {
+      var _a;
+      if (!detection) return;
+      const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
+      const hostname = new URL(url).hostname;
+      const rule = this.createRuleFromDetection(hostname, detection);
+      const ruleManager = getRuleManager();
+      await ruleManager.saveUserRule(hostname, rule);
+    }
+validateRule(rule) {
+      var _a;
+      if (!rule.id || !rule.name || !rule.match) {
+        return false;
+      }
+      if (!rule.match.pattern) {
+        return false;
+      }
+      if (!((_a = rule.content) == null ? void 0 : _a.selector)) {
+        return false;
+      }
+      return true;
+    }
+enhanceRule(existingRule, detection) {
+      const enhanced = { ...existingRule };
+      const content = detection.results.content;
+      const navigation = detection.results.navigation;
+      const title = detection.results.title;
+      const section = detection.results.section;
+      if (content.selector && !enhanced.content) {
+        enhanced.content = {};
+      }
+      if (content.selector && content.selector !== "#content") {
+        enhanced.content = enhanced.content || {};
+        enhanced.content.selector = content.selector;
+      }
+      if (navigation.next || navigation.prev || navigation.index) {
+        enhanced.navigation = enhanced.navigation || {};
+        if (navigation.next && !enhanced.navigation.next) {
+          enhanced.navigation.next = navigation.next.selector || navigation.next.url;
+        }
+        if (navigation.prev && !enhanced.navigation.prev) {
+          enhanced.navigation.prev = navigation.prev.selector || navigation.prev.url;
+        }
+        if (navigation.index && !enhanced.navigation.index) {
+          enhanced.navigation.index = navigation.index.selector || navigation.index.url;
+        }
+      }
+      if (title.selector && !enhanced.title) {
+        enhanced.title = {
+          selector: title.selector
+        };
+      }
+      if ((section == null ? void 0 : section.isSection) && (section.confidence || 0) >= 0.8) {
+        enhanced.advanced = enhanced.advanced || {};
+        enhanced.advanced.checkSection = true;
+      }
+      enhanced.meta = enhanced.meta || {};
+      enhanced.meta.updatedAt = ( new Date()).toISOString();
+      return enhanced;
+    }
+  }
+  function createRuleSaver() {
+    return new RuleSaver();
   }
   const DEFAULT_OPTIONS = {
     confidenceThreshold: 0.6,
@@ -6243,6 +7177,8 @@ cleanupScripts() {
       this.parser = new Parser({
         forceDetection: options.forceDetection
       });
+      this.sectionMerger = createSectionMerger(this.parser);
+      this.ruleSaver = createRuleSaver();
     }
 setPromptCallback(callback) {
       this.promptCallback = callback;
@@ -6343,7 +7279,7 @@ async launch(doc2, decision) {
       var _a;
       try {
         const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-        const chapter = await this.parseWithSectionMerge(doc2, currentUrl);
+        const chapter = await this.sectionMerger.merge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
           this.launchCallback(chapter, decision.rule);
         }
@@ -6351,129 +7287,9 @@ async launch(doc2, decision) {
         console.error("[AutoEnableManager] Parse error:", e);
       }
     }
-async parseWithSectionMerge(doc2, url) {
-      var _a, _b, _c, _d;
-      const resolvedUrl = url;
-      const baseUrl = getSectionBaseUrl$1(resolvedUrl);
-      let startUrl = resolvedUrl;
-      let startDoc = doc2;
-      if (baseUrl && baseUrl !== resolvedUrl) {
-        const baseDoc = await fetchUrl(baseUrl, resolvedUrl);
-        if (baseDoc) {
-          startUrl = baseUrl;
-          startDoc = baseDoc;
-        }
-      }
-      const first = await this.parser.parse(startDoc, startUrl);
-      if (!first) return null;
-      const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
-      if (disableByRule) return first;
-      const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
-      const detection = this.parser.detect(startDoc, startUrl);
-      const section = detection.results.section;
-      const shouldMerge = enableByRule || !!(section == null ? void 0 : section.isSection) && ((section == null ? void 0 : section.confidence) || 0) >= 0.8;
-      if (!shouldMerge) {
-        if (first.nextUrl && isSectionLikeUrl$1(startUrl, first.nextUrl)) {
-          const realNextChapterUrl = findNextChapterUrl(startDoc, startUrl);
-          if (realNextChapterUrl) {
-            first.nextUrl = realNextChapterUrl;
-          }
-        }
-        return first;
-      }
-      let mergedContent = first.content;
-      let mergedRaw = first.rawContent;
-      let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
-      let nextChapterUrl = (section == null ? void 0 : section.nextChapterUrl) || null;
-      let lastUrl = startUrl;
-      if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl$1(startUrl, first.nextUrl)) {
-        nextSectionUrl = first.nextUrl;
-      }
-      const seen = new Set([startUrl]);
-      for (let i = 0; i < 10 && nextSectionUrl; i++) {
-        const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-        if (seen.has(absNextSection)) break;
-        seen.add(absNextSection);
-        const nextDoc = await fetchUrl(absNextSection, lastUrl);
-        if (!nextDoc) break;
-        const nextParsed = await this.parser.parse(nextDoc, absNextSection);
-        if (!nextParsed) break;
-        mergedContent = joinHtml(mergedContent, nextParsed.content);
-        mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-        const nextDet = this.parser.detect(nextDoc, absNextSection);
-        const s = nextDet.results.section;
-        if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-        nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
-        if (!nextSectionUrl && nextParsed.nextUrl) {
-          if (isSectionLikeUrl$1(absNextSection, nextParsed.nextUrl)) {
-            nextSectionUrl = nextParsed.nextUrl;
-          } else if (!nextChapterUrl) {
-            nextChapterUrl = nextParsed.nextUrl;
-          }
-        }
-        lastUrl = absNextSection;
-      }
-      return {
-        ...first,
-        url: startUrl,
-        content: mergedContent,
-        rawContent: mergedRaw,
-        nextUrl: nextChapterUrl || first.nextUrl
-      };
-    }
 async saveRuleForCurrentSite(doc2, decision) {
-      var _a;
       if (!decision.detection) return;
-      const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-      const hostname = new URL(url).hostname;
-      const rule = this.createRuleFromDetection(hostname, decision.detection);
-      const ruleManager = getRuleManager();
-      await ruleManager.saveUserRule(hostname, rule);
-    }
-createRuleFromDetection(hostname, detection) {
-      const content = detection.results.content;
-      const navigation = detection.results.navigation;
-      const title = detection.results.title;
-      const section = detection.results.section;
-      const hostPattern = hostname.replace(/\./g, "\\.");
-      const rule = {
-        id: `user-${hostname}-${Date.now()}`,
-        name: `Auto-generated rule for ${hostname}`,
-        version: 1,
-        match: {
-          pattern: `^https?://${hostPattern}/`,
-          type: "regex"
-        },
-        content: {
-          selector: content.selector || "#content"
-        },
-        meta: {
-          source: "user",
-          autoLaunch: true,
-          createdAt: ( new Date()).toISOString()
-        }
-      };
-      if ((section == null ? void 0 : section.isSection) && (section.confidence || 0) >= 0.8) {
-        rule.advanced = { checkSection: true };
-      }
-      if (navigation.next || navigation.prev || navigation.index) {
-        rule.navigation = {};
-        if (navigation.next) {
-          rule.navigation.next = navigation.next.selector || navigation.next.url;
-        }
-        if (navigation.prev) {
-          rule.navigation.prev = navigation.prev.selector || navigation.prev.url;
-        }
-        if (navigation.index) {
-          rule.navigation.index = navigation.index.selector || navigation.index.url;
-        }
-      }
-      if (title.selector) {
-        rule.title = {
-          selector: title.selector
-        };
-      }
-      return rule;
+      await this.ruleSaver.saveFromDetection(doc2, decision.detection);
     }
 shouldSkip(url) {
       return (this.options.skipPatterns || []).some((pattern) => pattern.test(url));
@@ -6502,7 +7318,7 @@ async manualEnable(doc2 = document) {
       }
       try {
         const currentUrl = ((_b = doc2.location) == null ? void 0 : _b.href) || window.location.href;
-        const chapter = await this.parseWithSectionMerge(doc2, currentUrl);
+        const chapter = await this.sectionMerger.merge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
           this.launchCallback(chapter, void 0);
         }
@@ -6519,7 +7335,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2025-12-21";
+  const BUILD_DATE = "2025-12-24";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -20779,7 +21595,8 @@ entry,
           if (aborted) break;
           if (result.error === "abort") break;
           if (!result.doc) break;
-          const pageCandidates = collectTocCandidates(result.doc, pageUrl);
+          const effectivePageUrl = result.finalUrl || pageUrl;
+          const pageCandidates = collectTocCandidates(result.doc, effectivePageUrl);
           allCandidates.push(...pageCandidates);
           let newCount = 0;
           for (const entry of pageCandidates) {
@@ -20789,9 +21606,9 @@ entry,
             }
           }
           if (visitedPages.size >= 2 && newCount === 0) break;
-          const nextPageUrl = findNextTocPageUrl(result.doc, pageUrl, indexUrl);
+          const nextPageUrl = findNextTocPageUrl(result.doc, effectivePageUrl, indexUrl);
           if (!nextPageUrl) break;
-          referer = pageUrl;
+          referer = effectivePageUrl;
           pageUrl = nextPageUrl;
         }
       } finally {
@@ -21073,53 +21890,6 @@ activate,
       $reset
     };
   });
-  function getSectionBaseUrl(url) {
-    const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
-    if (m) return `${m[1]}${m[2]}`;
-    const m2 = url.match(/^(.*\/\d{3,})\/(\d{1,2})(?:\/)?$/);
-    if (m2) return `${m2[1]}/1`;
-    return null;
-  }
-  function isSectionLikeUrl(currentUrl, nextUrl) {
-    try {
-      const current = new URL(currentUrl);
-      const next = new URL(nextUrl);
-      if (current.host !== next.host) return false;
-      const currentPath = current.pathname;
-      const nextPath = next.pathname;
-      const parse = (pathname) => {
-        let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section >= 1 && section <= 99) {
-            return { chapterId: match[1], section };
-          }
-        }
-        match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section >= 1 && section <= 99) {
-            return { chapterId: match[1], section };
-          }
-        }
-        match = pathname.match(/\/(\d+)\.html?$/i);
-        if (match) return { chapterId: match[1], section: 1 };
-        match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
-        if (match) return { chapterId: match[1], section: parseInt(match[2], 10) };
-        match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-        if (match) return { chapterId: match[1], section: 1 };
-        return null;
-      };
-      const c = parse(currentPath);
-      const n = parse(nextPath);
-      if (c && n && c.chapterId === n.chapterId) {
-        if (n.section === c.section + 1 && n.section > 1) return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
   async function parseWithSectionMerge(parser, initialDoc, url, referer) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     const resolvedUrl = normalizeAbsoluteUrl(url, referer);
@@ -21159,8 +21929,10 @@ activate,
         nextSectionUrl = first.nextUrl;
       }
     }
+    const maxPages = 10;
+    const maxAdditionalPages = Math.max(0, maxPages - 1);
     const seen = new Set([startUrl]);
-    for (let i = 0; i < 10 && nextSectionUrl; i++) {
+    for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
       const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
       if (seen.has(absNextSection)) break;
       seen.add(absNextSection);
@@ -21191,127 +21963,6 @@ activate,
       rawContent: mergedRaw,
       nextUrl: nextChapterUrl || first.nextUrl
     };
-  }
-  function getGmXhr() {
-    if (typeof GM_xmlhttpRequest === "function") {
-      return GM_xmlhttpRequest;
-    }
-    return null;
-  }
-  function fetchAndParseUrl(url, referer, options = {}) {
-    const gmXhr = getGmXhr();
-    const normalizedUrl = normalizeUrlForFetch(url);
-    if (!gmXhr) {
-      console.error("[MNR] GM_xmlhttpRequest not available");
-      return {
-        promise: Promise.resolve({
-          doc: null,
-          status: null,
-          finalUrl: null,
-          error: "missing-gm-xhr"
-        }),
-        abort: () => {
-        }
-      };
-    }
-    let request = null;
-    let aborted = false;
-    const timeoutMs = options.timeoutMs ?? 15e3;
-    const maxRetries = Math.max(0, options.retries ?? 1);
-    const doRequest = () => new Promise((resolve) => {
-      const headers = {
-        Accept: "text/html,application/xhtml+xml,application/xml",
-        "Accept-Language": "zh-CN,zh;q=0.9"
-      };
-      if (referer) {
-        headers["Referer"] = normalizeUrlForFetch(referer);
-      }
-      request = gmXhr({
-        method: "GET",
-        url: normalizedUrl,
-        headers,
-        timeout: timeoutMs,
-        overrideMimeType: "text/html;charset=" + document.characterSet,
-        onload: (response) => {
-          var _a;
-          if (response.status >= 200 && response.status < 300) {
-            try {
-              const parser = new DOMParser();
-              const doc2 = parser.parseFromString(response.responseText, "text/html");
-              const base = doc2.createElement("base");
-              base.href = normalizedUrl;
-              if (doc2.head) {
-                doc2.head.insertBefore(base, doc2.head.firstChild);
-              } else {
-                (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
-              }
-              doc2._mnrUrl = normalizedUrl;
-              resolve({
-                doc: doc2,
-                status: response.status,
-                finalUrl: response.finalUrl || null,
-                error: null
-              });
-            } catch (e) {
-              console.error("[MNR] Parse error:", e);
-              resolve({
-                doc: null,
-                status: response.status,
-                finalUrl: response.finalUrl || null,
-                error: "parse"
-              });
-            }
-          } else {
-            console.error("[MNR] HTTP error:", response.status);
-            resolve({
-              doc: null,
-              status: response.status,
-              finalUrl: response.finalUrl || null,
-              error: "http"
-            });
-          }
-        },
-        onerror: (err) => {
-          console.error("[MNR] Request error:", err);
-          resolve({ doc: null, status: null, finalUrl: null, error: "network" });
-        },
-        onabort: () => {
-          resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
-        },
-        ontimeout: () => {
-          console.error("[MNR] Request timeout");
-          resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
-        }
-      });
-    });
-    const shouldRetry = (res) => {
-      if (aborted) return false;
-      if (res.error === "timeout" || res.error === "network") return true;
-      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
-        return true;
-      }
-      return false;
-    };
-    const promise = (async () => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
-        const res = await doRequest();
-        if (!shouldRetry(res) || attempt === maxRetries) {
-          return res;
-        }
-        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
-        await new Promise((resolve) => window.setTimeout(resolve, delay));
-      }
-      return { doc: null, status: null, finalUrl: null, error: "network" };
-    })();
-    const abort = () => {
-      aborted = true;
-      try {
-        request == null ? void 0 : request.abort();
-      } catch {
-      }
-    };
-    return { promise, abort };
   }
   function isInvalidChapterUrl(url, currentChapterUrl) {
     try {
@@ -23950,7 +24601,11 @@ ${value}`;
     class: "mnr-loading-overlay"
   };
   const SCROLL_THROTTLE_MS = 16;
-  const INTERSECTION_ROOT_MARGIN = "800px";
+  const INTERSECTION_ROOT_MARGIN_PX = 800;
+  const AUTO_LOAD_COOLDOWN_MIN_MS = 3e3;
+  const AUTO_LOAD_COOLDOWN_MAX_MS = 5e3;
+  const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
+  const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
   const SWIPE_THRESHOLD_PX = 80;
   const SWIPE_MAX_DURATION_MS = 700;
   const SWIPE_CANCEL_VERTICAL_PX = 28;
@@ -23958,6 +24613,7 @@ ${value}`;
   const _sfc_main = defineComponent({
     __name: "ReaderView",
     setup(__props) {
+      const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
       function throttle(fn, delay) {
         let lastCall = 0;
         let timeoutId = null;
@@ -23983,6 +24639,11 @@ ${value}`;
       const readerStore = useReaderStore();
       const configStore = useConfigStore();
       const ruleStore = useRuleStore();
+      const autoLoadArmed = ref(false);
+      let lastAutoLoadScrollTop = 0;
+      let autoLoadShortChainCount = 0;
+      let nextAutoLoadAt = 0;
+      let autoLoadTimer = null;
       const mainRef = ref(null);
       const topSentinel = ref(null);
       const bottomSentinel = ref(null);
@@ -23993,9 +24654,66 @@ ${value}`;
       const isNavigating = ref(false);
       const showControls = ref(true);
       const chapterRefs = new Map();
+      let isLoadingPrevLocal = false;
       let topObserver = null;
       let bottomObserver = null;
       let lastScrollTop = 0;
+      function getRandomDelayMs(min, max) {
+        const a = Math.min(min, max);
+        const b = Math.max(min, max);
+        return Math.floor(Math.random() * (b - a + 1)) + a;
+      }
+      function getDistanceToBottom(mainEl) {
+        return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
+      }
+      function isNearBottom(mainEl) {
+        return getDistanceToBottom(mainEl) <= INTERSECTION_ROOT_MARGIN_PX;
+      }
+      function isShortScrollableContent(mainEl) {
+        const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
+        return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
+      }
+      function clearAutoLoadTimer() {
+        if (!autoLoadTimer) return;
+        clearTimeout(autoLoadTimer);
+        autoLoadTimer = null;
+      }
+      function scheduleAutoLoadNext() {
+        const mainEl = mainRef.value;
+        if (!mainEl) return;
+        if (!configStore.behavior.preloadNext) return;
+        if (!hasNext.value) return;
+        if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
+        if (!isNearBottom(mainEl)) return;
+        const fillMode = isShortScrollableContent(mainEl);
+        const canAutoLoad = autoLoadArmed.value || fillMode;
+        if (!canAutoLoad) return;
+        if (fillMode && autoLoadShortChainCount >= AUTO_LOAD_SHORT_CHAIN_LIMIT) return;
+        const now = Date.now();
+        if (nextAutoLoadAt === 0) {
+          nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+        }
+        const delayMs = Math.max(0, nextAutoLoadAt - now);
+        if (delayMs > 0) {
+          if (!autoLoadTimer) {
+            autoLoadTimer = setTimeout(() => {
+              autoLoadTimer = null;
+              scheduleAutoLoadNext();
+            }, delayMs);
+          }
+          return;
+        }
+        clearAutoLoadTimer();
+        nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+        lastAutoLoadScrollTop = mainEl.scrollTop;
+        autoLoadArmed.value = false;
+        autoLoadShortChainCount = fillMode ? autoLoadShortChainCount + 1 : 0;
+        void readerStore.loadNextChapter("auto").then((ok) => {
+          if (!ok) {
+            nextAutoLoadAt = Date.now() + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MAX_MS, AUTO_LOAD_COOLDOWN_MAX_MS * 2);
+          }
+        });
+      }
       watch(isPickerActive, (active) => {
         const hideStyle = document.getElementById("mnr-hide-original");
         const readerRoot = document.getElementById("mnr-reader-root");
@@ -24100,7 +24818,10 @@ ${value}`;
         }
       }
       function scrollToChapter(index) {
-        const chapterEl = chapterRefs.get(index);
+        var _a;
+        const url = (_a = chapters.value[index]) == null ? void 0 : _a.chapter.url;
+        if (!url) return;
+        const chapterEl = chapterRefs.get(url);
         if (chapterEl) {
           chapterEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -24161,17 +24882,14 @@ ${value}`;
           readerStore.startCacheAll();
         }
       }
-      function setChapterRef(index) {
+      function setChapterRef(url) {
         return (el) => {
           if (!el) {
-            chapterRefs.delete(index);
+            chapterRefs.delete(url);
             return;
           }
-          chapterRefs.set(index, el);
-          const entry = visibleChapters.value.find((c) => c.index === index);
-          if (entry) {
-            setChapterHeight(entry.chapter.url, el.offsetHeight);
-          }
+          chapterRefs.set(url, el);
+          setChapterHeight(url, el.offsetHeight);
         };
       }
       function estimateIndexFromOffset(offset) {
@@ -24192,6 +24910,10 @@ ${value}`;
         if (!mainEl) return;
         const currentScrollY = mainEl.scrollTop;
         const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
+        if (!isNavigating.value && !autoLoadArmed.value && currentScrollY - lastAutoLoadScrollTop >= AUTO_LOAD_ARM_SCROLL_DELTA_PX) {
+          autoLoadArmed.value = true;
+          autoLoadShortChainCount = 0;
+        }
         if (autoHideHeader.value) {
           if (currentScrollY > lastScrollTop && currentScrollY > 100) {
             showControls.value = false;
@@ -24206,7 +24928,7 @@ ${value}`;
         const viewportTop = currentScrollY;
         const viewportBottom = currentScrollY + mainEl.clientHeight;
         for (const entry of visibleChapters.value) {
-          const el = chapterRefs.get(entry.index);
+          const el = chapterRefs.get(entry.chapter.url);
           if (!el) continue;
           const elTop = el.offsetTop;
           const elHeight = el.offsetHeight;
@@ -24235,35 +24957,41 @@ ${value}`;
         updateWindow(currentChapterIdx);
         const overallPercent = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
         readerStore.updateScroll(overallPercent);
+        scheduleAutoLoadNext();
       }
       const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
       async function loadPrevWithScrollAdjust(jumpToStart = false) {
         const mainEl = mainRef.value;
-        if (!mainEl || isLoadingPrev.value) return;
-        const oldScrollTop = mainEl.scrollTop;
-        const oldTopSpacer = topSpacer.value;
-        const success = await readerStore.loadPrevChapter("manual");
-        if (success) {
-          await nextTick();
-          updateWindow(readerStore.currentChapterIndex);
-          await nextTick();
-          await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
-          if (jumpToStart) {
-            await jumpToChapter(0, "auto");
-            return;
-          }
-          const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
-          if (chapterEls.length > 0) {
-            const newChapterEl = chapterEls[0];
-            const newChapterHeight = newChapterEl.offsetHeight;
-            const newEntry = readerStore.chapters[0];
-            if (newEntry) {
-              setChapterHeight(newEntry.chapter.url, newChapterHeight);
-            }
+        if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return;
+        isLoadingPrevLocal = true;
+        try {
+          const oldScrollTop = mainEl.scrollTop;
+          const oldTopSpacer = topSpacer.value;
+          const success = await readerStore.loadPrevChapter("manual");
+          if (success) {
             await nextTick();
-            const spacerDelta = topSpacer.value - oldTopSpacer;
-            mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
+            updateWindow(readerStore.currentChapterIndex);
+            await nextTick();
+            await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+            if (jumpToStart) {
+              await jumpToChapter(0, "auto");
+              return;
+            }
+            const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
+            if (chapterEls.length > 0) {
+              const newChapterEl = chapterEls[0];
+              const newChapterHeight = newChapterEl.offsetHeight;
+              const newEntry = readerStore.chapters[0];
+              if (newEntry) {
+                setChapterHeight(newEntry.chapter.url, newChapterHeight);
+              }
+              await nextTick();
+              const spacerDelta = topSpacer.value - oldTopSpacer;
+              mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
+            }
           }
+        } finally {
+          isLoadingPrevLocal = false;
         }
       }
       function handleWheel(e) {
@@ -24487,6 +25215,7 @@ ${value}`;
         }
       }
       async function jumpToChapter(index, behavior = "smooth") {
+        var _a;
         const mainEl = mainRef.value;
         if (!mainEl) return;
         if (index < 0 || index >= chapters.value.length) return;
@@ -24494,7 +25223,12 @@ ${value}`;
         updateWindow(index);
         await nextTick();
         await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
-        const targetEl = chapterRefs.get(index);
+        const url = (_a = chapters.value[index]) == null ? void 0 : _a.chapter.url;
+        if (!url) {
+          isNavigating.value = false;
+          return;
+        }
+        const targetEl = chapterRefs.get(url);
         if (!targetEl) {
           isNavigating.value = false;
           return;
@@ -24541,9 +25275,9 @@ ${value}`;
           threshold: 0
         };
         bottomObserver = new globalThis.IntersectionObserver((entries2) => {
-          if (entries2[0].isIntersecting && hasNext.value && !isLoadingNext.value && !isNavigating.value) {
-            readerStore.loadNextChapter("auto");
-          }
+          var _a2;
+          if (!((_a2 = entries2[0]) == null ? void 0 : _a2.isIntersecting)) return;
+          scheduleAutoLoadNext();
         }, observerOptions);
         topObserver = new globalThis.IntersectionObserver(() => {
         }, observerOptions);
@@ -24555,7 +25289,33 @@ ${value}`;
         }
         await nextTick();
         (_a = mainRef.value) == null ? void 0 : _a.focus();
+        scheduleAutoLoadNext();
       });
+      watch(
+        () => readerStore.chapters.length,
+        () => {
+          const mainEl = mainRef.value;
+          if (!mainEl) return;
+          lastAutoLoadScrollTop = mainEl.scrollTop;
+          autoLoadArmed.value = false;
+          if (!isShortScrollableContent(mainEl)) {
+            autoLoadShortChainCount = 0;
+          }
+          scheduleAutoLoadNext();
+        }
+      );
+      watch(
+        () => configStore.behavior.preloadNext,
+        (enabled) => {
+          if (!enabled) {
+            clearAutoLoadTimer();
+            nextAutoLoadAt = 0;
+            autoLoadShortChainCount = 0;
+            return;
+          }
+          scheduleAutoLoadNext();
+        }
+      );
       onUnmounted(() => {
         if (mainRef.value) {
           mainRef.value.removeEventListener("scroll", handleScroll);
@@ -24569,6 +25329,7 @@ ${value}`;
         bottomObserver == null ? void 0 : bottomObserver.disconnect();
         topObserver = null;
         bottomObserver = null;
+        clearAutoLoadTimer();
       });
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", {
@@ -24627,7 +25388,7 @@ ${value}`;
               return openBlock(), createElementBlock("article", {
                 key: entry.id,
                 ref_for: true,
-                ref: setChapterRef(entry.index),
+                ref: setChapterRef(entry.chapter.url),
                 class: "mnr-reader-content",
                 "data-chapter-url": entry.chapter.url,
                 onClick: handleContentClick
@@ -24703,7 +25464,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-ab06d920"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-2e203e2d"]]);
   const appState = {
     isInitialized: false,
     isActive: false,

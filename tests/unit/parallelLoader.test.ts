@@ -131,7 +131,9 @@ describe('ParallelLoader', () => {
       signal: controller.signal,
     });
 
-    expect(results).toHaveLength(0);
+    expect(results).toHaveLength(1);
+    expect(results[0].success).toBe(false);
+    expect(results[0].error).toBe('Request aborted');
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -158,11 +160,10 @@ describe('ParallelLoader', () => {
     await vi.advanceTimersByTimeAsync(6000);
 
     const results = await loadPromise;
-    const completed = results.filter(r => r !== undefined);
 
     expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(completed.length).toBeGreaterThanOrEqual(0);
-    expect(completed.length).toBeLessThan(3);
+    expect(results).toHaveLength(3);
+    expect(results.every(r => r.success === false)).toBe(true);
   });
 
   it('should apply jitter delays between requests', async () => {
@@ -179,6 +180,74 @@ describe('ParallelLoader', () => {
     await vi.runAllTimersAsync();
     const results = await loadPromise;
     expect(results).toHaveLength(3);
+  });
+
+  it('should wait minDelay before starting subsequent requests', async () => {
+    const fetcher = vi.fn().mockResolvedValue(mockChapter('url'));
+
+    const loadPromise = loader.loadChapters(['url1', 'url2'], {
+      fetcher,
+      maxConcurrent: 1,
+      minDelay: 100,
+      maxDelay: 100,
+      retries: 0,
+    });
+
+    // First request starts immediately.
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    // Give promise chain a chance to schedule the next request with delay.
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+
+    await vi.advanceTimersByTimeAsync(99);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    await vi.runAllTimersAsync();
+    const results = await loadPromise;
+    expect(results).toHaveLength(2);
+  });
+
+  it('should normalize misordered jitter bounds (minDelay > maxDelay)', async () => {
+    const fetcher = vi.fn().mockResolvedValue(mockChapter('url'));
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
+    const loadPromise = loader.loadChapters(['url1', 'url2'], {
+      fetcher,
+      maxConcurrent: 1,
+      minDelay: 500,
+      maxDelay: 100,
+      retries: 0,
+    });
+
+    // First request starts immediately.
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    // Give promise chain a chance to schedule the next request with delay.
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+
+    // Normalized delay is deterministic due to stubbed Math.random(): 300ms.
+    await vi.advanceTimersByTimeAsync(299);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    await vi.runAllTimersAsync();
+    const results = await loadPromise;
+    expect(results).toHaveLength(2);
   });
 
   it('should report progress', async () => {

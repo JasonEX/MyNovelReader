@@ -199,7 +199,25 @@ export class RuleManager {
       if (!response.ok) return;
 
       const rules: SiteRule[] = await response.json();
-      this.communityRules = rules.filter(this.validateRule);
+      this.communityRules = rules.filter(this.validateRule).map(rule => {
+        // Never execute remote code by default.
+        // Community rules are fetched dynamically and must not contain JS hooks.
+        if (
+          rule.hooks &&
+          Object.values(rule.hooks).some(v => typeof v === 'string' && v.trim().length > 0)
+        ) {
+          console.warn('[RuleManager] Ignoring hooks in community rule for safety:', rule.id);
+        }
+
+        return {
+          ...rule,
+          hooks: undefined,
+          meta: {
+            ...rule.meta,
+            source: 'community',
+          },
+        };
+      });
     } catch {
       // Silently fail
     }
