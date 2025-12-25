@@ -1,381 +1,399 @@
-/**
- * Unit tests for AutoEnableManager
- */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { JSDOM } from 'jsdom';
 
-// Mock GM API before importing
-const mockGmXhr = vi.fn();
-vi.stubGlobal('GM_xmlhttpRequest', mockGmXhr);
-vi.stubGlobal('GM_getValue', vi.fn().mockReturnValue(undefined));
-vi.stubGlobal('GM_setValue', vi.fn());
-vi.stubGlobal('GM_deleteValue', vi.fn());
-vi.stubGlobal('GM_listValues', vi.fn().mockReturnValue([]));
+type MockedSiteProtection = {
+  activate: ReturnType<typeof vi.fn>;
+  removeOverlays: ReturnType<typeof vi.fn>;
+};
 
-import { AutoEnableManager, getAutoEnableManager } from '@/core/AutoEnableManager';
+type MockedRuleStorage = {
+  getSitePreference: ReturnType<typeof vi.fn>;
+  setSitePreference: ReturnType<typeof vi.fn>;
+};
+
+type MockedRuleManager = {
+  initialize: ReturnType<typeof vi.fn>;
+  matchRule: ReturnType<typeof vi.fn>;
+};
+
+type MockedSectionMerger = {
+  merge: ReturnType<typeof vi.fn>;
+};
+
+type MockedRuleSaver = {
+  saveFromDetection: ReturnType<typeof vi.fn>;
+};
+
+const mockedRuleStorage: MockedRuleStorage = {
+  getSitePreference: vi.fn(),
+  setSitePreference: vi.fn(),
+};
+
+const mockedRuleManager: MockedRuleManager = {
+  initialize: vi.fn(async () => {}),
+  matchRule: vi.fn(async () => null),
+};
+
+const mockedProtection: MockedSiteProtection = {
+  activate: vi.fn(),
+  removeOverlays: vi.fn(),
+};
+
+const mockedSectionMerger: MockedSectionMerger = {
+  merge: vi.fn(),
+};
+
+const mockedRuleSaver: MockedRuleSaver = {
+  saveFromDetection: vi.fn(),
+};
+
+class MockDetectionEngine {
+  quickCheck = vi.fn(() => true);
+  detect = vi.fn(() => ({
+    results: {},
+    confidence: { overall: 0.7, reasons: ['mocked'] },
+  }));
+}
+
+vi.mock('@/core/rules/RuleStorage', () => ({
+  getRuleStorage: () => mockedRuleStorage,
+}));
+
+vi.mock('@/core/rules/RuleManager', () => ({
+  getRuleManager: () => mockedRuleManager,
+}));
+
+vi.mock('@/core/protection', () => ({
+  getSiteProtection: () => mockedProtection,
+}));
+
+vi.mock('@/core/auto-enable/SectionMerger', () => ({
+  createSectionMerger: () => mockedSectionMerger,
+}));
+
+vi.mock('@/core/auto-enable/RuleSaver', () => ({
+  createRuleSaver: () => mockedRuleSaver,
+}));
+
+vi.mock('@/core/detection', () => ({
+  DetectionEngine: MockDetectionEngine,
+}));
+
+vi.mock('@/core/parser', () => ({
+  Parser: class {
+    constructor(_options?: unknown) {}
+  },
+}));
 
 describe('AutoEnableManager', () => {
-  let manager: AutoEnableManager;
-  let dom: JSDOM;
-
   beforeEach(() => {
-    dom = new JSDOM(
-      `<!DOCTYPE html>
-      <html>
-        <head><title>第一章 测试</title></head>
-        <body>
-          <div id="content">
-            <h1>第一章 测试标题</h1>
-            <p>${'这是一段很长的小说内容，用于测试自动检测功能。'.repeat(50)}</p>
-          </div>
-          <a href="/chapter2.html">下一章</a>
-        </body>
-      </html>`,
-      {
-        url: 'https://example.com/novel/chapter1.html',
-        runScripts: 'dangerously',
-      }
-    );
+    vi.clearAllMocks();
 
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.location = dom.window.location;
+    mockedRuleStorage.getSitePreference.mockReturnValue(null);
+    mockedRuleStorage.setSitePreference.mockImplementation(() => {});
 
-    manager = new AutoEnableManager();
+    mockedRuleManager.initialize.mockResolvedValue(undefined);
+    mockedRuleManager.matchRule.mockResolvedValue(null);
+
+    mockedProtection.activate.mockImplementation(() => {});
+    mockedProtection.removeOverlays.mockImplementation(() => {});
+
+    mockedSectionMerger.merge.mockResolvedValue({
+      title: 'Chapter 1',
+      content: '<p>content</p>',
+      rawContent: '<p>raw</p>',
+      url: 'https://example.com/chapter/1',
+      prevUrl: null,
+      nextUrl: null,
+      indexUrl: null,
+      confidence: 1,
+      method: 'rule',
+    });
+
+    mockedRuleSaver.saveFromDetection.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
-  describe('constructor', () => {
-    it('should create instance with default options', () => {
-      const m = new AutoEnableManager();
-      expect(m).toBeInstanceOf(AutoEnableManager);
-    });
-
-    it('should accept custom options', () => {
-      const m = new AutoEnableManager({
-        minConfidence: 0.8,
-        autoLaunch: false,
-      });
-      expect(m).toBeInstanceOf(AutoEnableManager);
-    });
-  });
-
-  describe('setPromptCallback', () => {
-    it('should set prompt callback', () => {
-      const callback = vi.fn();
-      manager.setPromptCallback(callback);
-      // Callback is stored internally
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('setLaunchCallback', () => {
-    it('should set launch callback', () => {
-      const callback = vi.fn();
-      manager.setLaunchCallback(callback);
-      // Callback is stored internally
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('getDecision', () => {
-    it('should return undefined before check is run', () => {
-      // Note: Returns undefined, not null
-      expect(manager.getDecision()).toBeUndefined();
-    });
-  });
-
-  describe('reset', () => {
-    it('should reset manager state', () => {
-      manager.reset();
-      expect(manager.getDecision()).toBeUndefined();
-    });
-  });
-
-  describe('check', () => {
-    it('should detect chapter page', async () => {
-      const decision = await manager.check();
-
-      expect(decision).not.toBeNull();
-      expect(decision?.shouldEnable).toBeDefined();
-    });
-
-    it('should return cached decision on second call', async () => {
-      const decision1 = await manager.check();
-      const decision2 = await manager.check();
-
-      // Decision should be deeply equal (cached)
-      expect(decision2).toStrictEqual(decision1);
-    });
-
-    it('should include detection results', async () => {
-      const decision = await manager.check();
-
-      if (decision?.shouldEnable) {
-        expect(decision.detection).toBeDefined();
-        expect(decision.confidence).toBeGreaterThanOrEqual(0);
-      }
-    });
-  });
-
-  describe('shouldSkip', () => {
-    it('should return false by default', () => {
-      // Access private method through type assertion
-      const m = manager as unknown as { shouldSkip: () => boolean };
-      expect(m.shouldSkip()).toBe(false);
-    });
-  });
-
-  describe('createRuleFromDetection', () => {
-    it('should create rule from detection results when available', async () => {
-      const { createRuleSaver } = await import('@/core/auto-enable/RuleSaver');
-      const ruleSaver = createRuleSaver();
-
-      const decision = await manager.check();
-
-      if (decision?.detection) {
-        const rule = ruleSaver.createRuleFromDetection(
-          'example.com',
-          decision.detection as unknown as import('@/core/detection').DetectionEngineResult
-        );
-
-        if (rule) {
-          expect(rule).toHaveProperty('name');
-          expect(rule).toHaveProperty('match');
-          expect(rule).toHaveProperty('content');
-        }
-      } else {
-        // If no detection results, skip assertion
-        expect(true).toBe(true);
-      }
-    });
-  });
-
-  describe('execute', () => {
-    it('should execute detection flow', async () => {
-      const promptCallback = vi.fn().mockResolvedValue({ action: 'skip' });
-      manager.setPromptCallback(promptCallback);
-
-      await manager.execute();
-
-      // Either prompt is shown or auto-launch happens
-    });
-
-    it('should not execute twice', async () => {
-      const promptCallback = vi.fn().mockResolvedValue({ action: 'skip' });
-      manager.setPromptCallback(promptCallback);
-
-      await manager.execute();
-      await manager.execute();
-
-      // Second call should be no-op
-    });
-
-    it('should call launch callback on auto-launch', async () => {
-      const m = new AutoEnableManager({
-        minConfidence: 0, // Accept any confidence
-        autoLaunch: true,
-      });
-
-      const launchCallback = vi.fn();
-      m.setLaunchCallback(launchCallback);
-
-      const promptCallback = vi.fn().mockResolvedValue({ action: 'enable' });
-      m.setPromptCallback(promptCallback);
-
-      // Note: In test environment, auto-launch may not trigger
-      // because detection confidence may not meet threshold
-    });
-  });
-
-  describe('manualEnable', () => {
-    it('should enable reader manually when launch callback is set', async () => {
-      const launchCallback = vi.fn().mockResolvedValue(undefined);
-      manager.setLaunchCallback(launchCallback);
-
-      try {
-        await manager.manualEnable();
-        // If it doesn't throw, callback should have been called
-        expect(launchCallback).toHaveBeenCalled();
-      } catch {
-        // If GM API fails, we expect an error
-        expect(true).toBe(true);
-      }
-    });
-
-    it('should use detection results if available', async () => {
-      await manager.check();
-
-      const launchCallback = vi.fn().mockResolvedValue(undefined);
-      manager.setLaunchCallback(launchCallback);
-
-      try {
-        await manager.manualEnable();
-        const callArg = launchCallback.mock.calls[0]?.[0];
-        // Manual enable should pass parsed chapter
-        expect(callArg).toBeDefined();
-      } catch {
-        // GM API errors are expected in test environment
-        expect(true).toBe(true);
-      }
-    });
-  });
-
-  describe('getAutoEnableManager', () => {
-    it('should return singleton instance', () => {
-      const m1 = getAutoEnableManager();
-      const m2 = getAutoEnableManager();
-
-      expect(m1).toBe(m2);
-    });
-
-    it('should return AutoEnableManager instance', () => {
-      const m = getAutoEnableManager();
-      expect(m).toBeInstanceOf(AutoEnableManager);
-    });
-  });
-});
-
-describe('AutoEnableManager utility functions', () => {
-  let dom: JSDOM;
-
-  beforeEach(() => {
-    dom = new JSDOM(
-      `<!DOCTYPE html>
-      <html>
-        <body>
-          <a href="/chapter2.html">下一章</a>
-          <a href="/chapter1_2.html">下一页</a>
-        </body>
-      </html>`,
-      {
-        url: 'https://example.com/novel/chapter1.html',
-      }
-    );
-
-    globalThis.document = dom.window.document;
+  const createDoc = (url = 'https://example.com/chapter/1') => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', { url });
     globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.location = dom.window.location;
-  });
+    globalThis.document = dom.window.document;
+    return dom.window.document;
+  };
 
-  describe('isSectionLikeUrl', () => {
-    // These are module-level functions, test through manager behavior
-    it('should detect section-like URLs', () => {
-      // Section URLs typically have patterns like _2.html, -2.html, /2.html
-      const _sectionUrls = [
-        'https://example.com/chapter1_2.html',
-        'https://example.com/chapter1-2.html',
-        'https://example.com/chapter1/2.html',
-      ];
+  it('returns user-disabled decision and still shows floating button', async () => {
+    mockedRuleStorage.getSitePreference.mockReturnValue({ enabled: false, timestamp: Date.now() });
 
-      // Non-section URLs
-      const _normalUrls = [
-        'https://example.com/chapter2.html',
-        'https://example.com/book/chapter3.html',
-      ];
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
 
-      // Test behavior is implicitly tested through manager
+    const doc = createDoc('https://example.com/chapter/1');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: false,
+      method: 'user-disabled',
+      showFloatingButton: true,
     });
   });
 
-  describe('findNextChapterUrl', () => {
-    it('should find next chapter link', () => {
-      // The function is used internally by the manager
-      // Test through manager behavior
+  it('skips URLs matching skip patterns', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ skipPatterns: [/skip/i] });
+
+    const doc = createDoc('https://example.com/skip');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: false,
+      method: 'manual',
     });
+    expect(decision.reasons.join(' ')).toContain('skip');
+  });
+
+  it('returns manual decision when quickCheck fails', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const m = manager as unknown as { detectionEngine: MockDetectionEngine };
+    m.detectionEngine.quickCheck.mockReturnValue(false);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: false,
+      method: 'manual',
+    });
+  });
+
+  it('returns user-rule decision when rule match is from user', async () => {
+    mockedRuleManager.matchRule.mockResolvedValue({
+      rule: { id: 'user', match: { pattern: 'example', type: 'regex' }, meta: { source: 'user' } },
+      source: 'user',
+      matchedPattern: 'example',
+    });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const doc = createDoc('https://example.com/chapter/1');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: true,
+      method: 'user-rule',
+      confidence: 1,
+    });
+  });
+
+  it('returns builtin-rule decision when rule match is not from user', async () => {
+    mockedRuleManager.matchRule.mockResolvedValue({
+      rule: {
+        id: 'builtin',
+        match: { pattern: 'example', type: 'regex' },
+        meta: { source: 'builtin' },
+      },
+      source: 'builtin',
+      matchedPattern: 'example',
+    });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const doc = createDoc('https://example.com/chapter/1');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: true,
+      method: 'builtin-rule',
+      confidence: 1,
+    });
+  });
+
+  it('getDecision returns the last decision and reset clears it', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const doc = createDoc('https://example.com/chapter/1');
+    const decision = await manager.check(doc);
+
+    expect(manager.getDecision()).toEqual(decision);
+
+    manager.reset();
+    expect(manager.getDecision()).toBeUndefined();
+  });
+
+  it('execute returns early when shouldEnable is false', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ skipPatterns: [/./] });
+
+    const promptCallback = vi.fn();
+    const launchCallback = vi.fn();
+    manager.setPromptCallback(promptCallback);
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/anything');
+    await manager.execute(doc);
+
+    expect(promptCallback).not.toHaveBeenCalled();
+    expect(launchCallback).not.toHaveBeenCalled();
+  });
+
+  it('execute runs only once per instance', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ skipPatterns: [/./] });
+
+    const checkSpy = vi.spyOn(manager, 'check');
+
+    const doc = createDoc('https://example.com/anything');
+    await manager.execute(doc);
+    await manager.execute(doc);
+
+    expect(checkSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('execute auto-launches on rule match and activates protection', async () => {
+    mockedRuleManager.matchRule.mockResolvedValue({
+      rule: { id: 'user', match: { pattern: 'example', type: 'regex' }, meta: { source: 'user' } },
+      source: 'user',
+      matchedPattern: 'example',
+    });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: true });
+
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    await manager.execute(doc);
+
+    expect(mockedProtection.activate).toHaveBeenCalledTimes(1);
+    expect(mockedProtection.removeOverlays).toHaveBeenCalledTimes(1);
+    expect(mockedSectionMerger.merge).toHaveBeenCalledTimes(1);
+    expect(launchCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('execute prompts, saves rule, then launches for medium-confidence detection', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({
+      confidenceThreshold: 0.6,
+      autoLaunchThreshold: 0.9,
+      enableProtection: false,
+    });
+
+    const m = manager as unknown as { detectionEngine: MockDetectionEngine };
+    const detectionResult = {
+      results: { mocked: true },
+      confidence: { overall: 0.7, reasons: ['ok'] },
+    };
+    m.detectionEngine.detect.mockReturnValue(detectionResult);
+
+    const promptCallback = vi.fn(async () => ({ accepted: true, saveForDomain: true }));
+    const launchCallback = vi.fn();
+    manager.setPromptCallback(promptCallback);
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    await manager.execute(doc);
+
+    expect(promptCallback).toHaveBeenCalledTimes(1);
+    expect(mockedRuleSaver.saveFromDetection).toHaveBeenCalledWith(doc, detectionResult);
+    expect(mockedSectionMerger.merge).toHaveBeenCalledTimes(1);
+    expect(launchCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs and swallows launch errors', async () => {
+    mockedSectionMerger.merge.mockRejectedValueOnce(new Error('boom'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+
+    const m = manager as unknown as { detectionEngine: MockDetectionEngine };
+    m.detectionEngine.detect.mockReturnValue({
+      results: {},
+      confidence: { overall: 1.0, reasons: ['ok'] },
+    });
+
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    await manager.execute(doc);
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(launchCallback).not.toHaveBeenCalled();
+  });
+
+  it('manualEnable logs when site preference save fails (invalid URL)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = { location: { href: 'not a url' } } as unknown as Document;
+    await manager.manualEnable(doc);
+
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it('manualEnable activates protection and launches when merge succeeds', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: true });
+
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    await manager.manualEnable(doc);
+
+    expect(mockedProtection.activate).toHaveBeenCalledTimes(1);
+    expect(mockedProtection.removeOverlays).toHaveBeenCalledTimes(1);
+    expect(mockedSectionMerger.merge).toHaveBeenCalledTimes(1);
+    expect(launchCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('manualEnable logs and swallows merge errors', async () => {
+    mockedSectionMerger.merge.mockRejectedValueOnce(new Error('merge failed'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    await manager.manualEnable(doc);
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(launchCallback).not.toHaveBeenCalled();
   });
 });
 
-describe('AutoEnableManager with different page types', () => {
-  let manager: AutoEnableManager;
-
+describe('getAutoEnableManager', () => {
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
-  it('should detect non-chapter page', async () => {
-    const dom = new JSDOM(
-      `<!DOCTYPE html>
-      <html>
-        <head><title>小说目录</title></head>
-        <body>
-          <h1>小说目录</h1>
-          <ul>
-            <li><a href="/chapter1.html">第一章</a></li>
-            <li><a href="/chapter2.html">第二章</a></li>
-          </ul>
-        </body>
-      </html>`,
-      {
-        url: 'https://example.com/novel/index.html',
-      }
-    );
+  it('warns when called with options after singleton created', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.location = dom.window.location;
+    const { getAutoEnableManager } = await import('@/core/AutoEnableManager');
 
-    manager = new AutoEnableManager();
-    const decision = await manager.check();
+    getAutoEnableManager();
+    getAutoEnableManager({ confidenceThreshold: 0.5 });
 
-    // A table of contents page should have low confidence
-    expect(decision?.confidence).toBeLessThan(0.9);
-  });
-
-  it('should handle page with minimal content gracefully', async () => {
-    const dom = new JSDOM(
-      `<!DOCTYPE html>
-      <html>
-        <body>
-          <p>Short text</p>
-        </body>
-      </html>`,
-      {
-        url: 'https://example.com/page.html',
-      }
-    );
-
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.location = dom.window.location;
-
-    manager = new AutoEnableManager();
-    const decision = await manager.check();
-
-    // Minimal content should have low confidence or not be detected as chapter
-    expect(decision?.confidence).toBeLessThan(0.9);
-  });
-
-  it('should handle page with known content selectors', async () => {
-    const dom = new JSDOM(
-      `<!DOCTYPE html>
-      <html>
-        <body>
-          <div id="content">
-            <h1>第一章</h1>
-            ${'这是小说正文内容。'.repeat(100)}
-          </div>
-          <a href="/chapter2.html">下一章</a>
-        </body>
-      </html>`,
-      {
-        url: 'https://example.com/chapter1.html',
-      }
-    );
-
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.location = dom.window.location;
-
-    manager = new AutoEnableManager();
-    const decision = await manager.check();
-
-    // Page with #content selector should be detected
-    expect(decision?.shouldEnable).toBe(true);
-    expect(decision?.confidence).toBeGreaterThan(0.5);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
   });
 });

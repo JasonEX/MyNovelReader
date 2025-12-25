@@ -1478,7 +1478,7 @@ export const useReaderStore = defineStore('reader', () => {
     await applyTocConversion(currentConversionMode.value);
   }
 
-  async function ensureIndexUrl(): Promise<string | null> {
+  async function ensureIndexUrl(): Promise<string | undefined> {
     const current = chapter.value;
     const currentUrl = current?.url || '';
     const existing = current?.indexUrl;
@@ -1491,12 +1491,12 @@ export const useReaderStore = defineStore('reader', () => {
       return existing;
     }
 
-    if (!currentUrl) return null;
+    if (!currentUrl) return undefined;
 
     try {
       const parser = getParser();
       const detected = parser.detect(document, currentUrl).results.navigation.index?.url;
-      if (!detected) return null;
+      if (!detected) return undefined;
 
       const normalized = normalizeUrlForFetch(detected);
       for (const entry of chapters.value) {
@@ -1513,7 +1513,7 @@ export const useReaderStore = defineStore('reader', () => {
       return normalized;
     } catch (e) {
       console.error('[MNR] Failed to detect indexUrl:', e);
-      return null;
+      return undefined;
     }
   }
 
@@ -1738,7 +1738,7 @@ export const useReaderStore = defineStore('reader', () => {
 
     try {
       if (typeof GM_getValue !== 'undefined') {
-        const stored = GM_getValue(`mnr_cache_${bookId}`, null);
+        const stored = GM_getValue<string | null>(`mnr_cache_${bookId}`, null);
         if (stored) {
           const data: PersistedBookCache = JSON.parse(stored as string);
 

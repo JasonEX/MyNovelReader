@@ -61,6 +61,10 @@ export interface TitleConfig {
   selector?: string;
   /** Regex pattern to extract from document.title */
   pattern?: string;
+  /** Capture group index for chapter title (default: 1) */
+  patternIndex?: number;
+  /** Capture group index for book title (optional) */
+  bookPatternIndex?: number;
   /** Cleanup pattern */
   replace?: string;
   /** Book title selector */

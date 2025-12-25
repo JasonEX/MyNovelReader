@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted, watch } from 'vue';
+import { generateCssSelector } from '@/core/utils';
 
 // Types
 export type PickerMode = 'content' | 'next' | 'prev' | 'index' | 'title' | 'remove';
@@ -110,90 +111,8 @@ const elementTag = computed(() => {
 
 const generatedSelector = computed(() => {
   if (!hoveredElement.value) return '';
-  return generateSelector(hoveredElement.value);
+  return generateCssSelector(hoveredElement.value, { maxDepth: 5, allowClassCombination: true });
 });
-
-// Selector generation
-function generateSelector(element: Element): string {
-  // Try ID first
-  if (element.id) {
-    const escaped = cssEscape(element.id);
-    return `#${escaped}`;
-  }
-
-  // Try unique class
-  if (element.className && typeof element.className === 'string') {
-    const classes = element.className
-      .trim()
-      .split(/\s+/)
-      .filter(c => c.length > 0);
-    for (const cls of classes) {
-      const selector = `.${cssEscape(cls)}`;
-      try {
-        if (document.querySelectorAll(selector).length === 1) {
-          return selector;
-        }
-      } catch {
-        // Invalid selector
-      }
-    }
-
-    // Try class combination
-    if (classes.length >= 2) {
-      const selector = classes
-        .slice(0, 3)
-        .map(c => `.${cssEscape(c)}`)
-        .join('');
-      try {
-        if (document.querySelectorAll(selector).length === 1) {
-          return selector;
-        }
-      } catch {
-        // Invalid selector
-      }
-    }
-  }
-
-  // Build path selector
-  return buildPathSelector(element);
-}
-
-function buildPathSelector(element: Element): string {
-  const path: string[] = [];
-  let current: Element | null = element;
-
-  while (current && current !== document.body && path.length < 5) {
-    let selector = current.tagName.toLowerCase();
-
-    if (current.id) {
-      selector = `#${cssEscape(current.id)}`;
-      path.unshift(selector);
-      break;
-    }
-
-    // Add nth-child if needed
-    const parent = current.parentElement;
-    if (parent) {
-      const siblings = Array.from(parent.children).filter(c => c.tagName === current!.tagName);
-      if (siblings.length > 1) {
-        const index = siblings.indexOf(current) + 1;
-        selector += `:nth-child(${index})`;
-      }
-    }
-
-    path.unshift(selector);
-    current = parent;
-  }
-
-  return path.join(' > ');
-}
-
-function cssEscape(str: string): string {
-  if (typeof globalThis.CSS !== 'undefined' && globalThis.CSS.escape) {
-    return globalThis.CSS.escape(str);
-  }
-  return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
-}
 
 // Event handlers
 function handleMouseMove(e: MouseEvent) {
@@ -249,7 +168,7 @@ function handleClick(e: MouseEvent) {
   e.preventDefault();
   e.stopPropagation();
 
-  const selector = generateSelector(target);
+  const selector = generateCssSelector(target, { maxDepth: 5, allowClassCombination: true });
   emit('select', { element: target, selector });
   deactivate();
 }

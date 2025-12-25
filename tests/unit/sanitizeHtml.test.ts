@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sanitizeHtml, sanitizeUrl } from '@/core/utils';
+import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 
 describe('sanitizeUrl', () => {
@@ -80,5 +81,55 @@ describe('sanitizeHtml (basicSanitize fallback)', () => {
     const result = sanitizeHtml(html);
     expect(result).not.toContain('style=');
     expect(result).toContain('>x<');
+  });
+
+  it('unwraps <form> but preserves its content', () => {
+    const html = '<form action="/submit"><p>Form content</p></form>';
+    const result = sanitizeHtml(html);
+    expect(result).toContain('Form content');
+    expect(result).not.toContain('<form');
+  });
+
+  it('removes event handlers and dangerous href/src protocols', () => {
+    const html =
+      '<a href="javascript:alert(1)" onclick="evil()">x</a>' +
+      '<img src="vbscript:msgbox(1)" onerror="evil()" />';
+
+    const result = sanitizeHtml(html);
+
+    expect(result).not.toContain('onclick=');
+    expect(result).not.toContain('onerror=');
+    expect(result).not.toContain('href="javascript:');
+    expect(result).not.toContain('src="vbscript:');
+  });
+});
+
+describe('sanitizeHtml (DOMPurify path)', () => {
+  it('removes unsafe data:image SVG sources from img via hook', () => {
+    const svg = 'data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+PC9zdmc+';
+    const html = `<img src="${svg}" />`;
+    const result = sanitizeHtml(html);
+    expect(result).not.toContain('data:image/svg+xml');
+  });
+
+  it('falls back to basicSanitize when DOMPurify throws', () => {
+    const spy = vi.spyOn(DOMPurify, 'sanitize').mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    const html = '<p>ok</p><script>alert(1)</script>';
+    const result = sanitizeHtml(html);
+
+    expect(result).toContain('<p>ok</p>');
+    expect(result).not.toContain('<script>');
+
+    spy.mockRestore();
+  });
+
+  it('pre-sanitizes SVG content by stripping on* handlers', () => {
+    const html = '<svg onload="alert(1)"><circle></circle></svg>';
+    const result = sanitizeHtml(html);
+    expect(result).not.toContain('onload=');
+    expect(result).toContain('<svg');
   });
 });

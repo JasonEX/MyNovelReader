@@ -3,6 +3,7 @@
  */
 
 export { cssEscape } from './cssEscape';
+export { generateCssSelector } from './selectorUtils';
 export {
   normalizeAbsoluteUrl,
   joinHtml,

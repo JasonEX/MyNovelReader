@@ -10,7 +10,7 @@ import {
   NEGATIVE_PATTERNS,
   POSITIVE_PATTERNS,
 } from './types';
-import { cssEscape } from '@/core/utils';
+import { generateCssSelector } from '@/core/utils';
 
 /** Scoring weights for content detection */
 const WEIGHTS = {
@@ -269,57 +269,7 @@ export class ContentDetector {
    * Generate a CSS selector for the element
    */
   generateSelector(element: Element): string {
-    // Try ID first
-    if (element.id) {
-      return `#${cssEscape(element.id)}`;
-    }
-
-    // Try unique class
-    const classes = Array.from(element.classList);
-    for (const cls of classes) {
-      try {
-        if (document.querySelectorAll(`.${cssEscape(cls)}`).length === 1) {
-          return `.${cssEscape(cls)}`;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    // Generate path-based selector
-    return this.generatePathSelector(element);
-  }
-
-  /**
-   * Generate a path-based selector (e.g., body > div:nth-of-type(2) > div)
-   */
-  private generatePathSelector(element: Element): string {
-    const path: string[] = [];
-    let current: Element | null = element;
-
-    while (current && current !== document.body && current !== document.documentElement) {
-      let segment = current.tagName.toLowerCase();
-
-      if (current.id) {
-        segment = `#${cssEscape(current.id)}`;
-        path.unshift(segment);
-        break;
-      }
-
-      const parent = current.parentElement;
-      if (parent) {
-        const siblings = Array.from(parent.children).filter(c => c.tagName === current!.tagName);
-        if (siblings.length > 1) {
-          const index = siblings.indexOf(current) + 1;
-          segment += `:nth-of-type(${index})`;
-        }
-      }
-
-      path.unshift(segment);
-      current = parent;
-    }
-
-    return path.join(' > ');
+    return generateCssSelector(element);
   }
 
   /**

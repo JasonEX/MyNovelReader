@@ -51,7 +51,7 @@ export class RuleSaver {
       meta: {
         source: 'user',
         autoLaunch: true,
-        createdAt: new Date().toISOString(),
+        created: Date.now(),
       },
     };
 
@@ -139,19 +139,18 @@ export class RuleSaver {
    * @returns Enhanced rule
    */
   enhanceRule(existingRule: SiteRule, detection: DetectionEngineResult): SiteRule {
-    const enhanced = { ...existingRule };
+    const enhanced: SiteRule = {
+      ...existingRule,
+      content: { ...existingRule.content },
+    };
     const content = detection.results.content;
     const navigation = detection.results.navigation;
     const title = detection.results.title;
     const section = detection.results.section;
 
     // Update content selector if detected and more specific
-    if (content.selector && !enhanced.content) {
-      enhanced.content = {};
-    }
     if (content.selector && content.selector !== '#content') {
-      enhanced.content = enhanced.content || {};
-      enhanced.content.selector = content.selector;
+      enhanced.content = { ...enhanced.content, selector: content.selector };
     }
 
     // Update navigation if missing
@@ -183,8 +182,8 @@ export class RuleSaver {
     }
 
     // Update metadata
-    enhanced.meta = enhanced.meta || {};
-    enhanced.meta.updatedAt = new Date().toISOString();
+    const source = enhanced.meta?.source ?? 'user';
+    enhanced.meta = { ...enhanced.meta, source, updated: Date.now() };
 
     return enhanced;
   }

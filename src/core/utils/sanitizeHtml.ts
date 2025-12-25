@@ -25,7 +25,7 @@ const SAFE_DATA_ATTR = [
  * - Protection against common XSS vectors
  */
 const ENHANCED_CONFIG: Config = {
-  USE_PROFILES: { html: true },
+  USE_PROFILES: { html: true, svg: true },
   // Allow `data:` URIs for <img> so base64 chapter images can render.
   ADD_DATA_URI_TAGS: ['img'],
   // Only allow specific, safe data attributes (not all)

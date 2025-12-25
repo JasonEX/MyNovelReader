@@ -2,6 +2,8 @@
  * URL and HTML utility functions
  */
 
+import { parseChapterSectionFromPathname } from './sectionPath';
+
 /**
  * Normalize absolute URL
  */
@@ -97,55 +99,12 @@ export function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
     const currentPath = current.pathname;
     const nextPath = next.pathname;
 
-    const parse = (pathname: string): { chapterId: string; section: number } | null => {
-      // /123_2.html or /123-2.html
-      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: match[1], section };
-        }
+    const c = parseChapterSectionFromPathname(currentPath);
+    const n = parseChapterSectionFromPathname(nextPath);
+    if (c && n && c.chapterKey === n.chapterKey) {
+      if (n.section === c.section + 1 && n.section > 1) {
+        return true;
       }
-
-      // /123/2.html
-      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: match[1], section };
-        }
-      }
-
-      // /123.html
-      match = pathname.match(/\/(\d+)\.html?$/i);
-      if (match) return { chapterId: match[1], section: 1 };
-
-      // Extensionless pagination: /{bookId}/{chapterId}/{page}
-      // Keep it conservative to avoid treating /{bookId}/{chapterNo} as section pages.
-      const parts = pathname.split('/').filter(Boolean);
-      if (parts.length >= 3) {
-        const pagePart = parts[parts.length - 1];
-        const chapterPart = parts[parts.length - 2];
-
-        if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
-          const numericSegments = parts.slice(0, -1).filter(p => /^\d{3,}$/.test(p));
-          if (numericSegments.length >= 2) {
-            return { chapterId: parts.slice(0, -1).join('/'), section: parseInt(pagePart, 10) };
-          }
-        }
-      }
-
-      // /{chapterId} (extensionless)
-      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-      if (match) return { chapterId: match[1], section: 1 };
-
-      return null;
-    };
-
-    const c = parse(currentPath);
-    const n = parse(nextPath);
-    if (c && n && c.chapterId === n.chapterId) {
-      if (n.section === c.section + 1 && n.section > 1) return true;
     }
 
     // Query-based pagination: /chapter.html?page=2 -> /chapter.html?page=3

@@ -331,6 +331,10 @@ let managerInstance: AutoEnableManager | null = null;
 export function getAutoEnableManager(options?: AutoEnableOptions): AutoEnableManager {
   if (!managerInstance) {
     managerInstance = new AutoEnableManager(options);
+  } else if (options) {
+    console.warn(
+      '[AutoEnableManager] getAutoEnableManager(options) called after the singleton was created; options are ignored.'
+    );
   }
   return managerInstance;
 }

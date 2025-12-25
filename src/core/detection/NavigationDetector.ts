@@ -4,8 +4,9 @@
  */
 
 import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
+import { generateCssSelector, isSectionLikeUrl } from '@/core/utils';
 import { NAV_PATTERNS, NavigationResult, NavLinkResult, SectionDetectionResult } from './types';
-import { cssEscape } from '@/core/utils';
+import { parseChapterSectionFromPathname } from '@/core/utils/sectionPath';
 
 /** URLs to ignore as navigation links */
 const INVALID_URL_PATTERNS = [
@@ -21,13 +22,6 @@ const INVALID_URL_PATTERNS = [
   /^https?:\/\/[^/]+\/?$/i, // Root domain only (e.g., https://www.qidian.com/)
   /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i, // /index.html, /home.php
   /^https?:\/\/[^/]+\/\?/i, // Root with query string (e.g., https://example.com/?ref=xxx)
-];
-
-/** Section URL patterns - indicates multi-page chapter */
-const _SECTION_URL_PATTERNS = [
-  /\/\d+[_-]\d+\.html?$/i, // /123_2.html or /123-2.html
-  /\/\d+\/\d+\.html?$/i, // /123/2.html
-  /[_-]\d+\.html?$/i, // anything_2.html
 ];
 
 export class NavigationDetector {
@@ -371,61 +365,6 @@ export class NavigationDetector {
     return null;
   }
 
-  private parseChapterSectionFromPath(
-    pathname: string
-  ): { chapterId: number; section: number } | null {
-    // 1) /123_2.html or /123-2.html
-    let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-    if (match) {
-      const section = parseInt(match[2], 10);
-      // Section/page number should be small; ignore patterns like /{bookId}/{chapterId}.html.
-      if (section >= 1 && section <= 99) {
-        return { chapterId: parseInt(match[1], 10), section };
-      }
-    }
-
-    // 2) /123/2.html
-    match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-    if (match) {
-      const section = parseInt(match[2], 10);
-      // Many sites use /{bookId}/{chapterId}.html; treat as section only when page number is small.
-      if (section >= 1 && section <= 99) {
-        return { chapterId: parseInt(match[1], 10), section };
-      }
-    }
-
-    // 3) /123.html
-    match = pathname.match(/\/(\d+)\.html?$/i);
-    if (match) {
-      return { chapterId: parseInt(match[1], 10), section: 1 };
-    }
-
-    // 4) Extensionless pagination: /{chapterId}/{page} (page is usually small: 1-2 digits)
-    const parts = pathname.split('/').filter(Boolean);
-    if (parts.length >= 3) {
-      const pagePart = parts[parts.length - 1];
-      const chapterPart = parts[parts.length - 2];
-
-      if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
-        const section = parseInt(pagePart, 10);
-        const numericSegments = parts.slice(0, -1).filter(p => /^\d{3,}$/.test(p));
-
-        // Require at least 2 "big" numeric segments to avoid misclassifying /{bookId}/{chapterNo}.
-        if (numericSegments.length >= 2 && section >= 1 && section <= 99) {
-          return { chapterId: parseInt(chapterPart, 10), section };
-        }
-      }
-    }
-
-    // 5) Extensionless chapter: /{chapterId}
-    match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-    if (match) {
-      return { chapterId: parseInt(match[1], 10), section: 1 };
-    }
-
-    return null;
-  }
-
   /**
    * Detect if current page is part of a multi-page chapter (分页章节)
    * This enables automatic section merging without manual rule configuration
@@ -533,15 +472,15 @@ export class NavigationDetector {
 
   /**
    * Extract section number from URL
-   * Returns { chapter, section } or null
+   * Returns { section } or null
    */
-  private extractSectionFromUrl(url: string): { chapter: number; section: number } | null {
+  private extractSectionFromUrl(url: string): { section: number } | null {
     try {
       const parsed = new URL(url);
-      const info = this.parseChapterSectionFromPath(parsed.pathname);
+      const info = parseChapterSectionFromPathname(parsed.pathname);
       if (!info) return null;
       if (info.section > 1) {
-        return { chapter: info.chapterId, section: info.section };
+        return { section: info.section };
       }
       return null;
     } catch {
@@ -568,17 +507,29 @@ export class NavigationDetector {
       const currentPath = current.pathname;
       const nextPath = next.pathname;
 
-      const currentInfo = this.parseChapterSectionFromPath(currentPath);
-      const nextInfo = this.parseChapterSectionFromPath(nextPath);
-      if (currentInfo && nextInfo) {
-        // Different chapter IDs => not a section transition
-        if (currentInfo.chapterId !== nextInfo.chapterId) {
-          return { isSection: false, confidence: 0 };
-        }
-        // Same chapter, consecutive page number => section transition
-        if (nextInfo.section === currentInfo.section + 1 && nextInfo.section > 1) {
+      // Fast path: strict section-like detection (includes query-based pagination).
+      if (isSectionLikeUrl(currentUrl, nextUrl)) {
+        const currentInfo = parseChapterSectionFromPathname(currentPath);
+        const nextInfo = parseChapterSectionFromPathname(nextPath);
+        if (
+          currentInfo &&
+          nextInfo &&
+          currentInfo.chapterKey === nextInfo.chapterKey &&
+          nextInfo.section === currentInfo.section + 1 &&
+          nextInfo.section > 1
+        ) {
           return { isSection: true, confidence: 0.95 };
         }
+
+        // Query-based (or non-path) pagination: reliable enough but slightly lower confidence.
+        return { isSection: true, confidence: 0.85 };
+      }
+
+      const currentInfo = parseChapterSectionFromPathname(currentPath);
+      const nextInfo = parseChapterSectionFromPathname(nextPath);
+      if (currentInfo && nextInfo && currentInfo.chapterKey !== nextInfo.chapterKey) {
+        // Different chapter => not a section transition; avoid similarity false positives like /123.html -> /999.html.
+        return { isSection: false, confidence: 0 };
       }
 
       // Pattern 3: URLs are very similar except for a number
@@ -716,55 +667,6 @@ export class NavigationDetector {
    * Generate a CSS selector for a link element
    */
   private generateSelector(element: Element): string {
-    // Prefer ID
-    if ((element as HTMLElement).id) {
-      return `#${cssEscape((element as HTMLElement).id)}`;
-    }
-
-    // Try unique class
-    const classList = Array.from(element.classList || []);
-    for (const cls of classList) {
-      try {
-        if (document.querySelectorAll(`.${cssEscape(cls)}`).length === 1) {
-          return `.${cssEscape(cls)}`;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    return this.generatePathSelector(element);
-  }
-
-  /**
-   * Generate a path-based selector (e.g., body > div:nth-of-type(2) > a)
-   */
-  private generatePathSelector(element: Element): string {
-    const path: string[] = [];
-    let current: Element | null = element;
-
-    while (current && current !== document.body && current !== document.documentElement) {
-      let segment = current.tagName.toLowerCase();
-
-      if ((current as HTMLElement).id) {
-        segment = `#${cssEscape((current as HTMLElement).id)}`;
-        path.unshift(segment);
-        break;
-      }
-
-      const parent = current.parentElement;
-      if (parent) {
-        const siblings = Array.from(parent.children).filter(c => c.tagName === current!.tagName);
-        if (siblings.length > 1) {
-          const index = siblings.indexOf(current) + 1;
-          segment += `:nth-of-type(${index})`;
-        }
-      }
-
-      path.unshift(segment);
-      current = parent;
-    }
-
-    return path.join(' > ');
+    return generateCssSelector(element);
   }
 }

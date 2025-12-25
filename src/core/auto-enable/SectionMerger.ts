@@ -104,22 +104,13 @@ export class SectionMerger {
     }
 
     // Merge sections
-    return this.mergeSections(
-      startDoc,
-      startUrl,
-      first,
-      section,
-      maxPages,
-      options.fetcher,
-      options.signal
-    );
+    return this.mergeSections(startUrl, first, section, maxPages, options.fetcher, options.signal);
   }
 
   /**
    * Merge multiple section pages into one chapter
    */
   private async mergeSections(
-    startDoc: Document,
     startUrl: string,
     first: ParsedChapter,
     section: SectionInfo | undefined,

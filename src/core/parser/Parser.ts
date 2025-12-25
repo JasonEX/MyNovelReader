@@ -110,9 +110,10 @@ export class Parser {
     // Fallback to detection-based navigation ONLY if rule doesn't define that nav type
     // If rule defines a selector but it doesn't match, that means the link doesn't exist
     // (e.g., first chapter has no prev link)
-    const hasRulePrev = rule.navigation?.prev && rule.navigation.prev !== false;
-    const hasRuleNext = rule.navigation?.next && rule.navigation.next !== false;
-    const hasRuleIndex = rule.navigation?.index && rule.navigation.index !== false;
+    // Note: `false` means "explicitly disable", so treat it as defined and do not fall back.
+    const hasRulePrev = rule.navigation?.prev !== undefined;
+    const hasRuleNext = rule.navigation?.next !== undefined;
+    const hasRuleIndex = rule.navigation?.index !== undefined;
 
     if (!navigation.next || !navigation.prev || !navigation.index) {
       const detectedNav = this.detectionEngine.detect(doc, url).results.navigation;
@@ -263,20 +264,23 @@ export class Parser {
       return null;
     };
 
-    if (rule.navigation?.prev && rule.navigation.prev !== false) {
-      const el = this.selectElement(doc, rule.navigation.prev);
+    const prevSelector = rule.navigation?.prev;
+    if (typeof prevSelector === 'string' && prevSelector.trim()) {
+      const el = this.selectElement(doc, prevSelector);
       const anchor = asAnchor(el);
       if (anchor) result.prev = anchor.href;
     }
 
-    if (rule.navigation?.next && rule.navigation.next !== false) {
-      const el = this.selectElement(doc, rule.navigation.next);
+    const nextSelector = rule.navigation?.next;
+    if (typeof nextSelector === 'string' && nextSelector.trim()) {
+      const el = this.selectElement(doc, nextSelector);
       const anchor = asAnchor(el);
       if (anchor) result.next = anchor.href;
     }
 
-    if (rule.navigation?.index && rule.navigation.index !== false) {
-      const el = this.selectElement(doc, rule.navigation.index);
+    const indexSelector = rule.navigation?.index;
+    if (typeof indexSelector === 'string' && indexSelector.trim()) {
+      const el = this.selectElement(doc, indexSelector);
       const anchor = asAnchor(el);
       if (anchor) result.index = anchor.href;
     }

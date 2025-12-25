@@ -28,7 +28,7 @@ class GMStorageDriver implements RuleStorageDriver {
 
   async get(key: string): Promise<SiteRule | null> {
     try {
-      const data = GM_getValue(this.prefix + key, null);
+      const data = GM_getValue<string | null>(this.prefix + key, null);
       return data ? JSON.parse(data as string) : null;
     } catch {
       return null;
@@ -58,7 +58,7 @@ class GMStorageDriver implements RuleStorageDriver {
   }
 
   async getAllKeys(): Promise<string[]> {
-    const allKeys = GM_listValues() as string[];
+    const allKeys = GM_listValues();
     return allKeys.filter(k => k.startsWith(this.prefix)).map(k => k.slice(this.prefix.length));
   }
 
@@ -219,17 +219,17 @@ export class RuleStorage {
    * Save a user rule for a domain
    */
   async saveUserRule(domain: string, rule: SiteRule): Promise<void> {
-    // Ensure metadata is set
-    rule.meta = {
-      ...rule.meta,
-      source: 'user',
-      updated: Date.now(),
+    const ruleToSave: SiteRule = {
+      ...rule,
+      id: domain,
+      meta: {
+        ...rule.meta,
+        source: 'user',
+        updated: Date.now(),
+      },
     };
 
-    // Ensure ID matches domain
-    rule.id = domain;
-
-    await this.driver.set(domain, rule);
+    await this.driver.set(domain, ruleToSave);
   }
 
   /**
@@ -273,10 +273,23 @@ export class RuleStorage {
    * Import rules from JSON
    */
   async importRules(json: string, overwrite: boolean = false): Promise<number> {
-    const rules: SiteRule[] = JSON.parse(json);
+    let rules: unknown;
+    try {
+      rules = JSON.parse(json);
+    } catch (e) {
+      console.error('[MNR] Failed to parse imported rules JSON:', e);
+      return 0;
+    }
+
+    if (!Array.isArray(rules)) {
+      console.error('[MNR] Imported rules JSON must be an array.');
+      return 0;
+    }
     let count = 0;
 
-    for (const rule of rules) {
+    for (const rawRule of rules) {
+      if (!rawRule || typeof rawRule !== 'object') continue;
+      const rule = rawRule as SiteRule;
       if (!rule.id) continue;
 
       if (!overwrite) {
@@ -298,7 +311,7 @@ export class RuleStorage {
    */
   getSitePreference(domain: string): SitePreference | null {
     try {
-      const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+      const stored = GM_getValue<unknown>(STORAGE_KEYS.SITE_PREFERENCES, {});
       const prefs = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
         string,
         SitePreference
@@ -314,7 +327,7 @@ export class RuleStorage {
    */
   setSitePreference(domain: string, pref: SitePreference): void {
     try {
-      const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+      const stored = GM_getValue<unknown>(STORAGE_KEYS.SITE_PREFERENCES, {});
       const prefs = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
         string,
         SitePreference
@@ -331,7 +344,7 @@ export class RuleStorage {
    */
   deleteSitePreference(domain: string): void {
     try {
-      const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+      const stored = GM_getValue<unknown>(STORAGE_KEYS.SITE_PREFERENCES, {});
       const prefs = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
         string,
         SitePreference
@@ -356,9 +369,3 @@ export function getRuleStorage(): RuleStorage {
   }
   return storageInstance;
 }
-
-// Declare GM functions for TypeScript
-declare function GM_getValue(key: string, defaultValue?: unknown): unknown;
-declare function GM_setValue(key: string, value: unknown): void;
-declare function GM_deleteValue(key: string): void;
-declare function GM_listValues(): unknown[];

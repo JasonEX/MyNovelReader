@@ -139,6 +139,15 @@ export async function initialize(): Promise<void> {
  * Run the auto-enable flow
  */
 async function runAutoEnable(): Promise<void> {
+  const configStore = useConfigStore(pinia!);
+  const protectionOptions = buildProtectionOptions(configStore.protection);
+
+  // Ensure the singleton is initialized with the current runtime options even if we skip auto-enable.
+  const manager = getAutoEnableManager({
+    enableProtection: true,
+    protectionOptions,
+  });
+
   // Check if we should skip auto-enable (e.g., after exiting reader and navigating to new chapter)
   const skipFlag = sessionStorage.getItem('mnr_skip_auto_enable');
   if (skipFlag) {
@@ -153,14 +162,6 @@ async function runAutoEnable(): Promise<void> {
       return;
     }
   }
-
-  const configStore = useConfigStore(pinia!);
-  const protectionOptions = buildProtectionOptions(configStore.protection);
-
-  const manager = getAutoEnableManager({
-    enableProtection: true,
-    protectionOptions,
-  });
 
   // First, check the decision to handle user-disabled case
   const decision = await manager.check(document);

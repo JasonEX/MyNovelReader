@@ -2,13 +2,18 @@
  * Unit tests for URL utilities
  */
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getSectionBaseUrl,
   isSectionLikeUrl,
   normalizeAbsoluteUrl,
   normalizeCiwemaoChapterUrl,
 } from '@/core/utils/urlUtils';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('normalizeAbsoluteUrl', () => {
   it('should resolve relative URL with provided base', () => {
@@ -29,6 +34,24 @@ describe('normalizeAbsoluteUrl', () => {
     } finally {
       baseEl.remove();
     }
+  });
+
+  it('tries the next base candidate when one is invalid', () => {
+    expect(normalizeAbsoluteUrl('/a', 'http://[invalid')).toContain('/a');
+  });
+
+  it('resolves absolute URLs when base/document/location are unavailable', () => {
+    vi.stubGlobal('document', undefined);
+    vi.stubGlobal('location', undefined);
+    expect(normalizeAbsoluteUrl('https://example.com/a')).toBe('https://example.com/a');
+  });
+
+  it('returns input when URL parsing fails everywhere', () => {
+    vi.stubGlobal('document', undefined);
+    vi.stubGlobal('location', undefined);
+
+    const href = 'not a url';
+    expect(normalizeAbsoluteUrl(href)).toBe(href);
   });
 });
 
@@ -58,6 +81,9 @@ describe('isSectionLikeUrl', () => {
     );
     expect(
       isSectionLikeUrl('https://example.com/123_2.html', 'https://example.com/123_3.html')
+    ).toBe(true);
+    expect(
+      isSectionLikeUrl('https://example.com/123/1.html', 'https://example.com/123/2.html')
     ).toBe(true);
   });
 
@@ -95,6 +121,16 @@ describe('isSectionLikeUrl', () => {
     ).toBe(false);
   });
 
+  it('returns false when query-based pagination info is missing', () => {
+    expect(
+      isSectionLikeUrl('https://example.com/chapter.html', 'https://example.com/chapter.html?cid=1')
+    ).toBe(false);
+  });
+
+  it('returns false for malformed URLs without throwing', () => {
+    expect(isSectionLikeUrl('not a url', 'https://example.com/123_2.html')).toBe(false);
+  });
+
   it('detects extensionless pagination only when URL shape is unambiguous', () => {
     expect(
       isSectionLikeUrl(
@@ -118,6 +154,16 @@ describe('getSectionBaseUrl', () => {
     expect(getSectionBaseUrl('https://example.com/xs_bkt9oo/89812/1358/2')).toBe(
       'https://example.com/xs_bkt9oo/89812/1358/1'
     );
+  });
+
+  it('normalizes query-based pagination to the first page', () => {
+    expect(getSectionBaseUrl('https://example.com/chapter.html?page=2')).toBe(
+      'https://example.com/chapter.html?page=1'
+    );
+  });
+
+  it('returns null for malformed URLs without throwing', () => {
+    expect(getSectionBaseUrl('not a url')).toBe(null);
   });
 
   it('does not normalize ambiguous /{bookId}/{chapterNo} patterns', () => {

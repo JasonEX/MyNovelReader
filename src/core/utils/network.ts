@@ -128,8 +128,9 @@ function resolveAndValidateHttpUrl(url: string, base?: string): string | null {
     const u = new URL(resolved);
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
 
-    // Block requests to private network hosts unless the current page is on the same host.
-    // This mitigates GM_xmlhttpRequest bypassing CORS and accidentally leaking intranet content.
+    // Security: GM_xmlhttpRequest bypasses browser CORS and can be abused to fetch intranet/localhost content.
+    // We block private-network/loopback/link-local hosts (both IPv4 and IPv6) unless the current page is on the
+    // same host, which keeps same-origin "chapter fetch" working while mitigating accidental data leakage.
     if (isPrivateNetworkHost(u.hostname)) {
       const baseUrl = parseHttpUrl(base || '') || parseHttpUrl(getDefaultBaseUrl() || '');
       if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
@@ -314,27 +315,47 @@ export function fetchAndParseUrl(
         if (status >= 200 && status < 300) {
           const html = await response.text();
           const parsed = parseHtmlToDoc(html, finalUrl);
-          return { ...parsed, status, finalUrl };
+          const result: FetchAndParseResult = { ...parsed, status, finalUrl };
+          return result;
         }
 
         console.error('[MNR] HTTP error:', status);
-        return {
+        const result: FetchAndParseResult = {
           doc: null,
           status,
           finalUrl,
           error: 'http',
         };
+        return result;
       })
       .catch(err => {
         if (aborted) {
-          return { doc: null, status: null, finalUrl: null, error: 'abort' };
+          const result: FetchAndParseResult = {
+            doc: null,
+            status: null,
+            finalUrl: null,
+            error: 'abort',
+          };
+          return result;
         }
         if (timedOut) {
           console.error('[MNR] Request timeout');
-          return { doc: null, status: null, finalUrl: null, error: 'timeout' };
+          const result: FetchAndParseResult = {
+            doc: null,
+            status: null,
+            finalUrl: null,
+            error: 'timeout',
+          };
+          return result;
         }
         console.error('[MNR] Network error:', err);
-        return { doc: null, status: null, finalUrl: null, error: 'network' };
+        const result: FetchAndParseResult = {
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: 'network',
+        };
+        return result;
       })
       .finally(() => {
         if (timeoutTimer) {

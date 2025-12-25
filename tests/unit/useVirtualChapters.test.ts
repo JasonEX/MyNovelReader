@@ -1,10 +1,8 @@
-/* eslint-disable sort-imports */
-import { useVirtualChapters } from '@/ui/composables/useVirtualChapters';
-import type { ChapterEntry } from '@/ui/stores/reader';
-import { describe } from 'vitest';
-import { expect } from 'vitest';
-import { it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ref } from 'vue';
+
+import type { ChapterEntry } from '@/ui/stores/reader';
+import { useVirtualChapters } from '@/ui/composables/useVirtualChapters';
 
 function createChapter(url: string): ChapterEntry {
   return {

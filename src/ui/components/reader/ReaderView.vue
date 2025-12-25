@@ -161,9 +161,7 @@ const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
 const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
 
 // === Utility: Throttle function ===
-type AnyFn = (...args: unknown[]) => void; // eslint-disable-line no-unused-vars
-
-function throttle<T extends AnyFn>(fn: T, delay: number): T {
+function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   let lastCall = 0;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 

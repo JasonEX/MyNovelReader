@@ -2,7 +2,7 @@
  * Unit tests for ContentProcessor
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentProcessor } from '@/core/parser/ContentProcessor';
 import { JSDOM } from 'jsdom';
 
@@ -17,6 +17,10 @@ describe('ContentProcessor', () => {
     doc = dom.window.document;
     // Set global document for tests that need it
     globalThis.document = doc;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('constructor', () => {
@@ -207,6 +211,225 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('无法显示本章节全部内容');
     });
 
+    it('replaces truncated visible prefix with decoded p_key when head matches but tail is missing', () => {
+      const decoded = `<p>${'前言'.repeat(40)}</p>` + `<p>${'结尾'.repeat(40)}</p>` + '<p>END</p>';
+      const pKey = Buffer.from(decoded, 'utf8').toString('base64');
+      const visiblePrefix = `前言`.repeat(40);
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>${visiblePrefix}</p>
+              <a href="#">加载更多</a>
+            </div>
+            <script>const p_key="${pKey}";</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('前言');
+      expect(result).toContain('结尾');
+      expect(result).toContain('END');
+      expect(result).not.toContain('加载更多');
+    });
+
+    it('falls back to appending decoded text when insertAdjacentHTML fails', () => {
+      const decoded = '<p>隐藏正文一。</p><p>隐藏正文二。</p>';
+      const pKey = Buffer.from(decoded, 'utf8').toString('base64');
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <a href="#">加载更多</a>
+            </div>
+            <script>const p_key='${pKey}';</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const insertSpy = vi
+        .spyOn(dom.window.Element.prototype, 'insertAdjacentHTML')
+        .mockImplementation(() => {
+          throw new Error('insert failed');
+        });
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('开头正文');
+      expect(result).toContain('隐藏正文一');
+      expect(result).toContain('隐藏正文二');
+
+      insertSpy.mockRestore();
+    });
+
+    it('decodes p_key in Node fallback when atob is unavailable', () => {
+      vi.stubGlobal('atob', undefined);
+      const decoded = '<p>隐藏正文一。</p><p>隐藏正文二。</p>';
+      const pKey = Buffer.from(decoded, 'utf8').toString('base64');
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <a href="#">加载更多</a>
+            </div>
+            <script>const p_key='${pKey}';</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('隐藏正文一');
+      expect(result).toContain('隐藏正文二');
+    });
+
+    it('does not expand load-more content when p_key is missing', () => {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <a href="#">加载更多</a>
+            </div>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('开头正文');
+      expect(result).not.toContain('隐藏正文');
+    });
+
+    it('falls back to Buffer decoding when atob throws', () => {
+      vi.stubGlobal('atob', () => {
+        throw new Error('boom');
+      });
+
+      const decoded = '<p>隐藏正文一。</p><p>隐藏正文二。</p>';
+      const pKey = Buffer.from(decoded, 'utf8').toString('base64');
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <a href="#">加载更多</a>
+            </div>
+            <script>const p_key='${pKey}';</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('开头正文');
+      expect(result).toContain('隐藏正文一');
+      expect(result).toContain('隐藏正文二');
+      expect(result).not.toContain('加载更多');
+    });
+
+    it('ignores p_key when Buffer.from throws', () => {
+      vi.stubGlobal('atob', undefined);
+
+      const decoded = '<p>隐藏正文。</p>';
+      const pKey = Buffer.from(decoded, 'utf8').toString('base64');
+
+      const bufferSpy = vi.spyOn(Buffer, 'from').mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <a href="#">加载更多</a>
+            </div>
+            <script>const p_key='${pKey}';</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('开头正文');
+      expect(result).not.toContain('隐藏正文');
+
+      bufferSpy.mockRestore();
+    });
+
+    it('ignores p_key when decoding fails (missing Buffer fallback)', () => {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>开头正文。</p>
+              <a href="#">加载更多</a>
+            </div>
+            <script>const p_key='AA==';</script>
+          </body>
+        </html>
+      `;
+
+      dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
+      doc = dom.window.document;
+      globalThis.document = doc;
+
+      vi.stubGlobal('atob', undefined);
+      vi.stubGlobal('Buffer', undefined);
+
+      const element = doc.querySelector('.content')!;
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('开头正文');
+      expect(result).not.toContain('隐藏正文');
+    });
+
     it('should remove common reader toolbars/navigation mixed into content', () => {
       processor.setOptions({ chapterTitle: '第1256章 万宝' });
       const element = doc.createElement('div');
@@ -254,6 +477,49 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('温馨提示');
       expect(result).not.toContain('第1256章');
       expect(result).not.toMatch(/<p>\s*(?:&gt;|>)\s*<\/p>/i);
+    });
+
+    it('removes keyboard-tip blocks even when only the 按 trigger exists', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = `
+        <div>温馨提示：按键返回</div>
+        <p>正文内容。</p>
+      `;
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('正文内容');
+      expect(result).not.toContain('温馨提示');
+    });
+
+    it('removes toolbar/nav blocks when labels are plain text (no anchors)', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = `
+        <div>上一章 目录 下一章</div>
+        <div>投票推荐 加入书签 小说报错</div>
+        <p>正文内容。</p>
+      `;
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('正文内容');
+      expect(result).not.toContain('上一章');
+      expect(result).not.toContain('投票推荐');
+    });
+
+    it('keeps non-UI clickables and does not treat plain 列表 as body content', () => {
+      processor.setOptions({ chapterTitle: '第一章' });
+      const element = doc.createElement('div');
+      element.innerHTML = `
+        <a href="#">列表</a>
+        <a href="#">Hello</a>
+        <p>正文内容开始。</p>
+      `;
+
+      const result = processor.process(element, doc);
+      expect(result).toContain('正文内容开始');
+      expect(result).toContain('Hello');
+      expect(result).not.toContain('列表');
     });
   });
 
@@ -401,11 +667,7 @@ describe('ContentProcessor', () => {
   });
 
   describe('fixImages', () => {
-    // Note: In JSDOM environment, img tags may be stripped during innerHTML processing
-    // These tests are skipped because they require a real browser environment
-    // The fixImages functionality should be tested in E2E tests instead
-
-    it.skip('should preserve images with existing src attribute', () => {
+    it('preserves existing src images and centers them by default', () => {
       const element = doc.createElement('div');
       element.innerHTML = '<p>Text</p><img src="https://example.com/existing.jpg" />';
 
@@ -413,30 +675,35 @@ describe('ContentProcessor', () => {
 
       // Images with existing src should be preserved and have centering styles added
       expect(result).toContain('example.com/existing.jpg');
+      expect(result).toContain('margin: 10px auto');
     });
 
-    it.skip('should fix lazy loaded images when they have src attribute', () => {
+    it('fixes placeholder src like data:/javascript:/vbscript: via common lazy attributes', () => {
       const element = doc.createElement('div');
-      // Image needs src attribute for fixImages to work on it
       element.innerHTML =
-        '<p>Text</p><img src="placeholder.gif" data-src="https://example.com/image.jpg" />';
+        '<p>Text</p>' +
+        '<img src="data:image/png;base64,AA==" data-original="https://example.com/a.jpg" />' +
+        '<img src="javascript:alert(1)" data-src="https://example.com/b.jpg" />' +
+        '<img src="vbscript:msgbox(1)" data-url="https://example.com/c.jpg" />';
 
       const result = processor.process(element, doc);
 
-      // The data-src value should replace the src
-      expect(result).toContain('https://example.com/image.jpg');
+      expect(result).toContain('src="https://example.com/a.jpg"');
+      expect(result).toContain('src="https://example.com/b.jpg"');
+      expect(result).toContain('src="https://example.com/c.jpg"');
     });
 
-    it.skip('should not fix images when fixImages is false', () => {
+    it('does not fix images when fixImages is false', () => {
       processor.setOptions({ fixImages: false });
       const element = doc.createElement('div');
       element.innerHTML =
-        '<p>Text</p><img src="placeholder.gif" data-src="https://example.com/image.jpg" />';
+        '<p>Text</p><img src="about:blank" data-src="https://example.com/image.jpg" />';
 
       const result = processor.process(element, doc);
 
       // Should not have src from data-src when fixImages is false
-      expect(result).toContain('placeholder.gif');
+      expect(result).toContain('data-src="https://example.com/image.jpg"');
+      expect(result).not.toMatch(/\ssrc="https:\/\/example\.com\/image\.jpg"/);
     });
   });
 
@@ -481,6 +748,38 @@ describe('ContentProcessor', () => {
       const result = processor.process(element, doc);
 
       expect(result).toContain('正文内容');
+    });
+
+    it('removes near-duplicate title lines using fuzzy match', () => {
+      processor.setOptions({ chapterTitle: '第1256章 天幕并没有丝毫变动' });
+      const element = doc.createElement('div');
+      element.innerHTML = '<p>第1256章 天幕并没有絲毫变动</p>' + '<p>正文内容开始。</p>';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('正文内容开始');
+      expect(result).not.toContain('絲毫');
+    });
+
+    it('removes near-duplicate book title lines using fuzzy match', () => {
+      processor.setOptions({ bookTitle: '元婴修仙传' });
+      const element = doc.createElement('div');
+      element.innerHTML = '<p>元婴修仙傳</p><p>正文内容</p>';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('正文内容');
+      expect(result).not.toContain('元婴修仙傳');
+    });
+
+    it('removes generic chapter title patterns even without chapterTitle', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = '<p>第12章</p><p>正文内容</p>';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('正文内容');
+      expect(result).not.toContain('第12章');
     });
 
     it('should remove author line', () => {
@@ -625,11 +924,7 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('Second');
     });
 
-    // Note: :contains selector requires smartQueryAll fallback, which may have different behavior
-    // in JSDOM vs real browser environments. These tests document the expected behavior.
-    it.skip('should handle :contains("text") selector', () => {
-      // :contains is not a standard CSS selector, so native querySelectorAll fails
-      // smartQueryAll should handle it as a fallback
+    it('should handle :contains("text") selector', () => {
       processor.setOptions({ removeSelectors: 'p:contains("广告")' });
       const element = doc.createElement('div');
       element.innerHTML = '<p>正文内容</p><p>这是广告内容</p><p>更多内容</p>';
@@ -642,7 +937,7 @@ describe('ContentProcessor', () => {
       expect(result).toContain('更多内容');
     });
 
-    it.skip('should handle chained :contains selectors', () => {
+    it('should handle chained :contains selectors', () => {
       processor.setOptions({ removeSelectors: 'div:contains("广告"):contains("点击")' });
       const element = doc.createElement('div');
       element.innerHTML = `
@@ -657,6 +952,17 @@ describe('ContentProcessor', () => {
       expect(result).toContain('这是广告'); // Only contains one keyword
       expect(result).not.toContain('广告点击'); // Contains both keywords
       expect(result).toContain('正文内容');
+    });
+
+    it('handles invalid base selectors in :eq/:first/:last/:contains without throwing', () => {
+      processor.setOptions({
+        removeSelectors:
+          '[invalid:eq(0), [invalid:first, [invalid:last, [invalid:contains("x"), :invalid(',
+      });
+      const element = doc.createElement('div');
+      element.innerHTML = '<p>Keep me</p>';
+
+      expect(() => processor.process(element, doc)).not.toThrow();
     });
   });
 

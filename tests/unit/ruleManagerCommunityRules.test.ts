@@ -3,10 +3,13 @@ import { RuleManager } from '@/core/rules/RuleManager';
 
 describe('RuleManager (community rules)', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
   it('strips JS hooks from fetched community rules', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     const communityRule = {
       id: 'community-1',
       version: 1,

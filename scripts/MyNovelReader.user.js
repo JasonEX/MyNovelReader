@@ -73,7 +73,9 @@
     (function(cssCode) {
       try {
         if (typeof window !== "undefined") {
-          window.__MNR_STYLES__ = (window.__MNR_STYLES__ || "") + cssCode;
+          const w = window;
+          const globalState = w.__MY_NOVEL_READER__ || (w.__MY_NOVEL_READER__ = {});
+          globalState.styles = (globalState.styles || "") + cssCode;
           var styleId = "mnr-global-styles";
           var existingStyle = document.getElementById(styleId);
           if (!existingStyle) {
@@ -81,21 +83,21 @@
             existingStyle.id = styleId;
             document.head.appendChild(existingStyle);
           }
-          existingStyle.textContent = window.__MNR_STYLES__;
-          if (window.__MNR_SHADOW_ROOT__) {
-            var shadowStyle = window.__MNR_SHADOW_ROOT__.querySelector("#mnr-app-styles");
+          existingStyle.textContent = globalState.styles;
+          if (globalState.shadowRoot) {
+            var shadowStyle = globalState.shadowRoot.querySelector("#mnr-app-styles");
             if (!shadowStyle) {
               shadowStyle = document.createElement("style");
               shadowStyle.id = "mnr-app-styles";
-              window.__MNR_SHADOW_ROOT__.appendChild(shadowStyle);
+              globalState.shadowRoot.appendChild(shadowStyle);
             }
-            shadowStyle.textContent = window.__MNR_STYLES__;
+            shadowStyle.textContent = globalState.styles;
           }
         }
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-4e64cc86]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-4e64cc86]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-4e64cc86]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-4e64cc86]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-4e64cc86]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-4e64cc86]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-4e64cc86]{font-weight:600}.mnr-picker-hint[data-v-4e64cc86]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-4e64cc86]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-4e64cc86]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-4e64cc86]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-2e203e2d]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-2e203e2d]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-2e203e2d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-2e203e2d] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-2e203e2d] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-2e203e2d] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-2e203e2d]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-2e203e2d]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-2e203e2d]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-2e203e2d]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-2e203e2d]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-2e203e2d]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-2e203e2d]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-2e203e2d],.mnr-loading-next[data-v-2e203e2d]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-2e203e2d]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-2e203e2d 1s linear infinite}.mnr-loading-overlay[data-v-2e203e2d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-2e203e2d]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-2e203e2d]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-2e203e2d .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-2e203e2d{to{transform:rotate(360deg)}}.mnr-toast[data-v-2e203e2d]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-2e203e2d]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-2e203e2d],.mnr-toast-leave-active[data-v-2e203e2d]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-2e203e2d],.mnr-toast-leave-to[data-v-2e203e2d]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-2e203e2d]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-2e203e2d]{padding:40px}}.mnr-rule-editor-overlay[data-v-2e203e2d]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-2e203e2d]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-2e203e2d]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-d0da9bd2]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-d0da9bd2] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-d0da9bd2] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-d0da9bd2] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-d0da9bd2]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-d0da9bd2]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-d0da9bd2]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-d0da9bd2]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-d0da9bd2]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-d0da9bd2]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-d0da9bd2],.mnr-loading-next[data-v-d0da9bd2]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-d0da9bd2]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-d0da9bd2 1s linear infinite}.mnr-loading-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-d0da9bd2]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-d0da9bd2]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-d0da9bd2 .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-d0da9bd2{to{transform:rotate(360deg)}}.mnr-toast[data-v-d0da9bd2]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-d0da9bd2]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-d0da9bd2],.mnr-toast-leave-active[data-v-d0da9bd2]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-d0da9bd2],.mnr-toast-leave-to[data-v-d0da9bd2]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-d0da9bd2]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-d0da9bd2]{padding:40px}}.mnr-rule-editor-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-d0da9bd2]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-d0da9bd2]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -331,6 +333,105 @@ setThreshold(threshold) {
     }
     return str.replace(/([!"#$%&'()*+,.:;<=>?@[\\\]^`{|}~])/g, "\\$1");
   }
+  function isUniqueSelector(doc2, selector) {
+    try {
+      return doc2.querySelectorAll(selector).length === 1;
+    } catch {
+      return false;
+    }
+  }
+  function buildPathSelector(element, doc2, maxDepth) {
+    const path = [];
+    let current = element;
+    while (current && current !== doc2.body && current !== doc2.documentElement && path.length < maxDepth) {
+      let segment = current.tagName.toLowerCase();
+      const id = current.id;
+      if (id) {
+        segment = `#${cssEscape(id)}`;
+        path.unshift(segment);
+        break;
+      }
+      const parent = current.parentElement;
+      if (parent) {
+        const siblings = Array.from(parent.children).filter(
+          (sibling) => sibling.tagName === current.tagName
+        );
+        if (siblings.length > 1) {
+          const index = siblings.indexOf(current) + 1;
+          segment += `:nth-of-type(${index})`;
+        }
+      }
+      path.unshift(segment);
+      current = parent;
+    }
+    return path.join(" > ");
+  }
+  function generateCssSelector(element, options = {}) {
+    const doc2 = options.doc || element.ownerDocument || (typeof document !== "undefined" ? document : void 0);
+    if (!doc2) {
+      return element.tagName.toLowerCase();
+    }
+    const maxDepth = Math.max(1, options.maxDepth ?? Number.POSITIVE_INFINITY);
+    const id = element.id;
+    if (id) {
+      return `#${cssEscape(id)}`;
+    }
+    const classes = Array.from(element.classList || []).filter(Boolean);
+    for (const cls of classes) {
+      const selector = `.${cssEscape(cls)}`;
+      if (isUniqueSelector(doc2, selector)) {
+        return selector;
+      }
+    }
+    if (options.allowClassCombination && classes.length >= 2) {
+      const maxClasses = Math.max(2, options.maxClassCombination ?? 3);
+      const selector = classes.slice(0, Math.min(maxClasses, classes.length)).map((cls) => `.${cssEscape(cls)}`).join("");
+      if (isUniqueSelector(doc2, selector)) {
+        return selector;
+      }
+    }
+    const path = buildPathSelector(element, doc2, maxDepth);
+    return path || element.tagName.toLowerCase();
+  }
+  function parseChapterSectionFromPathname(pathname) {
+    if (!pathname) return null;
+    const normalized = pathname.startsWith("/") ? pathname : `/${pathname}`;
+    let match = normalized.match(/^(.*\/\d+)[_-](\d+)\.html?$/i);
+    if (match) {
+      const section = parseInt(match[2], 10);
+      if (section >= 1 && section <= 99) {
+        return { chapterKey: match[1], section };
+      }
+    }
+    match = normalized.match(/^(.*\/\d+)\/(\d+)\.html?$/i);
+    if (match) {
+      const section = parseInt(match[2], 10);
+      if (section >= 1 && section <= 99) {
+        return { chapterKey: match[1], section };
+      }
+    }
+    match = normalized.match(/^(.*\/\d+)\.html?$/i);
+    if (match) {
+      return { chapterKey: match[1], section: 1 };
+    }
+    const parts = normalized.split("/").filter(Boolean);
+    if (parts.length >= 3) {
+      const pagePart = parts[parts.length - 1];
+      const chapterPart = parts[parts.length - 2];
+      if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
+        const section = parseInt(pagePart, 10);
+        const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
+        if (numericSegments.length >= 2 && section >= 1 && section <= 99) {
+          return { chapterKey: `/${parts.slice(0, -1).join("/")}`, section };
+        }
+      }
+    }
+    match = normalized.match(/^(.*\/\d{3,})(?:\/)?$/);
+    if (match) {
+      return { chapterKey: match[1], section: 1 };
+    }
+    return null;
+  }
   function normalizeAbsoluteUrl(href, base) {
     const baseCandidates = [base];
     if (typeof document !== "undefined") baseCandidates.push(document.baseURI);
@@ -392,42 +493,12 @@ setThreshold(threshold) {
       if (current.host !== next.host) return false;
       const currentPath = current.pathname;
       const nextPath = next.pathname;
-      const parse = (pathname) => {
-        let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section >= 1 && section <= 99) {
-            return { chapterId: match[1], section };
-          }
+      const c = parseChapterSectionFromPathname(currentPath);
+      const n = parseChapterSectionFromPathname(nextPath);
+      if (c && n && c.chapterKey === n.chapterKey) {
+        if (n.section === c.section + 1 && n.section > 1) {
+          return true;
         }
-        match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-        if (match) {
-          const section = parseInt(match[2], 10);
-          if (section >= 1 && section <= 99) {
-            return { chapterId: match[1], section };
-          }
-        }
-        match = pathname.match(/\/(\d+)\.html?$/i);
-        if (match) return { chapterId: match[1], section: 1 };
-        const parts = pathname.split("/").filter(Boolean);
-        if (parts.length >= 3) {
-          const pagePart = parts[parts.length - 1];
-          const chapterPart = parts[parts.length - 2];
-          if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
-            const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
-            if (numericSegments.length >= 2) {
-              return { chapterId: parts.slice(0, -1).join("/"), section: parseInt(pagePart, 10) };
-            }
-          }
-        }
-        match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-        if (match) return { chapterId: match[1], section: 1 };
-        return null;
-      };
-      const c = parse(currentPath);
-      const n = parse(nextPath);
-      if (c && n && c.chapterId === n.chapterId) {
-        if (n.section === c.section + 1 && n.section > 1) return true;
       }
       if (currentPath === nextPath) {
         const PAGE_PARAM_KEYS = [
@@ -1517,7 +1588,7 @@ dirty.indexOf("<") === -1) {
     "data-echo"
   ];
   const ENHANCED_CONFIG = {
-    USE_PROFILES: { html: true },
+    USE_PROFILES: { html: true, svg: true },
 ADD_DATA_URI_TAGS: ["img"],
 ADD_ATTR: SAFE_DATA_ATTR,
 ALLOW_DATA_ATTR: false,
@@ -1961,43 +2032,7 @@ calculateChineseRatio(text2) {
       return chineseChars.length / Math.max(nonWhitespace.length, 1);
     }
 generateSelector(element) {
-      if (element.id) {
-        return `#${cssEscape(element.id)}`;
-      }
-      const classes = Array.from(element.classList);
-      for (const cls of classes) {
-        try {
-          if (document.querySelectorAll(`.${cssEscape(cls)}`).length === 1) {
-            return `.${cssEscape(cls)}`;
-          }
-        } catch {
-          continue;
-        }
-      }
-      return this.generatePathSelector(element);
-    }
-generatePathSelector(element) {
-      const path = [];
-      let current = element;
-      while (current && current !== document.body && current !== document.documentElement) {
-        let segment = current.tagName.toLowerCase();
-        if (current.id) {
-          segment = `#${cssEscape(current.id)}`;
-          path.unshift(segment);
-          break;
-        }
-        const parent = current.parentElement;
-        if (parent) {
-          const siblings = Array.from(parent.children).filter((c) => c.tagName === current.tagName);
-          if (siblings.length > 1) {
-            const index = siblings.indexOf(current) + 1;
-            segment += `:nth-of-type(${index})`;
-          }
-        }
-        path.unshift(segment);
-        current = parent;
-      }
-      return path.join(" > ");
+      return generateCssSelector(element);
     }
 normalizeScore(score) {
       return Math.min(Math.max(score / 100, 0), 1);
@@ -2329,43 +2364,6 @@ extractChapterNumber(url) {
       }
       return null;
     }
-    parseChapterSectionFromPath(pathname) {
-      let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: parseInt(match[1], 10), section };
-        }
-      }
-      match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-      if (match) {
-        const section = parseInt(match[2], 10);
-        if (section >= 1 && section <= 99) {
-          return { chapterId: parseInt(match[1], 10), section };
-        }
-      }
-      match = pathname.match(/\/(\d+)\.html?$/i);
-      if (match) {
-        return { chapterId: parseInt(match[1], 10), section: 1 };
-      }
-      const parts = pathname.split("/").filter(Boolean);
-      if (parts.length >= 3) {
-        const pagePart = parts[parts.length - 1];
-        const chapterPart = parts[parts.length - 2];
-        if (/^\d{1,2}$/.test(pagePart) && /^\d{3,}$/.test(chapterPart)) {
-          const section = parseInt(pagePart, 10);
-          const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
-          if (numericSegments.length >= 2 && section >= 1 && section <= 99) {
-            return { chapterId: parseInt(chapterPart, 10), section };
-          }
-        }
-      }
-      match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-      if (match) {
-        return { chapterId: parseInt(match[1], 10), section: 1 };
-      }
-      return null;
-    }
 detectSection(doc2, currentUrl, navigation) {
       var _a;
       const result = {
@@ -2443,10 +2441,10 @@ detectSection(doc2, currentUrl, navigation) {
 extractSectionFromUrl(url) {
       try {
         const parsed = new URL(url);
-        const info = this.parseChapterSectionFromPath(parsed.pathname);
+        const info = parseChapterSectionFromPathname(parsed.pathname);
         if (!info) return null;
         if (info.section > 1) {
-          return { chapter: info.chapterId, section: info.section };
+          return { section: info.section };
         }
         return null;
       } catch {
@@ -2462,15 +2460,18 @@ compareUrlsForSection(currentUrl, nextUrl) {
         }
         const currentPath = current.pathname;
         const nextPath = next.pathname;
-        const currentInfo = this.parseChapterSectionFromPath(currentPath);
-        const nextInfo = this.parseChapterSectionFromPath(nextPath);
-        if (currentInfo && nextInfo) {
-          if (currentInfo.chapterId !== nextInfo.chapterId) {
-            return { isSection: false, confidence: 0 };
-          }
-          if (nextInfo.section === currentInfo.section + 1 && nextInfo.section > 1) {
+        if (isSectionLikeUrl(currentUrl, nextUrl)) {
+          const currentInfo2 = parseChapterSectionFromPathname(currentPath);
+          const nextInfo2 = parseChapterSectionFromPathname(nextPath);
+          if (currentInfo2 && nextInfo2 && currentInfo2.chapterKey === nextInfo2.chapterKey && nextInfo2.section === currentInfo2.section + 1 && nextInfo2.section > 1) {
             return { isSection: true, confidence: 0.95 };
           }
+          return { isSection: true, confidence: 0.85 };
+        }
+        const currentInfo = parseChapterSectionFromPathname(currentPath);
+        const nextInfo = parseChapterSectionFromPathname(nextPath);
+        if (currentInfo && nextInfo && currentInfo.chapterKey !== nextInfo.chapterKey) {
+          return { isSection: false, confidence: 0 };
         }
         const similarity = this.calculateUrlSimilarity(currentPath, nextPath);
         if (similarity > 0.8) {
@@ -2557,43 +2558,7 @@ findNextChapterUrl(doc2, currentUrl, _navigation) {
       return null;
     }
 generateSelector(element) {
-      if (element.id) {
-        return `#${cssEscape(element.id)}`;
-      }
-      const classList = Array.from(element.classList || []);
-      for (const cls of classList) {
-        try {
-          if (document.querySelectorAll(`.${cssEscape(cls)}`).length === 1) {
-            return `.${cssEscape(cls)}`;
-          }
-        } catch {
-          continue;
-        }
-      }
-      return this.generatePathSelector(element);
-    }
-generatePathSelector(element) {
-      const path = [];
-      let current = element;
-      while (current && current !== document.body && current !== document.documentElement) {
-        let segment = current.tagName.toLowerCase();
-        if (current.id) {
-          segment = `#${cssEscape(current.id)}`;
-          path.unshift(segment);
-          break;
-        }
-        const parent = current.parentElement;
-        if (parent) {
-          const siblings = Array.from(parent.children).filter((c) => c.tagName === current.tagName);
-          if (siblings.length > 1) {
-            const index = siblings.indexOf(current) + 1;
-            segment += `:nth-of-type(${index})`;
-          }
-        }
-        path.unshift(segment);
-        current = parent;
-      }
-      return path.join(" > ");
+      return generateCssSelector(element);
     }
   }
   const KNOWN_TITLE_SELECTORS = [
@@ -3136,7 +3101,10 @@ process(element, doc2) {
         html2 = this.applyReplaceRules(html2, this.options.replaceRules);
       }
       if (this.options.removeAds) {
-        html2 = this.removeAdPatterns(html2);
+        const temp = doc2.createElement("div");
+        temp.innerHTML = html2;
+        this.removeAdPatternsFromTextNodes(temp, doc2);
+        html2 = temp.innerHTML;
       }
       if (this.options.normalizeWhitespace) {
         html2 = this.normalizeWhitespace(html2);
@@ -3299,6 +3267,16 @@ removeAdPatterns(text2) {
       }
       return result;
     }
+    removeAdPatternsFromTextNodes(container, doc2) {
+      const showText = typeof NodeFilter !== "undefined" ? NodeFilter.SHOW_TEXT : 4;
+      const walker = doc2.createTreeWalker(container, showText);
+      let node;
+      while (node = walker.nextNode()) {
+        const value = node.nodeValue || "";
+        const cleaned = this.removeAdPatterns(value);
+        if (cleaned !== value) node.nodeValue = cleaned;
+      }
+    }
 normalizeWhitespace(html2) {
       return html2.replace(/<p>\s*<\/p>/gi, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").replace(/<p>\s+/gi, "<p>").replace(/\s+<\/p>/gi, "</p>");
     }
@@ -3381,6 +3359,16 @@ cleanDuplicateInfo(html2, doc2) {
       }
       const tempDiv = doc2.createElement("div");
       tempDiv.innerHTML = result;
+      const isRemovableEmptyNode = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) return true;
+        if (node.nodeType !== Node.ELEMENT_NODE) return true;
+        const el = node;
+        const tag = el.tagName.toLowerCase();
+        const keepTags = new Set(["img", "svg", "picture", "video", "audio", "canvas"]);
+        if (keepTags.has(tag)) return false;
+        if (el.children.length > 0) return false;
+        return true;
+      };
       const children = Array.from(tempDiv.childNodes);
       let removedCount = 0;
       const maxRemove = 3;
@@ -3388,7 +3376,9 @@ cleanDuplicateInfo(html2, doc2) {
         if (removedCount >= maxRemove) break;
         const text2 = (child.textContent || "").trim();
         if (!text2) {
-          (_a = child.parentNode) == null ? void 0 : _a.removeChild(child);
+          if (isRemovableEmptyNode(child)) {
+            (_a = child.parentNode) == null ? void 0 : _a.removeChild(child);
+          }
           continue;
         }
         if (text2.length < 100 && this.looksLikeDuplicateTitle(text2)) {
@@ -3407,9 +3397,12 @@ cleanDuplicateInfo(html2, doc2) {
         const node = tailNodes[i];
         const text2 = (node.textContent || "").trim();
         if (!text2) {
-          (_c = node.parentNode) == null ? void 0 : _c.removeChild(node);
-          tailRemoved++;
-          continue;
+          if (isRemovableEmptyNode(node)) {
+            (_c = node.parentNode) == null ? void 0 : _c.removeChild(node);
+            tailRemoved++;
+            continue;
+          }
+          break;
         }
         if (/^>+$/.test(text2)) {
           (_d = node.parentNode) == null ? void 0 : _d.removeChild(node);
@@ -3478,9 +3471,12 @@ escapeRegExp(str) {
       return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 smartQueryAll(root, selector) {
-      try {
-        return Array.from(root.querySelectorAll(selector));
-      } catch {
+      const hasJqueryPseudo = /:(?:contains\(|eq\(|first\b|last\b)/.test(selector);
+      if (!hasJqueryPseudo) {
+        try {
+          return Array.from(root.querySelectorAll(selector));
+        } catch {
+        }
       }
       const eqMatch = selector.match(/^(.*):eq\(([-]?\d+)\)$/);
       if (eqMatch) {
@@ -5176,13 +5172,16 @@ async getUserRule(domain) {
       return this.driver.get(domain);
     }
 async saveUserRule(domain, rule) {
-      rule.meta = {
-        ...rule.meta,
-        source: "user",
-        updated: Date.now()
+      const ruleToSave = {
+        ...rule,
+        id: domain,
+        meta: {
+          ...rule.meta,
+          source: "user",
+          updated: Date.now()
+        }
       };
-      rule.id = domain;
-      await this.driver.set(domain, rule);
+      await this.driver.set(domain, ruleToSave);
     }
 async deleteUserRule(domain) {
       await this.driver.delete(domain);
@@ -5202,9 +5201,21 @@ async exportRules() {
       return JSON.stringify(rulesArray, null, 2);
     }
 async importRules(json, overwrite = false) {
-      const rules = JSON.parse(json);
+      let rules;
+      try {
+        rules = JSON.parse(json);
+      } catch (e) {
+        console.error("[MNR] Failed to parse imported rules JSON:", e);
+        return 0;
+      }
+      if (!Array.isArray(rules)) {
+        console.error("[MNR] Imported rules JSON must be an array.");
+        return 0;
+      }
       let count = 0;
-      for (const rule of rules) {
+      for (const rawRule of rules) {
+        if (!rawRule || typeof rawRule !== "object") continue;
+        const rule = rawRule;
         if (!rule.id) continue;
         if (!overwrite) {
           const existing = await this.driver.get(rule.id);
@@ -5455,9 +5466,9 @@ async parseWithRule(doc2, url, ruleMatch) {
         return await this.parseWithDetection(doc2, url, rule);
       }
       let navigation = this.extractNavigation(doc2, rule);
-      const hasRulePrev = ((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false;
-      const hasRuleNext = ((_b = rule.navigation) == null ? void 0 : _b.next) && rule.navigation.next !== false;
-      const hasRuleIndex = ((_c = rule.navigation) == null ? void 0 : _c.index) && rule.navigation.index !== false;
+      const hasRulePrev = ((_a = rule.navigation) == null ? void 0 : _a.prev) !== void 0;
+      const hasRuleNext = ((_b = rule.navigation) == null ? void 0 : _b.next) !== void 0;
+      const hasRuleIndex = ((_c = rule.navigation) == null ? void 0 : _c.index) !== void 0;
       if (!navigation.next || !navigation.prev || !navigation.index) {
         const detectedNav = this.detectionEngine.detect(doc2, url).results.navigation;
         if (!hasRuleNext && !navigation.next && ((_d = detectedNav.next) == null ? void 0 : _d.url)) {
@@ -5566,18 +5577,21 @@ extractNavigation(doc2, rule) {
         if (((_a2 = el.tagName) == null ? void 0 : _a2.toLowerCase()) === "a") return el;
         return null;
       };
-      if (((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false) {
-        const el = this.selectElement(doc2, rule.navigation.prev);
+      const prevSelector = (_a = rule.navigation) == null ? void 0 : _a.prev;
+      if (typeof prevSelector === "string" && prevSelector.trim()) {
+        const el = this.selectElement(doc2, prevSelector);
         const anchor = asAnchor(el);
         if (anchor) result.prev = anchor.href;
       }
-      if (((_b = rule.navigation) == null ? void 0 : _b.next) && rule.navigation.next !== false) {
-        const el = this.selectElement(doc2, rule.navigation.next);
+      const nextSelector = (_b = rule.navigation) == null ? void 0 : _b.next;
+      if (typeof nextSelector === "string" && nextSelector.trim()) {
+        const el = this.selectElement(doc2, nextSelector);
         const anchor = asAnchor(el);
         if (anchor) result.next = anchor.href;
       }
-      if (((_c = rule.navigation) == null ? void 0 : _c.index) && rule.navigation.index !== false) {
-        const el = this.selectElement(doc2, rule.navigation.index);
+      const indexSelector = (_c = rule.navigation) == null ? void 0 : _c.index;
+      if (typeof indexSelector === "string" && indexSelector.trim()) {
+        const el = this.selectElement(doc2, indexSelector);
         const anchor = asAnchor(el);
         if (anchor) result.index = anchor.href;
       }
@@ -5934,463 +5948,6 @@ async executeHooks(rule, doc2, content) {
     }
     return parserInstance;
   }
-  function getGmXhr() {
-    if (typeof GM_xmlhttpRequest === "function") {
-      return GM_xmlhttpRequest;
-    }
-    return null;
-  }
-  function normalizeUrlForFetch$1(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return normalized.replace(/#.*$/, "");
-    }
-  }
-  function getDefaultBaseUrl() {
-    if (typeof location !== "undefined" && typeof location.href === "string") {
-      return location.href;
-    }
-    if (typeof document !== "undefined" && typeof document.baseURI === "string") {
-      return document.baseURI;
-    }
-    return void 0;
-  }
-  function normalizeHostname(hostname) {
-    const trimmed = hostname.trim();
-    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-      return trimmed.slice(1, -1).toLowerCase();
-    }
-    return trimmed.toLowerCase();
-  }
-  function isPrivateNetworkHost(hostname) {
-    const host = normalizeHostname(hostname);
-    if (!host) return true;
-    if (host === "localhost") return true;
-    if (host === "0.0.0.0") return true;
-    const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-    if (ipv4) {
-      const parts = ipv4.slice(1).map((n) => parseInt(n, 10));
-      if (parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return true;
-      const [a, b] = parts;
-      if (a === 10) return true;
-      if (a === 127) return true;
-      if (a === 169 && b === 254) return true;
-      if (a === 172 && b >= 16 && b <= 31) return true;
-      if (a === 192 && b === 168) return true;
-      return false;
-    }
-    if (host === "::1") return true;
-    if (host.startsWith("fe80:")) return true;
-    if (host.startsWith("fc") || host.startsWith("fd")) return true;
-    return false;
-  }
-  function parseHttpUrl(url) {
-    try {
-      const u = new URL(url);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-      return u;
-    } catch {
-      return null;
-    }
-  }
-  function resolveAndValidateHttpUrl(url, base) {
-    const normalized = normalizeUrlForFetch$1(url);
-    let resolved = null;
-    try {
-      resolved = base ? new URL(normalized, base).toString() : new URL(normalized).toString();
-    } catch {
-      try {
-        const fallbackBase = getDefaultBaseUrl();
-        if (!fallbackBase) return null;
-        resolved = new URL(normalized, fallbackBase).toString();
-      } catch {
-        return null;
-      }
-    }
-    try {
-      const u = new URL(resolved);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-      if (isPrivateNetworkHost(u.hostname)) {
-        const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
-        if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
-          return null;
-        }
-      }
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return null;
-    }
-  }
-  function fetchAndParseUrl(url, referer, options = {}) {
-    const gmXhr = getGmXhr();
-    const requestUrl = resolveAndValidateHttpUrl(url, referer);
-    const timeoutMs = options.timeoutMs ?? 15e3;
-    const maxRetries = Math.max(0, options.retries ?? 1);
-    if (!requestUrl) {
-      console.error("[MNR] Invalid or unsupported URL:", url);
-      return {
-        promise: Promise.resolve({
-          doc: null,
-          status: null,
-          finalUrl: null,
-          error: "invalid-url"
-        }),
-        abort: () => {
-        }
-      };
-    }
-    const parseHtmlToDoc = (html2, finalUrl) => {
-      var _a;
-      try {
-        const parser = new DOMParser();
-        const doc2 = parser.parseFromString(html2, "text/html");
-        const base = doc2.createElement("base");
-        base.href = finalUrl || requestUrl;
-        if (doc2.head) {
-          doc2.head.insertBefore(base, doc2.head.firstChild);
-        } else {
-          (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
-        }
-        doc2._mnrUrl = finalUrl || requestUrl;
-        return {
-          doc: doc2,
-          status: 200,
-          finalUrl,
-          error: null
-        };
-      } catch (e) {
-        console.error("[MNR] Parse error:", e);
-        return {
-          doc: null,
-          status: null,
-          finalUrl,
-          error: "parse"
-        };
-      }
-    };
-    let request = null;
-    let aborted = false;
-    let fetchAbortController = null;
-    let timeoutTimer = null;
-    let timedOut = false;
-    const doRequest = () => {
-      const headers = {
-        Accept: "text/html,application/xhtml+xml,application/xml"
-      };
-      const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : void 0;
-      if (gmXhr) {
-        headers["Accept-Language"] = "zh-CN,zh;q=0.9";
-        if (normalizedReferer) {
-          headers["Referer"] = normalizedReferer;
-        }
-        return new Promise((resolve) => {
-          request = gmXhr({
-            method: "GET",
-            url: requestUrl,
-            headers,
-            timeout: timeoutMs,
-            overrideMimeType: "text/html;charset=" + document.characterSet,
-            onload: (response) => {
-              const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
-              if (response.status >= 200 && response.status < 300) {
-                const parsed = parseHtmlToDoc(response.responseText, finalUrl);
-                resolve({
-                  ...parsed,
-                  status: response.status,
-                  finalUrl
-                });
-                return;
-              }
-              console.error("[MNR] HTTP error:", response.status);
-              resolve({
-                doc: null,
-                status: response.status,
-                finalUrl,
-                error: "http"
-              });
-            },
-            onerror: () => {
-              resolve({ doc: null, status: null, finalUrl: null, error: "network" });
-            },
-            onabort: () => {
-              resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
-            },
-            ontimeout: () => {
-              console.error("[MNR] Request timeout");
-              resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
-            }
-          });
-        });
-      }
-      if (typeof fetch !== "function") {
-        console.error("[MNR] GM_xmlhttpRequest not available and fetch is missing");
-        return Promise.resolve({
-          doc: null,
-          status: null,
-          finalUrl: null,
-          error: "missing-gm-xhr"
-        });
-      }
-      fetchAbortController = new AbortController();
-      timedOut = false;
-      if (timeoutTimer) {
-        clearTimeout(timeoutTimer);
-        timeoutTimer = null;
-      }
-      timeoutTimer = setTimeout(() => {
-        timedOut = true;
-        fetchAbortController == null ? void 0 : fetchAbortController.abort();
-      }, timeoutMs);
-      const fetchInit = {
-        method: "GET",
-        headers,
-        signal: fetchAbortController.signal,
-        credentials: "include",
-        redirect: "follow"
-      };
-      if (normalizedReferer) {
-        try {
-          fetchInit.referrer = normalizedReferer;
-        } catch {
-        }
-      }
-      return fetch(requestUrl, fetchInit).then(async (response) => {
-        const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
-        const status = response.status;
-        if (status >= 200 && status < 300) {
-          const html2 = await response.text();
-          const parsed = parseHtmlToDoc(html2, finalUrl);
-          return { ...parsed, status, finalUrl };
-        }
-        console.error("[MNR] HTTP error:", status);
-        return {
-          doc: null,
-          status,
-          finalUrl,
-          error: "http"
-        };
-      }).catch((err) => {
-        if (aborted) {
-          return { doc: null, status: null, finalUrl: null, error: "abort" };
-        }
-        if (timedOut) {
-          console.error("[MNR] Request timeout");
-          return { doc: null, status: null, finalUrl: null, error: "timeout" };
-        }
-        console.error("[MNR] Network error:", err);
-        return { doc: null, status: null, finalUrl: null, error: "network" };
-      }).finally(() => {
-        if (timeoutTimer) {
-          clearTimeout(timeoutTimer);
-          timeoutTimer = null;
-        }
-      });
-    };
-    const shouldRetry = (res) => {
-      if (aborted) return false;
-      if (res.error === "timeout" || res.error === "network") return true;
-      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
-        return true;
-      }
-      return false;
-    };
-    const promise = (async () => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
-        const res = await doRequest();
-        if (!shouldRetry(res) || attempt === maxRetries) {
-          return res;
-        }
-        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
-        await new Promise((resolve) => globalThis.setTimeout(resolve, delay));
-      }
-      return { doc: null, status: null, finalUrl: null, error: "network" };
-    })();
-    const abort = () => {
-      aborted = true;
-      try {
-        request == null ? void 0 : request.abort();
-      } catch {
-      }
-      try {
-        fetchAbortController == null ? void 0 : fetchAbortController.abort();
-      } catch {
-      }
-      if (timeoutTimer) {
-        clearTimeout(timeoutTimer);
-        timeoutTimer = null;
-      }
-    };
-    return { promise, abort };
-  }
-  class SectionMerger {
-    constructor(parser) {
-      this.parser = parser;
-    }
-async merge(doc2, url, options = {}) {
-      var _a, _b, _c, _d;
-      const maxPages = Math.max(1, options.maxPages ?? 10);
-      const confidenceThreshold = options.confidenceThreshold ?? 0.8;
-      const baseUrl = getSectionBaseUrl(url);
-      let startUrl = url;
-      let startDoc = doc2;
-      if (baseUrl && baseUrl !== url) {
-        const baseDoc = await this.fetchUrl(baseUrl, url, options.fetcher, options.signal);
-        if (baseDoc) {
-          startUrl = baseUrl;
-          startDoc = baseDoc;
-        }
-      }
-      const first = await this.parser.parse(startDoc, startUrl);
-      if (!first) return null;
-      const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
-      if (disableByRule) return first;
-      const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
-      const detection = this.parser.detect(startDoc, startUrl);
-      const section = detection.results.section;
-      const hasNextSectionUrl = !!(section == null ? void 0 : section.isSection) && !!(section == null ? void 0 : section.nextSectionUrl);
-      const shouldMerge = enableByRule || !!(section == null ? void 0 : section.isSection) && ((section == null ? void 0 : section.confidence) || 0) >= confidenceThreshold;
-      if (!shouldMerge) {
-        if (!hasNextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
-          const realNextChapterUrl = this.findNextChapterUrl(startDoc, startUrl);
-          if (realNextChapterUrl) {
-            first.nextUrl = realNextChapterUrl;
-          }
-        }
-        return first;
-      }
-      return this.mergeSections(
-        startDoc,
-        startUrl,
-        first,
-        section,
-        maxPages,
-        options.fetcher,
-        options.signal
-      );
-    }
-async mergeSections(startDoc, startUrl, first, section, maxPages, fetcher, signal) {
-      let mergedContent = first.content;
-      let mergedRaw = first.rawContent;
-      let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
-      let nextChapterUrl = (section == null ? void 0 : section.nextChapterUrl) || null;
-      let lastUrl = startUrl;
-      if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
-        nextSectionUrl = first.nextUrl;
-      }
-      const maxAdditionalPages = Math.max(0, maxPages - 1);
-      const seen = new Set([startUrl]);
-      for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
-        if (signal == null ? void 0 : signal.aborted) break;
-        const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-        if (seen.has(absNextSection)) break;
-        seen.add(absNextSection);
-        const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
-        if (!nextDoc) break;
-        const nextParsed = await this.parser.parse(nextDoc, absNextSection);
-        if (!nextParsed) break;
-        mergedContent = joinHtml(mergedContent, nextParsed.content);
-        mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-        const nextDet = this.parser.detect(nextDoc, absNextSection);
-        const s = nextDet.results.section;
-        if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-        nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
-        if (!nextSectionUrl && nextParsed.nextUrl) {
-          if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
-            nextSectionUrl = nextParsed.nextUrl;
-          } else if (!nextChapterUrl) {
-            nextChapterUrl = nextParsed.nextUrl;
-          }
-        }
-        lastUrl = absNextSection;
-      }
-      return {
-        ...first,
-        url: startUrl,
-        content: mergedContent,
-        rawContent: mergedRaw,
-        nextUrl: nextChapterUrl || first.nextUrl
-      };
-    }
-async fetchUrl(url, referrer, customFetcher, signal) {
-      if (signal == null ? void 0 : signal.aborted) {
-        return null;
-      }
-      if (customFetcher) {
-        return await customFetcher(url, referrer);
-      }
-      const { promise, abort } = fetchAndParseUrl(url, referrer);
-      if (!signal) {
-        const result = await promise;
-        return result.doc;
-      }
-      if (signal.aborted) {
-        abort();
-        return null;
-      }
-      let abortListener = null;
-      const abortPromise = new Promise((resolve) => {
-        abortListener = () => {
-          abort();
-          resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
-        };
-        signal.addEventListener("abort", abortListener, { once: true });
-      });
-      try {
-        const result = await Promise.race([promise, abortPromise]);
-        return result.doc;
-      } finally {
-        if (abortListener) {
-          signal.removeEventListener("abort", abortListener);
-        }
-      }
-    }
-findNextChapterUrl(doc2, currentUrl) {
-      var _a;
-      const links = doc2.querySelectorAll("a[href]");
-      const candidates = [];
-      for (const link of links) {
-        const anchor = link;
-        const href = anchor.getAttribute("href");
-        if (!href) continue;
-        const absUrl = normalizeAbsoluteUrl(href, currentUrl);
-        if (absUrl === currentUrl || isSectionLikeUrl(currentUrl, absUrl)) continue;
-        const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
-        if (!text2) continue;
-        const normalizedText = text2.replace(/\s+/g, "").trim();
-        if (!normalizedText) continue;
-        const lowerText = normalizedText.toLowerCase();
-        const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /继续阅读/.test(normalizedText) || /next/i.test(normalizedText);
-        if (!isForward) continue;
-        const isChapterText = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
-        const isSectionText = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2)) || lowerText.includes("next") && lowerText.includes("page") && !lowerText.includes("chapter");
-        const isEnglishNextChapter = lowerText.includes("next") && lowerText.includes("chapter");
-        if (isSectionText && !isChapterText && !isEnglishNextChapter) continue;
-        let score = 0;
-        if (isChapterText) score += 50;
-        if (isEnglishNextChapter) score += 45;
-        if (lowerText === "next" || lowerText === ">" || lowerText === "»") score += 10;
-        if (lowerText.includes("next")) score += 2;
-        if (normalizedText.length <= 5) score += 1;
-        const rel = (anchor.getAttribute("rel") || "").toLowerCase();
-        if (rel.includes("next")) score += 2;
-        if (score > 0) {
-          candidates.push({ url: absUrl, score });
-        }
-      }
-      if (candidates.length === 0) return null;
-      candidates.sort((a, b) => b.score - a.score);
-      return candidates[0].url;
-    }
-  }
-  function createSectionMerger(parser) {
-    return new SectionMerger(parser);
-  }
   const DEFAULT_OPTIONS$1 = {
     blockRedirects: true,
     enableRightClick: true,
@@ -6405,7 +5962,6 @@ findNextChapterUrl(doc2, currentUrl) {
   };
   class SiteProtection {
     constructor(options = {}) {
-      this.originalHandlers = new Map();
       this.cleanupFunctions = [];
       this.isActive = false;
       this.options = { ...DEFAULT_OPTIONS$1, ...options };
@@ -6981,7 +6537,8 @@ removeOverlays() {
         if (el.tagName.toLowerCase() === "a" && el.hasAttribute("href")) return true;
         if (el.querySelector("a[href]")) return true;
         if (el.hasAttribute("onclick")) return true;
-        if (typeof el.onclick === "function") return true;
+        const maybeOnclick = el.onclick;
+        if (typeof maybeOnclick === "function") return true;
         return false;
       };
       const candidates = Array.from(
@@ -7067,7 +6624,7 @@ createRuleFromDetection(hostname, detection) {
         meta: {
           source: "user",
           autoLaunch: true,
-          createdAt: ( new Date()).toISOString()
+          created: Date.now()
         }
       };
       if ((section == null ? void 0 : section.isSection) && (section.confidence || 0) >= 0.8) {
@@ -7115,17 +6672,17 @@ validateRule(rule) {
       return true;
     }
 enhanceRule(existingRule, detection) {
-      const enhanced = { ...existingRule };
+      var _a;
+      const enhanced = {
+        ...existingRule,
+        content: { ...existingRule.content }
+      };
       const content = detection.results.content;
       const navigation = detection.results.navigation;
       const title = detection.results.title;
       const section = detection.results.section;
-      if (content.selector && !enhanced.content) {
-        enhanced.content = {};
-      }
       if (content.selector && content.selector !== "#content") {
-        enhanced.content = enhanced.content || {};
-        enhanced.content.selector = content.selector;
+        enhanced.content = { ...enhanced.content, selector: content.selector };
       }
       if (navigation.next || navigation.prev || navigation.index) {
         enhanced.navigation = enhanced.navigation || {};
@@ -7148,13 +6705,482 @@ enhanceRule(existingRule, detection) {
         enhanced.advanced = enhanced.advanced || {};
         enhanced.advanced.checkSection = true;
       }
-      enhanced.meta = enhanced.meta || {};
-      enhanced.meta.updatedAt = ( new Date()).toISOString();
+      const source = ((_a = enhanced.meta) == null ? void 0 : _a.source) ?? "user";
+      enhanced.meta = { ...enhanced.meta, source, updated: Date.now() };
       return enhanced;
     }
   }
   function createRuleSaver() {
     return new RuleSaver();
+  }
+  function getGmXhr() {
+    if (typeof GM_xmlhttpRequest === "function") {
+      return GM_xmlhttpRequest;
+    }
+    return null;
+  }
+  function normalizeUrlForFetch$1(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return normalized.replace(/#.*$/, "");
+    }
+  }
+  function getDefaultBaseUrl() {
+    if (typeof location !== "undefined" && typeof location.href === "string") {
+      return location.href;
+    }
+    if (typeof document !== "undefined" && typeof document.baseURI === "string") {
+      return document.baseURI;
+    }
+    return void 0;
+  }
+  function normalizeHostname(hostname) {
+    const trimmed = hostname.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      return trimmed.slice(1, -1).toLowerCase();
+    }
+    return trimmed.toLowerCase();
+  }
+  function isPrivateNetworkHost(hostname) {
+    const host = normalizeHostname(hostname);
+    if (!host) return true;
+    if (host === "localhost") return true;
+    if (host === "0.0.0.0") return true;
+    const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4) {
+      const parts = ipv4.slice(1).map((n) => parseInt(n, 10));
+      if (parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return true;
+      const [a, b] = parts;
+      if (a === 10) return true;
+      if (a === 127) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+      return false;
+    }
+    if (host === "::1") return true;
+    if (host.startsWith("fe80:")) return true;
+    if (host.startsWith("fc") || host.startsWith("fd")) return true;
+    return false;
+  }
+  function parseHttpUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      return u;
+    } catch {
+      return null;
+    }
+  }
+  function resolveAndValidateHttpUrl(url, base) {
+    const normalized = normalizeUrlForFetch$1(url);
+    let resolved = null;
+    try {
+      resolved = base ? new URL(normalized, base).toString() : new URL(normalized).toString();
+    } catch {
+      try {
+        const fallbackBase = getDefaultBaseUrl();
+        if (!fallbackBase) return null;
+        resolved = new URL(normalized, fallbackBase).toString();
+      } catch {
+        return null;
+      }
+    }
+    try {
+      const u = new URL(resolved);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      if (isPrivateNetworkHost(u.hostname)) {
+        const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
+        if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
+          return null;
+        }
+      }
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return null;
+    }
+  }
+  function fetchAndParseUrl(url, referer, options = {}) {
+    const gmXhr = getGmXhr();
+    const requestUrl = resolveAndValidateHttpUrl(url, referer);
+    const timeoutMs = options.timeoutMs ?? 15e3;
+    const maxRetries = Math.max(0, options.retries ?? 1);
+    if (!requestUrl) {
+      console.error("[MNR] Invalid or unsupported URL:", url);
+      return {
+        promise: Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "invalid-url"
+        }),
+        abort: () => {
+        }
+      };
+    }
+    const parseHtmlToDoc = (html2, finalUrl) => {
+      var _a;
+      try {
+        const parser = new DOMParser();
+        const doc2 = parser.parseFromString(html2, "text/html");
+        const base = doc2.createElement("base");
+        base.href = finalUrl || requestUrl;
+        if (doc2.head) {
+          doc2.head.insertBefore(base, doc2.head.firstChild);
+        } else {
+          (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
+        }
+        doc2._mnrUrl = finalUrl || requestUrl;
+        return {
+          doc: doc2,
+          status: 200,
+          finalUrl,
+          error: null
+        };
+      } catch (e) {
+        console.error("[MNR] Parse error:", e);
+        return {
+          doc: null,
+          status: null,
+          finalUrl,
+          error: "parse"
+        };
+      }
+    };
+    let request = null;
+    let aborted = false;
+    let fetchAbortController = null;
+    let timeoutTimer = null;
+    let timedOut = false;
+    const doRequest = () => {
+      const headers = {
+        Accept: "text/html,application/xhtml+xml,application/xml"
+      };
+      const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : void 0;
+      if (gmXhr) {
+        headers["Accept-Language"] = "zh-CN,zh;q=0.9";
+        if (normalizedReferer) {
+          headers["Referer"] = normalizedReferer;
+        }
+        return new Promise((resolve) => {
+          request = gmXhr({
+            method: "GET",
+            url: requestUrl,
+            headers,
+            timeout: timeoutMs,
+            overrideMimeType: "text/html;charset=" + document.characterSet,
+            onload: (response) => {
+              const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
+              if (response.status >= 200 && response.status < 300) {
+                const parsed = parseHtmlToDoc(response.responseText, finalUrl);
+                resolve({
+                  ...parsed,
+                  status: response.status,
+                  finalUrl
+                });
+                return;
+              }
+              console.error("[MNR] HTTP error:", response.status);
+              resolve({
+                doc: null,
+                status: response.status,
+                finalUrl,
+                error: "http"
+              });
+            },
+            onerror: () => {
+              resolve({ doc: null, status: null, finalUrl: null, error: "network" });
+            },
+            onabort: () => {
+              resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
+            },
+            ontimeout: () => {
+              console.error("[MNR] Request timeout");
+              resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
+            }
+          });
+        });
+      }
+      if (typeof fetch !== "function") {
+        console.error("[MNR] GM_xmlhttpRequest not available and fetch is missing");
+        return Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "missing-gm-xhr"
+        });
+      }
+      fetchAbortController = new AbortController();
+      timedOut = false;
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+      timeoutTimer = setTimeout(() => {
+        timedOut = true;
+        fetchAbortController == null ? void 0 : fetchAbortController.abort();
+      }, timeoutMs);
+      const fetchInit = {
+        method: "GET",
+        headers,
+        signal: fetchAbortController.signal,
+        credentials: "include",
+        redirect: "follow"
+      };
+      if (normalizedReferer) {
+        try {
+          fetchInit.referrer = normalizedReferer;
+        } catch {
+        }
+      }
+      return fetch(requestUrl, fetchInit).then(async (response) => {
+        const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
+        const status = response.status;
+        if (status >= 200 && status < 300) {
+          const html2 = await response.text();
+          const parsed = parseHtmlToDoc(html2, finalUrl);
+          const result2 = { ...parsed, status, finalUrl };
+          return result2;
+        }
+        console.error("[MNR] HTTP error:", status);
+        const result = {
+          doc: null,
+          status,
+          finalUrl,
+          error: "http"
+        };
+        return result;
+      }).catch((err) => {
+        if (aborted) {
+          const result2 = {
+            doc: null,
+            status: null,
+            finalUrl: null,
+            error: "abort"
+          };
+          return result2;
+        }
+        if (timedOut) {
+          console.error("[MNR] Request timeout");
+          const result2 = {
+            doc: null,
+            status: null,
+            finalUrl: null,
+            error: "timeout"
+          };
+          return result2;
+        }
+        console.error("[MNR] Network error:", err);
+        const result = {
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "network"
+        };
+        return result;
+      }).finally(() => {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+          timeoutTimer = null;
+        }
+      });
+    };
+    const shouldRetry = (res) => {
+      if (aborted) return false;
+      if (res.error === "timeout" || res.error === "network") return true;
+      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
+        return true;
+      }
+      return false;
+    };
+    const promise = (async () => {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
+        const res = await doRequest();
+        if (!shouldRetry(res) || attempt === maxRetries) {
+          return res;
+        }
+        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
+        await new Promise((resolve) => globalThis.setTimeout(resolve, delay));
+      }
+      return { doc: null, status: null, finalUrl: null, error: "network" };
+    })();
+    const abort = () => {
+      aborted = true;
+      try {
+        request == null ? void 0 : request.abort();
+      } catch {
+      }
+      try {
+        fetchAbortController == null ? void 0 : fetchAbortController.abort();
+      } catch {
+      }
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+    };
+    return { promise, abort };
+  }
+  class SectionMerger {
+    constructor(parser) {
+      this.parser = parser;
+    }
+async merge(doc2, url, options = {}) {
+      var _a, _b, _c, _d;
+      const maxPages = Math.max(1, options.maxPages ?? 10);
+      const confidenceThreshold = options.confidenceThreshold ?? 0.8;
+      const baseUrl = getSectionBaseUrl(url);
+      let startUrl = url;
+      let startDoc = doc2;
+      if (baseUrl && baseUrl !== url) {
+        const baseDoc = await this.fetchUrl(baseUrl, url, options.fetcher, options.signal);
+        if (baseDoc) {
+          startUrl = baseUrl;
+          startDoc = baseDoc;
+        }
+      }
+      const first = await this.parser.parse(startDoc, startUrl);
+      if (!first) return null;
+      const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
+      if (disableByRule) return first;
+      const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
+      const detection = this.parser.detect(startDoc, startUrl);
+      const section = detection.results.section;
+      const hasNextSectionUrl = !!(section == null ? void 0 : section.isSection) && !!(section == null ? void 0 : section.nextSectionUrl);
+      const shouldMerge = enableByRule || !!(section == null ? void 0 : section.isSection) && ((section == null ? void 0 : section.confidence) || 0) >= confidenceThreshold;
+      if (!shouldMerge) {
+        if (!hasNextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
+          const realNextChapterUrl = this.findNextChapterUrl(startDoc, startUrl);
+          if (realNextChapterUrl) {
+            first.nextUrl = realNextChapterUrl;
+          }
+        }
+        return first;
+      }
+      return this.mergeSections(startUrl, first, section, maxPages, options.fetcher, options.signal);
+    }
+async mergeSections(startUrl, first, section, maxPages, fetcher, signal) {
+      let mergedContent = first.content;
+      let mergedRaw = first.rawContent;
+      let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
+      let nextChapterUrl = (section == null ? void 0 : section.nextChapterUrl) || null;
+      let lastUrl = startUrl;
+      if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
+        nextSectionUrl = first.nextUrl;
+      }
+      const maxAdditionalPages = Math.max(0, maxPages - 1);
+      const seen = new Set([startUrl]);
+      for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
+        if (signal == null ? void 0 : signal.aborted) break;
+        const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
+        if (seen.has(absNextSection)) break;
+        seen.add(absNextSection);
+        const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
+        if (!nextDoc) break;
+        const nextParsed = await this.parser.parse(nextDoc, absNextSection);
+        if (!nextParsed) break;
+        mergedContent = joinHtml(mergedContent, nextParsed.content);
+        mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
+        const nextDet = this.parser.detect(nextDoc, absNextSection);
+        const s = nextDet.results.section;
+        if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+        nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
+        if (!nextSectionUrl && nextParsed.nextUrl) {
+          if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
+            nextSectionUrl = nextParsed.nextUrl;
+          } else if (!nextChapterUrl) {
+            nextChapterUrl = nextParsed.nextUrl;
+          }
+        }
+        lastUrl = absNextSection;
+      }
+      return {
+        ...first,
+        url: startUrl,
+        content: mergedContent,
+        rawContent: mergedRaw,
+        nextUrl: nextChapterUrl || first.nextUrl
+      };
+    }
+async fetchUrl(url, referrer, customFetcher, signal) {
+      if (signal == null ? void 0 : signal.aborted) {
+        return null;
+      }
+      if (customFetcher) {
+        return await customFetcher(url, referrer);
+      }
+      const { promise, abort } = fetchAndParseUrl(url, referrer);
+      if (!signal) {
+        const result = await promise;
+        return result.doc;
+      }
+      if (signal.aborted) {
+        abort();
+        return null;
+      }
+      let abortListener = null;
+      const abortPromise = new Promise((resolve) => {
+        abortListener = () => {
+          abort();
+          resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
+        };
+        signal.addEventListener("abort", abortListener, { once: true });
+      });
+      try {
+        const result = await Promise.race([promise, abortPromise]);
+        return result.doc;
+      } finally {
+        if (abortListener) {
+          signal.removeEventListener("abort", abortListener);
+        }
+      }
+    }
+findNextChapterUrl(doc2, currentUrl) {
+      var _a;
+      const links = doc2.querySelectorAll("a[href]");
+      const candidates = [];
+      for (const link of links) {
+        const anchor = link;
+        const href = anchor.getAttribute("href");
+        if (!href) continue;
+        const absUrl = normalizeAbsoluteUrl(href, currentUrl);
+        if (absUrl === currentUrl || isSectionLikeUrl(currentUrl, absUrl)) continue;
+        const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
+        if (!text2) continue;
+        const normalizedText = text2.replace(/\s+/g, "").trim();
+        if (!normalizedText) continue;
+        const lowerText = normalizedText.toLowerCase();
+        const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /继续阅读/.test(normalizedText) || /next/i.test(normalizedText);
+        if (!isForward) continue;
+        const isChapterText = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
+        const isSectionText = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2)) || lowerText.includes("next") && lowerText.includes("page") && !lowerText.includes("chapter");
+        const isEnglishNextChapter = lowerText.includes("next") && lowerText.includes("chapter");
+        if (isSectionText && !isChapterText && !isEnglishNextChapter) continue;
+        let score = 0;
+        if (isChapterText) score += 50;
+        if (isEnglishNextChapter) score += 45;
+        if (lowerText === "next" || lowerText === ">" || lowerText === "»") score += 10;
+        if (lowerText.includes("next")) score += 2;
+        if (normalizedText.length <= 5) score += 1;
+        const rel = (anchor.getAttribute("rel") || "").toLowerCase();
+        if (rel.includes("next")) score += 2;
+        if (score > 0) {
+          candidates.push({ url: absUrl, score });
+        }
+      }
+      if (candidates.length === 0) return null;
+      candidates.sort((a, b) => b.score - a.score);
+      return candidates[0].url;
+    }
+  }
+  function createSectionMerger(parser) {
+    return new SectionMerger(parser);
   }
   const DEFAULT_OPTIONS = {
     confidenceThreshold: 0.6,
@@ -7331,11 +7357,15 @@ async manualEnable(doc2 = document) {
   function getAutoEnableManager(options) {
     if (!managerInstance) {
       managerInstance = new AutoEnableManager(options);
+    } else if (options) {
+      console.warn(
+        "[AutoEnableManager] getAutoEnableManager(options) called after the singleton was created; options are ignored."
+      );
     }
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2025-12-24";
+  const BUILD_DATE = "2025-12-25";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -21629,11 +21659,11 @@ entry,
       if (existing && (!currentUrl || normalizeUrlForBlock(existing) !== normalizeUrlForBlock(currentUrl))) {
         return existing;
       }
-      if (!currentUrl) return null;
+      if (!currentUrl) return void 0;
       try {
         const parser = getParser();
         const detected = (_a = parser.detect(document, currentUrl).results.navigation.index) == null ? void 0 : _a.url;
-        if (!detected) return null;
+        if (!detected) return void 0;
         const normalized = normalizeUrlForFetch(detected);
         for (const entry of chapters.value) {
           const existingIndex = entry.chapter.indexUrl;
@@ -21646,7 +21676,7 @@ entry,
         return normalized;
       } catch (e) {
         console.error("[MNR] Failed to detect indexUrl:", e);
-        return null;
+        return void 0;
       }
     }
     async function loadToc() {
@@ -22513,6 +22543,12 @@ initialize: initialize2,
       $reset
     };
   });
+  function getMnrGlobalState() {
+    if (!window.__MY_NOVEL_READER__) {
+      window.__MY_NOVEL_READER__ = {};
+    }
+    return window.__MY_NOVEL_READER__;
+  }
   const BASE_RESET_CSS = `
 /* Reset all inherited styles */
 :host {
@@ -22591,26 +22627,32 @@ ul, ol {
 }
 `;
   function createShadowMount(hostId) {
+    const globalState = getMnrGlobalState();
     const host = document.createElement("div");
     host.id = hostId;
     document.body.appendChild(host);
     const shadowRoot = host.attachShadow({ mode: "open" });
-    window.__MNR_SHADOW_ROOT__ = shadowRoot;
+    globalState.shadowRoot = shadowRoot;
     const resetStyle = document.createElement("style");
     resetStyle.textContent = BASE_RESET_CSS;
     shadowRoot.appendChild(resetStyle);
-    if (window.__MNR_STYLES__) {
-      const appStyle = document.createElement("style");
-      appStyle.textContent = window.__MNR_STYLES__;
-      shadowRoot.appendChild(appStyle);
+    if (globalState.styles) {
+      const styleId = "mnr-app-styles";
+      const existing = shadowRoot.querySelector(`#${styleId}`);
+      const appStyle = existing || document.createElement("style");
+      if (!existing) {
+        appStyle.id = styleId;
+        shadowRoot.appendChild(appStyle);
+      }
+      appStyle.textContent = globalState.styles;
     }
     const mountPoint = document.createElement("div");
     mountPoint.id = `${hostId}-mount`;
     shadowRoot.appendChild(mountPoint);
     const cleanup = () => {
       host.remove();
-      if (window.__MNR_SHADOW_ROOT__ === shadowRoot) {
-        window.__MNR_SHADOW_ROOT__ = void 0;
+      if (globalState.shadowRoot === shadowRoot) {
+        globalState.shadowRoot = void 0;
       }
     };
     return { host, shadowRoot, mountPoint, cleanup };
@@ -23645,65 +23687,8 @@ setHeight,
       });
       const generatedSelector = computed(() => {
         if (!hoveredElement.value) return "";
-        return generateSelector(hoveredElement.value);
+        return generateCssSelector(hoveredElement.value, { maxDepth: 5, allowClassCombination: true });
       });
-      function generateSelector(element) {
-        if (element.id) {
-          const escaped = cssEscape2(element.id);
-          return `#${escaped}`;
-        }
-        if (element.className && typeof element.className === "string") {
-          const classes = element.className.trim().split(/\s+/).filter((c) => c.length > 0);
-          for (const cls of classes) {
-            const selector = `.${cssEscape2(cls)}`;
-            try {
-              if (document.querySelectorAll(selector).length === 1) {
-                return selector;
-              }
-            } catch {
-            }
-          }
-          if (classes.length >= 2) {
-            const selector = classes.slice(0, 3).map((c) => `.${cssEscape2(c)}`).join("");
-            try {
-              if (document.querySelectorAll(selector).length === 1) {
-                return selector;
-              }
-            } catch {
-            }
-          }
-        }
-        return buildPathSelector(element);
-      }
-      function buildPathSelector(element) {
-        const path = [];
-        let current = element;
-        while (current && current !== document.body && path.length < 5) {
-          let selector = current.tagName.toLowerCase();
-          if (current.id) {
-            selector = `#${cssEscape2(current.id)}`;
-            path.unshift(selector);
-            break;
-          }
-          const parent = current.parentElement;
-          if (parent) {
-            const siblings = Array.from(parent.children).filter((c) => c.tagName === current.tagName);
-            if (siblings.length > 1) {
-              const index = siblings.indexOf(current) + 1;
-              selector += `:nth-child(${index})`;
-            }
-          }
-          path.unshift(selector);
-          current = parent;
-        }
-        return path.join(" > ");
-      }
-      function cssEscape2(str) {
-        if (typeof globalThis.CSS !== "undefined" && globalThis.CSS.escape) {
-          return globalThis.CSS.escape(str);
-        }
-        return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1");
-      }
       function handleMouseMove(e) {
         if (!isActive.value) return;
         mouseX.value = e.clientX;
@@ -23740,7 +23725,7 @@ setHeight,
         }
         e.preventDefault();
         e.stopPropagation();
-        const selector = generateSelector(target);
+        const selector = generateCssSelector(target, { maxDepth: 5, allowClassCombination: true });
         emit2("select", { element: target, selector });
         deactivate();
       }
@@ -23837,7 +23822,7 @@ setHeight,
       };
     }
   });
-  const ElementPicker = _export_sfc(_sfc_main$3, [["__scopeId", "data-v-4e64cc86"]]);
+  const ElementPicker = _export_sfc(_sfc_main$3, [["__scopeId", "data-v-69ce3430"]]);
   const _hoisted_1$2 = { class: "mnr-selector-preview" };
   const _hoisted_2$2 = { class: "mnr-preview-header" };
   const _hoisted_3$2 = { class: "mnr-preview-label" };
@@ -25464,7 +25449,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-2e203e2d"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-d0da9bd2"]]);
   const appState = {
     isInitialized: false,
     isActive: false,
@@ -25541,6 +25526,12 @@ ${value}`;
     }
   }
   async function runAutoEnable() {
+    const configStore = useConfigStore(pinia);
+    const protectionOptions = buildProtectionOptions(configStore.protection);
+    const manager = getAutoEnableManager({
+      enableProtection: true,
+      protectionOptions
+    });
     const skipFlag = sessionStorage.getItem("mnr_skip_auto_enable");
     if (skipFlag) {
       sessionStorage.removeItem("mnr_skip_auto_enable");
@@ -25550,12 +25541,6 @@ ${value}`;
         return;
       }
     }
-    const configStore = useConfigStore(pinia);
-    const protectionOptions = buildProtectionOptions(configStore.protection);
-    const manager = getAutoEnableManager({
-      enableProtection: true,
-      protectionOptions
-    });
     const decision = await manager.check(document);
     appState.currentDecision = decision;
     if (decision.method === "user-disabled" || decision.showFloatingButton) {
