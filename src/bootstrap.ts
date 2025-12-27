@@ -18,13 +18,13 @@ import {
 } from '@/core';
 import { BUILD_DATE, VERSION } from '@/version';
 import { createApp, defineComponent, h, ref } from 'vue';
+import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
 import { type ProtectionSettings, useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { ReaderView } from '@/ui/components/reader';
-import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
 
 /** Application state */
 interface AppState {

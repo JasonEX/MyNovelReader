@@ -25,7 +25,7 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm run test:coverage
+        run: timeout 60s npm run test:coverage
 
       - name: Build
         run: npm run build
