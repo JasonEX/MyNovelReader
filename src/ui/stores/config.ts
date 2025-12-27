@@ -150,7 +150,6 @@ const DEFAULT_PROTECTION: ProtectionSettings = {
 
 // Storage key
 const STORAGE_KEY = 'mnr-config';
-const STORAGE_BACKUP_KEY = `${STORAGE_KEY}-backup`;
 
 export const useConfigStore = defineStore('config', () => {
   // State
@@ -227,34 +226,6 @@ export const useConfigStore = defineStore('config', () => {
     applyCustomCSS();
   }
 
-  function safeToString(value: unknown): string {
-    if (typeof value === 'string') return value;
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  }
-
-  async function backupCorruptedConfig(original: unknown): Promise<void> {
-    if (original === null || original === undefined) return;
-    try {
-      const payload = JSON.stringify({
-        savedAt: new Date().toISOString(),
-        type: typeof original,
-        value: safeToString(original),
-      });
-
-      if (typeof GM_setValue !== 'undefined') {
-        await GM_setValue(STORAGE_BACKUP_KEY, payload);
-      } else if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(STORAGE_BACKUP_KEY, payload);
-      }
-    } catch (e) {
-      console.error('[ConfigStore] Backup error:', e);
-    }
-  }
-
   // Persistence
   async function load() {
     try {
@@ -324,10 +295,7 @@ export const useConfigStore = defineStore('config', () => {
 
       // Repair corrupted data so users aren't stuck with repeated parse failures.
       if (hasInvalidData) {
-        console.warn(
-          '[ConfigStore] Corrupted config detected; backing up and resetting to defaults'
-        );
-        await backupCorruptedConfig(data);
+        console.warn('[ConfigStore] Corrupted config detected; resetting to defaults');
         await save();
       }
     } catch (e) {

@@ -118,17 +118,10 @@ describe('RuleManager', () => {
     expect(matched?.rule.id).toBe('glob');
   });
 
-  it('falls back to community and built-in rules', async () => {
+  it('falls back to built-in rules', async () => {
     const { manager } = createManagerWithStorage();
     (manager as unknown as { initialized: boolean }).initialized = true;
 
-    (manager as unknown as { communityRules: SiteRule[] }).communityRules = [
-      makeRule({
-        id: 'community',
-        match: { pattern: 'community\\.com', type: 'regex' },
-        meta: { source: 'community' },
-      }),
-    ];
     (manager as unknown as { builtInRules: SiteRule[] }).builtInRules = [
       makeRule({
         id: 'builtin',
@@ -136,9 +129,6 @@ describe('RuleManager', () => {
         meta: { source: 'builtin' },
       }),
     ];
-
-    const community = await manager.matchRule('https://community.com/1');
-    expect(community?.source).toBe('community');
 
     const builtin = await manager.matchRule('https://builtin.com/1');
     expect(builtin?.source).toBe('builtin');
@@ -155,7 +145,7 @@ describe('RuleManager', () => {
     await expect(manager.matchRule('https://example.com/1')).resolves.toBeNull();
   });
 
-  it('initialize loads user rules and built-in rules and tolerates community failures', async () => {
+  it('initialize loads user rules and built-in rules', async () => {
     const { manager, storage } = createManagerWithStorage();
     store.set(
       'example.com',
@@ -164,11 +154,6 @@ describe('RuleManager', () => {
         match: { pattern: 'example\\.com', type: 'regex' },
         meta: { source: 'user' },
       })
-    );
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({ ok: false }))
     );
 
     await manager.initialize();
@@ -188,11 +173,6 @@ describe('RuleManager', () => {
         match: { pattern: 'example\\.com', type: 'regex' },
         meta: { source: 'user' },
       })
-    );
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({ ok: false }))
     );
 
     const result = await manager.matchRule('https://example.com/chapter/1');
@@ -253,19 +233,6 @@ describe('RuleManager', () => {
 
     expect(manager.getBuiltInRules()).toEqual(builtins);
     expect(manager.getStorage()).toBe(storage);
-  });
-
-  it('initialize swallows community rule fetch exceptions', async () => {
-    const { manager } = createManagerWithStorage();
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => {
-        throw new Error('boom');
-      })
-    );
-
-    await expect(manager.initialize()).resolves.toBeUndefined();
   });
 
   it('returns null for malformed URLs without throwing', async () => {

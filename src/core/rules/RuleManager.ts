@@ -3,7 +3,7 @@
  * Handles loading, matching, and prioritizing rules
  */
 
-import { DEFAULT_COMMUNITY_RULES_URL, RuleMatchResult, SiteRule } from './types';
+import { RuleMatchResult, SiteRule } from './types';
 import { builtInRules as curatedBuiltInRules } from './builtInRules';
 import { RuleStorage } from './RuleStorage';
 
@@ -27,7 +27,6 @@ function toRegExp(pattern: string, type: 'regex' | 'glob' = 'regex'): RegExp {
 export class RuleManager {
   private storage: RuleStorage;
   private builtInRules: SiteRule[] = [];
-  private communityRules: SiteRule[] = [];
   private userRulesCache: Map<string, SiteRule> = new Map();
   private initialized: boolean = false;
 
@@ -48,17 +47,12 @@ export class RuleManager {
     // Load built-in rules
     this.builtInRules = await this.loadBuiltInRules();
 
-    // Load community rules (optional, async)
-    this.loadCommunityRules().catch(() => {
-      // Silently fail for community rules
-    });
-
     this.initialized = true;
   }
 
   /**
    * Match a URL against all rules
-   * Priority: user > community > builtin
+   * Priority: user > builtin
    */
   async matchRule(url: string): Promise<RuleMatchResult | null> {
     if (!this.initialized) {
@@ -89,18 +83,7 @@ export class RuleManager {
       }
     }
 
-    // 3. Check community rules
-    for (const rule of this.communityRules) {
-      if (this.matchesUrl(rule, url)) {
-        return {
-          rule,
-          source: 'community',
-          matchedPattern: rule.match.pattern,
-        };
-      }
-    }
-
-    // 4. Check built-in rules
+    // 3. Check built-in rules
     for (const rule of this.builtInRules) {
       if (this.matchesUrl(rule, url)) {
         return {
@@ -192,46 +175,6 @@ export class RuleManager {
   }
 
   /**
-   * Load community rules from remote URL
-   */
-  private async loadCommunityRules(): Promise<void> {
-    try {
-      const response = await fetch(DEFAULT_COMMUNITY_RULES_URL);
-      if (!response.ok) return;
-
-      const rules: SiteRule[] = await response.json();
-      this.communityRules = rules.filter(this.validateRule).map(rule => {
-        // Never execute remote code by default.
-        // Community rules are fetched dynamically and must not contain JS hooks.
-        if (
-          rule.hooks &&
-          Object.values(rule.hooks).some(v => typeof v === 'string' && v.trim().length > 0)
-        ) {
-          console.warn('[RuleManager] Ignoring hooks in community rule for safety:', rule.id);
-        }
-
-        return {
-          ...rule,
-          hooks: undefined,
-          meta: {
-            ...rule.meta,
-            source: 'community',
-          },
-        };
-      });
-    } catch {
-      // Silently fail
-    }
-  }
-
-  /**
-   * Validate a rule has required fields
-   */
-  private validateRule(rule: SiteRule): boolean {
-    return !!(rule.id && rule.match?.pattern && rule.content?.selector);
-  }
-
-  /**
    * Extract domain from URL
    */
   private extractDomain(url: string): string {
@@ -270,10 +213,9 @@ export class RuleManager {
   /**
    * Get statistics
    */
-  getStats(): { user: number; community: number; builtin: number } {
+  getStats(): { user: number; builtin: number } {
     return {
       user: this.userRulesCache.size,
-      community: this.communityRules.length,
       builtin: this.builtInRules.length,
     };
   }

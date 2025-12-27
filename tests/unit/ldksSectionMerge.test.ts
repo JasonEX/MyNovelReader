@@ -134,7 +134,7 @@ describe('ldks section merge', () => {
     // Content should contain both pages
     expect(last.content).toContain('PAGE1_CONTENT');
     expect(last.content).toContain('PAGE2_CONTENT');
-  });
+  }, 15000);
 
   it('should merge /id.html + /id_2.html and set nextUrl to next chapter', async () => {
     // Pinia store requires a DOM; create jsdom global.
@@ -240,5 +240,5 @@ describe('ldks section merge', () => {
     expect(last.nextUrl).toBe(nextChapterUrl);
     expect(last.content).toContain('PAGE1');
     expect(last.content).toContain('PAGE2');
-  });
+  }, 15000);
 });

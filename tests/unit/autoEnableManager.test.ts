@@ -141,6 +141,42 @@ describe('AutoEnableManager', () => {
     });
   });
 
+  it('returns site-preference decision when user enabled auto-enable for the site', async () => {
+    mockedRuleStorage.getSitePreference.mockReturnValue({ enabled: true, timestamp: Date.now() });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const doc = createDoc('https://example.com/chapter/1');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: true,
+      method: 'site-preference',
+      confidence: 1,
+    });
+
+    expect(mockedRuleManager.initialize).not.toHaveBeenCalled();
+  });
+
+  it('skips auto-enable on toc pages even if the site preference is disabled', async () => {
+    mockedRuleStorage.getSitePreference.mockReturnValue({ enabled: false, timestamp: Date.now() });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const doc = createDoc('https://example.com/book/1');
+    doc.title = '章节目录 - 示例小说';
+
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: false,
+      method: 'manual',
+    });
+    expect(decision.showFloatingButton).not.toBe(true);
+  });
+
   it('skips URLs matching skip patterns', async () => {
     const { AutoEnableManager } = await import('@/core/AutoEnableManager');
     const manager = new AutoEnableManager({ skipPatterns: [/skip/i] });
@@ -331,9 +367,7 @@ describe('AutoEnableManager', () => {
     expect(launchCallback).not.toHaveBeenCalled();
   });
 
-  it('manualEnable logs when site preference save fails (invalid URL)', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('manualEnable does not persist site preference for invalid URLs', async () => {
     const { AutoEnableManager } = await import('@/core/AutoEnableManager');
     const manager = new AutoEnableManager({ enableProtection: false });
 
@@ -343,7 +377,8 @@ describe('AutoEnableManager', () => {
     const doc = { location: { href: 'not a url' } } as unknown as Document;
     await manager.manualEnable(doc);
 
-    expect(errorSpy).toHaveBeenCalled();
+    expect(mockedRuleStorage.setSitePreference).not.toHaveBeenCalled();
+    expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 
   it('manualEnable activates protection and launches when merge succeeds', async () => {

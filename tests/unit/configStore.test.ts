@@ -39,10 +39,6 @@ describe('ConfigStore', () => {
     expect(dom.window.document.documentElement.style.getPropertyValue('--mnr-bg')).toBe('#ffffff');
     expect(dom.window.document.getElementById('mnr-custom-css')).not.toBeNull();
     expect(gmSetValue).toHaveBeenCalledWith(
-      'mnr-config-backup',
-      expect.stringContaining('{not-json')
-    );
-    expect(gmSetValue).toHaveBeenCalledWith(
       'mnr-config',
       expect.stringContaining('"themeId":"light"')
     );

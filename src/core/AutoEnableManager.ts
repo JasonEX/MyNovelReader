@@ -13,6 +13,7 @@ import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
 import { type ParsedChapter, Parser } from '@/core/parser';
 import { createRuleSaver } from '@/core/auto-enable/RuleSaver';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
+import { getPageKind } from '@/core/auto-enable/PageKind';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import type { SiteRule } from '@/core/rules/types';
@@ -22,7 +23,13 @@ export interface AutoEnableDecision {
   /** Whether to show the reader */
   shouldEnable: boolean;
   /** How the decision was made */
-  method: 'user-rule' | 'builtin-rule' | 'detection' | 'manual' | 'user-disabled';
+  method:
+    | 'user-rule'
+    | 'builtin-rule'
+    | 'detection'
+    | 'manual'
+    | 'user-disabled'
+    | 'site-preference';
   /** Confidence level (0-1) */
   confidence: number;
   /** The rule to use (if any) */
@@ -119,22 +126,6 @@ export class AutoEnableManager {
    */
   async check(doc: Document = document): Promise<AutoEnableDecision> {
     const url = doc.location?.href || window.location.href;
-    const hostname = new URL(url).hostname;
-
-    // Check site preference first (user-disabled takes priority)
-    const storage = getRuleStorage();
-    const pref = storage.getSitePreference(hostname);
-    if (pref?.enabled === false) {
-      // User previously exited reader on this site, don't auto-enable
-      // But still show floating button so they can manually enable
-      return {
-        shouldEnable: false,
-        method: 'user-disabled',
-        confidence: 0,
-        reasons: ['User previously disabled auto-enable for this site'],
-        showFloatingButton: true,
-      };
-    }
 
     // Check skip patterns
     if (this.shouldSkip(url)) {
@@ -144,6 +135,57 @@ export class AutoEnableManager {
         confidence: 0,
         reasons: ['URL matches skip pattern'],
       };
+    }
+
+    const pageKind = getPageKind(url, doc);
+    if (pageKind === 'toc') {
+      return {
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['目录页，跳过自动启用'],
+      };
+    }
+
+    if (pageKind !== 'chapter') {
+      return {
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['非正文页，跳过自动启用'],
+      };
+    }
+
+    let hostname: string | null = null;
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      hostname = null;
+    }
+
+    // Check site preference (only applies to chapter pages)
+    if (hostname) {
+      const storage = getRuleStorage();
+      const pref = storage.getSitePreference(hostname);
+      if (pref?.enabled === false) {
+        // User previously exited reader on this site, don't auto-enable
+        // But still show floating button so they can manually enable
+        return {
+          shouldEnable: false,
+          method: 'user-disabled',
+          confidence: 0,
+          reasons: ['用户已关闭该站点自动启用'],
+          showFloatingButton: true,
+        };
+      }
+      if (pref?.enabled === true) {
+        return {
+          shouldEnable: true,
+          method: 'site-preference',
+          confidence: 1,
+          reasons: ['用户已为该站点开启自动启用'],
+        };
+      }
     }
 
     // Quick check first
@@ -235,7 +277,10 @@ export class AutoEnableManager {
           await this.saveRuleForCurrentSite(doc, decision);
         }
 
-        await this.launch(doc, decision);
+        const launched = await this.launch(doc, decision);
+        if (launched) {
+          this.rememberSiteEnabled(doc);
+        }
       }
     }
   }
@@ -243,16 +288,32 @@ export class AutoEnableManager {
   /**
    * Launch the reader
    */
-  private async launch(doc: Document, decision: AutoEnableDecision): Promise<void> {
+  private async launch(doc: Document, decision: AutoEnableDecision): Promise<boolean> {
     try {
       const currentUrl = doc.location?.href || window.location.href;
       const chapter = await this.sectionMerger.merge(doc, currentUrl);
 
       if (chapter && this.launchCallback) {
         this.launchCallback(chapter, decision.rule);
+        return true;
       }
+      return false;
     } catch (e) {
       console.error('[AutoEnableManager] Parse error:', e);
+      return false;
+    }
+  }
+
+  private rememberSiteEnabled(doc: Document): void {
+    const url = doc.location?.href || window.location.href;
+    if (getPageKind(url, doc) !== 'chapter') return;
+
+    try {
+      const hostname = new URL(url).hostname;
+      const storage = getRuleStorage();
+      storage.setSitePreference(hostname, { enabled: true, timestamp: Date.now() });
+    } catch (e) {
+      console.error('[AutoEnableManager] Failed to save site preference:', e);
     }
   }
 
@@ -291,16 +352,6 @@ export class AutoEnableManager {
    * Manual enable (force launch without detection)
    */
   async manualEnable(doc: Document = document): Promise<void> {
-    // Save site preference - user wants reader on this site
-    const url = doc.location?.href || window.location.href;
-    try {
-      const hostname = new URL(url).hostname;
-      const storage = getRuleStorage();
-      storage.setSitePreference(hostname, { enabled: true, timestamp: Date.now() });
-    } catch (e) {
-      console.error('[AutoEnableManager] Failed to save site preference:', e);
-    }
-
     // Enable protection
     if (this.options.enableProtection) {
       const protection = getSiteProtection();
@@ -315,6 +366,7 @@ export class AutoEnableManager {
 
       if (chapter && this.launchCallback) {
         this.launchCallback(chapter, undefined);
+        this.rememberSiteEnabled(doc);
       }
     } catch (e) {
       console.error('[AutoEnableManager] Manual enable error:', e);

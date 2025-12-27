@@ -97,7 +97,7 @@
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-15d78857]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-15d78857]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-15d78857]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-15d78857]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-15d78857]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-15d78857]{display:flex;gap:4px}.mnr-tab-btn[data-v-15d78857]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-15d78857]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-15d78857]{margin-bottom:24px}.mnr-section-title[data-v-15d78857]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-15d78857]{margin-bottom:16px}.mnr-form-group label[data-v-15d78857]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-15d78857],.mnr-form-group textarea[data-v-15d78857]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-15d78857]:focus,.mnr-form-group textarea[data-v-15d78857]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-15d78857]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-15d78857]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-15d78857]{width:18px;height:18px}.mnr-code-toolbar[data-v-15d78857]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-15d78857]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-15d78857]:hover{opacity:.8}.mnr-code-editor[data-v-15d78857]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-15d78857]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-15d78857],.mnr-css-editor[data-v-15d78857]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-15d78857]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-15d78857]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-15d78857]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-15d78857]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-15d78857]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-d0da9bd2]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-d0da9bd2] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-d0da9bd2] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-d0da9bd2] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-d0da9bd2]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-d0da9bd2]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-d0da9bd2]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-d0da9bd2]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-d0da9bd2]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-d0da9bd2]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-d0da9bd2],.mnr-loading-next[data-v-d0da9bd2]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-d0da9bd2]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-d0da9bd2 1s linear infinite}.mnr-loading-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-d0da9bd2]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-d0da9bd2]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-d0da9bd2 .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-d0da9bd2{to{transform:rotate(360deg)}}.mnr-toast[data-v-d0da9bd2]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-d0da9bd2]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-d0da9bd2],.mnr-toast-leave-active[data-v-d0da9bd2]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-d0da9bd2],.mnr-toast-leave-to[data-v-d0da9bd2]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-d0da9bd2]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-d0da9bd2]{padding:40px}}.mnr-rule-editor-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-d0da9bd2]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-d0da9bd2]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-d0da9bd2]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-d0da9bd2] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-d0da9bd2] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-d0da9bd2] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-d0da9bd2]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-d0da9bd2]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-d0da9bd2]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-d0da9bd2]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-d0da9bd2]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-d0da9bd2]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-d0da9bd2],.mnr-loading-next[data-v-d0da9bd2]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-d0da9bd2]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-d0da9bd2 1s linear infinite}.mnr-loading-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-d0da9bd2]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-d0da9bd2]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-d0da9bd2 .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-d0da9bd2{to{transform:rotate(360deg)}}.mnr-toast[data-v-d0da9bd2]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-d0da9bd2]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-d0da9bd2],.mnr-toast-leave-active[data-v-d0da9bd2]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-d0da9bd2],.mnr-toast-leave-to[data-v-d0da9bd2]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-d0da9bd2]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-d0da9bd2]{padding:40px}}.mnr-rule-editor-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-d0da9bd2]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-d0da9bd2]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -3619,14 +3619,6 @@ smartQueryAll(root, selector) {
       }
     }
   }
-  const STORAGE_KEYS = {
-    USER_RULES: "mnr_user_rules",
-    RULE_PREFIX: "mnr_rule_",
-    COMMUNITY_RULES_URL: "mnr_community_rules_url",
-    LAST_COMMUNITY_UPDATE: "mnr_community_rules_updated",
-    SITE_PREFERENCES: "mnr_site_prefs"
-  };
-  const DEFAULT_COMMUNITY_RULES_URL = "https://raw.githubusercontent.com/JasonEX/MyNovelReader/master/rules/community.json";
   const CIWEIMAO_BEFORE_PARSE = `
   try {
     const contentEl = doc.querySelector('#J_BookRead');
@@ -5031,6 +5023,44 @@ checkSection: true
     }
   ];
   const builtInRules = [...specialRules, ...simplifiedRules];
+  const STORAGE_KEYS = {
+    USER_RULES: "mnr_user_rules",
+    RULE_PREFIX: "mnr_rule_",
+    SITE_PREFERENCES: "mnr_site_prefs"
+  };
+  function sanitizeUserRuleHooks(rule) {
+    const removedKeys = [];
+    const rawHooks = rule.hooks;
+    if (rawHooks === void 0) {
+      return { sanitized: rule, removedKeys };
+    }
+    const sanitized = { ...rule };
+    if (!rawHooks || typeof rawHooks !== "object" || Array.isArray(rawHooks)) {
+      removedKeys.push("hooks");
+      delete sanitized.hooks;
+      return { sanitized, removedKeys };
+    }
+    const hooksObj = rawHooks;
+    for (const key of Object.keys(hooksObj)) {
+      if (key !== "beforeParse") {
+        removedKeys.push(key);
+      }
+    }
+    const beforeParse = hooksObj.beforeParse;
+    const keepBeforeParse = typeof beforeParse === "string" && beforeParse.trim().length > 0;
+    if (!keepBeforeParse && "beforeParse" in hooksObj) {
+      removedKeys.push("beforeParse");
+    }
+    if (keepBeforeParse) {
+      sanitized.hooks = { beforeParse };
+    } else {
+      delete sanitized.hooks;
+    }
+    return { sanitized, removedKeys };
+  }
+  function warnDroppedHookFields(ruleId, removedKeys) {
+    console.warn("[RuleStorage] Dropped unsupported hooks fields:", ruleId, removedKeys);
+  }
   class GMStorageDriver {
     constructor(prefix = STORAGE_KEYS.RULE_PREFIX) {
       this.prefix = prefix;
@@ -5180,7 +5210,14 @@ checkSection: true
       }
     }
 async getUserRule(domain) {
-      return this.driver.get(domain);
+      const rule = await this.driver.get(domain);
+      if (!rule) return null;
+      const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+      if (removedKeys.length > 0) {
+        warnDroppedHookFields(domain, removedKeys);
+        await this.driver.set(domain, sanitized);
+      }
+      return sanitized;
     }
 async saveUserRule(domain, rule) {
       const ruleToSave = {
@@ -5192,13 +5229,27 @@ async saveUserRule(domain, rule) {
           updated: Date.now()
         }
       };
-      await this.driver.set(domain, ruleToSave);
+      const { sanitized, removedKeys } = sanitizeUserRuleHooks(ruleToSave);
+      if (removedKeys.length > 0) {
+        warnDroppedHookFields(domain, removedKeys);
+      }
+      await this.driver.set(domain, sanitized);
     }
 async deleteUserRule(domain) {
       await this.driver.delete(domain);
     }
 async getAllUserRules() {
-      return this.driver.getAll();
+      const all = await this.driver.getAll();
+      const sanitizedRules = new Map();
+      for (const [domain, rule] of all) {
+        const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+        sanitizedRules.set(domain, sanitized);
+        if (removedKeys.length > 0) {
+          warnDroppedHookFields(domain, removedKeys);
+          await this.driver.set(domain, sanitized);
+        }
+      }
+      return sanitizedRules;
     }
 async getAllDomains() {
       return this.driver.getAllKeys();
@@ -5207,7 +5258,7 @@ async clearAllRules() {
       await this.driver.clear();
     }
 async exportRules() {
-      const rules = await this.driver.getAll();
+      const rules = await this.getAllUserRules();
       const rulesArray = Array.from(rules.values());
       return JSON.stringify(rulesArray, null, 2);
     }
@@ -5232,7 +5283,11 @@ async importRules(json, overwrite = false) {
           const existing = await this.driver.get(rule.id);
           if (existing) continue;
         }
-        await this.driver.set(rule.id, rule);
+        const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+        if (removedKeys.length > 0) {
+          warnDroppedHookFields(rule.id, removedKeys);
+        }
+        await this.driver.set(rule.id, sanitized);
         count++;
       }
       return count;
@@ -5289,7 +5344,6 @@ deleteSitePreference(domain) {
   class RuleManager {
     constructor() {
       this.builtInRules = [];
-      this.communityRules = [];
       this.userRulesCache = new Map();
       this.initialized = false;
       this.storage = new RuleStorage();
@@ -5298,8 +5352,6 @@ async initialize() {
       if (this.initialized) return;
       this.userRulesCache = await this.storage.getAllUserRules();
       this.builtInRules = await this.loadBuiltInRules();
-      this.loadCommunityRules().catch(() => {
-      });
       this.initialized = true;
     }
 async matchRule(url) {
@@ -5320,15 +5372,6 @@ async matchRule(url) {
           return {
             rule,
             source: "user",
-            matchedPattern: rule.match.pattern
-          };
-        }
-      }
-      for (const rule of this.communityRules) {
-        if (this.matchesUrl(rule, url)) {
-          return {
-            rule,
-            source: "community",
             matchedPattern: rule.match.pattern
           };
         }
@@ -5384,31 +5427,6 @@ getStorage() {
 async loadBuiltInRules() {
       return builtInRules;
     }
-async loadCommunityRules() {
-      try {
-        const response = await fetch(DEFAULT_COMMUNITY_RULES_URL);
-        if (!response.ok) return;
-        const rules = await response.json();
-        this.communityRules = rules.filter(this.validateRule).map((rule) => {
-          if (rule.hooks && Object.values(rule.hooks).some((v) => typeof v === "string" && v.trim().length > 0)) {
-            console.warn("[RuleManager] Ignoring hooks in community rule for safety:", rule.id);
-          }
-          return {
-            ...rule,
-            hooks: void 0,
-            meta: {
-              ...rule.meta,
-              source: "community"
-            }
-          };
-        });
-      } catch {
-      }
-    }
-validateRule(rule) {
-      var _a, _b;
-      return !!(rule.id && ((_a = rule.match) == null ? void 0 : _a.pattern) && ((_b = rule.content) == null ? void 0 : _b.selector));
-    }
 extractDomain(url) {
       try {
         return new URL(url).hostname;
@@ -5431,7 +5449,6 @@ async clearUserRules() {
 getStats() {
       return {
         user: this.userRulesCache.size,
-        community: this.communityRules.length,
         builtin: this.builtInRules.length
       };
     }
@@ -5497,7 +5514,7 @@ getStats() {
     if (host.startsWith("fc") || host.startsWith("fd")) return true;
     return false;
   }
-  function parseHttpUrl(url) {
+  function parseHttpUrl$1(url) {
     try {
       const u = new URL(url);
       if (u.protocol !== "http:" && u.protocol !== "https:") return null;
@@ -5524,7 +5541,7 @@ getStats() {
       const u = new URL(resolved);
       if (u.protocol !== "http:" && u.protocol !== "https:") return null;
       if (isPrivateNetworkHost(u.hostname)) {
-        const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
+        const baseUrl = parseHttpUrl$1(base || "") || parseHttpUrl$1(getDefaultBaseUrl() || "");
         if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
           return null;
         }
@@ -6191,24 +6208,6 @@ smartSelect(doc2, selector) {
         }
       }
       return null;
-    }
-async executeHooks(rule, doc2, content) {
-      var _a, _b;
-      let result = content;
-      if ((_a = rule.hooks) == null ? void 0 : _a.beforeParse) {
-        await this.runBeforeParseHook(rule, doc2);
-      }
-      if ((_b = rule.hooks) == null ? void 0 : _b.afterParse) {
-        try {
-          const hookCode = rule.hooks.afterParse;
-          const fn = new Function("content", `return (${hookCode})(content)`);
-          const hookResult = await Promise.resolve(fn(result));
-          result = hookResult || result;
-        } catch (e) {
-          console.warn("[Parser] afterParse hook error:", e);
-        }
-      }
-      return result;
     }
     async runBeforeParseHook(rule, doc2, url) {
       var _a;
@@ -7209,6 +7208,75 @@ findNextChapterUrl(doc2, currentUrl) {
   function createSectionMerger(parser) {
     return new SectionMerger(parser);
   }
+  const TOC_TITLE_PATTERN = /(?:章节目录|章節目錄|章节列表|章節列表|目录|目錄|书目|書目|toc|catalog|contents?)/i;
+  const TOC_URL_PATTERN = /(?:^|\/)(?:catalog|toc|contents?|mulu|dir(?:ectory)?|chapterlist|chapters)(?:\/|$)/i;
+  const TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
+  const CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|read|txt|article)\/[^?#]*\d/i;
+  const CHAPTER_LINK_TEXT_PATTERN = /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
+  const NAV_LINK_TEXT_PATTERN = /(?:下一[章页]|上一[章页]|下一章|上一章|next|prev)/i;
+  function parseHttpUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      return u;
+    } catch {
+      return null;
+    }
+  }
+  function getKindFromUrl(url) {
+    const parsed = parseHttpUrl(url);
+    if (!parsed) return "other";
+    const pathname = parsed.pathname.toLowerCase();
+    const search = parsed.search.toLowerCase();
+    if (TOC_URL_PATTERN.test(pathname) || TOC_QUERY_PATTERN.test(search)) {
+      return "toc";
+    }
+    if (CHAPTER_URL_STRONG_PATTERN.test(pathname)) {
+      return "chapter";
+    }
+    return "other";
+  }
+  function getKindFromTitle(title) {
+    if (!title) return "other";
+    if (TOC_TITLE_PATTERN.test(title)) return "toc";
+    return "other";
+  }
+  function getKindFromDom(doc2) {
+    const body = doc2.body;
+    if (!body) return "other";
+    const titleKind = getKindFromTitle(doc2.title);
+    if (titleKind !== "other") return titleKind;
+    const anchors = Array.from(body.querySelectorAll("a[href]"));
+    let linkTextLength = 0;
+    let chapterLikeLinkCount = 0;
+    let navLinkCount = 0;
+    for (const anchor of anchors) {
+      const text2 = (anchor.textContent || "").trim();
+      if (!text2) continue;
+      linkTextLength += text2.length;
+      if (CHAPTER_LINK_TEXT_PATTERN.test(text2)) chapterLikeLinkCount++;
+      if (NAV_LINK_TEXT_PATTERN.test(text2)) navLinkCount++;
+    }
+    const totalTextLength = (body.textContent || "").length;
+    const linkDensity = linkTextLength / Math.max(1, totalTextLength);
+    const paragraphCount = body.querySelectorAll("p").length;
+    if (chapterLikeLinkCount >= 25 && linkDensity >= 0.12) return "toc";
+    if (anchors.length >= 120 && chapterLikeLinkCount >= 15 && linkDensity >= 0.08) return "toc";
+    if (navLinkCount > 0 && totalTextLength >= 2e3 && chapterLikeLinkCount <= 12 && linkDensity < 0.25) {
+      return "chapter";
+    }
+    if (totalTextLength >= 8e3 && chapterLikeLinkCount <= 12 && linkDensity < 0.25) return "chapter";
+    if (paragraphCount >= 8 && totalTextLength >= 4e3 && chapterLikeLinkCount <= 12 && linkDensity < 0.25) {
+      return "chapter";
+    }
+    return "other";
+  }
+  function getPageKind(url, doc2) {
+    const kindFromUrl = getKindFromUrl(url);
+    if (kindFromUrl !== "other") return kindFromUrl;
+    if (!doc2) return "other";
+    return getKindFromDom(doc2);
+  }
   const DEFAULT_OPTIONS = {
     confidenceThreshold: 0.6,
     autoLaunchThreshold: 0.9,
@@ -7242,18 +7310,6 @@ setLaunchCallback(callback) {
 async check(doc2 = document) {
       var _a, _b, _c, _d;
       const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-      const hostname = new URL(url).hostname;
-      const storage = getRuleStorage();
-      const pref = storage.getSitePreference(hostname);
-      if ((pref == null ? void 0 : pref.enabled) === false) {
-        return {
-          shouldEnable: false,
-          method: "user-disabled",
-          confidence: 0,
-          reasons: ["User previously disabled auto-enable for this site"],
-          showFloatingButton: true
-        };
-      }
       if (this.shouldSkip(url)) {
         return {
           shouldEnable: false,
@@ -7261,6 +7317,50 @@ async check(doc2 = document) {
           confidence: 0,
           reasons: ["URL matches skip pattern"]
         };
+      }
+      const pageKind = getPageKind(url, doc2);
+      if (pageKind === "toc") {
+        return {
+          shouldEnable: false,
+          method: "manual",
+          confidence: 0,
+          reasons: ["目录页，跳过自动启用"]
+        };
+      }
+      if (pageKind !== "chapter") {
+        return {
+          shouldEnable: false,
+          method: "manual",
+          confidence: 0,
+          reasons: ["非正文页，跳过自动启用"]
+        };
+      }
+      let hostname = null;
+      try {
+        hostname = new URL(url).hostname;
+      } catch {
+        hostname = null;
+      }
+      if (hostname) {
+        const storage = getRuleStorage();
+        const pref = storage.getSitePreference(hostname);
+        if ((pref == null ? void 0 : pref.enabled) === false) {
+          return {
+            shouldEnable: false,
+            method: "user-disabled",
+            confidence: 0,
+            reasons: ["用户已关闭该站点自动启用"],
+            showFloatingButton: true
+          };
+        }
+        if ((pref == null ? void 0 : pref.enabled) === true) {
+          return {
+            shouldEnable: true,
+            method: "site-preference",
+            confidence: 1,
+            reasons: ["用户已为该站点开启自动启用"]
+          };
+        }
       }
       if (!this.detectionEngine.quickCheck(doc2)) {
         return {
@@ -7324,7 +7424,10 @@ async execute(doc2 = document) {
           if (response.saveForDomain) {
             await this.saveRuleForCurrentSite(doc2, decision);
           }
-          await this.launch(doc2, decision);
+          const launched = await this.launch(doc2, decision);
+          if (launched) {
+            this.rememberSiteEnabled(doc2);
+          }
         }
       }
     }
@@ -7335,9 +7438,24 @@ async launch(doc2, decision) {
         const chapter = await this.sectionMerger.merge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
           this.launchCallback(chapter, decision.rule);
+          return true;
         }
+        return false;
       } catch (e) {
         console.error("[AutoEnableManager] Parse error:", e);
+        return false;
+      }
+    }
+    rememberSiteEnabled(doc2) {
+      var _a;
+      const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
+      if (getPageKind(url, doc2) !== "chapter") return;
+      try {
+        const hostname = new URL(url).hostname;
+        const storage = getRuleStorage();
+        storage.setSitePreference(hostname, { enabled: true, timestamp: Date.now() });
+      } catch (e) {
+        console.error("[AutoEnableManager] Failed to save site preference:", e);
       }
     }
 async saveRuleForCurrentSite(doc2, decision) {
@@ -7355,25 +7473,18 @@ reset() {
       this.currentDecision = void 0;
     }
 async manualEnable(doc2 = document) {
-      var _a, _b;
-      const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-      try {
-        const hostname = new URL(url).hostname;
-        const storage = getRuleStorage();
-        storage.setSitePreference(hostname, { enabled: true, timestamp: Date.now() });
-      } catch (e) {
-        console.error("[AutoEnableManager] Failed to save site preference:", e);
-      }
+      var _a;
       if (this.options.enableProtection) {
         const protection = getSiteProtection();
         protection.activate(this.options.protectionOptions);
         protection.removeOverlays();
       }
       try {
-        const currentUrl = ((_b = doc2.location) == null ? void 0 : _b.href) || window.location.href;
+        const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
         const chapter = await this.sectionMerger.merge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
           this.launchCallback(chapter, void 0);
+          this.rememberSiteEnabled(doc2);
         }
       } catch (e) {
         console.error("[AutoEnableManager] Manual enable error:", e);
@@ -7392,7 +7503,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2025-12-26";
+  const BUILD_DATE = "2025-12-27";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -20962,12 +21073,13 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
   }
   function trimNavFailures(navFailures, maxNavFailures) {
-    if (navFailures.size <= maxNavFailures) return;
+    const limit = Math.max(0, maxNavFailures);
+    if (navFailures.size <= limit) return;
     const entries2 = Array.from(navFailures.entries()).sort(
       (a, b) => a[1].nextRetryAt - b[1].nextRetryAt
     );
-    const toDeleteCount = Math.floor(maxNavFailures * 0.1);
-    for (let i = 0; i < toDeleteCount && i < entries2.length; i++) {
+    const toDeleteCount = Math.min(entries2.length, navFailures.size - limit);
+    for (let i = 0; i < toDeleteCount; i++) {
       navFailures.delete(entries2[i][0]);
     }
   }
@@ -21439,12 +21551,16 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     const tocWithStatus = computed(() => {
       var _a;
       const currentUrl = (_a = chapter.value) == null ? void 0 : _a.url;
-      return toc.value.map((entry) => ({
-        ...entry,
-        isCached: loadedUrls.value.has(entry.url) || cachedContents.value.has(entry.url),
-        isPersisted: persistedUrls.value.has(entry.url),
-        isCurrent: entry.url === currentUrl
-      }));
+      return toc.value.map((entry) => {
+        const url = normalizeUrlForFetch(entry.url);
+        return {
+          ...entry,
+          url,
+          isCached: loadedUrls.value.has(url) || cachedContents.value.has(url) || persistedUrls.value.has(url),
+          isPersisted: persistedUrls.value.has(url),
+          isCurrent: url === currentUrl
+        };
+      });
     });
     const currentChapterUrl = computed(() => {
       var _a;
@@ -21614,6 +21730,15 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       const cached = cachedContents.value.get(targetUrl);
       if (cached) {
         return insertCachedChapter(cached, isNext ? "append" : "prepend");
+      }
+      if (persistedUrls.value.has(targetUrl)) {
+        const persisted = await getPersistedCachedChapter(targetUrl);
+        if (persisted) {
+          const sessionCached = { ...persisted, cachedAt: Date.now() };
+          cachedContents.value.set(targetUrl, sessionCached);
+          trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
+          return insertCachedChapter(sessionCached, isNext ? "append" : "prepend");
+        }
       }
       if (loadedUrls.value.has(targetUrl)) {
         return false;
@@ -21873,6 +21998,9 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     async function startCacheAll(urls) {
       var _a, _b, _c, _d;
       if (cacheProgress.value.running) return;
+      await restoreCache();
+      const persistedSet = new Set(persistedUrls.value);
+      const cacheBook = getCurrentBookCacheKey();
       let taskList = urls ? [...urls] : [];
       cacheQueue.value = [...taskList];
       if (!taskList.length) {
@@ -21888,8 +22016,10 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
             }
           );
           cacheAbort.value = null;
-          const tocLinks = tocEntries.map((e) => e.url).slice(0, 1e4);
-          taskList = tocLinks.filter((u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+          const tocLinks = tocEntries.map((e) => normalizeUrlForFetch(e.url)).slice(0, 1e4);
+          taskList = tocLinks.filter(
+            (u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u) && !persistedSet.has(u)
+          );
           cacheQueue.value = [...taskList];
         }
       }
@@ -21903,7 +22033,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       let referer = ((_c = chapters.value[chapters.value.length - 1]) == null ? void 0 : _c.chapter.url) || ((_d = chapter.value) == null ? void 0 : _d.url);
       while (cacheProgress.value.running && nextUrl) {
         const targetUrl = normalizeUrlForFetch(nextUrl);
-        if (loadedUrls.value.has(targetUrl) || cachedContents.value.has(targetUrl)) {
+        if (loadedUrls.value.has(targetUrl) || cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
           cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
           nextUrl = taskList.shift() ?? null;
           continue;
@@ -21925,11 +22055,19 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           nextUrl = taskList.shift() ?? null;
           continue;
         }
-        cachedContents.value.set(parsed.url, {
+        const cached = {
           chapter: parsed,
           rule: parsed.rule,
           cachedAt: Date.now()
-        });
+        };
+        cachedContents.value.set(parsed.url, cached);
+        trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
+        if (cacheBook) {
+          const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
+          if (persisted) {
+            persistedSet.add(parsed.url);
+          }
+        }
         loadedUrls.value.add(parsed.url);
         cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
         referer = parsed.url;
@@ -21944,6 +22082,9 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         running: false
       };
       cacheAbort.value = null;
+      if (cacheBook && persistedSet.size > 0) {
+        persistedUrls.value = persistedSet;
+      }
       await persistCache();
     }
     function cancelCacheAll() {
@@ -22059,7 +22200,16 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
     }
     async function rebuildChaptersAround(targetUrl) {
-      const cached = cachedContents.value.get(targetUrl);
+      const url = normalizeUrlForFetch(targetUrl);
+      let cached = cachedContents.value.get(url);
+      if (!cached && persistedUrls.value.has(url)) {
+        const persisted = await getPersistedCachedChapter(url);
+        if (persisted) {
+          cached = { ...persisted, cachedAt: Date.now() };
+          cachedContents.value.set(url, cached);
+          trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
+        }
+      }
       if (!cached) return false;
       chapters.value = [];
       currentChapterIndex.value = 0;
@@ -22123,61 +22273,146 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         return btoa(indexUrl).slice(0, 32);
       }
     }
-    async function persistCache() {
+    function encodeBase64UrlUtf8(value) {
+      const bytes = new TextEncoder().encode(value);
+      let binary = "";
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+    function parseStoredJson(stored) {
+      if (stored === null || stored === void 0) return null;
+      if (typeof stored === "string") {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return null;
+        }
+      }
+      if (typeof stored === "object") {
+        return stored;
+      }
+      return null;
+    }
+    function getCacheV1Key(bookId) {
+      return `mnr_cache_${bookId}`;
+    }
+    function getCacheV2IndexKey(bookId) {
+      return `mnr_cache_v2_index_${bookId}`;
+    }
+    function getCacheV2ChapterKey(bookId, url) {
+      return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
+    }
+    function getCurrentBookCacheKey() {
       var _a;
       const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
-      if (!indexUrl || cachedContents.value.size === 0) return;
-      const bookId = generateBookId(indexUrl);
-      const chaptersObj = {};
-      for (const [url, cached] of cachedContents.value) {
-        chaptersObj[url] = cached;
+      if (!indexUrl) return null;
+      return { bookId: generateBookId(indexUrl), indexUrl };
+    }
+    function persistCachedChapter(cacheBook, url, cached) {
+      if (typeof GM_setValue === "undefined") return false;
+      try {
+        GM_setValue(getCacheV2ChapterKey(cacheBook.bookId, url), JSON.stringify(cached));
+        return true;
+      } catch (e) {
+        console.error("[MNR] Failed to persist cached chapter:", e);
+        return false;
       }
-      const data = {
-        bookId,
-        indexUrl,
-        chapters: chaptersObj,
+    }
+    async function getPersistedCachedChapter(url) {
+      var _a, _b, _c;
+      const cacheBook = getCurrentBookCacheKey();
+      if (!cacheBook) return null;
+      if (typeof GM_getValue === "undefined") return null;
+      try {
+        const storedV2 = GM_getValue(getCacheV2ChapterKey(cacheBook.bookId, url), null);
+        const cachedV2 = parseStoredJson(storedV2);
+        if ((_a = cachedV2 == null ? void 0 : cachedV2.chapter) == null ? void 0 : _a.url) {
+          return cachedV2;
+        }
+        const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
+        const dataV1 = parseStoredJson(storedV1);
+        const cachedV1 = (_b = dataV1 == null ? void 0 : dataV1.chapters) == null ? void 0 : _b[url];
+        if ((_c = cachedV1 == null ? void 0 : cachedV1.chapter) == null ? void 0 : _c.url) {
+          return cachedV1;
+        }
+      } catch (e) {
+        console.error("[MNR] Failed to load persisted chapter:", e);
+      }
+      return null;
+    }
+    async function persistCache() {
+      const cacheBook = getCurrentBookCacheKey();
+      if (!cacheBook) return;
+      if (typeof GM_setValue === "undefined") return;
+      const persistedSet = new Set(persistedUrls.value);
+      for (const [url, cached] of cachedContents.value) {
+        const persisted = persistCachedChapter(cacheBook, url, cached);
+        if (persisted) {
+          persistedSet.add(url);
+        }
+      }
+      if (persistedSet.size === 0) return;
+      const indexData = {
+        version: 2,
+        bookId: cacheBook.bookId,
+        indexUrl: cacheBook.indexUrl,
+        urls: Array.from(persistedSet),
         lastUpdated: Date.now()
       };
       try {
-        if (typeof GM_setValue !== "undefined") {
-          GM_setValue(`mnr_cache_${bookId}`, JSON.stringify(data));
-          persistedUrls.value = new Set(Object.keys(chaptersObj));
-        }
+        GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
+        persistedUrls.value = persistedSet;
       } catch (e) {
-        console.error("[MNR] Failed to persist cache:", e);
+        console.error("[MNR] Failed to persist cache index:", e);
       }
     }
     async function restoreCache() {
-      var _a;
-      const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
-      if (!indexUrl) return;
-      const bookId = generateBookId(indexUrl);
+      const cacheBook = getCurrentBookCacheKey();
+      if (!cacheBook) return;
+      if (typeof GM_getValue === "undefined") return;
       try {
-        if (typeof GM_getValue !== "undefined") {
-          const stored = GM_getValue(`mnr_cache_${bookId}`, null);
-          if (stored) {
-            const data = JSON.parse(stored);
-            const urls = Object.keys(data.chapters);
-            for (const [url, cached] of Object.entries(data.chapters)) {
-              cachedContents.value.set(url, cached);
-              loadedUrls.value.add(url);
-            }
-            persistedUrls.value = new Set(urls);
-          }
+        const storedV2 = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
+        const dataV2 = parseStoredJson(storedV2);
+        if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
+          persistedUrls.value = new Set(dataV2.urls);
+          return;
+        }
+        const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
+        const dataV1 = parseStoredJson(storedV1);
+        if ((dataV1 == null ? void 0 : dataV1.chapters) && typeof dataV1.chapters === "object") {
+          persistedUrls.value = new Set(Object.keys(dataV1.chapters));
         }
       } catch (e) {
         console.error("[MNR] Failed to restore cache:", e);
       }
     }
     async function clearPersistedCache() {
-      var _a;
-      const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
-      if (!indexUrl) return;
-      const bookId = generateBookId(indexUrl);
-      try {
-        if (typeof GM_deleteValue !== "undefined") {
-          GM_deleteValue(`mnr_cache_${bookId}`);
+      const cacheBook = getCurrentBookCacheKey();
+      if (!cacheBook) return;
+      if (typeof GM_deleteValue === "undefined") return;
+      let urls = new Set(persistedUrls.value);
+      if (typeof GM_getValue !== "undefined") {
+        const storedIndex = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
+        const dataV2 = parseStoredJson(storedIndex);
+        if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
+          urls = new Set(dataV2.urls);
         }
+      }
+      try {
+        const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
+        if (urls.size > 0) {
+          for (const url of urls) {
+            GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
+          }
+        } else if (typeof GM_listValues === "function") {
+          for (const key of GM_listValues()) {
+            if (key.startsWith(chapterKeyPrefix)) {
+              GM_deleteValue(key);
+            }
+          }
+        }
+        GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
+        GM_deleteValue(getCacheV1Key(cacheBook.bookId));
         persistedUrls.value.clear();
       } catch (e) {
         console.error("[MNR] Failed to clear cache:", e);
@@ -22312,7 +22547,6 @@ activate,
     blockPopups: true
   };
   const STORAGE_KEY = "mnr-config";
-  const STORAGE_BACKUP_KEY = `${STORAGE_KEY}-backup`;
   const useConfigStore = defineStore("config", () => {
     const themeId = ref("light");
     const reading = ref({ ...DEFAULT_READING });
@@ -22374,31 +22608,6 @@ activate,
       applyReading();
       applyCustomCSS();
     }
-    function safeToString(value) {
-      if (typeof value === "string") return value;
-      try {
-        return JSON.stringify(value);
-      } catch {
-        return String(value);
-      }
-    }
-    async function backupCorruptedConfig(original) {
-      if (original === null || original === void 0) return;
-      try {
-        const payload = JSON.stringify({
-          savedAt: ( new Date()).toISOString(),
-          type: typeof original,
-          value: safeToString(original)
-        });
-        if (typeof GM_setValue !== "undefined") {
-          await GM_setValue(STORAGE_BACKUP_KEY, payload);
-        } else if (typeof localStorage !== "undefined") {
-          localStorage.setItem(STORAGE_BACKUP_KEY, payload);
-        }
-      } catch (e) {
-        console.error("[ConfigStore] Backup error:", e);
-      }
-    }
     async function load() {
       try {
         let data = null;
@@ -22456,10 +22665,7 @@ activate,
         }
         applyAll();
         if (hasInvalidData) {
-          console.warn(
-            "[ConfigStore] Corrupted config detected; backing up and resetting to defaults"
-          );
-          await backupCorruptedConfig(data);
+          console.warn("[ConfigStore] Corrupted config detected; resetting to defaults");
           await save();
         }
       } catch (e) {
@@ -23415,7 +23621,7 @@ setHeight,
   const _hoisted_24$1 = { class: "mnr-switch-row" };
   const _hoisted_25$1 = { class: "mnr-switch-row" };
   const _hoisted_26$1 = { class: "mnr-switch-row" };
-  const _hoisted_27$1 = { class: "mnr-switch-row" };
+  const _hoisted_27 = { class: "mnr-switch-row" };
   const _hoisted_28 = { class: "mnr-settings-section" };
   const _hoisted_29 = { class: "mnr-segmented-control" };
   const _hoisted_30 = { class: "mnr-settings-section" };
@@ -23681,7 +23887,7 @@ setHeight,
                         [vModelCheckbox, autoHideHeader.value]
                       ])
                     ]),
-                    createBaseVNode("label", _hoisted_27$1, [
+                    createBaseVNode("label", _hoisted_27, [
                       _cache[37] || (_cache[37] = createBaseVNode("span", null, "显示阅读进度", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => showProgress.value = $event),
@@ -24215,11 +24421,10 @@ setHeight,
   const _hoisted_20 = { class: "mnr-checkbox-row" };
   const _hoisted_21 = { class: "mnr-form-section" };
   const _hoisted_22 = { class: "mnr-form-group" };
-  const _hoisted_23 = { class: "mnr-form-group" };
-  const _hoisted_24 = { class: "mnr-form-section" };
-  const _hoisted_25 = { class: "mnr-form-group" };
-  const _hoisted_26 = { class: "mnr-editor-footer" };
-  const _hoisted_27 = ["disabled"];
+  const _hoisted_23 = { class: "mnr-form-section" };
+  const _hoisted_24 = { class: "mnr-form-group" };
+  const _hoisted_25 = { class: "mnr-editor-footer" };
+  const _hoisted_26 = ["disabled"];
   const _sfc_main$1 = defineComponent({
     __name: "RuleEditorPanel",
     props: {
@@ -24228,7 +24433,7 @@ setHeight,
     },
     emits: ["save", "cancel", "pickerStateChange"],
     setup(__props, { emit: __emit }) {
-      var _a, _b, _c, _d, _e, _f;
+      var _a, _b, _c, _d, _e;
       const props = __props;
       const emit2 = __emit;
       const tabs = [
@@ -24300,8 +24505,7 @@ setHeight,
         useRawContent: ((_c = localRule.processing) == null ? void 0 : _c.useRawContent) ?? false
       });
       const hookBeforeParse = ref(((_d = localRule.hooks) == null ? void 0 : _d.beforeParse) || "");
-      const hookAfterParse = ref(((_e = localRule.hooks) == null ? void 0 : _e.afterParse) || "");
-      const customCSS = ref(((_f = localRule.style) == null ? void 0 : _f.customCSS) || "");
+      const customCSS = ref(((_e = localRule.style) == null ? void 0 : _e.customCSS) || "");
       const codeFormat = ref("json");
       const codeContent = ref("");
       const codeError = ref("");
@@ -24443,14 +24647,20 @@ ${value}`;
         return result;
       }
       function save() {
+        var _a2;
         if (!localRule.processing) localRule.processing = {};
         localRule.processing.removeAds = processingOptions.removeAds;
         localRule.processing.fixImages = processingOptions.fixImages;
         localRule.processing.useRawContent = processingOptions.useRawContent;
-        if (hookBeforeParse.value || hookAfterParse.value) {
+        const beforeParse = hookBeforeParse.value.trim();
+        if (beforeParse) {
           if (!localRule.hooks) localRule.hooks = {};
-          if (hookBeforeParse.value) localRule.hooks.beforeParse = hookBeforeParse.value;
-          if (hookAfterParse.value) localRule.hooks.afterParse = hookAfterParse.value;
+          localRule.hooks.beforeParse = beforeParse;
+        } else if ((_a2 = localRule.hooks) == null ? void 0 : _a2.beforeParse) {
+          delete localRule.hooks.beforeParse;
+          if (Object.keys(localRule.hooks).length === 0) {
+            delete localRule.hooks;
+          }
         }
         if (customCSS.value) {
           if (!localRule.style) localRule.style = {};
@@ -24477,7 +24687,7 @@ ${value}`;
         }, [
           createBaseVNode("div", _hoisted_1$1, [
             createBaseVNode("h3", _hoisted_2$1, toDisplayString(isNew.value ? "创建规则" : "编辑规则"), 1),
-            _cache[23] || (_cache[23] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "E", -1)),
+            _cache[22] || (_cache[22] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "E", -1)),
             createBaseVNode("div", _hoisted_3$1, [
               (openBlock(), createElementBlock(Fragment, null, renderList(tabs, (tab) => {
                 return createBaseVNode("button", {
@@ -24490,9 +24700,9 @@ ${value}`;
           ]),
           withDirectives(createBaseVNode("div", _hoisted_5$1, [
             createBaseVNode("div", _hoisted_6$1, [
-              _cache[27] || (_cache[27] = createBaseVNode("h4", { class: "mnr-section-title" }, "基本信息", -1)),
+              _cache[26] || (_cache[26] = createBaseVNode("h4", { class: "mnr-section-title" }, "基本信息", -1)),
               createBaseVNode("div", _hoisted_7$1, [
-                _cache[24] || (_cache[24] = createBaseVNode("label", null, "规则名称", -1)),
+                _cache[23] || (_cache[23] = createBaseVNode("label", null, "规则名称", -1)),
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => localRule.name = $event),
                   type: "text",
@@ -24502,7 +24712,7 @@ ${value}`;
                 ])
               ]),
               createBaseVNode("div", _hoisted_8$1, [
-                _cache[25] || (_cache[25] = createBaseVNode("label", null, "URL 匹配模式", -1)),
+                _cache[24] || (_cache[24] = createBaseVNode("label", null, "URL 匹配模式", -1)),
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => localRule.match.pattern = $event),
                   type: "text",
@@ -24510,11 +24720,11 @@ ${value}`;
                 }, null, 512), [
                   [vModelText, localRule.match.pattern]
                 ]),
-                _cache[26] || (_cache[26] = createBaseVNode("span", { class: "mnr-hint" }, "正则表达式，匹配当前页面 URL", -1))
+                _cache[25] || (_cache[25] = createBaseVNode("span", { class: "mnr-hint" }, "正则表达式，匹配当前页面 URL", -1))
               ])
             ]),
             createBaseVNode("div", _hoisted_9$1, [
-              _cache[30] || (_cache[30] = createBaseVNode("h4", { class: "mnr-section-title" }, "内容选择器", -1)),
+              _cache[29] || (_cache[29] = createBaseVNode("h4", { class: "mnr-section-title" }, "内容选择器", -1)),
               createVNode(SelectorPreview, {
                 selector: localRule.content.selector,
                 "onUpdate:selector": _cache[2] || (_cache[2] = ($event) => localRule.content.selector = $event),
@@ -24524,7 +24734,7 @@ ${value}`;
                 onPick: _cache[3] || (_cache[3] = ($event) => startPicking("content"))
               }, null, 8, ["selector"]),
               createBaseVNode("div", _hoisted_10$1, [
-                _cache[28] || (_cache[28] = createBaseVNode("label", null, "移除元素", -1)),
+                _cache[27] || (_cache[27] = createBaseVNode("label", null, "移除元素", -1)),
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => localRule.content.remove = $event),
                   type: "text",
@@ -24532,11 +24742,11 @@ ${value}`;
                 }, null, 512), [
                   [vModelText, localRule.content.remove]
                 ]),
-                _cache[29] || (_cache[29] = createBaseVNode("span", { class: "mnr-hint" }, "要从内容中移除的元素选择器，逗号分隔", -1))
+                _cache[28] || (_cache[28] = createBaseVNode("span", { class: "mnr-hint" }, "要从内容中移除的元素选择器，逗号分隔", -1))
               ])
             ]),
             createBaseVNode("div", _hoisted_11, [
-              _cache[31] || (_cache[31] = createBaseVNode("h4", { class: "mnr-section-title" }, "导航链接", -1)),
+              _cache[30] || (_cache[30] = createBaseVNode("h4", { class: "mnr-section-title" }, "导航链接", -1)),
               createVNode(SelectorPreview, {
                 selector: navPrev.value,
                 "onUpdate:selector": _cache[5] || (_cache[5] = ($event) => navPrev.value = $event),
@@ -24560,7 +24770,7 @@ ${value}`;
               }, null, 8, ["selector"])
             ]),
             createBaseVNode("div", _hoisted_12, [
-              _cache[32] || (_cache[32] = createBaseVNode("h4", { class: "mnr-section-title" }, "标题", -1)),
+              _cache[31] || (_cache[31] = createBaseVNode("h4", { class: "mnr-section-title" }, "标题", -1)),
               createVNode(SelectorPreview, {
                 selector: titleSelector.value,
                 "onUpdate:selector": _cache[11] || (_cache[11] = ($event) => titleSelector.value = $event),
@@ -24578,7 +24788,7 @@ ${value}`;
               withDirectives(createBaseVNode("select", {
                 "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => codeFormat.value = $event),
                 class: "mnr-format-select"
-              }, [..._cache[33] || (_cache[33] = [
+              }, [..._cache[32] || (_cache[32] = [
                 createBaseVNode("option", { value: "json" }, "JSON", -1),
                 createBaseVNode("option", { value: "yaml" }, "YAML", -1)
               ])], 512), [
@@ -24607,7 +24817,7 @@ ${value}`;
           ]),
           withDirectives(createBaseVNode("div", _hoisted_16, [
             createBaseVNode("div", _hoisted_17, [
-              _cache[37] || (_cache[37] = createBaseVNode("h4", { class: "mnr-section-title" }, "处理选项", -1)),
+              _cache[36] || (_cache[36] = createBaseVNode("h4", { class: "mnr-section-title" }, "处理选项", -1)),
               createBaseVNode("label", _hoisted_18, [
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => processingOptions.removeAds = $event),
@@ -24615,7 +24825,7 @@ ${value}`;
                 }, null, 512), [
                   [vModelCheckbox, processingOptions.removeAds]
                 ]),
-                _cache[34] || (_cache[34] = createBaseVNode("span", null, "移除广告", -1))
+                _cache[33] || (_cache[33] = createBaseVNode("span", null, "移除广告", -1))
               ]),
               createBaseVNode("label", _hoisted_19, [
                 withDirectives(createBaseVNode("input", {
@@ -24624,7 +24834,7 @@ ${value}`;
                 }, null, 512), [
                   [vModelCheckbox, processingOptions.fixImages]
                 ]),
-                _cache[35] || (_cache[35] = createBaseVNode("span", null, "修复图片", -1))
+                _cache[34] || (_cache[34] = createBaseVNode("span", null, "修复图片", -1))
               ]),
               createBaseVNode("label", _hoisted_20, [
                 withDirectives(createBaseVNode("input", {
@@ -24633,37 +24843,27 @@ ${value}`;
                 }, null, 512), [
                   [vModelCheckbox, processingOptions.useRawContent]
                 ]),
-                _cache[36] || (_cache[36] = createBaseVNode("span", null, "使用原始内容（不处理）", -1))
+                _cache[35] || (_cache[35] = createBaseVNode("span", null, "使用原始内容（不处理）", -1))
               ])
             ]),
             createBaseVNode("div", _hoisted_21, [
-              _cache[40] || (_cache[40] = createBaseVNode("h4", { class: "mnr-section-title" }, "自定义钩子", -1)),
+              _cache[38] || (_cache[38] = createBaseVNode("h4", { class: "mnr-section-title" }, "自定义钩子", -1)),
               createBaseVNode("div", _hoisted_22, [
-                _cache[38] || (_cache[38] = createBaseVNode("label", null, "解析前执行 (beforeParse)", -1)),
+                _cache[37] || (_cache[37] = createBaseVNode("label", null, "解析前执行 (beforeParse)", -1)),
                 withDirectives(createBaseVNode("textarea", {
                   "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => hookBeforeParse.value = $event),
                   class: "mnr-hook-editor",
-                  placeholder: "// JavaScript 代码，参数: doc"
+                  placeholder: "// JavaScript 代码，参数: doc, url, helpers"
                 }, null, 512), [
                   [vModelText, hookBeforeParse.value]
                 ])
-              ]),
-              createBaseVNode("div", _hoisted_23, [
-                _cache[39] || (_cache[39] = createBaseVNode("label", null, "解析后执行 (afterParse)", -1)),
-                withDirectives(createBaseVNode("textarea", {
-                  "onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => hookAfterParse.value = $event),
-                  class: "mnr-hook-editor",
-                  placeholder: "// JavaScript 代码，参数: content"
-                }, null, 512), [
-                  [vModelText, hookAfterParse.value]
-                ])
               ])
             ]),
-            createBaseVNode("div", _hoisted_24, [
-              _cache[41] || (_cache[41] = createBaseVNode("h4", { class: "mnr-section-title" }, "自定义 CSS", -1)),
-              createBaseVNode("div", _hoisted_25, [
+            createBaseVNode("div", _hoisted_23, [
+              _cache[39] || (_cache[39] = createBaseVNode("h4", { class: "mnr-section-title" }, "自定义 CSS", -1)),
+              createBaseVNode("div", _hoisted_24, [
                 withDirectives(createBaseVNode("textarea", {
-                  "onUpdate:modelValue": _cache[20] || (_cache[20] = ($event) => customCSS.value = $event),
+                  "onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => customCSS.value = $event),
                   class: "mnr-css-editor",
                   placeholder: "/* 自定义样式 */"
                 }, null, 512), [
@@ -24674,20 +24874,20 @@ ${value}`;
           ], 512), [
             [vShow, activeTab.value === "advanced"]
           ]),
-          createBaseVNode("div", _hoisted_26, [
+          createBaseVNode("div", _hoisted_25, [
             createBaseVNode("button", {
               class: "mnr-btn mnr-btn-secondary",
-              onClick: _cache[21] || (_cache[21] = ($event) => _ctx.$emit("cancel"))
+              onClick: _cache[20] || (_cache[20] = ($event) => _ctx.$emit("cancel"))
             }, "取消"),
             createBaseVNode("button", {
               class: "mnr-btn mnr-btn-primary",
               disabled: !isValid.value,
               onClick: save
-            }, "保存规则", 8, _hoisted_27)
+            }, "保存规则", 8, _hoisted_26)
           ]),
           createVNode(ElementPicker, {
             active: pickerActive.value,
-            "onUpdate:active": _cache[22] || (_cache[22] = ($event) => pickerActive.value = $event),
+            "onUpdate:active": _cache[21] || (_cache[21] = ($event) => pickerActive.value = $event),
             mode: pickerMode.value,
             onSelect: handlePickerSelect,
             onCancel: handlePickerCancel
@@ -24696,7 +24896,7 @@ ${value}`;
       };
     }
   });
-  const RuleEditorPanel = _export_sfc(_sfc_main$1, [["__scopeId", "data-v-15d78857"]]);
+  const RuleEditorPanel = _export_sfc(_sfc_main$1, [["__scopeId", "data-v-9661dd82"]]);
   const _hoisted_1 = {
     key: 0,
     class: "mnr-loading-prev"
@@ -25586,9 +25786,11 @@ ${value}`;
   const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-d0da9bd2"]]);
   const appState = {
     isInitialized: false,
+    autoEnableDone: false,
     isActive: false,
     currentDecision: null,
-    originalUrl: null
+    originalUrl: null,
+    entryPageKind: null
   };
   let app = null;
   let pinia = null;
@@ -25644,9 +25846,13 @@ ${value}`;
     console.error("[MNR] Early protection error:", e);
   }
   async function initialize() {
-    if (appState.isInitialized) {
-      return;
-    }
+    await ensureInitialized();
+    if (!appState.isInitialized || appState.autoEnableDone) return;
+    appState.autoEnableDone = true;
+    await runAutoEnable();
+  }
+  async function ensureInitialized() {
+    if (appState.isInitialized) return;
     console.log(`[MNR] MyNovelReader v${VERSION} (${BUILD_DATE})`);
     try {
       pinia = createPinia();
@@ -25654,7 +25860,6 @@ ${value}`;
       const ruleStore = useRuleStore(pinia);
       await Promise.all([configStore.load(), ruleStore.initialize()]);
       appState.isInitialized = true;
-      await runAutoEnable();
     } catch (e) {
       console.error("[MNR] Initialization error:", e);
     }
@@ -25726,6 +25931,7 @@ ${value}`;
       return;
     }
     appState.originalUrl = window.location.href;
+    appState.entryPageKind = getPageKind(window.location.href, document);
     const readerStore = useReaderStore(pinia);
     readerStore.activate();
     readerStore.setChapter(chapter, rule);
@@ -25755,12 +25961,15 @@ ${value}`;
   }
   function closeReader() {
     if (!appState.isActive) return;
-    try {
-      const hostname = new URL(window.location.href).hostname;
-      const storage = getRuleStorage();
-      storage.setSitePreference(hostname, { enabled: false, timestamp: Date.now() });
-    } catch (e) {
-      console.error("[MNR] Failed to save site preference:", e);
+    const entryPageKind = appState.entryPageKind;
+    if (entryPageKind === "chapter") {
+      try {
+        const hostname = new URL(window.location.href).hostname;
+        const storage = getRuleStorage();
+        storage.setSitePreference(hostname, { enabled: false, timestamp: Date.now() });
+      } catch (e) {
+        console.error("[MNR] Failed to save site preference:", e);
+      }
     }
     let targetUrl = null;
     if (pinia) {
@@ -25790,12 +25999,15 @@ ${value}`;
     }
     appState.isActive = false;
     appState.originalUrl = null;
+    appState.entryPageKind = null;
     if (targetUrl && originalUrl && targetUrl !== originalUrl) {
       sessionStorage.setItem("mnr_skip_auto_enable", Date.now().toString());
       window.location.href = targetUrl;
       return;
     }
-    showFloatingButton();
+    if (entryPageKind === "chapter") {
+      showFloatingButton();
+    }
   }
   function showFloatingButton() {
     hideFloatingButton();
@@ -25840,14 +26052,57 @@ ${value}`;
     }
   }
   async function manualEnable() {
-    const manager = getAutoEnableManager();
+    hideFloatingButton();
+    await ensureInitialized();
+    if (!pinia) return;
+    const configStore = useConfigStore(pinia);
+    const protectionOptions = buildProtectionOptions(configStore.protection);
+    const manager = getAutoEnableManager({
+      enableProtection: true,
+      protectionOptions
+    });
     manager.setLaunchCallback(launchReader);
     await manager.manualEnable(document);
   }
+  function isTopFrame() {
+    try {
+      return window.top === window.self;
+    } catch {
+      return false;
+    }
+  }
+  function registerMenuCommands() {
+    if (!isTopFrame()) return;
+    if (typeof GM_registerMenuCommand !== "function") return;
+    GM_registerMenuCommand("进入阅读模式", () => {
+      manualEnable().catch((e) => console.error("[MNR] Manual enable error:", e));
+    });
+  }
+  async function bootstrap() {
+    registerMenuCommands();
+    if (!isTopFrame()) return;
+    if (appState.isActive) return;
+    const url = window.location.href;
+    const pageKind = getPageKind(url, document);
+    if (pageKind !== "chapter") return;
+    try {
+      const hostname = new URL(url).hostname;
+      const pref = getRuleStorage().getSitePreference(hostname);
+      if ((pref == null ? void 0 : pref.enabled) === false) {
+        showFloatingButton();
+        return;
+      }
+    } catch (e) {
+      console.debug("[MNR] Failed to read site preference:", e);
+    }
+    await initialize();
+  }
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialize);
+    document.addEventListener("DOMContentLoaded", () => {
+      bootstrap().catch((e) => console.error("[MNR] Bootstrap error:", e));
+    });
   } else {
-    initialize();
+    bootstrap().catch((e) => console.error("[MNR] Bootstrap error:", e));
   }
 
 })();

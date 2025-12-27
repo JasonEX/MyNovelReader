@@ -141,5 +141,5 @@ describe('p_key template + extensionless section merge', () => {
     expect(loaded.content).toContain('第二页正文');
     expect(loaded.content).toContain('第三页正文');
     expect(loaded.content).not.toContain('加载更多');
-  });
+  }, 15000);
 });

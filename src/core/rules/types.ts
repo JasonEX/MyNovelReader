@@ -135,8 +135,8 @@ export interface HooksConfig {
 export interface RuleMeta {
   /** Rule author */
   author?: string;
-  /** Rule source: builtin, user, or community */
-  source: 'builtin' | 'user' | 'community';
+  /** Rule source: builtin or user */
+  source: 'builtin' | 'user';
   /** Creation timestamp */
   created?: number;
   /** Last update timestamp */
@@ -191,7 +191,7 @@ export interface SiteRule {
 /** Rule matching result */
 export interface RuleMatchResult {
   rule: SiteRule;
-  source: 'user' | 'community' | 'builtin' | 'detection';
+  source: 'user' | 'builtin';
   matchedPattern: string;
 }
 
@@ -199,8 +199,6 @@ export interface RuleMatchResult {
 export const STORAGE_KEYS = {
   USER_RULES: 'mnr_user_rules',
   RULE_PREFIX: 'mnr_rule_',
-  COMMUNITY_RULES_URL: 'mnr_community_rules_url',
-  LAST_COMMUNITY_UPDATE: 'mnr_community_rules_updated',
   SITE_PREFERENCES: 'mnr_site_prefs',
 } as const;
 
@@ -211,7 +209,3 @@ export interface SitePreference {
   /** When this preference was last updated */
   timestamp: number;
 }
-
-/** Default community rules URL */
-export const DEFAULT_COMMUNITY_RULES_URL =
-  'https://raw.githubusercontent.com/JasonEX/MyNovelReader/master/rules/community.json';
