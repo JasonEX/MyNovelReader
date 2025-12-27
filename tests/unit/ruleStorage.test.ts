@@ -143,6 +143,75 @@ describe('RuleStorage (GM fallback driver)', () => {
     expect(loaded).toBeNull();
   });
 
+  it('sanitizes unsupported hook fields on load and warns per rule', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const storage = new RuleStorage();
+
+    // Simulate legacy stored rule payload containing deprecated hook fields.
+    // @ts-expect-error - userscript global stub
+    GM_setValue(
+      'mnr_rule_example.com',
+      JSON.stringify({
+        id: 'example.com',
+        version: 1,
+        match: { pattern: 'a', type: 'regex' },
+        content: { selector: '#a' },
+        meta: { source: 'user' },
+        hooks: {
+          beforeParse: "doc.body.setAttribute('x', '1')",
+          afterParse: '(content) => content',
+          onLoad: "console.log('noop')",
+        },
+      })
+    );
+
+    const loaded = await storage.getUserRule('example.com');
+    expect(loaded?.hooks).toEqual({ beforeParse: "doc.body.setAttribute('x', '1')" });
+
+    expect(warn).toHaveBeenCalledWith(
+      '[RuleStorage] Dropped unsupported hooks fields:',
+      'example.com',
+      expect.arrayContaining(['afterParse', 'onLoad'])
+    );
+
+    const stored = gmStore.get('mnr_rule_example.com');
+    expect(typeof stored).toBe('string');
+    expect(stored as string).toContain('beforeParse');
+    expect(stored as string).not.toContain('afterParse');
+    expect(stored as string).not.toContain('onLoad');
+  });
+
+  it('sanitizes unsupported hook fields on import and warns per rule', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const storage = new RuleStorage();
+    const json = JSON.stringify([
+      {
+        id: 'example.com',
+        version: 1,
+        match: { pattern: 'a', type: 'regex' },
+        content: { selector: '#a' },
+        meta: { source: 'user' },
+        hooks: {
+          beforeParse: "doc.body.setAttribute('x', '1')",
+          afterParse: '(content) => content',
+        },
+      },
+    ]);
+
+    const count = await storage.importRules(json, true);
+    expect(count).toBe(1);
+    expect(warn).toHaveBeenCalledWith(
+      '[RuleStorage] Dropped unsupported hooks fields:',
+      'example.com',
+      expect.arrayContaining(['afterParse'])
+    );
+
+    const loaded = await storage.getUserRule('example.com');
+    expect(loaded?.hooks).toEqual({ beforeParse: "doc.body.setAttribute('x', '1')" });
+  });
+
   it('exports and imports rules (overwrite control)', async () => {
     const ruleA: SiteRule = {
       id: 'example.com',

@@ -3894,7 +3894,9 @@ beforeParse: `
         try {
           const reviews = doc.querySelectorAll('h1 .review');
           reviews.forEach(el => el.remove());
-        } catch (e) {}
+        } catch (e) {
+          console.debug('[MNR] Failed to remove review elements:', e);
+        }
 
         try {
           const script = doc.querySelector('#vite-plugin-ssr_pageContext');
@@ -5036,8 +5038,17 @@ checkSection: true
     async get(key) {
       try {
         const data = GM_getValue(this.prefix + key, null);
-        return data ? JSON.parse(data) : null;
-      } catch {
+        if (typeof data === "string") {
+          try {
+            return JSON.parse(data);
+          } catch (e) {
+            console.error(`[RuleStorage] Failed to parse rule ${key}:`, e);
+            return null;
+          }
+        }
+        return null;
+      } catch (e) {
+        console.debug("[RuleStorage] Failed to get rule:", key, e);
         return null;
       }
     }
@@ -5232,7 +5243,8 @@ getSitePreference(domain) {
         const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
         const prefs = typeof stored === "object" && stored !== null ? stored : {};
         return prefs[domain] || null;
-      } catch {
+      } catch (e) {
+        console.debug("[RuleStorage] Failed to get site preference:", domain, e);
         return null;
       }
     }
@@ -5344,7 +5356,8 @@ matchesUrl(rule, url) {
           }
         }
         return true;
-      } catch {
+      } catch (e) {
+        console.debug("[RuleManager] Rule match error for pattern:", rule.match.pattern, e);
         return false;
       }
     }
@@ -5429,6 +5442,320 @@ getStats() {
       ruleManagerInstance = new RuleManager();
     }
     return ruleManagerInstance;
+  }
+  function getGmXhr() {
+    if (typeof GM_xmlhttpRequest === "function") {
+      return GM_xmlhttpRequest;
+    }
+    return null;
+  }
+  function normalizeUrlForFetch$1(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return normalized.replace(/#.*$/, "");
+    }
+  }
+  function getDefaultBaseUrl() {
+    if (typeof location !== "undefined" && typeof location.href === "string") {
+      return location.href;
+    }
+    if (typeof document !== "undefined" && typeof document.baseURI === "string") {
+      return document.baseURI;
+    }
+    return void 0;
+  }
+  function normalizeHostname(hostname) {
+    const trimmed = hostname.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      return trimmed.slice(1, -1).toLowerCase();
+    }
+    return trimmed.toLowerCase();
+  }
+  function isPrivateNetworkHost(hostname) {
+    const host = normalizeHostname(hostname);
+    if (!host) return true;
+    if (host === "localhost") return true;
+    if (host === "0.0.0.0") return true;
+    const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4) {
+      const parts = ipv4.slice(1).map((n) => parseInt(n, 10));
+      if (parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return true;
+      const [a, b] = parts;
+      if (a === 10) return true;
+      if (a === 127) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+      return false;
+    }
+    if (host === "::1") return true;
+    if (host.startsWith("fe80:")) return true;
+    if (host.startsWith("fc") || host.startsWith("fd")) return true;
+    return false;
+  }
+  function parseHttpUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      return u;
+    } catch {
+      return null;
+    }
+  }
+  function resolveAndValidateHttpUrl(url, base) {
+    const normalized = normalizeUrlForFetch$1(url);
+    let resolved = null;
+    try {
+      resolved = base ? new URL(normalized, base).toString() : new URL(normalized).toString();
+    } catch {
+      try {
+        const fallbackBase = getDefaultBaseUrl();
+        if (!fallbackBase) return null;
+        resolved = new URL(normalized, fallbackBase).toString();
+      } catch {
+        return null;
+      }
+    }
+    try {
+      const u = new URL(resolved);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+      if (isPrivateNetworkHost(u.hostname)) {
+        const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
+        if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
+          return null;
+        }
+      }
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return null;
+    }
+  }
+  function fetchAndParseUrl(url, referer, options = {}) {
+    const gmXhr = getGmXhr();
+    const requestUrl = resolveAndValidateHttpUrl(url, referer);
+    const timeoutMs = options.timeoutMs ?? 15e3;
+    const maxRetries = Math.max(0, options.retries ?? 1);
+    if (!requestUrl) {
+      console.error("[MNR] Invalid or unsupported URL:", url);
+      return {
+        promise: Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "invalid-url"
+        }),
+        abort: () => {
+        }
+      };
+    }
+    const parseHtmlToDoc = (html2, finalUrl) => {
+      var _a;
+      try {
+        const parser = new DOMParser();
+        const doc2 = parser.parseFromString(html2, "text/html");
+        const base = doc2.createElement("base");
+        base.href = finalUrl || requestUrl;
+        if (doc2.head) {
+          doc2.head.insertBefore(base, doc2.head.firstChild);
+        } else {
+          (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
+        }
+        doc2._mnrUrl = finalUrl || requestUrl;
+        return {
+          doc: doc2,
+          status: 200,
+          finalUrl,
+          error: null
+        };
+      } catch (e) {
+        console.error("[MNR] Parse error:", e);
+        return {
+          doc: null,
+          status: null,
+          finalUrl,
+          error: "parse"
+        };
+      }
+    };
+    let request = null;
+    let aborted = false;
+    let fetchAbortController = null;
+    let timeoutTimer = null;
+    let timedOut = false;
+    const doRequest = () => {
+      const headers = {
+        Accept: "text/html,application/xhtml+xml,application/xml"
+      };
+      const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : void 0;
+      if (gmXhr) {
+        headers["Accept-Language"] = "zh-CN,zh;q=0.9";
+        if (normalizedReferer) {
+          headers["Referer"] = normalizedReferer;
+        }
+        return new Promise((resolve) => {
+          request = gmXhr({
+            method: "GET",
+            url: requestUrl,
+            headers,
+            timeout: timeoutMs,
+            overrideMimeType: "text/html;charset=" + document.characterSet,
+            onload: (response) => {
+              const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
+              if (response.status >= 200 && response.status < 300) {
+                const parsed = parseHtmlToDoc(response.responseText, finalUrl);
+                resolve({
+                  ...parsed,
+                  status: response.status,
+                  finalUrl
+                });
+                return;
+              }
+              console.error("[MNR] HTTP error:", response.status);
+              resolve({
+                doc: null,
+                status: response.status,
+                finalUrl,
+                error: "http"
+              });
+            },
+            onerror: () => {
+              resolve({ doc: null, status: null, finalUrl: null, error: "network" });
+            },
+            onabort: () => {
+              resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
+            },
+            ontimeout: () => {
+              console.error("[MNR] Request timeout");
+              resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
+            }
+          });
+        });
+      }
+      if (typeof fetch !== "function") {
+        console.error("[MNR] GM_xmlhttpRequest not available and fetch is missing");
+        return Promise.resolve({
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "missing-gm-xhr"
+        });
+      }
+      fetchAbortController = new AbortController();
+      timedOut = false;
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+      timeoutTimer = setTimeout(() => {
+        timedOut = true;
+        fetchAbortController == null ? void 0 : fetchAbortController.abort();
+      }, timeoutMs);
+      const fetchInit = {
+        method: "GET",
+        headers,
+        signal: fetchAbortController.signal,
+        credentials: "include",
+        redirect: "follow"
+      };
+      if (normalizedReferer) {
+        try {
+          fetchInit.referrer = normalizedReferer;
+        } catch {
+        }
+      }
+      return fetch(requestUrl, fetchInit).then(async (response) => {
+        const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
+        const status = response.status;
+        if (status >= 200 && status < 300) {
+          const html2 = await response.text();
+          const parsed = parseHtmlToDoc(html2, finalUrl);
+          const result2 = { ...parsed, status, finalUrl };
+          return result2;
+        }
+        console.error("[MNR] HTTP error:", status);
+        const result = {
+          doc: null,
+          status,
+          finalUrl,
+          error: "http"
+        };
+        return result;
+      }).catch((err) => {
+        if (aborted) {
+          const result2 = {
+            doc: null,
+            status: null,
+            finalUrl: null,
+            error: "abort"
+          };
+          return result2;
+        }
+        if (timedOut) {
+          console.error("[MNR] Request timeout");
+          const result2 = {
+            doc: null,
+            status: null,
+            finalUrl: null,
+            error: "timeout"
+          };
+          return result2;
+        }
+        console.error("[MNR] Network error:", err);
+        const result = {
+          doc: null,
+          status: null,
+          finalUrl: null,
+          error: "network"
+        };
+        return result;
+      }).finally(() => {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+          timeoutTimer = null;
+        }
+      });
+    };
+    const shouldRetry = (res) => {
+      if (aborted) return false;
+      if (res.error === "timeout" || res.error === "network") return true;
+      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
+        return true;
+      }
+      return false;
+    };
+    const promise = (async () => {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
+        const res = await doRequest();
+        if (!shouldRetry(res) || attempt === maxRetries) {
+          return res;
+        }
+        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
+        await new Promise((resolve) => globalThis.setTimeout(resolve, delay));
+      }
+      return { doc: null, status: null, finalUrl: null, error: "network" };
+    })();
+    const abort = () => {
+      aborted = true;
+      try {
+        request == null ? void 0 : request.abort();
+      } catch {
+      }
+      try {
+        fetchAbortController == null ? void 0 : fetchAbortController.abort();
+      } catch {
+      }
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+    };
+    return { promise, abort };
   }
   const MIN_DYNAMIC_TEXT_LENGTH = 80;
   const GLOBAL_DYNAMIC_WAIT_MS = 600;
@@ -5645,7 +5972,8 @@ extractTitle(doc2, rule) {
       if (((_f = rule.title) == null ? void 0 : _f.replace) && chapter) {
         try {
           chapter = chapter.replace(new RegExp(rule.title.replace), "").trim();
-        } catch {
+        } catch (e) {
+          console.debug("[Parser] Invalid title replace regex:", rule.title.replace, e);
         }
       }
       return { chapter, book };
@@ -5794,11 +6122,15 @@ selectElement(doc2, selector) {
     sleep(ms) {
       return new Promise((resolve) => window.setTimeout(resolve, ms));
     }
+resolveHookFetchUrl(url) {
+      return resolveAndValidateHttpUrl(url, window.location.href);
+    }
 smartSelect(doc2, selector) {
       try {
         const native = doc2.querySelector(selector);
         if (native) return native;
-      } catch {
+      } catch (e) {
+        console.debug("[Parser] Native selector failed, trying custom parsing:", selector, e);
       }
       const eqMatch = selector.match(/^(.*):eq\(([-]?\d+)\)$/);
       if (eqMatch) {
@@ -5809,7 +6141,8 @@ smartSelect(doc2, selector) {
           if (nodes.length === 0) return null;
           const idx = index >= 0 ? index : nodes.length + index;
           return nodes[idx] || null;
-        } catch {
+        } catch (e) {
+          console.debug("[Parser] :eq selector failed:", baseSel, e);
           return null;
         }
       }
@@ -5819,7 +6152,8 @@ smartSelect(doc2, selector) {
         try {
           const nodes = Array.from(doc2.querySelectorAll(baseSel));
           return nodes.length ? nodes[nodes.length - 1] : null;
-        } catch {
+        } catch (e) {
+          console.debug("[Parser] :last selector failed:", baseSel, e);
           return null;
         }
       }
@@ -5829,7 +6163,8 @@ smartSelect(doc2, selector) {
         try {
           const nodes = Array.from(doc2.querySelectorAll(baseSel));
           return nodes.length ? nodes[0] : null;
-        } catch {
+        } catch (e) {
+          console.debug("[Parser] :first selector failed:", baseSel, e);
           return null;
         }
       }
@@ -5850,7 +6185,8 @@ smartSelect(doc2, selector) {
             candidates = candidates.filter((el) => (el.textContent || "").includes(text2));
           }
           return candidates[0] || null;
-        } catch {
+        } catch (e) {
+          console.debug("[Parser] :contains selector failed:", baseSel, e);
           return null;
         }
       }
@@ -5860,16 +6196,14 @@ async executeHooks(rule, doc2, content) {
       var _a, _b;
       let result = content;
       if ((_a = rule.hooks) == null ? void 0 : _a.beforeParse) {
-        try {
-          await this.runBeforeParseHook(rule, doc2);
-        } catch (e) {
-          console.warn("[Parser] beforeParse hook error:", e);
-        }
+        await this.runBeforeParseHook(rule, doc2);
       }
       if ((_b = rule.hooks) == null ? void 0 : _b.afterParse) {
         try {
-          const fn = new Function("content", `return (${rule.hooks.afterParse})(content)`);
-          result = fn(result) || result;
+          const hookCode = rule.hooks.afterParse;
+          const fn = new Function("content", `return (${hookCode})(content)`);
+          const hookResult = await Promise.resolve(fn(result));
+          result = hookResult || result;
         } catch (e) {
           console.warn("[Parser] afterParse hook error:", e);
         }
@@ -5880,11 +6214,12 @@ async executeHooks(rule, doc2, content) {
       var _a;
       if (!((_a = rule.hooks) == null ? void 0 : _a.beforeParse)) return;
       try {
+        const hookCode = rule.hooks.beforeParse;
         const fn = new Function(
           "doc",
           "url",
           "helpers",
-          `return (async () => { ${rule.hooks.beforeParse} })();`
+          `return (async () => { ${hookCode} })();`
         );
         await fn(doc2, url, this.getHookHelpers());
       } catch (e) {
@@ -5907,6 +6242,12 @@ async executeHooks(rule, doc2, content) {
       }
     }
     async fetchText(url, options = {}) {
+      const resolved = this.resolveHookFetchUrl(url);
+      if (!resolved) {
+        console.warn("[Parser] Fetch blocked: invalid or unsafe URL:", url);
+        return null;
+      }
+      const resolvedUrl = new URL(resolved);
       const timeoutMs = options.timeoutMs ?? 4e3;
       const headers = options.headers ?? {};
       const withCredentials = options.withCredentials ?? true;
@@ -5915,7 +6256,7 @@ async executeHooks(rule, doc2, content) {
         return new Promise((resolve) => {
           gmXhr({
             method: "GET",
-            url,
+            url: resolvedUrl.href,
             headers,
             timeout: timeoutMs,
             withCredentials,
@@ -5928,7 +6269,7 @@ async executeHooks(rule, doc2, content) {
       try {
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-        const resp = await fetch(url, {
+        const resp = await fetch(resolvedUrl.href, {
           credentials: withCredentials ? "include" : "omit",
           headers,
           signal: controller.signal
@@ -6713,320 +7054,6 @@ enhanceRule(existingRule, detection) {
   function createRuleSaver() {
     return new RuleSaver();
   }
-  function getGmXhr() {
-    if (typeof GM_xmlhttpRequest === "function") {
-      return GM_xmlhttpRequest;
-    }
-    return null;
-  }
-  function normalizeUrlForFetch$1(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return normalized.replace(/#.*$/, "");
-    }
-  }
-  function getDefaultBaseUrl() {
-    if (typeof location !== "undefined" && typeof location.href === "string") {
-      return location.href;
-    }
-    if (typeof document !== "undefined" && typeof document.baseURI === "string") {
-      return document.baseURI;
-    }
-    return void 0;
-  }
-  function normalizeHostname(hostname) {
-    const trimmed = hostname.trim();
-    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-      return trimmed.slice(1, -1).toLowerCase();
-    }
-    return trimmed.toLowerCase();
-  }
-  function isPrivateNetworkHost(hostname) {
-    const host = normalizeHostname(hostname);
-    if (!host) return true;
-    if (host === "localhost") return true;
-    if (host === "0.0.0.0") return true;
-    const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-    if (ipv4) {
-      const parts = ipv4.slice(1).map((n) => parseInt(n, 10));
-      if (parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return true;
-      const [a, b] = parts;
-      if (a === 10) return true;
-      if (a === 127) return true;
-      if (a === 169 && b === 254) return true;
-      if (a === 172 && b >= 16 && b <= 31) return true;
-      if (a === 192 && b === 168) return true;
-      return false;
-    }
-    if (host === "::1") return true;
-    if (host.startsWith("fe80:")) return true;
-    if (host.startsWith("fc") || host.startsWith("fd")) return true;
-    return false;
-  }
-  function parseHttpUrl(url) {
-    try {
-      const u = new URL(url);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-      return u;
-    } catch {
-      return null;
-    }
-  }
-  function resolveAndValidateHttpUrl(url, base) {
-    const normalized = normalizeUrlForFetch$1(url);
-    let resolved = null;
-    try {
-      resolved = base ? new URL(normalized, base).toString() : new URL(normalized).toString();
-    } catch {
-      try {
-        const fallbackBase = getDefaultBaseUrl();
-        if (!fallbackBase) return null;
-        resolved = new URL(normalized, fallbackBase).toString();
-      } catch {
-        return null;
-      }
-    }
-    try {
-      const u = new URL(resolved);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-      if (isPrivateNetworkHost(u.hostname)) {
-        const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
-        if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) {
-          return null;
-        }
-      }
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return null;
-    }
-  }
-  function fetchAndParseUrl(url, referer, options = {}) {
-    const gmXhr = getGmXhr();
-    const requestUrl = resolveAndValidateHttpUrl(url, referer);
-    const timeoutMs = options.timeoutMs ?? 15e3;
-    const maxRetries = Math.max(0, options.retries ?? 1);
-    if (!requestUrl) {
-      console.error("[MNR] Invalid or unsupported URL:", url);
-      return {
-        promise: Promise.resolve({
-          doc: null,
-          status: null,
-          finalUrl: null,
-          error: "invalid-url"
-        }),
-        abort: () => {
-        }
-      };
-    }
-    const parseHtmlToDoc = (html2, finalUrl) => {
-      var _a;
-      try {
-        const parser = new DOMParser();
-        const doc2 = parser.parseFromString(html2, "text/html");
-        const base = doc2.createElement("base");
-        base.href = finalUrl || requestUrl;
-        if (doc2.head) {
-          doc2.head.insertBefore(base, doc2.head.firstChild);
-        } else {
-          (_a = doc2.documentElement) == null ? void 0 : _a.insertBefore(base, doc2.documentElement.firstChild);
-        }
-        doc2._mnrUrl = finalUrl || requestUrl;
-        return {
-          doc: doc2,
-          status: 200,
-          finalUrl,
-          error: null
-        };
-      } catch (e) {
-        console.error("[MNR] Parse error:", e);
-        return {
-          doc: null,
-          status: null,
-          finalUrl,
-          error: "parse"
-        };
-      }
-    };
-    let request = null;
-    let aborted = false;
-    let fetchAbortController = null;
-    let timeoutTimer = null;
-    let timedOut = false;
-    const doRequest = () => {
-      const headers = {
-        Accept: "text/html,application/xhtml+xml,application/xml"
-      };
-      const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : void 0;
-      if (gmXhr) {
-        headers["Accept-Language"] = "zh-CN,zh;q=0.9";
-        if (normalizedReferer) {
-          headers["Referer"] = normalizedReferer;
-        }
-        return new Promise((resolve) => {
-          request = gmXhr({
-            method: "GET",
-            url: requestUrl,
-            headers,
-            timeout: timeoutMs,
-            overrideMimeType: "text/html;charset=" + document.characterSet,
-            onload: (response) => {
-              const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
-              if (response.status >= 200 && response.status < 300) {
-                const parsed = parseHtmlToDoc(response.responseText, finalUrl);
-                resolve({
-                  ...parsed,
-                  status: response.status,
-                  finalUrl
-                });
-                return;
-              }
-              console.error("[MNR] HTTP error:", response.status);
-              resolve({
-                doc: null,
-                status: response.status,
-                finalUrl,
-                error: "http"
-              });
-            },
-            onerror: () => {
-              resolve({ doc: null, status: null, finalUrl: null, error: "network" });
-            },
-            onabort: () => {
-              resolve({ doc: null, status: null, finalUrl: null, error: "abort" });
-            },
-            ontimeout: () => {
-              console.error("[MNR] Request timeout");
-              resolve({ doc: null, status: null, finalUrl: null, error: "timeout" });
-            }
-          });
-        });
-      }
-      if (typeof fetch !== "function") {
-        console.error("[MNR] GM_xmlhttpRequest not available and fetch is missing");
-        return Promise.resolve({
-          doc: null,
-          status: null,
-          finalUrl: null,
-          error: "missing-gm-xhr"
-        });
-      }
-      fetchAbortController = new AbortController();
-      timedOut = false;
-      if (timeoutTimer) {
-        clearTimeout(timeoutTimer);
-        timeoutTimer = null;
-      }
-      timeoutTimer = setTimeout(() => {
-        timedOut = true;
-        fetchAbortController == null ? void 0 : fetchAbortController.abort();
-      }, timeoutMs);
-      const fetchInit = {
-        method: "GET",
-        headers,
-        signal: fetchAbortController.signal,
-        credentials: "include",
-        redirect: "follow"
-      };
-      if (normalizedReferer) {
-        try {
-          fetchInit.referrer = normalizedReferer;
-        } catch {
-        }
-      }
-      return fetch(requestUrl, fetchInit).then(async (response) => {
-        const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
-        const status = response.status;
-        if (status >= 200 && status < 300) {
-          const html2 = await response.text();
-          const parsed = parseHtmlToDoc(html2, finalUrl);
-          const result2 = { ...parsed, status, finalUrl };
-          return result2;
-        }
-        console.error("[MNR] HTTP error:", status);
-        const result = {
-          doc: null,
-          status,
-          finalUrl,
-          error: "http"
-        };
-        return result;
-      }).catch((err) => {
-        if (aborted) {
-          const result2 = {
-            doc: null,
-            status: null,
-            finalUrl: null,
-            error: "abort"
-          };
-          return result2;
-        }
-        if (timedOut) {
-          console.error("[MNR] Request timeout");
-          const result2 = {
-            doc: null,
-            status: null,
-            finalUrl: null,
-            error: "timeout"
-          };
-          return result2;
-        }
-        console.error("[MNR] Network error:", err);
-        const result = {
-          doc: null,
-          status: null,
-          finalUrl: null,
-          error: "network"
-        };
-        return result;
-      }).finally(() => {
-        if (timeoutTimer) {
-          clearTimeout(timeoutTimer);
-          timeoutTimer = null;
-        }
-      });
-    };
-    const shouldRetry = (res) => {
-      if (aborted) return false;
-      if (res.error === "timeout" || res.error === "network") return true;
-      if (res.error === "http" && res.status && (res.status >= 500 || res.status === 429)) {
-        return true;
-      }
-      return false;
-    };
-    const promise = (async () => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        if (aborted) return { doc: null, status: null, finalUrl: null, error: "abort" };
-        const res = await doRequest();
-        if (!shouldRetry(res) || attempt === maxRetries) {
-          return res;
-        }
-        const delay = Math.min(400 * Math.pow(2, attempt), 2e3);
-        await new Promise((resolve) => globalThis.setTimeout(resolve, delay));
-      }
-      return { doc: null, status: null, finalUrl: null, error: "network" };
-    })();
-    const abort = () => {
-      aborted = true;
-      try {
-        request == null ? void 0 : request.abort();
-      } catch {
-      }
-      try {
-        fetchAbortController == null ? void 0 : fetchAbortController.abort();
-      } catch {
-      }
-      if (timeoutTimer) {
-        clearTimeout(timeoutTimer);
-        timeoutTimer = null;
-      }
-    };
-    return { promise, abort };
-  }
   class SectionMerger {
     constructor(parser) {
       this.parser = parser;
@@ -7365,7 +7392,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2025-12-25";
+  const BUILD_DATE = "2025-12-26";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -20631,6 +20658,8 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     return useStore;
   }
   const MAX_CACHED_CHAPTERS = 8;
+  const MAX_SESSION_CACHE = 500;
+  const MAX_NAV_FAILURES = 200;
   const VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
   function normalizeUrlForFetch(url) {
     const normalized = normalizeCiwemaoChapterUrl(url);
@@ -20641,6 +20670,686 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     } catch {
       return normalized.replace(/#.*$/, "");
     }
+  }
+  function normalizeUrl(url) {
+    return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
+  }
+  function normalizeUrlForBlock(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return normalizeUrl(u.toString());
+    } catch {
+      return normalizeUrl(normalized.replace(/#.*$/, ""));
+    }
+  }
+  function resolveUrl(href, base) {
+    try {
+      return new URL(href, base).toString();
+    } catch {
+      return null;
+    }
+  }
+  function extractUrlPattern(url) {
+    try {
+      const u = new URL(url);
+      return u.pathname.replace(/\d+/g, "{N}");
+    } catch {
+      return url.replace(/\d+/g, "{N}");
+    }
+  }
+  function extractBookId(url) {
+    try {
+      const u = new URL(url);
+      const patterns = [
+        /\/book\/(\d+)/,
+        /\/chapter\/(\d+)\//,
+        /\/(\d+)\/\d+(?:\.html?)?$/,
+        /\/(\d+)_\d+(?:\.html?)?$/,
+        /[?&](?:book_?id|bid|id)=(\d+)/i
+      ];
+      for (const p2 of patterns) {
+        const m = u.pathname.match(p2) || u.search.match(p2);
+        if (m) return m[1];
+      }
+    } catch {
+    }
+    return null;
+  }
+  function extractChapterNumber(title) {
+    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
+    if (match1) return parseInt(match1[1], 10);
+    const match2 = title.match(/^(\d+)[.、\s]/);
+    if (match2) return parseInt(match2[1], 10);
+    const match3 = title.match(/Chapter\s*(\d+)/i);
+    if (match3) return parseInt(match3[1], 10);
+    return null;
+  }
+  function normalizeTocPagerText(text2) {
+    return text2.replace(/\s+/g, "").trim();
+  }
+  function isTocNextPageText(text2) {
+    const t = normalizeTocPagerText(text2).toLowerCase();
+    if (!t) return false;
+    if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
+      return true;
+    }
+    if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
+      return true;
+    }
+    return false;
+  }
+  function normalizeUrlForCompare(url) {
+    try {
+      const u = new URL(url);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return url;
+    }
+  }
+  function extractTocPaginationSeed(indexUrl) {
+    try {
+      const u = new URL(indexUrl);
+      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
+      return (m == null ? void 0 : m[1]) || null;
+    } catch {
+      return null;
+    }
+  }
+  function isValidTocPaginationUrl(candidateUrl, indexUrl) {
+    try {
+      const c = new URL(candidateUrl);
+      const idx = new URL(indexUrl);
+      if (c.protocol !== "http:" && c.protocol !== "https:") return false;
+      if (c.origin !== idx.origin) return false;
+      const seed = extractTocPaginationSeed(indexUrl);
+      if (seed && !c.pathname.includes(seed)) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function normalizeTextForVipDetection(text2) {
+    return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、""''（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
+  }
+  function isInvalidChapterUrl(url, currentChapterUrl) {
+    try {
+      const normalizedUrl = normalizeCiwemaoChapterUrl(url);
+      const parsed = new URL(normalizedUrl);
+      const pathname = parsed.pathname;
+      if (pathname === "/" || pathname === "") {
+        return true;
+      }
+      const pathParts = pathname.split("/").filter(Boolean);
+      if (pathParts.length < 2) {
+        const part = pathParts[0] || "";
+        if (!/\d/.test(part)) {
+          return true;
+        }
+      }
+      const invalidPatterns = [
+        /^https?:\/\/[^/]+\/?$/i,
+/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
+/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
+        /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
+/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
+        /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
+        /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
+        /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
+      ];
+      for (const pattern of invalidPatterns) {
+        if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
+          return true;
+        }
+      }
+      if (currentChapterUrl) {
+        const currentParsed = new URL(currentChapterUrl);
+        const currentParts = currentParsed.pathname.split("/").filter(Boolean);
+        if (currentParts.length >= 3 && pathParts.length < currentParts.length - 1) {
+          return true;
+        }
+        if (parsed.host !== currentParsed.host) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  function isVipChapterPage(doc2) {
+    var _a;
+    const rawText = ((_a = doc2.body) == null ? void 0 : _a.textContent) || "";
+    if (!rawText) return false;
+    const text2 = normalizeTextForVipDetection(rawText);
+    const patterns = [
+      /本章(?:为|是)?vip章节/,
+      /(vip|付费|收费)(?:章节|内容)/,
+      /(未订阅|未购买|未解锁).{0,10}(本章|本章节|章节|内容)/,
+      /(本章|本章节|章节|内容).{0,12}(?:已)?锁定/,
+      /(本章|本章节|章节|内容).{0,12}(?:需|需要).{0,6}(订阅|购买|付费|解锁)/,
+      /(订阅|购买|付费|解锁).{0,12}(后|即可|才能|方可|才可).{0,12}(阅读|查看|继续阅读|继续查看)/,
+      /(请|需).{0,6}(订阅|购买|付费|解锁).{0,12}(阅读|查看|继续阅读|继续查看)/,
+      /立即(订阅|购买|解锁|充值)/,
+      /(订阅|购买|解锁)本章/
+    ];
+    if (patterns.some((re) => re.test(text2))) return true;
+    const ctaText = Array.from(
+      doc2.querySelectorAll('a,button,input[type="button"],input[type="submit"]')
+    ).map((el) => {
+      if (el instanceof HTMLInputElement) return el.value || "";
+      return el.textContent || "";
+    }).join(" ");
+    const cta = normalizeTextForVipDetection(ctaText);
+    if (/立即(订阅|购买|解锁|充值)/.test(cta) && /(vip|付费|订阅|购买|解锁|锁定)/.test(text2)) {
+      return true;
+    }
+    return false;
+  }
+  function detectTocPage(content, pageUrl, currentChapterUrl) {
+    const tocUrlPatterns = [
+      /\/book\/\d+\.html?$/i,
+      /\/book\/\d+\/?$/i,
+      /\/novel\/\d+\/?$/i,
+      /\/xiaoshuo\/\d+\/?$/i,
+      /\/info\/\d+\.html?$/i,
+      /\/\d+\/index\.html?$/i,
+      /\/booklist/i,
+      /\/catalog/i,
+      /\/contents?\.html?$/i,
+      /\/list\.html?$/i,
+      /\/toc\.html?$/i
+    ];
+    for (const pattern of tocUrlPatterns) {
+      if (pattern.test(pageUrl)) {
+        return true;
+      }
+    }
+    try {
+      const currentPath2 = new URL(currentChapterUrl).pathname;
+      const pagePath = new URL(pageUrl).pathname;
+      const chapterPattern = /\/(txt|read|chapter|article)\/\d+\/\d+/i;
+      const bookPattern = /\/(book|novel|info|xiaoshuo)\/\d+/i;
+      if (chapterPattern.test(currentPath2) && bookPattern.test(pagePath)) {
+        return true;
+      }
+    } catch {
+    }
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const textContent = tempDiv.textContent || "";
+    const textLength = textContent.length;
+    const links = tempDiv.querySelectorAll("a");
+    const linkCount = links.length;
+    if (textLength < 500 && linkCount > 10) {
+      return true;
+    }
+    const linkTextLength = Array.from(links).reduce(
+      (sum, a) => {
+        var _a;
+        return sum + (((_a = a.textContent) == null ? void 0 : _a.length) || 0);
+      },
+      0
+    );
+    const linkRatio = textLength > 0 ? linkTextLength / textLength : 0;
+    if (linkRatio > 0.6 && linkCount > 8) {
+      return true;
+    }
+    const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
+    const chapterLinks = Array.from(links).filter((a) => {
+      const href = a.getAttribute("href") || "";
+      return chapterLinkPattern.test(href);
+    });
+    if (chapterLinks.length > 10) {
+      return true;
+    }
+    const normalizeUrlLocal = (url) => {
+      try {
+        const u = new URL(url, pageUrl);
+        return u.pathname.replace(/\/$/, "");
+      } catch {
+        return url.replace(/\/$/, "");
+      }
+    };
+    const currentPath = normalizeUrlLocal(currentChapterUrl);
+    const hasLinkToCurrentChapter = Array.from(links).some((a) => {
+      const href = a.getAttribute("href");
+      if (!href) return false;
+      return normalizeUrlLocal(href) === currentPath;
+    });
+    if (hasLinkToCurrentChapter && linkCount > 5) {
+      return true;
+    }
+    const tocKeywords = [
+      "目录",
+      "章节列表",
+      "章节目录",
+      "全部章节",
+      "最新章节",
+      "小说目录",
+      "table of contents",
+      "toc",
+      "catalog",
+      "index"
+    ];
+    const pageText = textContent.toLowerCase();
+    const keywordMatches = tocKeywords.filter((kw) => pageText.includes(kw.toLowerCase()));
+    if (keywordMatches.length >= 2 || keywordMatches.length >= 1 && linkCount > 15) {
+      return true;
+    }
+    const linkTexts = Array.from(links).map((a) => {
+      var _a;
+      return ((_a = a.textContent) == null ? void 0 : _a.trim()) || "";
+    }).filter((t) => t.length > 0);
+    const chapterNamePattern = /^第.{1,10}[章节回话篇集卷]/;
+    const chapterNameLinks = linkTexts.filter((t) => chapterNamePattern.test(t));
+    if (chapterNameLinks.length > 5) {
+      return true;
+    }
+    return false;
+  }
+  function trimCachedContents(cachedContents, maxSessionCache) {
+    if (cachedContents.size <= maxSessionCache) return;
+    const entries2 = Array.from(cachedContents.entries()).sort(
+      (a, b) => a[1].cachedAt - b[1].cachedAt
+    );
+    const toDelete = entries2.slice(0, entries2.length - maxSessionCache);
+    for (const [url] of toDelete) {
+      cachedContents.delete(url);
+    }
+  }
+  function trimNavFailures(navFailures, maxNavFailures) {
+    if (navFailures.size <= maxNavFailures) return;
+    const entries2 = Array.from(navFailures.entries()).sort(
+      (a, b) => a[1].nextRetryAt - b[1].nextRetryAt
+    );
+    const toDeleteCount = Math.floor(maxNavFailures * 0.1);
+    for (let i = 0; i < toDeleteCount && i < entries2.length; i++) {
+      navFailures.delete(entries2[i][0]);
+    }
+  }
+  const MAX_TOC_PAGES = 120;
+  const CHAPTER_TITLE_PATTERNS = [
+    /^.{0,10}第.{1,10}[章节回话篇集卷]/,
+    /^\d{1,4}[.、\s]/,
+    /^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
+    /^chapter\s*\d+/i,
+    /^(prologue|epilogue|preface)/i
+  ];
+  const NON_CHAPTER_TITLE_PATTERNS = [
+    /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
+    /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更|上架通知|卷末感言/,
+    /必看|必读|请务必阅读|读者必看/,
+    /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
+    /求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
+    /新书|推荐|安利|宣传|书单|书评/,
+    /^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
+    /^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
+    /官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
+    /登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
+    /首页|返回|上一页|下一页|翻页/,
+    /^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
+    /^(正文|番外|VIP卷?|免费章节?)\s*$/
+  ];
+  function isLikelyChapterTitle(title) {
+    const t = title.trim();
+    return CHAPTER_TITLE_PATTERNS.some((p2) => p2.test(t));
+  }
+  function isNonChapterTitle(title) {
+    const t = title.trim();
+    if (t.length < 2) return true;
+    return NON_CHAPTER_TITLE_PATTERNS.some((p2) => p2.test(t));
+  }
+  function isPlaceholderTocTitle(title) {
+    return /^章节\s*\d+$/i.test(title.trim());
+  }
+  function isBetterTocTitle(oldTitle, newTitle) {
+    const oldWhitelist = isLikelyChapterTitle(oldTitle);
+    const newWhitelist = isLikelyChapterTitle(newTitle);
+    if (newWhitelist && !oldWhitelist) return true;
+    if (oldWhitelist && !newWhitelist) return false;
+    if (!isPlaceholderTocTitle(oldTitle) && isPlaceholderTocTitle(newTitle)) return false;
+    if (isPlaceholderTocTitle(oldTitle) && !isPlaceholderTocTitle(newTitle)) return true;
+    return newTitle.length > oldTitle.length;
+  }
+  function extractTocLinkTitle(a) {
+    const titleSelectors = [
+      '[class*="chapterItemTitle"]',
+      '[class*="chapter-title"]',
+      '[class*="chapterTitle"]',
+      "h2",
+      "h3"
+    ];
+    for (const sel of titleSelectors) {
+      const el = a.querySelector(sel);
+      if (el) {
+        const text2 = (el.textContent || "").trim();
+        if (text2) return text2;
+      }
+    }
+    const firstP = a.querySelector("p");
+    if (firstP) {
+      const allP = a.querySelectorAll("p");
+      if (allP.length > 1) {
+        const text2 = (firstP.textContent || "").trim();
+        if (text2) return text2;
+      }
+    }
+    let directText = "";
+    for (const node of Array.from(a.childNodes)) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        directText += node.textContent || "";
+      }
+    }
+    directText = directText.trim();
+    if (directText) return directText;
+    return (a.textContent || "").trim();
+  }
+  function filterTocEntries(entries2) {
+    if (entries2.length < 5) return entries2;
+    const bookIdCounts = new Map();
+    for (const entry of entries2) {
+      const bookId = extractBookId(entry.url);
+      if (bookId) {
+        bookIdCounts.set(bookId, (bookIdCounts.get(bookId) || 0) + 1);
+      }
+    }
+    let dominantBookId = null;
+    let maxCount = 0;
+    for (const [bookId, count] of bookIdCounts) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantBookId = bookId;
+      }
+    }
+    const sameBookEntries = dominantBookId && maxCount >= 5 ? entries2.filter((entry) => {
+      const bookId = extractBookId(entry.url);
+      return !bookId || bookId === dominantBookId;
+    }) : entries2;
+    const patternCounts = new Map();
+    for (const entry of sameBookEntries) {
+      const pattern = extractUrlPattern(entry.url);
+      patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
+    }
+    const sortedPatterns = Array.from(patternCounts.entries()).sort((a, b) => b[1] - a[1]);
+    const dominantPatterns = new Set();
+    const totalEntries = sameBookEntries.length;
+    for (const [pattern, count] of sortedPatterns) {
+      const ratio = count / totalEntries;
+      if (count >= 5 || ratio > 0.3) {
+        dominantPatterns.add(pattern);
+        const coveredCount = Array.from(dominantPatterns).reduce(
+          (sum, p2) => sum + (patternCounts.get(p2) || 0),
+          0
+        );
+        if (coveredCount / totalEntries > 0.9) break;
+      }
+    }
+    if (dominantPatterns.size === 0 && sortedPatterns.length > 0) {
+      dominantPatterns.add(sortedPatterns[0][0]);
+    }
+    const scoredEntries = sameBookEntries.map((entry) => {
+      let score = 0;
+      const pattern = extractUrlPattern(entry.url);
+      if (dominantPatterns.has(pattern)) {
+        score += 2;
+      }
+      const matchesWhitelist = isLikelyChapterTitle(entry.title);
+      if (matchesWhitelist) {
+        score += 1;
+      }
+      if (!matchesWhitelist && isNonChapterTitle(entry.title)) {
+        score -= 2;
+      }
+      return { entry, score };
+    });
+    const filtered = scoredEntries.filter(({ score }) => score >= 1).map(({ entry }) => entry);
+    if (filtered.length < sameBookEntries.length * 0.3 || filtered.length < 10) {
+      const lenientFiltered = sameBookEntries.filter((entry) => !isNonChapterTitle(entry.title));
+      if (lenientFiltered.length >= filtered.length) {
+        return sortTocEntries(lenientFiltered);
+      }
+    }
+    return sortTocEntries(filtered);
+  }
+  function sortTocEntries(entries2) {
+    if (entries2.length < 5) return entries2;
+    const entriesWithNum = entries2.map((entry, index) => ({
+      index,
+      entry,
+      num: extractChapterNumber(entry.title)
+    })).filter((item) => item.num !== null);
+    if (entriesWithNum.length < entries2.length * 0.3 || entriesWithNum.length < 3) {
+      return entries2;
+    }
+    let descendingPairs = 0;
+    let ascendingPairs = 0;
+    for (let i = 0; i < entriesWithNum.length - 1; i++) {
+      const diff = entriesWithNum[i + 1].num - entriesWithNum[i].num;
+      if (diff < 0) descendingPairs++;
+      else if (diff > 0) ascendingPairs++;
+    }
+    const totalPairs = descendingPairs + ascendingPairs;
+    if (totalPairs > 0 && descendingPairs / totalPairs > 0.6) {
+      return [...entries2].reverse();
+    }
+    return entries2;
+  }
+  function dedupeTocEntries(candidates) {
+    const seenUrls = new Map();
+    const results = [];
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const entry = candidates[i];
+      if (seenUrls.has(entry.url)) {
+        const existing = seenUrls.get(entry.url);
+        if (isBetterTocTitle(existing.title, entry.title)) {
+          existing.title = entry.title;
+        }
+      } else {
+        seenUrls.set(entry.url, entry);
+        results.unshift(entry);
+      }
+    }
+    return results;
+  }
+  function collectTocCandidates(doc2, base, rule) {
+    var _a;
+    const links = Array.from(doc2.querySelectorAll("a[href]"));
+    const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
+    const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
+    const excludeAncestors = (((_a = rule == null ? void 0 : rule.toc) == null ? void 0 : _a.excludeAncestors) || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const candidates = [];
+    for (const a of links) {
+      if (excludeAncestors.length > 0) {
+        let excluded = false;
+        for (const sel of excludeAncestors) {
+          try {
+            if (a.closest(sel)) {
+              excluded = true;
+              break;
+            }
+          } catch {
+          }
+        }
+        if (excluded) continue;
+      }
+      const text2 = extractTocLinkTitle(a);
+      const href = a.getAttribute("href") || "";
+      const abs = resolveUrl(href, base);
+      if (!abs) continue;
+      const url = normalizeUrlForFetch(abs);
+      if (!(textPattern.test(text2) || urlPattern.test(href))) {
+        continue;
+      }
+      const title = text2 || `章节 ${candidates.length + 1}`;
+      candidates.push({ title, url });
+    }
+    return candidates;
+  }
+  function findNextTocPageUrl(doc2, currentPageUrl, indexUrl) {
+    var _a, _b;
+    const currentNorm = normalizeUrlForCompare(currentPageUrl);
+    const pushCandidate = (candidates2, href, score) => {
+      const abs = resolveUrl(href, currentPageUrl);
+      if (!abs) return;
+      const absNorm = normalizeUrlForCompare(abs);
+      if (absNorm === currentNorm) return;
+      if (!isValidTocPaginationUrl(abs, indexUrl)) return;
+      candidates2.push({ url: abs, score });
+    };
+    const candidates = [];
+    const linkNext = (_a = doc2.querySelector('link[rel="next"][href]')) == null ? void 0 : _a.getAttribute("href");
+    if (linkNext) {
+      pushCandidate(candidates, linkNext, 100);
+    }
+    const aRelNext = (_b = doc2.querySelector('a[rel~="next"][href]')) == null ? void 0 : _b.getAttribute("href");
+    if (aRelNext) {
+      pushCandidate(candidates, aRelNext, 90);
+    }
+    for (const a of Array.from(doc2.querySelectorAll("a[href]"))) {
+      const text2 = a.textContent || "";
+      if (!isTocNextPageText(text2)) continue;
+      const href = a.getAttribute("href");
+      if (!href) continue;
+      let score = 50;
+      const rel = (a.getAttribute("rel") || "").toLowerCase();
+      if (rel.includes("next")) score += 10;
+      const cls = (a.getAttribute("class") || "").toLowerCase();
+      if (cls.includes("next")) score += 3;
+      if (a.closest(".pager, .pagination, .page, .pagebar, .caption, nav")) score += 2;
+      pushCandidate(candidates, href, score);
+    }
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].url;
+  }
+  async function loadTocEntriesPaged(indexUrl, currentUrl, rule, setAbort) {
+    const visitedPages = new Set();
+    const seenChapterUrls = new Set();
+    const allCandidates = [];
+    const aborters = [];
+    let aborted = false;
+    const abortAll = () => {
+      aborted = true;
+      for (const fn of aborters) {
+        try {
+          fn();
+        } catch {
+        }
+      }
+    };
+    setAbort(abortAll);
+    try {
+      let pageUrl = indexUrl;
+      let referer = currentUrl || indexUrl;
+      while (pageUrl && visitedPages.size < MAX_TOC_PAGES) {
+        const pageKey = normalizeUrlForCompare(pageUrl);
+        if (visitedPages.has(pageKey)) break;
+        visitedPages.add(pageKey);
+        const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
+        aborters.push(abort);
+        const result = await promise;
+        if (aborted) break;
+        if (result.error === "abort") break;
+        if (!result.doc) break;
+        const effectivePageUrl = result.finalUrl || pageUrl;
+        const pageCandidates = collectTocCandidates(result.doc, effectivePageUrl, rule);
+        allCandidates.push(...pageCandidates);
+        let newCount = 0;
+        for (const entry of pageCandidates) {
+          if (!seenChapterUrls.has(entry.url)) {
+            seenChapterUrls.add(entry.url);
+            newCount++;
+          }
+        }
+        if (visitedPages.size >= 2 && newCount === 0) break;
+        const nextPageUrl = findNextTocPageUrl(result.doc, effectivePageUrl, indexUrl);
+        if (!nextPageUrl) break;
+        referer = effectivePageUrl;
+        pageUrl = nextPageUrl;
+      }
+    } finally {
+      setAbort(null);
+    }
+    if (allCandidates.length === 0) return [];
+    return filterTocEntries(dedupeTocEntries(allCandidates));
+  }
+  async function parseWithSectionMerge(parser, initialDoc, url, referer) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const resolvedUrl = normalizeAbsoluteUrl(url, referer);
+    const baseUrl = getSectionBaseUrl(resolvedUrl);
+    let startUrl = resolvedUrl;
+    let startDoc = initialDoc;
+    if (baseUrl && baseUrl !== resolvedUrl) {
+      const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
+      const result = await promise;
+      if (result.doc) {
+        startUrl = baseUrl;
+        startDoc = result.doc;
+      }
+    }
+    const first = await parser.parse(startDoc, startUrl);
+    if (!first) return null;
+    const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
+    if (disableByRule) return first;
+    const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
+    const detection = parser.detect(startDoc, startUrl);
+    const section = {
+      isSection: !!((_e = detection.results.section) == null ? void 0 : _e.isSection),
+      nextSectionUrl: ((_f = detection.results.section) == null ? void 0 : _f.nextSectionUrl) || null,
+      nextChapterUrl: ((_g = detection.results.section) == null ? void 0 : _g.nextChapterUrl) || null,
+      confidence: ((_h = detection.results.section) == null ? void 0 : _h.confidence) || 0
+    };
+    const shouldMerge = enableByRule || section.isSection && section.confidence >= 0.8;
+    if (!shouldMerge) return first;
+    let mergedContent = first.content;
+    let mergedRaw = first.rawContent;
+    let nextSectionUrl = section.nextSectionUrl;
+    let nextChapterUrl = section.nextChapterUrl || null;
+    let lastUrl = startUrl;
+    if (enableByRule && !nextSectionUrl && first.nextUrl) {
+      const isSectionUrl = isSectionLikeUrl(startUrl, first.nextUrl);
+      if (isSectionUrl) {
+        nextSectionUrl = first.nextUrl;
+      }
+    }
+    const maxPages = 10;
+    const maxAdditionalPages = Math.max(0, maxPages - 1);
+    const seen = new Set([startUrl]);
+    for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
+      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
+      if (seen.has(absNextSection)) break;
+      seen.add(absNextSection);
+      const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
+      const nextResult = await promise;
+      if (!nextResult.doc) break;
+      const nextParsed = await parser.parse(nextResult.doc, absNextSection);
+      if (!nextParsed) break;
+      mergedContent = joinHtml(mergedContent, nextParsed.content);
+      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
+      const nextDet = parser.detect(nextResult.doc, absNextSection);
+      const s = nextDet.results.section;
+      if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
+      nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
+      if (enableByRule && !nextSectionUrl && nextParsed.nextUrl) {
+        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
+          nextSectionUrl = nextParsed.nextUrl;
+        } else {
+          if (!nextChapterUrl) nextChapterUrl = nextParsed.nextUrl;
+        }
+      }
+      lastUrl = absNextSection;
+    }
+    return {
+      ...first,
+      url: startUrl,
+      content: mergedContent,
+      rawContent: mergedRaw,
+      nextUrl: nextChapterUrl || first.nextUrl
+    };
   }
   const useReaderStore = defineStore("reader", () => {
     const isActive = ref(false);
@@ -20692,16 +21401,6 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       var _a;
       return ((_a = chapter.value) == null ? void 0 : _a.content) || "";
     });
-    function normalizeUrlForBlock(url) {
-      const normalized = normalizeCiwemaoChapterUrl(url);
-      try {
-        const u = new URL(normalized);
-        u.hash = "";
-        return normalizeUrl(u.toString());
-      } catch {
-        return normalizeUrl(normalized.replace(/#.*$/, ""));
-      }
-    }
     function isVipBlockedUrl(url) {
       return vipBlockedUrls.value.has(normalizeUrlForBlock(url));
     }
@@ -20862,9 +21561,6 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
       return true;
     }
-    function normalizeUrl(url) {
-      return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
-    }
     async function loadChapter(direction, source) {
       const isNext = direction === "next";
       const refChapter = isNext ? chapters.value[chapters.value.length - 1] : chapters.value[0];
@@ -20949,6 +21645,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
           const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
           navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+          trimNavFailures(navFailures, MAX_NAV_FAILURES);
           if (source === "manual" || count === 1) {
             showToast(errorMessage, "error", 2500);
           }
@@ -20966,6 +21663,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
           const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
           navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+          trimNavFailures(navFailures, MAX_NAV_FAILURES);
           if (source === "manual" || count === 1) {
             showToast(errorMessage, "error", 2500);
           }
@@ -21011,6 +21709,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           rule: parsed.rule,
           cachedAt: Date.now()
         });
+        trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
         if (currentConversionMode.value !== "none") {
           await applyConversionToChapterEntry(id, currentConversionMode.value);
         }
@@ -21180,9 +21879,14 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
         const currentUrl = (_b = chapter.value) == null ? void 0 : _b.url;
         if (indexUrl) {
-          const tocEntries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, (abort) => {
-            cacheAbort.value = abort;
-          });
+          const tocEntries = await loadTocEntriesPaged(
+            indexUrl,
+            currentUrl || indexUrl,
+            rule.value ?? void 0,
+            (abort) => {
+              cacheAbort.value = abort;
+            }
+          );
           cacheAbort.value = null;
           const tocLinks = tocEntries.map((e) => e.url).slice(0, 1e4);
           taskList = tocLinks.filter((u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
@@ -21249,404 +21953,6 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       (_a = cacheAbort.value) == null ? void 0 : _a.call(cacheAbort);
       cacheAbort.value = null;
     }
-    function resolveUrl(href, base) {
-      try {
-        return new URL(href, base).toString();
-      } catch {
-        return null;
-      }
-    }
-    function extractUrlPattern(url) {
-      try {
-        const u = new URL(url);
-        return u.pathname.replace(/\d+/g, "{N}");
-      } catch {
-        return url.replace(/\d+/g, "{N}");
-      }
-    }
-    const CHAPTER_TITLE_PATTERNS = [
-/^.{0,10}第.{1,10}[章节回话篇集卷]/,
-/^\d{1,4}[.、\s]/,
-/^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
-/^chapter\s*\d+/i,
-      /^(prologue|epilogue|preface)/i
-    ];
-    const NON_CHAPTER_TITLE_PATTERNS = [
-/^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
-      /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更|上架通知|卷末感言/,
-      /必看|必读|请务必阅读|读者必看/,
-/^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
-/求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
-      /新书|推荐|安利|宣传|书单|书评/,
-/^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
-/^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
-/官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
-/登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
-      /首页|返回|上一页|下一页|翻页/,
-/^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
-      /^(正文|番外|VIP卷?|免费章节?)\s*$/
-    ];
-    function extractBookId(url) {
-      try {
-        const u = new URL(url);
-        const patterns = [
-          /\/book\/(\d+)/,
-          /\/chapter\/(\d+)\//,
-          /\/(\d+)\/\d+(?:\.html?)?$/,
-/\/(\d+)_\d+(?:\.html?)?$/,
-          /[?&](?:book_?id|bid|id)=(\d+)/i
-        ];
-        for (const p2 of patterns) {
-          const m = u.pathname.match(p2) || u.search.match(p2);
-          if (m) return m[1];
-        }
-      } catch {
-      }
-      return null;
-    }
-    function isLikelyChapterTitle(title2) {
-      const t = title2.trim();
-      return CHAPTER_TITLE_PATTERNS.some((p2) => p2.test(t));
-    }
-    function isNonChapterTitle(title2) {
-      const t = title2.trim();
-      if (t.length < 2) return true;
-      return NON_CHAPTER_TITLE_PATTERNS.some((p2) => p2.test(t));
-    }
-    function filterTocEntries(entries2) {
-      if (entries2.length < 5) return entries2;
-      const bookIdCounts = new Map();
-      for (const entry of entries2) {
-        const bookId = extractBookId(entry.url);
-        if (bookId) {
-          bookIdCounts.set(bookId, (bookIdCounts.get(bookId) || 0) + 1);
-        }
-      }
-      let dominantBookId = null;
-      let maxCount = 0;
-      for (const [bookId, count] of bookIdCounts) {
-        if (count > maxCount) {
-          maxCount = count;
-          dominantBookId = bookId;
-        }
-      }
-      const sameBookEntries = dominantBookId && maxCount >= 5 ? entries2.filter((entry) => {
-        const bookId = extractBookId(entry.url);
-        return !bookId || bookId === dominantBookId;
-      }) : entries2;
-      const patternCounts = new Map();
-      const patternEntries = new Map();
-      for (const entry of sameBookEntries) {
-        const pattern = extractUrlPattern(entry.url);
-        patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
-        if (!patternEntries.has(pattern)) {
-          patternEntries.set(pattern, []);
-        }
-        patternEntries.get(pattern).push(entry);
-      }
-      const sortedPatterns = Array.from(patternCounts.entries()).sort((a, b) => b[1] - a[1]);
-      const dominantPatterns = new Set();
-      const totalEntries = sameBookEntries.length;
-      for (const [pattern, count] of sortedPatterns) {
-        const ratio = count / totalEntries;
-        if (count >= 5 || ratio > 0.3) {
-          dominantPatterns.add(pattern);
-          const coveredCount = Array.from(dominantPatterns).reduce(
-            (sum, p2) => sum + (patternCounts.get(p2) || 0),
-            0
-          );
-          if (coveredCount / totalEntries > 0.9) break;
-        }
-      }
-      if (dominantPatterns.size === 0 && sortedPatterns.length > 0) {
-        dominantPatterns.add(sortedPatterns[0][0]);
-      }
-      const scoredEntries = sameBookEntries.map((entry) => {
-        let score = 0;
-        const pattern = extractUrlPattern(entry.url);
-        if (dominantPatterns.has(pattern)) {
-          score += 2;
-        }
-        const matchesWhitelist = isLikelyChapterTitle(entry.title);
-        if (matchesWhitelist) {
-          score += 1;
-        }
-        if (!matchesWhitelist && isNonChapterTitle(entry.title)) {
-          score -= 2;
-        }
-        return { entry, score };
-      });
-      const filtered = scoredEntries.filter(({ score }) => score >= 1).map(({ entry }) => entry);
-      if (filtered.length < sameBookEntries.length * 0.3 || filtered.length < 10) {
-        const lenientFiltered = sameBookEntries.filter((entry) => !isNonChapterTitle(entry.title));
-        if (lenientFiltered.length >= filtered.length) {
-          return sortTocEntries(lenientFiltered);
-        }
-      }
-      return sortTocEntries(filtered);
-    }
-    function sortTocEntries(entries2) {
-      if (entries2.length < 5) return entries2;
-      const entriesWithNum = entries2.map((entry, index) => ({
-        index,
-entry,
-        num: extractChapterNumber(entry.title)
-      })).filter((item) => item.num !== null);
-      if (entriesWithNum.length < entries2.length * 0.3 || entriesWithNum.length < 3) {
-        return entries2;
-      }
-      let descendingPairs = 0;
-      let ascendingPairs = 0;
-      for (let i = 0; i < entriesWithNum.length - 1; i++) {
-        const diff = entriesWithNum[i + 1].num - entriesWithNum[i].num;
-        if (diff < 0) descendingPairs++;
-        else if (diff > 0) ascendingPairs++;
-      }
-      const totalPairs = descendingPairs + ascendingPairs;
-      if (totalPairs > 0 && descendingPairs / totalPairs > 0.6) {
-        return [...entries2].reverse();
-      }
-      return entries2;
-    }
-    function extractChapterNumber(title2) {
-      const match1 = title2.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
-      if (match1) return parseInt(match1[1], 10);
-      const match2 = title2.match(/^(\d+)[.、\s]/);
-      if (match2) return parseInt(match2[1], 10);
-      const match3 = title2.match(/Chapter\s*(\d+)/i);
-      if (match3) return parseInt(match3[1], 10);
-      return null;
-    }
-    function isPlaceholderTocTitle(title2) {
-      return /^章节\s*\d+$/i.test(title2.trim());
-    }
-    function isBetterTocTitle(oldTitle, newTitle) {
-      const oldWhitelist = isLikelyChapterTitle(oldTitle);
-      const newWhitelist = isLikelyChapterTitle(newTitle);
-      if (newWhitelist && !oldWhitelist) return true;
-      if (oldWhitelist && !newWhitelist) return false;
-      if (!isPlaceholderTocTitle(oldTitle) && isPlaceholderTocTitle(newTitle)) return false;
-      if (isPlaceholderTocTitle(oldTitle) && !isPlaceholderTocTitle(newTitle)) return true;
-      return newTitle.length > oldTitle.length;
-    }
-    function extractTocLinkTitle(a) {
-      const titleSelectors = [
-        '[class*="chapterItemTitle"]',
-'[class*="chapter-title"]',
-        '[class*="chapterTitle"]',
-        "h2",
-"h3"
-      ];
-      for (const sel of titleSelectors) {
-        const el = a.querySelector(sel);
-        if (el) {
-          const text2 = (el.textContent || "").trim();
-          if (text2) return text2;
-        }
-      }
-      const firstP = a.querySelector("p");
-      if (firstP) {
-        const allP = a.querySelectorAll("p");
-        if (allP.length > 1) {
-          const text2 = (firstP.textContent || "").trim();
-          if (text2) return text2;
-        }
-      }
-      let directText = "";
-      for (const node of Array.from(a.childNodes)) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          directText += node.textContent || "";
-        }
-      }
-      directText = directText.trim();
-      if (directText) return directText;
-      return (a.textContent || "").trim();
-    }
-    function collectTocCandidates(doc2, base) {
-      var _a, _b;
-      const links = Array.from(doc2.querySelectorAll("a[href]"));
-      const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
-      const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
-      const excludeAncestors = (((_b = (_a = rule.value) == null ? void 0 : _a.toc) == null ? void 0 : _b.excludeAncestors) || "").split(",").map((s) => s.trim()).filter(Boolean);
-      const candidates = [];
-      for (const a of links) {
-        if (excludeAncestors.length > 0) {
-          let excluded = false;
-          for (const sel of excludeAncestors) {
-            try {
-              if (a.closest(sel)) {
-                excluded = true;
-                break;
-              }
-            } catch {
-            }
-          }
-          if (excluded) continue;
-        }
-        const text2 = extractTocLinkTitle(a);
-        const href = a.getAttribute("href") || "";
-        const abs = resolveUrl(href, base);
-        if (!abs) continue;
-        const url = normalizeUrlForFetch(abs);
-        if (!(textPattern.test(text2) || urlPattern.test(href))) {
-          continue;
-        }
-        const title2 = text2 || `章节 ${candidates.length + 1}`;
-        candidates.push({ title: title2, url });
-      }
-      return candidates;
-    }
-    function dedupeTocEntries(candidates) {
-      const seenUrls = new Map();
-      const results = [];
-      for (let i = candidates.length - 1; i >= 0; i--) {
-        const entry = candidates[i];
-        if (seenUrls.has(entry.url)) {
-          const existing = seenUrls.get(entry.url);
-          if (isBetterTocTitle(existing.title, entry.title)) {
-            existing.title = entry.title;
-          }
-        } else {
-          seenUrls.set(entry.url, entry);
-          results.unshift(entry);
-        }
-      }
-      return results;
-    }
-    const MAX_TOC_PAGES = 120;
-    function normalizeTocPagerText(text2) {
-      return text2.replace(/\s+/g, "").trim();
-    }
-    function isTocNextPageText(text2) {
-      const t = normalizeTocPagerText(text2).toLowerCase();
-      if (!t) return false;
-      if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
-        return true;
-      }
-      if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
-        return true;
-      }
-      return false;
-    }
-    function extractTocPaginationSeed(indexUrl) {
-      try {
-        const u = new URL(indexUrl);
-        const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
-        return (m == null ? void 0 : m[1]) || null;
-      } catch {
-        return null;
-      }
-    }
-    function normalizeUrlForCompare(url) {
-      try {
-        const u = new URL(url);
-        u.hash = "";
-        return u.toString();
-      } catch {
-        return url;
-      }
-    }
-    function isValidTocPaginationUrl(candidateUrl, indexUrl) {
-      try {
-        const c = new URL(candidateUrl);
-        const idx = new URL(indexUrl);
-        if (c.protocol !== "http:" && c.protocol !== "https:") return false;
-        if (c.origin !== idx.origin) return false;
-        const seed = extractTocPaginationSeed(indexUrl);
-        if (seed && !c.pathname.includes(seed)) return false;
-        return true;
-      } catch {
-        return false;
-      }
-    }
-    function findNextTocPageUrl(doc2, currentPageUrl, indexUrl) {
-      var _a, _b;
-      const currentNorm = normalizeUrlForCompare(currentPageUrl);
-      const pushCandidate = (candidates2, href, score) => {
-        const abs = resolveUrl(href, currentPageUrl);
-        if (!abs) return;
-        const absNorm = normalizeUrlForCompare(abs);
-        if (absNorm === currentNorm) return;
-        if (!isValidTocPaginationUrl(abs, indexUrl)) return;
-        candidates2.push({ url: abs, score });
-      };
-      const candidates = [];
-      const linkNext = (_a = doc2.querySelector('link[rel="next"][href]')) == null ? void 0 : _a.getAttribute("href");
-      if (linkNext) {
-        pushCandidate(candidates, linkNext, 100);
-      }
-      const aRelNext = (_b = doc2.querySelector('a[rel~="next"][href]')) == null ? void 0 : _b.getAttribute("href");
-      if (aRelNext) {
-        pushCandidate(candidates, aRelNext, 90);
-      }
-      for (const a of Array.from(doc2.querySelectorAll("a[href]"))) {
-        const text2 = a.textContent || "";
-        if (!isTocNextPageText(text2)) continue;
-        const href = a.getAttribute("href");
-        if (!href) continue;
-        let score = 50;
-        const rel = (a.getAttribute("rel") || "").toLowerCase();
-        if (rel.includes("next")) score += 10;
-        const cls = (a.getAttribute("class") || "").toLowerCase();
-        if (cls.includes("next")) score += 3;
-        if (a.closest(".pager, .pagination, .page, .pagebar, .caption, nav")) score += 2;
-        pushCandidate(candidates, href, score);
-      }
-      if (candidates.length === 0) return null;
-      candidates.sort((a, b) => b.score - a.score);
-      return candidates[0].url;
-    }
-    async function loadTocEntriesPaged(indexUrl, currentUrl, setAbort) {
-      const visitedPages = new Set();
-      const seenChapterUrls = new Set();
-      const allCandidates = [];
-      const aborters = [];
-      let aborted = false;
-      const abortAll = () => {
-        aborted = true;
-        for (const fn of aborters) {
-          try {
-            fn();
-          } catch {
-          }
-        }
-      };
-      setAbort(abortAll);
-      try {
-        let pageUrl = indexUrl;
-        let referer = currentUrl || indexUrl;
-        while (pageUrl && visitedPages.size < MAX_TOC_PAGES) {
-          const pageKey = normalizeUrlForCompare(pageUrl);
-          if (visitedPages.has(pageKey)) break;
-          visitedPages.add(pageKey);
-          const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
-          aborters.push(abort);
-          const result = await promise;
-          if (aborted) break;
-          if (result.error === "abort") break;
-          if (!result.doc) break;
-          const effectivePageUrl = result.finalUrl || pageUrl;
-          const pageCandidates = collectTocCandidates(result.doc, effectivePageUrl);
-          allCandidates.push(...pageCandidates);
-          let newCount = 0;
-          for (const entry of pageCandidates) {
-            if (!seenChapterUrls.has(entry.url)) {
-              seenChapterUrls.add(entry.url);
-              newCount++;
-            }
-          }
-          if (visitedPages.size >= 2 && newCount === 0) break;
-          const nextPageUrl = findNextTocPageUrl(result.doc, effectivePageUrl, indexUrl);
-          if (!nextPageUrl) break;
-          referer = effectivePageUrl;
-          pageUrl = nextPageUrl;
-        }
-      } finally {
-        setAbort(null);
-      }
-      if (allCandidates.length === 0) return [];
-      return filterTocEntries(dedupeTocEntries(allCandidates));
-    }
     async function setTocEntries(entries2) {
       tocOriginal.value = entries2;
       await applyTocConversion(currentConversionMode.value);
@@ -21693,14 +21999,24 @@ entry,
       }
       tocLoading.value = true;
       try {
-        let entries2 = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, (abort) => {
-          tocAbort.value = abort;
-        });
+        let entries2 = await loadTocEntriesPaged(
+          indexUrl,
+          currentUrl || indexUrl,
+          rule.value ?? void 0,
+          (abort) => {
+            tocAbort.value = abort;
+          }
+        );
         if (entries2.length === 0) {
           await new Promise((resolve) => window.setTimeout(resolve, 400));
-          entries2 = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, (abort) => {
-            tocAbort.value = abort;
-          });
+          entries2 = await loadTocEntriesPaged(
+            indexUrl,
+            currentUrl || indexUrl,
+            rule.value ?? void 0,
+            (abort) => {
+              tocAbort.value = abort;
+            }
+          );
         }
         await setTocEntries(entries2);
         if (entries2.length === 0) {
@@ -21920,260 +22236,6 @@ activate,
       $reset
     };
   });
-  async function parseWithSectionMerge(parser, initialDoc, url, referer) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    const resolvedUrl = normalizeAbsoluteUrl(url, referer);
-    const baseUrl = getSectionBaseUrl(resolvedUrl);
-    let startUrl = resolvedUrl;
-    let startDoc = initialDoc;
-    if (baseUrl && baseUrl !== resolvedUrl) {
-      const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
-      const result = await promise;
-      if (result.doc) {
-        startUrl = baseUrl;
-        startDoc = result.doc;
-      }
-    }
-    const first = await parser.parse(startDoc, startUrl);
-    if (!first) return null;
-    const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
-    if (disableByRule) return first;
-    const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
-    const detection = parser.detect(startDoc, startUrl);
-    const section = {
-      isSection: !!((_e = detection.results.section) == null ? void 0 : _e.isSection),
-      nextSectionUrl: ((_f = detection.results.section) == null ? void 0 : _f.nextSectionUrl) || null,
-      nextChapterUrl: ((_g = detection.results.section) == null ? void 0 : _g.nextChapterUrl) || null,
-      confidence: ((_h = detection.results.section) == null ? void 0 : _h.confidence) || 0
-    };
-    const shouldMerge = enableByRule || section.isSection && section.confidence >= 0.8;
-    if (!shouldMerge) return first;
-    let mergedContent = first.content;
-    let mergedRaw = first.rawContent;
-    let nextSectionUrl = section.nextSectionUrl;
-    let nextChapterUrl = section.nextChapterUrl || null;
-    let lastUrl = startUrl;
-    if (enableByRule && !nextSectionUrl && first.nextUrl) {
-      const isSectionUrl = isSectionLikeUrl(startUrl, first.nextUrl);
-      if (isSectionUrl) {
-        nextSectionUrl = first.nextUrl;
-      }
-    }
-    const maxPages = 10;
-    const maxAdditionalPages = Math.max(0, maxPages - 1);
-    const seen = new Set([startUrl]);
-    for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
-      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-      if (seen.has(absNextSection)) break;
-      seen.add(absNextSection);
-      const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
-      const nextResult = await promise;
-      if (!nextResult.doc) break;
-      const nextParsed = await parser.parse(nextResult.doc, absNextSection);
-      if (!nextParsed) break;
-      mergedContent = joinHtml(mergedContent, nextParsed.content);
-      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-      const nextDet = parser.detect(nextResult.doc, absNextSection);
-      const s = nextDet.results.section;
-      if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-      nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
-      if (enableByRule && !nextSectionUrl && nextParsed.nextUrl) {
-        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
-          nextSectionUrl = nextParsed.nextUrl;
-        } else {
-          if (!nextChapterUrl) nextChapterUrl = nextParsed.nextUrl;
-        }
-      }
-      lastUrl = absNextSection;
-    }
-    return {
-      ...first,
-      url: startUrl,
-      content: mergedContent,
-      rawContent: mergedRaw,
-      nextUrl: nextChapterUrl || first.nextUrl
-    };
-  }
-  function isInvalidChapterUrl(url, currentChapterUrl) {
-    try {
-      const normalizedUrl = normalizeCiwemaoChapterUrl(url);
-      const parsed = new URL(normalizedUrl);
-      const pathname = parsed.pathname;
-      if (pathname === "/" || pathname === "") {
-        return true;
-      }
-      const pathParts = pathname.split("/").filter(Boolean);
-      if (pathParts.length < 2) {
-        const part = pathParts[0] || "";
-        if (!/\d/.test(part)) {
-          return true;
-        }
-      }
-      const invalidPatterns = [
-        /^https?:\/\/[^/]+\/?$/i,
-/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
-/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
-        /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
-/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
-        /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
-/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
-        /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
-        /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
-      ];
-      for (const pattern of invalidPatterns) {
-        if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
-          return true;
-        }
-      }
-      if (currentChapterUrl) {
-        const currentParsed = new URL(currentChapterUrl);
-        const currentParts = currentParsed.pathname.split("/").filter(Boolean);
-        if (currentParts.length >= 3 && pathParts.length < currentParts.length - 1) {
-          return true;
-        }
-        if (parsed.host !== currentParsed.host) {
-          return true;
-        }
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-  function normalizeTextForVipDetection(text2) {
-    return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、“”‘’（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
-  }
-  function isVipChapterPage(doc2) {
-    var _a;
-    const rawText = ((_a = doc2.body) == null ? void 0 : _a.textContent) || "";
-    if (!rawText) return false;
-    const text2 = normalizeTextForVipDetection(rawText);
-    const patterns = [
-      /本章(?:为|是)?vip章节/,
-      /(vip|付费|收费)(?:章节|内容)/,
-      /(未订阅|未购买|未解锁).{0,10}(本章|本章节|章节|内容)/,
-      /(本章|本章节|章节|内容).{0,12}(?:已)?锁定/,
-      /(本章|本章节|章节|内容).{0,12}(?:需|需要).{0,6}(订阅|购买|付费|解锁)/,
-      /(订阅|购买|付费|解锁).{0,12}(后|即可|才能|方可|才可).{0,12}(阅读|查看|继续阅读|继续查看)/,
-      /(请|需).{0,6}(订阅|购买|付费|解锁).{0,12}(阅读|查看|继续阅读|继续查看)/,
-      /立即(订阅|购买|解锁|充值)/,
-      /(订阅|购买|解锁)本章/
-    ];
-    if (patterns.some((re) => re.test(text2))) return true;
-    const ctaText = Array.from(
-      doc2.querySelectorAll('a,button,input[type="button"],input[type="submit"]')
-    ).map((el) => {
-      if (el instanceof HTMLInputElement) return el.value || "";
-      return el.textContent || "";
-    }).join(" ");
-    const cta = normalizeTextForVipDetection(ctaText);
-    if (/立即(订阅|购买|解锁|充值)/.test(cta) && /(vip|付费|订阅|购买|解锁|锁定)/.test(text2)) {
-      return true;
-    }
-    return false;
-  }
-  function detectTocPage(content, pageUrl, currentChapterUrl) {
-    const tocUrlPatterns = [
-      /\/book\/\d+\.html?$/i,
-/\/book\/\d+\/?$/i,
-/\/novel\/\d+\/?$/i,
-/\/xiaoshuo\/\d+\/?$/i,
-/\/info\/\d+\.html?$/i,
-/\/\d+\/index\.html?$/i,
-/\/booklist/i,
-/\/catalog/i,
-/\/contents?\.html?$/i,
-/\/list\.html?$/i,
-/\/toc\.html?$/i
-];
-    for (const pattern of tocUrlPatterns) {
-      if (pattern.test(pageUrl)) {
-        return true;
-      }
-    }
-    try {
-      const currentPath2 = new URL(currentChapterUrl).pathname;
-      const pagePath = new URL(pageUrl).pathname;
-      const chapterPattern = /\/(txt|read|chapter|article)\/\d+\/\d+/i;
-      const bookPattern = /\/(book|novel|info|xiaoshuo)\/\d+/i;
-      if (chapterPattern.test(currentPath2) && bookPattern.test(pagePath)) {
-        return true;
-      }
-    } catch {
-    }
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = content;
-    const textContent = tempDiv.textContent || "";
-    const textLength = textContent.length;
-    const links = tempDiv.querySelectorAll("a");
-    const linkCount = links.length;
-    if (textLength < 500 && linkCount > 10) {
-      return true;
-    }
-    const linkTextLength = Array.from(links).reduce(
-      (sum, a) => {
-        var _a;
-        return sum + (((_a = a.textContent) == null ? void 0 : _a.length) || 0);
-      },
-      0
-    );
-    const linkRatio = textLength > 0 ? linkTextLength / textLength : 0;
-    if (linkRatio > 0.6 && linkCount > 8) {
-      return true;
-    }
-    const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
-    const chapterLinks = Array.from(links).filter((a) => {
-      const href = a.getAttribute("href") || "";
-      return chapterLinkPattern.test(href);
-    });
-    if (chapterLinks.length > 10) {
-      return true;
-    }
-    const normalizeUrl = (url) => {
-      try {
-        const u = new URL(url, pageUrl);
-        return u.pathname.replace(/\/$/, "");
-      } catch {
-        return url.replace(/\/$/, "");
-      }
-    };
-    const currentPath = normalizeUrl(currentChapterUrl);
-    const hasLinkToCurrentChapter = Array.from(links).some((a) => {
-      const href = a.getAttribute("href");
-      if (!href) return false;
-      return normalizeUrl(href) === currentPath;
-    });
-    if (hasLinkToCurrentChapter && linkCount > 5) {
-      return true;
-    }
-    const tocKeywords = [
-      "目录",
-      "章节列表",
-      "章节目录",
-      "全部章节",
-      "最新章节",
-      "小说目录",
-      "table of contents",
-      "toc",
-      "catalog",
-      "index"
-    ];
-    const pageText = textContent.toLowerCase();
-    const keywordMatches = tocKeywords.filter((kw) => pageText.includes(kw.toLowerCase()));
-    if (keywordMatches.length >= 2 || keywordMatches.length >= 1 && linkCount > 15) {
-      return true;
-    }
-    const linkTexts = Array.from(links).map((a) => {
-      var _a;
-      return ((_a = a.textContent) == null ? void 0 : _a.trim()) || "";
-    }).filter((t) => t.length > 0);
-    const chapterNamePattern = /^第.{1,10}[章节回话篇集卷]/;
-    const chapterNameLinks = linkTexts.filter((t) => chapterNamePattern.test(t));
-    if (chapterNameLinks.length > 5) {
-      return true;
-    }
-    return false;
-  }
   const THEMES = [
     {
       id: "light",
@@ -22250,6 +22312,7 @@ activate,
     blockPopups: true
   };
   const STORAGE_KEY = "mnr-config";
+  const STORAGE_BACKUP_KEY = `${STORAGE_KEY}-backup`;
   const useConfigStore = defineStore("config", () => {
     const themeId = ref("light");
     const reading = ref({ ...DEFAULT_READING });
@@ -22311,23 +22374,94 @@ activate,
       applyReading();
       applyCustomCSS();
     }
+    function safeToString(value) {
+      if (typeof value === "string") return value;
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+    async function backupCorruptedConfig(original) {
+      if (original === null || original === void 0) return;
+      try {
+        const payload = JSON.stringify({
+          savedAt: ( new Date()).toISOString(),
+          type: typeof original,
+          value: safeToString(original)
+        });
+        if (typeof GM_setValue !== "undefined") {
+          await GM_setValue(STORAGE_BACKUP_KEY, payload);
+        } else if (typeof localStorage !== "undefined") {
+          localStorage.setItem(STORAGE_BACKUP_KEY, payload);
+        }
+      } catch (e) {
+        console.error("[ConfigStore] Backup error:", e);
+      }
+    }
     async function load() {
       try {
         let data = null;
+        let hasInvalidData = false;
         if (typeof GM_getValue !== "undefined") {
           data = await GM_getValue(STORAGE_KEY, null);
         } else if (typeof localStorage !== "undefined") {
-          data = localStorage.getItem(STORAGE_KEY);
+          const stored = localStorage.getItem(STORAGE_KEY);
+          data = stored;
         }
         if (data) {
-          const parsed = typeof data === "string" ? JSON.parse(data) : data;
-          if (parsed.themeId) themeId.value = parsed.themeId;
-          if (parsed.reading) reading.value = { ...DEFAULT_READING, ...parsed.reading };
-          if (parsed.behavior) behavior.value = { ...DEFAULT_BEHAVIOR, ...parsed.behavior };
-          if (parsed.protection) protection.value = { ...DEFAULT_PROTECTION, ...parsed.protection };
-          if (parsed.customCSS) customCSS.value = parsed.customCSS;
+          let parsed;
+          if (typeof data === "string") {
+            try {
+              parsed = JSON.parse(data);
+            } catch (e) {
+              console.error("[ConfigStore] Failed to parse config JSON:", e);
+              hasInvalidData = true;
+              parsed = null;
+            }
+          } else {
+            parsed = data;
+          }
+          if (!hasInvalidData && (!parsed || typeof parsed !== "object" || Array.isArray(parsed))) {
+            console.warn("[ConfigStore] Invalid config data, expected object");
+            hasInvalidData = true;
+          }
+          if (!hasInvalidData) {
+            const config = parsed;
+            if (typeof config.themeId === "string") {
+              themeId.value = config.themeId;
+            }
+            if (config.reading && typeof config.reading === "object") {
+              reading.value = {
+                ...DEFAULT_READING,
+                ...config.reading
+              };
+            }
+            if (config.behavior && typeof config.behavior === "object") {
+              behavior.value = {
+                ...DEFAULT_BEHAVIOR,
+                ...config.behavior
+              };
+            }
+            if (config.protection && typeof config.protection === "object") {
+              protection.value = {
+                ...DEFAULT_PROTECTION,
+                ...config.protection
+              };
+            }
+            if (typeof config.customCSS === "string") {
+              customCSS.value = config.customCSS;
+            }
+          }
         }
         applyAll();
+        if (hasInvalidData) {
+          console.warn(
+            "[ConfigStore] Corrupted config detected; backing up and resetting to defaults"
+          );
+          await backupCorruptedConfig(data);
+          await save();
+        }
       } catch (e) {
         console.error("[ConfigStore] Load error:", e);
       }

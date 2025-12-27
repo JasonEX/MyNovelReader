@@ -6,7 +6,7 @@
  * Rule Categories:
  * - Category A (deleted): Auto-detectable by detection engine - NOT included here
  * - Category B (simplified): Custom selectors but no special processing
- * - Category C (full): Special processing (contentPatch, useiframe, mutations, etc.)
+ * - Category C (full): Special processing (beforeParse hook, iframe/mutations handling, etc.)
  *
  * Migration Notes:
  * - Original 96 rules reduced to ~55 essential rules
@@ -259,7 +259,7 @@ const CIWEIMAO_BEFORE_PARSE = `
 
 /**
  * Category C: Rules with special processing
- * These require contentPatch, getContent, mutations, iframe, or VIP detection
+ * These require special processing (beforeParse hook, dynamic content handling, iframe/mutations, etc.)
  */
 const specialRules: SiteRule[] = [
   // Qidian (起点) - VIP chapters, dynamic content
@@ -291,7 +291,9 @@ const specialRules: SiteRule[] = [
         try {
           const reviews = doc.querySelectorAll('h1 .review');
           reviews.forEach(el => el.remove());
-        } catch (e) {}
+        } catch (e) {
+          console.debug('[MNR] Failed to remove review elements:', e);
+        }
 
         try {
           const script = doc.querySelector('#vite-plugin-ssr_pageContext');

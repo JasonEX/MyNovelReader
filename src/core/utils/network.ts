@@ -108,7 +108,7 @@ function parseHttpUrl(url: string): URL | null {
   }
 }
 
-function resolveAndValidateHttpUrl(url: string, base?: string): string | null {
+export function resolveAndValidateHttpUrl(url: string, base?: string): string | null {
   const normalized = normalizeUrlForFetch(url);
 
   let resolved: string | null = null;

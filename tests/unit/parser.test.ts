@@ -126,26 +126,47 @@ describe('Parser', () => {
     expect(smartSelect(doc, 'p:contains(zzz)')).toBeNull();
   });
 
-  it('executes hooks (beforeParse + afterParse) with helpers', async () => {
+  it('allows cross-origin hook fetchText via GM_xmlhttpRequest (http/https only)', async () => {
     const doc = dom.window.document;
+
+    const gmXhr = vi.fn(
+      (opts: { url: string; onload: (resp: { responseText: string }) => void }) => {
+        opts.onload({ responseText: 'ok' });
+      }
+    );
+    vi.stubGlobal('GM_xmlhttpRequest', gmXhr);
+
     const rule: SiteRule = {
       id: 'r',
       version: 1,
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
       hooks: {
-        beforeParse: "doc.body.setAttribute('data-before', '1');",
-        afterParse: '(content) => content + "!"',
+        beforeParse:
+          "const t = await helpers.fetchText('https://cross.origin.test/data'); doc.body.setAttribute('data-fetched', t || '');",
       },
       meta: { source: 'user' },
     };
 
-    const out = await parser.executeHooks(rule, doc, '<p>a</p>');
-    expect(out).toBe('<p>a</p>!');
-    expect(doc.body.getAttribute('data-before')).toBe('1');
+    const runBeforeParseHook = (
+      parser as unknown as {
+        runBeforeParseHook: (rule: SiteRule, doc: Document, url?: string) => Promise<void>;
+      }
+    ).runBeforeParseHook.bind(parser);
+    await runBeforeParseHook(rule, doc, dom.window.location.href);
+
+    expect(doc.body.getAttribute('data-fetched')).toBe('ok');
+    expect(gmXhr).toHaveBeenCalledWith(
+      expect.objectContaining({ method: 'GET', url: 'https://cross.origin.test/data' })
+    );
   });
 
-  it('keeps original content when afterParse hook returns falsy', async () => {
+  it('blocks hook fetchText to private-network hosts (e.g. 127.0.0.1) when cross-origin', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const gmXhr = vi.fn();
+    vi.stubGlobal('GM_xmlhttpRequest', gmXhr);
+
     const doc = dom.window.document;
     const rule: SiteRule = {
       id: 'r',
@@ -153,13 +174,25 @@ describe('Parser', () => {
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
       hooks: {
-        afterParse: '() => ""',
+        beforeParse:
+          "const t = await helpers.fetchText('http://127.0.0.1/private'); doc.body.setAttribute('data-fetched', String(t));",
       },
       meta: { source: 'user' },
     };
 
-    const out = await parser.executeHooks(rule, doc, '<p>a</p>');
-    expect(out).toBe('<p>a</p>');
+    const runBeforeParseHook = (
+      parser as unknown as {
+        runBeforeParseHook: (rule: SiteRule, doc: Document, url?: string) => Promise<void>;
+      }
+    ).runBeforeParseHook.bind(parser);
+    await runBeforeParseHook(rule, doc, dom.window.location.href);
+
+    expect(doc.body.getAttribute('data-fetched')).toBe('null');
+    expect(gmXhr).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      '[Parser] Fetch blocked: invalid or unsafe URL:',
+      'http://127.0.0.1/private'
+    );
   });
 
   it('handles hook errors without throwing', async () => {
@@ -173,14 +206,17 @@ describe('Parser', () => {
       content: { selector: '#content' },
       hooks: {
         beforeParse: 'throw new Error("boom")',
-        // Invalid JS expression
-        afterParse: 'not-valid-js',
       },
       meta: { source: 'user' },
     };
 
-    const out = await parser.executeHooks(rule, doc, 'x');
-    expect(out).toBe('x');
+    const runBeforeParseHook = (
+      parser as unknown as {
+        runBeforeParseHook: (rule: SiteRule, doc: Document, url?: string) => Promise<void>;
+      }
+    ).runBeforeParseHook.bind(parser);
+
+    await expect(runBeforeParseHook(rule, doc, dom.window.location.href)).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalled();
   });
 
@@ -478,6 +514,49 @@ describe('Parser', () => {
     await triggerLazyLoadScroll(() => 0, 100);
   });
 
+  it('validates hook fetch URLs (http/https only; blocks private-network hosts)', () => {
+    const resolveHookFetchUrl = (
+      parser as unknown as { resolveHookFetchUrl: (url: string) => string | null }
+    ).resolveHookFetchUrl.bind(parser);
+
+    expect(resolveHookFetchUrl('/a')).toBe('https://example.com/a');
+    expect(resolveHookFetchUrl('https://example.com/a')).toBe('https://example.com/a');
+    expect(resolveHookFetchUrl('http://example.com/a')).toBe('http://example.com/a');
+
+    // Cross-origin http(s) is allowed by default.
+    expect(resolveHookFetchUrl('https://evil.example.net/a')).toBe('https://evil.example.net/a');
+
+    // Non-http(s) is blocked.
+    expect(resolveHookFetchUrl('file:///etc/passwd')).toBeNull();
+
+    // GM_xmlhttpRequest bypasses CORS; block private-network/loopback hosts unless same-host.
+    expect(resolveHookFetchUrl('http://127.0.0.1/a')).toBeNull();
+  });
+
+  it('fetchText blocks unsafe URLs without making requests', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const gm = vi.fn(() => ({ abort: () => {} }));
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const fetchMock = vi.fn(async () => ({ ok: true, text: async () => 'ok' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const fetchText = (
+      parser as unknown as {
+        fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
+      }
+    ).fetchText.bind(parser);
+
+    await expect(fetchText('http://127.0.0.1/a')).resolves.toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      '[Parser] Fetch blocked: invalid or unsafe URL:',
+      'http://127.0.0.1/a'
+    );
+    expect(gm).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('fetchText uses GM_xmlhttpRequest when available', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
       opts.onload?.({
@@ -496,7 +575,7 @@ describe('Parser', () => {
       parser as unknown as {
         fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
       }
-    ).fetchText;
+    ).fetchText.bind(parser);
     const result = await fetchText('https://example.com/a', {
       timeoutMs: 10,
       headers: { Accept: 'text/plain' },
@@ -525,7 +604,7 @@ describe('Parser', () => {
       parser as unknown as {
         fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
       }
-    ).fetchText;
+    ).fetchText.bind(parser);
 
     await expect(fetchText('https://example.com/empty')).resolves.toBeNull();
   });
@@ -541,7 +620,7 @@ describe('Parser', () => {
       parser as unknown as {
         fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
       }
-    ).fetchText;
+    ).fetchText.bind(parser);
     await expect(fetchText('https://example.com/a')).resolves.toBe('hello');
 
     vi.stubGlobal(
@@ -569,7 +648,7 @@ describe('Parser', () => {
       parser as unknown as {
         fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
       }
-    ).fetchText;
+    ).fetchText.bind(parser);
 
     await expect(fetchText('https://example.com/a', { withCredentials: false })).resolves.toBe(
       'ok'

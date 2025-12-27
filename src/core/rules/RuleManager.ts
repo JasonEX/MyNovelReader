@@ -132,7 +132,8 @@ export class RuleManager {
       }
 
       return true;
-    } catch {
+    } catch (e) {
+      console.debug('[RuleManager] Rule match error for pattern:', rule.match.pattern, e);
       return false;
     }
   }

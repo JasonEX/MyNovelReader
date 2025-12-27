@@ -119,16 +119,16 @@ export interface AdvancedConfig {
 
 /** JavaScript hooks for advanced customization */
 export interface HooksConfig {
-  /** JS code to run before parsing (receives: doc) */
+  /**
+   * JS code to run before parsing.
+   *
+   * This is executed as async code with signature:
+   *   (doc: Document, url?: string, helpers?: { fetchJson, fetchText }) => Promise<void>
+   *
+   * Note: Only `beforeParse` is supported. Other legacy hook fields are intentionally not supported
+   * to keep the rules schema simple and predictable.
+   */
   beforeParse?: string;
-  /** JS code to run after parsing (receives: content, returns: content) */
-  afterParse?: string;
-  /** JS code to patch content DOM (receives: $doc) */
-  contentPatch?: string;
-  /** JS code for VIP chapter detection (receives: $doc, returns: boolean) */
-  isVipChapter?: string;
-  /** JS code to run on page load */
-  onLoad?: string;
 }
 
 /** Rule metadata */

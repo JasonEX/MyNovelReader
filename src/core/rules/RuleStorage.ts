@@ -5,6 +5,47 @@
 
 import { SitePreference, SiteRule, STORAGE_KEYS } from './types';
 
+function sanitizeUserRuleHooks(rule: SiteRule): { sanitized: SiteRule; removedKeys: string[] } {
+  const removedKeys: string[] = [];
+  const rawHooks = (rule as SiteRule & { hooks?: unknown }).hooks;
+  if (rawHooks === undefined) {
+    return { sanitized: rule, removedKeys };
+  }
+
+  const sanitized: SiteRule = { ...rule };
+
+  if (!rawHooks || typeof rawHooks !== 'object' || Array.isArray(rawHooks)) {
+    removedKeys.push('hooks');
+    delete (sanitized as SiteRule & { hooks?: unknown }).hooks;
+    return { sanitized, removedKeys };
+  }
+
+  const hooksObj = rawHooks as Record<string, unknown>;
+  for (const key of Object.keys(hooksObj)) {
+    if (key !== 'beforeParse') {
+      removedKeys.push(key);
+    }
+  }
+
+  const beforeParse = hooksObj.beforeParse;
+  const keepBeforeParse = typeof beforeParse === 'string' && beforeParse.trim().length > 0;
+  if (!keepBeforeParse && 'beforeParse' in hooksObj) {
+    removedKeys.push('beforeParse');
+  }
+
+  if (keepBeforeParse) {
+    (sanitized as SiteRule & { hooks?: Record<string, unknown> }).hooks = { beforeParse };
+  } else {
+    delete (sanitized as SiteRule & { hooks?: unknown }).hooks;
+  }
+
+  return { sanitized, removedKeys };
+}
+
+function warnDroppedHookFields(ruleId: string, removedKeys: string[]) {
+  console.warn('[RuleStorage] Dropped unsupported hooks fields:', ruleId, removedKeys);
+}
+
 /** Storage driver interface */
 export interface RuleStorageDriver {
   get(key: string): Promise<SiteRule | null>;
@@ -28,9 +69,18 @@ class GMStorageDriver implements RuleStorageDriver {
 
   async get(key: string): Promise<SiteRule | null> {
     try {
-      const data = GM_getValue<string | null>(this.prefix + key, null);
-      return data ? JSON.parse(data as string) : null;
-    } catch {
+      const data = GM_getValue<unknown>(this.prefix + key, null);
+      if (typeof data === 'string') {
+        try {
+          return JSON.parse(data) as SiteRule;
+        } catch (e) {
+          console.error(`[RuleStorage] Failed to parse rule ${key}:`, e);
+          return null;
+        }
+      }
+      return null;
+    } catch (e) {
+      console.debug('[RuleStorage] Failed to get rule:', key, e);
       return null;
     }
   }
@@ -212,7 +262,16 @@ export class RuleStorage {
    * Get a rule by domain
    */
   async getUserRule(domain: string): Promise<SiteRule | null> {
-    return this.driver.get(domain);
+    const rule = await this.driver.get(domain);
+    if (!rule) return null;
+
+    const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+    if (removedKeys.length > 0) {
+      warnDroppedHookFields(domain, removedKeys);
+      await this.driver.set(domain, sanitized);
+    }
+
+    return sanitized;
   }
 
   /**
@@ -229,7 +288,11 @@ export class RuleStorage {
       },
     };
 
-    await this.driver.set(domain, ruleToSave);
+    const { sanitized, removedKeys } = sanitizeUserRuleHooks(ruleToSave);
+    if (removedKeys.length > 0) {
+      warnDroppedHookFields(domain, removedKeys);
+    }
+    await this.driver.set(domain, sanitized);
   }
 
   /**
@@ -243,7 +306,20 @@ export class RuleStorage {
    * Get all user rules
    */
   async getAllUserRules(): Promise<Map<string, SiteRule>> {
-    return this.driver.getAll();
+    const all = await this.driver.getAll();
+    const sanitizedRules = new Map<string, SiteRule>();
+
+    for (const [domain, rule] of all) {
+      const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+      sanitizedRules.set(domain, sanitized);
+
+      if (removedKeys.length > 0) {
+        warnDroppedHookFields(domain, removedKeys);
+        await this.driver.set(domain, sanitized);
+      }
+    }
+
+    return sanitizedRules;
   }
 
   /**
@@ -264,7 +340,7 @@ export class RuleStorage {
    * Export rules as JSON
    */
   async exportRules(): Promise<string> {
-    const rules = await this.driver.getAll();
+    const rules = await this.getAllUserRules();
     const rulesArray = Array.from(rules.values());
     return JSON.stringify(rulesArray, null, 2);
   }
@@ -297,7 +373,11 @@ export class RuleStorage {
         if (existing) continue;
       }
 
-      await this.driver.set(rule.id, rule);
+      const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+      if (removedKeys.length > 0) {
+        warnDroppedHookFields(rule.id, removedKeys);
+      }
+      await this.driver.set(rule.id, sanitized);
       count++;
     }
 
@@ -317,7 +397,8 @@ export class RuleStorage {
         SitePreference
       >;
       return prefs[domain] || null;
-    } catch {
+    } catch (e) {
+      console.debug('[RuleStorage] Failed to get site preference:', domain, e);
       return null;
     }
   }

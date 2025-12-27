@@ -5,94 +5,44 @@
 import { computed, ref } from 'vue';
 import { type ConversionMode, convertHTML, convertText } from '@/core/converter';
 import { getParser, type ParsedChapter } from '@/core/parser';
-import {
-  getSectionBaseUrl,
-  isSectionLikeUrl,
-  joinHtml,
-  normalizeAbsoluteUrl,
-  normalizeCiwemaoChapterUrl,
-} from '@/core/utils';
 import { defineStore } from 'pinia';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import type { SiteRule } from '@/core/rules/types';
 
-type SectionInfo = {
-  isSection: boolean;
-  nextSectionUrl: string | null;
-  nextChapterUrl: string | null;
-  confidence: number;
+// Import types from modular files
+import type {
+  CachedChapter,
+  CacheProgressState,
+  ChapterEntry,
+  LoadSource,
+  PersistedBookCache,
+  ReadingProgress,
+  TocEntry,
+  TocEntryWithStatus,
+} from './reader/types';
+import {
+  MAX_CACHED_CHAPTERS,
+  MAX_NAV_FAILURES,
+  MAX_SESSION_CACHE,
+  VIP_BLOCK_TOAST,
+} from './reader/types';
+
+// Import utilities from modular files
+import { detectTocPage, isInvalidChapterUrl, isVipChapterPage } from './reader/detection';
+import { normalizeUrl, normalizeUrlForBlock, normalizeUrlForFetch } from './reader/utils';
+import { trimCachedContents, trimNavFailures } from './reader/trim';
+import { loadTocEntriesPaged } from './reader/toc';
+import { parseWithSectionMerge } from './reader/section';
+
+// Re-export types for backward compatibility
+export type {
+  CachedChapter,
+  CacheProgressState,
+  ChapterEntry,
+  ReadingProgress,
+  TocEntry,
+  TocEntryWithStatus,
 };
-
-type LoadSource = 'auto' | 'manual';
-
-export interface ReadingProgress {
-  /** Chapter URL */
-  url: string;
-  /** Scroll position (0-100%) */
-  scrollPercent: number;
-  /** Current chapter (visible) URL */
-  chapterUrl: string;
-  /** Progress within current chapter (0-100%) */
-  chapterPercent: number;
-  /** Last read timestamp */
-  lastRead: number;
-}
-
-export interface CacheProgressState {
-  done: number;
-  total: number;
-  running: boolean;
-}
-
-/** Chapter entry for infinite scroll */
-export interface ChapterEntry {
-  chapter: ParsedChapter;
-  rule?: SiteRule;
-  id: string; // unique ID for Vue key
-}
-
-/** Table of contents entry */
-export interface TocEntry {
-  title: string;
-  url: string;
-}
-
-/** TOC entry with cache status for UI */
-export interface TocEntryWithStatus extends TocEntry {
-  isCached: boolean;
-  isPersisted: boolean;
-  isCurrent: boolean;
-}
-
-/** Cached chapter content (separate from display chapters) */
-export interface CachedChapter {
-  chapter: ParsedChapter;
-  rule?: SiteRule;
-  cachedAt: number;
-}
-
-/** Persisted cache structure for GM storage */
-interface PersistedBookCache {
-  bookId: string;
-  indexUrl: string;
-  chapters: Record<string, CachedChapter>;
-  lastUpdated: number;
-}
-
-const MAX_CACHED_CHAPTERS = 8;
-// MAX_CACHE_TASKS removed - now unlimited
-const VIP_BLOCK_TOAST = '该章节为VIP/付费内容，无法加载';
-
-function normalizeUrlForFetch(url: string): string {
-  const normalized = normalizeCiwemaoChapterUrl(url);
-  try {
-    const u = new URL(normalized);
-    u.hash = '';
-    return u.toString();
-  } catch {
-    return normalized.replace(/#.*$/, '');
-  }
-}
 
 export const useReaderStore = defineStore('reader', () => {
   // State
@@ -140,17 +90,6 @@ export const useReaderStore = defineStore('reader', () => {
   const bookTitle = computed(() => chapter.value?.bookTitle || '');
   const content = computed(() => chapter.value?.content || '');
 
-  function normalizeUrlForBlock(url: string): string {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = '';
-      return normalizeUrl(u.toString());
-    } catch {
-      return normalizeUrl(normalized.replace(/#.*$/, ''));
-    }
-  }
-
   function isVipBlockedUrl(url: string): boolean {
     return vipBlockedUrls.value.has(normalizeUrlForBlock(url));
   }
@@ -184,12 +123,19 @@ export const useReaderStore = defineStore('reader', () => {
   // TOC with cache status for UI
   const tocWithStatus = computed<TocEntryWithStatus[]>(() => {
     const currentUrl = chapter.value?.url;
-    return toc.value.map(entry => ({
-      ...entry,
-      isCached: loadedUrls.value.has(entry.url) || cachedContents.value.has(entry.url),
-      isPersisted: persistedUrls.value.has(entry.url),
-      isCurrent: entry.url === currentUrl,
-    }));
+    return toc.value.map(entry => {
+      const url = normalizeUrlForFetch(entry.url);
+      return {
+        ...entry,
+        url,
+        isCached:
+          loadedUrls.value.has(url) ||
+          cachedContents.value.has(url) ||
+          persistedUrls.value.has(url),
+        isPersisted: persistedUrls.value.has(url),
+        isCurrent: url === currentUrl,
+      };
+    });
   });
 
   // Current chapter URL for external reference
@@ -336,11 +282,6 @@ export const useReaderStore = defineStore('reader', () => {
     return true;
   }
 
-  /** Normalize URL for comparison (remove trailing slash and index.html) */
-  function normalizeUrl(url: string): string {
-    return url.replace(/\/$/, '').replace(/\/index\.html?$/, '');
-  }
-
   /** Unified chapter loading function */
   async function loadChapter(direction: 'next' | 'prev', source: LoadSource): Promise<boolean> {
     const isNext = direction === 'next';
@@ -410,6 +351,15 @@ export const useReaderStore = defineStore('reader', () => {
     if (cached) {
       return insertCachedChapter(cached, isNext ? 'append' : 'prepend');
     }
+    if (persistedUrls.value.has(targetUrl)) {
+      const persisted = await getPersistedCachedChapter(targetUrl);
+      if (persisted) {
+        const sessionCached: CachedChapter = { ...persisted, cachedAt: Date.now() };
+        cachedContents.value.set(targetUrl, sessionCached);
+        trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
+        return insertCachedChapter(sessionCached, isNext ? 'append' : 'prepend');
+      }
+    }
     if (loadedUrls.value.has(targetUrl)) {
       return false;
     }
@@ -447,6 +397,7 @@ export const useReaderStore = defineStore('reader', () => {
         const count = (prev?.count || 0) + 1;
         const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 30000);
         navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+        trimNavFailures(navFailures, MAX_NAV_FAILURES);
         if (source === 'manual' || count === 1) {
           showToast(errorMessage, 'error', 2500);
         }
@@ -467,6 +418,7 @@ export const useReaderStore = defineStore('reader', () => {
         const count = (prev?.count || 0) + 1;
         const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 30000);
         navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+        trimNavFailures(navFailures, MAX_NAV_FAILURES);
         if (source === 'manual' || count === 1) {
           showToast(errorMessage, 'error', 2500);
         }
@@ -529,6 +481,9 @@ export const useReaderStore = defineStore('reader', () => {
         rule: parsed.rule,
         cachedAt: Date.now(),
       });
+
+      // Trim in-memory session cache (LRU) to keep memory bounded.
+      trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
 
       // Apply current conversion mode if active
       if (currentConversionMode.value !== 'none') {
@@ -734,11 +689,15 @@ export const useReaderStore = defineStore('reader', () => {
 
   /**
    * Batch cache chapters (best-effort, sequential)
-   * Caches to cachedContents (not chapters) for memory efficiency
-   * No limit on number of chapters - can cache entire book
+   * Persists chapters to storage (best-effort); in-memory cache is LRU-capped.
    */
   async function startCacheAll(urls?: string[]): Promise<void> {
     if (cacheProgress.value.running) return;
+
+    // Ensure we have the latest persistedUrls before building the task list.
+    await restoreCache();
+    const persistedSet = new Set(persistedUrls.value);
+    const cacheBook = getCurrentBookCacheKey();
 
     let taskList = urls ? [...urls] : []; // No limit
     cacheQueue.value = [...taskList];
@@ -748,14 +707,21 @@ export const useReaderStore = defineStore('reader', () => {
       const indexUrl = chapter.value?.indexUrl;
       const currentUrl = chapter.value?.url;
       if (indexUrl) {
-        const tocEntries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, abort => {
-          cacheAbort.value = abort;
-        });
+        const tocEntries = await loadTocEntriesPaged(
+          indexUrl,
+          currentUrl || indexUrl,
+          rule.value ?? undefined,
+          abort => {
+            cacheAbort.value = abort;
+          }
+        );
         cacheAbort.value = null;
 
-        const tocLinks = tocEntries.map(e => e.url).slice(0, 10000);
-        // Cache entire book, filter already cached
-        taskList = tocLinks.filter(u => !loadedUrls.value.has(u) && !cachedContents.value.has(u));
+        const tocLinks = tocEntries.map(e => normalizeUrlForFetch(e.url)).slice(0, 10000);
+        // Cache entire book, filter already cached/persisted
+        taskList = tocLinks.filter(
+          u => !loadedUrls.value.has(u) && !cachedContents.value.has(u) && !persistedSet.has(u)
+        );
         cacheQueue.value = [...taskList];
       }
     }
@@ -774,8 +740,12 @@ export const useReaderStore = defineStore('reader', () => {
     while (cacheProgress.value.running && nextUrl) {
       const targetUrl = normalizeUrlForFetch(nextUrl);
 
-      // 去重 - check both loadedUrls and cachedContents
-      if (loadedUrls.value.has(targetUrl) || cachedContents.value.has(targetUrl)) {
+      // 去重 - check loadedUrls, session cache, and persisted cache
+      if (
+        loadedUrls.value.has(targetUrl) ||
+        cachedContents.value.has(targetUrl) ||
+        persistedSet.has(targetUrl)
+      ) {
         cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
         nextUrl = taskList.shift() ?? null;
         continue;
@@ -801,11 +771,23 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       // Store in cachedContents (not chapters - for memory efficiency)
-      cachedContents.value.set(parsed.url, {
+      const cached: CachedChapter = {
         chapter: parsed,
         rule: parsed.rule,
         cachedAt: Date.now(),
-      });
+      };
+      cachedContents.value.set(parsed.url, cached);
+
+      // Trim session cache (LRU) to avoid unbounded memory usage during cache-all.
+      trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
+
+      // Persist chapter (best-effort) while caching to avoid holding everything in memory.
+      if (cacheBook) {
+        const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
+        if (persisted) {
+          persistedSet.add(parsed.url);
+        }
+      }
 
       // Mark as loaded for deduplication
       loadedUrls.value.add(parsed.url);
@@ -831,6 +813,9 @@ export const useReaderStore = defineStore('reader', () => {
     cacheAbort.value = null;
 
     // Persist cache after completion
+    if (cacheBook && persistedSet.size > 0) {
+      persistedUrls.value = persistedSet;
+    }
     await persistCache();
   }
 
@@ -839,635 +824,6 @@ export const useReaderStore = defineStore('reader', () => {
     cacheQueue.value = [];
     cacheAbort.value?.();
     cacheAbort.value = null;
-  }
-
-  function resolveUrl(href: string, base: string): string | null {
-    try {
-      return new URL(href, base).toString();
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Extract URL pattern by replacing numbers with placeholders
-   * e.g., /chapter/123/456.html -> /chapter/{N}/{N}.html
-   */
-  function extractUrlPattern(url: string): string {
-    try {
-      const u = new URL(url);
-      // Replace consecutive digits with {N}, keep path structure
-      return u.pathname.replace(/\d+/g, '{N}');
-    } catch {
-      return url.replace(/\d+/g, '{N}');
-    }
-  }
-
-  /**
-   * Chapter title whitelist patterns - titles matching these are likely real chapters
-   * Based on common novel chapter naming conventions
-   */
-  const CHAPTER_TITLE_PATTERNS = [
-    // Chinese chapter formats: 第X章/节/回/话/篇/集/卷
-    /^.{0,10}第.{1,10}[章节回话篇集卷]/,
-    // Numbered chapters: 1. xxx, 001 xxx, etc.
-    /^\d{1,4}[.、\s]/,
-    // Chapter keyword at start
-    /^(序章|序幕|楔子|引子|终章|尾声|番外|后记|前言)/,
-    // English format
-    /^chapter\s*\d+/i,
-    /^(prologue|epilogue|preface)/i,
-  ];
-
-  /**
-   * Non-chapter title patterns to filter out (blacklist)
-   */
-  const NON_CHAPTER_TITLE_PATTERNS = [
-    // Announcements and notices
-    /^(公告|通知|声明|说明|必读|注意|警告|温馨提示)/,
-    /上架感言|完本感言|请假|推迟|停更|断更|更新|爆更|上架通知|卷末感言/,
-    /必看|必读|请务必阅读|读者必看/,
-    // Author-related
-    /^(作者|关于作者|作品相关|设定|世界观|人物介绍|角色)/,
-    // Promotional content
-    /求.*票|求.*收藏|求.*订阅|求.*打赏|求.*推荐|求.*支持/,
-    /新书|推荐|安利|宣传|书单|书评/,
-    // Metadata pages
-    /^(目录|封面|简介|内容简介|书籍信息|作品信息)/,
-    // Locked/VIP markers that are standalone entries (not part of chapter title)
-    /^(VIP|付费|锁定|未解锁|需订阅|加入书架)$/i,
-    // External links and community
-    /官网|公众号|微信|QQ群|粉丝群|书友群|交流群|读者群/,
-    // Common non-content links
-    /登[录陆]|注册|充值|书架|书城|排行|分类|搜索|设置/,
-    /首页|返回|上一页|下一页|翻页/,
-    // Volume/section labels only (e.g., "章节2", "卷一", not real chapter titles)
-    /^(章节|分卷|卷|部|篇)\s*[\d一二三四五六七八九十百千]+\s*$/,
-    /^(正文|番外|VIP卷?|免费章节?)\s*$/,
-  ];
-
-  /**
-   * Extract book ID from URL for same-book filtering
-   * Returns null if cannot extract
-   */
-  function extractBookId(url: string): string | null {
-    try {
-      const u = new URL(url);
-      // Common patterns: /book/123/, /chapter/123/456/, /123/456.html
-      const patterns = [
-        /\/book\/(\d+)/,
-        /\/chapter\/(\d+)\//,
-        /\/(\d+)\/\d+(?:\.html?)?$/,
-        // Faloo (飞卢): /{bookId}_{chapterId}.html
-        /\/(\d+)_\d+(?:\.html?)?$/,
-        /[?&](?:book_?id|bid|id)=(\d+)/i,
-      ];
-      for (const p of patterns) {
-        const m = u.pathname.match(p) || u.search.match(p);
-        if (m) return m[1];
-      }
-    } catch {
-      // Invalid URL
-    }
-    return null;
-  }
-
-  /**
-   * Check if a title matches chapter patterns (whitelist)
-   */
-  function isLikelyChapterTitle(title: string): boolean {
-    const t = title.trim();
-    return CHAPTER_TITLE_PATTERNS.some(p => p.test(t));
-  }
-
-  /**
-   * Check if a title looks like a non-chapter entry (blacklist)
-   */
-  function isNonChapterTitle(title: string): boolean {
-    const t = title.trim();
-    // Too short to be a chapter
-    if (t.length < 2) return true;
-    // Match against blacklist patterns
-    return NON_CHAPTER_TITLE_PATTERNS.some(p => p.test(t));
-  }
-
-  /**
-   * Smart filter TOC entries based on URL pattern analysis and title filtering
-   * Strategy:
-   * 1. Same-book filtering - filter out links to other books (recommendations)
-   * 2. URL pattern analysis - find dominant URL patterns (chapter URLs usually follow same pattern)
-   * 3. Title whitelist - entries matching chapter patterns get priority
-   * 4. Title blacklist - filter out non-chapter content
-   */
-  function filterTocEntries(entries: TocEntry[]): TocEntry[] {
-    if (entries.length < 5) return entries; // Too few to analyze
-
-    // Step 0: Same-book filtering - find dominant book ID and filter out other books
-    const bookIdCounts = new Map<string, number>();
-    for (const entry of entries) {
-      const bookId = extractBookId(entry.url);
-      if (bookId) {
-        bookIdCounts.set(bookId, (bookIdCounts.get(bookId) || 0) + 1);
-      }
-    }
-
-    // Find the dominant book ID (most common one)
-    let dominantBookId: string | null = null;
-    let maxCount = 0;
-    for (const [bookId, count] of bookIdCounts) {
-      if (count > maxCount) {
-        maxCount = count;
-        dominantBookId = bookId;
-      }
-    }
-
-    // Pre-filter: remove entries pointing to different books (recommendations)
-    const sameBookEntries =
-      dominantBookId && maxCount >= 5
-        ? entries.filter(entry => {
-            const bookId = extractBookId(entry.url);
-            // Keep if: no book ID detected, or matches dominant book ID
-            return !bookId || bookId === dominantBookId;
-          })
-        : entries;
-
-    // Step 1: Count URL patterns
-    const patternCounts = new Map<string, number>();
-    const patternEntries = new Map<string, TocEntry[]>();
-
-    for (const entry of sameBookEntries) {
-      const pattern = extractUrlPattern(entry.url);
-      patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
-      if (!patternEntries.has(pattern)) {
-        patternEntries.set(pattern, []);
-      }
-      patternEntries.get(pattern)!.push(entry);
-    }
-
-    // Step 2: Find dominant pattern(s)
-    const sortedPatterns = Array.from(patternCounts.entries()).sort((a, b) => b[1] - a[1]);
-
-    const dominantPatterns = new Set<string>();
-    const totalEntries = sameBookEntries.length;
-
-    for (const [pattern, count] of sortedPatterns) {
-      // Accept patterns that have at least 5 entries OR represent > 30% of total
-      const ratio = count / totalEntries;
-      if (count >= 5 || ratio > 0.3) {
-        dominantPatterns.add(pattern);
-        // Stop if we've covered enough entries (> 90%)
-        const coveredCount = Array.from(dominantPatterns).reduce(
-          (sum, p) => sum + (patternCounts.get(p) || 0),
-          0
-        );
-        if (coveredCount / totalEntries > 0.9) break;
-      }
-    }
-
-    // If no dominant pattern found, use the most common one
-    if (dominantPatterns.size === 0 && sortedPatterns.length > 0) {
-      dominantPatterns.add(sortedPatterns[0][0]);
-    }
-
-    // Step 3: Score and filter entries
-    // Score: +2 for URL pattern match, +1 for whitelist title, -2 for blacklist title
-    // But: whitelist overrides blacklist (chapter with "求票" suffix should be kept)
-    const scoredEntries = sameBookEntries.map(entry => {
-      let score = 0;
-      const pattern = extractUrlPattern(entry.url);
-
-      // URL pattern match
-      if (dominantPatterns.has(pattern)) {
-        score += 2;
-      }
-
-      // Title whitelist (looks like a chapter)
-      const matchesWhitelist = isLikelyChapterTitle(entry.title);
-      if (matchesWhitelist) {
-        score += 1;
-      }
-
-      // Title blacklist (looks like non-chapter)
-      // Only apply blacklist penalty if title doesn't match whitelist
-      // This prevents filtering "第1章 xxx（求票）" which is a valid chapter
-      if (!matchesWhitelist && isNonChapterTitle(entry.title)) {
-        score -= 2;
-      }
-
-      return { entry, score };
-    });
-
-    // Filter: keep entries with score >= 1
-    // (either URL match + not blacklisted, or whitelist title)
-    const filtered = scoredEntries.filter(({ score }) => score >= 1).map(({ entry }) => entry);
-
-    // Fallback: if filtering removed too many entries, be more conservative
-    if (filtered.length < sameBookEntries.length * 0.3 || filtered.length < 10) {
-      // More lenient: just apply blacklist filtering without URL pattern
-      const lenientFiltered = sameBookEntries.filter(entry => !isNonChapterTitle(entry.title));
-      // If lenient filter gives reasonable results, use it
-      if (lenientFiltered.length >= filtered.length) {
-        // Use lenient results, but we still need to apply sorting logic below
-        return sortTocEntries(lenientFiltered);
-      }
-    }
-
-    return sortTocEntries(filtered);
-  }
-
-  /**
-   * Detect list order and sort/reverse if necessary
-   * Handles cases where TOC is in descending order (newest first)
-   */
-  function sortTocEntries(entries: TocEntry[]): TocEntry[] {
-    if (entries.length < 5) return entries;
-
-    // Extract numbers from titles
-    const entriesWithNum = entries
-      .map((entry, index) => ({
-        index, // Keep original index
-        entry,
-        num: extractChapterNumber(entry.title),
-      }))
-      .filter(item => item.num !== null);
-
-    // Only attempt sorting if we have enough numbered entries
-    if (entriesWithNum.length < entries.length * 0.3 || entriesWithNum.length < 3) {
-      return entries;
-    }
-
-    // Check order trends using adjacent pairs
-    let descendingPairs = 0;
-    let ascendingPairs = 0;
-
-    for (let i = 0; i < entriesWithNum.length - 1; i++) {
-      const diff = entriesWithNum[i + 1].num! - entriesWithNum[i].num!;
-      if (diff < 0) descendingPairs++;
-      else if (diff > 0) ascendingPairs++;
-    }
-
-    // If overwhelmingly descending (reverse order), reverse the list
-    // Threshold: > 60% of pairs are descending
-    const totalPairs = descendingPairs + ascendingPairs;
-    if (totalPairs > 0 && descendingPairs / totalPairs > 0.6) {
-      // It's a descending list, reverse it to make it ascending (Chapter 1 -> Chapter N)
-      return [...entries].reverse();
-    }
-
-    return entries;
-  }
-
-  /**
-   * Extract chapter number from title for sorting
-   * Primarily supports Arabic numbers which are most common
-   */
-  function extractChapterNumber(title: string): number | null {
-    // 1. "第123章" / "第 123 章" / "第123话"
-    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
-    if (match1) return parseInt(match1[1], 10);
-
-    // 2. "123." / "123 " / "123、" at start
-    const match2 = title.match(/^(\d+)[.、\s]/);
-    if (match2) return parseInt(match2[1], 10);
-
-    // 3. "Chapter 123"
-    const match3 = title.match(/Chapter\s*(\d+)/i);
-    if (match3) return parseInt(match3[1], 10);
-
-    // 4. Pure number at start (riskier, check length)
-    // const match4 = title.match(/^(\d+)\s*$/);
-    // if (match4) return parseInt(match4[1], 10);
-
-    return null;
-  }
-
-  /**
-   * Parse TOC with titles from a document
-   * Deduplication strategy: Keep last occurrence position, but prefer better titles
-   * This handles TOC pages with "recent updates" at top followed by full chapter list
-   */
-  function isPlaceholderTocTitle(title: string): boolean {
-    return /^章节\s*\d+$/i.test(title.trim());
-  }
-
-  function isBetterTocTitle(oldTitle: string, newTitle: string): boolean {
-    const oldWhitelist = isLikelyChapterTitle(oldTitle);
-    const newWhitelist = isLikelyChapterTitle(newTitle);
-
-    // Prefer titles that look like real chapters
-    if (newWhitelist && !oldWhitelist) return true;
-    if (oldWhitelist && !newWhitelist) return false;
-
-    // Avoid replacing a non-placeholder with a placeholder
-    if (!isPlaceholderTocTitle(oldTitle) && isPlaceholderTocTitle(newTitle)) return false;
-    if (isPlaceholderTocTitle(oldTitle) && !isPlaceholderTocTitle(newTitle)) return true;
-
-    // Otherwise prefer the longer (more informative) title
-    return newTitle.length > oldTitle.length;
-  }
-
-  /**
-   * Extract chapter title from link element
-   * Prioritizes inner title elements to avoid getting extra text like "免费", "VIP"
-   */
-  function extractTocLinkTitle(a: Element): string {
-    // Method 1: Try common title selectors (Qidian mobile sidebar, etc.)
-    const titleSelectors = [
-      '[class*="chapterItemTitle"]', // Qidian mobile: _chapterItemTitle_xxx
-      '[class*="chapter-title"]',
-      '[class*="chapterTitle"]',
-      'h2', // Qidian mobile catalog: <a><div><h2>Title</h2></div><span>免费</span></a>
-      'h3',
-    ];
-
-    for (const sel of titleSelectors) {
-      const el = a.querySelector(sel);
-      if (el) {
-        const text = (el.textContent || '').trim();
-        if (text) return text;
-      }
-    }
-
-    // Method 2: If link has child elements, try to get first meaningful text
-    // This handles structures like: <a><div><p>Title</p><p>免费</p></div></a>
-    const firstP = a.querySelector('p');
-    if (firstP) {
-      // Check if there are multiple p elements (likely title + status)
-      const allP = a.querySelectorAll('p');
-      if (allP.length > 1) {
-        // Return first p's text (usually the title)
-        const text = (firstP.textContent || '').trim();
-        if (text) return text;
-      }
-    }
-
-    // Method 3: Get direct text content only (excludes child element text)
-    // This handles: <a>Chapter Title<span>Extra</span></a>
-    let directText = '';
-    for (const node of Array.from(a.childNodes)) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        directText += node.textContent || '';
-      }
-    }
-    directText = directText.trim();
-    if (directText) return directText;
-
-    // Fallback to full textContent
-    return (a.textContent || '').trim();
-  }
-
-  function collectTocCandidates(doc: Document, base: string): TocEntry[] {
-    const links = Array.from(doc.querySelectorAll('a[href]'));
-    // Match chapter titles: 第X章/节/回/话/篇/集/卷/幕, or standalone 章/回/节/話/幕
-    const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
-    // Match chapter URLs: /chapter_1, /read/1, /123.html (pure numeric filename)
-    const urlPattern =
-      /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
-    const excludeAncestors = (rule.value?.toc?.excludeAncestors || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    const candidates: TocEntry[] = [];
-    for (const a of links) {
-      // Rule-specific TOC exclusions (keep generic parser clean; configure per-site in rules).
-      if (excludeAncestors.length > 0) {
-        let excluded = false;
-        for (const sel of excludeAncestors) {
-          try {
-            if (a.closest(sel)) {
-              excluded = true;
-              break;
-            }
-          } catch {
-            // Ignore invalid selectors
-          }
-        }
-        if (excluded) continue;
-      }
-
-      const text = extractTocLinkTitle(a);
-      const href = a.getAttribute('href') || '';
-      const abs = resolveUrl(href, base);
-      if (!abs) continue;
-      const url = normalizeUrlForFetch(abs);
-
-      // Only keep links that look like chapters
-      if (!(textPattern.test(text) || urlPattern.test(href))) {
-        continue;
-      }
-
-      const title = text || `章节 ${candidates.length + 1}`;
-      candidates.push({ title, url });
-    }
-
-    return candidates;
-  }
-
-  /**
-   * Deduplicate TOC entries while preserving the last occurrence position.
-   * This helps handle TOC pages that have "recent updates" at top followed by full list.
-   */
-  function dedupeTocEntries(candidates: TocEntry[]): TocEntry[] {
-    const seenUrls = new Map<string, TocEntry>();
-    const results: TocEntry[] = [];
-
-    for (let i = candidates.length - 1; i >= 0; i--) {
-      const entry = candidates[i];
-      if (seenUrls.has(entry.url)) {
-        const existing = seenUrls.get(entry.url)!;
-        if (isBetterTocTitle(existing.title, entry.title)) {
-          existing.title = entry.title;
-        }
-      } else {
-        seenUrls.set(entry.url, entry);
-        results.unshift(entry);
-      }
-    }
-
-    return results;
-  }
-
-  const MAX_TOC_PAGES = 120;
-
-  function normalizeTocPagerText(text: string): string {
-    return text.replace(/\s+/g, '').trim();
-  }
-
-  function isTocNextPageText(text: string): boolean {
-    const t = normalizeTocPagerText(text).toLowerCase();
-    if (!t) return false;
-    if (t.includes('下一页') || t.includes('下页') || t.includes('下一頁') || t.includes('下頁')) {
-      return true;
-    }
-    // Conservative English fallback (avoid matching "next chapter")
-    if (t.includes('next') && !t.includes('chapter') && (t.includes('page') || t === 'next')) {
-      return true;
-    }
-    return false;
-  }
-
-  function extractTocPaginationSeed(indexUrl: string): string | null {
-    try {
-      const u = new URL(indexUrl);
-      // Prefer numeric IDs (most CN sites), but keep it conservative: 3+ digits.
-      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
-      return m?.[1] || null;
-    } catch {
-      return null;
-    }
-  }
-
-  function normalizeUrlForCompare(url: string): string {
-    try {
-      const u = new URL(url);
-      u.hash = '';
-      return u.toString();
-    } catch {
-      return url;
-    }
-  }
-
-  function isValidTocPaginationUrl(candidateUrl: string, indexUrl: string): boolean {
-    try {
-      const c = new URL(candidateUrl);
-      const idx = new URL(indexUrl);
-      if (c.protocol !== 'http:' && c.protocol !== 'https:') return false;
-      if (c.origin !== idx.origin) return false;
-
-      const seed = extractTocPaginationSeed(indexUrl);
-      if (seed && !c.pathname.includes(seed)) return false;
-
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  function findNextTocPageUrl(
-    doc: Document,
-    currentPageUrl: string,
-    indexUrl: string
-  ): string | null {
-    const currentNorm = normalizeUrlForCompare(currentPageUrl);
-
-    const pushCandidate = (
-      candidates: Array<{ url: string; score: number }>,
-      href: string,
-      score: number
-    ) => {
-      const abs = resolveUrl(href, currentPageUrl);
-      if (!abs) return;
-      const absNorm = normalizeUrlForCompare(abs);
-      if (absNorm === currentNorm) return;
-      if (!isValidTocPaginationUrl(abs, indexUrl)) return;
-      candidates.push({ url: abs, score });
-    };
-
-    const candidates: Array<{ url: string; score: number }> = [];
-
-    // 1) <link rel="next" href="...">
-    const linkNext = doc.querySelector('link[rel="next"][href]')?.getAttribute('href');
-    if (linkNext) {
-      pushCandidate(candidates, linkNext, 100);
-    }
-
-    // 2) <a rel="next" href="...">
-    const aRelNext = doc.querySelector('a[rel~="next"][href]')?.getAttribute('href');
-    if (aRelNext) {
-      pushCandidate(candidates, aRelNext, 90);
-    }
-
-    // 3) Text-based paging links (e.g. "下一页")
-    for (const a of Array.from(doc.querySelectorAll('a[href]'))) {
-      const text = a.textContent || '';
-      if (!isTocNextPageText(text)) continue;
-
-      const href = a.getAttribute('href');
-      if (!href) continue;
-
-      let score = 50;
-      const rel = (a.getAttribute('rel') || '').toLowerCase();
-      if (rel.includes('next')) score += 10;
-      const cls = (a.getAttribute('class') || '').toLowerCase();
-      if (cls.includes('next')) score += 3;
-      if (a.closest('.pager, .pagination, .page, .pagebar, .caption, nav')) score += 2;
-
-      pushCandidate(candidates, href, score);
-    }
-
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => b.score - a.score);
-    return candidates[0].url;
-  }
-
-  async function loadTocEntriesPaged(
-    indexUrl: string,
-    currentUrl: string,
-    setAbort: (abort: (() => void) | null) => void
-  ): Promise<TocEntry[]> {
-    const visitedPages = new Set<string>();
-    const seenChapterUrls = new Set<string>();
-    const allCandidates: TocEntry[] = [];
-
-    const aborters: Array<() => void> = [];
-    let aborted = false;
-    const abortAll = () => {
-      aborted = true;
-      for (const fn of aborters) {
-        try {
-          fn();
-        } catch {
-          // ignore
-        }
-      }
-    };
-    setAbort(abortAll);
-
-    try {
-      let pageUrl: string | null = indexUrl;
-      let referer: string | undefined = currentUrl || indexUrl;
-
-      while (pageUrl && visitedPages.size < MAX_TOC_PAGES) {
-        const pageKey = normalizeUrlForCompare(pageUrl);
-        if (visitedPages.has(pageKey)) break;
-        visitedPages.add(pageKey);
-
-        const { promise, abort } = fetchAndParseUrl(pageUrl, referer);
-        aborters.push(abort);
-
-        const result = await promise;
-        if (aborted) break;
-        if (result.error === 'abort') break;
-        if (!result.doc) break;
-
-        const effectivePageUrl = result.finalUrl || pageUrl;
-        const pageCandidates = collectTocCandidates(result.doc, effectivePageUrl);
-        allCandidates.push(...pageCandidates);
-
-        let newCount = 0;
-        for (const entry of pageCandidates) {
-          if (!seenChapterUrls.has(entry.url)) {
-            seenChapterUrls.add(entry.url);
-            newCount++;
-          }
-        }
-
-        // If we are "turning pages" but keep seeing the same set, stop to avoid loops.
-        if (visitedPages.size >= 2 && newCount === 0) break;
-
-        const nextPageUrl = findNextTocPageUrl(result.doc, effectivePageUrl, indexUrl);
-        if (!nextPageUrl) break;
-
-        referer = effectivePageUrl;
-        pageUrl = nextPageUrl;
-      }
-    } finally {
-      setAbort(null);
-    }
-
-    if (allCandidates.length === 0) return [];
-    return filterTocEntries(dedupeTocEntries(allCandidates));
   }
 
   /**
@@ -1536,15 +892,25 @@ export const useReaderStore = defineStore('reader', () => {
     tocLoading.value = true;
 
     try {
-      let entries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, abort => {
-        tocAbort.value = abort;
-      });
+      let entries = await loadTocEntriesPaged(
+        indexUrl,
+        currentUrl || indexUrl,
+        rule.value ?? undefined,
+        abort => {
+          tocAbort.value = abort;
+        }
+      );
       if (entries.length === 0) {
         // Retry once for transient request failures / slow dynamic pages.
         await new Promise<void>(resolve => window.setTimeout(resolve, 400));
-        entries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, abort => {
-          tocAbort.value = abort;
-        });
+        entries = await loadTocEntriesPaged(
+          indexUrl,
+          currentUrl || indexUrl,
+          rule.value ?? undefined,
+          abort => {
+            tocAbort.value = abort;
+          }
+        );
       }
       await setTocEntries(entries);
       if (entries.length === 0) {
@@ -1594,8 +960,17 @@ export const useReaderStore = defineStore('reader', () => {
    * Clears current chapters and sets the target as the only chapter
    */
   async function rebuildChaptersAround(targetUrl: string): Promise<boolean> {
+    const url = normalizeUrlForFetch(targetUrl);
     // Check cachedContents first
-    const cached = cachedContents.value.get(targetUrl);
+    let cached = cachedContents.value.get(url);
+    if (!cached && persistedUrls.value.has(url)) {
+      const persisted = await getPersistedCachedChapter(url);
+      if (persisted) {
+        cached = { ...persisted, cachedAt: Date.now() };
+        cachedContents.value.set(url, cached);
+        trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
+      }
+    }
     if (!cached) return false;
 
     // Clear current chapters
@@ -1694,36 +1069,128 @@ export const useReaderStore = defineStore('reader', () => {
     }
   }
 
+  type CacheBookKey = {
+    bookId: string;
+    indexUrl: string;
+  };
+
+  type PersistedBookCacheV2Index = {
+    version: 2;
+    bookId: string;
+    indexUrl: string;
+    urls: string[];
+    lastUpdated: number;
+  };
+
+  function encodeBase64UrlUtf8(value: string): string {
+    const bytes = new TextEncoder().encode(value);
+    let binary = '';
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function parseStoredJson<T>(stored: unknown): T | null {
+    if (stored === null || stored === undefined) return null;
+    if (typeof stored === 'string') {
+      try {
+        return JSON.parse(stored) as T;
+      } catch {
+        return null;
+      }
+    }
+    if (typeof stored === 'object') {
+      return stored as T;
+    }
+    return null;
+  }
+
+  function getCacheV1Key(bookId: string): string {
+    return `mnr_cache_${bookId}`;
+  }
+
+  function getCacheV2IndexKey(bookId: string): string {
+    return `mnr_cache_v2_index_${bookId}`;
+  }
+
+  function getCacheV2ChapterKey(bookId: string, url: string): string {
+    return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
+  }
+
+  function getCurrentBookCacheKey(): CacheBookKey | null {
+    const indexUrl = chapter.value?.indexUrl;
+    if (!indexUrl) return null;
+    return { bookId: generateBookId(indexUrl), indexUrl };
+  }
+
+  function persistCachedChapter(
+    cacheBook: CacheBookKey,
+    url: string,
+    cached: CachedChapter
+  ): boolean {
+    if (typeof GM_setValue === 'undefined') return false;
+    try {
+      GM_setValue(getCacheV2ChapterKey(cacheBook.bookId, url), JSON.stringify(cached));
+      return true;
+    } catch (e) {
+      console.error('[MNR] Failed to persist cached chapter:', e);
+      return false;
+    }
+  }
+
+  async function getPersistedCachedChapter(url: string): Promise<CachedChapter | null> {
+    const cacheBook = getCurrentBookCacheKey();
+    if (!cacheBook) return null;
+    if (typeof GM_getValue === 'undefined') return null;
+
+    try {
+      const storedV2 = GM_getValue<unknown>(getCacheV2ChapterKey(cacheBook.bookId, url), null);
+      const cachedV2 = parseStoredJson<CachedChapter>(storedV2);
+      if (cachedV2?.chapter?.url) {
+        return cachedV2;
+      }
+
+      const storedV1 = GM_getValue<unknown>(getCacheV1Key(cacheBook.bookId), null);
+      const dataV1 = parseStoredJson<PersistedBookCache>(storedV1);
+      const cachedV1 = dataV1?.chapters?.[url];
+      if (cachedV1?.chapter?.url) {
+        return cachedV1;
+      }
+    } catch (e) {
+      console.error('[MNR] Failed to load persisted chapter:', e);
+    }
+    return null;
+  }
+
   /**
    * Persist cache to GM storage
    */
   async function persistCache(): Promise<void> {
-    const indexUrl = chapter.value?.indexUrl;
-    if (!indexUrl || cachedContents.value.size === 0) return;
+    const cacheBook = getCurrentBookCacheKey();
+    if (!cacheBook) return;
+    if (typeof GM_setValue === 'undefined') return;
 
-    const bookId = generateBookId(indexUrl);
-
-    // Convert Map to object for JSON serialization
-    const chaptersObj: Record<string, CachedChapter> = {};
+    const persistedSet = new Set(persistedUrls.value);
     for (const [url, cached] of cachedContents.value) {
-      chaptersObj[url] = cached;
+      const persisted = persistCachedChapter(cacheBook, url, cached);
+      if (persisted) {
+        persistedSet.add(url);
+      }
     }
+    if (persistedSet.size === 0) return;
 
-    const data: PersistedBookCache = {
-      bookId,
-      indexUrl,
-      chapters: chaptersObj,
+    const indexData: PersistedBookCacheV2Index = {
+      version: 2,
+      bookId: cacheBook.bookId,
+      indexUrl: cacheBook.indexUrl,
+      urls: Array.from(persistedSet),
       lastUpdated: Date.now(),
     };
 
     try {
-      if (typeof GM_setValue !== 'undefined') {
-        GM_setValue(`mnr_cache_${bookId}`, JSON.stringify(data));
-        // Update persistedUrls to reflect what's saved
-        persistedUrls.value = new Set(Object.keys(chaptersObj));
-      }
+      GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
+      persistedUrls.value = persistedSet;
     } catch (e) {
-      console.error('[MNR] Failed to persist cache:', e);
+      console.error('[MNR] Failed to persist cache index:', e);
     }
   }
 
@@ -1731,25 +1198,22 @@ export const useReaderStore = defineStore('reader', () => {
    * Restore cache from GM storage
    */
   async function restoreCache(): Promise<void> {
-    const indexUrl = chapter.value?.indexUrl;
-    if (!indexUrl) return;
-
-    const bookId = generateBookId(indexUrl);
+    const cacheBook = getCurrentBookCacheKey();
+    if (!cacheBook) return;
+    if (typeof GM_getValue === 'undefined') return;
 
     try {
-      if (typeof GM_getValue !== 'undefined') {
-        const stored = GM_getValue<string | null>(`mnr_cache_${bookId}`, null);
-        if (stored) {
-          const data: PersistedBookCache = JSON.parse(stored as string);
+      const storedV2 = GM_getValue<unknown>(getCacheV2IndexKey(cacheBook.bookId), null);
+      const dataV2 = parseStoredJson<PersistedBookCacheV2Index>(storedV2);
+      if (dataV2?.version === 2 && Array.isArray(dataV2.urls)) {
+        persistedUrls.value = new Set(dataV2.urls);
+        return;
+      }
 
-          // Restore to cachedContents, loadedUrls, and persistedUrls
-          const urls = Object.keys(data.chapters);
-          for (const [url, cached] of Object.entries(data.chapters)) {
-            cachedContents.value.set(url, cached);
-            loadedUrls.value.add(url);
-          }
-          persistedUrls.value = new Set(urls);
-        }
+      const storedV1 = GM_getValue<unknown>(getCacheV1Key(cacheBook.bookId), null);
+      const dataV1 = parseStoredJson<PersistedBookCache>(storedV1);
+      if (dataV1?.chapters && typeof dataV1.chapters === 'object') {
+        persistedUrls.value = new Set(Object.keys(dataV1.chapters));
       }
     } catch (e) {
       console.error('[MNR] Failed to restore cache:', e);
@@ -1760,15 +1224,36 @@ export const useReaderStore = defineStore('reader', () => {
    * Clear persisted cache for current book
    */
   async function clearPersistedCache(): Promise<void> {
-    const indexUrl = chapter.value?.indexUrl;
-    if (!indexUrl) return;
+    const cacheBook = getCurrentBookCacheKey();
+    if (!cacheBook) return;
+    if (typeof GM_deleteValue === 'undefined') return;
 
-    const bookId = generateBookId(indexUrl);
+    let urls = new Set(persistedUrls.value);
+
+    if (typeof GM_getValue !== 'undefined') {
+      const storedIndex = GM_getValue<unknown>(getCacheV2IndexKey(cacheBook.bookId), null);
+      const dataV2 = parseStoredJson<PersistedBookCacheV2Index>(storedIndex);
+      if (dataV2?.version === 2 && Array.isArray(dataV2.urls)) {
+        urls = new Set(dataV2.urls);
+      }
+    }
 
     try {
-      if (typeof GM_deleteValue !== 'undefined') {
-        GM_deleteValue(`mnr_cache_${bookId}`);
+      const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
+      if (urls.size > 0) {
+        for (const url of urls) {
+          GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
+        }
+      } else if (typeof GM_listValues === 'function') {
+        for (const key of GM_listValues()) {
+          if (key.startsWith(chapterKeyPrefix)) {
+            GM_deleteValue(key);
+          }
+        }
       }
+
+      GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
+      GM_deleteValue(getCacheV1Key(cacheBook.bookId));
       // Only clear persisted URLs, keep session cache intact
       persistedUrls.value.clear();
     } catch (e) {
@@ -1834,356 +1319,3 @@ export const useReaderStore = defineStore('reader', () => {
     $reset,
   };
 });
-
-async function parseWithSectionMerge(
-  parser: ReturnType<typeof getParser>,
-  initialDoc: Document,
-  url: string,
-  referer?: string
-): Promise<ParsedChapter | null> {
-  const resolvedUrl = normalizeAbsoluteUrl(url, referer);
-
-  // If user opens a later section page, normalize to the first page for stable TOC matching.
-  const baseUrl = getSectionBaseUrl(resolvedUrl);
-  let startUrl = resolvedUrl;
-  let startDoc = initialDoc;
-  if (baseUrl && baseUrl !== resolvedUrl) {
-    const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
-    const result = await promise;
-    if (result.doc) {
-      startUrl = baseUrl;
-      startDoc = result.doc;
-    }
-  }
-
-  const first = await parser.parse(startDoc, startUrl);
-  if (!first) return null;
-
-  // Decide whether to attempt section merging: rule says so OR detection says current/next is section-like.
-  // If rule explicitly sets noSection: true, skip all section merging (both rule-based and auto-detected).
-  const disableByRule = !!first.rule?.advanced?.noSection;
-  if (disableByRule) return first;
-
-  const enableByRule = !!first.rule?.advanced?.checkSection;
-  const detection = parser.detect(startDoc, startUrl);
-  const section: SectionInfo = {
-    isSection: !!detection.results.section?.isSection,
-    nextSectionUrl: detection.results.section?.nextSectionUrl || null,
-    nextChapterUrl: detection.results.section?.nextChapterUrl || null,
-    confidence: detection.results.section?.confidence || 0,
-  };
-
-  const shouldMerge = enableByRule || (section.isSection && section.confidence >= 0.8);
-  if (!shouldMerge) return first;
-
-  let mergedContent = first.content;
-  let mergedRaw = first.rawContent;
-  let nextSectionUrl = section.nextSectionUrl;
-  let nextChapterUrl = section.nextChapterUrl || null;
-  let lastUrl = startUrl;
-
-  // When rule enables checkSection but auto-detection didn't find nextSectionUrl,
-  // check if first.nextUrl is a section URL (e.g., /123_2.html pattern).
-  // This handles cases where rule selector picks "下一页" but auto-detection picks "下一章".
-  if (enableByRule && !nextSectionUrl && first.nextUrl) {
-    const isSectionUrl = isSectionLikeUrl(startUrl, first.nextUrl);
-    if (isSectionUrl) {
-      nextSectionUrl = first.nextUrl;
-    }
-  }
-
-  // Best-effort: merge up to 10 pages (including the first page) to avoid infinite loops.
-  const maxPages = 10;
-  const maxAdditionalPages = Math.max(0, maxPages - 1);
-
-  const seen = new Set<string>([startUrl]);
-  for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
-    const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-    if (seen.has(absNextSection)) break;
-    seen.add(absNextSection);
-
-    const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
-    const nextResult = await promise;
-    if (!nextResult.doc) break;
-
-    const nextParsed = await parser.parse(nextResult.doc, absNextSection);
-    if (!nextParsed) break;
-
-    mergedContent = joinHtml(mergedContent, nextParsed.content);
-    mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-
-    const nextDet = parser.detect(nextResult.doc, absNextSection);
-    const s = nextDet.results.section;
-    if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-
-    // Prefer auto-detected nextSectionUrl, but fall back to rule-parsed nextUrl if it looks like a section
-    nextSectionUrl = s?.nextSectionUrl || null;
-    if (enableByRule && !nextSectionUrl && nextParsed.nextUrl) {
-      if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
-        nextSectionUrl = nextParsed.nextUrl;
-      } else {
-        // nextParsed.nextUrl is not a section URL, treat it as next chapter
-        if (!nextChapterUrl) nextChapterUrl = nextParsed.nextUrl;
-      }
-    }
-    lastUrl = absNextSection;
-  }
-
-  // After merging, nextUrl should point to next *chapter*, not the next page.
-  // Keep other fields from the first page (title/book/index/prev).
-  return {
-    ...first,
-    url: startUrl,
-    content: mergedContent,
-    rawContent: mergedRaw,
-    nextUrl: nextChapterUrl || first.nextUrl,
-  };
-}
-
-/**
- * Check if URL is invalid for chapter navigation (homepage, login, etc.)
- * This is a quick pre-fetch check to avoid loading non-chapter pages
- */
-function isInvalidChapterUrl(url: string, currentChapterUrl?: string): boolean {
-  try {
-    const normalizedUrl = normalizeCiwemaoChapterUrl(url);
-    const parsed = new URL(normalizedUrl);
-    const pathname = parsed.pathname;
-
-    // Homepage/root path
-    if (pathname === '/' || pathname === '') {
-      return true;
-    }
-
-    // Very short paths are likely not chapter pages
-    const pathParts = pathname.split('/').filter(Boolean);
-    if (pathParts.length < 2) {
-      // Some sites use single-segment chapter URLs, e.g.:
-      // - Faloo: /412421_1.html
-      // - Others: /123.html
-      // If it doesn't contain digits, it's very likely not a chapter.
-      const part = pathParts[0] || '';
-      if (!/\d/.test(part)) {
-        return true;
-      }
-    }
-
-    // Common non-chapter URL patterns
-    const invalidPatterns = [
-      /^https?:\/\/[^/]+\/?$/i, // Root domain
-      /^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i, // Homepage variants
-      /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
-      /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // Book index without chapter
-      /\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
-      /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
-      // Ciweimao: non-chapter endpoints under /chapter/
-      /\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
-      /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
-      /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i,
-    ];
-
-    for (const pattern of invalidPatterns) {
-      if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
-        return true;
-      }
-    }
-
-    // If current chapter URL is provided, check URL structure similarity
-    if (currentChapterUrl) {
-      const currentParsed = new URL(currentChapterUrl);
-      const currentParts = currentParsed.pathname.split('/').filter(Boolean);
-
-      // If current URL has significantly more path depth, target is likely not a chapter
-      // e.g., current: /chapter/123/456, target: /book/123 -> invalid
-      if (currentParts.length >= 3 && pathParts.length < currentParts.length - 1) {
-        return true;
-      }
-
-      // Different domain/host -> invalid
-      if (parsed.host !== currentParsed.host) {
-        return true;
-      }
-    }
-
-    return false;
-  } catch {
-    // URL parsing failed
-    return false;
-  }
-}
-
-function normalizeTextForVipDetection(text: string): string {
-  return text
-    .replace(/\s+/g, '')
-    .replace(/[\u3000]/g, '')
-    .replace(/[，。！？、“”‘’（）()【】[\]<>《》:：;；·~…—-]/g, '')
-    .toLowerCase();
-}
-
-/**
- * Detect if a fetched page is a VIP / locked chapter page.
- * Conservative heuristics to avoid false positives (e.g. "求订阅" in正文).
- */
-function isVipChapterPage(doc: Document): boolean {
-  const rawText = doc.body?.textContent || '';
-  if (!rawText) return false;
-
-  const text = normalizeTextForVipDetection(rawText);
-
-  const patterns: RegExp[] = [
-    /本章(?:为|是)?vip章节/,
-    /(vip|付费|收费)(?:章节|内容)/,
-    /(未订阅|未购买|未解锁).{0,10}(本章|本章节|章节|内容)/,
-    /(本章|本章节|章节|内容).{0,12}(?:已)?锁定/,
-    /(本章|本章节|章节|内容).{0,12}(?:需|需要).{0,6}(订阅|购买|付费|解锁)/,
-    /(订阅|购买|付费|解锁).{0,12}(后|即可|才能|方可|才可).{0,12}(阅读|查看|继续阅读|继续查看)/,
-    /(请|需).{0,6}(订阅|购买|付费|解锁).{0,12}(阅读|查看|继续阅读|继续查看)/,
-    /立即(订阅|购买|解锁|充值)/,
-    /(订阅|购买|解锁)本章/,
-  ];
-
-  if (patterns.some(re => re.test(text))) return true;
-
-  // Extra: check common CTA buttons (helps when正文很短且关键字分散在按钮上)
-  const ctaText = Array.from(
-    doc.querySelectorAll('a,button,input[type="button"],input[type="submit"]')
-  )
-    .map(el => {
-      if (el instanceof HTMLInputElement) return el.value || '';
-      return el.textContent || '';
-    })
-    .join(' ');
-  const cta = normalizeTextForVipDetection(ctaText);
-  if (/立即(订阅|购买|解锁|充值)/.test(cta) && /(vip|付费|订阅|购买|解锁|锁定)/.test(text)) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Detect if content looks like a Table of Contents page
- * Uses multiple heuristics to identify TOC pages
- */
-function detectTocPage(content: string, pageUrl: string, currentChapterUrl: string): boolean {
-  // Heuristic 0: URL pattern suggests index/book page
-  const tocUrlPatterns = [
-    /\/book\/\d+\.html?$/i, // /book/123.htm
-    /\/book\/\d+\/?$/i, // /book/123/ or /book/123
-    /\/novel\/\d+\/?$/i, // /novel/123/
-    /\/xiaoshuo\/\d+\/?$/i, // /xiaoshuo/123/
-    /\/info\/\d+\.html?$/i, // /info/123.html
-    /\/\d+\/index\.html?$/i, // /123/index.html
-    /\/booklist/i, // /booklist
-    /\/catalog/i, // /catalog
-    /\/contents?\.html?$/i, // /content.html or /contents.html
-    /\/list\.html?$/i, // /list.html
-    /\/toc\.html?$/i, // /toc.html
-  ];
-
-  for (const pattern of tocUrlPatterns) {
-    if (pattern.test(pageUrl)) {
-      return true;
-    }
-  }
-
-  // Heuristic 0.5: Compare URL structures - chapter URLs usually have different pattern than index
-  try {
-    const currentPath = new URL(currentChapterUrl).pathname;
-    const pagePath = new URL(pageUrl).pathname;
-
-    // If current chapter is like /txt/123/456 but page is like /book/123, it's likely TOC
-    const chapterPattern = /\/(txt|read|chapter|article)\/\d+\/\d+/i;
-    const bookPattern = /\/(book|novel|info|xiaoshuo)\/\d+/i;
-
-    if (chapterPattern.test(currentPath) && bookPattern.test(pagePath)) {
-      return true;
-    }
-  } catch {
-    // URL parsing failed, continue with other checks
-  }
-
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = content;
-
-  const textContent = tempDiv.textContent || '';
-  const textLength = textContent.length;
-  const links = tempDiv.querySelectorAll('a');
-  const linkCount = links.length;
-
-  // Heuristic 1: Very short content with many links
-  if (textLength < 500 && linkCount > 10) {
-    return true;
-  }
-
-  // Heuristic 2: High link-to-text ratio (TOC pages are mostly links)
-  const linkTextLength = Array.from(links).reduce(
-    (sum, a) => sum + (a.textContent?.length || 0),
-    0
-  );
-  const linkRatio = textLength > 0 ? linkTextLength / textLength : 0;
-  if (linkRatio > 0.6 && linkCount > 8) {
-    return true;
-  }
-
-  // Heuristic 3: Many links pointing to chapter-like URLs
-  const chapterLinkPattern =
-    /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
-  const chapterLinks = Array.from(links).filter(a => {
-    const href = a.getAttribute('href') || '';
-    return chapterLinkPattern.test(href);
-  });
-  if (chapterLinks.length > 10) {
-    return true;
-  }
-
-  // Heuristic 4: Contains link to the current chapter (we're on a page listing chapters)
-  const normalizeUrl = (url: string) => {
-    try {
-      const u = new URL(url, pageUrl);
-      return u.pathname.replace(/\/$/, '');
-    } catch {
-      return url.replace(/\/$/, '');
-    }
-  };
-  const currentPath = normalizeUrl(currentChapterUrl);
-  const hasLinkToCurrentChapter = Array.from(links).some(a => {
-    const href = a.getAttribute('href');
-    if (!href) return false;
-    return normalizeUrl(href) === currentPath;
-  });
-  if (hasLinkToCurrentChapter && linkCount > 5) {
-    return true;
-  }
-
-  // Heuristic 5: Title/content contains TOC-related keywords
-  const tocKeywords = [
-    '目录',
-    '章节列表',
-    '章节目录',
-    '全部章节',
-    '最新章节',
-    '小说目录',
-    'table of contents',
-    'toc',
-    'catalog',
-    'index',
-  ];
-  const pageText = textContent.toLowerCase();
-  const keywordMatches = tocKeywords.filter(kw => pageText.includes(kw.toLowerCase()));
-  if (keywordMatches.length >= 2 || (keywordMatches.length >= 1 && linkCount > 15)) {
-    return true;
-  }
-
-  // Heuristic 6: Content is structured like a list (many similar short links)
-  const linkTexts = Array.from(links)
-    .map(a => a.textContent?.trim() || '')
-    .filter(t => t.length > 0);
-  const chapterNamePattern = /^第.{1,10}[章节回话篇集卷]/;
-  const chapterNameLinks = linkTexts.filter(t => chapterNamePattern.test(t));
-  if (chapterNameLinks.length > 5) {
-    return true;
-  }
-
-  return false;
-}

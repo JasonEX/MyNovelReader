@@ -154,16 +154,7 @@
           <textarea
             v-model="hookBeforeParse"
             class="mnr-hook-editor"
-            placeholder="// JavaScript 代码，参数: doc"
-          ></textarea>
-        </div>
-
-        <div class="mnr-form-group">
-          <label>解析后执行 (afterParse)</label>
-          <textarea
-            v-model="hookAfterParse"
-            class="mnr-hook-editor"
-            placeholder="// JavaScript 代码，参数: content"
+            placeholder="// JavaScript 代码，参数: doc, url, helpers"
           ></textarea>
         </div>
       </div>
@@ -283,7 +274,6 @@ const processingOptions = reactive({
 
 // Hooks
 const hookBeforeParse = ref(localRule.hooks?.beforeParse || '');
-const hookAfterParse = ref(localRule.hooks?.afterParse || '');
 const customCSS = ref(localRule.style?.customCSS || '');
 
 // Code editor
@@ -465,10 +455,15 @@ function save() {
   localRule.processing.useRawContent = processingOptions.useRawContent;
 
   // Apply hooks
-  if (hookBeforeParse.value || hookAfterParse.value) {
+  const beforeParse = hookBeforeParse.value.trim();
+  if (beforeParse) {
     if (!localRule.hooks) localRule.hooks = {};
-    if (hookBeforeParse.value) localRule.hooks.beforeParse = hookBeforeParse.value;
-    if (hookAfterParse.value) localRule.hooks.afterParse = hookAfterParse.value;
+    localRule.hooks.beforeParse = beforeParse;
+  } else if (localRule.hooks?.beforeParse) {
+    delete localRule.hooks.beforeParse;
+    if (Object.keys(localRule.hooks).length === 0) {
+      delete localRule.hooks;
+    }
   }
 
   // Apply custom CSS
