@@ -5528,6 +5528,10 @@ blockRedirects() {
       const isAllowedNavigation = (url) => {
         try {
           const targetUrl = new URL(url, window.location.href);
+          const cloudflareHosts = ["challenges.cloudflare.com", "captcha.cloudflare.com"];
+          if (cloudflareHosts.some((h2) => targetUrl.hostname === h2)) {
+            return true;
+          }
           if (targetUrl.origin === window.location.origin) {
             const blockedPatterns = [
               /ad[s]?[_-]?/i,
@@ -6519,7 +6523,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2025-12-21";
+  const BUILD_DATE = "2026-01-01";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
