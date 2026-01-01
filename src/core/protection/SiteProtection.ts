@@ -141,6 +141,13 @@ export class SiteProtection {
     const isAllowedNavigation = (url: string): boolean => {
       try {
         const targetUrl = new URL(url, window.location.href);
+
+        // Allow Cloudflare challenge/captcha pages to prevent verification loops
+        const cloudflareHosts = ['challenges.cloudflare.com', 'captcha.cloudflare.com'];
+        if (cloudflareHosts.some(h => targetUrl.hostname === h)) {
+          return true;
+        }
+
         // Allow same-origin navigations
         if (targetUrl.origin === window.location.origin) {
           // Block common ad/redirect patterns
