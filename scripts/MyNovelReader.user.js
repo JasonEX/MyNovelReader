@@ -1596,7 +1596,9 @@ generatePathSelector(element) {
         }
         const parent = current.parentElement;
         if (parent) {
-          const siblings = Array.from(parent.children).filter((c) => c.tagName === current.tagName);
+          const siblings = Array.from(parent.children).filter(
+            (c) => c.tagName === current.tagName
+          );
           if (siblings.length > 1) {
             const index = siblings.indexOf(current) + 1;
             segment += `:nth-of-type(${index})`;
@@ -1745,7 +1747,7 @@ findNavLink(doc2, type, currentUrl) {
       }
       const links = doc2.querySelectorAll("a[href]");
       const candidates = [];
-      for (const link of links) {
+      for (const link of Array.from(links)) {
         const anchor = link;
         const text2 = ((_b = anchor.textContent) == null ? void 0 : _b.trim()) || "";
         if (!this.isValidLink(anchor, type, currentUrl)) continue;
@@ -2077,7 +2079,7 @@ calculateUrlSimilarity(path1, path2) {
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
         if (!isSection || isChapter) continue;
         if (!isNextSectionText(text2)) continue;
-        if (!this.isValidLink(a, "next")) continue;
+        if (!this.isValidLink(a, "next", currentUrl)) continue;
         const href = a.href;
         if (!href) continue;
         const comparison = this.compareUrlsForSection(currentUrl, href);
@@ -2097,7 +2099,7 @@ calculateUrlSimilarity(path1, path2) {
 findNextChapterUrl(doc2, currentUrl, _navigation) {
       var _a;
       const links = doc2.querySelectorAll("a[href]");
-      for (const link of links) {
+      for (const link of Array.from(links)) {
         const anchor = link;
         const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
         const normalizedText = text2.replace(/\s+/g, "").trim();
@@ -2105,7 +2107,7 @@ findNextChapterUrl(doc2, currentUrl, _navigation) {
         if (!isForward) continue;
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
         const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
-        if (isChapter && !isSection && this.isValidLink(anchor, "next")) {
+        if (isChapter && !isSection && this.isValidLink(anchor, "next", currentUrl)) {
           const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
           if (!comparison.isSection) {
             return anchor.href;
@@ -2142,7 +2144,9 @@ generatePathSelector(element) {
         }
         const parent = current.parentElement;
         if (parent) {
-          const siblings = Array.from(parent.children).filter((c) => c.tagName === current.tagName);
+          const siblings = Array.from(parent.children).filter(
+            (c) => c.tagName === current.tagName
+          );
           if (siblings.length > 1) {
             const index = siblings.indexOf(current) + 1;
             segment += `:nth-of-type(${index})`;
@@ -2269,7 +2273,7 @@ detectFromDocumentTitle(doc2) {
     }
 detectFromHeadings(doc2) {
       const h1s = doc2.querySelectorAll("h1");
-      for (const h1 of h1s) {
+      for (const h1 of Array.from(h1s)) {
         const text2 = this.cleanTitle(h1.textContent || "");
         if (this.isValidTitle(text2) && TITLE_PATTERN.test(text2)) {
           return {
@@ -2281,7 +2285,7 @@ detectFromHeadings(doc2) {
         }
       }
       const h2s = doc2.querySelectorAll("h2");
-      for (const h2 of h2s) {
+      for (const h2 of Array.from(h2s)) {
         const text2 = this.cleanTitle(h2.textContent || "");
         if (this.isValidTitle(text2) && TITLE_PATTERN.test(text2)) {
           return {
@@ -4975,9 +4979,9 @@ async parseWithRule(doc2, url, ruleMatch) {
         return await this.parseWithDetection(doc2, url, rule);
       }
       let navigation = this.extractNavigation(doc2, rule);
-      const hasRulePrev = ((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false;
-      const hasRuleNext = ((_b = rule.navigation) == null ? void 0 : _b.next) && rule.navigation.next !== false;
-      const hasRuleIndex = ((_c = rule.navigation) == null ? void 0 : _c.index) && rule.navigation.index !== false;
+      const hasRulePrev = ((_a = rule.navigation) == null ? void 0 : _a.prev) !== void 0;
+      const hasRuleNext = ((_b = rule.navigation) == null ? void 0 : _b.next) !== void 0;
+      const hasRuleIndex = ((_c = rule.navigation) == null ? void 0 : _c.index) !== void 0;
       if (!navigation.next || !navigation.prev || !navigation.index) {
         const detectedNav = this.detectionEngine.detect(doc2, url).results.navigation;
         if (!hasRuleNext && !navigation.next && ((_d = detectedNav.next) == null ? void 0 : _d.url)) {
@@ -5086,17 +5090,17 @@ extractNavigation(doc2, rule) {
         if (((_a2 = el.tagName) == null ? void 0 : _a2.toLowerCase()) === "a") return el;
         return null;
       };
-      if (((_a = rule.navigation) == null ? void 0 : _a.prev) && rule.navigation.prev !== false) {
+      if ((_a = rule.navigation) == null ? void 0 : _a.prev) {
         const el = this.selectElement(doc2, rule.navigation.prev);
         const anchor = asAnchor(el);
         if (anchor) result.prev = anchor.href;
       }
-      if (((_b = rule.navigation) == null ? void 0 : _b.next) && rule.navigation.next !== false) {
+      if ((_b = rule.navigation) == null ? void 0 : _b.next) {
         const el = this.selectElement(doc2, rule.navigation.next);
         const anchor = asAnchor(el);
         if (anchor) result.next = anchor.href;
       }
-      if (((_c = rule.navigation) == null ? void 0 : _c.index) && rule.navigation.index !== false) {
+      if ((_c = rule.navigation) == null ? void 0 : _c.index) {
         const el = this.selectElement(doc2, rule.navigation.index);
         const anchor = asAnchor(el);
         if (anchor) result.index = anchor.href;
@@ -5468,7 +5472,6 @@ async executeHooks(rule, doc2, content) {
   };
   class SiteProtection {
     constructor(options = {}) {
-      this.originalHandlers = new Map();
       this.cleanupFunctions = [];
       this.isActive = false;
       this.options = { ...DEFAULT_OPTIONS$1, ...options };
@@ -5587,6 +5590,7 @@ blockRedirects() {
       }
       const originalSetTimeout = window.setTimeout;
       const originalSetInterval = window.setInterval;
+      const timerTarget = window;
       const suspiciousPatterns = [/location\s*[.=]/i, /window\.open/i, /href\s*=/i, /navigate/i];
       const isSuspiciousCallback = (callback) => {
         if (typeof callback === "string") {
@@ -5594,18 +5598,20 @@ blockRedirects() {
         }
         return false;
       };
-      window.setTimeout = (callback, delay, ...args) => {
+      const guardedSetTimeout = (callback, delay, ...args) => {
         if (isSuspiciousCallback(callback) && (delay || 0) > 0) {
           return 0;
         }
         return originalSetTimeout(callback, delay, ...args);
       };
-      window.setInterval = (callback, delay, ...args) => {
+      const guardedSetInterval = (callback, delay, ...args) => {
         if (isSuspiciousCallback(callback)) {
           return 0;
         }
         return originalSetInterval(callback, delay, ...args);
       };
+      timerTarget.setTimeout = guardedSetTimeout;
+      timerTarget.setInterval = guardedSetInterval;
       const isBlockedExternalUrl = (url, kind) => {
         if (url.protocol !== "http:" && url.protocol !== "https:") return true;
         if (url.origin === window.location.origin) return false;
@@ -5743,8 +5749,8 @@ blockRedirects() {
           } catch {
           }
         }
-        window.setTimeout = originalSetTimeout;
-        window.setInterval = originalSetInterval;
+        timerTarget.setTimeout = originalSetTimeout;
+        timerTarget.setInterval = originalSetInterval;
         NodeCtor.prototype.appendChild = originalAppendChild;
         NodeCtor.prototype.insertBefore = originalInsertBefore;
         if (originalWrite) {
@@ -6209,7 +6215,7 @@ cleanupScripts() {
   function findNextChapterUrl(doc2, currentUrl) {
     var _a;
     const links = doc2.querySelectorAll("a[href]");
-    for (const link of links) {
+    for (const link of Array.from(links)) {
       const anchor = link;
       const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
       const normalizedText = text2.replace(/\s+/g, "").trim();
@@ -6454,7 +6460,7 @@ createRuleFromDetection(hostname, detection) {
         meta: {
           source: "user",
           autoLaunch: true,
-          createdAt: ( new Date()).toISOString()
+          created: Date.now()
         }
       };
       if ((section == null ? void 0 : section.isSection) && (section.confidence || 0) >= 0.8) {
@@ -20842,7 +20848,7 @@ entry,
       const currentUrl = ((_a = chapter.value) == null ? void 0 : _a.url) || "";
       let indexUrl = (_b = chapter.value) == null ? void 0 : _b.indexUrl;
       if (!indexUrl || currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl)) {
-        indexUrl = await ensureIndexUrl();
+        indexUrl = await ensureIndexUrl() || void 0;
       }
       if (!indexUrl) {
         showToast("未检测到目录链接", "info", 2500);
@@ -20995,7 +21001,7 @@ entry,
       const bookId = generateBookId(indexUrl);
       try {
         if (typeof GM_getValue !== "undefined") {
-          const stored = GM_getValue(`mnr_cache_${bookId}`, null);
+          const stored = GM_getValue(`mnr_cache_${bookId}`, void 0);
           if (stored) {
             const data = JSON.parse(stored);
             const urls = Object.keys(data.chapters);
@@ -21638,7 +21644,7 @@ activate,
       try {
         let data = null;
         if (typeof GM_getValue !== "undefined") {
-          data = await GM_getValue(STORAGE_KEY, null);
+          data = await GM_getValue(STORAGE_KEY, void 0);
         } else if (typeof localStorage !== "undefined") {
           data = localStorage.getItem(STORAGE_KEY);
         }

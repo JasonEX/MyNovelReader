@@ -155,7 +155,7 @@ export class TitleDetector {
   private detectFromHeadings(doc: Document): TitleResult | null {
     // Try h1 first
     const h1s = doc.querySelectorAll('h1');
-    for (const h1 of h1s) {
+    for (const h1 of Array.from(h1s)) {
       const text = this.cleanTitle(h1.textContent || '');
       if (this.isValidTitle(text) && TITLE_PATTERN.test(text)) {
         return {
@@ -169,7 +169,7 @@ export class TitleDetector {
 
     // Try h2 if no valid h1 found
     const h2s = doc.querySelectorAll('h2');
-    for (const h2 of h2s) {
+    for (const h2 of Array.from(h2s)) {
       const text = this.cleanTitle(h2.textContent || '');
       if (this.isValidTitle(text) && TITLE_PATTERN.test(text)) {
         return {

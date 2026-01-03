@@ -173,7 +173,6 @@ describe('SiteProtection', () => {
       };
 
       const originalWriteln = vi.fn();
-      // @ts-expect-error - test env: override document.writeln
       doc.writeln = originalWriteln;
 
       const p = new SiteProtection({ cleanupScripts: true });

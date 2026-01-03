@@ -110,9 +110,11 @@ export class Parser {
     // Fallback to detection-based navigation ONLY if rule doesn't define that nav type
     // If rule defines a selector but it doesn't match, that means the link doesn't exist
     // (e.g., first chapter has no prev link)
-    const hasRulePrev = rule.navigation?.prev && rule.navigation.prev !== false;
-    const hasRuleNext = rule.navigation?.next && rule.navigation.next !== false;
-    const hasRuleIndex = rule.navigation?.index && rule.navigation.index !== false;
+    // Treat `false` as an explicit opt-out (NavigationConfig allows `string | false`).
+    // Only fall back to detection when the rule does not define the nav field at all.
+    const hasRulePrev = rule.navigation?.prev !== undefined;
+    const hasRuleNext = rule.navigation?.next !== undefined;
+    const hasRuleIndex = rule.navigation?.index !== undefined;
 
     if (!navigation.next || !navigation.prev || !navigation.index) {
       const detectedNav = this.detectionEngine.detect(doc, url).results.navigation;
@@ -263,19 +265,19 @@ export class Parser {
       return null;
     };
 
-    if (rule.navigation?.prev && rule.navigation.prev !== false) {
+    if (rule.navigation?.prev) {
       const el = this.selectElement(doc, rule.navigation.prev);
       const anchor = asAnchor(el);
       if (anchor) result.prev = anchor.href;
     }
 
-    if (rule.navigation?.next && rule.navigation.next !== false) {
+    if (rule.navigation?.next) {
       const el = this.selectElement(doc, rule.navigation.next);
       const anchor = asAnchor(el);
       if (anchor) result.next = anchor.href;
     }
 
-    if (rule.navigation?.index && rule.navigation.index !== false) {
+    if (rule.navigation?.index) {
       const el = this.selectElement(doc, rule.navigation.index);
       const anchor = asAnchor(el);
       if (anchor) result.index = anchor.href;

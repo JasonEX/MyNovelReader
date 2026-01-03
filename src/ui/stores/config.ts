@@ -233,7 +233,7 @@ export const useConfigStore = defineStore('config', () => {
 
       // Try GM_getValue first
       if (typeof GM_getValue !== 'undefined') {
-        data = await GM_getValue(STORAGE_KEY, null);
+        data = (await GM_getValue(STORAGE_KEY, undefined)) as string | null;
       } else if (typeof localStorage !== 'undefined') {
         data = localStorage.getItem(STORAGE_KEY);
       }

@@ -48,7 +48,6 @@ const DEFAULT_OPTIONS: ProtectionOptions = {
 
 export class SiteProtection {
   private options: ProtectionOptions;
-  private originalHandlers: Map<string, EventListener[]> = new Map();
   private cleanupFunctions: (() => void)[] = [];
   private isActive = false;
 
@@ -216,6 +215,10 @@ export class SiteProtection {
     // Intercept setTimeout/setInterval for timed redirects
     const originalSetTimeout = window.setTimeout;
     const originalSetInterval = window.setInterval;
+    const timerTarget = window as unknown as {
+      setTimeout: typeof window.setTimeout;
+      setInterval: typeof window.setInterval;
+    };
 
     const suspiciousPatterns = [/location\s*[.=]/i, /window\.open/i, /href\s*=/i, /navigate/i];
 
@@ -229,21 +232,22 @@ export class SiteProtection {
       return false;
     };
 
-    // @ts-expect-error - Overriding setTimeout
-    window.setTimeout = (callback: TimerHandler, delay?: number, ...args: unknown[]) => {
+    const guardedSetTimeout: typeof window.setTimeout = (callback, delay, ...args) => {
       if (isSuspiciousCallback(callback) && (delay || 0) > 0) {
         return 0;
       }
       return originalSetTimeout(callback, delay, ...args);
     };
 
-    // @ts-expect-error - Overriding setInterval
-    window.setInterval = (callback: TimerHandler, delay?: number, ...args: unknown[]) => {
+    const guardedSetInterval: typeof window.setInterval = (callback, delay, ...args) => {
       if (isSuspiciousCallback(callback)) {
         return 0;
       }
       return originalSetInterval(callback, delay, ...args);
     };
+
+    timerTarget.setTimeout = guardedSetTimeout;
+    timerTarget.setInterval = guardedSetInterval;
 
     // Block dynamic injection of third-party scripts/iframes (common on mobile ad-tech).
     // This is conservative: it only affects programmatic insertions, not static HTML.
@@ -328,13 +332,11 @@ export class SiteProtection {
       return false;
     };
 
-    // @ts-expect-error - Overriding appendChild
     NodeCtor.prototype.appendChild = function (node: Node) {
       if (shouldBlockNode(node)) return node;
       return originalAppendChild.call(this, node);
     };
 
-    // @ts-expect-error - Overriding insertBefore
     NodeCtor.prototype.insertBefore = function (newNode: Node, referenceNode: Node | null) {
       if (shouldBlockNode(newNode)) return newNode;
       return originalInsertBefore.call(this, newNode, referenceNode);
@@ -408,9 +410,7 @@ export class SiteProtection {
     };
 
     if (this.options.cleanupScripts && originalWrite && originalWriteln) {
-      // @ts-expect-error - Overriding document.write
       document.write = (...args: unknown[]) => handleWriteLike(originalWrite, args);
-      // @ts-expect-error - Overriding document.writeln
       document.writeln = (...args: unknown[]) => handleWriteLike(originalWriteln, args);
     }
 
@@ -428,25 +428,19 @@ export class SiteProtection {
           // Ignore errors during cleanup
         }
       }
-      // @ts-expect-error - Restoring setTimeout
-      window.setTimeout = originalSetTimeout;
-      // @ts-expect-error - Restoring setInterval
-      window.setInterval = originalSetInterval;
+      timerTarget.setTimeout = originalSetTimeout;
+      timerTarget.setInterval = originalSetInterval;
 
-      // @ts-expect-error - Restoring appendChild
       NodeCtor.prototype.appendChild = originalAppendChild;
-      // @ts-expect-error - Restoring insertBefore
       NodeCtor.prototype.insertBefore = originalInsertBefore;
 
       if (originalWrite) {
-        // @ts-expect-error - Restoring document.write
         document.write = originalWrite;
       }
       if (originalWriteln) {
-        // @ts-expect-error - Restoring document.writeln
         document.writeln = originalWriteln;
       }
-    });
+    }); // End cleanupFunctions.push
   }
 
   /**

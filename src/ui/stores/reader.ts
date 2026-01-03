@@ -1519,7 +1519,7 @@ export const useReaderStore = defineStore('reader', () => {
       !indexUrl ||
       (currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl))
     ) {
-      indexUrl = await ensureIndexUrl();
+      indexUrl = (await ensureIndexUrl()) || undefined;
     }
     if (!indexUrl) {
       showToast('未检测到目录链接', 'info', 2500);
@@ -1731,7 +1731,7 @@ export const useReaderStore = defineStore('reader', () => {
 
     try {
       if (typeof GM_getValue !== 'undefined') {
-        const stored = GM_getValue(`mnr_cache_${bookId}`, null);
+        const stored = GM_getValue(`mnr_cache_${bookId}`, undefined);
         if (stored) {
           const data: PersistedBookCache = JSON.parse(stored as string);
 

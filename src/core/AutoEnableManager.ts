@@ -150,7 +150,7 @@ function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
 function findNextChapterUrl(doc: Document, currentUrl: string): string | null {
   const links = doc.querySelectorAll('a[href]');
 
-  for (const link of links) {
+  for (const link of Array.from(links)) {
     const anchor = link as HTMLAnchorElement;
     const text = anchor.textContent?.trim() || '';
     const normalizedText = text.replace(/\s+/g, '').trim();
@@ -550,7 +550,7 @@ export class AutoEnableManager {
       meta: {
         source: 'user',
         autoLaunch: true,
-        createdAt: new Date().toISOString(),
+        created: Date.now(),
       },
     };
 

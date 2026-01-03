@@ -23,13 +23,6 @@ const INVALID_URL_PATTERNS = [
   /^https?:\/\/[^/]+\/\?/i, // Root with query string (e.g., https://example.com/?ref=xxx)
 ];
 
-/** Section URL patterns - indicates multi-page chapter */
-const _SECTION_URL_PATTERNS = [
-  /\/\d+[_-]\d+\.html?$/i, // /123_2.html or /123-2.html
-  /\/\d+\/\d+\.html?$/i, // /123/2.html
-  /[_-]\d+\.html?$/i, // anything_2.html
-];
-
 export class NavigationDetector {
   /**
    * Detect all navigation links in the document
@@ -80,7 +73,7 @@ export class NavigationDetector {
       text: string;
     }> = [];
 
-    for (const link of links) {
+    for (const link of Array.from(links)) {
       const anchor = link as HTMLAnchorElement;
       const text = anchor.textContent?.trim() || '';
 
@@ -580,7 +573,7 @@ export class NavigationDetector {
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       if (!isSection || isChapter) continue;
       if (!isNextSectionText(text)) continue;
-      if (!this.isValidLink(a, 'next')) continue;
+      if (!this.isValidLink(a, 'next', currentUrl)) continue;
 
       const href = a.href;
       if (!href) continue;
@@ -614,7 +607,7 @@ export class NavigationDetector {
     // Look for links with "下一章/下一节/后一章/next" text (forward only)
     const links = doc.querySelectorAll('a[href]');
 
-    for (const link of links) {
+    for (const link of Array.from(links)) {
       const anchor = link as HTMLAnchorElement;
       const text = anchor.textContent?.trim() || '';
       const normalizedText = text.replace(/\s+/g, '').trim();
@@ -629,7 +622,7 @@ export class NavigationDetector {
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
 
-      if (isChapter && !isSection && this.isValidLink(anchor, 'next')) {
+      if (isChapter && !isSection && this.isValidLink(anchor, 'next', currentUrl)) {
         // Verify it's a different chapter, not the same chapter's section
         const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
         if (!comparison.isSection) {
@@ -683,7 +676,9 @@ export class NavigationDetector {
 
       const parent = current.parentElement;
       if (parent) {
-        const siblings = Array.from(parent.children).filter(c => c.tagName === current!.tagName);
+        const siblings = Array.from(parent.children).filter(
+          (c: Element) => c.tagName === current!.tagName
+        );
         if (siblings.length > 1) {
           const index = siblings.indexOf(current) + 1;
           segment += `:nth-of-type(${index})`;
