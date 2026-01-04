@@ -242,9 +242,6 @@ export class SiteProtection {
       return originalSetInterval(callback, delay, ...args);
     };
 
-    timerTarget.setTimeout = guardedSetTimeout;
-    timerTarget.setInterval = guardedSetInterval;
-
     // Block dynamic injection of third-party scripts/iframes (common on mobile ad-tech).
     // This is conservative: it only affects programmatic insertions, not static HTML.
     const isBlockedExternalUrl = (url: URL, kind: 'script' | 'iframe'): boolean => {
