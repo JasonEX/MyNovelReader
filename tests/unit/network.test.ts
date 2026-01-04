@@ -1,0 +1,381 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { fetchAndParseUrl, getGmXhr, normalizeUrlForFetch } from '@/core/utils/network';
+
+const makeXhrResponse = (
+  opts: GM_xmlhttpRequestOptions,
+  overrides: Partial<GmXhrResponse> = {}
+): GmXhrResponse => ({
+  readyState: 4,
+  responseHeaders: '',
+  responseText: '',
+  status: 0,
+  statusText: '',
+  finalUrl: opts.url,
+  ...overrides,
+});
+
+describe('network utilities', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('getGmXhr returns null when missing', () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+    expect(getGmXhr()).toBeNull();
+  });
+
+  it('normalizeUrlForFetch strips hash', () => {
+    expect(normalizeUrlForFetch('https://example.com/a#b')).toBe('https://example.com/a');
+  });
+
+  it('normalizeUrlForFetch tolerates non-absolute URLs', () => {
+    expect(normalizeUrlForFetch('/a#b')).toBe('/a');
+  });
+
+  it('returns invalid-url when URL cannot be resolved (no default base)', async () => {
+    vi.stubGlobal('location', undefined);
+    vi.stubGlobal('document', undefined);
+
+    const res = await fetchAndParseUrl('chapter/1', 'not a url').promise;
+
+    expect(res.error).toBe('invalid-url');
+  });
+
+  it('blocks private-network hosts when referer is on a different host', async () => {
+    const res = await fetchAndParseUrl('http://127.0.0.1/ch', 'https://example.com/').promise;
+    expect(res.error).toBe('invalid-url');
+  });
+
+  it('allows private-network hosts when referer is the same host (IPv6)', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        status: 200,
+        responseText: '<!doctype html><html><body>ok</body></html>',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const { promise } = fetchAndParseUrl('http://[::1]/ch#x', 'http://[::1]/');
+    const res = await promise;
+
+    expect(res.error).toBeNull();
+    expect(gm).toHaveBeenCalledTimes(1);
+    const calledUrl = (gm.mock.calls[0]?.[0] as GM_xmlhttpRequestOptions).url;
+    expect(calledUrl).toBe('http://[::1]/ch');
+  });
+
+  it('GM_xmlhttpRequest success parses HTML and sets base', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        status: 200,
+        responseText: '<!doctype html><html><head></head><body><a href="/x">x</a></body></html>',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const { promise } = fetchAndParseUrl('https://example.com/ch1', 'https://example.com/');
+    const res = await promise;
+
+    expect(res.error).toBeNull();
+    expect(res.doc?.querySelector('base')?.getAttribute('href')).toContain(
+      'https://example.com/ch1'
+    );
+    expect(gm).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries on HTTP 500 and succeeds', async () => {
+    let calls = 0;
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      calls++;
+      if (calls === 1) {
+        opts.onload?.({ status: 500, responseText: 'oops', finalUrl: opts.url });
+      } else {
+        opts.onload?.({
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+          finalUrl: opts.url,
+        });
+      }
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const { promise } = fetchAndParseUrl('https://example.com/ch2', 'https://example.com/', {
+      retries: 1,
+      timeoutMs: 1000,
+    });
+
+    await vi.runAllTimersAsync();
+    const res = await promise;
+
+    expect(res.error).toBeNull();
+    expect(calls).toBe(2);
+  });
+
+  it('fetch fallback returns missing-gm-xhr when fetch is absent', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+    vi.stubGlobal('fetch', undefined);
+
+    const { promise } = fetchAndParseUrl('https://example.com/ch3', 'https://example.com/');
+    const res = await promise;
+
+    expect(res.error).toBe('missing-gm-xhr');
+  });
+
+  it('fetch fallback classifies abort and timeout', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const aborting = fetchAndParseUrl('https://example.com/ch4', 'https://example.com/', {
+      timeoutMs: 1000,
+      retries: 0,
+    });
+    aborting.abort();
+    const aborted = await aborting.promise;
+    expect(aborted.error).toBe('abort');
+
+    const timingOut = fetchAndParseUrl('https://example.com/ch5', 'https://example.com/', {
+      timeoutMs: 10,
+      retries: 0,
+    });
+
+    await vi.advanceTimersByTimeAsync(20);
+    const timedOut = await timingOut.promise;
+    expect(timedOut.error).toBe('timeout');
+  });
+
+  it('fetch path parses HTML on 200', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const fetchMock = vi.fn(async () => ({
+      status: 200,
+      url: 'https://example.com/final',
+      text: async () => '<!doctype html><html><head></head><body><a href="/x">x</a></body></html>',
+    }));
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
+      retries: 0,
+      timeoutMs: 1000,
+    }).promise;
+
+    expect(res.error).toBeNull();
+    expect(res.doc?.querySelector('base')?.getAttribute('href')).toContain('https://example.com/');
+  });
+
+  it('fetch path returns http error for non-2xx', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const fetchMock = vi.fn(async () => ({
+      status: 404,
+      url: 'https://example.com/notfound',
+      text: async () => 'nope',
+    }));
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
+      retries: 0,
+      timeoutMs: 1000,
+    }).promise;
+
+    expect(res.error).toBe('http');
+    expect(res.status).toBe(404);
+  });
+
+  it('fetch path classifies network errors', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const fetchMock = vi.fn(async () => {
+      throw new Error('boom');
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
+      retries: 0,
+      timeoutMs: 1000,
+    }).promise;
+
+    expect(res.error).toBe('network');
+  });
+
+  it('resolves relative URLs using document.baseURI when referer is invalid', async () => {
+    vi.stubGlobal('location', undefined);
+    const originalBaseUri = Object.getOwnPropertyDescriptor(document, 'baseURI');
+    Object.defineProperty(document, 'baseURI', {
+      value: 'https://example.com/book/',
+      configurable: true,
+    });
+
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        status: 200,
+        responseText: '<!doctype html><html><body>ok</body></html>',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const { promise } = fetchAndParseUrl('chapter/1', 'not a url');
+    const res = await promise;
+
+    expect(res.error).toBeNull();
+    expect(gm).toHaveBeenCalledTimes(1);
+    const calledUrl = (gm.mock.calls[0]?.[0] as GM_xmlhttpRequestOptions).url;
+    expect(calledUrl).toContain('https://example.com/book/chapter/1');
+
+    if (originalBaseUri) {
+      Object.defineProperty(document, 'baseURI', originalBaseUri);
+    }
+  });
+
+  it('GM_xmlhttpRequest onerror/onabort/ontimeout map to network/abort/timeout', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onerror?.(makeXhrResponse(opts));
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    await expect(
+      fetchAndParseUrl('https://example.com/ch', 'https://example.com/', { retries: 0 }).promise
+    ).resolves.toMatchObject({ error: 'network' });
+
+    const gmAbort = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onabort?.(makeXhrResponse(opts));
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gmAbort);
+    await expect(
+      fetchAndParseUrl('https://example.com/ch', 'https://example.com/', { retries: 0 }).promise
+    ).resolves.toMatchObject({ error: 'abort' });
+
+    const gmTimeout = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.ontimeout?.(makeXhrResponse(opts));
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gmTimeout);
+    await expect(
+      fetchAndParseUrl('https://example.com/ch', 'https://example.com/', { retries: 0 }).promise
+    ).resolves.toMatchObject({ error: 'timeout' });
+  });
+
+  it('returns parse error when DOMParser throws', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        status: 200,
+        responseText: '<!doctype html><html><body>ok</body></html>',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    class BrokenDomParser {
+      parseFromString(): Document {
+        throw new Error('boom');
+      }
+    }
+
+    vi.stubGlobal('DOMParser', BrokenDomParser as unknown as typeof DOMParser);
+
+    const { promise } = fetchAndParseUrl('https://example.com/ch', 'https://example.com/');
+    const res = await promise;
+    expect(res.error).toBe('parse');
+  });
+
+  it('inserts <base> when parsed document lacks head', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        status: 200,
+        responseText: '<!doctype html><html><body>ok</body></html>',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const real = new DOMParser();
+    class NoHeadDomParser {
+      parseFromString(html: string, mime: string): Document {
+        const doc = real.parseFromString(html, mime);
+        Object.defineProperty(doc, 'head', { value: null, configurable: true });
+        return doc;
+      }
+    }
+
+    vi.stubGlobal('DOMParser', NoHeadDomParser as unknown as typeof DOMParser);
+
+    const { promise } = fetchAndParseUrl('https://example.com/ch', 'https://example.com/');
+    const res = await promise;
+
+    expect(res.error).toBeNull();
+    expect(res.doc?.querySelector('base')).not.toBeNull();
+  });
+
+  it('abort() tolerates driver abort failures in GM and fetch paths', async () => {
+    const gm = vi.fn((_opts: GM_xmlhttpRequestOptions) => ({
+      abort: () => {
+        throw new Error('abort boom');
+      },
+    }));
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const gmReq = fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
+      timeoutMs: 1000,
+      retries: 0,
+    });
+    expect(() => gmReq.abort()).not.toThrow();
+
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {}))
+    );
+
+    const RealAbortController = AbortController;
+    class ThrowingAbortController {
+      signal = new RealAbortController().signal;
+      abort() {
+        throw new Error('boom');
+      }
+    }
+    vi.stubGlobal('AbortController', ThrowingAbortController as unknown as typeof AbortController);
+
+    const fetchReq = fetchAndParseUrl('https://example.com/ch2', 'https://example.com/', {
+      timeoutMs: 1000,
+      retries: 0,
+    });
+    expect(() => fetchReq.abort()).not.toThrow();
+  });
+});

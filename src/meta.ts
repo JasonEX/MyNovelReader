@@ -7,6 +7,10 @@
 
 import { BUILD_DATE, VERSION } from './version';
 
+// This userscript supports many sites via auto-detection.
+// Keep @connect permissive so GM_xmlhttpRequest works on any supported host.
+const CONNECTS = ['*'];
+
 export const META_BASE = {
   id: 'mynovelreader@ywzhaiqi@gmail.com',
   name: 'My Novel Reader',
@@ -38,8 +42,8 @@ export const META_BASE = {
     'unsafeWindow',
   ],
 
-  // Network connections
-  connects: ['*'],
+  // Network connections - allow all to avoid breaking unknown/unsupported-yet sites
+  connects: CONNECTS,
 
   // Simplified match patterns - auto-detection handles the rest
   // These cover the most common novel site URL patterns

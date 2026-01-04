@@ -1,43 +1,49 @@
-declare var unsafeWindow:Window;
-declare var GM_info:GM_Information;
+declare var unsafeWindow: Window;
+declare var GM_info: GM_Information;
 
 /** @deprecated use `console.log` instead */
-declare function GM_log                 (...args: any[]): void;
+declare function GM_log(...args: unknown[]): void;
 
-declare function GM_addStyle            (css: string): void;
-declare function GM_getValue            (name: string, defaultValue?:string): string|number|boolean;
-declare function GM_setValue            (name: string, value: string|number|boolean): void;
-declare function GM_deleteValue         (name: string): void;
-declare function GM_listValues          (): string[];
+declare function GM_addStyle(css: string): void;
+declare function GM_getValue<T = unknown>(name: string, defaultValue?: T): T;
+declare function GM_setValue<T = unknown>(name: string, value: T): void;
+declare function GM_deleteValue(name: string): void;
+declare function GM_listValues(): string[];
 
-declare function GM_getResourceText     (resourceName: string): string;
-declare function GM_getResourceURL      (resourceName: string): string;
-declare function GM_openInTab           (url: string, loadInBackground?: boolean): Window;
-declare function GM_registerMenuCommand (caption: string, commandFunc: MenuCommandCallback, accessKey?: string): void;
-declare function GM_setClipboard        (text: string): void;
-declare function GM_xmlhttpRequest      (details: xhrParams): GmXhrReturn | GmXhrReturnSync;
+declare function GM_getResourceText(resourceName: string): string;
+declare function GM_getResourceURL(resourceName: string): string;
+declare function GM_openInTab(url: string, loadInBackground?: boolean): Window;
+declare function GM_registerMenuCommand(
+  caption: string,
+  commandFunc: MenuCommandCallback,
+  accessKey?: string
+): void;
+declare function GM_setClipboard(text: string): void;
+declare function GM_xmlhttpRequest(
+  details: GM_xmlhttpRequestOptions
+): GmXhrReturn | GmXhrReturnSync;
 
 interface GM_Information {
-   script: GM_Script_Info;
-   scriptMetaStr: string;
-   scriptWillUpdate: boolean;
-   version: string;
+  script: GM_Script_Info;
+  scriptMetaStr: string;
+  scriptWillUpdate: boolean;
+  version: string;
 }
 
 interface GM_Script_Info {
-    name: string;
-    namespace: string;
-    description: string;
-    version: string;
-    includes: string[];
-    excludes: string;
-    matches: string;
-    resources: any[];
-    unwrap: boolean;
+  name: string;
+  namespace: string;
+  description: string;
+  version: string;
+  includes: string[];
+  excludes: string;
+  matches: string;
+  resources: unknown[];
+  unwrap: boolean;
 }
 
 interface MenuCommandCallback {
-    (...args: any[]): any;
+  (...args: unknown[]): unknown;
 }
 
 interface xhrParams {
@@ -55,11 +61,11 @@ interface xhrParams {
     /**
      * Pass your `this` to here, if required.
      */
-    context?: any;
+    context?: unknown;
 
     data?: string;
 
-    headers?: any;
+    headers?: Record<string, string>;
 
     user?: string;
     password?: string;
@@ -100,13 +106,13 @@ interface GmXhrEventCallback {
 }
 
 interface GmXhrResponse {
-    readyState: string;
-    responseHeaders: string;
-    responseText: string;
-    status: number;
-    statusText: string;
-    context: void|any;
-    finalUrl: string;
+  readyState: number;
+  responseHeaders: string;
+  responseText: string;
+  status: number;
+  statusText: string;
+  context?: unknown;
+  finalUrl: string;
 }
 
 interface GmXhrProgressParams {
@@ -120,10 +126,12 @@ interface GmXhrReturn {
 }
 
 interface GmXhrReturnSync extends GmXhrReturn {
-    finalUrl: string;
-    readyState: string;
-    responseHeaders: any;
-    responseText: string;
-    status: number;
-    statusText: string;
+  finalUrl: string;
+  readyState: number;
+  responseHeaders: string;
+  responseText: string;
+  status: number;
+  statusText: string;
 }
+
+type GM_xmlhttpRequestOptions = xhrParams;

@@ -215,10 +215,6 @@ export class SiteProtection {
     // Intercept setTimeout/setInterval for timed redirects
     const originalSetTimeout = window.setTimeout;
     const originalSetInterval = window.setInterval;
-    const timerTarget = window as unknown as {
-      setTimeout: typeof window.setTimeout;
-      setInterval: typeof window.setInterval;
-    };
 
     const suspiciousPatterns = [/location\s*[.=]/i, /window\.open/i, /href\s*=/i, /navigate/i];
 
@@ -232,14 +228,14 @@ export class SiteProtection {
       return false;
     };
 
-    const guardedSetTimeout: typeof window.setTimeout = (callback, delay, ...args) => {
+    window.setTimeout = (callback: TimerHandler, delay?: number, ...args: unknown[]) => {
       if (isSuspiciousCallback(callback) && (delay || 0) > 0) {
         return 0;
       }
       return originalSetTimeout(callback, delay, ...args);
     };
 
-    const guardedSetInterval: typeof window.setInterval = (callback, delay, ...args) => {
+    window.setInterval = (callback: TimerHandler, delay?: number, ...args: unknown[]) => {
       if (isSuspiciousCallback(callback)) {
         return 0;
       }
@@ -428,8 +424,8 @@ export class SiteProtection {
           // Ignore errors during cleanup
         }
       }
-      timerTarget.setTimeout = originalSetTimeout;
-      timerTarget.setInterval = originalSetInterval;
+      window.setTimeout = originalSetTimeout;
+      window.setInterval = originalSetInterval;
 
       NodeCtor.prototype.appendChild = originalAppendChild;
       NodeCtor.prototype.insertBefore = originalInsertBefore;
@@ -856,8 +852,8 @@ export class SiteProtection {
       if (el.tagName.toLowerCase() === 'a' && el.hasAttribute('href')) return true;
       if (el.querySelector('a[href]')) return true;
       if (el.hasAttribute('onclick')) return true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (typeof (el as any).onclick === 'function') return true;
+      const maybeOnclick = (el as unknown as { onclick?: unknown }).onclick;
+      if (typeof maybeOnclick === 'function') return true;
       return false;
     };
 

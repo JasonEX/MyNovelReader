@@ -47,8 +47,17 @@ export default defineConfig({
       injectCodeFunction: function (cssCode) {
         try {
           if (typeof window !== 'undefined') {
+            type MnrGlobalState = {
+              styles?: string;
+              shadowRoot?: ShadowRoot;
+            };
+            type MnrWindow = Window & { __MY_NOVEL_READER__?: MnrGlobalState };
+
+            const w = window as MnrWindow;
+            const globalState = w.__MY_NOVEL_READER__ || (w.__MY_NOVEL_READER__ = {});
+
             // Store CSS for Shadow DOM injection
-            window.__MNR_STYLES__ = (window.__MNR_STYLES__ || '') + cssCode;
+            globalState.styles = (globalState.styles || '') + cssCode;
 
             // Also inject to document.head for light DOM components (ElementPicker, etc.)
             // Use a unique ID to prevent duplicate injection
@@ -59,17 +68,17 @@ export default defineConfig({
               existingStyle.id = styleId;
               document.head.appendChild(existingStyle);
             }
-            existingStyle.textContent = window.__MNR_STYLES__;
+            existingStyle.textContent = globalState.styles;
 
             // If Shadow DOM already exists, also inject there
-            if (window.__MNR_SHADOW_ROOT__) {
-              var shadowStyle = window.__MNR_SHADOW_ROOT__.querySelector('#mnr-app-styles');
+            if (globalState.shadowRoot) {
+              var shadowStyle = globalState.shadowRoot.querySelector('#mnr-app-styles');
               if (!shadowStyle) {
                 shadowStyle = document.createElement('style');
                 shadowStyle.id = 'mnr-app-styles';
-                window.__MNR_SHADOW_ROOT__.appendChild(shadowStyle);
+                globalState.shadowRoot.appendChild(shadowStyle);
               }
-              shadowStyle.textContent = window.__MNR_STYLES__;
+              shadowStyle.textContent = globalState.styles;
             }
           }
         } catch (e) {
@@ -96,11 +105,20 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['tests/**/*.test.ts'],
+    testTimeout: 15_000,
+    hookTimeout: 15_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',
-      include: ['src/core/**/*.{js,ts}'],
+      include: ['src/**/*.{js,ts}'],
+      exclude: ['src/**/*.d.ts', 'src/ui/components/**', 'src/typings/**'],
+      thresholds: {
+        lines: 88,
+        statements: 88,
+        functions: 88,
+        branches: 80,
+      },
     },
   },
   resolve: {

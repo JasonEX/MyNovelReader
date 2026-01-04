@@ -182,5 +182,206 @@ describe('TitleDetector', () => {
       expect(result.chapterTitle).toBe('');
       expect(result.confidence).toBe(0);
     });
+
+    it('tolerates selector errors and continues scanning', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>第1章 测试</title></head>
+          <body><h1>第1章 测试</h1></body>
+        </html>
+      `);
+
+      const doc = dom.window.document;
+      const original = doc.querySelector.bind(doc);
+      doc.querySelector = ((selector: string) => {
+        if (selector === 'h1.chapter-title') throw new Error('boom');
+        return original(selector);
+      }) as typeof doc.querySelector;
+
+      const result = detector.detect(doc);
+      expect(result.chapterTitle).toContain('第1章');
+    });
+
+    it('falls back to first part of document.title when no chapter pattern exists', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>我的小说 - 首页</title></head>
+          <body></body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.method).toBe('document-title');
+      expect(result.chapterTitle).toBe('我的小说');
+    });
+
+    it('returns empty result when document.title has only an overlong chapter match', () => {
+      const long = `第1章 ${'很长的标题'.repeat(60)}`;
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>${long}</title></head>
+          <body></body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.chapterTitle).toBe('');
+      expect(result.confidence).toBe(0);
+    });
+
+    it('detects chapter title from h2 when no valid h1 exists', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>小说</title></head>
+          <body>
+            <h1></h1>
+            <h2>第12章 H2标题</h2>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.method).toBe('heading');
+      expect(result.chapterTitle).toContain('第12章');
+    });
+
+    it('ignores malformed JSON-LD when extracting book title', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>第1章 测试</title>
+            <meta property="og:novel:book_name" content="书名A" />
+          </head>
+          <body>
+            <script type="application/ld+json">{ not valid json </script>
+            <h1>第1章 测试</h1>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.bookTitle).toBe('书名A');
+    });
+
+    it('ignores structured data arrays without a book title', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>第1章</title></head>
+          <body>
+            <script type="application/ld+json">
+              [
+                {
+                  "@type": "Page",
+                  "data": { "info": { "name": 123 } },
+                  "random": { "nested": { "foo": "bar" } }
+                }
+              ]
+            </script>
+            <h1>第1章 测试</h1>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.chapterTitle).toContain('第1章');
+      expect(result.bookTitle).toBeUndefined();
+    });
+
+    it('continues scanning book-title selectors when doc.querySelector throws', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>第1章 测试</title>
+            <meta property="og:novel:book_name" content="书名B" />
+          </head>
+          <body><h1>第1章 测试</h1></body>
+        </html>
+      `);
+
+      const doc = dom.window.document;
+      const original = doc.querySelector.bind(doc);
+      doc.querySelector = ((selector: string) => {
+        if (selector === '.bookname') throw new Error('boom');
+        return original(selector);
+      }) as typeof doc.querySelector;
+
+      const result = detector.detect(doc);
+      expect(result.bookTitle).toBe('书名B');
+    });
+
+    it('prefers longer book title when weights tie (after stripping chapter suffix)', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>第1章 测试</title>
+            <meta property="og:title" content="短名 第1章" />
+            <meta name="twitter:title" content="更长书名 第1章" />
+          </head>
+          <body><h1>第1章 测试</h1></body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.bookTitle).toBe('更长书名');
+    });
+
+    it('detects book title from structured data and script hints', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>第1章 开始 - 假名</title>
+            <meta name="keywords" content="《元婴修仙传》,修仙,玄幻" />
+            <meta name="description" content="《元婴修仙传》是一部精彩小说" />
+          </head>
+          <body>
+            <script type="application/ld+json">
+              { "@type": "Book", "name": "《元婴修仙传》" }
+            </script>
+            <script>
+              window.__DATA__ = { bookName: "元婴修仙传" };
+            </script>
+            <a href="/index">元婴修仙传 章节目录</a>
+            <h1 id="chapter:title">第1章 开始</h1>
+          </body>
+        </html>
+      `);
+
+      const doc = dom.window.document;
+      const originalQuerySelector = doc.querySelector.bind(doc);
+      const knownTitleSelectors = new Set([
+        'h1.chapter-title',
+        'h1.chapter_title',
+        '.chapter-title',
+        '.chapter_title',
+        '.bookname h1',
+        'h1.title',
+        '.title h1',
+        '#chapter_title',
+        '.readtitle h1',
+        'article h1',
+        'h1',
+      ]);
+
+      doc.querySelector = ((selector: string) => {
+        if (knownTitleSelectors.has(selector)) throw new Error('boom');
+        return originalQuerySelector(selector);
+      }) as typeof doc.querySelector;
+
+      const result = detector.detect(doc);
+
+      expect(result.bookTitle).toBe('元婴修仙传');
+      expect(result.selector).toContain('#');
+    });
   });
 });

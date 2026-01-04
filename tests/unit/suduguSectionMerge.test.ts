@@ -93,7 +93,7 @@ describe('sudugu section merge', () => {
       if (u === page2Url) responseText = page2Html;
       if (u === page3Url) responseText = page3Html;
       if (u === page4Url) responseText = page4Html;
-      setTimeout(() => opts.onload({ status: 200, responseText }), 0);
+      setTimeout(() => opts.onload?.({ status: 200, responseText }), 0);
       return { abort: () => opts.onabort?.() };
     });
 

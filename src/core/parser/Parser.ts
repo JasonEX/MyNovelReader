@@ -6,6 +6,7 @@ import { ContentProcessor, ProcessingOptions } from './ContentProcessor';
 import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
 import { RuleMatchResult, SiteRule } from '@/core/rules/types';
 import { getRuleManager } from '@/core/rules/RuleManager';
+import { resolveAndValidateHttpUrl } from '@/core/utils/network';
 
 const MIN_DYNAMIC_TEXT_LENGTH = 80;
 const GLOBAL_DYNAMIC_WAIT_MS = 600;
@@ -110,8 +111,7 @@ export class Parser {
     // Fallback to detection-based navigation ONLY if rule doesn't define that nav type
     // If rule defines a selector but it doesn't match, that means the link doesn't exist
     // (e.g., first chapter has no prev link)
-    // Treat `false` as an explicit opt-out (NavigationConfig allows `string | false`).
-    // Only fall back to detection when the rule does not define the nav field at all.
+    // Note: `false` means "explicitly disable", so treat it as defined and do not fall back.
     const hasRulePrev = rule.navigation?.prev !== undefined;
     const hasRuleNext = rule.navigation?.next !== undefined;
     const hasRuleIndex = rule.navigation?.index !== undefined;
@@ -265,20 +265,23 @@ export class Parser {
       return null;
     };
 
-    if (rule.navigation?.prev) {
-      const el = this.selectElement(doc, rule.navigation.prev);
+    const prevSelector = rule.navigation?.prev;
+    if (typeof prevSelector === 'string' && prevSelector.trim()) {
+      const el = this.selectElement(doc, prevSelector);
       const anchor = asAnchor(el);
       if (anchor) result.prev = anchor.href;
     }
 
-    if (rule.navigation?.next) {
-      const el = this.selectElement(doc, rule.navigation.next);
+    const nextSelector = rule.navigation?.next;
+    if (typeof nextSelector === 'string' && nextSelector.trim()) {
+      const el = this.selectElement(doc, nextSelector);
       const anchor = asAnchor(el);
       if (anchor) result.next = anchor.href;
     }
 
-    if (rule.navigation?.index) {
-      const el = this.selectElement(doc, rule.navigation.index);
+    const indexSelector = rule.navigation?.index;
+    if (typeof indexSelector === 'string' && indexSelector.trim()) {
+      const el = this.selectElement(doc, indexSelector);
       const anchor = asAnchor(el);
       if (anchor) result.index = anchor.href;
     }
@@ -352,8 +355,8 @@ export class Parser {
     if (rule.title?.replace && chapter) {
       try {
         chapter = chapter.replace(new RegExp(rule.title.replace), '').trim();
-      } catch {
-        // Invalid regex
+      } catch (e) {
+        console.debug('[Parser] Invalid title replace regex:', rule.title.replace, e);
       }
     }
 
@@ -546,6 +549,16 @@ export class Parser {
   }
 
   /**
+   * Resolve and validate a URL for hook fetch helpers.
+   *
+   * Allows cross-origin http(s) by default (this userscript already declares permissive @connect),
+   * but blocks private-network/loopback hosts unless the current page is on the same host.
+   */
+  private resolveHookFetchUrl(url: string): string | null {
+    return resolveAndValidateHttpUrl(url, window.location.href);
+  }
+
+  /**
    * Minimal jQuery-like selector support (:contains, :eq, :last)
    */
   private smartSelect(doc: Document, selector: string): Element | null {
@@ -553,8 +566,9 @@ export class Parser {
     try {
       const native = doc.querySelector(selector);
       if (native) return native;
-    } catch {
-      // ignore and try custom parsing
+    } catch (e) {
+      // Invalid selector, try custom parsing
+      console.debug('[Parser] Native selector failed, trying custom parsing:', selector, e);
     }
 
     // Handle :eq(n)
@@ -567,7 +581,8 @@ export class Parser {
         if (nodes.length === 0) return null;
         const idx = index >= 0 ? index : nodes.length + index;
         return nodes[idx] || null;
-      } catch {
+      } catch (e) {
+        console.debug('[Parser] :eq selector failed:', baseSel, e);
         return null;
       }
     }
@@ -579,7 +594,8 @@ export class Parser {
       try {
         const nodes = Array.from(doc.querySelectorAll(baseSel));
         return nodes.length ? nodes[nodes.length - 1] : null;
-      } catch {
+      } catch (e) {
+        console.debug('[Parser] :last selector failed:', baseSel, e);
         return null;
       }
     }
@@ -591,7 +607,8 @@ export class Parser {
       try {
         const nodes = Array.from(doc.querySelectorAll(baseSel));
         return nodes.length ? nodes[0] : null;
-      } catch {
+      } catch (e) {
+        console.debug('[Parser] :first selector failed:', baseSel, e);
         return null;
       }
     }
@@ -616,7 +633,8 @@ export class Parser {
           candidates = candidates.filter(el => (el.textContent || '').includes(text));
         }
         return candidates[0] || null;
-      } catch {
+      } catch (e) {
+        console.debug('[Parser] :contains selector failed:', baseSel, e);
         return null;
       }
     }
@@ -624,40 +642,16 @@ export class Parser {
     return null;
   }
 
-  /**
-   * Execute rule hooks
-   */
-  async executeHooks(rule: SiteRule, doc: Document, content: string): Promise<string> {
-    let result = content;
-
-    if (rule.hooks?.beforeParse) {
-      try {
-        await this.runBeforeParseHook(rule, doc);
-      } catch (e) {
-        console.warn('[Parser] beforeParse hook error:', e);
-      }
-    }
-
-    if (rule.hooks?.afterParse) {
-      try {
-        const fn = new Function('content', `return (${rule.hooks.afterParse})(content)`);
-        result = fn(result) || result;
-      } catch (e) {
-        console.warn('[Parser] afterParse hook error:', e);
-      }
-    }
-
-    return result;
-  }
-
   private async runBeforeParseHook(rule: SiteRule, doc: Document, url?: string): Promise<void> {
     if (!rule.hooks?.beforeParse) return;
+
     try {
+      const hookCode = rule.hooks.beforeParse;
       const fn = new Function(
         'doc',
         'url',
         'helpers',
-        `return (async () => { ${rule.hooks.beforeParse} })();`
+        `return (async () => { ${hookCode} })();`
       ) as (doc: Document, url?: string, helpers?: HookHelpers) => Promise<void>;
       await fn(doc, url, this.getHookHelpers());
     } catch (e) {
@@ -686,6 +680,13 @@ export class Parser {
   }
 
   private async fetchText(url: string, options: HookFetchOptions = {}): Promise<string | null> {
+    const resolved = this.resolveHookFetchUrl(url);
+    if (!resolved) {
+      console.warn('[Parser] Fetch blocked: invalid or unsafe URL:', url);
+      return null;
+    }
+
+    const resolvedUrl = new URL(resolved);
     const timeoutMs = options.timeoutMs ?? 4000;
     const headers = options.headers ?? {};
     const withCredentials = options.withCredentials ?? true;
@@ -695,7 +696,7 @@ export class Parser {
       return new Promise(resolve => {
         gmXhr({
           method: 'GET',
-          url,
+          url: resolvedUrl.href,
           headers,
           timeout: timeoutMs,
           withCredentials,
@@ -709,7 +710,7 @@ export class Parser {
     try {
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-      const resp = await fetch(url, {
+      const resp = await fetch(resolvedUrl.href, {
         credentials: withCredentials ? 'include' : 'omit',
         headers,
         signal: controller.signal,

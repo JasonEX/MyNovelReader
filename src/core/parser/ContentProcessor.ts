@@ -3,8 +3,8 @@
  */
 
 import { AD_PATTERNS, REMOVE_SELECTORS } from '@/core/constants';
+import { sanitizeHtml, sanitizeUrl } from '@/core/utils';
 import { ReplaceRule } from '@/core/rules/types';
-import { sanitizeHtml } from '@/core/utils';
 
 export interface ProcessingOptions {
   /** Remove common ad patterns */
@@ -47,7 +47,11 @@ export class ContentProcessor {
    */
   process(element: Element, doc: Document): string {
     if (this.options.useRawContent) {
-      return sanitizeHtml(element.innerHTML);
+      let html = element.innerHTML;
+      if (this.options.fixImages) {
+        html = this.fixImages(html, doc, { center: false });
+      }
+      return sanitizeHtml(html);
     }
 
     // Clone to avoid modifying original
@@ -83,7 +87,10 @@ export class ContentProcessor {
 
     // Remove ad patterns
     if (this.options.removeAds) {
-      html = this.removeAdPatterns(html);
+      const temp = doc.createElement('div');
+      temp.innerHTML = html;
+      this.removeAdPatternsFromTextNodes(temp, doc);
+      html = temp.innerHTML;
     }
 
     // Normalize whitespace
@@ -327,6 +334,18 @@ export class ContentProcessor {
     return result;
   }
 
+  private removeAdPatternsFromTextNodes(container: Element, doc: Document): void {
+    const showText = typeof NodeFilter !== 'undefined' ? NodeFilter.SHOW_TEXT : 4;
+    const walker = doc.createTreeWalker(container, showText);
+
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      const value = node.nodeValue || '';
+      const cleaned = this.removeAdPatterns(value);
+      if (cleaned !== value) node.nodeValue = cleaned;
+    }
+  }
+
   /**
    * Normalize whitespace
    */
@@ -348,23 +367,62 @@ export class ContentProcessor {
   /**
    * Fix and center images
    */
-  private fixImages(html: string, doc: Document): string {
+  private fixImages(html: string, doc: Document): string;
+  private fixImages(html: string, doc: Document, options: { center: boolean }): string;
+  private fixImages(
+    html: string,
+    doc: Document,
+    options: { center: boolean } = { center: true }
+  ): string {
     // Create a temporary container
     const temp = doc.createElement('div');
     temp.innerHTML = html;
 
     const images = temp.querySelectorAll('img');
     images.forEach(img => {
-      // Fix lazy load
-      const dataSrc = img.getAttribute('data-src') || img.getAttribute('data-original');
-      if (dataSrc && !img.src) {
-        img.src = dataSrc;
+      const srcAttr = img.getAttribute('src')?.trim() || '';
+      const looksPlaceholder =
+        !srcAttr ||
+        srcAttr === '#' ||
+        srcAttr === 'about:blank' ||
+        srcAttr.startsWith('data:') ||
+        srcAttr.startsWith('javascript:') ||
+        srcAttr.startsWith('vbscript:');
+
+      // Fix lazy load - normalize common attribute names used by novel sites.
+      if (looksPlaceholder) {
+        const candidates = [
+          'data-src',
+          'data-original',
+          'data-lazy-src',
+          'data-original-src',
+          'data-url',
+          'data-actualsrc',
+          'data-echo',
+          'data-srcset',
+        ];
+
+        for (const attrName of candidates) {
+          const rawValue = img.getAttribute(attrName)?.trim();
+          if (!rawValue) continue;
+
+          const value =
+            attrName === 'data-srcset' ? rawValue.split(',')[0]?.trim().split(/\s+/)[0] : rawValue;
+
+          const safeUrl = sanitizeUrl(value, { allowDataImage: true, mode: 'strict' });
+          if (!safeUrl) continue;
+
+          img.setAttribute('src', safeUrl);
+          break;
+        }
       }
 
-      // Add centering style
-      img.style.display = 'block';
-      img.style.maxWidth = '100%';
-      img.style.margin = '10px auto';
+      if (options.center) {
+        // Add centering style
+        img.style.display = 'block';
+        img.style.maxWidth = '100%';
+        img.style.margin = '10px auto';
+      }
     });
 
     return temp.innerHTML;
@@ -454,6 +512,21 @@ export class ContentProcessor {
     const tempDiv = doc.createElement('div');
     tempDiv.innerHTML = result;
 
+    const isRemovableEmptyNode = (node: Node): boolean => {
+      if (node.nodeType === Node.TEXT_NODE) return true;
+      if (node.nodeType !== Node.ELEMENT_NODE) return true;
+
+      const el = node as Element;
+      const tag = el.tagName.toLowerCase();
+      const keepTags = new Set(['img', 'svg', 'picture', 'video', 'audio', 'canvas']);
+      if (keepTags.has(tag)) return false;
+
+      // If the node contains nested elements (e.g. an <a> wrapping an <img>), keep it.
+      if (el.children.length > 0) return false;
+
+      return true;
+    };
+
     // Get all direct children and first-level text content
     const children = Array.from(tempDiv.childNodes);
     let removedCount = 0;
@@ -464,8 +537,10 @@ export class ContentProcessor {
 
       const text = (child.textContent || '').trim();
       if (!text) {
-        // Remove empty nodes
-        child.parentNode?.removeChild(child);
+        // Remove empty nodes, but preserve meaningful media elements (e.g. images)
+        if (isRemovableEmptyNode(child)) {
+          child.parentNode?.removeChild(child);
+        }
         continue;
       }
 
@@ -490,9 +565,12 @@ export class ContentProcessor {
       const node = tailNodes[i];
       const text = (node.textContent || '').trim();
       if (!text) {
-        node.parentNode?.removeChild(node);
-        tailRemoved++;
-        continue;
+        if (isRemovableEmptyNode(node)) {
+          node.parentNode?.removeChild(node);
+          tailRemoved++;
+          continue;
+        }
+        break;
       }
       if (/^>+$/.test(text)) {
         node.parentNode?.removeChild(node);
@@ -610,11 +688,14 @@ export class ContentProcessor {
    * Minimal jQuery-like selector support for content cleaning (:contains, :eq, :first, :last)
    */
   private smartQueryAll(root: Element | Document, selector: string): Element[] {
-    // Try native selector first
-    try {
-      return Array.from(root.querySelectorAll(selector));
-    } catch {
-      // fall through
+    const hasJqueryPseudo = /:(?:contains\(|eq\(|first\b|last\b)/.test(selector);
+    if (!hasJqueryPseudo) {
+      // Try native selector first
+      try {
+        return Array.from(root.querySelectorAll(selector));
+      } catch {
+        // fall through
+      }
     }
 
     // Handle :eq(n)

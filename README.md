@@ -25,7 +25,7 @@
 
 ### 技术栈
 
-- **构建工具**: Vite 6
+- **构建工具**: Vite 6 + vite-plugin-monkey
 - **前端框架**: Vue 3 (Composition API) + Pinia
 - **语言**: TypeScript
 - **测试框架**: Vitest (jsdom)
@@ -37,10 +37,13 @@
 npm install                  # 安装依赖并安装 Husky 钩子
 npm run dev                  # 监听文件变化自动构建到 scripts/
 npm run build                # 生产构建，生成 scripts/MyNovelReader.user.js
-npm test                     # 运行全部单测
-npm test -- --coverage       # 生成 coverage 报告（已在 .gitignore）
+npm test                     # 运行全部单测（watch）
+npm run test:run             # 单次运行全部单测
+npm run test:coverage        # 生成 coverage 报告（已在 .gitignore）
 npm run lint                 # 基础语法检查
 npm run lint:strict          # 不允许有 warnings
+npm run lint:fix             # 自动修复可修复的 lint 问题
+npm run typecheck            # TypeScript 类型检查（noEmit）
 npm run format               # Prettier 全量格式化
 npx vitest run tests/unit/xxx.test.ts  # 运行单个测试
 ```
@@ -53,7 +56,10 @@ npx vitest run tests/unit/xxx.test.ts  # 运行单个测试
 │   ├── bootstrap.ts         # 启动逻辑
 │   ├── meta.ts              # UserScript 元数据
 │   ├── version.ts           # 版本号
+│   ├── env.d.ts             # Vite/TS 全局类型
 │   ├── core/                # 核心逻辑
+│   │   ├── auto-enable/     # 自动启用相关
+│   │   ├── constants/       # 常量
 │   │   ├── detection/       # 智能内容检测
 │   │   │   ├── ContentDetector.ts    # 内容检测器
 │   │   │   ├── NavigationDetector.ts # 导航检测
@@ -62,9 +68,12 @@ npx vitest run tests/unit/xxx.test.ts  # 运行单个测试
 │   │   ├── parser/          # 内容解析
 │   │   ├── converter/       # 繁简转换
 │   │   ├── rules/           # 站点规则管理
-│   │   └── protection/      # 站点保护
-│   ├── ui/                  # UI 组件
-│   ├── utils/               # 工具函数
+│   │   ├── protection/      # 站点保护
+│   │   └── utils/           # 工具函数
+│   ├── ui/                  # UI
+│   │   ├── components/      # 组件
+│   │   ├── composables/     # 组合式逻辑
+│   │   └── stores/          # Pinia stores
 │   └── typings/             # 类型定义
 ├── tests/unit/              # Vitest 单元测试
 ├── scripts/                 # 构建输出 MyNovelReader.user.js

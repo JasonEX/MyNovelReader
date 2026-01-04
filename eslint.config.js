@@ -122,6 +122,7 @@ export default [
     files: ['**/*.vue'],
     plugins: {
       vue: vuePlugin,
+      '@typescript-eslint': ts,
     },
     languageOptions: {
       parser: vueParser,
@@ -135,6 +136,11 @@ export default [
       ...vuePlugin.configs['vue3-recommended'].rules,
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
     },
   },
   // Prettier integration

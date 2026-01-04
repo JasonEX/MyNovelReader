@@ -8,8 +8,8 @@
     "module": "esnext", // specifiy module code generation
     "jsx": "preserve", // preserve JSX for Vue JSX support
     "target": "es2020", // specify ECMAScript target version
-    "lib": ["es2020", "dom"],
-    "moduleResolution": "node",
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "moduleResolution": "bundler",
     "allowJs": true, // allow a partial TypeScript and JavaScript codebase
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,

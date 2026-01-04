@@ -229,25 +229,75 @@ export const useConfigStore = defineStore('config', () => {
   // Persistence
   async function load() {
     try {
-      let data: string | null = null;
+      let data: unknown = null;
+      let hasInvalidData = false;
 
       // Try GM_getValue first
       if (typeof GM_getValue !== 'undefined') {
-        data = (await GM_getValue(STORAGE_KEY, undefined)) as string | null;
+        data = await GM_getValue<unknown>(STORAGE_KEY, null);
       } else if (typeof localStorage !== 'undefined') {
-        data = localStorage.getItem(STORAGE_KEY);
+        const stored = localStorage.getItem(STORAGE_KEY);
+        data = stored;
       }
 
       if (data) {
-        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-        if (parsed.themeId) themeId.value = parsed.themeId;
-        if (parsed.reading) reading.value = { ...DEFAULT_READING, ...parsed.reading };
-        if (parsed.behavior) behavior.value = { ...DEFAULT_BEHAVIOR, ...parsed.behavior };
-        if (parsed.protection) protection.value = { ...DEFAULT_PROTECTION, ...parsed.protection };
-        if (parsed.customCSS) customCSS.value = parsed.customCSS;
+        let parsed: unknown;
+        if (typeof data === 'string') {
+          try {
+            parsed = JSON.parse(data);
+          } catch (e) {
+            console.error('[ConfigStore] Failed to parse config JSON:', e);
+            hasInvalidData = true;
+            parsed = null;
+          }
+        } else {
+          parsed = data;
+        }
+
+        // Validate parsed data is an object
+        if (!hasInvalidData && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))) {
+          console.warn('[ConfigStore] Invalid config data, expected object');
+          hasInvalidData = true;
+        }
+
+        if (!hasInvalidData) {
+          const config = parsed as Record<string, unknown>;
+
+          // Validate and apply each field with type checking
+          if (typeof config.themeId === 'string') {
+            themeId.value = config.themeId;
+          }
+          if (config.reading && typeof config.reading === 'object') {
+            reading.value = {
+              ...DEFAULT_READING,
+              ...(config.reading as Partial<typeof DEFAULT_READING>),
+            };
+          }
+          if (config.behavior && typeof config.behavior === 'object') {
+            behavior.value = {
+              ...DEFAULT_BEHAVIOR,
+              ...(config.behavior as Partial<typeof DEFAULT_BEHAVIOR>),
+            };
+          }
+          if (config.protection && typeof config.protection === 'object') {
+            protection.value = {
+              ...DEFAULT_PROTECTION,
+              ...(config.protection as Partial<typeof DEFAULT_PROTECTION>),
+            };
+          }
+          if (typeof config.customCSS === 'string') {
+            customCSS.value = config.customCSS;
+          }
+        }
       }
 
       applyAll();
+
+      // Repair corrupted data so users aren't stuck with repeated parse failures.
+      if (hasInvalidData) {
+        console.warn('[ConfigStore] Corrupted config detected; resetting to defaults');
+        await save();
+      }
     } catch (e) {
       console.error('[ConfigStore] Load error:', e);
     }

@@ -4,8 +4,9 @@
  */
 
 import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
+import { generateCssSelector, isSectionLikeUrl } from '@/core/utils';
 import { NAV_PATTERNS, NavigationResult, NavLinkResult, SectionDetectionResult } from './types';
-import { cssEscape } from '@/core/utils';
+import { parseChapterSectionFromPathname } from '@/core/utils/sectionPath';
 
 /** URLs to ignore as navigation links */
 const INVALID_URL_PATTERNS = [
@@ -24,15 +25,53 @@ const INVALID_URL_PATTERNS = [
 ];
 
 export class NavigationDetector {
+  private resolveBaseUrl(doc: Document, currentUrl?: string): string {
+    const candidates: Array<string | undefined> = [
+      currentUrl,
+      doc.location?.href,
+      (doc as Document & { _mnrUrl?: string })._mnrUrl,
+      typeof window !== 'undefined' ? window.location.href : undefined,
+    ];
+
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      try {
+        const u = new URL(candidate);
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          return u.toString();
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return candidates.find(Boolean) || '';
+  }
+
+  private resolveLinkUrl(anchor: HTMLAnchorElement, baseUrl: string): string | null {
+    const rawHref = anchor.getAttribute('href');
+    if (!rawHref) return null;
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(rawHref, baseUrl);
+    } catch {
+      return null;
+    }
+
+    // Only allow http(s) navigation targets.
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return null;
+    }
+
+    return parsedUrl.toString();
+  }
+
   /**
    * Detect all navigation links in the document
    */
   detect(doc: Document, currentUrl?: string): NavigationResult {
-    const resolvedCurrentUrl =
-      currentUrl ||
-      doc.location?.href ||
-      (doc as Document & { _mnrUrl?: string })._mnrUrl ||
-      window.location.href;
+    const resolvedCurrentUrl = this.resolveBaseUrl(doc, currentUrl);
     return {
       next: this.findNavLink(doc, 'next', resolvedCurrentUrl),
       prev: this.findNavLink(doc, 'prev', resolvedCurrentUrl),
@@ -53,10 +92,15 @@ export class NavigationDetector {
     // Strategy 1: rel attribute (highest confidence)
     if (type !== 'index') {
       const relLink = doc.querySelector(`a[rel="${type}"]`);
-      if (relLink && this.isValidLink(relLink as HTMLAnchorElement, type, currentUrl)) {
+      const href = relLink ? this.resolveLinkUrl(relLink as HTMLAnchorElement, currentUrl) : null;
+      if (
+        relLink &&
+        href &&
+        this.isValidLink(relLink as HTMLAnchorElement, type, currentUrl, href)
+      ) {
         return {
           element: relLink as HTMLAnchorElement,
-          url: (relLink as HTMLAnchorElement).href,
+          url: href,
           selector: this.generateSelector(relLink as HTMLAnchorElement),
           confidence: 0.95,
           method: 'rel-attribute',
@@ -71,14 +115,16 @@ export class NavigationDetector {
       element: HTMLAnchorElement;
       score: number;
       text: string;
+      href: string;
     }> = [];
 
     for (const link of Array.from(links)) {
       const anchor = link as HTMLAnchorElement;
       const text = anchor.textContent?.trim() || '';
+      const href = this.resolveLinkUrl(anchor, currentUrl);
 
       // Skip invalid hrefs
-      if (!this.isValidLink(anchor, type, currentUrl)) continue;
+      if (!href || !this.isValidLink(anchor, type, currentUrl, href)) continue;
 
       // Score based on text matching
       let score = 0;
@@ -137,7 +183,7 @@ export class NavigationDetector {
       }
 
       if (score > 0) {
-        candidates.push({ element: anchor, score, text });
+        candidates.push({ element: anchor, score, text, href });
       }
     }
 
@@ -149,7 +195,7 @@ export class NavigationDetector {
 
     return {
       element: best.element,
-      url: best.element.href,
+      url: best.href,
       selector: this.generateSelector(best.element),
       confidence: Math.min(best.score / 15, 0.9),
       method: 'text-matching',
@@ -163,16 +209,25 @@ export class NavigationDetector {
   private isValidLink(
     anchor: HTMLAnchorElement,
     purpose: 'next' | 'prev' | 'index',
-    currentUrl: string
+    currentUrl: string,
+    href: string
   ): boolean {
-    const href = anchor.href;
     const text = anchor.textContent?.trim() || '';
 
     // Must have href
     if (!href) return false;
 
-    // Skip javascript: links
-    if (href.startsWith('javascript:')) return false;
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(href);
+    } catch {
+      return false;
+    }
+
+    // Only allow http(s) navigation targets.
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return false;
+    }
 
     // Skip invalid URL patterns
     // NOTE: index/list URLs are often valid *for目录页*; don't filter them for index purpose.
@@ -191,9 +246,8 @@ export class NavigationDetector {
     // Skip anchor-only links (unless they contain chapter info)
     if (href.includes('#') && !href.includes('#chapter')) {
       try {
-        const url = new URL(href);
         const currentPathname = new URL(currentUrl).pathname;
-        if (url.pathname === currentPathname) {
+        if (parsedUrl.pathname === currentPathname) {
           return false;
         }
       } catch {
@@ -203,8 +257,7 @@ export class NavigationDetector {
 
     // Skip URLs that are clearly not chapter pages
     try {
-      const url = new URL(href);
-      const pathname = url.pathname;
+      const pathname = parsedUrl.pathname;
 
       // Skip if pathname is too short (likely homepage or section page)
       // But allow for index purpose if it looks like a book directory
@@ -228,7 +281,16 @@ export class NavigationDetector {
         // 排除: /book, /novel, /index.html (无数字)
         const part = pathParts[0] || '';
         if (!/\d/.test(part)) {
-          return false;
+          // Some sites use slug-like chapter URLs without digits (e.g. /next.html).
+          // Allow them only when link text strongly indicates navigation purpose.
+          const looksLikeNav =
+            NAV_PATTERNS[purpose].some(p => p.test(text)) ||
+            CHAPTER_TEXT_PATTERNS.some(p => p.test(text)) ||
+            SECTION_TEXT_PATTERNS.some(p => p.test(text));
+
+          if (!looksLikeNav) {
+            return false;
+          }
         }
       }
 
@@ -298,53 +360,6 @@ export class NavigationDetector {
       if (match) {
         return parseInt(match[1], 10);
       }
-    }
-
-    return null;
-  }
-
-  private parseChapterSectionFromPath(
-    pathname: string
-  ): { chapterId: number; section: number } | null {
-    // 1) /123_2.html or /123-2.html
-    let match = pathname.match(/\/(\d+)[_-](\d+)\.html?$/i);
-    if (match) {
-      const section = parseInt(match[2], 10);
-      // Section/page number should be small; ignore patterns like /{bookId}/{chapterId}.html.
-      if (section >= 1 && section <= 99) {
-        return { chapterId: parseInt(match[1], 10), section };
-      }
-    }
-
-    // 2) /123/2.html
-    match = pathname.match(/\/(\d+)\/(\d+)\.html?$/i);
-    if (match) {
-      const section = parseInt(match[2], 10);
-      // Many sites use /{bookId}/{chapterId}.html; treat as section only when page number is small.
-      if (section >= 1 && section <= 99) {
-        return { chapterId: parseInt(match[1], 10), section };
-      }
-    }
-
-    // 3) /123.html
-    match = pathname.match(/\/(\d+)\.html?$/i);
-    if (match) {
-      return { chapterId: parseInt(match[1], 10), section: 1 };
-    }
-
-    // 4) Extensionless pagination: /{chapterId}/{page} (page is usually small: 1-2 digits)
-    match = pathname.match(/\/(\d{3,})\/(\d{1,2})(?:\/)?$/);
-    if (match) {
-      const section = parseInt(match[2], 10);
-      if (section >= 1 && section <= 99) {
-        return { chapterId: parseInt(match[1], 10), section };
-      }
-    }
-
-    // 5) Extensionless chapter: /{chapterId}
-    match = pathname.match(/\/(\d{3,})(?:\/)?$/);
-    if (match) {
-      return { chapterId: parseInt(match[1], 10), section: 1 };
     }
 
     return null;
@@ -457,15 +472,15 @@ export class NavigationDetector {
 
   /**
    * Extract section number from URL
-   * Returns { chapter, section } or null
+   * Returns { section } or null
    */
-  private extractSectionFromUrl(url: string): { chapter: number; section: number } | null {
+  private extractSectionFromUrl(url: string): { section: number } | null {
     try {
       const parsed = new URL(url);
-      const info = this.parseChapterSectionFromPath(parsed.pathname);
+      const info = parseChapterSectionFromPathname(parsed.pathname);
       if (!info) return null;
       if (info.section > 1) {
-        return { chapter: info.chapterId, section: info.section };
+        return { section: info.section };
       }
       return null;
     } catch {
@@ -492,17 +507,29 @@ export class NavigationDetector {
       const currentPath = current.pathname;
       const nextPath = next.pathname;
 
-      const currentInfo = this.parseChapterSectionFromPath(currentPath);
-      const nextInfo = this.parseChapterSectionFromPath(nextPath);
-      if (currentInfo && nextInfo) {
-        // Different chapter IDs => not a section transition
-        if (currentInfo.chapterId !== nextInfo.chapterId) {
-          return { isSection: false, confidence: 0 };
-        }
-        // Same chapter, consecutive page number => section transition
-        if (nextInfo.section === currentInfo.section + 1 && nextInfo.section > 1) {
+      // Fast path: strict section-like detection (includes query-based pagination).
+      if (isSectionLikeUrl(currentUrl, nextUrl)) {
+        const currentInfo = parseChapterSectionFromPathname(currentPath);
+        const nextInfo = parseChapterSectionFromPathname(nextPath);
+        if (
+          currentInfo &&
+          nextInfo &&
+          currentInfo.chapterKey === nextInfo.chapterKey &&
+          nextInfo.section === currentInfo.section + 1 &&
+          nextInfo.section > 1
+        ) {
           return { isSection: true, confidence: 0.95 };
         }
+
+        // Query-based (or non-path) pagination: reliable enough but slightly lower confidence.
+        return { isSection: true, confidence: 0.85 };
+      }
+
+      const currentInfo = parseChapterSectionFromPathname(currentPath);
+      const nextInfo = parseChapterSectionFromPathname(nextPath);
+      if (currentInfo && nextInfo && currentInfo.chapterKey !== nextInfo.chapterKey) {
+        // Different chapter => not a section transition; avoid similarity false positives like /123.html -> /999.html.
+        return { isSection: false, confidence: 0 };
       }
 
       // Pattern 3: URLs are very similar except for a number
@@ -569,14 +596,14 @@ export class NavigationDetector {
       const text = (a.textContent || '').trim();
       if (!text) continue;
 
+      const href = this.resolveLinkUrl(a, currentUrl);
+      if (!href) continue;
+
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       if (!isSection || isChapter) continue;
       if (!isNextSectionText(text)) continue;
-      if (!this.isValidLink(a, 'next', currentUrl)) continue;
-
-      const href = a.href;
-      if (!href) continue;
+      if (!this.isValidLink(a, 'next', currentUrl, href)) continue;
 
       const comparison = this.compareUrlsForSection(currentUrl, href);
       if (!comparison.isSection) continue;
@@ -610,6 +637,8 @@ export class NavigationDetector {
     for (const link of Array.from(links)) {
       const anchor = link as HTMLAnchorElement;
       const text = anchor.textContent?.trim() || '';
+      const href = this.resolveLinkUrl(anchor, currentUrl);
+      if (!href) continue;
       const normalizedText = text.replace(/\s+/g, '').trim();
       const isForward =
         /下一/.test(normalizedText) ||
@@ -622,11 +651,11 @@ export class NavigationDetector {
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
 
-      if (isChapter && !isSection && this.isValidLink(anchor, 'next', currentUrl)) {
+      if (isChapter && !isSection && this.isValidLink(anchor, 'next', currentUrl, href)) {
         // Verify it's a different chapter, not the same chapter's section
-        const comparison = this.compareUrlsForSection(currentUrl, anchor.href);
+        const comparison = this.compareUrlsForSection(currentUrl, href);
         if (!comparison.isSection) {
-          return anchor.href;
+          return href;
         }
       }
     }
@@ -638,57 +667,6 @@ export class NavigationDetector {
    * Generate a CSS selector for a link element
    */
   private generateSelector(element: Element): string {
-    // Prefer ID
-    if ((element as HTMLElement).id) {
-      return `#${cssEscape((element as HTMLElement).id)}`;
-    }
-
-    // Try unique class
-    const classList = Array.from(element.classList || []);
-    for (const cls of classList) {
-      try {
-        if (document.querySelectorAll(`.${cssEscape(cls)}`).length === 1) {
-          return `.${cssEscape(cls)}`;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    return this.generatePathSelector(element);
-  }
-
-  /**
-   * Generate a path-based selector (e.g., body > div:nth-of-type(2) > a)
-   */
-  private generatePathSelector(element: Element): string {
-    const path: string[] = [];
-    let current: Element | null = element;
-
-    while (current && current !== document.body && current !== document.documentElement) {
-      let segment = current.tagName.toLowerCase();
-
-      if ((current as HTMLElement).id) {
-        segment = `#${cssEscape((current as HTMLElement).id)}`;
-        path.unshift(segment);
-        break;
-      }
-
-      const parent = current.parentElement;
-      if (parent) {
-        const siblings = Array.from(parent.children).filter(
-          (c: Element) => c.tagName === current!.tagName
-        );
-        if (siblings.length > 1) {
-          const index = siblings.indexOf(current) + 1;
-          segment += `:nth-of-type(${index})`;
-        }
-      }
-
-      path.unshift(segment);
-      current = parent;
-    }
-
-    return path.join(' > ');
+    return generateCssSelector(element);
   }
 }

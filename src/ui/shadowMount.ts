@@ -5,11 +5,22 @@
  * This prevents host page CSS from interfering with our UI components.
  */
 
+interface MnrGlobalState {
+  styles?: string;
+  shadowRoot?: ShadowRoot;
+}
+
 declare global {
   interface Window {
-    __MNR_STYLES__?: string;
-    __MNR_SHADOW_ROOT__?: ShadowRoot;
+    __MY_NOVEL_READER__?: MnrGlobalState;
   }
+}
+
+function getMnrGlobalState(): MnrGlobalState {
+  if (!window.__MY_NOVEL_READER__) {
+    window.__MY_NOVEL_READER__ = {};
+  }
+  return window.__MY_NOVEL_READER__;
 }
 
 interface ShadowMountResult {
@@ -108,6 +119,8 @@ ul, ol {
  * @returns Shadow mount result with host, shadowRoot, mountPoint, and cleanup function
  */
 export function createShadowMount(hostId: string): ShadowMountResult {
+  const globalState = getMnrGlobalState();
+
   // Create host element
   const host = document.createElement('div');
   host.id = hostId;
@@ -117,7 +130,7 @@ export function createShadowMount(hostId: string): ShadowMountResult {
   const shadowRoot = host.attachShadow({ mode: 'open' });
 
   // Store shadow root globally for CSS injection
-  window.__MNR_SHADOW_ROOT__ = shadowRoot;
+  globalState.shadowRoot = shadowRoot;
 
   // Create style element with reset CSS
   const resetStyle = document.createElement('style');
@@ -125,10 +138,15 @@ export function createShadowMount(hostId: string): ShadowMountResult {
   shadowRoot.appendChild(resetStyle);
 
   // Inject any previously collected CSS
-  if (window.__MNR_STYLES__) {
-    const appStyle = document.createElement('style');
-    appStyle.textContent = window.__MNR_STYLES__;
-    shadowRoot.appendChild(appStyle);
+  if (globalState.styles) {
+    const styleId = 'mnr-app-styles';
+    const existing = shadowRoot.querySelector(`#${styleId}`);
+    const appStyle = (existing || document.createElement('style')) as HTMLStyleElement;
+    if (!existing) {
+      appStyle.id = styleId;
+      shadowRoot.appendChild(appStyle);
+    }
+    appStyle.textContent = globalState.styles;
   }
 
   // Create mount point inside Shadow DOM
@@ -139,8 +157,8 @@ export function createShadowMount(hostId: string): ShadowMountResult {
   // Cleanup function
   const cleanup = () => {
     host.remove();
-    if (window.__MNR_SHADOW_ROOT__ === shadowRoot) {
-      window.__MNR_SHADOW_ROOT__ = undefined;
+    if (globalState.shadowRoot === shadowRoot) {
+      globalState.shadowRoot = undefined;
     }
   };
 

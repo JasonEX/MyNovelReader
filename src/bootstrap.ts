@@ -18,6 +18,7 @@ import {
 } from '@/core';
 import { BUILD_DATE, VERSION } from '@/version';
 import { createApp, defineComponent, h, ref } from 'vue';
+import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
 import { type ProtectionSettings, useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
@@ -28,17 +29,21 @@ import { ReaderView } from '@/ui/components/reader';
 /** Application state */
 interface AppState {
   isInitialized: boolean;
+  autoEnableDone: boolean;
   isActive: boolean;
   currentDecision: AutoEnableDecision | null;
   originalUrl: string | null; // URL when reader was opened
+  entryPageKind: PageKind | null; // page kind when reader was opened
 }
 
 // Global app state
 const appState: AppState = {
   isInitialized: false,
+  autoEnableDone: false,
   isActive: false,
   currentDecision: null,
   originalUrl: null,
+  entryPageKind: null,
 };
 
 // Vue app instance
@@ -110,9 +115,15 @@ try {
  * Initialize the application
  */
 export async function initialize(): Promise<void> {
-  if (appState.isInitialized) {
-    return;
-  }
+  await ensureInitialized();
+  if (!appState.isInitialized || appState.autoEnableDone) return;
+
+  appState.autoEnableDone = true;
+  await runAutoEnable();
+}
+
+async function ensureInitialized(): Promise<void> {
+  if (appState.isInitialized) return;
 
   console.log(`[MNR] MyNovelReader v${VERSION} (${BUILD_DATE})`);
 
@@ -127,9 +138,6 @@ export async function initialize(): Promise<void> {
     await Promise.all([configStore.load(), ruleStore.initialize()]);
 
     appState.isInitialized = true;
-
-    // Run auto-enable check
-    await runAutoEnable();
   } catch (e) {
     console.error('[MNR] Initialization error:', e);
   }
@@ -139,6 +147,15 @@ export async function initialize(): Promise<void> {
  * Run the auto-enable flow
  */
 async function runAutoEnable(): Promise<void> {
+  const configStore = useConfigStore(pinia!);
+  const protectionOptions = buildProtectionOptions(configStore.protection);
+
+  // Ensure the singleton is initialized with the current runtime options even if we skip auto-enable.
+  const manager = getAutoEnableManager({
+    enableProtection: true,
+    protectionOptions,
+  });
+
   // Check if we should skip auto-enable (e.g., after exiting reader and navigating to new chapter)
   const skipFlag = sessionStorage.getItem('mnr_skip_auto_enable');
   if (skipFlag) {
@@ -153,14 +170,6 @@ async function runAutoEnable(): Promise<void> {
       return;
     }
   }
-
-  const configStore = useConfigStore(pinia!);
-  const protectionOptions = buildProtectionOptions(configStore.protection);
-
-  const manager = getAutoEnableManager({
-    enableProtection: true,
-    protectionOptions,
-  });
 
   // First, check the decision to handle user-disabled case
   const decision = await manager.check(document);
@@ -247,6 +256,7 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
 
   // Save original URL before reader modifies it
   appState.originalUrl = window.location.href;
+  appState.entryPageKind = getPageKind(window.location.href, document);
 
   // Update reader store
   const readerStore = useReaderStore(pinia);
@@ -301,13 +311,18 @@ function hideOriginalContent(): void {
 export function closeReader(): void {
   if (!appState.isActive) return;
 
-  // Save site preference - user exited reader, don't auto-enable next time
-  try {
-    const hostname = new URL(window.location.href).hostname;
-    const storage = getRuleStorage();
-    storage.setSitePreference(hostname, { enabled: false, timestamp: Date.now() });
-  } catch (e) {
-    console.error('[MNR] Failed to save site preference:', e);
+  const entryPageKind = appState.entryPageKind;
+
+  // Save site preference - user exited reader, don't auto-enable next time.
+  // Only persist this on chapter pages to avoid TOC false-positives polluting the whole domain.
+  if (entryPageKind === 'chapter') {
+    try {
+      const hostname = new URL(window.location.href).hostname;
+      const storage = getRuleStorage();
+      storage.setSitePreference(hostname, { enabled: false, timestamp: Date.now() });
+    } catch (e) {
+      console.error('[MNR] Failed to save site preference:', e);
+    }
   }
 
   // Get current chapter URL before closing
@@ -352,6 +367,7 @@ export function closeReader(): void {
 
   appState.isActive = false;
   appState.originalUrl = null; // Clear saved URL
+  appState.entryPageKind = null;
 
   // If current chapter URL is different from the original page URL,
   // navigate to the target URL so page content matches what user was reading
@@ -362,8 +378,10 @@ export function closeReader(): void {
     return; // Don't show floating button, page will reload
   }
 
-  // Show floating button to re-enter
-  showFloatingButton();
+  // Show floating button to re-enter (chapter pages only)
+  if (entryPageKind === 'chapter') {
+    showFloatingButton();
+  }
 }
 
 /**
@@ -422,7 +440,18 @@ function hideFloatingButton(): void {
  * Manual enable (for toolbar button)
  */
 export async function manualEnable(): Promise<void> {
-  const manager = getAutoEnableManager();
+  hideFloatingButton();
+
+  await ensureInitialized();
+  if (!pinia) return;
+
+  const configStore = useConfigStore(pinia);
+  const protectionOptions = buildProtectionOptions(configStore.protection);
+
+  const manager = getAutoEnableManager({
+    enableProtection: true,
+    protectionOptions,
+  });
   manager.setLaunchCallback(launchReader);
   await manager.manualEnable(document);
 }
@@ -442,11 +471,54 @@ export function getVersion(): { version: string; buildDate: string } {
 }
 
 // Auto-initialize when DOM is ready
+function isTopFrame(): boolean {
+  try {
+    return window.top === window.self;
+  } catch {
+    return false;
+  }
+}
+
+function registerMenuCommands(): void {
+  if (!isTopFrame()) return;
+  if (typeof GM_registerMenuCommand !== 'function') return;
+
+  GM_registerMenuCommand('进入阅读模式', () => {
+    manualEnable().catch(e => console.error('[MNR] Manual enable error:', e));
+  });
+}
+
+async function bootstrap(): Promise<void> {
+  registerMenuCommands();
+
+  if (!isTopFrame()) return;
+  if (appState.isActive) return;
+
+  const url = window.location.href;
+  const pageKind = getPageKind(url, document);
+  if (pageKind !== 'chapter') return;
+
+  // If user disabled auto-enable for this site, avoid heavy initialization and show the floating button.
+  try {
+    const hostname = new URL(url).hostname;
+    const pref = getRuleStorage().getSitePreference(hostname);
+    if (pref?.enabled === false) {
+      showFloatingButton();
+      return;
+    }
+  } catch (e) {
+    console.debug('[MNR] Failed to read site preference:', e);
+  }
+
+  await initialize();
+}
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialize);
+  document.addEventListener('DOMContentLoaded', () => {
+    bootstrap().catch(e => console.error('[MNR] Bootstrap error:', e));
+  });
 } else {
-  // DOM already ready
-  initialize();
+  bootstrap().catch(e => console.error('[MNR] Bootstrap error:', e));
 }
 
 // Export for manual control

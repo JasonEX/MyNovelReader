@@ -2,7 +2,7 @@
  * Unit tests for ContentDetector
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentDetector } from '@/core/detection/ContentDetector';
 import { JSDOM } from 'jsdom';
 
@@ -11,6 +11,10 @@ describe('ContentDetector', () => {
 
   beforeEach(() => {
     detector = new ContentDetector();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('detect', () => {
@@ -163,6 +167,134 @@ describe('ContentDetector', () => {
 
       expect(result.element?.id).toBe('chinese');
     });
+
+    it('returns empty result when candidates exist but score is too low', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div id="comment-section">
+              ${'<a href="#">link</a>'.repeat(200)}
+              ${'This is mostly links and should have low content score. '.repeat(20)}
+            </div>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element).toBeNull();
+      expect(result.method).toBe('fallback');
+    });
+
+    it('skips invalid selectors in KNOWN_CONTENT_SELECTORS', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div id="content">
+              <p>${'小说正文内容'.repeat(120)}</p>
+            </div>
+          </body>
+        </html>
+      `);
+
+      const doc = dom.window.document;
+      const original = doc.querySelector.bind(doc);
+      const querySpy = vi.spyOn(doc, 'querySelector').mockImplementation(selector => {
+        if (selector === '#pagecontent') {
+          throw new Error('boom');
+        }
+        return original(selector);
+      });
+
+      const result = detector.detect(doc);
+
+      expect(result.selector).toBe('#content');
+      expect(querySpy).toHaveBeenCalled();
+    });
+
+    it('treats 加载更多 pattern as invalid when p_key is missing', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div class="content">
+              <p>较短正文。</p>
+              <p>无法显示本章节全部内容，请返回原网页阅读。</p>
+              <p><a href="#">加载更多</a></p>
+            </div>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element).toBeNull();
+      expect(result.method).toBe('fallback');
+    });
+
+    it('ignores hidden candidates (display:none)', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div style="display:none">
+              ${'这是隐藏内容'.repeat(120)}
+            </div>
+            <div class="main-story">
+              ${'这是可见内容'.repeat(120)}
+            </div>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element).not.toBeNull();
+      expect(result.element?.className).toBe('main-story');
+    });
+
+    it('scores MAIN tags and paragraph counts', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <main class="story-main">
+              <p>第一段。</p>
+              <p>第二段。</p>
+              <p>第三段。</p>
+              <p>${'这是小说正文内容'.repeat(120)}</p>
+            </main>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element?.tagName.toLowerCase()).toBe('main');
+      expect(result.method).toBe('heuristic');
+    });
+
+    it('applies negative scoring to comment-like containers', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div id="comment">
+              ${'评论'.repeat(300)}${'<a href="#">x</a>'.repeat(200)}
+            </div>
+            <div id="main-story">
+              ${'这是中文小说内容'.repeat(200)}
+            </div>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element?.id).toBe('main-story');
+    });
   });
 
   describe('generateSelector', () => {
@@ -202,5 +334,59 @@ describe('ContentDetector', () => {
       // Should be properly escaped
       expect(selector).toContain('content');
     });
+
+    it('uses unique class selector when possible (with global document set)', () => {
+      const dom = new JSDOM('<html><body><div class="unique-class">Test</div></body></html>');
+      vi.stubGlobal('document', dom.window.document);
+      const element = dom.window.document.querySelector('.unique-class')!;
+
+      const selector = detector.generateSelector(element);
+
+      expect(selector).toBe('.unique-class');
+    });
+
+    it('continues when querySelectorAll throws for a class selector', () => {
+      const dom = new JSDOM('<html><body><div class="bad">Test</div></body></html>');
+      vi.stubGlobal('document', dom.window.document);
+      const element = dom.window.document.querySelector('.bad')!;
+
+      const qsa = vi.spyOn(dom.window.document, 'querySelectorAll').mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+      const selector = detector.generateSelector(element);
+
+      expect(selector).toContain('div');
+      expect(qsa).toHaveBeenCalled();
+    });
+
+    it('generates a path selector that stops at the nearest ancestor with an id', () => {
+      const dom = new JSDOM(`
+        <html>
+          <body>
+            <div id="wrap">
+              <p><span>Test</span></p>
+            </div>
+          </body>
+        </html>
+      `);
+      vi.stubGlobal('document', dom.window.document);
+      const element = dom.window.document.querySelector('#wrap span')!;
+
+      const selector = detector.generateSelector(element);
+
+      expect(selector).toContain('#wrap');
+    });
+  });
+
+  it('treats NAV/HEADER/FOOTER/ASIDE elements as navigation elements', () => {
+    const dom = new JSDOM('<html><body><nav>Nav</nav></body></html>');
+    const nav = dom.window.document.querySelector('nav')!;
+
+    const isNavigationElement = (
+      detector as unknown as { isNavigationElement: (el: Element) => boolean }
+    ).isNavigationElement;
+
+    expect(isNavigationElement(nav)).toBe(true);
   });
 });

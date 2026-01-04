@@ -4,7 +4,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { SiteProtection } from '@/core/protection/SiteProtection';
+
+import { getSiteProtection, SiteProtection } from '@/core/protection/SiteProtection';
 
 describe('SiteProtection', () => {
   let protection: SiteProtection;
@@ -210,6 +211,10 @@ describe('SiteProtection', () => {
 
   describe('blockPopups', () => {
     it('should intercept window.open calls', () => {
+      // Stub JSDOM's window.open to avoid noisy "navigation not implemented" logs.
+      const originalOpen = vi.fn(() => ({}) as unknown as Window);
+      Object.defineProperty(dom.window, 'open', { value: originalOpen, configurable: true });
+
       protection.activate();
 
       // After protection, window.open should be intercepted
@@ -218,6 +223,7 @@ describe('SiteProtection', () => {
         const result = dom.window.open('https://popup.com');
         // Protection should return null for blocked popups
         expect(result).toBeNull();
+        expect(originalOpen).toHaveBeenCalledTimes(0);
       }).not.toThrow();
     });
   });
@@ -276,6 +282,33 @@ describe('SiteProtection', () => {
       expect(layer.style.display).toBe('none');
     });
 
+    it('should remove transparent background click layers (no opacity)', () => {
+      const layer = dom.window.document.createElement('a');
+      layer.href = 'https://evil.example/';
+      layer.style.position = 'fixed';
+      layer.style.top = '0';
+      layer.style.left = '0';
+      layer.style.width = '100%';
+      layer.style.height = '80px';
+      layer.style.zIndex = '2147483647';
+      layer.style.opacity = '1';
+      layer.style.backgroundColor = 'transparent';
+      layer.id = 'test-click-layer-transparent';
+      layer.getBoundingClientRect = () =>
+        ({
+          width: dom.window.innerWidth,
+          height: 80,
+          top: 0,
+          left: 0,
+          bottom: 80,
+          right: dom.window.innerWidth,
+        }) as DOMRect;
+      dom.window.document.body.appendChild(layer);
+
+      protection.removeOverlays();
+      expect(layer.style.display).toBe('none');
+    });
+
     it('should not remove visible fixed headers', () => {
       const header = dom.window.document.createElement('div');
       header.textContent = 'Menu';
@@ -301,6 +334,16 @@ describe('SiteProtection', () => {
 
       protection.removeOverlays();
       expect(header.style.display).not.toBe('none');
+    });
+  });
+
+  describe('getSiteProtection singleton', () => {
+    it('returns the same instance on repeated calls', () => {
+      const a = getSiteProtection();
+      const b = getSiteProtection();
+
+      expect(a).toBeInstanceOf(SiteProtection);
+      expect(a).toBe(b);
     });
   });
 

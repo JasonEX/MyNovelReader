@@ -140,6 +140,30 @@ describe('ConfidenceScorer', () => {
       expect(report.reasons).toContain('找到下一章链接');
       expect(report.reasons.some(r => r.includes('书名'))).toBe(true);
     });
+
+    it('should describe uncertain content detection', () => {
+      const results: DetectionResults = {
+        content: {
+          element: null,
+          selector: '#content',
+          confidence: 0.3,
+          method: 'heuristic',
+        },
+        navigation: {
+          next: null,
+          prev: null,
+          index: null,
+        },
+        title: {
+          chapterTitle: '第一章',
+          confidence: 0.8,
+          method: 'heading',
+        },
+      };
+
+      const report = scorer.score(results);
+      expect(report.reasons).toContain('内容区域检测不确定');
+    });
   });
 
   describe('threshold', () => {

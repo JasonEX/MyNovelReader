@@ -3,6 +3,7 @@ Thumbs.db
 
 # Editor / tooling metadata
 .serena/
+.ace-tool/
 .vscode/
 *.sublime-workspace
 AGENTS.md
