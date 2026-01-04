@@ -8,6 +8,7 @@ const {
   mockGetAllUserRules,
   mockGetBuiltInRules,
   mockMatchRule,
+  mockGetUserRule,
   mockSaveUserRule,
   mockDeleteUserRule,
 } = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ const {
   mockGetAllUserRules: vi.fn(async () => new Map<string, SiteRule>()),
   mockGetBuiltInRules: vi.fn(async () => [] as SiteRule[]),
   mockMatchRule: vi.fn(async () => null as unknown),
+  mockGetUserRule: vi.fn(() => null),
   mockSaveUserRule: vi.fn(async () => {}),
   mockDeleteUserRule: vi.fn(async () => {}),
 }));
@@ -26,6 +28,7 @@ vi.mock('@/core/rules/RuleManager', () => ({
     getBuiltInRules: mockGetBuiltInRules,
     matchRule: mockMatchRule,
     saveUserRule: mockSaveUserRule,
+    getUserRule: mockGetUserRule,
     deleteUserRule: mockDeleteUserRule,
   }),
 }));

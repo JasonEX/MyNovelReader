@@ -126,7 +126,12 @@ export class RuleManager {
    */
   async saveUserRule(domain: string, rule: SiteRule): Promise<void> {
     await this.storage.saveUserRule(domain, rule);
-    this.userRulesCache.set(domain, rule);
+    const saved = await this.storage.getUserRule(domain);
+    if (saved) {
+      this.userRulesCache.set(domain, saved);
+    } else {
+      this.userRulesCache.set(domain, rule);
+    }
   }
 
   /**

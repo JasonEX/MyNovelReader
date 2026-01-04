@@ -61,7 +61,7 @@ export const useRuleStore = defineStore('rule', () => {
     try {
       const manager = getRuleManager();
       await manager.saveUserRule(domain, rule);
-      userRules.value.set(domain, rule);
+      userRules.value.set(domain, manager.getUserRule(domain) ?? rule);
     } catch (e) {
       console.error('[RuleStore] Save error:', e);
       throw e;

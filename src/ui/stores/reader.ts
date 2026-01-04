@@ -71,12 +71,27 @@ export const useReaderStore = defineStore('reader', () => {
   const cacheProgress = ref<CacheProgressState>({ done: 0, total: 0, running: false });
   const cacheQueue = ref<string[]>([]);
   const cacheAbort = ref<(() => void) | null>(null);
+  const reloadAbort = ref<(() => void) | null>(null);
 
   // Table of contents state
   const toc = ref<TocEntry[]>([]);
   const tocOriginal = ref<TocEntry[]>([]);
   const tocLoading = ref(false);
   const tocAbort = ref<(() => void) | null>(null);
+
+  let sessionId = 0;
+  let viewId = 0;
+  const bumpSession = (): number => {
+    sessionId += 1;
+    viewId += 1;
+    return sessionId;
+  };
+  const bumpView = (): number => {
+    viewId += 1;
+    return viewId;
+  };
+  const isSessionStale = (runId: number): boolean => runId !== sessionId;
+  const isViewStale = (runId: number): boolean => runId !== viewId;
 
   // Cached chapters storage (separate from display chapters for memory efficiency)
   const cachedContents = ref<Map<string, CachedChapter>>(new Map());
@@ -148,7 +163,26 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function deactivate() {
+    bumpSession();
     isActive.value = false;
+    pendingNextAbort.value?.();
+    pendingNextAbort.value = null;
+    pendingPrevAbort.value?.();
+    pendingPrevAbort.value = null;
+    cacheAbort.value?.();
+    cacheAbort.value = null;
+    reloadAbort.value?.();
+    reloadAbort.value = null;
+    tocAbort.value?.();
+    tocAbort.value = null;
+
+    isLoading.value = false;
+    isLoadingPrev.value = false;
+    isLoadingNext.value = false;
+    tocLoading.value = false;
+    cacheProgress.value = { done: 0, total: 0, running: false };
+    cacheQueue.value = [];
+
     chapters.value = [];
     currentChapterIndex.value = 0;
     error.value = null;
@@ -160,9 +194,32 @@ export const useReaderStore = defineStore('reader', () => {
     originalTitles.value.clear();
     cachedContents.value.clear();
     persistedUrls.value.clear();
+    toc.value = [];
+    tocOriginal.value = [];
   }
 
   function setChapter(newChapter: ParsedChapter, newRule?: SiteRule) {
+    bumpSession();
+    pendingNextAbort.value?.();
+    pendingNextAbort.value = null;
+    pendingPrevAbort.value?.();
+    pendingPrevAbort.value = null;
+    cacheAbort.value?.();
+    cacheAbort.value = null;
+    reloadAbort.value?.();
+    reloadAbort.value = null;
+    tocAbort.value?.();
+    tocAbort.value = null;
+
+    isLoading.value = false;
+    isLoadingPrev.value = false;
+    isLoadingNext.value = false;
+    tocLoading.value = false;
+    cacheProgress.value = { done: 0, total: 0, running: false };
+    cacheQueue.value = [];
+    toc.value = [];
+    tocOriginal.value = [];
+
     // Canonicalize URLs (strip hashes etc.) to stabilize caching and navigation.
     if (newChapter.url) {
       newChapter.url = normalizeUrlForFetch(newChapter.url);
@@ -187,7 +244,6 @@ export const useReaderStore = defineStore('reader', () => {
       },
     ];
     currentChapterIndex.value = 0;
-    isLoading.value = false;
     error.value = null;
     loadedUrls.value.clear();
     loadedUrls.value.add(newChapter.url);
@@ -223,7 +279,7 @@ export const useReaderStore = defineStore('reader', () => {
     }
 
     // Restore persisted cache for this book (async, don't block)
-    restoreCache();
+    void restoreCache();
   }
 
   /** Helper: Insert a chapter from cache to chapters list */
@@ -245,6 +301,7 @@ export const useReaderStore = defineStore('reader', () => {
       chapters.value.unshift(entry);
       currentChapterIndex.value++;
     }
+    loadedUrls.value.add(entry.chapter.url);
 
     // Store original content for text conversion
     originalContents.value.set(id, cached.chapter.content);
@@ -284,6 +341,7 @@ export const useReaderStore = defineStore('reader', () => {
 
   /** Unified chapter loading function */
   async function loadChapter(direction: 'next' | 'prev', source: LoadSource): Promise<boolean> {
+    const runId = viewId;
     const isNext = direction === 'next';
     const refChapter = isNext ? chapters.value[chapters.value.length - 1] : chapters.value[0];
     const isLoadingRef = isNext ? isLoadingNext : isLoadingPrev;
@@ -346,6 +404,10 @@ export const useReaderStore = defineStore('reader', () => {
       return false;
     }
 
+    if (loadedUrls.value.has(targetUrl)) {
+      return false;
+    }
+
     // Prefer cached content if available (avoid refetching on race/abort failures).
     const cached = cachedContents.value.get(targetUrl);
     if (cached) {
@@ -353,15 +415,13 @@ export const useReaderStore = defineStore('reader', () => {
     }
     if (persistedUrls.value.has(targetUrl)) {
       const persisted = await getPersistedCachedChapter(targetUrl);
+      if (isViewStale(runId)) return false;
       if (persisted) {
         const sessionCached: CachedChapter = { ...persisted, cachedAt: Date.now() };
         cachedContents.value.set(targetUrl, sessionCached);
         trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
         return insertCachedChapter(sessionCached, isNext ? 'append' : 'prepend');
       }
-    }
-    if (loadedUrls.value.has(targetUrl)) {
-      return false;
     }
 
     isLoadingRef.value = true;
@@ -385,9 +445,17 @@ export const useReaderStore = defineStore('reader', () => {
     try {
       const referer = refChapter.chapter.url;
       const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+      if (isViewStale(runId)) {
+        abort();
+        return false;
+      }
       pendingAbortRef.value = abort;
 
       const result = await promise;
+      if (isViewStale(runId)) {
+        abort();
+        return false;
+      }
       pendingAbortRef.value = null;
       if (result.error === 'abort') {
         return false;
@@ -413,6 +481,9 @@ export const useReaderStore = defineStore('reader', () => {
 
       const parser = getParser();
       const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
+      if (isViewStale(runId)) {
+        return false;
+      }
       if (!parsed) {
         const prev = navFailures.get(navKey);
         const count = (prev?.count || 0) + 1;
@@ -521,11 +592,15 @@ export const useReaderStore = defineStore('reader', () => {
 
       return true;
     } catch (e) {
-      console.error(`[MNR] Failed to load ${direction} chapter:`, e);
-      setError(errorMessage);
+      if (!isViewStale(runId)) {
+        console.error(`[MNR] Failed to load ${direction} chapter:`, e);
+        setError(errorMessage);
+      }
       return false;
     } finally {
-      isLoadingRef.value = false;
+      if (!isViewStale(runId)) {
+        isLoadingRef.value = false;
+      }
     }
   }
 
@@ -692,10 +767,14 @@ export const useReaderStore = defineStore('reader', () => {
    * Persists chapters to storage (best-effort); in-memory cache is LRU-capped.
    */
   async function startCacheAll(urls?: string[]): Promise<void> {
+    const runId = sessionId;
     if (cacheProgress.value.running) return;
+
+    const seenUrls = new Set<string>();
 
     // Ensure we have the latest persistedUrls before building the task list.
     await restoreCache();
+    if (isSessionStale(runId)) return;
     const persistedSet = new Set(persistedUrls.value);
     const cacheBook = getCurrentBookCacheKey();
 
@@ -712,9 +791,12 @@ export const useReaderStore = defineStore('reader', () => {
           currentUrl || indexUrl,
           rule.value ?? undefined,
           abort => {
-            cacheAbort.value = abort;
+            if (!isSessionStale(runId)) {
+              cacheAbort.value = abort;
+            }
           }
         );
+        if (isSessionStale(runId)) return;
         cacheAbort.value = null;
 
         const tocLinks = tocEntries.map(e => normalizeUrlForFetch(e.url)).slice(0, 10000);
@@ -728,6 +810,7 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Total is actual list length
     const estimatedTotal = taskList.length;
+    if (isSessionStale(runId)) return;
     if (estimatedTotal === 0) {
       cacheProgress.value = { done: 0, total: 0, running: false };
       return;
@@ -742,6 +825,7 @@ export const useReaderStore = defineStore('reader', () => {
 
       // 去重 - check loadedUrls, session cache, and persisted cache
       if (
+        seenUrls.has(targetUrl) ||
         loadedUrls.value.has(targetUrl) ||
         cachedContents.value.has(targetUrl) ||
         persistedSet.has(targetUrl)
@@ -752,8 +836,16 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+      if (isSessionStale(runId)) {
+        abort();
+        break;
+      }
       cacheAbort.value = abort;
       const result = await promise;
+      if (isSessionStale(runId)) {
+        abort();
+        break;
+      }
       cacheAbort.value = null;
       if (result.error === 'abort') {
         break;
@@ -765,6 +857,9 @@ export const useReaderStore = defineStore('reader', () => {
 
       const parser = getParser();
       const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
+      if (isSessionStale(runId)) {
+        break;
+      }
       if (!parsed) {
         nextUrl = taskList.shift() ?? null;
         continue;
@@ -777,6 +872,7 @@ export const useReaderStore = defineStore('reader', () => {
         cachedAt: Date.now(),
       };
       cachedContents.value.set(parsed.url, cached);
+      seenUrls.add(parsed.url);
 
       // Trim session cache (LRU) to avoid unbounded memory usage during cache-all.
       trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
@@ -790,8 +886,6 @@ export const useReaderStore = defineStore('reader', () => {
       }
 
       // Mark as loaded for deduplication
-      loadedUrls.value.add(parsed.url);
-
       cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
 
       // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl（分页合并后 nextUrl 已指向下一章）
@@ -799,11 +893,20 @@ export const useReaderStore = defineStore('reader', () => {
       nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
 
       // If following nextUrl chain, update total estimate
-      if (!cacheQueue.value.length && nextUrl && !loadedUrls.value.has(nextUrl)) {
-        cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done + 1 };
+      if (taskList.length === 0 && nextUrl) {
+        const normalizedNext = normalizeUrlForFetch(nextUrl);
+        if (
+          !seenUrls.has(normalizedNext) &&
+          !loadedUrls.value.has(normalizedNext) &&
+          !cachedContents.value.has(normalizedNext) &&
+          !persistedSet.has(normalizedNext)
+        ) {
+          cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done + 1 };
+        }
       }
     }
 
+    if (isSessionStale(runId)) return;
     // Final total update
     cacheProgress.value = {
       ...cacheProgress.value,
@@ -874,6 +977,7 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   async function loadToc(): Promise<void> {
+    const runId = sessionId;
     if (toc.value.length > 0 || tocLoading.value) return;
 
     const currentUrl = chapter.value?.url || '';
@@ -897,44 +1001,64 @@ export const useReaderStore = defineStore('reader', () => {
         currentUrl || indexUrl,
         rule.value ?? undefined,
         abort => {
-          tocAbort.value = abort;
+          if (!isSessionStale(runId)) {
+            tocAbort.value = abort;
+          }
         }
       );
+      if (isSessionStale(runId)) return;
       if (entries.length === 0) {
         // Retry once for transient request failures / slow dynamic pages.
         await new Promise<void>(resolve => window.setTimeout(resolve, 400));
+        if (isSessionStale(runId)) return;
         entries = await loadTocEntriesPaged(
           indexUrl,
           currentUrl || indexUrl,
           rule.value ?? undefined,
           abort => {
-            tocAbort.value = abort;
+            if (!isSessionStale(runId)) {
+              tocAbort.value = abort;
+            }
           }
         );
+        if (isSessionStale(runId)) return;
       }
       await setTocEntries(entries);
+      if (isSessionStale(runId)) return;
       if (entries.length === 0) {
         showToast('目录解析为空，可稍后重试或刷新页面', 'info', 2500);
       }
     } catch (e) {
-      console.error('[MNR] Failed to load TOC:', e);
-      showToast('目录加载失败，可稍后重试', 'error', 2500);
+      if (!isSessionStale(runId)) {
+        console.error('[MNR] Failed to load TOC:', e);
+        showToast('目录加载失败，可稍后重试', 'error', 2500);
+      }
     } finally {
-      tocLoading.value = false;
-      tocAbort.value = null;
+      if (!isSessionStale(runId)) {
+        tocLoading.value = false;
+        tocAbort.value = null;
+      }
     }
   }
 
   function $reset() {
+    bumpSession();
     isActive.value = false;
     isLoading.value = false;
     isLoadingPrev.value = false;
     isLoadingNext.value = false;
+    pendingNextAbort.value?.();
+    pendingNextAbort.value = null;
+    pendingPrevAbort.value?.();
+    pendingPrevAbort.value = null;
+    reloadAbort.value?.();
+    reloadAbort.value = null;
     chapters.value = [];
     currentChapterIndex.value = 0;
     error.value = null;
     scrollPercent.value = 0;
     loadedUrls.value.clear();
+    vipBlockedUrls.value.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
     blockedNavUrls.value.clear();
@@ -944,6 +1068,7 @@ export const useReaderStore = defineStore('reader', () => {
     currentConversionMode.value = 'none';
     cacheProgress.value = { done: 0, total: 0, running: false };
     cacheQueue.value = [];
+    cacheAbort.value?.();
     cacheAbort.value = null;
     // Reset TOC state
     toc.value = [];
@@ -960,11 +1085,23 @@ export const useReaderStore = defineStore('reader', () => {
    * Clears current chapters and sets the target as the only chapter
    */
   async function rebuildChaptersAround(targetUrl: string): Promise<boolean> {
+    const runId = bumpView();
     const url = normalizeUrlForFetch(targetUrl);
+    pendingNextAbort.value?.();
+    pendingNextAbort.value = null;
+    pendingPrevAbort.value?.();
+    pendingPrevAbort.value = null;
+    reloadAbort.value?.();
+    reloadAbort.value = null;
+    isLoading.value = false;
+    isLoadingPrev.value = false;
+    isLoadingNext.value = false;
+
     // Check cachedContents first
     let cached = cachedContents.value.get(url);
     if (!cached && persistedUrls.value.has(url)) {
       const persisted = await getPersistedCachedChapter(url);
+      if (isViewStale(runId)) return false;
       if (persisted) {
         cached = { ...persisted, cachedAt: Date.now() };
         cachedContents.value.set(url, cached);
@@ -972,20 +1109,23 @@ export const useReaderStore = defineStore('reader', () => {
       }
     }
     if (!cached) return false;
+    if (isViewStale(runId)) return false;
 
     // Clear current chapters
     chapters.value = [];
     currentChapterIndex.value = 0;
+    loadedUrls.value.clear();
     originalContents.value.clear();
     originalTitles.value.clear();
 
     // Add target chapter
     const id = `chapter-${Date.now()}-jump-0`;
     chapters.value.push({
-      chapter: cached.chapter,
+      chapter: { ...cached.chapter },
       rule: cached.rule,
       id,
     });
+    loadedUrls.value.add(url);
 
     // Store original content
     originalContents.value.set(id, cached.chapter.content);
@@ -1007,6 +1147,7 @@ export const useReaderStore = defineStore('reader', () => {
    * Used after rule updates to apply changes immediately
    */
   async function reloadCurrentChapter(): Promise<void> {
+    const runId = viewId;
     const current = chapters.value[currentChapterIndex.value];
     if (!current) return;
 
@@ -1015,8 +1156,23 @@ export const useReaderStore = defineStore('reader', () => {
     showToast('正在重新加载...', 'info');
 
     // Refetch the page
-    const { promise } = fetchAndParseUrl(url, url);
+    reloadAbort.value?.();
+    reloadAbort.value = null;
+    const { promise, abort } = fetchAndParseUrl(url, url);
+    if (!isViewStale(runId)) {
+      reloadAbort.value = abort;
+    }
     const result = await promise;
+    if (isViewStale(runId)) {
+      abort();
+      return;
+    }
+    if (reloadAbort.value === abort) {
+      reloadAbort.value = null;
+    }
+    if (result.error === 'abort') {
+      return;
+    }
     if (!result.doc) {
       showToast('重新加载失败', 'error');
       return;
@@ -1025,6 +1181,9 @@ export const useReaderStore = defineStore('reader', () => {
     // Parse with new rules (will pick up updated rules from RuleManager)
     const parser = getParser();
     const parsed = await parseWithSectionMerge(parser, result.doc, url, url);
+    if (isViewStale(runId)) {
+      return;
+    }
 
     if (parsed) {
       if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
@@ -1165,6 +1324,7 @@ export const useReaderStore = defineStore('reader', () => {
    * Persist cache to GM storage
    */
   async function persistCache(): Promise<void> {
+    const runId = sessionId;
     const cacheBook = getCurrentBookCacheKey();
     if (!cacheBook) return;
     if (typeof GM_setValue === 'undefined') return;
@@ -1188,6 +1348,7 @@ export const useReaderStore = defineStore('reader', () => {
 
     try {
       GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
+      if (isSessionStale(runId)) return;
       persistedUrls.value = persistedSet;
     } catch (e) {
       console.error('[MNR] Failed to persist cache index:', e);
@@ -1198,6 +1359,7 @@ export const useReaderStore = defineStore('reader', () => {
    * Restore cache from GM storage
    */
   async function restoreCache(): Promise<void> {
+    const runId = sessionId;
     const cacheBook = getCurrentBookCacheKey();
     if (!cacheBook) return;
     if (typeof GM_getValue === 'undefined') return;
@@ -1206,6 +1368,7 @@ export const useReaderStore = defineStore('reader', () => {
       const storedV2 = GM_getValue<unknown>(getCacheV2IndexKey(cacheBook.bookId), null);
       const dataV2 = parseStoredJson<PersistedBookCacheV2Index>(storedV2);
       if (dataV2?.version === 2 && Array.isArray(dataV2.urls)) {
+        if (isSessionStale(runId)) return;
         persistedUrls.value = new Set(dataV2.urls);
         return;
       }
@@ -1213,6 +1376,7 @@ export const useReaderStore = defineStore('reader', () => {
       const storedV1 = GM_getValue<unknown>(getCacheV1Key(cacheBook.bookId), null);
       const dataV1 = parseStoredJson<PersistedBookCache>(storedV1);
       if (dataV1?.chapters && typeof dataV1.chapters === 'object') {
+        if (isSessionStale(runId)) return;
         persistedUrls.value = new Set(Object.keys(dataV1.chapters));
       }
     } catch (e) {

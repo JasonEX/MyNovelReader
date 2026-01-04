@@ -26,9 +26,14 @@ describe('RuleManager', () => {
     const manager = new RuleManager();
 
     const storage = {
+      getUserRule: vi.fn(async (domain: string) => store.get(domain) ?? null),
       getAllUserRules: vi.fn(async () => new Map(store)),
       saveUserRule: vi.fn(async (domain: string, rule: SiteRule) => {
-        store.set(domain, rule);
+        store.set(domain, {
+          ...rule,
+          id: domain,
+          meta: { ...(rule.meta ?? {}), source: 'user', updated: Date.now() },
+        });
       }),
       deleteUserRule: vi.fn(async (domain: string) => {
         store.delete(domain);

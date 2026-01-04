@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JSDOM } from 'jsdom';
+import type { ProtectionOptions } from '@/core/protection';
 
 type MockedSiteProtection = {
   activate: ReturnType<typeof vi.fn>;
@@ -421,14 +422,33 @@ describe('getAutoEnableManager', () => {
     vi.resetModules();
   });
 
-  it('warns when called with options after singleton created', async () => {
+  it('updates options when called with options after singleton created', async () => {
+    vi.clearAllMocks();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { getAutoEnableManager } = await import('@/core/AutoEnableManager');
 
-    getAutoEnableManager();
-    getAutoEnableManager({ confidenceThreshold: 0.5 });
+    const options1: ProtectionOptions = { blockRedirects: false };
+    const manager = getAutoEnableManager({
+      enableProtection: true,
+      protectionOptions: options1,
+    });
+    manager.setLaunchCallback(vi.fn());
 
-    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/chapter/1',
+    });
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.document = dom.window.document;
+
+    await manager.manualEnable(dom.window.document);
+    expect(mockedProtection.activate).toHaveBeenLastCalledWith(options1);
+
+    const options2: ProtectionOptions = { blockRedirects: true };
+    getAutoEnableManager({ enableProtection: true, protectionOptions: options2 });
+    await manager.manualEnable(dom.window.document);
+    expect(mockedProtection.activate).toHaveBeenLastCalledWith(options2);
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });

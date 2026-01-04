@@ -96,6 +96,13 @@ export class AutoEnableManager {
   private launchCallback?: LaunchCallback;
   private hasRun = false;
   private currentDecision?: AutoEnableDecision;
+  private currentDecisionUrl?: string;
+
+  private recordDecision(url: string, decision: AutoEnableDecision): AutoEnableDecision {
+    this.currentDecision = decision;
+    this.currentDecisionUrl = url;
+    return decision;
+  }
 
   constructor(options: AutoEnableOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
@@ -105,6 +112,16 @@ export class AutoEnableManager {
     });
     this.sectionMerger = createSectionMerger(this.parser);
     this.ruleSaver = createRuleSaver();
+  }
+
+  updateOptions(options: AutoEnableOptions = {}): void {
+    this.options = { ...this.options, ...options };
+    if (Object.prototype.hasOwnProperty.call(options, 'forceDetection')) {
+      this.parser = new Parser({
+        forceDetection: options.forceDetection,
+      });
+      this.sectionMerger = createSectionMerger(this.parser);
+    }
   }
 
   /**
@@ -126,34 +143,36 @@ export class AutoEnableManager {
    */
   async check(doc: Document = document): Promise<AutoEnableDecision> {
     const url = doc.location?.href || window.location.href;
+    const decide = (decision: AutoEnableDecision): AutoEnableDecision =>
+      this.recordDecision(url, decision);
 
     // Check skip patterns
     if (this.shouldSkip(url)) {
-      return {
+      return decide({
         shouldEnable: false,
         method: 'manual',
         confidence: 0,
         reasons: ['URL matches skip pattern'],
-      };
+      });
     }
 
     const pageKind = getPageKind(url, doc);
     if (pageKind === 'toc') {
-      return {
+      return decide({
         shouldEnable: false,
         method: 'manual',
         confidence: 0,
         reasons: ['目录页，跳过自动启用'],
-      };
+      });
     }
 
     if (pageKind !== 'chapter') {
-      return {
+      return decide({
         shouldEnable: false,
         method: 'manual',
         confidence: 0,
         reasons: ['非正文页，跳过自动启用'],
-      };
+      });
     }
 
     let hostname: string | null = null;
@@ -170,35 +189,26 @@ export class AutoEnableManager {
       if (pref?.enabled === false) {
         // User previously exited reader on this site, don't auto-enable
         // But still show floating button so they can manually enable
-        return {
+        return decide({
           shouldEnable: false,
           method: 'user-disabled',
           confidence: 0,
           reasons: ['用户已关闭该站点自动启用'],
           showFloatingButton: true,
-        };
+        });
       }
       if (pref?.enabled === true) {
-        return {
+        return decide({
           shouldEnable: true,
           method: 'site-preference',
           confidence: 1,
           reasons: ['用户已为该站点开启自动启用'],
-        };
+        });
       }
     }
 
-    // Quick check first
-    if (!this.detectionEngine.quickCheck(doc)) {
-      return {
-        shouldEnable: false,
-        method: 'manual',
-        confidence: 0,
-        reasons: ['Page does not appear to be novel content'],
-      };
-    }
-
-    // Check for saved user rule
+    // Check for saved user / built-in rules first.
+    // Explicit rules should still apply even if quickCheck is a false negative.
     if (!this.options.forceDetection) {
       const ruleManager = getRuleManager();
       await ruleManager.initialize();
@@ -214,9 +224,18 @@ export class AutoEnableManager {
             `Matched ${ruleMatch.rule.meta?.source || 'builtin'} rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`,
           ],
         };
-        this.currentDecision = decision;
-        return decision;
+        return decide(decision);
       }
+    }
+
+    // Quick check before running full detection
+    if (!this.detectionEngine.quickCheck(doc)) {
+      return decide({
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['Page does not appear to be novel content'],
+      });
     }
 
     // Run detection
@@ -230,8 +249,7 @@ export class AutoEnableManager {
       reasons: detection.confidence.reasons,
     };
 
-    this.currentDecision = decision;
-    return decision;
+    return decide(decision);
   }
 
   /**
@@ -243,7 +261,11 @@ export class AutoEnableManager {
     }
     this.hasRun = true;
 
-    const decision = await this.check(doc);
+    const currentUrl = doc.location?.href || window.location.href;
+    const decision =
+      this.currentDecision && this.currentDecisionUrl === currentUrl
+        ? this.currentDecision
+        : await this.check(doc);
 
     if (!decision.shouldEnable) {
       return;
@@ -346,6 +368,7 @@ export class AutoEnableManager {
   reset(): void {
     this.hasRun = false;
     this.currentDecision = undefined;
+    this.currentDecisionUrl = undefined;
   }
 
   /**
@@ -384,9 +407,7 @@ export function getAutoEnableManager(options?: AutoEnableOptions): AutoEnableMan
   if (!managerInstance) {
     managerInstance = new AutoEnableManager(options);
   } else if (options) {
-    console.warn(
-      '[AutoEnableManager] getAutoEnableManager(options) called after the singleton was created; options are ignored.'
-    );
+    managerInstance.updateOptions(options);
   }
   return managerInstance;
 }

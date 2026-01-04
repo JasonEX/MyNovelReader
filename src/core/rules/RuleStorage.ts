@@ -373,11 +373,24 @@ export class RuleStorage {
         if (existing) continue;
       }
 
-      const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
+      const meta =
+        typeof rule.meta === 'object' && rule.meta !== null
+          ? rule.meta
+          : ({} as Record<string, unknown>);
+      const ruleToSave: SiteRule = {
+        ...rule,
+        meta: {
+          ...meta,
+          source: 'user',
+          updated: Date.now(),
+        },
+      };
+
+      const { sanitized, removedKeys } = sanitizeUserRuleHooks(ruleToSave);
       if (removedKeys.length > 0) {
-        warnDroppedHookFields(rule.id, removedKeys);
+        warnDroppedHookFields(ruleToSave.id, removedKeys);
       }
-      await this.driver.set(rule.id, sanitized);
+      await this.driver.set(ruleToSave.id, sanitized);
       count++;
     }
 
