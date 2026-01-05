@@ -6308,6 +6308,21 @@ smartSelect(doc2, selector) {
     }
     return parserInstance;
   }
+  const isCloudflareChallenge = (doc2 = document) => {
+    var _a;
+    const pathname = ((_a = doc2.location) == null ? void 0 : _a.pathname) || window.location.pathname;
+    if (pathname.startsWith("/cdn-cgi/")) return true;
+    const selectors = [
+      '[id*="cf-chl"]',
+      '[class*="cf-chl"]',
+      '[id*="challenge"]',
+      '[class*="challenge"]',
+      'form[action*="/cdn-cgi/"]',
+      'iframe[src*="challenges.cloudflare.com"]',
+      'iframe[src*="captcha.cloudflare.com"]'
+    ];
+    return doc2.querySelector(selectors.join(",")) !== null;
+  };
   const DEFAULT_OPTIONS$1 = {
     blockRedirects: true,
     enableRightClick: true,
@@ -6335,34 +6350,41 @@ activate(options) {
         this.deactivate();
       }
       this.isActive = true;
-      if (this.options.clearTimers) {
+      const isChallenge = isCloudflareChallenge();
+      const effectiveOptions = isChallenge ? {
+        ...this.options,
+        blockRedirects: false,
+        clearTimers: false,
+        removeEventHijacking: false
+      } : this.options;
+      if (effectiveOptions.clearTimers) {
         this.clearTimers();
       }
-      if (this.options.blockRedirects) {
+      if (effectiveOptions.blockRedirects) {
         this.blockRedirects();
       }
-      if (this.options.enableRightClick) {
+      if (effectiveOptions.enableRightClick) {
         this.enableRightClick();
       }
-      if (this.options.enableSelection) {
+      if (effectiveOptions.enableSelection) {
         this.enableSelection();
       }
-      if (this.options.enableCopy) {
+      if (effectiveOptions.enableCopy) {
         this.enableCopy();
       }
-      if (this.options.unlockKeyboard) {
+      if (effectiveOptions.unlockKeyboard) {
         this.unlockKeyboard();
       }
-      if (this.options.blockPopups) {
+      if (effectiveOptions.blockPopups) {
         this.blockPopups();
       }
-      if (this.options.cleanupScripts) {
+      if (effectiveOptions.cleanupScripts) {
         this.cleanupScripts();
       }
-      if (this.options.removeEventHijacking) {
+      if (effectiveOptions.removeEventHijacking) {
         this.removeEventHijacking();
       }
-      if (this.options.blockVisibilityDetection) {
+      if (effectiveOptions.blockVisibilityDetection) {
         this.blockVisibilityDetection();
       }
     }
@@ -7349,6 +7371,14 @@ async check(doc2 = document) {
       var _a, _b, _c, _d;
       const url = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
       const decide = (decision2) => this.recordDecision(url, decision2);
+      if (isCloudflareChallenge(doc2)) {
+        return decide({
+          shouldEnable: false,
+          method: "manual",
+          confidence: 0,
+          reasons: ["Cloudflare Challenge 页面，等待验证完成"]
+        });
+      }
       if (this.shouldSkip(url)) {
         return decide({
           shouldEnable: false,

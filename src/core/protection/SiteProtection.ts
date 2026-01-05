@@ -33,6 +33,23 @@ export interface ProtectionOptions {
   cleanupScripts?: boolean;
 }
 
+export const isCloudflareChallenge = (doc: Document = document): boolean => {
+  const pathname = doc.location?.pathname || window.location.pathname;
+  if (pathname.startsWith('/cdn-cgi/')) return true;
+
+  const selectors = [
+    '[id*="cf-chl"]',
+    '[class*="cf-chl"]',
+    '[id*="challenge"]',
+    '[class*="challenge"]',
+    'form[action*="/cdn-cgi/"]',
+    'iframe[src*="challenges.cloudflare.com"]',
+    'iframe[src*="captcha.cloudflare.com"]',
+  ];
+
+  return doc.querySelector(selectors.join(',')) !== null;
+};
+
 const DEFAULT_OPTIONS: ProtectionOptions = {
   blockRedirects: true,
   enableRightClick: true,
@@ -72,44 +89,54 @@ export class SiteProtection {
     }
     this.isActive = true;
 
+    const isChallenge = isCloudflareChallenge();
+    const effectiveOptions = isChallenge
+      ? {
+          ...this.options,
+          blockRedirects: false,
+          clearTimers: false,
+          removeEventHijacking: false,
+        }
+      : this.options;
+
     // Clear timers first to reduce CPU usage from tracking scripts
-    if (this.options.clearTimers) {
+    if (effectiveOptions.clearTimers) {
       this.clearTimers();
     }
 
-    if (this.options.blockRedirects) {
+    if (effectiveOptions.blockRedirects) {
       this.blockRedirects();
     }
 
-    if (this.options.enableRightClick) {
+    if (effectiveOptions.enableRightClick) {
       this.enableRightClick();
     }
 
-    if (this.options.enableSelection) {
+    if (effectiveOptions.enableSelection) {
       this.enableSelection();
     }
 
-    if (this.options.enableCopy) {
+    if (effectiveOptions.enableCopy) {
       this.enableCopy();
     }
 
-    if (this.options.unlockKeyboard) {
+    if (effectiveOptions.unlockKeyboard) {
       this.unlockKeyboard();
     }
 
-    if (this.options.blockPopups) {
+    if (effectiveOptions.blockPopups) {
       this.blockPopups();
     }
 
-    if (this.options.cleanupScripts) {
+    if (effectiveOptions.cleanupScripts) {
       this.cleanupScripts();
     }
 
-    if (this.options.removeEventHijacking) {
+    if (effectiveOptions.removeEventHijacking) {
       this.removeEventHijacking();
     }
 
-    if (this.options.blockVisibilityDetection) {
+    if (effectiveOptions.blockVisibilityDetection) {
       this.blockVisibilityDetection();
     }
   }

@@ -9,7 +9,7 @@
  */
 
 import { DetectionEngine, type DetectionEngineResult } from '@/core/detection';
-import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
+import { getSiteProtection, isCloudflareChallenge, type ProtectionOptions } from '@/core/protection';
 import { type ParsedChapter, Parser } from '@/core/parser';
 import { createRuleSaver } from '@/core/auto-enable/RuleSaver';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
@@ -145,6 +145,15 @@ export class AutoEnableManager {
     const url = doc.location?.href || window.location.href;
     const decide = (decision: AutoEnableDecision): AutoEnableDecision =>
       this.recordDecision(url, decision);
+
+    if (isCloudflareChallenge(doc)) {
+      return decide({
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['Cloudflare Challenge 页面，等待验证完成'],
+      });
+    }
 
     // Check skip patterns
     if (this.shouldSkip(url)) {
