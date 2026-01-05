@@ -3030,6 +3030,7 @@ detectSection(doc2 = document, currentUrl = window.location.href) {
       return this.navigationDetector.detectSection(doc2, currentUrl, navigation);
     }
 quickCheck(doc2 = document) {
+      const currentUrl = window.location.href;
       const indicators = [
 () => {
           const title = doc2.title;
@@ -3041,12 +3042,17 @@ quickCheck(doc2 = document) {
         },
 () => {
           const links = Array.from(doc2.querySelectorAll("a"));
-          return links.some((a) => /下一[章页]/.test(a.textContent || ""));
+          return links.some((a) => /下一[章页节篇回]|下页/i.test(a.textContent || ""));
         },
 () => {
           const body = doc2.body;
           const text2 = (body == null ? void 0 : body.textContent) || "";
           return text2.length > 3e3;
+        },
+() => {
+          const body = doc2.body;
+          const text2 = (body == null ? void 0 : body.textContent) || "";
+          return /\/chapters?\//i.test(currentUrl) && text2.length > 1200;
         }
       ];
       const matches = indicators.filter((check) => {
@@ -7535,7 +7541,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-01-04";
+  const BUILD_DATE = "2026-01-05";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
