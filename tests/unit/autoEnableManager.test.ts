@@ -67,6 +67,7 @@ vi.mock('@/core/rules/RuleManager', () => ({
 
 vi.mock('@/core/protection', () => ({
   getSiteProtection: () => mockedProtection,
+  isCloudflareChallenge: vi.fn(() => false),
 }));
 
 vi.mock('@/core/auto-enable/SectionMerger', () => ({
