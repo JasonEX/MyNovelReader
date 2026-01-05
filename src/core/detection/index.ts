@@ -72,6 +72,7 @@ export class DetectionEngine {
    * Quick check if page looks like a novel chapter
    */
   quickCheck(doc: Document = document): boolean {
+    const currentUrl = window.location.href;
     // Check for common novel page indicators
     const indicators = [
       // Check document title
@@ -87,13 +88,19 @@ export class DetectionEngine {
       // Check for navigation links
       () => {
         const links = Array.from(doc.querySelectorAll('a'));
-        return links.some(a => /下一[章页]/.test(a.textContent || ''));
+        return links.some(a => /下一[章页节篇回]|下页/i.test(a.textContent || ''));
       },
       // Check text content length
       () => {
         const body = doc.body;
         const text = body?.textContent || '';
         return text.length > 3000;
+      },
+      // Check URL and content length for chapter-like paths
+      () => {
+        const body = doc.body;
+        const text = body?.textContent || '';
+        return /\/chapters?\//i.test(currentUrl) && text.length > 1200;
       },
     ];
 
