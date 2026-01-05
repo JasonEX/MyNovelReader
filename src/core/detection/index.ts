@@ -72,7 +72,7 @@ export class DetectionEngine {
    * Quick check if page looks like a novel chapter
    */
   quickCheck(doc: Document = document): boolean {
-    const currentUrl = window.location.href;
+    const currentUrl = doc.location?.href || window.location.href;
     // Check for common novel page indicators
     const indicators = [
       // Check document title

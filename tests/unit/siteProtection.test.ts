@@ -5,7 +5,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { getSiteProtection, SiteProtection } from '@/core/protection/SiteProtection';
+import {
+  getSiteProtection,
+  isCloudflareChallenge,
+  SiteProtection,
+} from '@/core/protection/SiteProtection';
 
 describe('SiteProtection', () => {
   let protection: SiteProtection;
@@ -43,6 +47,34 @@ describe('SiteProtection', () => {
         enableRightClick: false,
       });
       expect(p).toBeInstanceOf(SiteProtection);
+    });
+  });
+
+  describe('isCloudflareChallenge', () => {
+    it('does not misclassify generic "challenge" UI elements', () => {
+      const localDom = new JSDOM(
+        '<!DOCTYPE html><html><body><div id="daily-challenge"></div></body></html>',
+        { url: 'https://example.com/' }
+      );
+
+      expect(isCloudflareChallenge(localDom.window.document)).toBe(false);
+    });
+
+    it('detects Cloudflare challenge pages by /cdn-cgi/ path', () => {
+      const localDom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+        url: 'https://example.com/cdn-cgi/l/chk_jschl',
+      });
+
+      expect(isCloudflareChallenge(localDom.window.document)).toBe(true);
+    });
+
+    it('detects Cloudflare challenge pages by /cdn-cgi/ markers', () => {
+      const localDom = new JSDOM(
+        '<!DOCTYPE html><html><body><form action="/cdn-cgi/challenge-platform/h/g/orchestrate"></form></body></html>',
+        { url: 'https://example.com/' }
+      );
+
+      expect(isCloudflareChallenge(localDom.window.document)).toBe(true);
     });
   });
 

@@ -64,6 +64,26 @@ describe('DetectionEngine', () => {
     expect(engine.quickCheck(doc)).toBe(true);
   });
 
+  it('quickCheck uses provided document location (not host window URL)', () => {
+    const hostDom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://host.example.com/read/1',
+      pretendToBeVisual: true,
+    });
+    const chaptersDom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/chapters/123',
+      pretendToBeVisual: true,
+    });
+
+    globalThis.window = hostDom.window as unknown as Window & typeof globalThis;
+    globalThis.document = hostDom.window.document;
+
+    const targetDoc = chaptersDom.window.document;
+    targetDoc.body.innerHTML = `<a href="/chapters/124">下一章</a><div>${'x'.repeat(1500)}</div>`;
+
+    const engine = new DetectionEngine();
+    expect(engine.quickCheck(targetDoc)).toBe(true);
+  });
+
   it('delegates generateSelector and supports threshold accessors', () => {
     doc.body.innerHTML = '<div id="content"><p>x</p></div>';
     const el = doc.querySelector('#content')!;

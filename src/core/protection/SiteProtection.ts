@@ -40,9 +40,9 @@ export const isCloudflareChallenge = (doc: Document = document): boolean => {
   const selectors = [
     '[id*="cf-chl"]',
     '[class*="cf-chl"]',
-    '[id*="challenge"]',
-    '[class*="challenge"]',
     'form[action*="/cdn-cgi/"]',
+    'script[src*="/cdn-cgi/challenge-platform"]',
+    'link[href*="/cdn-cgi/challenge-platform"]',
     'iframe[src*="challenges.cloudflare.com"]',
     'iframe[src*="captcha.cloudflare.com"]',
   ];
