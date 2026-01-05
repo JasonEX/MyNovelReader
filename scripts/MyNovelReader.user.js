@@ -7229,7 +7229,7 @@ findNextChapterUrl(doc2, currentUrl) {
   const TOC_TITLE_PATTERN = /(?:章节目录|章節目錄|章节列表|章節列表|目录|目錄|书目|書目|toc|catalog|contents?)/i;
   const TOC_URL_PATTERN = /(?:^|\/)(?:catalog|toc|contents?|mulu|dir(?:ectory)?|chapterlist|chapters)(?:\/|$)/i;
   const TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
-  const CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|read|txt|article)\/[^?#]*\d/i;
+  const CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/[^?#]*\d/i;
   const CHAPTER_LINK_TEXT_PATTERN = /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
   const NAV_LINK_TEXT_PATTERN = /(?:下一[章页]|上一[章页]|下一章|上一章|next|prev)/i;
   function parseHttpUrl(url) {
@@ -7535,7 +7535,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-01-04";
+  const BUILD_DATE = "2026-01-05";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
