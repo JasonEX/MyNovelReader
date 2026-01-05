@@ -9,8 +9,9 @@ const TOC_URL_PATTERN =
 const TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
 
 // URL-only chapter detection should be conservative to avoid triggering on book/detail/list pages.
+// Keep numeric requirements and only add explicit chapter-style segments (e.g. chapters, /novel/chapters/).
 // For ambiguous URLs (e.g. numeric .html), fall back to DOM heuristics instead.
-const CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|read|txt|article)\/[^?#]*\d/i;
+const CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/[^?#]*\d/i;
 
 const CHAPTER_LINK_TEXT_PATTERN =
   /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
