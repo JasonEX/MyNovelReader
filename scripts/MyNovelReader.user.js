@@ -3030,7 +3030,8 @@ detectSection(doc2 = document, currentUrl = window.location.href) {
       return this.navigationDetector.detectSection(doc2, currentUrl, navigation);
     }
 quickCheck(doc2 = document) {
-      const currentUrl = window.location.href;
+      var _a;
+      const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
       const indicators = [
 () => {
           const title = doc2.title;
@@ -6315,9 +6316,9 @@ smartSelect(doc2, selector) {
     const selectors = [
       '[id*="cf-chl"]',
       '[class*="cf-chl"]',
-      '[id*="challenge"]',
-      '[class*="challenge"]',
       'form[action*="/cdn-cgi/"]',
+      'script[src*="/cdn-cgi/challenge-platform"]',
+      'link[href*="/cdn-cgi/challenge-platform"]',
       'iframe[src*="challenges.cloudflare.com"]',
       'iframe[src*="captcha.cloudflare.com"]'
     ];
