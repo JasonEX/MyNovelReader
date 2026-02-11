@@ -6408,15 +6408,18 @@ blockRedirects() {
           if (cloudflareHosts.some((h2) => targetUrl.hostname === h2)) {
             return true;
           }
+          if (targetUrl.origin === window.location.origin && targetUrl.pathname.startsWith("/cdn-cgi/")) {
+            return true;
+          }
           if (targetUrl.origin === window.location.origin) {
             const blockedPatterns = [
-              /ad[s]?[_-]?/i,
-              /click[_-]?track/i,
-              /redirect/i,
-              /jump[_-]?to/i,
-              /go[_-]?to[_-]?url/i,
-              /link[_-]?out/i,
-              /external/i
+              /(?:^|[/_-])ads?(?:[/_-]|$)/i,
+              /(?:^|[/_-])click[_-]?track/i,
+              /(?:^|[/_-])redirect(?:[/_-]|$)/i,
+              /(?:^|[/_-])jump[_-]?to/i,
+              /(?:^|[/_-])go[_-]?to[_-]?url/i,
+              /(?:^|[/_-])link[_-]?out/i,
+              /(?:^|[/_-])external(?:[/_-]|$)/i
             ];
             return !blockedPatterns.some((p2) => p2.test(targetUrl.pathname));
           }
@@ -6485,6 +6488,9 @@ blockRedirects() {
       const isBlockedExternalUrl = (url, kind) => {
         if (url.protocol !== "http:" && url.protocol !== "https:") return true;
         if (url.origin === window.location.origin) return false;
+        const cfHosts = ["challenges.cloudflare.com", "captcha.cloudflare.com"];
+        if (cfHosts.some((h2) => url.hostname === h2)) return false;
+        if (url.pathname.startsWith("/cdn-cgi/")) return false;
         return kind === "script" || kind === "iframe";
       };
       const isHighEntropyPath = (pathname) => {
@@ -7572,7 +7578,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-01-05";
+  const BUILD_DATE = "2026-02-11";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -21909,6 +21915,17 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           }
           return false;
         }
+        if (isCloudflareChallenge(result.doc)) {
+          const prev = navFailures.get(navKey);
+          const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
+          const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
+          navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+          trimNavFailures(navFailures, MAX_NAV_FAILURES);
+          if (source === "manual" || count === 1) {
+            showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
+          }
+          return false;
+        }
         if (isVipChapterPage(result.doc)) {
           vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
           showToast(VIP_BLOCK_TOAST, "info", 3e3);
@@ -26057,7 +26074,7 @@ ${value}`;
       getSiteProtection().activate({
         blockRedirects: true,
         blockPopups: true,
-        clearTimers: true,
+        clearTimers: false,
         enableRightClick: false,
         enableSelection: false,
         enableCopy: false,

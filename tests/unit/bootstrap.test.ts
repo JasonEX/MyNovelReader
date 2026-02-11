@@ -141,7 +141,7 @@ describe('bootstrap', () => {
       expect.objectContaining({
         blockRedirects: true,
         blockPopups: true,
-        clearTimers: true,
+        clearTimers: false,
       })
     );
   });

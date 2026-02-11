@@ -174,17 +174,27 @@ export class SiteProtection {
           return true;
         }
 
+        // Allow same-origin Cloudflare verification paths (e.g. /cdn-cgi/l/chk_jschl)
+        if (
+          targetUrl.origin === window.location.origin &&
+          targetUrl.pathname.startsWith('/cdn-cgi/')
+        ) {
+          return true;
+        }
+
         // Allow same-origin navigations
         if (targetUrl.origin === window.location.origin) {
-          // Block common ad/redirect patterns
+          // Block common ad/redirect patterns.
+          // Patterns must use word boundaries to avoid false positives:
+          // e.g. /ad/ must not match "/read/", "/thread/", "/upload/"
           const blockedPatterns = [
-            /ad[s]?[_-]?/i,
-            /click[_-]?track/i,
-            /redirect/i,
-            /jump[_-]?to/i,
-            /go[_-]?to[_-]?url/i,
-            /link[_-]?out/i,
-            /external/i,
+            /(?:^|[/_-])ads?(?:[/_-]|$)/i,
+            /(?:^|[/_-])click[_-]?track/i,
+            /(?:^|[/_-])redirect(?:[/_-]|$)/i,
+            /(?:^|[/_-])jump[_-]?to/i,
+            /(?:^|[/_-])go[_-]?to[_-]?url/i,
+            /(?:^|[/_-])link[_-]?out/i,
+            /(?:^|[/_-])external(?:[/_-]|$)/i,
           ];
           return !blockedPatterns.some(p => p.test(targetUrl.pathname));
         }
@@ -275,6 +285,11 @@ export class SiteProtection {
       // Block non-http(s) for scripts/iframes (data:, javascript:, etc.)
       if (url.protocol !== 'http:' && url.protocol !== 'https:') return true;
       if (url.origin === window.location.origin) return false;
+
+      // Allow Cloudflare challenge scripts and iframes so CF verification can complete.
+      const cfHosts = ['challenges.cloudflare.com', 'captcha.cloudflare.com'];
+      if (cfHosts.some(h => url.hostname === h)) return false;
+      if (url.pathname.startsWith('/cdn-cgi/')) return false;
 
       // Always block cross-origin dynamic scripts/iframes to prevent random redirect chains.
       // Users can still navigate manually by clicking normal links.

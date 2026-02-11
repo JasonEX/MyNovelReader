@@ -7,6 +7,7 @@ import { type ConversionMode, convertHTML, convertText } from '@/core/converter'
 import { getParser, type ParsedChapter } from '@/core/parser';
 import { defineStore } from 'pinia';
 import { fetchAndParseUrl } from '@/core/utils/network';
+import { isCloudflareChallenge } from '@/core/protection';
 import type { SiteRule } from '@/core/rules/types';
 
 // Import types from modular files
@@ -468,6 +469,20 @@ export const useReaderStore = defineStore('reader', () => {
         trimNavFailures(navFailures, MAX_NAV_FAILURES);
         if (source === 'manual' || count === 1) {
           showToast(errorMessage, 'error', 2500);
+        }
+        return false;
+      }
+
+      // Cloudflare challenge page: the actual chapter was not returned.
+      // Treat as a transient failure so the backoff/retry mechanism kicks in.
+      if (isCloudflareChallenge(result.doc)) {
+        const prev = navFailures.get(navKey);
+        const count = (prev?.count || 0) + 1;
+        const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 30000);
+        navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
+        trimNavFailures(navFailures, MAX_NAV_FAILURES);
+        if (source === 'manual' || count === 1) {
+          showToast('Cloudflare 验证页面，请在新标签页中完成验证后重试', 'info', 4000);
         }
         return false;
       }

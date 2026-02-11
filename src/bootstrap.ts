@@ -92,12 +92,15 @@ function shouldEnableEarlyProtection(url: string): boolean {
 
 // Activate minimal protection as early as possible to block mobile ad-tech redirects.
 // This is intentionally conservative and will be reconfigured after settings are loaded.
+// NOTE: clearTimers is OFF here because at document-start the DOM is not ready, so
+// isCloudflareChallenge() always returns false and clearTimers would kill CF's challenge
+// scripts. Timers will be cleared later when activate() is called with full options.
 try {
   if (shouldEnableEarlyProtection(window.location.href)) {
     getSiteProtection().activate({
       blockRedirects: true,
       blockPopups: true,
-      clearTimers: true,
+      clearTimers: false,
       enableRightClick: false,
       enableSelection: false,
       enableCopy: false,

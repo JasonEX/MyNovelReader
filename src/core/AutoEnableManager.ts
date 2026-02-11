@@ -9,7 +9,11 @@
  */
 
 import { DetectionEngine, type DetectionEngineResult } from '@/core/detection';
-import { getSiteProtection, isCloudflareChallenge, type ProtectionOptions } from '@/core/protection';
+import {
+  getSiteProtection,
+  isCloudflareChallenge,
+  type ProtectionOptions,
+} from '@/core/protection';
 import { type ParsedChapter, Parser } from '@/core/parser';
 import { createRuleSaver } from '@/core/auto-enable/RuleSaver';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
