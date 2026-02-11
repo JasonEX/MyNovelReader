@@ -367,14 +367,17 @@ export class SiteProtection {
       return false;
     };
 
-    NodeCtor.prototype.appendChild = function (node: Node) {
+    NodeCtor.prototype.appendChild = function <T extends Node>(node: T): T {
       if (shouldBlockNode(node)) return node;
-      return originalAppendChild.call(this, node);
+      return originalAppendChild.call(this, node) as T;
     };
 
-    NodeCtor.prototype.insertBefore = function (newNode: Node, referenceNode: Node | null) {
+    NodeCtor.prototype.insertBefore = function <T extends Node>(
+      newNode: T,
+      referenceNode: Node | null
+    ): T {
       if (shouldBlockNode(newNode)) return newNode;
-      return originalInsertBefore.call(this, newNode, referenceNode);
+      return originalInsertBefore.call(this, newNode, referenceNode) as T;
     };
 
     // Aggressive mode: filter document.write/writeln that injects suspicious external scripts.
@@ -578,12 +581,13 @@ export class SiteProtection {
    * Intercept keyboard events to prevent sites from blocking keys
    */
   private unlockKeyboard(): void {
-    const handler = (e: KeyboardEvent) => {
-      if (this.isMnrEvent(e)) {
+    const handler = (e: Event) => {
+      const ke = e as KeyboardEvent;
+      if (this.isMnrEvent(ke)) {
         return;
       }
-      e.stopImmediatePropagation();
-      e.stopPropagation();
+      ke.stopImmediatePropagation();
+      ke.stopPropagation();
     };
 
     const types: Array<keyof DocumentEventMap> = ['keydown', 'keyup', 'keypress'];

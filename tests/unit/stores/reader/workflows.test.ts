@@ -30,9 +30,13 @@ vi.mock('@/ui/stores/reader/section', () => ({
   parseWithSectionMerge: mockParseWithSectionMerge,
 }));
 
-vi.mock('@/ui/stores/reader/toc', () => ({
-  loadTocEntriesPaged: mockLoadTocEntriesPaged,
-}));
+vi.mock('@/ui/stores/reader/toc', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/ui/stores/reader/toc')>();
+  return {
+    ...actual,
+    loadTocEntriesPaged: mockLoadTocEntriesPaged,
+  };
+});
 
 describe('ReaderStore - workflows', () => {
   beforeEach(() => {

@@ -97,7 +97,7 @@
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-drawer[data-v-6d373c76]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-6d373c76]{transform:translate(0)}.mnr-drawer-overlay[data-v-6d373c76]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-6d373c76],.mnr-fade-leave-active[data-v-6d373c76]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-6d373c76],.mnr-fade-leave-to[data-v-6d373c76]{opacity:0}.mnr-drawer-header[data-v-6d373c76]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-6d373c76]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-6d373c76]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-6d373c76]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-6d373c76]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-6d373c76]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-6d373c76]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-6d373c76 1s linear infinite}@keyframes mnr-spin-6d373c76{to{transform:rotate(360deg)}}.mnr-drawer-empty[data-v-6d373c76]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-6d373c76]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-6d373c76]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-6d373c76]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-6d373c76]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-6d373c76]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-6d373c76]{color:#4caf50}.mnr-stat-session[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list[data-v-6d373c76]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-6d373c76]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-6d373c76]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-6d373c76]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-6d373c76]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-6d373c76]{color:#4caf50}.mnr-cached-icon[data-v-6d373c76]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-6d373c76]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-6d373c76]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-d0da9bd2]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-d0da9bd2] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-d0da9bd2] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-d0da9bd2] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-d0da9bd2]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-d0da9bd2]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-d0da9bd2]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-d0da9bd2]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-d0da9bd2]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-d0da9bd2]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-d0da9bd2]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-d0da9bd2],.mnr-loading-next[data-v-d0da9bd2]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}.mnr-loading-spinner.small[data-v-d0da9bd2]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);border-radius:50%;animation:mnr-spin-d0da9bd2 1s linear infinite}.mnr-loading-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-d0da9bd2]{background:#0009;color:#fff}}.mnr-loading-spinner[data-v-d0da9bd2]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2;border-radius:50%;animation:mnr-spin-d0da9bd2 .8s cubic-bezier(.4,0,.2,1) infinite}@keyframes mnr-spin-d0da9bd2{to{transform:rotate(360deg)}}.mnr-toast[data-v-d0da9bd2]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-d0da9bd2]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-d0da9bd2],.mnr-toast-leave-active[data-v-d0da9bd2]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-d0da9bd2],.mnr-toast-leave-to[data-v-d0da9bd2]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}@media(min-width:768px){.mnr-reader-content[data-v-d0da9bd2]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-d0da9bd2]{padding:40px}}.mnr-rule-editor-overlay[data-v-d0da9bd2]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-d0da9bd2]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-d0da9bd2]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-340f8e56]{border-radius:50%;animation:mnr-spin-340f8e56 .8s cubic-bezier(.4,0,.2,1) infinite}.mnr-spinner.small[data-v-340f8e56]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-340f8e56]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}.mnr-spinner.large[data-v-340f8e56]{width:64px;height:64px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}@keyframes mnr-spin-340f8e56{to{transform:rotate(360deg)}}.mnr-toast[data-v-53e91417]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-53e91417]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-53e91417],.mnr-toast-leave-active[data-v-53e91417]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-53e91417],.mnr-toast-leave-to[data-v-53e91417]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}.mnr-loading-overlay[data-v-f2b9dbb7]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-f2b9dbb7]{background:#0009;color:#fff}}.mnr-loading-overlay--inline[data-v-f2b9dbb7]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px;color:#333}.mnr-drawer[data-v-fe73b01a]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-fe73b01a]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-fe73b01a]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-drawer-empty[data-v-fe73b01a]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-fe73b01a]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-fe73b01a]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-fe73b01a]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-fe73b01a]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-fe73b01a]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-fe73b01a]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-3c301d71]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-3c301d71]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-3c301d71]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-3c301d71] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-3c301d71] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-3c301d71] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-3c301d71]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-3c301d71]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-3c301d71]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-3c301d71]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-3c301d71]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-3c301d71]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-3c301d71]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-3c301d71],.mnr-loading-next[data-v-3c301d71]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}@media(min-width:768px){.mnr-reader-content[data-v-3c301d71]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-3c301d71]{padding:40px}}.mnr-rule-editor-overlay[data-v-3c301d71]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-3c301d71]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-3c301d71]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -6702,11 +6702,12 @@ enableCopy() {
     }
 unlockKeyboard() {
       const handler = (e) => {
-        if (this.isMnrEvent(e)) {
+        const ke = e;
+        if (this.isMnrEvent(ke)) {
           return;
         }
-        e.stopImmediatePropagation();
-        e.stopPropagation();
+        ke.stopImmediatePropagation();
+        ke.stopPropagation();
       };
       const types = ["keydown", "keyup", "keypress"];
       types.forEach((type) => document.addEventListener(type, handler, true));
@@ -10693,6 +10694,48 @@ function defineComponent(options, extraOptions) {
       ret = [];
     }
     return ret;
+  }
+  function renderSlot(slots, name, props = {}, fallback, noSlotted) {
+    if (currentRenderingInstance.ce || currentRenderingInstance.parent && isAsyncWrapper(currentRenderingInstance.parent) && currentRenderingInstance.parent.ce) {
+      const hasProps = Object.keys(props).length > 0;
+      return openBlock(), createBlock(
+        Fragment,
+        null,
+        [createVNode("slot", props, fallback)],
+        hasProps ? -2 : 64
+      );
+    }
+    let slot = slots[name];
+    if (slot && slot._c) {
+      slot._d = false;
+    }
+    openBlock();
+    const validSlotContent = slot && ensureValidVNode(slot(props));
+    const slotKey = props.key ||
+
+validSlotContent && validSlotContent.key;
+    const rendered = createBlock(
+      Fragment,
+      {
+        key: (slotKey && !isSymbol(slotKey) ? slotKey : `_${name}`) +
+(!validSlotContent && fallback ? "_fb" : "")
+      },
+      validSlotContent || [],
+      validSlotContent && slots._ === 1 ? 64 : -2
+    );
+    if (slot && slot._c) {
+      slot._d = true;
+    }
+    return rendered;
+  }
+  function ensureValidVNode(vnodes) {
+    return vnodes.some((child) => {
+      if (!isVNode(child)) return true;
+      if (child.type === Comment) return false;
+      if (child.type === Fragment && !ensureValidVNode(child.children))
+        return false;
+      return true;
+    }) ? vnodes : null;
   }
   const getPublicInstance = (i) => {
     if (!i) return null;
@@ -14983,6 +15026,609 @@ mounted(el, { value }) {
       return res;
     }
     return container;
+  }
+  /*!
+   * pinia v2.3.1
+   * (c) 2025 Eduardo San Martin Morote
+   * @license MIT
+   */
+  let activePinia;
+  const setActivePinia = (pinia2) => activePinia = pinia2;
+  const piniaSymbol = (
+Symbol()
+  );
+  function isPlainObject(o) {
+    return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
+  }
+  var MutationType;
+  (function(MutationType2) {
+    MutationType2["direct"] = "direct";
+    MutationType2["patchObject"] = "patch object";
+    MutationType2["patchFunction"] = "patch function";
+  })(MutationType || (MutationType = {}));
+  function createPinia() {
+    const scope = effectScope(true);
+    const state = scope.run(() => ref({}));
+    let _p = [];
+    let toBeInstalled = [];
+    const pinia2 = markRaw({
+      install(app2) {
+        setActivePinia(pinia2);
+        {
+          pinia2._a = app2;
+          app2.provide(piniaSymbol, pinia2);
+          app2.config.globalProperties.$pinia = pinia2;
+          toBeInstalled.forEach((plugin) => _p.push(plugin));
+          toBeInstalled = [];
+        }
+      },
+      use(plugin) {
+        if (!this._a && true) {
+          toBeInstalled.push(plugin);
+        } else {
+          _p.push(plugin);
+        }
+        return this;
+      },
+      _p,
+
+_a: null,
+      _e: scope,
+      _s: new Map(),
+      state
+    });
+    return pinia2;
+  }
+  const noop = () => {
+  };
+  function addSubscription(subscriptions, callback, detached, onCleanup = noop) {
+    subscriptions.push(callback);
+    const removeSubscription = () => {
+      const idx = subscriptions.indexOf(callback);
+      if (idx > -1) {
+        subscriptions.splice(idx, 1);
+        onCleanup();
+      }
+    };
+    if (!detached && getCurrentScope()) {
+      onScopeDispose(removeSubscription);
+    }
+    return removeSubscription;
+  }
+  function triggerSubscriptions(subscriptions, ...args) {
+    subscriptions.slice().forEach((callback) => {
+      callback(...args);
+    });
+  }
+  const fallbackRunWithContext = (fn) => fn();
+  const ACTION_MARKER = Symbol();
+  const ACTION_NAME = Symbol();
+  function mergeReactiveObjects(target, patchToApply) {
+    if (target instanceof Map && patchToApply instanceof Map) {
+      patchToApply.forEach((value, key) => target.set(key, value));
+    } else if (target instanceof Set && patchToApply instanceof Set) {
+      patchToApply.forEach(target.add, target);
+    }
+    for (const key in patchToApply) {
+      if (!patchToApply.hasOwnProperty(key))
+        continue;
+      const subPatch = patchToApply[key];
+      const targetValue = target[key];
+      if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) {
+        target[key] = mergeReactiveObjects(targetValue, subPatch);
+      } else {
+        target[key] = subPatch;
+      }
+    }
+    return target;
+  }
+  const skipHydrateSymbol = (
+Symbol()
+  );
+  function shouldHydrate(obj) {
+    return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
+  }
+  const { assign } = Object;
+  function isComputed(o) {
+    return !!(isRef(o) && o.effect);
+  }
+  function createOptionsStore(id, options, pinia2, hot) {
+    const { state, actions, getters } = options;
+    const initialState = pinia2.state.value[id];
+    let store;
+    function setup() {
+      if (!initialState && true) {
+        {
+          pinia2.state.value[id] = state ? state() : {};
+        }
+      }
+      const localState = toRefs(pinia2.state.value[id]);
+      return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
+        computedGetters[name] = markRaw(computed(() => {
+          setActivePinia(pinia2);
+          const store2 = pinia2._s.get(id);
+          return getters[name].call(store2, store2);
+        }));
+        return computedGetters;
+      }, {}));
+    }
+    store = createSetupStore(id, setup, options, pinia2, hot, true);
+    return store;
+  }
+  function createSetupStore($id, setup, options = {}, pinia2, hot, isOptionsStore) {
+    let scope;
+    const optionsForPlugin = assign({ actions: {} }, options);
+    const $subscribeOptions = { deep: true };
+    let isListening;
+    let isSyncListening;
+    let subscriptions = [];
+    let actionSubscriptions = [];
+    let debuggerEvents;
+    const initialState = pinia2.state.value[$id];
+    if (!isOptionsStore && !initialState && true) {
+      {
+        pinia2.state.value[$id] = {};
+      }
+    }
+    ref({});
+    let activeListener;
+    function $patch(partialStateOrMutator) {
+      let subscriptionMutation;
+      isListening = isSyncListening = false;
+      if (typeof partialStateOrMutator === "function") {
+        partialStateOrMutator(pinia2.state.value[$id]);
+        subscriptionMutation = {
+          type: MutationType.patchFunction,
+          storeId: $id,
+          events: debuggerEvents
+        };
+      } else {
+        mergeReactiveObjects(pinia2.state.value[$id], partialStateOrMutator);
+        subscriptionMutation = {
+          type: MutationType.patchObject,
+          payload: partialStateOrMutator,
+          storeId: $id,
+          events: debuggerEvents
+        };
+      }
+      const myListenerId = activeListener = Symbol();
+      nextTick().then(() => {
+        if (activeListener === myListenerId) {
+          isListening = true;
+        }
+      });
+      isSyncListening = true;
+      triggerSubscriptions(subscriptions, subscriptionMutation, pinia2.state.value[$id]);
+    }
+    const $reset = isOptionsStore ? function $reset2() {
+      const { state } = options;
+      const newState = state ? state() : {};
+      this.$patch(($state) => {
+        assign($state, newState);
+      });
+    } : (
+noop
+    );
+    function $dispose() {
+      scope.stop();
+      subscriptions = [];
+      actionSubscriptions = [];
+      pinia2._s.delete($id);
+    }
+    const action = (fn, name = "") => {
+      if (ACTION_MARKER in fn) {
+        fn[ACTION_NAME] = name;
+        return fn;
+      }
+      const wrappedAction = function() {
+        setActivePinia(pinia2);
+        const args = Array.from(arguments);
+        const afterCallbackList = [];
+        const onErrorCallbackList = [];
+        function after(callback) {
+          afterCallbackList.push(callback);
+        }
+        function onError(callback) {
+          onErrorCallbackList.push(callback);
+        }
+        triggerSubscriptions(actionSubscriptions, {
+          args,
+          name: wrappedAction[ACTION_NAME],
+          store,
+          after,
+          onError
+        });
+        let ret;
+        try {
+          ret = fn.apply(this && this.$id === $id ? this : store, args);
+        } catch (error) {
+          triggerSubscriptions(onErrorCallbackList, error);
+          throw error;
+        }
+        if (ret instanceof Promise) {
+          return ret.then((value) => {
+            triggerSubscriptions(afterCallbackList, value);
+            return value;
+          }).catch((error) => {
+            triggerSubscriptions(onErrorCallbackList, error);
+            return Promise.reject(error);
+          });
+        }
+        triggerSubscriptions(afterCallbackList, ret);
+        return ret;
+      };
+      wrappedAction[ACTION_MARKER] = true;
+      wrappedAction[ACTION_NAME] = name;
+      return wrappedAction;
+    };
+    const partialStore = {
+      _p: pinia2,
+$id,
+      $onAction: addSubscription.bind(null, actionSubscriptions),
+      $patch,
+      $reset,
+      $subscribe(callback, options2 = {}) {
+        const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
+        const stopWatcher = scope.run(() => watch(() => pinia2.state.value[$id], (state) => {
+          if (options2.flush === "sync" ? isSyncListening : isListening) {
+            callback({
+              storeId: $id,
+              type: MutationType.direct,
+              events: debuggerEvents
+            }, state);
+          }
+        }, assign({}, $subscribeOptions, options2)));
+        return removeSubscription;
+      },
+      $dispose
+    };
+    const store = reactive(partialStore);
+    pinia2._s.set($id, store);
+    const runWithContext = pinia2._a && pinia2._a.runWithContext || fallbackRunWithContext;
+    const setupStore = runWithContext(() => pinia2._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
+    for (const key in setupStore) {
+      const prop = setupStore[key];
+      if (isRef(prop) && !isComputed(prop) || isReactive(prop)) {
+        if (!isOptionsStore) {
+          if (initialState && shouldHydrate(prop)) {
+            if (isRef(prop)) {
+              prop.value = initialState[key];
+            } else {
+              mergeReactiveObjects(prop, initialState[key]);
+            }
+          }
+          {
+            pinia2.state.value[$id][key] = prop;
+          }
+        }
+      } else if (typeof prop === "function") {
+        const actionValue = action(prop, key);
+        {
+          setupStore[key] = actionValue;
+        }
+        optionsForPlugin.actions[key] = prop;
+      } else ;
+    }
+    {
+      assign(store, setupStore);
+      assign(toRaw(store), setupStore);
+    }
+    Object.defineProperty(store, "$state", {
+      get: () => pinia2.state.value[$id],
+      set: (state) => {
+        $patch(($state) => {
+          assign($state, state);
+        });
+      }
+    });
+    pinia2._p.forEach((extender) => {
+      {
+        assign(store, scope.run(() => extender({
+          store,
+          app: pinia2._a,
+          pinia: pinia2,
+          options: optionsForPlugin
+        })));
+      }
+    });
+    if (initialState && isOptionsStore && options.hydrate) {
+      options.hydrate(store.$state, initialState);
+    }
+    isListening = true;
+    isSyncListening = true;
+    return store;
+  }
+
+function defineStore(idOrOptions, setup, setupOptions) {
+    let id;
+    let options;
+    const isSetupStore = typeof setup === "function";
+    if (typeof idOrOptions === "string") {
+      id = idOrOptions;
+      options = isSetupStore ? setupOptions : setup;
+    } else {
+      options = idOrOptions;
+      id = idOrOptions.id;
+    }
+    function useStore(pinia2, hot) {
+      const hasContext = hasInjectionContext();
+      pinia2 =
+
+pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
+      if (pinia2)
+        setActivePinia(pinia2);
+      pinia2 = activePinia;
+      if (!pinia2._s.has(id)) {
+        if (isSetupStore) {
+          createSetupStore(id, setup, options, pinia2);
+        } else {
+          createOptionsStore(id, options, pinia2);
+        }
+      }
+      const store = pinia2._s.get(id);
+      return store;
+    }
+    useStore.$id = id;
+    return useStore;
+  }
+  const MAX_CACHED_CHAPTERS = 8;
+  const MAX_SESSION_CACHE = 500;
+  const MAX_NAV_FAILURES = 200;
+  const VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
+  function normalizeUrlForFetch(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return normalized.replace(/#.*$/, "");
+    }
+  }
+  function normalizeUrl(url) {
+    return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
+  }
+  function normalizeUrlForBlock(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return normalizeUrl(u.toString());
+    } catch {
+      return normalizeUrl(normalized.replace(/#.*$/, ""));
+    }
+  }
+  function resolveUrl(href, base) {
+    try {
+      return new URL(href, base).toString();
+    } catch {
+      return null;
+    }
+  }
+  function extractUrlPattern(url) {
+    try {
+      const u = new URL(url);
+      return u.pathname.replace(/\d+/g, "{N}");
+    } catch {
+      return url.replace(/\d+/g, "{N}");
+    }
+  }
+  function extractBookId(url) {
+    try {
+      const u = new URL(url);
+      const patterns = [
+        /\/book\/(\d+)/,
+        /\/chapter\/(\d+)\//,
+        /\/(\d+)\/\d+(?:\.html?)?$/,
+        /\/(\d+)_\d+(?:\.html?)?$/,
+        /[?&](?:book_?id|bid|id)=(\d+)/i
+      ];
+      for (const p2 of patterns) {
+        const m = u.pathname.match(p2) || u.search.match(p2);
+        if (m) return m[1];
+      }
+    } catch {
+    }
+    return null;
+  }
+  function extractChapterNumber(title) {
+    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
+    if (match1) return parseInt(match1[1], 10);
+    const match2 = title.match(/^(\d+)[.、\s]/);
+    if (match2) return parseInt(match2[1], 10);
+    const match3 = title.match(/Chapter\s*(\d+)/i);
+    if (match3) return parseInt(match3[1], 10);
+    return null;
+  }
+  function normalizeTocPagerText(text2) {
+    return text2.replace(/\s+/g, "").trim();
+  }
+  function isTocNextPageText(text2) {
+    const t = normalizeTocPagerText(text2).toLowerCase();
+    if (!t) return false;
+    if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
+      return true;
+    }
+    if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
+      return true;
+    }
+    return false;
+  }
+  function normalizeUrlForCompare(url) {
+    try {
+      const u = new URL(url);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return url;
+    }
+  }
+  function extractTocPaginationSeed(indexUrl) {
+    try {
+      const u = new URL(indexUrl);
+      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
+      return (m == null ? void 0 : m[1]) || null;
+    } catch {
+      return null;
+    }
+  }
+  function isValidTocPaginationUrl(candidateUrl, indexUrl) {
+    try {
+      const c = new URL(candidateUrl);
+      const idx = new URL(indexUrl);
+      if (c.protocol !== "http:" && c.protocol !== "https:") return false;
+      if (c.origin !== idx.origin) return false;
+      const seed = extractTocPaginationSeed(indexUrl);
+      if (seed && !c.pathname.includes(seed)) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function normalizeTextForVipDetection(text2) {
+    return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、""''（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
+  }
+  function generateBookId(indexUrl) {
+    try {
+      const url = new URL(indexUrl);
+      return url.hostname + url.pathname.replace(/\//g, "_");
+    } catch {
+      return btoa(indexUrl).slice(0, 32);
+    }
+  }
+  function encodeBase64UrlUtf8(value) {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  }
+  function parseStoredJson(stored) {
+    if (stored === null || stored === void 0) return null;
+    if (typeof stored === "string") {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return null;
+      }
+    }
+    if (typeof stored === "object") {
+      return stored;
+    }
+    return null;
+  }
+  function getCacheV1Key(bookId) {
+    return `mnr_cache_${bookId}`;
+  }
+  function getCacheV2IndexKey(bookId) {
+    return `mnr_cache_v2_index_${bookId}`;
+  }
+  function getCacheV2ChapterKey(bookId, url) {
+    return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
+  }
+  function getCurrentBookCacheKey(indexUrl) {
+    if (!indexUrl) return null;
+    return { bookId: generateBookId(indexUrl), indexUrl };
+  }
+  function persistCachedChapter(cacheBook, url, cached) {
+    if (typeof GM_setValue === "undefined") return false;
+    try {
+      GM_setValue(getCacheV2ChapterKey(cacheBook.bookId, url), JSON.stringify(cached));
+      return true;
+    } catch (e) {
+      console.error("[MNR] Failed to persist cached chapter:", e);
+      return false;
+    }
+  }
+  function getPersistedCachedChapter(cacheBook, url) {
+    var _a, _b, _c;
+    if (typeof GM_getValue === "undefined") return null;
+    try {
+      const storedV2 = GM_getValue(getCacheV2ChapterKey(cacheBook.bookId, url), null);
+      const cachedV2 = parseStoredJson(storedV2);
+      if ((_a = cachedV2 == null ? void 0 : cachedV2.chapter) == null ? void 0 : _a.url) {
+        return cachedV2;
+      }
+      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
+      const dataV1 = parseStoredJson(storedV1);
+      const cachedV1 = (_b = dataV1 == null ? void 0 : dataV1.chapters) == null ? void 0 : _b[url];
+      if ((_c = cachedV1 == null ? void 0 : cachedV1.chapter) == null ? void 0 : _c.url) {
+        return cachedV1;
+      }
+    } catch (e) {
+      console.error("[MNR] Failed to load persisted chapter:", e);
+    }
+    return null;
+  }
+  function persistCache(cacheBook, cachedContents, persistedUrls) {
+    if (typeof GM_setValue === "undefined") return persistedUrls;
+    const persistedSet = new Set(persistedUrls);
+    for (const [url, cached] of cachedContents) {
+      const persisted = persistCachedChapter(cacheBook, url, cached);
+      if (persisted) {
+        persistedSet.add(url);
+      }
+    }
+    if (persistedSet.size === 0) return persistedSet;
+    const indexData = {
+      version: 2,
+      bookId: cacheBook.bookId,
+      indexUrl: cacheBook.indexUrl,
+      urls: Array.from(persistedSet),
+      lastUpdated: Date.now()
+    };
+    try {
+      GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
+    } catch (e) {
+      console.error("[MNR] Failed to persist cache index:", e);
+    }
+    return persistedSet;
+  }
+  function restoreCache(cacheBook) {
+    if (typeof GM_getValue === "undefined") return null;
+    try {
+      const storedV2 = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
+      const dataV2 = parseStoredJson(storedV2);
+      if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
+        return new Set(dataV2.urls);
+      }
+      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
+      const dataV1 = parseStoredJson(storedV1);
+      if ((dataV1 == null ? void 0 : dataV1.chapters) && typeof dataV1.chapters === "object") {
+        return new Set(Object.keys(dataV1.chapters));
+      }
+    } catch (e) {
+      console.error("[MNR] Failed to restore cache:", e);
+    }
+    return null;
+  }
+  function clearPersistedCache(cacheBook, persistedUrls) {
+    if (typeof GM_deleteValue === "undefined") return;
+    let urls = new Set(persistedUrls);
+    if (typeof GM_getValue !== "undefined") {
+      const storedIndex = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
+      const dataV2 = parseStoredJson(storedIndex);
+      if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
+        urls = new Set(dataV2.urls);
+      }
+    }
+    try {
+      const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
+      if (urls.size > 0) {
+        for (const url of urls) {
+          GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
+        }
+      } else if (typeof GM_listValues === "function") {
+        for (const key of GM_listValues()) {
+          if (key.startsWith(chapterKeyPrefix)) {
+            GM_deleteValue(key);
+          }
+        }
+      }
+      GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
+      GM_deleteValue(getCacheV1Key(cacheBook.bookId));
+    } catch (e) {
+      console.error("[MNR] Failed to clear cache:", e);
+    }
   }
   const s_2_t = {
     "·": "‧",
@@ -20499,466 +21145,46 @@ mounted(el, { value }) {
       return html2;
     }
   }
-  /*!
-   * pinia v2.3.1
-   * (c) 2025 Eduardo San Martin Morote
-   * @license MIT
-   */
-  let activePinia;
-  const setActivePinia = (pinia2) => activePinia = pinia2;
-  const piniaSymbol = (
-Symbol()
-  );
-  function isPlainObject(o) {
-    return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
-  }
-  var MutationType;
-  (function(MutationType2) {
-    MutationType2["direct"] = "direct";
-    MutationType2["patchObject"] = "patch object";
-    MutationType2["patchFunction"] = "patch function";
-  })(MutationType || (MutationType = {}));
-  function createPinia() {
-    const scope = effectScope(true);
-    const state = scope.run(() => ref({}));
-    let _p = [];
-    let toBeInstalled = [];
-    const pinia2 = markRaw({
-      install(app2) {
-        setActivePinia(pinia2);
-        {
-          pinia2._a = app2;
-          app2.provide(piniaSymbol, pinia2);
-          app2.config.globalProperties.$pinia = pinia2;
-          toBeInstalled.forEach((plugin) => _p.push(plugin));
-          toBeInstalled = [];
-        }
-      },
-      use(plugin) {
-        if (!this._a && true) {
-          toBeInstalled.push(plugin);
-        } else {
-          _p.push(plugin);
-        }
-        return this;
-      },
-      _p,
-
-_a: null,
-      _e: scope,
-      _s: new Map(),
-      state
-    });
-    return pinia2;
-  }
-  const noop = () => {
-  };
-  function addSubscription(subscriptions, callback, detached, onCleanup = noop) {
-    subscriptions.push(callback);
-    const removeSubscription = () => {
-      const idx = subscriptions.indexOf(callback);
-      if (idx > -1) {
-        subscriptions.splice(idx, 1);
-        onCleanup();
+  async function applyConversionToChapterEntry(chapters, originalContents, originalTitles, entryId, mode) {
+    const entry = chapters.find((e) => e.id === entryId);
+    if (!entry) return;
+    const originalContent = originalContents.get(entryId);
+    const originalTitle = originalTitles.get(entryId);
+    const updates = {};
+    if (mode === "none") {
+      if (originalContent && entry.chapter.content !== originalContent) {
+        updates.content = originalContent;
       }
-    };
-    if (!detached && getCurrentScope()) {
-      onScopeDispose(removeSubscription);
-    }
-    return removeSubscription;
-  }
-  function triggerSubscriptions(subscriptions, ...args) {
-    subscriptions.slice().forEach((callback) => {
-      callback(...args);
-    });
-  }
-  const fallbackRunWithContext = (fn) => fn();
-  const ACTION_MARKER = Symbol();
-  const ACTION_NAME = Symbol();
-  function mergeReactiveObjects(target, patchToApply) {
-    if (target instanceof Map && patchToApply instanceof Map) {
-      patchToApply.forEach((value, key) => target.set(key, value));
-    } else if (target instanceof Set && patchToApply instanceof Set) {
-      patchToApply.forEach(target.add, target);
-    }
-    for (const key in patchToApply) {
-      if (!patchToApply.hasOwnProperty(key))
-        continue;
-      const subPatch = patchToApply[key];
-      const targetValue = target[key];
-      if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) {
-        target[key] = mergeReactiveObjects(targetValue, subPatch);
-      } else {
-        target[key] = subPatch;
+      if (originalTitle) {
+        updates.title = originalTitle.title;
+        updates.bookTitle = originalTitle.bookTitle;
       }
-    }
-    return target;
-  }
-  const skipHydrateSymbol = (
-Symbol()
-  );
-  function shouldHydrate(obj) {
-    return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
-  }
-  const { assign } = Object;
-  function isComputed(o) {
-    return !!(isRef(o) && o.effect);
-  }
-  function createOptionsStore(id, options, pinia2, hot) {
-    const { state, actions, getters } = options;
-    const initialState = pinia2.state.value[id];
-    let store;
-    function setup() {
-      if (!initialState && true) {
-        {
-          pinia2.state.value[id] = state ? state() : {};
-        }
-      }
-      const localState = toRefs(pinia2.state.value[id]);
-      return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
-        computedGetters[name] = markRaw(computed(() => {
-          setActivePinia(pinia2);
-          const store2 = pinia2._s.get(id);
-          return getters[name].call(store2, store2);
-        }));
-        return computedGetters;
-      }, {}));
-    }
-    store = createSetupStore(id, setup, options, pinia2, hot, true);
-    return store;
-  }
-  function createSetupStore($id, setup, options = {}, pinia2, hot, isOptionsStore) {
-    let scope;
-    const optionsForPlugin = assign({ actions: {} }, options);
-    const $subscribeOptions = { deep: true };
-    let isListening;
-    let isSyncListening;
-    let subscriptions = [];
-    let actionSubscriptions = [];
-    let debuggerEvents;
-    const initialState = pinia2.state.value[$id];
-    if (!isOptionsStore && !initialState && true) {
-      {
-        pinia2.state.value[$id] = {};
-      }
-    }
-    ref({});
-    let activeListener;
-    function $patch(partialStateOrMutator) {
-      let subscriptionMutation;
-      isListening = isSyncListening = false;
-      if (typeof partialStateOrMutator === "function") {
-        partialStateOrMutator(pinia2.state.value[$id]);
-        subscriptionMutation = {
-          type: MutationType.patchFunction,
-          storeId: $id,
-          events: debuggerEvents
-        };
-      } else {
-        mergeReactiveObjects(pinia2.state.value[$id], partialStateOrMutator);
-        subscriptionMutation = {
-          type: MutationType.patchObject,
-          payload: partialStateOrMutator,
-          storeId: $id,
-          events: debuggerEvents
-        };
-      }
-      const myListenerId = activeListener = Symbol();
-      nextTick().then(() => {
-        if (activeListener === myListenerId) {
-          isListening = true;
-        }
-      });
-      isSyncListening = true;
-      triggerSubscriptions(subscriptions, subscriptionMutation, pinia2.state.value[$id]);
-    }
-    const $reset = isOptionsStore ? function $reset2() {
-      const { state } = options;
-      const newState = state ? state() : {};
-      this.$patch(($state) => {
-        assign($state, newState);
-      });
-    } : (
-noop
-    );
-    function $dispose() {
-      scope.stop();
-      subscriptions = [];
-      actionSubscriptions = [];
-      pinia2._s.delete($id);
-    }
-    const action = (fn, name = "") => {
-      if (ACTION_MARKER in fn) {
-        fn[ACTION_NAME] = name;
-        return fn;
-      }
-      const wrappedAction = function() {
-        setActivePinia(pinia2);
-        const args = Array.from(arguments);
-        const afterCallbackList = [];
-        const onErrorCallbackList = [];
-        function after(callback) {
-          afterCallbackList.push(callback);
-        }
-        function onError(callback) {
-          onErrorCallbackList.push(callback);
-        }
-        triggerSubscriptions(actionSubscriptions, {
-          args,
-          name: wrappedAction[ACTION_NAME],
-          store,
-          after,
-          onError
-        });
-        let ret;
-        try {
-          ret = fn.apply(this && this.$id === $id ? this : store, args);
-        } catch (error) {
-          triggerSubscriptions(onErrorCallbackList, error);
-          throw error;
-        }
-        if (ret instanceof Promise) {
-          return ret.then((value) => {
-            triggerSubscriptions(afterCallbackList, value);
-            return value;
-          }).catch((error) => {
-            triggerSubscriptions(onErrorCallbackList, error);
-            return Promise.reject(error);
-          });
-        }
-        triggerSubscriptions(afterCallbackList, ret);
-        return ret;
-      };
-      wrappedAction[ACTION_MARKER] = true;
-      wrappedAction[ACTION_NAME] = name;
-      return wrappedAction;
-    };
-    const partialStore = {
-      _p: pinia2,
-$id,
-      $onAction: addSubscription.bind(null, actionSubscriptions),
-      $patch,
-      $reset,
-      $subscribe(callback, options2 = {}) {
-        const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
-        const stopWatcher = scope.run(() => watch(() => pinia2.state.value[$id], (state) => {
-          if (options2.flush === "sync" ? isSyncListening : isListening) {
-            callback({
-              storeId: $id,
-              type: MutationType.direct,
-              events: debuggerEvents
-            }, state);
-          }
-        }, assign({}, $subscribeOptions, options2)));
-        return removeSubscription;
-      },
-      $dispose
-    };
-    const store = reactive(partialStore);
-    pinia2._s.set($id, store);
-    const runWithContext = pinia2._a && pinia2._a.runWithContext || fallbackRunWithContext;
-    const setupStore = runWithContext(() => pinia2._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
-    for (const key in setupStore) {
-      const prop = setupStore[key];
-      if (isRef(prop) && !isComputed(prop) || isReactive(prop)) {
-        if (!isOptionsStore) {
-          if (initialState && shouldHydrate(prop)) {
-            if (isRef(prop)) {
-              prop.value = initialState[key];
-            } else {
-              mergeReactiveObjects(prop, initialState[key]);
-            }
-          }
-          {
-            pinia2.state.value[$id][key] = prop;
-          }
-        }
-      } else if (typeof prop === "function") {
-        const actionValue = action(prop, key);
-        {
-          setupStore[key] = actionValue;
-        }
-        optionsForPlugin.actions[key] = prop;
-      } else ;
-    }
-    {
-      assign(store, setupStore);
-      assign(toRaw(store), setupStore);
-    }
-    Object.defineProperty(store, "$state", {
-      get: () => pinia2.state.value[$id],
-      set: (state) => {
-        $patch(($state) => {
-          assign($state, state);
-        });
-      }
-    });
-    pinia2._p.forEach((extender) => {
-      {
-        assign(store, scope.run(() => extender({
-          store,
-          app: pinia2._a,
-          pinia: pinia2,
-          options: optionsForPlugin
-        })));
-      }
-    });
-    if (initialState && isOptionsStore && options.hydrate) {
-      options.hydrate(store.$state, initialState);
-    }
-    isListening = true;
-    isSyncListening = true;
-    return store;
-  }
-
-function defineStore(idOrOptions, setup, setupOptions) {
-    let id;
-    let options;
-    const isSetupStore = typeof setup === "function";
-    if (typeof idOrOptions === "string") {
-      id = idOrOptions;
-      options = isSetupStore ? setupOptions : setup;
     } else {
-      options = idOrOptions;
-      id = idOrOptions.id;
-    }
-    function useStore(pinia2, hot) {
-      const hasContext = hasInjectionContext();
-      pinia2 =
-
-pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
-      if (pinia2)
-        setActivePinia(pinia2);
-      pinia2 = activePinia;
-      if (!pinia2._s.has(id)) {
-        if (isSetupStore) {
-          createSetupStore(id, setup, options, pinia2);
-        } else {
-          createOptionsStore(id, options, pinia2);
-        }
+      if (originalContent) {
+        updates.content = await convertHTML(originalContent, mode);
       }
-      const store = pinia2._s.get(id);
-      return store;
-    }
-    useStore.$id = id;
-    return useStore;
-  }
-  const MAX_CACHED_CHAPTERS = 8;
-  const MAX_SESSION_CACHE = 500;
-  const MAX_NAV_FAILURES = 200;
-  const VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
-  function normalizeUrlForFetch(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return normalized.replace(/#.*$/, "");
-    }
-  }
-  function normalizeUrl(url) {
-    return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
-  }
-  function normalizeUrlForBlock(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = "";
-      return normalizeUrl(u.toString());
-    } catch {
-      return normalizeUrl(normalized.replace(/#.*$/, ""));
-    }
-  }
-  function resolveUrl(href, base) {
-    try {
-      return new URL(href, base).toString();
-    } catch {
-      return null;
-    }
-  }
-  function extractUrlPattern(url) {
-    try {
-      const u = new URL(url);
-      return u.pathname.replace(/\d+/g, "{N}");
-    } catch {
-      return url.replace(/\d+/g, "{N}");
-    }
-  }
-  function extractBookId(url) {
-    try {
-      const u = new URL(url);
-      const patterns = [
-        /\/book\/(\d+)/,
-        /\/chapter\/(\d+)\//,
-        /\/(\d+)\/\d+(?:\.html?)?$/,
-        /\/(\d+)_\d+(?:\.html?)?$/,
-        /[?&](?:book_?id|bid|id)=(\d+)/i
-      ];
-      for (const p2 of patterns) {
-        const m = u.pathname.match(p2) || u.search.match(p2);
-        if (m) return m[1];
+      if (originalTitle) {
+        updates.title = await convertText(originalTitle.title, mode);
+        updates.bookTitle = originalTitle.bookTitle ? await convertText(originalTitle.bookTitle, mode) : originalTitle.bookTitle;
       }
-    } catch {
     }
-    return null;
-  }
-  function extractChapterNumber(title) {
-    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
-    if (match1) return parseInt(match1[1], 10);
-    const match2 = title.match(/^(\d+)[.、\s]/);
-    if (match2) return parseInt(match2[1], 10);
-    const match3 = title.match(/Chapter\s*(\d+)/i);
-    if (match3) return parseInt(match3[1], 10);
-    return null;
-  }
-  function normalizeTocPagerText(text2) {
-    return text2.replace(/\s+/g, "").trim();
-  }
-  function isTocNextPageText(text2) {
-    const t = normalizeTocPagerText(text2).toLowerCase();
-    if (!t) return false;
-    if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
-      return true;
-    }
-    if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
-      return true;
-    }
-    return false;
-  }
-  function normalizeUrlForCompare(url) {
-    try {
-      const u = new URL(url);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return url;
+    if (Object.keys(updates).length > 0) {
+      entry.chapter = { ...entry.chapter, ...updates };
     }
   }
-  function extractTocPaginationSeed(indexUrl) {
-    try {
-      const u = new URL(indexUrl);
-      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
-      return (m == null ? void 0 : m[1]) || null;
-    } catch {
-      return null;
+  async function applyTocConversion(tocOriginal, mode) {
+    if (tocOriginal.length === 0) {
+      return [];
     }
-  }
-  function isValidTocPaginationUrl(candidateUrl, indexUrl) {
-    try {
-      const c = new URL(candidateUrl);
-      const idx = new URL(indexUrl);
-      if (c.protocol !== "http:" && c.protocol !== "https:") return false;
-      if (c.origin !== idx.origin) return false;
-      const seed = extractTocPaginationSeed(indexUrl);
-      if (seed && !c.pathname.includes(seed)) return false;
-      return true;
-    } catch {
-      return false;
+    if (mode === "none") {
+      return [...tocOriginal];
     }
-  }
-  function normalizeTextForVipDetection(text2) {
-    return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、""''（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
+    return Promise.all(
+      tocOriginal.map(async (entry) => ({
+        ...entry,
+        title: await convertText(entry.title, mode)
+      }))
+    );
   }
   function isInvalidChapterUrl(url, currentChapterUrl) {
     try {
@@ -21157,6 +21383,392 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     for (let i = 0; i < toDeleteCount; i++) {
       navFailures.delete(entries2[i][0]);
     }
+  }
+  async function parseWithSectionMerge(parser, initialDoc, url, _referer) {
+    const merger = createSectionMerger(parser);
+    return merger.merge(initialDoc, url);
+  }
+  function recordNavFailure(failures, key, opts) {
+    const prev = failures.get(key);
+    const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
+    const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
+    failures.set(key, { count, nextRetryAt: Date.now() + backoffMs });
+    trimNavFailures(failures, opts.maxFailures);
+    return count;
+  }
+  function clearNavFailure(failures, key) {
+    failures.delete(key);
+  }
+  function createNavigation(ctx) {
+    async function insertCachedChapter(cached, position) {
+      const suffix = position === "append" ? "cached" : "cached-prev";
+      const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
+      const entry = {
+        chapter: { ...cached.chapter },
+        rule: cached.rule,
+        id
+      };
+      if (position === "append") {
+        ctx.chapters.value.push(entry);
+      } else {
+        ctx.chapters.value.unshift(entry);
+        ctx.currentChapterIndex.value++;
+      }
+      ctx.loadedUrls.value.add(entry.chapter.url);
+      ctx.originalContents.value.set(id, cached.chapter.content);
+      ctx.originalTitles.value.set(id, {
+        title: cached.chapter.title,
+        bookTitle: cached.chapter.bookTitle
+      });
+      if (ctx.currentConversionMode.value !== "none") {
+        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+      }
+      if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
+        if (position === "append" && ctx.currentChapterIndex.value > 2) {
+          const removed = ctx.chapters.value.shift();
+          if (removed) {
+            ctx.loadedUrls.value.delete(removed.chapter.url);
+            ctx.originalContents.value.delete(removed.id);
+            ctx.originalTitles.value.delete(removed.id);
+            ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
+          }
+        } else if (position === "prepend") {
+          const removed = ctx.chapters.value.pop();
+          if (removed) {
+            ctx.loadedUrls.value.delete(removed.chapter.url);
+            ctx.originalContents.value.delete(removed.id);
+            ctx.originalTitles.value.delete(removed.id);
+          }
+        }
+      }
+      return true;
+    }
+    async function loadChapter(direction, source) {
+      const runId = ctx.viewId();
+      const isNext = direction === "next";
+      const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
+      const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
+      const pendingAbortRef = isNext ? ctx.pendingNextAbort : ctx.pendingPrevAbort;
+      const endMessage = isNext ? "已经是最后一章了" : "已经是第一章了";
+      const errorMessage = isNext ? "加载下一章失败" : "加载上一章失败";
+      if (isLoadingRef.value) {
+        return false;
+      }
+      const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
+      if (!rawTargetUrl) {
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      const targetUrl = normalizeUrlForFetch(rawTargetUrl);
+      if (targetUrl !== rawTargetUrl) {
+        if (isNext) {
+          refChapter.chapter.nextUrl = targetUrl;
+        } else {
+          refChapter.chapter.prevUrl = targetUrl;
+        }
+      }
+      if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
+        ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      if (ctx.vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
+        ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+        return false;
+      }
+      const navKey = normalizeUrlForBlock(targetUrl);
+      if (ctx.blockedNavUrls.value.has(navKey)) {
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      const failure = ctx.navFailures.get(navKey);
+      if (failure && Date.now() < failure.nextRetryAt) {
+        if (source === "manual") {
+          ctx.showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
+        }
+        return false;
+      }
+      if (ctx.loadedUrls.value.has(targetUrl)) {
+        return false;
+      }
+      const cached = ctx.cachedContents.value.get(targetUrl);
+      if (cached) {
+        return insertCachedChapter(cached, isNext ? "append" : "prepend");
+      }
+      if (ctx.persistedUrls.value.has(targetUrl)) {
+        const persisted = await ctx.getPersistedCachedChapter(targetUrl);
+        if (ctx.isViewStale(runId)) return false;
+        if (persisted) {
+          const sessionCached = { ...persisted, cachedAt: Date.now() };
+          ctx.cachedContents.value.set(targetUrl, sessionCached);
+          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+          return insertCachedChapter(sessionCached, isNext ? "append" : "prepend");
+        }
+      }
+      isLoadingRef.value = true;
+      if (pendingAbortRef.value) {
+        pendingAbortRef.value();
+        pendingAbortRef.value = null;
+      }
+      if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
+        isLoadingRef.value = false;
+        ctx.blockedNavUrls.value.add(navKey);
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      try {
+        const referer = refChapter.chapter.url;
+        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+        if (ctx.isViewStale(runId)) {
+          abort();
+          return false;
+        }
+        pendingAbortRef.value = abort;
+        const result = await promise;
+        if (ctx.isViewStale(runId)) {
+          abort();
+          return false;
+        }
+        pendingAbortRef.value = null;
+        if (result.error === "abort") {
+          return false;
+        }
+        if (!result.doc) {
+          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          if (source === "manual" || count === 1) {
+            ctx.showToast(errorMessage, "error", 2500);
+          }
+          return false;
+        }
+        if (isCloudflareChallenge(result.doc)) {
+          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          if (source === "manual" || count === 1) {
+            ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
+          }
+          return false;
+        }
+        if (isVipChapterPage(result.doc)) {
+          ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
+          ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+          return false;
+        }
+        const parser = getParser();
+        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
+        if (ctx.isViewStale(runId)) {
+          return false;
+        }
+        if (!parsed) {
+          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          if (source === "manual" || count === 1) {
+            ctx.showToast(errorMessage, "error", 2500);
+          }
+          return false;
+        }
+        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
+        const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
+        if (isTocPage) {
+          ctx.blockedNavUrls.value.add(navKey);
+          if (source === "manual") {
+            ctx.showToast(endMessage, "info");
+          }
+          return false;
+        }
+        if (!isNext) {
+          if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)) {
+          } else if (parsed.prevUrl && !parsed.nextUrl) {
+            ctx.blockedNavUrls.value.add(navKey);
+            return false;
+          }
+        }
+        const suffix = isNext ? "" : "prev-";
+        const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
+        const entry = {
+          chapter: parsed,
+          rule: parsed.rule,
+          id
+        };
+        if (isNext) {
+          ctx.chapters.value.push(entry);
+        } else {
+          ctx.chapters.value.unshift(entry);
+          ctx.currentChapterIndex.value++;
+        }
+        clearNavFailure(ctx.navFailures, navKey);
+        ctx.loadedUrls.value.add(parsed.url);
+        ctx.originalContents.value.set(id, parsed.content);
+        ctx.originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
+        ctx.cachedContents.value.set(parsed.url, {
+          chapter: parsed,
+          rule: parsed.rule,
+          cachedAt: Date.now()
+        });
+        trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+        if (ctx.currentConversionMode.value !== "none") {
+          await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+        }
+        if (!ctx.history.value.includes(parsed.url)) {
+          if (isNext) {
+            ctx.history.value.push(parsed.url);
+          } else {
+            ctx.history.value.unshift(parsed.url);
+          }
+        }
+        if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
+          if (isNext && ctx.currentChapterIndex.value > 2) {
+            const removed = ctx.chapters.value.shift();
+            if (removed) {
+              ctx.loadedUrls.value.delete(removed.chapter.url);
+              ctx.originalContents.value.delete(removed.id);
+              ctx.originalTitles.value.delete(removed.id);
+              ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
+            }
+          } else if (!isNext) {
+            const removed = ctx.chapters.value.pop();
+            if (removed) {
+              ctx.loadedUrls.value.delete(removed.chapter.url);
+              ctx.originalContents.value.delete(removed.id);
+              ctx.originalTitles.value.delete(removed.id);
+            }
+          }
+        }
+        return true;
+      } catch (e) {
+        if (!ctx.isViewStale(runId)) {
+          console.error(`[MNR] Failed to load ${direction} chapter:`, e);
+          ctx.setError(errorMessage);
+        }
+        return false;
+      } finally {
+        if (!ctx.isViewStale(runId)) {
+          isLoadingRef.value = false;
+        }
+      }
+    }
+    async function loadNextChapter(source = "auto") {
+      return loadChapter("next", source);
+    }
+    async function loadPrevChapter(source = "manual") {
+      return loadChapter("prev", source);
+    }
+    async function rebuildChaptersAround(targetUrl) {
+      var _a, _b, _c, _d, _e, _f;
+      const runId = ctx.bumpView();
+      const url = normalizeUrlForFetch(targetUrl);
+      (_b = (_a = ctx.pendingNextAbort).value) == null ? void 0 : _b.call(_a);
+      ctx.pendingNextAbort.value = null;
+      (_d = (_c = ctx.pendingPrevAbort).value) == null ? void 0 : _d.call(_c);
+      ctx.pendingPrevAbort.value = null;
+      (_f = (_e = ctx.reloadAbort).value) == null ? void 0 : _f.call(_e);
+      ctx.reloadAbort.value = null;
+      ctx.isLoading.value = false;
+      ctx.isLoadingPrev.value = false;
+      ctx.isLoadingNext.value = false;
+      let cached = ctx.cachedContents.value.get(url);
+      if (!cached && ctx.persistedUrls.value.has(url)) {
+        const persisted = await ctx.getPersistedCachedChapter(url);
+        if (ctx.isViewStale(runId)) return false;
+        if (persisted) {
+          cached = { ...persisted, cachedAt: Date.now() };
+          ctx.cachedContents.value.set(url, cached);
+          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+        }
+      }
+      if (!cached) return false;
+      if (ctx.isViewStale(runId)) return false;
+      ctx.chapters.value = [];
+      ctx.currentChapterIndex.value = 0;
+      ctx.loadedUrls.value.clear();
+      ctx.originalContents.value.clear();
+      ctx.originalTitles.value.clear();
+      const id = `chapter-${Date.now()}-jump-0`;
+      ctx.chapters.value.push({
+        chapter: { ...cached.chapter },
+        rule: cached.rule,
+        id
+      });
+      ctx.loadedUrls.value.add(url);
+      ctx.originalContents.value.set(id, cached.chapter.content);
+      ctx.originalTitles.value.set(id, {
+        title: cached.chapter.title,
+        bookTitle: cached.chapter.bookTitle
+      });
+      if (ctx.currentConversionMode.value !== "none") {
+        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+      }
+      return true;
+    }
+    async function reloadCurrentChapter() {
+      var _a, _b;
+      const runId = ctx.viewId();
+      const current = ctx.chapters.value[ctx.currentChapterIndex.value];
+      if (!current) return;
+      const url = current.chapter.url;
+      ctx.showToast("正在重新加载...", "info");
+      (_b = (_a = ctx.reloadAbort).value) == null ? void 0 : _b.call(_a);
+      ctx.reloadAbort.value = null;
+      const { promise, abort } = fetchAndParseUrl(url, url);
+      if (!ctx.isViewStale(runId)) {
+        ctx.reloadAbort.value = abort;
+      }
+      const result = await promise;
+      if (ctx.isViewStale(runId)) {
+        abort();
+        return;
+      }
+      if (ctx.reloadAbort.value === abort) {
+        ctx.reloadAbort.value = null;
+      }
+      if (result.error === "abort") {
+        return;
+      }
+      if (!result.doc) {
+        ctx.showToast("重新加载失败", "error");
+        return;
+      }
+      const parser = getParser();
+      const parsed = await parseWithSectionMerge(parser, result.doc, url);
+      if (ctx.isViewStale(runId)) {
+        return;
+      }
+      if (parsed) {
+        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
+        current.chapter = parsed;
+        current.rule = parsed.rule;
+        ctx.originalContents.value.set(current.id, parsed.content);
+        ctx.cachedContents.value.set(parsed.url, {
+          chapter: parsed,
+          rule: parsed.rule,
+          cachedAt: Date.now()
+        });
+        if (ctx.currentConversionMode.value !== "none") {
+          const converted = await convertHTML(parsed.content, ctx.currentConversionMode.value);
+          current.chapter = { ...current.chapter, content: converted };
+        }
+        ctx.showToast("规则已应用", "info");
+      } else {
+        ctx.showToast("解析失败", "error");
+      }
+    }
+    return {
+      insertCachedChapter,
+      loadChapter,
+      loadNextChapter,
+      loadPrevChapter,
+      rebuildChaptersAround,
+      reloadCurrentChapter
+    };
   }
   const MAX_TOC_PAGES = 120;
   const CHAPTER_TITLE_PATTERNS = [
@@ -21464,79 +22076,226 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     if (allCandidates.length === 0) return [];
     return filterTocEntries(dedupeTocEntries(allCandidates));
   }
-  async function parseWithSectionMerge(parser, initialDoc, url, referer) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    const resolvedUrl = normalizeAbsoluteUrl(url, referer);
-    const baseUrl = getSectionBaseUrl(resolvedUrl);
-    let startUrl = resolvedUrl;
-    let startDoc = initialDoc;
-    if (baseUrl && baseUrl !== resolvedUrl) {
-      const { promise } = fetchAndParseUrl(baseUrl, referer || resolvedUrl);
-      const result = await promise;
-      if (result.doc) {
-        startUrl = baseUrl;
-        startDoc = result.doc;
+  function createTocActions(ctx) {
+    const _loadTocEntriesPaged = ctx.loadTocEntriesPaged ?? loadTocEntriesPaged;
+    async function setTocEntries(entries2) {
+      ctx.tocOriginal.value = entries2;
+      await ctx.applyTocConversion(ctx.currentConversionMode.value);
+    }
+    async function ensureIndexUrl() {
+      var _a;
+      const current = ctx.chapter.value;
+      const currentUrl = (current == null ? void 0 : current.url) || "";
+      const existing = current == null ? void 0 : current.indexUrl;
+      if (existing && (!currentUrl || normalizeUrlForBlock(existing) !== normalizeUrlForBlock(currentUrl))) {
+        return existing;
+      }
+      if (!currentUrl) return void 0;
+      try {
+        const parser = getParser();
+        const detected = (_a = parser.detect(document, currentUrl).results.navigation.index) == null ? void 0 : _a.url;
+        if (!detected) return void 0;
+        const normalized = normalizeUrlForFetch(detected);
+        for (const entry of ctx.chapters.value) {
+          const existingIndex = entry.chapter.indexUrl;
+          const entryUrl = entry.chapter.url;
+          const looksLikeSelf = existingIndex && entryUrl ? normalizeUrlForBlock(existingIndex) === normalizeUrlForBlock(entryUrl) : false;
+          if (!existingIndex || looksLikeSelf) {
+            entry.chapter.indexUrl = normalized;
+          }
+        }
+        return normalized;
+      } catch (e) {
+        console.error("[MNR] Failed to detect indexUrl:", e);
+        return void 0;
       }
     }
-    const first = await parser.parse(startDoc, startUrl);
-    if (!first) return null;
-    const disableByRule = !!((_b = (_a = first.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.noSection);
-    if (disableByRule) return first;
-    const enableByRule = !!((_d = (_c = first.rule) == null ? void 0 : _c.advanced) == null ? void 0 : _d.checkSection);
-    const detection = parser.detect(startDoc, startUrl);
-    const section = {
-      isSection: !!((_e = detection.results.section) == null ? void 0 : _e.isSection),
-      nextSectionUrl: ((_f = detection.results.section) == null ? void 0 : _f.nextSectionUrl) || null,
-      nextChapterUrl: ((_g = detection.results.section) == null ? void 0 : _g.nextChapterUrl) || null,
-      confidence: ((_h = detection.results.section) == null ? void 0 : _h.confidence) || 0
-    };
-    const shouldMerge = enableByRule || section.isSection && section.confidence >= 0.8;
-    if (!shouldMerge) return first;
-    let mergedContent = first.content;
-    let mergedRaw = first.rawContent;
-    let nextSectionUrl = section.nextSectionUrl;
-    let nextChapterUrl = section.nextChapterUrl || null;
-    let lastUrl = startUrl;
-    if (enableByRule && !nextSectionUrl && first.nextUrl) {
-      const isSectionUrl = isSectionLikeUrl(startUrl, first.nextUrl);
-      if (isSectionUrl) {
-        nextSectionUrl = first.nextUrl;
+    async function loadToc() {
+      var _a, _b;
+      const runId = ctx.sessionId();
+      if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
+      const currentUrl = ((_a = ctx.chapter.value) == null ? void 0 : _a.url) || "";
+      let indexUrl = (_b = ctx.chapter.value) == null ? void 0 : _b.indexUrl;
+      if (!indexUrl || currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl)) {
+        indexUrl = await ensureIndexUrl() || void 0;
       }
-    }
-    const maxPages = 10;
-    const maxAdditionalPages = Math.max(0, maxPages - 1);
-    const seen = new Set([startUrl]);
-    for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
-      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-      if (seen.has(absNextSection)) break;
-      seen.add(absNextSection);
-      const { promise } = fetchAndParseUrl(absNextSection, lastUrl);
-      const nextResult = await promise;
-      if (!nextResult.doc) break;
-      const nextParsed = await parser.parse(nextResult.doc, absNextSection);
-      if (!nextParsed) break;
-      mergedContent = joinHtml(mergedContent, nextParsed.content);
-      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-      const nextDet = parser.detect(nextResult.doc, absNextSection);
-      const s = nextDet.results.section;
-      if (s == null ? void 0 : s.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-      nextSectionUrl = (s == null ? void 0 : s.nextSectionUrl) || null;
-      if (enableByRule && !nextSectionUrl && nextParsed.nextUrl) {
-        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
-          nextSectionUrl = nextParsed.nextUrl;
-        } else {
-          if (!nextChapterUrl) nextChapterUrl = nextParsed.nextUrl;
+      if (!indexUrl) {
+        ctx.showToast("未检测到目录链接", "info", 2500);
+        return;
+      }
+      ctx.tocLoading.value = true;
+      try {
+        let entries2 = await _loadTocEntriesPaged(
+          indexUrl,
+          currentUrl || indexUrl,
+          ctx.rule.value ?? void 0,
+          (abort) => {
+            if (!ctx.isSessionStale(runId)) {
+              ctx.tocAbort.value = abort;
+            }
+          }
+        );
+        if (ctx.isSessionStale(runId)) return;
+        if (entries2.length === 0) {
+          await new Promise((resolve) => window.setTimeout(resolve, 400));
+          if (ctx.isSessionStale(runId)) return;
+          entries2 = await _loadTocEntriesPaged(
+            indexUrl,
+            currentUrl || indexUrl,
+            ctx.rule.value ?? void 0,
+            (abort) => {
+              if (!ctx.isSessionStale(runId)) {
+                ctx.tocAbort.value = abort;
+              }
+            }
+          );
+          if (ctx.isSessionStale(runId)) return;
+        }
+        await setTocEntries(entries2);
+        if (ctx.isSessionStale(runId)) return;
+        if (entries2.length === 0) {
+          ctx.showToast("目录解析为空，可稍后重试或刷新页面", "info", 2500);
+        }
+      } catch (e) {
+        if (!ctx.isSessionStale(runId)) {
+          console.error("[MNR] Failed to load TOC:", e);
+          ctx.showToast("目录加载失败，可稍后重试", "error", 2500);
+        }
+      } finally {
+        if (!ctx.isSessionStale(runId)) {
+          ctx.tocLoading.value = false;
+          ctx.tocAbort.value = null;
         }
       }
-      lastUrl = absNextSection;
     }
-    return {
-      ...first,
-      url: startUrl,
-      content: mergedContent,
-      rawContent: mergedRaw,
-      nextUrl: nextChapterUrl || first.nextUrl
-    };
+    return { setTocEntries, ensureIndexUrl, loadToc };
+  }
+  function createCacheAll(ctx) {
+    async function startCacheAll(urls) {
+      var _a, _b, _c, _d, _e;
+      const runId = ctx.sessionId();
+      if (ctx.cacheProgress.value.running) return;
+      const seenUrls = new Set();
+      await ctx.restoreCache();
+      if (ctx.isSessionStale(runId)) return;
+      const persistedSet = new Set(ctx.persistedUrls.value);
+      const cacheBook = getCurrentBookCacheKey((_a = ctx.chapter.value) == null ? void 0 : _a.indexUrl);
+      let taskList = urls ? [...urls] : [];
+      ctx.cacheQueue.value = [...taskList];
+      if (!taskList.length) {
+        const indexUrl = (_b = ctx.chapter.value) == null ? void 0 : _b.indexUrl;
+        const currentUrl = (_c = ctx.chapter.value) == null ? void 0 : _c.url;
+        if (indexUrl) {
+          const tocEntries = await loadTocEntriesPaged(
+            indexUrl,
+            currentUrl || indexUrl,
+            ctx.rule.value ?? void 0,
+            (abort) => {
+              if (!ctx.isSessionStale(runId)) {
+                ctx.cacheAbort.value = abort;
+              }
+            }
+          );
+          if (ctx.isSessionStale(runId)) return;
+          ctx.cacheAbort.value = null;
+          const tocLinks = tocEntries.map((e) => normalizeUrlForFetch(e.url)).slice(0, 1e4);
+          taskList = tocLinks.filter(
+            (u) => !ctx.loadedUrls.value.has(u) && !ctx.cachedContents.value.has(u) && !persistedSet.has(u)
+          );
+          ctx.cacheQueue.value = [...taskList];
+        }
+      }
+      const estimatedTotal = taskList.length;
+      if (ctx.isSessionStale(runId)) return;
+      if (estimatedTotal === 0) {
+        ctx.cacheProgress.value = { done: 0, total: 0, running: false };
+        return;
+      }
+      ctx.cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
+      let nextUrl = taskList.shift();
+      let referer = ((_d = ctx.chapters.value[ctx.chapters.value.length - 1]) == null ? void 0 : _d.chapter.url) || ((_e = ctx.chapter.value) == null ? void 0 : _e.url);
+      while (ctx.cacheProgress.value.running && nextUrl) {
+        const targetUrl = normalizeUrlForFetch(nextUrl);
+        if (seenUrls.has(targetUrl) || ctx.loadedUrls.value.has(targetUrl) || ctx.cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
+          ctx.cacheProgress.value = { ...ctx.cacheProgress.value, done: ctx.cacheProgress.value.done + 1 };
+          nextUrl = taskList.shift() ?? null;
+          continue;
+        }
+        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+        if (ctx.isSessionStale(runId)) {
+          abort();
+          break;
+        }
+        ctx.cacheAbort.value = abort;
+        const result = await promise;
+        if (ctx.isSessionStale(runId)) {
+          abort();
+          break;
+        }
+        ctx.cacheAbort.value = null;
+        if (result.error === "abort") {
+          break;
+        }
+        if (!result.doc) {
+          nextUrl = taskList.shift() ?? null;
+          continue;
+        }
+        const parser = getParser();
+        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl);
+        if (ctx.isSessionStale(runId)) {
+          break;
+        }
+        if (!parsed) {
+          nextUrl = taskList.shift() ?? null;
+          continue;
+        }
+        const cached = {
+          chapter: parsed,
+          rule: parsed.rule,
+          cachedAt: Date.now()
+        };
+        ctx.cachedContents.value.set(parsed.url, cached);
+        seenUrls.add(parsed.url);
+        trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+        if (cacheBook) {
+          const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
+          if (persisted) {
+            persistedSet.add(parsed.url);
+          }
+        }
+        ctx.cacheProgress.value = { ...ctx.cacheProgress.value, done: ctx.cacheProgress.value.done + 1 };
+        referer = parsed.url;
+        nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
+        if (taskList.length === 0 && nextUrl) {
+          const normalizedNext = normalizeUrlForFetch(nextUrl);
+          if (!seenUrls.has(normalizedNext) && !ctx.loadedUrls.value.has(normalizedNext) && !ctx.cachedContents.value.has(normalizedNext) && !persistedSet.has(normalizedNext)) {
+            ctx.cacheProgress.value = {
+              ...ctx.cacheProgress.value,
+              total: ctx.cacheProgress.value.done + 1
+            };
+          }
+        }
+      }
+      if (ctx.isSessionStale(runId)) return;
+      ctx.cacheProgress.value = {
+        ...ctx.cacheProgress.value,
+        total: ctx.cacheProgress.value.done,
+        running: false
+      };
+      ctx.cacheAbort.value = null;
+      if (cacheBook && persistedSet.size > 0) {
+        ctx.persistedUrls.value = persistedSet;
+      }
+      await ctx.persistCache();
+    }
+    function cancelCacheAll() {
+      var _a, _b;
+      ctx.cacheProgress.value = { done: 0, total: 0, running: false };
+      ctx.cacheQueue.value = [];
+      (_b = (_a = ctx.cacheAbort).value) == null ? void 0 : _b.call(_a);
+      ctx.cacheAbort.value = null;
+    }
+    return { startCacheAll, cancelCacheAll };
   }
   const useReaderStore = defineStore("reader", () => {
     const isActive = ref(false);
@@ -21567,6 +22326,8 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     const tocOriginal = ref([]);
     const tocLoading = ref(false);
     const tocAbort = ref(null);
+    const cachedContents = ref( new Map());
+    const persistedUrls = ref( new Set());
     let sessionId = 0;
     let viewId = 0;
     const bumpSession = () => {
@@ -21580,8 +22341,6 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     };
     const isSessionStale = (runId) => runId !== sessionId;
     const isViewStale = (runId) => runId !== viewId;
-    const cachedContents = ref( new Map());
-    const persistedUrls = ref( new Set());
     const chapter = computed(() => {
       var _a;
       return ((_a = chapters.value[currentChapterIndex.value]) == null ? void 0 : _a.chapter) || null;
@@ -21655,389 +22414,6 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       var _a;
       return ((_a = chapter.value) == null ? void 0 : _a.url) || "";
     });
-    function activate() {
-      isActive.value = true;
-      error.value = null;
-    }
-    function deactivate() {
-      var _a, _b, _c, _d, _e;
-      bumpSession();
-      isActive.value = false;
-      (_a = pendingNextAbort.value) == null ? void 0 : _a.call(pendingNextAbort);
-      pendingNextAbort.value = null;
-      (_b = pendingPrevAbort.value) == null ? void 0 : _b.call(pendingPrevAbort);
-      pendingPrevAbort.value = null;
-      (_c = cacheAbort.value) == null ? void 0 : _c.call(cacheAbort);
-      cacheAbort.value = null;
-      (_d = reloadAbort.value) == null ? void 0 : _d.call(reloadAbort);
-      reloadAbort.value = null;
-      (_e = tocAbort.value) == null ? void 0 : _e.call(tocAbort);
-      tocAbort.value = null;
-      isLoading.value = false;
-      isLoadingPrev.value = false;
-      isLoadingNext.value = false;
-      tocLoading.value = false;
-      cacheProgress.value = { done: 0, total: 0, running: false };
-      cacheQueue.value = [];
-      chapters.value = [];
-      currentChapterIndex.value = 0;
-      error.value = null;
-      loadedUrls.value.clear();
-      vipBlockedUrls.value.clear();
-      blockedNavUrls.value.clear();
-      navFailures.clear();
-      originalContents.value.clear();
-      originalTitles.value.clear();
-      cachedContents.value.clear();
-      persistedUrls.value.clear();
-      toc.value = [];
-      tocOriginal.value = [];
-    }
-    function setChapter(newChapter, newRule) {
-      var _a, _b, _c, _d, _e;
-      bumpSession();
-      (_a = pendingNextAbort.value) == null ? void 0 : _a.call(pendingNextAbort);
-      pendingNextAbort.value = null;
-      (_b = pendingPrevAbort.value) == null ? void 0 : _b.call(pendingPrevAbort);
-      pendingPrevAbort.value = null;
-      (_c = cacheAbort.value) == null ? void 0 : _c.call(cacheAbort);
-      cacheAbort.value = null;
-      (_d = reloadAbort.value) == null ? void 0 : _d.call(reloadAbort);
-      reloadAbort.value = null;
-      (_e = tocAbort.value) == null ? void 0 : _e.call(tocAbort);
-      tocAbort.value = null;
-      isLoading.value = false;
-      isLoadingPrev.value = false;
-      isLoadingNext.value = false;
-      tocLoading.value = false;
-      cacheProgress.value = { done: 0, total: 0, running: false };
-      cacheQueue.value = [];
-      toc.value = [];
-      tocOriginal.value = [];
-      if (newChapter.url) {
-        newChapter.url = normalizeUrlForFetch(newChapter.url);
-      }
-      if (newChapter.prevUrl) {
-        newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
-      }
-      if (newChapter.nextUrl) {
-        newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
-      }
-      if (newChapter.indexUrl) {
-        newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
-      }
-      const id = `chapter-${Date.now()}-0`;
-      chapters.value = [
-        {
-          chapter: newChapter,
-          rule: newRule,
-          id
-        }
-      ];
-      currentChapterIndex.value = 0;
-      error.value = null;
-      loadedUrls.value.clear();
-      loadedUrls.value.add(newChapter.url);
-      vipBlockedUrls.value.clear();
-      blockedNavUrls.value.clear();
-      navFailures.clear();
-      cachedContents.value.clear();
-      persistedUrls.value.clear();
-      originalContents.value.clear();
-      originalContents.value.set(id, newChapter.content);
-      originalTitles.value.clear();
-      originalTitles.value.set(id, { title: newChapter.title, bookTitle: newChapter.bookTitle });
-      cachedContents.value.set(newChapter.url, {
-        chapter: newChapter,
-        rule: newRule,
-        cachedAt: Date.now()
-      });
-      if (newChapter.url && !history.value.includes(newChapter.url)) {
-        history.value.push(newChapter.url);
-        if (history.value.length > 100) {
-          history.value = history.value.slice(-100);
-        }
-      }
-      if (currentConversionMode.value !== "none") {
-        void applyConversionToChapterEntry(id, currentConversionMode.value);
-      }
-      void restoreCache();
-    }
-    async function insertCachedChapter(cached, position) {
-      const suffix = position === "append" ? "cached" : "cached-prev";
-      const id = `chapter-${Date.now()}-${suffix}-${chapters.value.length}`;
-      const entry = {
-        chapter: { ...cached.chapter },
-        rule: cached.rule,
-        id
-      };
-      if (position === "append") {
-        chapters.value.push(entry);
-      } else {
-        chapters.value.unshift(entry);
-        currentChapterIndex.value++;
-      }
-      loadedUrls.value.add(entry.chapter.url);
-      originalContents.value.set(id, cached.chapter.content);
-      originalTitles.value.set(id, {
-        title: cached.chapter.title,
-        bookTitle: cached.chapter.bookTitle
-      });
-      if (currentConversionMode.value !== "none") {
-        await applyConversionToChapterEntry(id, currentConversionMode.value);
-      }
-      if (chapters.value.length > MAX_CACHED_CHAPTERS) {
-        if (position === "append" && currentChapterIndex.value > 2) {
-          const removed = chapters.value.shift();
-          if (removed) {
-            loadedUrls.value.delete(removed.chapter.url);
-            originalContents.value.delete(removed.id);
-            originalTitles.value.delete(removed.id);
-            currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
-          }
-        } else if (position === "prepend") {
-          const removed = chapters.value.pop();
-          if (removed) {
-            loadedUrls.value.delete(removed.chapter.url);
-            originalContents.value.delete(removed.id);
-            originalTitles.value.delete(removed.id);
-          }
-        }
-      }
-      return true;
-    }
-    async function loadChapter(direction, source) {
-      const runId = viewId;
-      const isNext = direction === "next";
-      const refChapter = isNext ? chapters.value[chapters.value.length - 1] : chapters.value[0];
-      const isLoadingRef = isNext ? isLoadingNext : isLoadingPrev;
-      const pendingAbortRef = isNext ? pendingNextAbort : pendingPrevAbort;
-      const endMessage = isNext ? "已经是最后一章了" : "已经是第一章了";
-      const errorMessage = isNext ? "加载下一章失败" : "加载上一章失败";
-      if (isLoadingRef.value) {
-        return false;
-      }
-      const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
-      if (!rawTargetUrl) {
-        if (source === "manual") {
-          showToast(endMessage, "info");
-        }
-        return false;
-      }
-      const targetUrl = normalizeUrlForFetch(rawTargetUrl);
-      if (targetUrl !== rawTargetUrl) {
-        if (isNext) {
-          refChapter.chapter.nextUrl = targetUrl;
-        } else {
-          refChapter.chapter.prevUrl = targetUrl;
-        }
-      }
-      if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
-        blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
-        if (source === "manual") {
-          showToast(endMessage, "info");
-        }
-        return false;
-      }
-      if (vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
-        showToast(VIP_BLOCK_TOAST, "info", 3e3);
-        return false;
-      }
-      const navKey = normalizeUrlForBlock(targetUrl);
-      if (blockedNavUrls.value.has(navKey)) {
-        if (source === "manual") {
-          showToast(endMessage, "info");
-        }
-        return false;
-      }
-      const failure = navFailures.get(navKey);
-      if (failure && Date.now() < failure.nextRetryAt) {
-        if (source === "manual") {
-          showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
-        }
-        return false;
-      }
-      if (loadedUrls.value.has(targetUrl)) {
-        return false;
-      }
-      const cached = cachedContents.value.get(targetUrl);
-      if (cached) {
-        return insertCachedChapter(cached, isNext ? "append" : "prepend");
-      }
-      if (persistedUrls.value.has(targetUrl)) {
-        const persisted = await getPersistedCachedChapter(targetUrl);
-        if (isViewStale(runId)) return false;
-        if (persisted) {
-          const sessionCached = { ...persisted, cachedAt: Date.now() };
-          cachedContents.value.set(targetUrl, sessionCached);
-          trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
-          return insertCachedChapter(sessionCached, isNext ? "append" : "prepend");
-        }
-      }
-      isLoadingRef.value = true;
-      if (pendingAbortRef.value) {
-        pendingAbortRef.value();
-        pendingAbortRef.value = null;
-      }
-      if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
-        isLoadingRef.value = false;
-        blockedNavUrls.value.add(navKey);
-        if (source === "manual") {
-          showToast(endMessage, "info");
-        }
-        return false;
-      }
-      try {
-        const referer = refChapter.chapter.url;
-        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-        if (isViewStale(runId)) {
-          abort();
-          return false;
-        }
-        pendingAbortRef.value = abort;
-        const result = await promise;
-        if (isViewStale(runId)) {
-          abort();
-          return false;
-        }
-        pendingAbortRef.value = null;
-        if (result.error === "abort") {
-          return false;
-        }
-        if (!result.doc) {
-          const prev = navFailures.get(navKey);
-          const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
-          const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
-          navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
-          trimNavFailures(navFailures, MAX_NAV_FAILURES);
-          if (source === "manual" || count === 1) {
-            showToast(errorMessage, "error", 2500);
-          }
-          return false;
-        }
-        if (isCloudflareChallenge(result.doc)) {
-          const prev = navFailures.get(navKey);
-          const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
-          const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
-          navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
-          trimNavFailures(navFailures, MAX_NAV_FAILURES);
-          if (source === "manual" || count === 1) {
-            showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
-          }
-          return false;
-        }
-        if (isVipChapterPage(result.doc)) {
-          vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
-          showToast(VIP_BLOCK_TOAST, "info", 3e3);
-          return false;
-        }
-        const parser = getParser();
-        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
-        if (isViewStale(runId)) {
-          return false;
-        }
-        if (!parsed) {
-          const prev = navFailures.get(navKey);
-          const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
-          const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
-          navFailures.set(navKey, { count, nextRetryAt: Date.now() + backoffMs });
-          trimNavFailures(navFailures, MAX_NAV_FAILURES);
-          if (source === "manual" || count === 1) {
-            showToast(errorMessage, "error", 2500);
-          }
-          return false;
-        }
-        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
-        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
-        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
-        const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
-        if (isTocPage) {
-          blockedNavUrls.value.add(navKey);
-          if (source === "manual") {
-            showToast(endMessage, "info");
-          }
-          return false;
-        }
-        if (!isNext) {
-          if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)) {
-          } else if (parsed.prevUrl && !parsed.nextUrl) {
-            blockedNavUrls.value.add(navKey);
-            return false;
-          }
-        }
-        const suffix = isNext ? "" : "prev-";
-        const id = `chapter-${Date.now()}-${suffix}${chapters.value.length}`;
-        const entry = {
-          chapter: parsed,
-          rule: parsed.rule,
-          id
-        };
-        if (isNext) {
-          chapters.value.push(entry);
-        } else {
-          chapters.value.unshift(entry);
-          currentChapterIndex.value++;
-        }
-        navFailures.delete(navKey);
-        loadedUrls.value.add(parsed.url);
-        originalContents.value.set(id, parsed.content);
-        originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
-        cachedContents.value.set(parsed.url, {
-          chapter: parsed,
-          rule: parsed.rule,
-          cachedAt: Date.now()
-        });
-        trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
-        if (currentConversionMode.value !== "none") {
-          await applyConversionToChapterEntry(id, currentConversionMode.value);
-        }
-        if (!history.value.includes(parsed.url)) {
-          if (isNext) {
-            history.value.push(parsed.url);
-          } else {
-            history.value.unshift(parsed.url);
-          }
-        }
-        if (chapters.value.length > MAX_CACHED_CHAPTERS) {
-          if (isNext && currentChapterIndex.value > 2) {
-            const removed = chapters.value.shift();
-            if (removed) {
-              loadedUrls.value.delete(removed.chapter.url);
-              originalContents.value.delete(removed.id);
-              originalTitles.value.delete(removed.id);
-              currentChapterIndex.value = Math.max(0, currentChapterIndex.value - 1);
-            }
-          } else if (!isNext) {
-            const removed = chapters.value.pop();
-            if (removed) {
-              loadedUrls.value.delete(removed.chapter.url);
-              originalContents.value.delete(removed.id);
-              originalTitles.value.delete(removed.id);
-            }
-          }
-        }
-        return true;
-      } catch (e) {
-        if (!isViewStale(runId)) {
-          console.error(`[MNR] Failed to load ${direction} chapter:`, e);
-          setError(errorMessage);
-        }
-        return false;
-      } finally {
-        if (!isViewStale(runId)) {
-          isLoadingRef.value = false;
-        }
-      }
-    }
-    async function loadNextChapter(source = "auto") {
-      return loadChapter("next", source);
-    }
-    async function loadPrevChapter(source = "manual") {
-      return loadChapter("prev", source);
-    }
-    function setLoading(loading) {
-      isLoading.value = loading;
-    }
     function setError(msg) {
       error.value = msg;
       toastType.value = "error";
@@ -22068,6 +22444,202 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         toastTimer.value = null;
       }
     }
+    async function applyConversionToChapterEntry$1(entryId, mode) {
+      await applyConversionToChapterEntry(
+        chapters.value,
+        originalContents.value,
+        originalTitles.value,
+        entryId,
+        mode
+      );
+    }
+    async function applyTocConversion$1(mode) {
+      toc.value = await applyTocConversion(tocOriginal.value, mode);
+    }
+    async function applyTextConversion(mode) {
+      currentConversionMode.value = mode;
+      for (const entry of chapters.value) {
+        await applyConversionToChapterEntry$1(entry.id, mode);
+      }
+      await applyTocConversion$1(mode);
+    }
+    async function getPersistedCachedChapterForCurrentBook(url) {
+      var _a;
+      const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
+      if (!cacheBook) return null;
+      return getPersistedCachedChapter(cacheBook, url);
+    }
+    async function persistCache$1() {
+      var _a;
+      const runId = sessionId;
+      const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
+      if (!cacheBook) return;
+      const result = persistCache(cacheBook, cachedContents.value, persistedUrls.value);
+      if (!isSessionStale(runId)) {
+        persistedUrls.value = result;
+      }
+    }
+    async function restoreCache$1() {
+      var _a;
+      const runId = sessionId;
+      const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
+      if (!cacheBook) return;
+      const restored = restoreCache(cacheBook);
+      if (restored && !isSessionStale(runId)) {
+        persistedUrls.value = restored;
+      }
+    }
+    async function clearPersistedCache$1() {
+      var _a;
+      const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
+      if (!cacheBook) return;
+      clearPersistedCache(cacheBook, persistedUrls.value);
+      persistedUrls.value.clear();
+    }
+    const nav = createNavigation({
+      chapters,
+      currentChapterIndex,
+      isLoading,
+      isLoadingNext,
+      isLoadingPrev,
+      pendingNextAbort,
+      pendingPrevAbort,
+      reloadAbort,
+      loadedUrls,
+      vipBlockedUrls,
+      blockedNavUrls,
+      cachedContents,
+      persistedUrls,
+      originalContents,
+      originalTitles,
+      currentConversionMode,
+      navFailures,
+      history,
+      viewId: () => viewId,
+      bumpView,
+      isViewStale,
+      showToast,
+      setError,
+      applyConversionToChapterEntry: applyConversionToChapterEntry$1,
+      getPersistedCachedChapter: getPersistedCachedChapterForCurrentBook
+    });
+    const { startCacheAll, cancelCacheAll } = createCacheAll({
+      cacheProgress,
+      cacheQueue,
+      cacheAbort,
+      loadedUrls,
+      cachedContents,
+      persistedUrls,
+      chapter,
+      rule,
+      chapters,
+      sessionId: () => sessionId,
+      isSessionStale,
+      restoreCache: restoreCache$1,
+      persistCache: persistCache$1
+    });
+    const tocActions = createTocActions({
+      toc,
+      tocOriginal,
+      tocLoading,
+      tocAbort,
+      chapters,
+      chapter,
+      rule,
+      currentConversionMode,
+      sessionId: () => sessionId,
+      isSessionStale,
+      showToast,
+      applyTocConversion: applyTocConversion$1,
+      loadTocEntriesPaged
+    });
+    function cancelAllInFlight() {
+      var _a, _b, _c, _d, _e;
+      (_a = pendingNextAbort.value) == null ? void 0 : _a.call(pendingNextAbort);
+      pendingNextAbort.value = null;
+      (_b = pendingPrevAbort.value) == null ? void 0 : _b.call(pendingPrevAbort);
+      pendingPrevAbort.value = null;
+      (_c = cacheAbort.value) == null ? void 0 : _c.call(cacheAbort);
+      cacheAbort.value = null;
+      (_d = reloadAbort.value) == null ? void 0 : _d.call(reloadAbort);
+      reloadAbort.value = null;
+      (_e = tocAbort.value) == null ? void 0 : _e.call(tocAbort);
+      tocAbort.value = null;
+      isLoading.value = false;
+      isLoadingPrev.value = false;
+      isLoadingNext.value = false;
+      tocLoading.value = false;
+      cacheProgress.value = { done: 0, total: 0, running: false };
+      cacheQueue.value = [];
+    }
+    function clearAllData() {
+      chapters.value = [];
+      currentChapterIndex.value = 0;
+      error.value = null;
+      loadedUrls.value.clear();
+      vipBlockedUrls.value.clear();
+      blockedNavUrls.value.clear();
+      navFailures.clear();
+      originalContents.value.clear();
+      originalTitles.value.clear();
+      cachedContents.value.clear();
+      persistedUrls.value.clear();
+      toc.value = [];
+      tocOriginal.value = [];
+    }
+    function activate() {
+      isActive.value = true;
+      error.value = null;
+    }
+    function deactivate() {
+      bumpSession();
+      isActive.value = false;
+      cancelAllInFlight();
+      clearAllData();
+    }
+    function setChapter(newChapter, newRule) {
+      bumpSession();
+      cancelAllInFlight();
+      toc.value = [];
+      tocOriginal.value = [];
+      if (newChapter.url) newChapter.url = normalizeUrlForFetch(newChapter.url);
+      if (newChapter.prevUrl) newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
+      if (newChapter.nextUrl) newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
+      if (newChapter.indexUrl) newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
+      const id = `chapter-${Date.now()}-0`;
+      chapters.value = [{ chapter: newChapter, rule: newRule, id }];
+      currentChapterIndex.value = 0;
+      error.value = null;
+      loadedUrls.value.clear();
+      loadedUrls.value.add(newChapter.url);
+      vipBlockedUrls.value.clear();
+      blockedNavUrls.value.clear();
+      navFailures.clear();
+      cachedContents.value.clear();
+      persistedUrls.value.clear();
+      originalContents.value.clear();
+      originalContents.value.set(id, newChapter.content);
+      originalTitles.value.clear();
+      originalTitles.value.set(id, { title: newChapter.title, bookTitle: newChapter.bookTitle });
+      cachedContents.value.set(newChapter.url, {
+        chapter: newChapter,
+        rule: newRule,
+        cachedAt: Date.now()
+      });
+      if (newChapter.url && !history.value.includes(newChapter.url)) {
+        history.value.push(newChapter.url);
+        if (history.value.length > 100) {
+          history.value = history.value.slice(-100);
+        }
+      }
+      if (currentConversionMode.value !== "none") {
+        void applyConversionToChapterEntry$1(id, currentConversionMode.value);
+      }
+      void restoreCache$1();
+    }
+    function setLoading(loading) {
+      isLoading.value = loading;
+    }
     function updateScroll(percent) {
       scrollPercent.value = Math.max(0, Math.min(100, percent));
     }
@@ -22084,584 +22656,26 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
     }
     function getProgress() {
-      var _a;
+      var _a, _b;
       if (!((_a = chapter.value) == null ? void 0 : _a.url)) return null;
       return {
-        url: readerStoreHistoryFallback(),
+        url: ((_b = chapter.value) == null ? void 0 : _b.url) || window.location.href,
         chapterUrl: chapter.value.url,
-        chapterPercent: calculateCurrentChapterPercent(),
+        chapterPercent: scrollPercent.value,
         scrollPercent: scrollPercent.value,
         lastRead: Date.now()
       };
     }
-    function readerStoreHistoryFallback() {
-      var _a;
-      return ((_a = chapter.value) == null ? void 0 : _a.url) || window.location.href;
-    }
-    function calculateCurrentChapterPercent() {
-      return scrollPercent.value;
-    }
-    async function applyConversionToChapterEntry(entryId, mode) {
-      const entry = chapters.value.find((e) => e.id === entryId);
-      if (!entry) return;
-      const originalContent = originalContents.value.get(entryId);
-      const originalTitle = originalTitles.value.get(entryId);
-      const updates = {};
-      if (mode === "none") {
-        if (originalContent && entry.chapter.content !== originalContent) {
-          updates.content = originalContent;
-        }
-        if (originalTitle) {
-          updates.title = originalTitle.title;
-          updates.bookTitle = originalTitle.bookTitle;
-        }
-      } else {
-        if (originalContent) {
-          updates.content = await convertHTML(originalContent, mode);
-        }
-        if (originalTitle) {
-          updates.title = await convertText(originalTitle.title, mode);
-          updates.bookTitle = originalTitle.bookTitle ? await convertText(originalTitle.bookTitle, mode) : originalTitle.bookTitle;
-        }
-      }
-      if (Object.keys(updates).length > 0) {
-        entry.chapter = { ...entry.chapter, ...updates };
-      }
-    }
-    async function applyTocConversion(mode) {
-      if (tocOriginal.value.length === 0) {
-        toc.value = [];
-        return;
-      }
-      if (mode === "none") {
-        toc.value = [...tocOriginal.value];
-        return;
-      }
-      const converted = await Promise.all(
-        tocOriginal.value.map(async (entry) => ({
-          ...entry,
-          title: await convertText(entry.title, mode)
-        }))
-      );
-      toc.value = converted;
-    }
-    async function applyTextConversion(mode) {
-      currentConversionMode.value = mode;
-      for (const entry of chapters.value) {
-        await applyConversionToChapterEntry(entry.id, mode);
-      }
-      await applyTocConversion(mode);
-    }
-    async function startCacheAll(urls) {
-      var _a, _b, _c, _d;
-      const runId = sessionId;
-      if (cacheProgress.value.running) return;
-      const seenUrls = new Set();
-      await restoreCache();
-      if (isSessionStale(runId)) return;
-      const persistedSet = new Set(persistedUrls.value);
-      const cacheBook = getCurrentBookCacheKey();
-      let taskList = urls ? [...urls] : [];
-      cacheQueue.value = [...taskList];
-      if (!taskList.length) {
-        const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
-        const currentUrl = (_b = chapter.value) == null ? void 0 : _b.url;
-        if (indexUrl) {
-          const tocEntries = await loadTocEntriesPaged(
-            indexUrl,
-            currentUrl || indexUrl,
-            rule.value ?? void 0,
-            (abort) => {
-              if (!isSessionStale(runId)) {
-                cacheAbort.value = abort;
-              }
-            }
-          );
-          if (isSessionStale(runId)) return;
-          cacheAbort.value = null;
-          const tocLinks = tocEntries.map((e) => normalizeUrlForFetch(e.url)).slice(0, 1e4);
-          taskList = tocLinks.filter(
-            (u) => !loadedUrls.value.has(u) && !cachedContents.value.has(u) && !persistedSet.has(u)
-          );
-          cacheQueue.value = [...taskList];
-        }
-      }
-      const estimatedTotal = taskList.length;
-      if (isSessionStale(runId)) return;
-      if (estimatedTotal === 0) {
-        cacheProgress.value = { done: 0, total: 0, running: false };
-        return;
-      }
-      cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
-      let nextUrl = taskList.shift();
-      let referer = ((_c = chapters.value[chapters.value.length - 1]) == null ? void 0 : _c.chapter.url) || ((_d = chapter.value) == null ? void 0 : _d.url);
-      while (cacheProgress.value.running && nextUrl) {
-        const targetUrl = normalizeUrlForFetch(nextUrl);
-        if (seenUrls.has(targetUrl) || loadedUrls.value.has(targetUrl) || cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
-          cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
-          nextUrl = taskList.shift() ?? null;
-          continue;
-        }
-        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-        if (isSessionStale(runId)) {
-          abort();
-          break;
-        }
-        cacheAbort.value = abort;
-        const result = await promise;
-        if (isSessionStale(runId)) {
-          abort();
-          break;
-        }
-        cacheAbort.value = null;
-        if (result.error === "abort") {
-          break;
-        }
-        if (!result.doc) {
-          nextUrl = taskList.shift() ?? null;
-          continue;
-        }
-        const parser = getParser();
-        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
-        if (isSessionStale(runId)) {
-          break;
-        }
-        if (!parsed) {
-          nextUrl = taskList.shift() ?? null;
-          continue;
-        }
-        const cached = {
-          chapter: parsed,
-          rule: parsed.rule,
-          cachedAt: Date.now()
-        };
-        cachedContents.value.set(parsed.url, cached);
-        seenUrls.add(parsed.url);
-        trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
-        if (cacheBook) {
-          const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
-          if (persisted) {
-            persistedSet.add(parsed.url);
-          }
-        }
-        cacheProgress.value = { ...cacheProgress.value, done: cacheProgress.value.done + 1 };
-        referer = parsed.url;
-        nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
-        if (taskList.length === 0 && nextUrl) {
-          const normalizedNext = normalizeUrlForFetch(nextUrl);
-          if (!seenUrls.has(normalizedNext) && !loadedUrls.value.has(normalizedNext) && !cachedContents.value.has(normalizedNext) && !persistedSet.has(normalizedNext)) {
-            cacheProgress.value = { ...cacheProgress.value, total: cacheProgress.value.done + 1 };
-          }
-        }
-      }
-      if (isSessionStale(runId)) return;
-      cacheProgress.value = {
-        ...cacheProgress.value,
-        total: cacheProgress.value.done,
-        running: false
-      };
-      cacheAbort.value = null;
-      if (cacheBook && persistedSet.size > 0) {
-        persistedUrls.value = persistedSet;
-      }
-      await persistCache();
-    }
-    function cancelCacheAll() {
-      var _a;
-      cacheProgress.value = { done: 0, total: 0, running: false };
-      cacheQueue.value = [];
-      (_a = cacheAbort.value) == null ? void 0 : _a.call(cacheAbort);
-      cacheAbort.value = null;
-    }
-    async function setTocEntries(entries2) {
-      tocOriginal.value = entries2;
-      await applyTocConversion(currentConversionMode.value);
-    }
-    async function ensureIndexUrl() {
-      var _a;
-      const current = chapter.value;
-      const currentUrl = (current == null ? void 0 : current.url) || "";
-      const existing = current == null ? void 0 : current.indexUrl;
-      if (existing && (!currentUrl || normalizeUrlForBlock(existing) !== normalizeUrlForBlock(currentUrl))) {
-        return existing;
-      }
-      if (!currentUrl) return void 0;
-      try {
-        const parser = getParser();
-        const detected = (_a = parser.detect(document, currentUrl).results.navigation.index) == null ? void 0 : _a.url;
-        if (!detected) return void 0;
-        const normalized = normalizeUrlForFetch(detected);
-        for (const entry of chapters.value) {
-          const existingIndex = entry.chapter.indexUrl;
-          const entryUrl = entry.chapter.url;
-          const looksLikeSelf = existingIndex && entryUrl ? normalizeUrlForBlock(existingIndex) === normalizeUrlForBlock(entryUrl) : false;
-          if (!existingIndex || looksLikeSelf) {
-            entry.chapter.indexUrl = normalized;
-          }
-        }
-        return normalized;
-      } catch (e) {
-        console.error("[MNR] Failed to detect indexUrl:", e);
-        return void 0;
-      }
-    }
-    async function loadToc() {
-      var _a, _b;
-      const runId = sessionId;
-      if (toc.value.length > 0 || tocLoading.value) return;
-      const currentUrl = ((_a = chapter.value) == null ? void 0 : _a.url) || "";
-      let indexUrl = (_b = chapter.value) == null ? void 0 : _b.indexUrl;
-      if (!indexUrl || currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl)) {
-        indexUrl = await ensureIndexUrl() || void 0;
-      }
-      if (!indexUrl) {
-        showToast("未检测到目录链接", "info", 2500);
-        return;
-      }
-      tocLoading.value = true;
-      try {
-        let entries2 = await loadTocEntriesPaged(
-          indexUrl,
-          currentUrl || indexUrl,
-          rule.value ?? void 0,
-          (abort) => {
-            if (!isSessionStale(runId)) {
-              tocAbort.value = abort;
-            }
-          }
-        );
-        if (isSessionStale(runId)) return;
-        if (entries2.length === 0) {
-          await new Promise((resolve) => window.setTimeout(resolve, 400));
-          if (isSessionStale(runId)) return;
-          entries2 = await loadTocEntriesPaged(
-            indexUrl,
-            currentUrl || indexUrl,
-            rule.value ?? void 0,
-            (abort) => {
-              if (!isSessionStale(runId)) {
-                tocAbort.value = abort;
-              }
-            }
-          );
-          if (isSessionStale(runId)) return;
-        }
-        await setTocEntries(entries2);
-        if (isSessionStale(runId)) return;
-        if (entries2.length === 0) {
-          showToast("目录解析为空，可稍后重试或刷新页面", "info", 2500);
-        }
-      } catch (e) {
-        if (!isSessionStale(runId)) {
-          console.error("[MNR] Failed to load TOC:", e);
-          showToast("目录加载失败，可稍后重试", "error", 2500);
-        }
-      } finally {
-        if (!isSessionStale(runId)) {
-          tocLoading.value = false;
-          tocAbort.value = null;
-        }
-      }
-    }
     function $reset() {
-      var _a, _b, _c, _d;
       bumpSession();
       isActive.value = false;
-      isLoading.value = false;
-      isLoadingPrev.value = false;
-      isLoadingNext.value = false;
-      (_a = pendingNextAbort.value) == null ? void 0 : _a.call(pendingNextAbort);
-      pendingNextAbort.value = null;
-      (_b = pendingPrevAbort.value) == null ? void 0 : _b.call(pendingPrevAbort);
-      pendingPrevAbort.value = null;
-      (_c = reloadAbort.value) == null ? void 0 : _c.call(reloadAbort);
-      reloadAbort.value = null;
-      chapters.value = [];
-      currentChapterIndex.value = 0;
-      error.value = null;
+      cancelAllInFlight();
+      clearAllData();
       scrollPercent.value = 0;
-      loadedUrls.value.clear();
-      vipBlockedUrls.value.clear();
-      originalContents.value.clear();
-      originalTitles.value.clear();
-      blockedNavUrls.value.clear();
-      navFailures.clear();
-      cachedContents.value.clear();
-      persistedUrls.value.clear();
       currentConversionMode.value = "none";
-      cacheProgress.value = { done: 0, total: 0, running: false };
-      cacheQueue.value = [];
-      (_d = cacheAbort.value) == null ? void 0 : _d.call(cacheAbort);
-      cacheAbort.value = null;
-      toc.value = [];
-      tocOriginal.value = [];
-      tocLoading.value = false;
-      if (tocAbort.value) {
-        tocAbort.value();
-        tocAbort.value = null;
-      }
-    }
-    async function rebuildChaptersAround(targetUrl) {
-      var _a, _b, _c;
-      const runId = bumpView();
-      const url = normalizeUrlForFetch(targetUrl);
-      (_a = pendingNextAbort.value) == null ? void 0 : _a.call(pendingNextAbort);
-      pendingNextAbort.value = null;
-      (_b = pendingPrevAbort.value) == null ? void 0 : _b.call(pendingPrevAbort);
-      pendingPrevAbort.value = null;
-      (_c = reloadAbort.value) == null ? void 0 : _c.call(reloadAbort);
-      reloadAbort.value = null;
-      isLoading.value = false;
-      isLoadingPrev.value = false;
-      isLoadingNext.value = false;
-      let cached = cachedContents.value.get(url);
-      if (!cached && persistedUrls.value.has(url)) {
-        const persisted = await getPersistedCachedChapter(url);
-        if (isViewStale(runId)) return false;
-        if (persisted) {
-          cached = { ...persisted, cachedAt: Date.now() };
-          cachedContents.value.set(url, cached);
-          trimCachedContents(cachedContents.value, MAX_SESSION_CACHE);
-        }
-      }
-      if (!cached) return false;
-      if (isViewStale(runId)) return false;
-      chapters.value = [];
-      currentChapterIndex.value = 0;
-      loadedUrls.value.clear();
-      originalContents.value.clear();
-      originalTitles.value.clear();
-      const id = `chapter-${Date.now()}-jump-0`;
-      chapters.value.push({
-        chapter: { ...cached.chapter },
-        rule: cached.rule,
-        id
-      });
-      loadedUrls.value.add(url);
-      originalContents.value.set(id, cached.chapter.content);
-      originalTitles.value.set(id, {
-        title: cached.chapter.title,
-        bookTitle: cached.chapter.bookTitle
-      });
-      if (currentConversionMode.value !== "none") {
-        await applyConversionToChapterEntry(id, currentConversionMode.value);
-      }
-      return true;
-    }
-    async function reloadCurrentChapter() {
-      var _a;
-      const runId = viewId;
-      const current = chapters.value[currentChapterIndex.value];
-      if (!current) return;
-      const url = current.chapter.url;
-      showToast("正在重新加载...", "info");
-      (_a = reloadAbort.value) == null ? void 0 : _a.call(reloadAbort);
-      reloadAbort.value = null;
-      const { promise, abort } = fetchAndParseUrl(url, url);
-      if (!isViewStale(runId)) {
-        reloadAbort.value = abort;
-      }
-      const result = await promise;
-      if (isViewStale(runId)) {
-        abort();
-        return;
-      }
-      if (reloadAbort.value === abort) {
-        reloadAbort.value = null;
-      }
-      if (result.error === "abort") {
-        return;
-      }
-      if (!result.doc) {
-        showToast("重新加载失败", "error");
-        return;
-      }
-      const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, result.doc, url, url);
-      if (isViewStale(runId)) {
-        return;
-      }
-      if (parsed) {
-        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
-        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
-        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
-        current.chapter = parsed;
-        current.rule = parsed.rule;
-        originalContents.value.set(current.id, parsed.content);
-        cachedContents.value.set(parsed.url, {
-          chapter: parsed,
-          rule: parsed.rule,
-          cachedAt: Date.now()
-        });
-        if (currentConversionMode.value !== "none") {
-          const converted = await convertHTML(parsed.content, currentConversionMode.value);
-          current.chapter = { ...current.chapter, content: converted };
-        }
-        showToast("规则已应用", "info");
-      } else {
-        showToast("解析失败", "error");
-      }
-    }
-    function generateBookId(indexUrl) {
-      try {
-        const url = new URL(indexUrl);
-        return url.hostname + url.pathname.replace(/\//g, "_");
-      } catch {
-        return btoa(indexUrl).slice(0, 32);
-      }
-    }
-    function encodeBase64UrlUtf8(value) {
-      const bytes = new TextEncoder().encode(value);
-      let binary = "";
-      for (const b of bytes) binary += String.fromCharCode(b);
-      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-    }
-    function parseStoredJson(stored) {
-      if (stored === null || stored === void 0) return null;
-      if (typeof stored === "string") {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return null;
-        }
-      }
-      if (typeof stored === "object") {
-        return stored;
-      }
-      return null;
-    }
-    function getCacheV1Key(bookId) {
-      return `mnr_cache_${bookId}`;
-    }
-    function getCacheV2IndexKey(bookId) {
-      return `mnr_cache_v2_index_${bookId}`;
-    }
-    function getCacheV2ChapterKey(bookId, url) {
-      return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
-    }
-    function getCurrentBookCacheKey() {
-      var _a;
-      const indexUrl = (_a = chapter.value) == null ? void 0 : _a.indexUrl;
-      if (!indexUrl) return null;
-      return { bookId: generateBookId(indexUrl), indexUrl };
-    }
-    function persistCachedChapter(cacheBook, url, cached) {
-      if (typeof GM_setValue === "undefined") return false;
-      try {
-        GM_setValue(getCacheV2ChapterKey(cacheBook.bookId, url), JSON.stringify(cached));
-        return true;
-      } catch (e) {
-        console.error("[MNR] Failed to persist cached chapter:", e);
-        return false;
-      }
-    }
-    async function getPersistedCachedChapter(url) {
-      var _a, _b, _c;
-      const cacheBook = getCurrentBookCacheKey();
-      if (!cacheBook) return null;
-      if (typeof GM_getValue === "undefined") return null;
-      try {
-        const storedV2 = GM_getValue(getCacheV2ChapterKey(cacheBook.bookId, url), null);
-        const cachedV2 = parseStoredJson(storedV2);
-        if ((_a = cachedV2 == null ? void 0 : cachedV2.chapter) == null ? void 0 : _a.url) {
-          return cachedV2;
-        }
-        const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
-        const dataV1 = parseStoredJson(storedV1);
-        const cachedV1 = (_b = dataV1 == null ? void 0 : dataV1.chapters) == null ? void 0 : _b[url];
-        if ((_c = cachedV1 == null ? void 0 : cachedV1.chapter) == null ? void 0 : _c.url) {
-          return cachedV1;
-        }
-      } catch (e) {
-        console.error("[MNR] Failed to load persisted chapter:", e);
-      }
-      return null;
-    }
-    async function persistCache() {
-      const runId = sessionId;
-      const cacheBook = getCurrentBookCacheKey();
-      if (!cacheBook) return;
-      if (typeof GM_setValue === "undefined") return;
-      const persistedSet = new Set(persistedUrls.value);
-      for (const [url, cached] of cachedContents.value) {
-        const persisted = persistCachedChapter(cacheBook, url, cached);
-        if (persisted) {
-          persistedSet.add(url);
-        }
-      }
-      if (persistedSet.size === 0) return;
-      const indexData = {
-        version: 2,
-        bookId: cacheBook.bookId,
-        indexUrl: cacheBook.indexUrl,
-        urls: Array.from(persistedSet),
-        lastUpdated: Date.now()
-      };
-      try {
-        GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
-        if (isSessionStale(runId)) return;
-        persistedUrls.value = persistedSet;
-      } catch (e) {
-        console.error("[MNR] Failed to persist cache index:", e);
-      }
-    }
-    async function restoreCache() {
-      const runId = sessionId;
-      const cacheBook = getCurrentBookCacheKey();
-      if (!cacheBook) return;
-      if (typeof GM_getValue === "undefined") return;
-      try {
-        const storedV2 = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
-        const dataV2 = parseStoredJson(storedV2);
-        if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
-          if (isSessionStale(runId)) return;
-          persistedUrls.value = new Set(dataV2.urls);
-          return;
-        }
-        const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
-        const dataV1 = parseStoredJson(storedV1);
-        if ((dataV1 == null ? void 0 : dataV1.chapters) && typeof dataV1.chapters === "object") {
-          if (isSessionStale(runId)) return;
-          persistedUrls.value = new Set(Object.keys(dataV1.chapters));
-        }
-      } catch (e) {
-        console.error("[MNR] Failed to restore cache:", e);
-      }
-    }
-    async function clearPersistedCache() {
-      const cacheBook = getCurrentBookCacheKey();
-      if (!cacheBook) return;
-      if (typeof GM_deleteValue === "undefined") return;
-      let urls = new Set(persistedUrls.value);
-      if (typeof GM_getValue !== "undefined") {
-        const storedIndex = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
-        const dataV2 = parseStoredJson(storedIndex);
-        if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
-          urls = new Set(dataV2.urls);
-        }
-      }
-      try {
-        const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
-        if (urls.size > 0) {
-          for (const url of urls) {
-            GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
-          }
-        } else if (typeof GM_listValues === "function") {
-          for (const key of GM_listValues()) {
-            if (key.startsWith(chapterKeyPrefix)) {
-              GM_deleteValue(key);
-            }
-          }
-        }
-        GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
-        GM_deleteValue(getCacheV1Key(cacheBook.bookId));
-        persistedUrls.value.clear();
-      } catch (e) {
-        console.error("[MNR] Failed to clear cache:", e);
-      }
     }
     return {
-isActive,
+      isActive,
       isLoading,
       isLoadingPrev,
       isLoadingNext,
@@ -22678,7 +22692,7 @@ isActive,
       tocLoading,
       cachedContents,
       persistedUrls,
-title,
+      title,
       bookTitle,
       content,
       hasNext,
@@ -22688,12 +22702,12 @@ title,
       method,
       tocWithStatus,
       currentChapterUrl,
-activate,
+      activate,
       deactivate,
       setChapter,
       setCurrentChapter,
-      loadNextChapter,
-      loadPrevChapter,
+      loadNextChapter: nav.loadNextChapter,
+      loadPrevChapter: nav.loadPrevChapter,
       setLoading,
       setError,
       showToast,
@@ -22704,12 +22718,12 @@ activate,
       applyTextConversion,
       startCacheAll,
       cancelCacheAll,
-      loadToc,
-      rebuildChaptersAround,
-      reloadCurrentChapter,
-      persistCache,
-      restoreCache,
-      clearPersistedCache,
+      loadToc: tocActions.loadToc,
+      rebuildChaptersAround: nav.rebuildChaptersAround,
+      reloadCurrentChapter: nav.reloadCurrentChapter,
+      persistCache: persistCache$1,
+      restoreCache: restoreCache$1,
+      clearPersistedCache: clearPersistedCache$1,
       $reset
     };
   });
@@ -23239,17 +23253,17 @@ ul, ol {
     };
     return { host, shadowRoot, mountPoint, cleanup };
   }
-  const _hoisted_1$8 = {
+  const _hoisted_1$9 = {
     class: "mnr-prompt-card",
     role: "dialog",
     "aria-modal": "true"
   };
-  const _hoisted_2$7 = { class: "mnr-confidence" };
+  const _hoisted_2$8 = { class: "mnr-confidence" };
   const _hoisted_3$7 = { class: "mnr-confidence-bar" };
   const _hoisted_4$7 = { class: "mnr-confidence-text" };
   const _hoisted_5$6 = { class: "mnr-results" };
   const _hoisted_6$5 = { class: "mnr-checkbox-label" };
-  const _sfc_main$8 = defineComponent({
+  const _sfc_main$b = defineComponent({
     __name: "DetectionPrompt",
     props: {
       decision: {},
@@ -23297,12 +23311,12 @@ ul, ol {
               class: "mnr-prompt-overlay",
               onClick: withModifiers(handleDismiss, ["self"])
             }, [
-              createBaseVNode("div", _hoisted_1$8, [
+              createBaseVNode("div", _hoisted_1$9, [
                 _cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [
                   createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"),
                   createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")
                 ], -1)),
-                createBaseVNode("div", _hoisted_2$7, [
+                createBaseVNode("div", _hoisted_2$8, [
                   createBaseVNode("div", _hoisted_3$7, [
                     createBaseVNode("div", {
                       class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
@@ -23366,7 +23380,7 @@ ul, ol {
     }
     return target;
   };
-  const DetectionPrompt = _export_sfc(_sfc_main$8, [["__scopeId", "data-v-91cf13cd"]]);
+  const DetectionPrompt = _export_sfc(_sfc_main$b, [["__scopeId", "data-v-91cf13cd"]]);
   function useVirtualChapters(chapters, options = {}) {
     const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
     const heights = ref( new Map());
@@ -23510,7 +23524,8 @@ setHeight,
       if (enabled === void 0) return true;
       return unref(enabled);
     });
-    function handleKeyDown(e) {
+    function handleKeyDown(ev) {
+      const e = ev;
       if (!isEnabled.value) return;
       const target = e.target;
       const key = e.key.toLowerCase();
@@ -23530,11 +23545,498 @@ setHeight,
     }
     useEventListener("keydown", handleKeyDown, { capture: true });
   }
-  const _hoisted_1$7 = {
+  const SCROLL_THROTTLE_MS = 16;
+  function throttle(fn, delay) {
+    let lastCall = 0;
+    let timeoutId = null;
+    return ((...fnArgs) => {
+      const now = Date.now();
+      const remaining = delay - (now - lastCall);
+      if (remaining <= 0) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        lastCall = now;
+        fn(...fnArgs);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(() => {
+          lastCall = Date.now();
+          timeoutId = null;
+          fn(...fnArgs);
+        }, remaining);
+      }
+    });
+  }
+  function useReaderScroll(options) {
+    const {
+      mainRef,
+      chapters,
+      visibleChapters,
+      chapterRefs,
+      chapterHeights,
+      averageHeight,
+      setChapterHeight,
+      updateWindow,
+      readerStore,
+      autoHideHeader,
+      showControls,
+      isNavigating,
+      autoLoadArmed,
+      lastAutoLoadScrollTop,
+      autoLoadShortChainCount,
+      scheduleAutoLoadNext
+    } = options;
+    let lastScrollTop = 0;
+    function estimateIndexFromOffset(offset) {
+      if (chapters.value.length === 0) return -1;
+      let acc = 0;
+      for (let i = 0; i < chapters.value.length; i++) {
+        const url = chapters.value[i].chapter.url;
+        const height = chapterHeights.value.get(url) ?? averageHeight.value;
+        acc += height;
+        if (offset < acc) {
+          return i;
+        }
+      }
+      return chapters.value.length - 1;
+    }
+    function handleScrollCore() {
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      const currentScrollY = mainEl.scrollTop;
+      const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
+      const ARM_SCROLL_DELTA_PX = 180;
+      if (!isNavigating.value && !autoLoadArmed.value && currentScrollY - lastAutoLoadScrollTop.value >= ARM_SCROLL_DELTA_PX) {
+        autoLoadArmed.value = true;
+        autoLoadShortChainCount.value = 0;
+      }
+      if (autoHideHeader.value) {
+        if (currentScrollY > lastScrollTop && currentScrollY > 100) {
+          showControls.value = false;
+        } else if (currentScrollY < lastScrollTop - 20) {
+          showControls.value = true;
+        }
+      }
+      lastScrollTop = currentScrollY;
+      let currentChapterEl = null;
+      let currentChapterIdx = -1;
+      let maxVisibleHeight = 0;
+      const viewportTop = currentScrollY;
+      const viewportBottom = currentScrollY + mainEl.clientHeight;
+      for (const entry of visibleChapters.value) {
+        const el = chapterRefs.get(entry.chapter.url);
+        if (!el) continue;
+        const elTop = el.offsetTop;
+        const elHeight = el.offsetHeight;
+        const elBottom = elTop + elHeight;
+        setChapterHeight(entry.chapter.url, elHeight);
+        const visibleTop = Math.max(elTop, viewportTop);
+        const visibleBottom = Math.min(elBottom, viewportBottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+        if (visibleHeight > maxVisibleHeight) {
+          maxVisibleHeight = visibleHeight;
+          currentChapterIdx = entry.index;
+          currentChapterEl = el;
+        }
+      }
+      if (!currentChapterEl || currentChapterIdx === -1) {
+        const estimatedIdx = estimateIndexFromOffset(currentScrollY + mainEl.clientHeight / 2);
+        if (estimatedIdx !== -1) {
+          readerStore.setCurrentChapter(estimatedIdx);
+          updateWindow(estimatedIdx);
+          const overallPercent2 = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
+          readerStore.updateScroll(overallPercent2);
+        }
+        return;
+      }
+      readerStore.setCurrentChapter(currentChapterIdx);
+      updateWindow(currentChapterIdx);
+      const overallPercent = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
+      readerStore.updateScroll(overallPercent);
+      scheduleAutoLoadNext();
+    }
+    const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
+    return { handleScroll, lastScrollTop };
+  }
+  const INTERSECTION_ROOT_MARGIN_PX = 800;
+  const AUTO_LOAD_COOLDOWN_MIN_MS = 3e3;
+  const AUTO_LOAD_COOLDOWN_MAX_MS = 5e3;
+  const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
+  const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
+  function useReaderAutoLoad(options) {
+    const { mainRef, readerStore, configStore, hasNext, isLoadingNext, isLoadingPrev, isLoading, isNavigating } = options;
+    const autoLoadArmed = ref(false);
+    const lastAutoLoadScrollTop = { value: 0 };
+    const autoLoadShortChainCount = { value: 0 };
+    let nextAutoLoadAt = 0;
+    let autoLoadTimer = null;
+    function getRandomDelayMs(min, max) {
+      const a = Math.min(min, max);
+      const b = Math.max(min, max);
+      return Math.floor(Math.random() * (b - a + 1)) + a;
+    }
+    function getDistanceToBottom(mainEl) {
+      return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
+    }
+    function isNearBottom(mainEl) {
+      return getDistanceToBottom(mainEl) <= INTERSECTION_ROOT_MARGIN_PX;
+    }
+    function isShortScrollableContent(mainEl) {
+      const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
+      return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
+    }
+    function clearAutoLoadTimer() {
+      if (!autoLoadTimer) return;
+      clearTimeout(autoLoadTimer);
+      autoLoadTimer = null;
+    }
+    function scheduleAutoLoadNext() {
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      if (!configStore.behavior.preloadNext) return;
+      if (!hasNext.value) return;
+      if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
+      if (!isNearBottom(mainEl)) return;
+      const fillMode = isShortScrollableContent(mainEl);
+      const canAutoLoad = autoLoadArmed.value || fillMode;
+      if (!canAutoLoad) return;
+      if (fillMode && autoLoadShortChainCount.value >= AUTO_LOAD_SHORT_CHAIN_LIMIT) return;
+      const now = Date.now();
+      if (nextAutoLoadAt === 0) {
+        nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+      }
+      const delayMs = Math.max(0, nextAutoLoadAt - now);
+      if (delayMs > 0) {
+        if (!autoLoadTimer) {
+          autoLoadTimer = setTimeout(() => {
+            autoLoadTimer = null;
+            scheduleAutoLoadNext();
+          }, delayMs);
+        }
+        return;
+      }
+      clearAutoLoadTimer();
+      nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+      lastAutoLoadScrollTop.value = mainEl.scrollTop;
+      autoLoadArmed.value = false;
+      autoLoadShortChainCount.value = fillMode ? autoLoadShortChainCount.value + 1 : 0;
+      void readerStore.loadNextChapter("auto").then((ok) => {
+        if (!ok) {
+          nextAutoLoadAt = Date.now() + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MAX_MS, AUTO_LOAD_COOLDOWN_MAX_MS * 2);
+        }
+      });
+    }
+    watch(
+      () => readerStore.chapters.length,
+      () => {
+        const mainEl = mainRef.value;
+        if (!mainEl) return;
+        lastAutoLoadScrollTop.value = mainEl.scrollTop;
+        autoLoadArmed.value = false;
+        if (!isShortScrollableContent(mainEl)) {
+          autoLoadShortChainCount.value = 0;
+        }
+        scheduleAutoLoadNext();
+      }
+    );
+    watch(
+      () => configStore.behavior.preloadNext,
+      (enabled) => {
+        if (!enabled) {
+          clearAutoLoadTimer();
+          nextAutoLoadAt = 0;
+          autoLoadShortChainCount.value = 0;
+          return;
+        }
+        scheduleAutoLoadNext();
+      }
+    );
+    onUnmounted(() => {
+      clearAutoLoadTimer();
+    });
+    return {
+      autoLoadArmed,
+      scheduleAutoLoadNext,
+      clearAutoLoadTimer,
+      lastAutoLoadScrollTop,
+      autoLoadShortChainCount,
+      INTERSECTION_ROOT_MARGIN_PX
+    };
+  }
+  const SWIPE_THRESHOLD_PX = 80;
+  const SWIPE_MAX_DURATION_MS = 700;
+  const SWIPE_CANCEL_VERTICAL_PX = 28;
+  const SWIPE_AXIS_RATIO = 1.5;
+  function isTouchEvent(e) {
+    const candidate = e;
+    return Boolean(candidate.touches && candidate.changedTouches);
+  }
+  function isInteractiveElement(target) {
+    if (!(target instanceof HTMLElement)) return false;
+    return Boolean(target.closest("a, button, input, textarea, select, label"));
+  }
+  function useTouchGestures(options) {
+    const { enabled, onSwipeLeft, onSwipeRight } = options;
+    let swipeStart = null;
+    function handleTouchStart(e) {
+      if (!enabled.value) return;
+      if (!isTouchEvent(e)) return;
+      if (e.touches.length !== 1) return;
+      if (isInteractiveElement(e.target)) return;
+      const touch = e.touches[0];
+      swipeStart = {
+        id: touch.identifier,
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+        cancelled: false
+      };
+    }
+    function handleTouchMove(e) {
+      if (!swipeStart) return;
+      if (!isTouchEvent(e)) return;
+      if (e.touches.length !== 1) {
+        swipeStart = null;
+        return;
+      }
+      const touch = Array.from(e.touches).find((t) => t.identifier === (swipeStart == null ? void 0 : swipeStart.id));
+      if (!touch) return;
+      const dx = touch.clientX - swipeStart.x;
+      const dy = touch.clientY - swipeStart.y;
+      if (Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX && Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO) {
+        swipeStart.cancelled = true;
+      }
+    }
+    function handleTouchEnd(e) {
+      if (!swipeStart) return;
+      if (!isTouchEvent(e)) return;
+      const start = swipeStart;
+      swipeStart = null;
+      if (start.cancelled) return;
+      if (!enabled.value) return;
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) return;
+      const touch = Array.from(e.changedTouches).find((t) => t.identifier === start.id);
+      if (!touch) return;
+      const dt = Date.now() - start.time;
+      if (dt > SWIPE_MAX_DURATION_MS) return;
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+      if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
+      if (dx < 0) {
+        onSwipeLeft();
+      } else {
+        onSwipeRight();
+      }
+    }
+    function handleTouchCancel() {
+      swipeStart = null;
+    }
+    return { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel };
+  }
+  function useChapterNavigation(options) {
+    const {
+      mainRef,
+      chapters,
+      chapterRefs,
+      readerStore,
+      isNavigating,
+      isLoadingPrev,
+      isLoadingNext,
+      hasPrev,
+      hasNext,
+      topSpacer,
+      setChapterHeight,
+      updateWindow
+    } = options;
+    let isLoadingPrevLocal = false;
+    function scrollToChapter(index) {
+      var _a;
+      const url = (_a = chapters.value[index]) == null ? void 0 : _a.chapter.url;
+      if (!url) return;
+      const chapterEl = chapterRefs.get(url);
+      if (chapterEl) {
+        chapterEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+    async function jumpToCachedChapter(url) {
+      var _a;
+      const existingIndex = readerStore.chapters.findIndex((entry) => entry.chapter.url === url);
+      if (existingIndex >= 0) {
+        readerStore.setCurrentChapter(existingIndex);
+        scrollToChapter(existingIndex);
+        return;
+      }
+      const success = await readerStore.rebuildChaptersAround(url);
+      if (success) {
+        window.history.replaceState({ mnrChapter: 0 }, "", url);
+        (_a = mainRef.value) == null ? void 0 : _a.scrollTo({ top: 0, behavior: "auto" });
+      } else {
+        window.location.href = url;
+      }
+    }
+    async function jumpToChapter(index, behavior = "smooth") {
+      var _a;
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      if (index < 0 || index >= chapters.value.length) return;
+      isNavigating.value = true;
+      updateWindow(index);
+      await nextTick();
+      await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+      const url = (_a = chapters.value[index]) == null ? void 0 : _a.chapter.url;
+      if (!url) {
+        isNavigating.value = false;
+        return;
+      }
+      const targetEl = chapterRefs.get(url);
+      if (!targetEl) {
+        isNavigating.value = false;
+        return;
+      }
+      const containerRect = mainEl.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+      const targetOffset = targetRect.top - containerRect.top + mainEl.scrollTop;
+      mainEl.scrollTo({
+        top: targetOffset,
+        behavior
+      });
+      readerStore.setCurrentChapter(index);
+      if (behavior === "smooth") {
+        setTimeout(() => {
+          isNavigating.value = false;
+        }, 200);
+      } else {
+        globalThis.requestAnimationFrame(() => {
+          isNavigating.value = false;
+        });
+      }
+    }
+    async function loadPrevWithScrollAdjust(jumpToStart = false) {
+      const mainEl = mainRef.value;
+      if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return;
+      isLoadingPrevLocal = true;
+      try {
+        const oldScrollTop = mainEl.scrollTop;
+        const oldTopSpacer = topSpacer.value;
+        const success = await readerStore.loadPrevChapter("manual");
+        if (success) {
+          await nextTick();
+          updateWindow(readerStore.currentChapterIndex);
+          await nextTick();
+          await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+          if (jumpToStart) {
+            await jumpToChapter(0, "auto");
+            return;
+          }
+          const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
+          if (chapterEls.length > 0) {
+            const newChapterEl = chapterEls[0];
+            const newChapterHeight = newChapterEl.offsetHeight;
+            const newEntry = readerStore.chapters[0];
+            if (newEntry) {
+              setChapterHeight(newEntry.chapter.url, newChapterHeight);
+            }
+            await nextTick();
+            const spacerDelta = topSpacer.value - oldTopSpacer;
+            mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
+          }
+        }
+      } finally {
+        isLoadingPrevLocal = false;
+      }
+    }
+    function handleWheel(e) {
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      if (e.deltaY < 0 && mainEl.scrollTop <= 0 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+        loadPrevWithScrollAdjust();
+      }
+    }
+    async function navigateChapter(direction) {
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      const currentIdx = readerStore.currentChapterIndex;
+      const chaptersCount = readerStore.chapters.length;
+      if (isNavigating.value) {
+        return;
+      }
+      if (direction === "prev") {
+        if (currentIdx > 0) {
+          jumpToChapter(currentIdx - 1);
+        } else if (hasPrev.value && !isLoadingPrev.value) {
+          const success = await readerStore.loadPrevChapter("manual");
+          if (success) {
+            globalThis.requestAnimationFrame(() => jumpToChapter(0, "auto"));
+          }
+        } else if (!hasPrev.value) {
+          readerStore.showToast(readerStore.getVipBlockedToast("prev") || "已经是第一章了", "info");
+        }
+      } else {
+        if (currentIdx < chaptersCount - 1) {
+          jumpToChapter(currentIdx + 1);
+        } else if (hasNext.value && !isLoadingNext.value) {
+          const success = await readerStore.loadNextChapter("manual");
+          if (success) {
+            globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
+          }
+        } else if (!hasNext.value) {
+          readerStore.showToast(readerStore.getVipBlockedToast("next") || "已经是最后一章了", "info");
+        }
+      }
+    }
+    function scrollReader(direction) {
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      const step = 150;
+      const pageHeight = mainEl.clientHeight * 0.9;
+      let top = 0;
+      let behavior = "auto";
+      switch (direction) {
+        case "up": {
+          if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+            loadPrevWithScrollAdjust(true);
+            return;
+          }
+          top = -step;
+          break;
+        }
+        case "down":
+          top = step;
+          break;
+        case "pageup": {
+          if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+            loadPrevWithScrollAdjust(true);
+            return;
+          }
+          top = -pageHeight;
+          behavior = "smooth";
+          break;
+        }
+        case "pagedown":
+          top = pageHeight;
+          behavior = "smooth";
+          break;
+      }
+      mainEl.scrollBy({ top, behavior });
+    }
+    return {
+      navigateChapter,
+      jumpToChapter,
+      jumpToCachedChapter,
+      scrollToChapter,
+      loadPrevWithScrollAdjust,
+      handleWheel,
+      scrollReader
+    };
+  }
+  const _hoisted_1$8 = {
     key: 0,
     class: "mnr-progress-text"
   };
-  const _sfc_main$7 = defineComponent({
+  const _sfc_main$a = defineComponent({
     __name: "ProgressIndicator",
     props: {
       percent: { default: 0 },
@@ -23583,24 +24085,24 @@ setHeight,
             class: "mnr-progress-bar",
             style: normalizeStyle({ width: `${percent.value}%` })
           }, null, 4),
-          __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$7, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)
+          __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$8, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)
         ], 2);
       };
     }
   });
-  const ProgressIndicator = _export_sfc(_sfc_main$7, [["__scopeId", "data-v-08ca51a0"]]);
-  const _hoisted_1$6 = {
+  const ProgressIndicator = _export_sfc(_sfc_main$a, [["__scopeId", "data-v-08ca51a0"]]);
+  const _hoisted_1$7 = {
     key: 0,
     class: "mnr-floating-toolbar"
   };
-  const _hoisted_2$6 = { class: "mnr-fab-group" };
+  const _hoisted_2$7 = { class: "mnr-fab-group" };
   const _hoisted_3$6 = ["disabled"];
   const _hoisted_4$6 = { class: "mnr-icon" };
   const _hoisted_5$5 = {
     key: 0,
     class: "mnr-fab-badge"
   };
-  const _sfc_main$6 = defineComponent({
+  const _sfc_main$9 = defineComponent({
     __name: "FloatingToolbar",
     props: {
       cacheRunning: { type: Boolean },
@@ -23614,7 +24116,7 @@ setHeight,
       return (_ctx, _cache) => {
         return openBlock(), createBlock(Transition, { name: "mnr-fade-slide" }, {
           default: withCtx(() => [
-            __props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$6, [
+            __props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$7, [
               createBaseVNode("button", {
                 class: "mnr-fab",
                 title: "目录 (Tab)",
@@ -23623,7 +24125,7 @@ setHeight,
               }, [..._cache[3] || (_cache[3] = [
                 createBaseVNode("span", { class: "mnr-icon" }, "☰", -1)
               ])]),
-              createBaseVNode("div", _hoisted_2$6, [
+              createBaseVNode("div", _hoisted_2$7, [
                 createBaseVNode("button", {
                   class: "mnr-fab",
                   title: "缓存本书",
@@ -23650,7 +24152,71 @@ setHeight,
       };
     }
   });
-  const FloatingToolbar = _export_sfc(_sfc_main$6, [["__scopeId", "data-v-63e5b047"]]);
+  const FloatingToolbar = _export_sfc(_sfc_main$9, [["__scopeId", "data-v-63e5b047"]]);
+  const _sfc_main$8 = defineComponent({
+    __name: "MnrSpinner",
+    props: {
+      size: { default: "medium" }
+    },
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", {
+          class: normalizeClass(["mnr-spinner", __props.size])
+        }, null, 2);
+      };
+    }
+  });
+  const MnrSpinner = _export_sfc(_sfc_main$8, [["__scopeId", "data-v-340f8e56"]]);
+  const _sfc_main$7 = defineComponent({
+    __name: "MnrToast",
+    props: {
+      message: {},
+      type: { default: "info" },
+      visible: { type: Boolean }
+    },
+    emits: ["dismiss"],
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createBlock(Transition, { name: "mnr-toast" }, {
+          default: withCtx(() => [
+            __props.visible ? (openBlock(), createElementBlock("div", {
+              key: 0,
+              class: normalizeClass(["mnr-toast", { "mnr-toast--error": __props.type === "error" }]),
+              onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("dismiss"))
+            }, toDisplayString(__props.message), 3)) : createCommentVNode("", true)
+          ]),
+          _: 1
+        });
+      };
+    }
+  });
+  const MnrToast = _export_sfc(_sfc_main$7, [["__scopeId", "data-v-53e91417"]]);
+  const _hoisted_1$6 = {
+    key: 0,
+    class: "mnr-loading-overlay"
+  };
+  const _hoisted_2$6 = {
+    key: 1,
+    class: "mnr-loading-overlay--inline"
+  };
+  const _sfc_main$6 = defineComponent({
+    __name: "MnrLoadingOverlay",
+    props: {
+      inline: { type: Boolean, default: false }
+    },
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return !__props.inline ? (openBlock(), createElementBlock("div", _hoisted_1$6, [
+          createVNode(MnrSpinner, { size: "medium" }),
+          renderSlot(_ctx.$slots, "default", {}, void 0)
+        ])) : (openBlock(), createElementBlock("div", _hoisted_2$6, [
+          createVNode(MnrSpinner, { size: "medium" }),
+          renderSlot(_ctx.$slots, "default", {}, void 0)
+        ]));
+      };
+    }
+  });
+  const MnrLoadingOverlay = _export_sfc(_sfc_main$6, [["__scopeId", "data-v-f2b9dbb7"]]);
   const _hoisted_1$5 = { class: "mnr-drawer-header" };
   const _hoisted_2$5 = { class: "mnr-drawer-title" };
   const _hoisted_3$5 = {
@@ -23675,7 +24241,7 @@ setHeight,
     key: 0,
     class: "mnr-stat-persisted"
   };
-  const _hoisted_10$4 = {
+  const _hoisted_10$3 = {
     key: 1,
     class: "mnr-stat-session"
   };
@@ -23774,10 +24340,10 @@ setHeight,
                 onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("close"))
               }, "✕")
             ]),
-            __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$5, [..._cache[2] || (_cache[2] = [
-              createBaseVNode("div", { class: "mnr-loading-spinner small" }, null, -1),
-              createBaseVNode("span", null, "加载目录中...", -1)
-            ])])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_4$5, [..._cache[3] || (_cache[3] = [
+            __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$5, [
+              createVNode(unref(MnrSpinner), { size: "small" }),
+              _cache[2] || (_cache[2] = createBaseVNode("span", null, "加载目录中...", -1))
+            ])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_4$5, [..._cache[3] || (_cache[3] = [
               createBaseVNode("p", null, "暂无目录", -1)
             ])])) : (openBlock(), createElementBlock("div", {
               key: 2,
@@ -23800,7 +24366,7 @@ setHeight,
                   _cache[4] || (_cache[4] = createBaseVNode("span", { class: "mnr-persisted-icon" }, "✓", -1)),
                   createTextVNode(" 已保存 " + toDisplayString(persistedCount.value) + " 章 ", 1)
                 ])) : createCommentVNode("", true),
-                sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_10$4, [
+                sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_10$3, [
                   _cache[5] || (_cache[5] = createBaseVNode("span", { class: "mnr-cached-icon" }, "○", -1)),
                   createTextVNode(" 临时 " + toDisplayString(sessionCount.value) + " 章 ", 1)
                 ])) : createCommentVNode("", true)
@@ -23833,7 +24399,7 @@ setHeight,
       };
     }
   });
-  const ChapterDrawer = _export_sfc(_sfc_main$5, [["__scopeId", "data-v-6d373c76"]]);
+  const ChapterDrawer = _export_sfc(_sfc_main$5, [["__scopeId", "data-v-fe73b01a"]]);
   const _hoisted_1$4 = { class: "mnr-settings-panel" };
   const _hoisted_2$4 = { class: "mnr-settings-header" };
   const _hoisted_3$4 = { class: "mnr-settings-content" };
@@ -23843,7 +24409,7 @@ setHeight,
   const _hoisted_7$3 = { class: "mnr-settings-section" };
   const _hoisted_8$3 = { class: "mnr-slider-row" };
   const _hoisted_9$3 = ["value"];
-  const _hoisted_10$3 = { class: "mnr-slider-value" };
+  const _hoisted_10$2 = { class: "mnr-slider-value" };
   const _hoisted_11$2 = { class: "mnr-settings-section" };
   const _hoisted_12$2 = { class: "mnr-slider-row" };
   const _hoisted_13$2 = ["value"];
@@ -24027,7 +24593,7 @@ setHeight,
                         class: "mnr-slider-label",
                         style: { "font-size": "1.2em" }
                       }, "A", -1)),
-                      createBaseVNode("span", _hoisted_10$3, toDisplayString(fontSize.value) + "px", 1)
+                      createBaseVNode("span", _hoisted_10$2, toDisplayString(fontSize.value) + "px", 1)
                     ])
                   ]),
                   createBaseVNode("section", _hoisted_11$2, [
@@ -24417,7 +24983,7 @@ setHeight,
   };
   const _hoisted_8$2 = { key: 0 };
   const _hoisted_9$2 = { key: 1 };
-  const _hoisted_10$2 = { key: 2 };
+  const _hoisted_10$1 = { key: 2 };
   const _hoisted_11$1 = {
     key: 1,
     class: "mnr-preview-content"
@@ -24605,7 +25171,7 @@ setHeight,
             key: 0,
             class: normalizeClass(["mnr-preview-match", matchClass.value])
           }, [
-            matchCount.value === 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, "❌ 未找到匹配元素")) : matchCount.value === 1 ? (openBlock(), createElementBlock("span", _hoisted_9$2, "✓ 找到 1 个元素")) : (openBlock(), createElementBlock("span", _hoisted_10$2, "⚠ 找到 " + toDisplayString(matchCount.value) + " 个元素", 1))
+            matchCount.value === 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, "❌ 未找到匹配元素")) : matchCount.value === 1 ? (openBlock(), createElementBlock("span", _hoisted_9$2, "✓ 找到 1 个元素")) : (openBlock(), createElementBlock("span", _hoisted_10$1, "⚠ 找到 " + toDisplayString(matchCount.value) + " 个元素", 1))
           ], 2)) : createCommentVNode("", true),
           __props.showPreview && previewContent.value ? (openBlock(), createElementBlock("div", _hoisted_11$1, [
             createBaseVNode("div", _hoisted_12$1, [
@@ -24647,7 +25213,7 @@ setHeight,
   const _hoisted_7$1 = { class: "mnr-form-group" };
   const _hoisted_8$1 = { class: "mnr-form-group" };
   const _hoisted_9$1 = { class: "mnr-form-section" };
-  const _hoisted_10$1 = { class: "mnr-form-group" };
+  const _hoisted_10 = { class: "mnr-form-group" };
   const _hoisted_11 = { class: "mnr-form-section" };
   const _hoisted_12 = { class: "mnr-form-section" };
   const _hoisted_13 = { class: "mnr-editor-content" };
@@ -24975,7 +25541,7 @@ ${value}`;
                 "preview-type": "html",
                 onPick: _cache[3] || (_cache[3] = ($event) => startPicking("content"))
               }, null, 8, ["selector"]),
-              createBaseVNode("div", _hoisted_10$1, [
+              createBaseVNode("div", _hoisted_10, [
                 _cache[27] || (_cache[27] = createBaseVNode("label", null, "移除元素", -1)),
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => localRule.content.remove = $event),
@@ -25157,54 +25723,12 @@ ${value}`;
   const _hoisted_7 = { class: "mnr-chapter-nav" };
   const _hoisted_8 = ["href"];
   const _hoisted_9 = { class: "mnr-rule-editor-container" };
-  const _hoisted_10 = {
-    key: 2,
-    class: "mnr-loading-overlay"
-  };
-  const SCROLL_THROTTLE_MS = 16;
-  const INTERSECTION_ROOT_MARGIN_PX = 800;
-  const AUTO_LOAD_COOLDOWN_MIN_MS = 3e3;
-  const AUTO_LOAD_COOLDOWN_MAX_MS = 5e3;
-  const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
-  const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
-  const SWIPE_THRESHOLD_PX = 80;
-  const SWIPE_MAX_DURATION_MS = 700;
-  const SWIPE_CANCEL_VERTICAL_PX = 28;
-  const SWIPE_AXIS_RATIO = 1.5;
   const _sfc_main = defineComponent({
     __name: "ReaderView",
     setup(__props) {
-      const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
-      function throttle(fn, delay) {
-        let lastCall = 0;
-        let timeoutId = null;
-        return ((...fnArgs) => {
-          const now = Date.now();
-          const remaining = delay - (now - lastCall);
-          if (remaining <= 0) {
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              timeoutId = null;
-            }
-            lastCall = now;
-            fn(...fnArgs);
-          } else if (!timeoutId) {
-            timeoutId = setTimeout(() => {
-              lastCall = Date.now();
-              timeoutId = null;
-              fn(...fnArgs);
-            }, remaining);
-          }
-        });
-      }
       const readerStore = useReaderStore();
       const configStore = useConfigStore();
       const ruleStore = useRuleStore();
-      const autoLoadArmed = ref(false);
-      let lastAutoLoadScrollTop = 0;
-      let autoLoadShortChainCount = 0;
-      let nextAutoLoadAt = 0;
-      let autoLoadTimer = null;
       const mainRef = ref(null);
       const topSentinel = ref(null);
       const bottomSentinel = ref(null);
@@ -25215,66 +25739,8 @@ ${value}`;
       const isNavigating = ref(false);
       const showControls = ref(true);
       const chapterRefs = new Map();
-      let isLoadingPrevLocal = false;
       let topObserver = null;
       let bottomObserver = null;
-      let lastScrollTop = 0;
-      function getRandomDelayMs(min, max) {
-        const a = Math.min(min, max);
-        const b = Math.max(min, max);
-        return Math.floor(Math.random() * (b - a + 1)) + a;
-      }
-      function getDistanceToBottom(mainEl) {
-        return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
-      }
-      function isNearBottom(mainEl) {
-        return getDistanceToBottom(mainEl) <= INTERSECTION_ROOT_MARGIN_PX;
-      }
-      function isShortScrollableContent(mainEl) {
-        const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
-        return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
-      }
-      function clearAutoLoadTimer() {
-        if (!autoLoadTimer) return;
-        clearTimeout(autoLoadTimer);
-        autoLoadTimer = null;
-      }
-      function scheduleAutoLoadNext() {
-        const mainEl = mainRef.value;
-        if (!mainEl) return;
-        if (!configStore.behavior.preloadNext) return;
-        if (!hasNext.value) return;
-        if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
-        if (!isNearBottom(mainEl)) return;
-        const fillMode = isShortScrollableContent(mainEl);
-        const canAutoLoad = autoLoadArmed.value || fillMode;
-        if (!canAutoLoad) return;
-        if (fillMode && autoLoadShortChainCount >= AUTO_LOAD_SHORT_CHAIN_LIMIT) return;
-        const now = Date.now();
-        if (nextAutoLoadAt === 0) {
-          nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
-        }
-        const delayMs = Math.max(0, nextAutoLoadAt - now);
-        if (delayMs > 0) {
-          if (!autoLoadTimer) {
-            autoLoadTimer = setTimeout(() => {
-              autoLoadTimer = null;
-              scheduleAutoLoadNext();
-            }, delayMs);
-          }
-          return;
-        }
-        clearAutoLoadTimer();
-        nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
-        lastAutoLoadScrollTop = mainEl.scrollTop;
-        autoLoadArmed.value = false;
-        autoLoadShortChainCount = fillMode ? autoLoadShortChainCount + 1 : 0;
-        void readerStore.loadNextChapter("auto").then((ok) => {
-          if (!ok) {
-            nextAutoLoadAt = Date.now() + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MAX_MS, AUTO_LOAD_COOLDOWN_MAX_MS * 2);
-          }
-        });
-      }
       watch(isPickerActive, (active) => {
         const hideStyle = document.getElementById("mnr-hide-original");
         const readerRoot = document.getElementById("mnr-reader-root");
@@ -25337,13 +25803,67 @@ ${value}`;
       const showProgress = computed(() => configStore.behavior.showProgress);
       const cacheProgress = computed(() => readerStore.cacheProgress);
       const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
+      const {
+        autoLoadArmed,
+        scheduleAutoLoadNext,
+        lastAutoLoadScrollTop,
+        autoLoadShortChainCount
+      } = useReaderAutoLoad({
+        mainRef,
+        readerStore,
+        configStore,
+        hasNext,
+        isLoadingNext,
+        isLoadingPrev,
+        isLoading,
+        isNavigating
+      });
+      const { handleScroll } = useReaderScroll({
+        mainRef,
+        chapters,
+        visibleChapters,
+        chapterRefs,
+        chapterHeights,
+        averageHeight,
+        setChapterHeight,
+        updateWindow,
+        readerStore,
+        autoHideHeader,
+        showControls,
+        isNavigating,
+        autoLoadArmed,
+        lastAutoLoadScrollTop,
+        autoLoadShortChainCount,
+        scheduleAutoLoadNext
+      });
+      const {
+        navigateChapter,
+        jumpToCachedChapter,
+        scrollReader,
+        handleWheel
+      } = useChapterNavigation({
+        mainRef,
+        chapters,
+        chapterRefs,
+        readerStore,
+        isNavigating,
+        isLoadingPrev,
+        isLoadingNext,
+        hasPrev,
+        hasNext,
+        topSpacer,
+        setChapterHeight,
+        updateWindow
+      });
+      const swipeEnabled = computed(() => configStore.behavior.swipeGestures && !isPickerActive.value);
+      const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
+        enabled: swipeEnabled,
+        onSwipeLeft: () => void navigateChapter("next"),
+        onSwipeRight: () => void navigateChapter("prev")
+      });
       function shieldEvent(event) {
         event.stopPropagation();
       }
-      const keyboardEnabled = computed(
-        () => configStore.behavior.keyboardNavigation && !isPickerActive.value
-      );
-      const swipeEnabled = computed(() => configStore.behavior.swipeGestures && !isPickerActive.value);
       function navigate(direction) {
         if (indexUrl.value) {
           window.location.href = indexUrl.value;
@@ -25360,31 +25880,6 @@ ${value}`;
           jumpToCachedChapter(entry.url);
         } else {
           window.location.href = entry.url;
-        }
-      }
-      async function jumpToCachedChapter(url) {
-        var _a;
-        const existingIndex = readerStore.chapters.findIndex((entry) => entry.chapter.url === url);
-        if (existingIndex >= 0) {
-          readerStore.setCurrentChapter(existingIndex);
-          scrollToChapter(existingIndex);
-          return;
-        }
-        const success = await readerStore.rebuildChaptersAround(url);
-        if (success) {
-          window.history.replaceState({ mnrChapter: 0 }, "", url);
-          (_a = mainRef.value) == null ? void 0 : _a.scrollTo({ top: 0, behavior: "auto" });
-        } else {
-          window.location.href = url;
-        }
-      }
-      function scrollToChapter(index) {
-        var _a;
-        const url = (_a = chapters.value[index]) == null ? void 0 : _a.chapter.url;
-        if (!url) return;
-        const chapterEl = chapterRefs.get(url);
-        if (chapterEl) {
-          chapterEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
       function handleContentClick(e) {
@@ -25453,174 +25948,8 @@ ${value}`;
           setChapterHeight(url, el.offsetHeight);
         };
       }
-      function estimateIndexFromOffset(offset) {
-        if (chapters.value.length === 0) return -1;
-        let acc = 0;
-        for (let i = 0; i < chapters.value.length; i++) {
-          const url = chapters.value[i].chapter.url;
-          const height = chapterHeights.value.get(url) ?? averageHeight.value;
-          acc += height;
-          if (offset < acc) {
-            return i;
-          }
-        }
-        return chapters.value.length - 1;
-      }
-      function handleScrollCore() {
-        const mainEl = mainRef.value;
-        if (!mainEl) return;
-        const currentScrollY = mainEl.scrollTop;
-        const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
-        if (!isNavigating.value && !autoLoadArmed.value && currentScrollY - lastAutoLoadScrollTop >= AUTO_LOAD_ARM_SCROLL_DELTA_PX) {
-          autoLoadArmed.value = true;
-          autoLoadShortChainCount = 0;
-        }
-        if (autoHideHeader.value) {
-          if (currentScrollY > lastScrollTop && currentScrollY > 100) {
-            showControls.value = false;
-          } else if (currentScrollY < lastScrollTop - 20) {
-            showControls.value = true;
-          }
-        }
-        lastScrollTop = currentScrollY;
-        let currentChapterEl = null;
-        let currentChapterIdx = -1;
-        let maxVisibleHeight = 0;
-        const viewportTop = currentScrollY;
-        const viewportBottom = currentScrollY + mainEl.clientHeight;
-        for (const entry of visibleChapters.value) {
-          const el = chapterRefs.get(entry.chapter.url);
-          if (!el) continue;
-          const elTop = el.offsetTop;
-          const elHeight = el.offsetHeight;
-          const elBottom = elTop + elHeight;
-          setChapterHeight(entry.chapter.url, elHeight);
-          const visibleTop = Math.max(elTop, viewportTop);
-          const visibleBottom = Math.min(elBottom, viewportBottom);
-          const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-          if (visibleHeight > maxVisibleHeight) {
-            maxVisibleHeight = visibleHeight;
-            currentChapterIdx = entry.index;
-            currentChapterEl = el;
-          }
-        }
-        if (!currentChapterEl || currentChapterIdx === -1) {
-          const estimatedIdx = estimateIndexFromOffset(currentScrollY + mainEl.clientHeight / 2);
-          if (estimatedIdx !== -1) {
-            readerStore.setCurrentChapter(estimatedIdx);
-            updateWindow(estimatedIdx);
-            const overallPercent2 = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
-            readerStore.updateScroll(overallPercent2);
-          }
-          return;
-        }
-        readerStore.setCurrentChapter(currentChapterIdx);
-        updateWindow(currentChapterIdx);
-        const overallPercent = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
-        readerStore.updateScroll(overallPercent);
-        scheduleAutoLoadNext();
-      }
-      const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
-      async function loadPrevWithScrollAdjust(jumpToStart = false) {
-        const mainEl = mainRef.value;
-        if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return;
-        isLoadingPrevLocal = true;
-        try {
-          const oldScrollTop = mainEl.scrollTop;
-          const oldTopSpacer = topSpacer.value;
-          const success = await readerStore.loadPrevChapter("manual");
-          if (success) {
-            await nextTick();
-            updateWindow(readerStore.currentChapterIndex);
-            await nextTick();
-            await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
-            if (jumpToStart) {
-              await jumpToChapter(0, "auto");
-              return;
-            }
-            const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
-            if (chapterEls.length > 0) {
-              const newChapterEl = chapterEls[0];
-              const newChapterHeight = newChapterEl.offsetHeight;
-              const newEntry = readerStore.chapters[0];
-              if (newEntry) {
-                setChapterHeight(newEntry.chapter.url, newChapterHeight);
-              }
-              await nextTick();
-              const spacerDelta = topSpacer.value - oldTopSpacer;
-              mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
-            }
-          }
-        } finally {
-          isLoadingPrevLocal = false;
-        }
-      }
-      function handleWheel(e) {
-        const mainEl = mainRef.value;
-        if (!mainEl) return;
-        if (e.deltaY < 0 && mainEl.scrollTop <= 0 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-          loadPrevWithScrollAdjust();
-        }
-      }
-      let swipeStart = null;
-      function isTouchEvent(e) {
-        const candidate = e;
-        return Boolean(candidate.touches && candidate.changedTouches);
-      }
-      function isInteractiveElement(target) {
-        if (!(target instanceof HTMLElement)) return false;
-        return Boolean(target.closest("a, button, input, textarea, select, label"));
-      }
-      function handleTouchStart(e) {
-        if (!swipeEnabled.value) return;
-        if (!isTouchEvent(e)) return;
-        if (e.touches.length !== 1) return;
-        if (isInteractiveElement(e.target)) return;
-        const touch = e.touches[0];
-        swipeStart = {
-          id: touch.identifier,
-          x: touch.clientX,
-          y: touch.clientY,
-          time: Date.now(),
-          cancelled: false
-        };
-      }
-      function handleTouchMove(e) {
-        if (!swipeStart) return;
-        if (!isTouchEvent(e)) return;
-        if (e.touches.length !== 1) {
-          swipeStart = null;
-          return;
-        }
-        const touch = Array.from(e.touches).find((t) => t.identifier === (swipeStart == null ? void 0 : swipeStart.id));
-        if (!touch) return;
-        const dx = touch.clientX - swipeStart.x;
-        const dy = touch.clientY - swipeStart.y;
-        if (Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX && Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO) {
-          swipeStart.cancelled = true;
-        }
-      }
-      function handleTouchEnd(e) {
-        if (!swipeStart) return;
-        if (!isTouchEvent(e)) return;
-        const start = swipeStart;
-        swipeStart = null;
-        if (start.cancelled) return;
-        if (!swipeEnabled.value) return;
-        const selection = window.getSelection();
-        if (selection && selection.toString().length > 0) return;
-        const touch = Array.from(e.changedTouches).find((t) => t.identifier === start.id);
-        if (!touch) return;
-        const dt = Date.now() - start.time;
-        if (dt > SWIPE_MAX_DURATION_MS) return;
-        const dx = touch.clientX - start.x;
-        const dy = touch.clientY - start.y;
-        if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
-        if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
-        void navigateChapter(dx < 0 ? "next" : "prev");
-      }
-      function handleTouchCancel() {
-        swipeStart = null;
+      function exitReader() {
+        closeReader();
       }
       function handleEscape() {
         if (drawerOpen.value) {
@@ -25641,180 +25970,32 @@ ${value}`;
           ruleEditorVisible.value = !ruleEditorVisible.value;
         }
       }
+      const keyboardEnabled = computed(
+        () => configStore.behavior.keyboardNavigation && !isPickerActive.value
+      );
       useKeyboardShortcuts(
         [
-{
-            key: "escape",
-            handler: handleEscape,
-            allowInInputs: true
-          },
-{
-            key: "tab",
-            handler: toggleDrawer,
-            preventDefault: true
-          },
-{
+          { key: "escape", handler: handleEscape, allowInInputs: true },
+          { key: "tab", handler: toggleDrawer, preventDefault: true },
+          {
             key: "enter",
             handler: () => {
-              if (indexUrl.value) {
-                window.location.href = indexUrl.value;
-              }
+              if (indexUrl.value) window.location.href = indexUrl.value;
             },
             preventDefault: true
           },
-{
-            key: ["s", ","],
-            handler: toggleSettings,
-            preventDefault: true
-          },
-{
-            key: "e",
-            handler: toggleRuleEditor,
-            preventDefault: true
-          },
-{
-            key: "q",
-            handler: exitReader,
-            preventDefault: true,
-            stopPropagation: true
-          },
-{
-            key: ["arrowleft", "p"],
-            handler: () => navigateChapter("prev"),
-            preventDefault: true,
-            stopPropagation: true
-          },
-{
-            key: ["arrowright", "n"],
-            handler: () => navigateChapter("next"),
-            preventDefault: true,
-            stopPropagation: true
-          },
-{
-            key: "arrowup",
-            handler: () => scrollReader("up"),
-            preventDefault: true
-          },
-{
-            key: "arrowdown",
-            handler: () => scrollReader("down"),
-            preventDefault: true
-          },
-{
-            key: " ",
-            handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"),
-            preventDefault: true
-          }
+          { key: ["s", ","], handler: toggleSettings, preventDefault: true },
+          { key: "e", handler: toggleRuleEditor, preventDefault: true },
+          { key: "q", handler: exitReader, preventDefault: true, stopPropagation: true },
+          { key: ["arrowleft", "p"], handler: () => navigateChapter("prev"), preventDefault: true, stopPropagation: true },
+          { key: ["arrowright", "n"], handler: () => navigateChapter("next"), preventDefault: true, stopPropagation: true },
+          { key: "arrowup", handler: () => scrollReader("up"), preventDefault: true },
+          { key: "arrowdown", handler: () => scrollReader("down"), preventDefault: true },
+          { key: " ", handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"), preventDefault: true }
         ],
         { enabled: keyboardEnabled }
       );
-      function scrollReader(direction) {
-        const mainEl = mainRef.value;
-        if (!mainEl) return;
-        const step = 150;
-        const pageHeight = mainEl.clientHeight * 0.9;
-        let top = 0;
-        let behavior = "auto";
-        switch (direction) {
-          case "up": {
-            if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-              loadPrevWithScrollAdjust(true);
-              return;
-            }
-            top = -step;
-            break;
-          }
-          case "down":
-            top = step;
-            break;
-          case "pageup": {
-            if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-              loadPrevWithScrollAdjust(true);
-              return;
-            }
-            top = -pageHeight;
-            behavior = "smooth";
-            break;
-          }
-          case "pagedown":
-            top = pageHeight;
-            behavior = "smooth";
-            break;
-        }
-        mainEl.scrollBy({ top, behavior });
-      }
-      async function navigateChapter(direction) {
-        const mainEl = mainRef.value;
-        if (!mainEl) return;
-        const currentIdx = readerStore.currentChapterIndex;
-        const chaptersCount = readerStore.chapters.length;
-        if (isNavigating.value) {
-          return;
-        }
-        if (direction === "prev") {
-          if (currentIdx > 0) {
-            jumpToChapter(currentIdx - 1);
-          } else if (hasPrev.value && !isLoadingPrev.value) {
-            const success = await readerStore.loadPrevChapter("manual");
-            if (success) {
-              globalThis.requestAnimationFrame(() => jumpToChapter(0, "auto"));
-            }
-          } else if (!hasPrev.value) {
-            readerStore.showToast(readerStore.getVipBlockedToast("prev") || "已经是第一章了", "info");
-          }
-        } else {
-          if (currentIdx < chaptersCount - 1) {
-            jumpToChapter(currentIdx + 1);
-          } else if (hasNext.value && !isLoadingNext.value) {
-            const success = await readerStore.loadNextChapter("manual");
-            if (success) {
-              globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
-            }
-          } else if (!hasNext.value) {
-            readerStore.showToast(readerStore.getVipBlockedToast("next") || "已经是最后一章了", "info");
-          }
-        }
-      }
-      async function jumpToChapter(index, behavior = "smooth") {
-        var _a;
-        const mainEl = mainRef.value;
-        if (!mainEl) return;
-        if (index < 0 || index >= chapters.value.length) return;
-        isNavigating.value = true;
-        updateWindow(index);
-        await nextTick();
-        await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
-        const url = (_a = chapters.value[index]) == null ? void 0 : _a.chapter.url;
-        if (!url) {
-          isNavigating.value = false;
-          return;
-        }
-        const targetEl = chapterRefs.get(url);
-        if (!targetEl) {
-          isNavigating.value = false;
-          return;
-        }
-        const containerRect = mainEl.getBoundingClientRect();
-        const targetRect = targetEl.getBoundingClientRect();
-        const targetOffset = targetRect.top - containerRect.top + mainEl.scrollTop;
-        mainEl.scrollTo({
-          top: targetOffset,
-          behavior
-        });
-        readerStore.setCurrentChapter(index);
-        if (behavior === "smooth") {
-          setTimeout(() => {
-            isNavigating.value = false;
-          }, 200);
-        } else {
-          globalThis.requestAnimationFrame(() => {
-            isNavigating.value = false;
-          });
-        }
-      }
-      function exitReader() {
-        closeReader();
-      }
+      const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
       onMounted(async () => {
         var _a;
         configStore.applyAll();
@@ -25852,31 +26033,6 @@ ${value}`;
         (_a = mainRef.value) == null ? void 0 : _a.focus();
         scheduleAutoLoadNext();
       });
-      watch(
-        () => readerStore.chapters.length,
-        () => {
-          const mainEl = mainRef.value;
-          if (!mainEl) return;
-          lastAutoLoadScrollTop = mainEl.scrollTop;
-          autoLoadArmed.value = false;
-          if (!isShortScrollableContent(mainEl)) {
-            autoLoadShortChainCount = 0;
-          }
-          scheduleAutoLoadNext();
-        }
-      );
-      watch(
-        () => configStore.behavior.preloadNext,
-        (enabled) => {
-          if (!enabled) {
-            clearAutoLoadTimer();
-            nextAutoLoadAt = 0;
-            autoLoadShortChainCount = 0;
-            return;
-          }
-          scheduleAutoLoadNext();
-        }
-      );
       onUnmounted(() => {
         if (mainRef.value) {
           mainRef.value.removeEventListener("scroll", handleScroll);
@@ -25890,7 +26046,6 @@ ${value}`;
         bottomObserver == null ? void 0 : bottomObserver.disconnect();
         topObserver = null;
         bottomObserver = null;
-        clearAutoLoadTimer();
       });
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", {
@@ -25938,10 +26093,10 @@ ${value}`;
               ref: topSentinel,
               class: "mnr-sentinel"
             }, null, 512),
-            isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [..._cache[5] || (_cache[5] = [
-              createBaseVNode("div", { class: "mnr-loading-spinner small" }, null, -1),
-              createBaseVNode("span", null, "加载上一章...", -1)
-            ])])) : createCommentVNode("", true),
+            isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [
+              createVNode(unref(MnrSpinner), { size: "small" }),
+              _cache[5] || (_cache[5] = createBaseVNode("span", null, "加载上一章...", -1))
+            ])) : createCommentVNode("", true),
             createBaseVNode("div", {
               style: normalizeStyle({ height: `${unref(topSpacer)}px` })
             }, null, 4),
@@ -25968,10 +26123,10 @@ ${value}`;
               ref: bottomSentinel,
               class: "mnr-sentinel"
             }, null, 512),
-            isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_5, [..._cache[6] || (_cache[6] = [
-              createBaseVNode("div", { class: "mnr-loading-spinner small" }, null, -1),
-              createBaseVNode("span", null, "加载下一章...", -1)
-            ])])) : createCommentVNode("", true),
+            isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_5, [
+              createVNode(unref(MnrSpinner), { size: "small" }),
+              _cache[6] || (_cache[6] = createBaseVNode("span", null, "加载下一章...", -1))
+            ])) : createCommentVNode("", true),
             chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [
               _cache[7] || (_cache[7] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)),
               createBaseVNode("div", _hoisted_7, [
@@ -26007,25 +26162,23 @@ ${value}`;
               }, null, 8, ["rule", "domain"])
             ])
           ], 2)) : createCommentVNode("", true),
-          isLoading.value ? (openBlock(), createElementBlock("div", _hoisted_10, [..._cache[8] || (_cache[8] = [
-            createBaseVNode("div", { class: "mnr-loading-spinner" }, null, -1),
-            createBaseVNode("span", null, "加载中...", -1)
-          ])])) : createCommentVNode("", true),
-          createVNode(Transition, { name: "mnr-toast" }, {
-            default: withCtx(() => [
-              error.value ? (openBlock(), createElementBlock("div", {
-                key: 0,
-                class: normalizeClass(["mnr-toast", { "mnr-toast--error": toastType.value === "error" }]),
-                onClick: clearError
-              }, toDisplayString(error.value), 3)) : createCommentVNode("", true)
-            ]),
+          isLoading.value ? (openBlock(), createBlock(unref(MnrLoadingOverlay), { key: 2 }, {
+            default: withCtx(() => [..._cache[8] || (_cache[8] = [
+              createBaseVNode("span", null, "加载中...", -1)
+            ])]),
             _: 1
-          })
+          })) : createCommentVNode("", true),
+          createVNode(unref(MnrToast), {
+            message: error.value ?? "",
+            type: toastType.value,
+            visible: !!error.value,
+            onDismiss: clearError
+          }, null, 8, ["message", "type", "visible"])
         ], 32);
       };
     }
   });
-  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-d0da9bd2"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-3c301d71"]]);
   const appState = {
     isInitialized: false,
     autoEnableDone: false,

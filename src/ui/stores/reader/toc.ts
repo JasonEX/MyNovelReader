@@ -1,21 +1,26 @@
 /**
  * Reader Store TOC Utilities
- * Table of Contents parsing, filtering, and sorting functions
+ * Table of Contents parsing, filtering, sorting, and stateful TOC actions.
  */
 
+import type { ChapterEntry, TocEntry } from './types';
+import type { ComputedRef, Ref } from 'vue';
 import {
   extractBookId,
   extractChapterNumber,
   extractUrlPattern,
   isTocNextPageText,
   isValidTocPaginationUrl,
+  normalizeUrlForBlock,
   normalizeUrlForCompare,
   normalizeUrlForFetch,
   resolveUrl,
 } from './utils';
+import type { ConversionMode } from '@/core/converter';
 import { fetchAndParseUrl } from '@/core/utils/network';
+import { getParser } from '@/core/parser';
+import type { ParsedChapter } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
-import type { TocEntry } from './types';
 
 // ============ Constants ============
 
@@ -471,4 +476,146 @@ export async function loadTocEntriesPaged(
 
   if (allCandidates.length === 0) return [];
   return filterTocEntries(dedupeTocEntries(allCandidates));
+}
+
+// ============ Stateful TOC Actions ============
+
+export interface TocActionContext {
+  // State refs
+  toc: Ref<TocEntry[]>;
+  tocOriginal: Ref<TocEntry[]>;
+  tocLoading: Ref<boolean>;
+  tocAbort: Ref<(() => void) | null>;
+  chapters: Ref<ChapterEntry[]>;
+
+  // Computed
+  chapter: ComputedRef<ParsedChapter | null>;
+  rule: ComputedRef<SiteRule | null>;
+  currentConversionMode: Ref<ConversionMode>;
+
+  // Session management
+  sessionId: () => number;
+  isSessionStale: (runId: number) => boolean;
+
+  // Callbacks
+  showToast: (msg: string, type: 'info' | 'error', duration?: number) => void;
+  applyTocConversion: (mode: ConversionMode) => Promise<void>;
+
+  // Dependencies (injectable for testing)
+  loadTocEntriesPaged?: typeof loadTocEntriesPaged;
+}
+
+export function createTocActions(ctx: TocActionContext) {
+  const _loadTocEntriesPaged = ctx.loadTocEntriesPaged ?? loadTocEntriesPaged;
+
+  async function setTocEntries(entries: TocEntry[]): Promise<void> {
+    ctx.tocOriginal.value = entries;
+    await ctx.applyTocConversion(ctx.currentConversionMode.value);
+  }
+
+  async function ensureIndexUrl(): Promise<string | undefined> {
+    const current = ctx.chapter.value;
+    const currentUrl = current?.url || '';
+    const existing = current?.indexUrl;
+
+    // If we already have an indexUrl and it doesn't look like the current chapter URL, keep it.
+    if (
+      existing &&
+      (!currentUrl || normalizeUrlForBlock(existing) !== normalizeUrlForBlock(currentUrl))
+    ) {
+      return existing;
+    }
+
+    if (!currentUrl) return undefined;
+
+    try {
+      const parser = getParser();
+      const detected = parser.detect(document, currentUrl).results.navigation.index?.url;
+      if (!detected) return undefined;
+
+      const normalized = normalizeUrlForFetch(detected);
+      for (const entry of ctx.chapters.value) {
+        const existingIndex = entry.chapter.indexUrl;
+        const entryUrl = entry.chapter.url;
+        const looksLikeSelf =
+          existingIndex && entryUrl
+            ? normalizeUrlForBlock(existingIndex) === normalizeUrlForBlock(entryUrl)
+            : false;
+        if (!existingIndex || looksLikeSelf) {
+          entry.chapter.indexUrl = normalized;
+        }
+      }
+      return normalized;
+    } catch (e) {
+      console.error('[MNR] Failed to detect indexUrl:', e);
+      return undefined;
+    }
+  }
+
+  async function loadToc(): Promise<void> {
+    const runId = ctx.sessionId();
+    if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
+
+    const currentUrl = ctx.chapter.value?.url || '';
+    let indexUrl = ctx.chapter.value?.indexUrl;
+    if (
+      !indexUrl ||
+      (currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl))
+    ) {
+      indexUrl = (await ensureIndexUrl()) || undefined;
+    }
+    if (!indexUrl) {
+      ctx.showToast('未检测到目录链接', 'info', 2500);
+      return;
+    }
+
+    ctx.tocLoading.value = true;
+
+    try {
+      let entries = await _loadTocEntriesPaged(
+        indexUrl,
+        currentUrl || indexUrl,
+        ctx.rule.value ?? undefined,
+        abort => {
+          if (!ctx.isSessionStale(runId)) {
+            ctx.tocAbort.value = abort;
+          }
+        }
+      );
+      if (ctx.isSessionStale(runId)) return;
+      if (entries.length === 0) {
+        // Retry once for transient request failures / slow dynamic pages.
+        await new Promise<void>(resolve => window.setTimeout(resolve, 400));
+        if (ctx.isSessionStale(runId)) return;
+        entries = await _loadTocEntriesPaged(
+          indexUrl,
+          currentUrl || indexUrl,
+          ctx.rule.value ?? undefined,
+          abort => {
+            if (!ctx.isSessionStale(runId)) {
+              ctx.tocAbort.value = abort;
+            }
+          }
+        );
+        if (ctx.isSessionStale(runId)) return;
+      }
+      await setTocEntries(entries);
+      if (ctx.isSessionStale(runId)) return;
+      if (entries.length === 0) {
+        ctx.showToast('目录解析为空，可稍后重试或刷新页面', 'info', 2500);
+      }
+    } catch (e) {
+      if (!ctx.isSessionStale(runId)) {
+        console.error('[MNR] Failed to load TOC:', e);
+        ctx.showToast('目录加载失败，可稍后重试', 'error', 2500);
+      }
+    } finally {
+      if (!ctx.isSessionStale(runId)) {
+        ctx.tocLoading.value = false;
+        ctx.tocAbort.value = null;
+      }
+    }
+  }
+
+  return { setTocEntries, ensureIndexUrl, loadToc };
 }

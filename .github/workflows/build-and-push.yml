@@ -9,6 +9,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -22,10 +23,13 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint:strict
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
-        run: timeout 60s npm run test:coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build

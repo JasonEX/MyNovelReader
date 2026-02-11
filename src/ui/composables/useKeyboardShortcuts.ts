@@ -77,7 +77,8 @@ export function useKeyboardShortcuts(
     return unref(enabled);
   });
 
-  function handleKeyDown(e: KeyboardEvent) {
+  function handleKeyDown(ev: Event) {
+    const e = ev as KeyboardEvent;
     // Check global enabled state
     if (!isEnabled.value) return;
 

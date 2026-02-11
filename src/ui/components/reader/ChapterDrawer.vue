@@ -12,7 +12,7 @@
     </div>
 
     <div v-if="loading" class="mnr-drawer-loading">
-      <div class="mnr-loading-spinner small"></div>
+      <MnrSpinner size="small" />
       <span>加载目录中...</span>
     </div>
 
@@ -76,6 +76,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue';
 import type { TocEntryWithStatus, CacheProgressState } from '@/ui/stores/reader';
+import { MnrSpinner } from '@/ui/components/common';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -246,21 +247,6 @@ function handleSelect(entry: TocEntryWithStatus) {
   gap: 12px;
   padding: 40px 20px;
   color: var(--mnr-text, #666);
-}
-
-.mnr-loading-spinner.small {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--mnr-border, #e0e0e0);
-  border-top-color: var(--mnr-link, #1976d2);
-  border-radius: 50%;
-  animation: mnr-spin 1s linear infinite;
-}
-
-@keyframes mnr-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Empty */

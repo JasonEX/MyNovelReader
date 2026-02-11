@@ -42,7 +42,7 @@
 
       <!-- Loading previous indicator -->
       <div v-if="isLoadingPrev" class="mnr-loading-prev">
-        <div class="mnr-loading-spinner small"></div>
+        <MnrSpinner size="small" />
         <span>加载上一章...</span>
       </div>
 
@@ -68,7 +68,7 @@
 
       <!-- Loading next chapter indicator -->
       <div v-if="isLoadingNext" class="mnr-loading-next">
-        <div class="mnr-loading-spinner small"></div>
+        <MnrSpinner size="small" />
         <span>加载下一章...</span>
       </div>
 
@@ -117,22 +117,12 @@
     </div>
 
     <!-- Loading overlay -->
-    <div v-if="isLoading" class="mnr-loading-overlay">
-      <div class="mnr-loading-spinner"></div>
+    <MnrLoadingOverlay v-if="isLoading">
       <span>加载中...</span>
-    </div>
+    </MnrLoadingOverlay>
 
     <!-- Toast message -->
-    <Transition name="mnr-toast">
-      <div
-        v-if="error"
-        class="mnr-toast"
-        :class="{ 'mnr-toast--error': toastType === 'error' }"
-        @click="clearError"
-      >
-        {{ error }}
-      </div>
-    </Transition>
+    <MnrToast :message="error ?? ''" :type="toastType" :visible="!!error" @dismiss="clearError" />
   </div>
 </template>
 
@@ -143,62 +133,26 @@ import { useConfigStore } from '@/ui/stores/config';
 import { useRuleStore } from '@/ui/stores/rule';
 import { useVirtualChapters } from '@/ui/composables/useVirtualChapters';
 import { useKeyboardShortcuts } from '@/ui/composables/useKeyboardShortcuts';
+import { useReaderScroll } from '@/ui/composables/reader/useReaderScroll';
+import {
+  useReaderAutoLoad,
+  INTERSECTION_ROOT_MARGIN_PX,
+} from '@/ui/composables/reader/useReaderAutoLoad';
+import { useTouchGestures } from '@/ui/composables/reader/useTouchGestures';
+import { useChapterNavigation } from '@/ui/composables/reader/useChapterNavigation';
 import { closeReader } from '@/bootstrap';
 import ProgressIndicator from './ProgressIndicator.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import ChapterDrawer from './ChapterDrawer.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import RuleEditorPanel from '@/ui/components/editor/RuleEditorPanel.vue';
+import { MnrSpinner, MnrToast, MnrLoadingOverlay } from '@/ui/components/common';
 import type { SiteRule } from '@/core/rules/types';
-
-// === Constants ===
-const SCROLL_THROTTLE_MS = 16; // ~60fps
-const INTERSECTION_ROOT_MARGIN_PX = 800;
-const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
-const AUTO_LOAD_COOLDOWN_MIN_MS = 3000;
-const AUTO_LOAD_COOLDOWN_MAX_MS = 5000;
-const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
-const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
-
-// === Utility: Throttle function ===
-function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
-  let lastCall = 0;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  return ((...fnArgs: Parameters<T>) => {
-    const now = Date.now();
-    const remaining = delay - (now - lastCall);
-
-    if (remaining <= 0) {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      lastCall = now;
-      fn(...fnArgs);
-    } else if (!timeoutId) {
-      timeoutId = setTimeout(() => {
-        lastCall = Date.now();
-        timeoutId = null;
-        fn(...fnArgs);
-      }, remaining);
-    }
-  }) as T;
-}
 
 // Stores
 const readerStore = useReaderStore();
 const configStore = useConfigStore();
 const ruleStore = useRuleStore();
-
-// Auto-load safety gate:
-// - Avoid request storms when the sentinel stays intersecting (e.g. short chapters / large rootMargin).
-// - Require some user scrolling after each append before allowing the next auto-load.
-const autoLoadArmed = ref(false);
-let lastAutoLoadScrollTop = 0;
-let autoLoadShortChainCount = 0;
-let nextAutoLoadAt = 0;
-let autoLoadTimer: ReturnType<typeof setTimeout> | null = null;
 
 // State
 const mainRef = ref<HTMLElement | null>(null);
@@ -211,83 +165,10 @@ const drawerOpen = ref(false);
 const isNavigating = ref(false);
 const showControls = ref(true);
 const chapterRefs = new Map<string, HTMLElement>();
-let isLoadingPrevLocal = false;
 
 // IntersectionObserver instances
 let topObserver: globalThis.IntersectionObserver | null = null;
 let bottomObserver: globalThis.IntersectionObserver | null = null;
-let lastScrollTop = 0; // For scroll direction detection
-
-function getRandomDelayMs(min: number, max: number): number {
-  const a = Math.min(min, max);
-  const b = Math.max(min, max);
-  return Math.floor(Math.random() * (b - a + 1)) + a;
-}
-
-function getDistanceToBottom(mainEl: HTMLElement): number {
-  return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
-}
-
-function isNearBottom(mainEl: HTMLElement): boolean {
-  return getDistanceToBottom(mainEl) <= INTERSECTION_ROOT_MARGIN_PX;
-}
-
-function isShortScrollableContent(mainEl: HTMLElement): boolean {
-  const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
-  return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
-}
-
-function clearAutoLoadTimer(): void {
-  if (!autoLoadTimer) return;
-  clearTimeout(autoLoadTimer);
-  autoLoadTimer = null;
-}
-
-function scheduleAutoLoadNext(): void {
-  const mainEl = mainRef.value;
-  if (!mainEl) return;
-  if (!configStore.behavior.preloadNext) return;
-  if (!hasNext.value) return;
-  if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
-  if (!isNearBottom(mainEl)) return;
-
-  const fillMode = isShortScrollableContent(mainEl);
-  const canAutoLoad = autoLoadArmed.value || fillMode;
-  if (!canAutoLoad) return;
-
-  // Prevent endless auto-loading when content stays extremely short.
-  if (fillMode && autoLoadShortChainCount >= AUTO_LOAD_SHORT_CHAIN_LIMIT) return;
-
-  const now = Date.now();
-  if (nextAutoLoadAt === 0) {
-    nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
-  }
-  const delayMs = Math.max(0, nextAutoLoadAt - now);
-  if (delayMs > 0) {
-    if (!autoLoadTimer) {
-      autoLoadTimer = setTimeout(() => {
-        autoLoadTimer = null;
-        scheduleAutoLoadNext();
-      }, delayMs);
-    }
-    return;
-  }
-
-  // Commit auto-load
-  clearAutoLoadTimer();
-  nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
-  lastAutoLoadScrollTop = mainEl.scrollTop;
-  autoLoadArmed.value = false;
-  autoLoadShortChainCount = fillMode ? autoLoadShortChainCount + 1 : 0;
-
-  void readerStore.loadNextChapter('auto').then(ok => {
-    if (!ok) {
-      // On failures, slow down a bit more to avoid triggering anti-crawler rules.
-      nextAutoLoadAt =
-        Date.now() + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MAX_MS, AUTO_LOAD_COOLDOWN_MAX_MS * 2);
-    }
-  });
-}
 
 // Watch picker state to show/hide original page
 watch(isPickerActive, active => {
@@ -295,7 +176,6 @@ watch(isPickerActive, active => {
   const readerRoot = document.getElementById('mnr-reader-root');
 
   if (active) {
-    // Show original page for element selection
     if (hideStyle) {
       hideStyle.setAttribute('data-disabled', 'true');
       hideStyle.textContent = '';
@@ -304,7 +184,6 @@ watch(isPickerActive, active => {
       readerRoot.style.display = 'none';
     }
   } else {
-    // Restore reader UI
     if (hideStyle && hideStyle.hasAttribute('data-disabled')) {
       hideStyle.removeAttribute('data-disabled');
       hideStyle.textContent = `
@@ -360,102 +239,104 @@ const showProgress = computed(() => configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
 const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
 
+// === Composables ===
+
+// Auto-load composable (must be initialized before scroll composable)
+const { autoLoadArmed, scheduleAutoLoadNext, lastAutoLoadScrollTop, autoLoadShortChainCount } =
+  useReaderAutoLoad({
+    mainRef,
+    readerStore,
+    configStore,
+    hasNext,
+    isLoadingNext,
+    isLoadingPrev,
+    isLoading,
+    isNavigating,
+  });
+
+// Scroll composable
+const { handleScroll } = useReaderScroll({
+  mainRef,
+  chapters,
+  visibleChapters,
+  chapterRefs,
+  chapterHeights,
+  averageHeight,
+  setChapterHeight,
+  updateWindow,
+  readerStore,
+  autoHideHeader,
+  showControls,
+  isNavigating,
+  autoLoadArmed,
+  lastAutoLoadScrollTop,
+  autoLoadShortChainCount,
+  scheduleAutoLoadNext,
+});
+
+// Chapter navigation composable
+const { navigateChapter, jumpToCachedChapter, scrollReader, handleWheel } = useChapterNavigation({
+  mainRef,
+  chapters,
+  chapterRefs,
+  readerStore,
+  isNavigating,
+  isLoadingPrev,
+  isLoadingNext,
+  hasPrev,
+  hasNext,
+  topSpacer,
+  setChapterHeight,
+  updateWindow,
+});
+
+// Touch gestures composable
+const swipeEnabled = computed(() => configStore.behavior.swipeGestures && !isPickerActive.value);
+const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
+  enabled: swipeEnabled,
+  onSwipeLeft: () => void navigateChapter('next'),
+  onSwipeRight: () => void navigateChapter('prev'),
+});
+
+// === UI event handlers ===
+
 function shieldEvent(event: Event) {
   event.stopPropagation();
 }
 
-// Keyboard shortcuts enabled state
-const keyboardEnabled = computed(
-  () => configStore.behavior.keyboardNavigation && !isPickerActive.value
-);
-
-// Swipe gestures enabled state
-const swipeEnabled = computed(() => configStore.behavior.swipeGestures && !isPickerActive.value);
-
-// Navigation
 function navigate(direction: 'index') {
   if (direction === 'index' && indexUrl.value) {
     window.location.href = indexUrl.value;
   }
 }
 
-// Drawer functions
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value;
   if (drawerOpen.value) {
     readerStore.loadToc();
-    // Hide controls when opening drawer for cleaner view, or keep them?
-    // Let's keep them hidden if drawer overlaps, but drawer is sidebar.
   }
 }
 
 function handleChapterSelect(entry: TocEntryWithStatus) {
-  // Check if chapter is cached - smart jump
   if (entry.isCached) {
     jumpToCachedChapter(entry.url);
   } else {
-    // Not cached - navigate to the URL (page reload)
     window.location.href = entry.url;
-  }
-}
-
-/**
- * Jump to a cached chapter without page reload
- */
-async function jumpToCachedChapter(url: string) {
-  // First check if already in the current chapters array
-  const existingIndex = readerStore.chapters.findIndex(entry => entry.chapter.url === url);
-
-  if (existingIndex >= 0) {
-    // Already in display list - just scroll to it
-    readerStore.setCurrentChapter(existingIndex);
-    scrollToChapter(existingIndex);
-    return;
-  }
-
-  // Not in current chapters - rebuild from cache
-  const success = await readerStore.rebuildChaptersAround(url);
-  if (success) {
-    // Update browser URL without reload
-    window.history.replaceState({ mnrChapter: 0 }, '', url);
-
-    // Scroll to top
-    mainRef.value?.scrollTo({ top: 0, behavior: 'auto' });
-  } else {
-    // Fallback to page navigation if cache miss
-    window.location.href = url;
-  }
-}
-
-/**
- * Scroll to a specific chapter in the view
- */
-function scrollToChapter(index: number) {
-  const url = chapters.value[index]?.chapter.url;
-  if (!url) return;
-
-  const chapterEl = chapterRefs.get(url);
-  if (chapterEl) {
-    chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
 function handleContentClick(e: MouseEvent) {
   const target = e.target as HTMLElement;
 
-  // Handle link clicks
   if (target.tagName === 'A') {
     const href = target.getAttribute('href');
     if (href && !href.startsWith('javascript:')) {
-      // Allow navigation to chapter links
       return;
     }
     e.preventDefault();
-    return; // Stop here if it was a link
+    return;
   }
 
-  // Toggle controls visibility on content click (common reader UX)
-  // Don't toggle if selecting text
   const selection = window.getSelection();
   if (!selection || selection.toString().length === 0) {
     showControls.value = !showControls.value;
@@ -476,7 +357,6 @@ async function handleRuleSave(rule: SiteRule) {
   if (currentDomain.value) {
     try {
       await ruleStore.saveUserRule(currentDomain.value, rule);
-      // Reload current chapter to apply new rule
       await readerStore.reloadCurrentChapter();
     } catch (e) {
       console.error('[MNR] Save rule error:', e);
@@ -487,15 +367,13 @@ async function handleRuleSave(rule: SiteRule) {
 }
 
 async function handleRuleReset() {
-  // Close settings panel and reload with default/auto-detection
   settingsVisible.value = false;
   await readerStore.reloadCurrentChapter();
 }
 
 function openSettings() {
   settingsVisible.value = true;
-  // Controls can stay visible or hide? Let's keep them visible behind overlay or hide
-  showControls.value = false; // Hide floating toolbar when settings are open
+  showControls.value = false;
 }
 
 async function handleTextConversionChange(mode: 'none' | 'sc' | 'tc') {
@@ -526,297 +404,12 @@ function setChapterRef(url: string) {
   };
 }
 
-function estimateIndexFromOffset(offset: number): number {
-  if (chapters.value.length === 0) return -1;
-
-  let acc = 0;
-  for (let i = 0; i < chapters.value.length; i++) {
-    const url = chapters.value[i].chapter.url;
-    const height = chapterHeights.value.get(url) ?? averageHeight.value;
-    acc += height;
-    if (offset < acc) {
-      return i;
-    }
-  }
-  return chapters.value.length - 1;
-}
-
-// Scroll handling - Core logic (will be throttled)
-function handleScrollCore() {
-  const mainEl = mainRef.value;
-  if (!mainEl) return;
-
-  const currentScrollY = mainEl.scrollTop;
-  const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
-
-  // Arm auto-load only after user has actually scrolled down a bit.
-  if (
-    !isNavigating.value &&
-    !autoLoadArmed.value &&
-    currentScrollY - lastAutoLoadScrollTop >= AUTO_LOAD_ARM_SCROLL_DELTA_PX
-  ) {
-    autoLoadArmed.value = true;
-    autoLoadShortChainCount = 0;
-  }
-
-  // Auto-hide controls on scroll down
-  if (autoHideHeader.value) {
-    if (currentScrollY > lastScrollTop && currentScrollY > 100) {
-      // Scrolling down & passed top area
-      showControls.value = false;
-    } else if (currentScrollY < lastScrollTop - 20) {
-      // Scrolling up significantly
-      showControls.value = true;
-    }
-  }
-  lastScrollTop = currentScrollY;
-
-  // Find current visible chapter using visible area calculation
-  let currentChapterEl: HTMLElement | null = null;
-  let currentChapterIdx = -1;
-  let maxVisibleHeight = 0;
-
-  const viewportTop = currentScrollY;
-  const viewportBottom = currentScrollY + mainEl.clientHeight;
-
-  for (const entry of visibleChapters.value) {
-    const el = chapterRefs.get(entry.chapter.url);
-    if (!el) continue;
-
-    const elTop = el.offsetTop;
-    const elHeight = el.offsetHeight;
-    const elBottom = elTop + elHeight;
-
-    // Update height cache
-    setChapterHeight(entry.chapter.url, elHeight);
-
-    // Calculate visible overlap
-    const visibleTop = Math.max(elTop, viewportTop);
-    const visibleBottom = Math.min(elBottom, viewportBottom);
-    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-    if (visibleHeight > maxVisibleHeight) {
-      maxVisibleHeight = visibleHeight;
-      currentChapterIdx = entry.index;
-      currentChapterEl = el;
-    }
-  }
-
-  if (!currentChapterEl || currentChapterIdx === -1) {
-    // Fallback: when spacer fills the viewport, estimate index from scroll offset
-    const estimatedIdx = estimateIndexFromOffset(currentScrollY + mainEl.clientHeight / 2);
-    if (estimatedIdx !== -1) {
-      readerStore.setCurrentChapter(estimatedIdx);
-      updateWindow(estimatedIdx);
-      const overallPercent =
-        scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
-      readerStore.updateScroll(overallPercent);
-    }
-    return;
-  }
-
-  // Update current chapter in store (this updates header title and browser URL)
-  readerStore.setCurrentChapter(currentChapterIdx);
-
-  // Update virtual window based on current chapter
-  updateWindow(currentChapterIdx);
-
-  // Update overall scroll progress for UI
-  const overallPercent = scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
-  readerStore.updateScroll(overallPercent);
-
-  // Note: Chapter loading is triggered by sentinel + this scroll gate.
-  scheduleAutoLoadNext();
-}
-
-// Throttled scroll handler
-const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
-
-// Load previous chapter with scroll position adjustment
-// jumpToStart: true => snap to the start (title) of the newly loaded chapter to avoid bounce
-async function loadPrevWithScrollAdjust(jumpToStart = false) {
-  const mainEl = mainRef.value;
-  if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return;
-
-  isLoadingPrevLocal = true;
-
-  try {
-    // 1. Remember current scroll position and topSpacer
-    const oldScrollTop = mainEl.scrollTop;
-    const oldTopSpacer = topSpacer.value;
-
-    const success = await readerStore.loadPrevChapter('manual');
-
-    if (success) {
-      // 2. Wait for Vue to update DOM
-      await nextTick();
-
-      // 3. Update virtual window to include new chapter (critical!)
-      updateWindow(readerStore.currentChapterIndex);
-
-      // 4. Wait for window change to trigger re-render
-      await nextTick();
-      await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
-
-      if (jumpToStart) {
-        // When user explicitly wants to go to previous chapter, snap to its title
-        await jumpToChapter(0, 'auto');
-        return;
-      }
-
-      // 5. Get new chapter height and cache it
-      const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
-      if (chapterEls.length > 0) {
-        const newChapterEl = chapterEls[0] as HTMLElement;
-        const newChapterHeight = newChapterEl.offsetHeight;
-
-        // 6. Ensure new chapter height is cached
-        const newEntry = readerStore.chapters[0];
-        if (newEntry) {
-          setChapterHeight(newEntry.chapter.url, newChapterHeight);
-        }
-
-        // 7. Wait for heights update to trigger reactive updates
-        await nextTick();
-
-        // 8. Calculate scroll adjustment including spacer delta
-        const spacerDelta = topSpacer.value - oldTopSpacer;
-        mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
-      }
-    }
-  } finally {
-    isLoadingPrevLocal = false;
-  }
-}
-
-// Handle wheel event for loading previous chapter when already at top
-function handleWheel(e: WheelEvent) {
-  const mainEl = mainRef.value;
-  if (!mainEl) return;
-
-  // Only handle upward scroll when at top
-  if (
-    e.deltaY < 0 &&
-    mainEl.scrollTop <= 0 &&
-    hasPrev.value &&
-    !isLoadingPrev.value &&
-    !isNavigating.value
-  ) {
-    loadPrevWithScrollAdjust();
-  }
-}
-
-// === Swipe gestures (touch) ===
-
-type SwipeStartState = {
-  id: number;
-  x: number;
-  y: number;
-  time: number;
-  cancelled: boolean;
-};
-
-const SWIPE_THRESHOLD_PX = 80;
-const SWIPE_MAX_DURATION_MS = 700;
-const SWIPE_CANCEL_VERTICAL_PX = 28;
-const SWIPE_AXIS_RATIO = 1.5;
-
-let swipeStart: SwipeStartState | null = null;
-
-type TouchPoint = {
-  identifier: number;
-  clientX: number;
-  clientY: number;
-};
-
-type TouchEventLike = {
-  touches: ArrayLike<TouchPoint>;
-  changedTouches: ArrayLike<TouchPoint>;
-  target: unknown;
-};
-
-function isTouchEvent(e: Event): e is Event & TouchEventLike {
-  const candidate = e as unknown as Partial<TouchEventLike>;
-  return Boolean(candidate.touches && candidate.changedTouches);
-}
-
-function isInteractiveElement(target: unknown): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return Boolean(target.closest('a, button, input, textarea, select, label'));
-}
-
-function handleTouchStart(e: Event) {
-  if (!swipeEnabled.value) return;
-  if (!isTouchEvent(e)) return;
-  if (e.touches.length !== 1) return;
-  if (isInteractiveElement(e.target)) return;
-
-  const touch = e.touches[0];
-  swipeStart = {
-    id: touch.identifier,
-    x: touch.clientX,
-    y: touch.clientY,
-    time: Date.now(),
-    cancelled: false,
-  };
-}
-
-function handleTouchMove(e: Event) {
-  if (!swipeStart) return;
-  if (!isTouchEvent(e)) return;
-  if (e.touches.length !== 1) {
-    swipeStart = null;
-    return;
-  }
-
-  const touch = Array.from(e.touches).find(t => t.identifier === swipeStart?.id);
-  if (!touch) return;
-
-  const dx = touch.clientX - swipeStart.x;
-  const dy = touch.clientY - swipeStart.y;
-
-  // Cancel if it's clearly a vertical scroll gesture.
-  if (Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX && Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO) {
-    swipeStart.cancelled = true;
-  }
-}
-
-function handleTouchEnd(e: Event) {
-  if (!swipeStart) return;
-  if (!isTouchEvent(e)) return;
-
-  const start = swipeStart;
-  swipeStart = null;
-
-  if (start.cancelled) return;
-  if (!swipeEnabled.value) return;
-
-  const selection = window.getSelection();
-  if (selection && selection.toString().length > 0) return;
-
-  const touch = Array.from(e.changedTouches).find(t => t.identifier === start.id);
-  if (!touch) return;
-
-  const dt = Date.now() - start.time;
-  if (dt > SWIPE_MAX_DURATION_MS) return;
-
-  const dx = touch.clientX - start.x;
-  const dy = touch.clientY - start.y;
-
-  if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
-  if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
-
-  // Reader UX: swipe left => next, swipe right => prev
-  void navigateChapter(dx < 0 ? 'next' : 'prev');
-}
-
-function handleTouchCancel() {
-  swipeStart = null;
+function exitReader() {
+  closeReader();
 }
 
 // === Keyboard shortcuts ===
 
-// Escape handler - closes panels (works even in inputs)
 function handleEscape() {
   if (drawerOpen.value) {
     drawerOpen.value = false;
@@ -827,91 +420,50 @@ function handleEscape() {
   }
 }
 
-// Toggle settings panel
 function toggleSettings() {
   if (!ruleEditorVisible.value) {
     settingsVisible.value = !settingsVisible.value;
   }
 }
 
-// Toggle rule editor panel
 function toggleRuleEditor() {
   if (!settingsVisible.value) {
     ruleEditorVisible.value = !ruleEditorVisible.value;
   }
 }
 
-// Register keyboard shortcuts using composable
+const keyboardEnabled = computed(
+  () => configStore.behavior.keyboardNavigation && !isPickerActive.value
+);
+
 useKeyboardShortcuts(
   [
-    // Escape - close panels (works in inputs too)
-    {
-      key: 'escape',
-      handler: handleEscape,
-      allowInInputs: true,
-    },
-    // Tab - toggle chapter drawer
-    {
-      key: 'tab',
-      handler: toggleDrawer,
-      preventDefault: true,
-    },
-    // Enter - go to index page
+    { key: 'escape', handler: handleEscape, allowInInputs: true },
+    { key: 'tab', handler: toggleDrawer, preventDefault: true },
     {
       key: 'enter',
       handler: () => {
-        if (indexUrl.value) {
-          window.location.href = indexUrl.value;
-        }
+        if (indexUrl.value) window.location.href = indexUrl.value;
       },
       preventDefault: true,
     },
-    // S or , - toggle settings
-    {
-      key: ['s', ','],
-      handler: toggleSettings,
-      preventDefault: true,
-    },
-    // E - toggle rule editor
-    {
-      key: 'e',
-      handler: toggleRuleEditor,
-      preventDefault: true,
-    },
-    // Q - exit reader
-    {
-      key: 'q',
-      handler: exitReader,
-      preventDefault: true,
-      stopPropagation: true,
-    },
-    // Left arrow or P - previous chapter
+    { key: ['s', ','], handler: toggleSettings, preventDefault: true },
+    { key: 'e', handler: toggleRuleEditor, preventDefault: true },
+    { key: 'q', handler: exitReader, preventDefault: true, stopPropagation: true },
     {
       key: ['arrowleft', 'p'],
       handler: () => navigateChapter('prev'),
       preventDefault: true,
       stopPropagation: true,
     },
-    // Right arrow or N - next chapter
     {
       key: ['arrowright', 'n'],
       handler: () => navigateChapter('next'),
       preventDefault: true,
       stopPropagation: true,
     },
-    // Up arrow - scroll up
-    {
-      key: 'arrowup',
-      handler: () => scrollReader('up'),
-      preventDefault: true,
-    },
-    // Down arrow - scroll down
-    {
-      key: 'arrowdown',
-      handler: () => scrollReader('down'),
-      preventDefault: true,
-    },
-    // Space - page scroll
+    { key: 'arrowup', handler: () => scrollReader('up'), preventDefault: true },
+    { key: 'arrowdown', handler: () => scrollReader('down'), preventDefault: true },
     {
       key: ' ',
       handler: e => scrollReader(e.shiftKey ? 'pageup' : 'pagedown'),
@@ -921,165 +473,18 @@ useKeyboardShortcuts(
   { enabled: keyboardEnabled }
 );
 
-// Scroll content
-function scrollReader(direction: 'up' | 'down' | 'pageup' | 'pagedown') {
-  const mainEl = mainRef.value;
-  if (!mainEl) return;
+// === Lifecycle ===
 
-  const step = 150; // slightly more than standard line height
-  const pageHeight = mainEl.clientHeight * 0.9;
+const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
 
-  let top = 0;
-  let behavior: 'auto' | 'smooth' = 'auto';
-
-  switch (direction) {
-    case 'up': {
-      // If already at the very top, load previous chapter
-      if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-        loadPrevWithScrollAdjust(true);
-        return;
-      }
-      top = -step;
-      break;
-    }
-    case 'down':
-      top = step;
-      break;
-    case 'pageup': {
-      // If already at the very top, directly load previous chapter and snap to its title
-      if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-        loadPrevWithScrollAdjust(true);
-        return;
-      }
-      top = -pageHeight;
-      behavior = 'smooth';
-      break;
-    }
-    case 'pagedown':
-      top = pageHeight;
-      behavior = 'smooth';
-      break;
-  }
-
-  mainEl.scrollBy({ top, behavior });
-}
-
-// Navigate to previous or next chapter
-async function navigateChapter(direction: 'prev' | 'next') {
-  const mainEl = mainRef.value;
-  if (!mainEl) return;
-
-  const currentIdx = readerStore.currentChapterIndex;
-  const chaptersCount = readerStore.chapters.length;
-
-  // Smart lock: allow navigation if the previous one is almost done (e.g. DOM updated),
-  // but prevent instant double-clicks.
-  // If navigating, we ignore request only if it's very recent.
-  if (isNavigating.value) {
-    // Optional: add timestamp check here if needed, but for now rely on jumpToChapter's shorter lock
-    return;
-  }
-
-  if (direction === 'prev') {
-    if (currentIdx > 0) {
-      jumpToChapter(currentIdx - 1);
-    } else if (hasPrev.value && !isLoadingPrev.value) {
-      const success = await readerStore.loadPrevChapter('manual');
-      if (success) {
-        // Use auto scroll to prevent bounce/race condition with top observer
-        globalThis.requestAnimationFrame(() => jumpToChapter(0, 'auto'));
-      }
-    } else if (!hasPrev.value) {
-      // Show toast when no previous chapter available
-      readerStore.showToast(readerStore.getVipBlockedToast('prev') || '已经是第一章了', 'info');
-    }
-  } else {
-    if (currentIdx < chaptersCount - 1) {
-      jumpToChapter(currentIdx + 1);
-    } else if (hasNext.value && !isLoadingNext.value) {
-      const success = await readerStore.loadNextChapter('manual');
-      if (success) {
-        globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
-      }
-    } else if (!hasNext.value) {
-      // Show toast when no next chapter available
-      readerStore.showToast(readerStore.getVipBlockedToast('next') || '已经是最后一章了', 'info');
-    }
-  }
-}
-
-// Jump to a specific chapter by index
-async function jumpToChapter(index: number, behavior: 'auto' | 'smooth' = 'smooth') {
-  const mainEl = mainRef.value;
-  if (!mainEl) return;
-  if (index < 0 || index >= chapters.value.length) return;
-
-  isNavigating.value = true;
-
-  // Update virtual window first to include target chapter
-  updateWindow(index);
-
-  // Wait for Vue to update the DOM after window change
-  await nextTick();
-  // Wait a frame so layout/offsets are correct
-  await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
-
-  const url = chapters.value[index]?.chapter.url;
-  if (!url) {
-    isNavigating.value = false;
-    return;
-  }
-
-  const targetEl = chapterRefs.get(url);
-  if (!targetEl) {
-    isNavigating.value = false;
-    return;
-  }
-
-  const containerRect = mainEl.getBoundingClientRect();
-  const targetRect = targetEl.getBoundingClientRect();
-  const targetOffset = targetRect.top - containerRect.top + mainEl.scrollTop;
-  mainEl.scrollTo({
-    top: targetOffset,
-    behavior,
-  });
-
-  // Update current chapter index
-  readerStore.setCurrentChapter(index);
-
-  // Reset navigating flag
-  if (behavior === 'smooth') {
-    // Reduced lock time to allow faster sequential navigation.
-    // 200ms is enough to prevent accidental double-clicks but feels responsive.
-    // The browser's smooth scroll will continue, but we accept new input.
-    setTimeout(() => {
-      isNavigating.value = false;
-    }, 200);
-  } else {
-    // Immediate reset for auto scroll
-    globalThis.requestAnimationFrame(() => {
-      isNavigating.value = false;
-    });
-  }
-}
-
-// Exit reader mode
-function exitReader() {
-  closeReader();
-}
-
-// Lifecycle
 onMounted(async () => {
-  // Apply theme and settings
   configStore.applyAll();
 
-  // Apply initial text conversion if set
   const textConversion = configStore.reading.textConversion;
   if (textConversion !== 'none') {
     await readerStore.applyTextConversion(textConversion);
   }
 
-  // Event listeners
   if (mainRef.value) {
     mainRef.value.addEventListener('scroll', handleScroll, { passive: true });
     mainRef.value.addEventListener('wheel', handleWheel, { passive: true });
@@ -1088,29 +493,20 @@ onMounted(async () => {
     mainRef.value.addEventListener('touchend', handleTouchEnd, { passive: true });
     mainRef.value.addEventListener('touchcancel', handleTouchCancel, { passive: true });
   }
-  // Keyboard shortcuts are handled by useKeyboardShortcuts composable
 
-  // Setup IntersectionObservers for infinite scroll
   const observerOptions = {
     root: mainRef.value,
     rootMargin: INTERSECTION_ROOT_MARGIN,
     threshold: 0,
   };
 
-  // Bottom sentinel - load next chapter
   bottomObserver = new globalThis.IntersectionObserver(entries => {
     if (!entries[0]?.isIntersecting) return;
     scheduleAutoLoadNext();
   }, observerOptions);
 
-  // Top sentinel - NO auto-load for previous chapter
-  // Previous chapter loading is now ONLY triggered by explicit user actions:
-  // - Wheel scroll up when at top (handleWheel)
-  // - Keyboard shortcuts (ArrowUp/PageUp when at top)
-  // This prevents unwanted bounce during programmatic navigation
   topObserver = new globalThis.IntersectionObserver(() => {
-    // Intentionally empty - we keep the observer for potential future use
-    // but don't auto-trigger prev chapter loading
+    // Intentionally empty - prev chapter loading is triggered by explicit user actions only
   }, observerOptions);
 
   if (bottomSentinel.value) {
@@ -1120,42 +516,11 @@ onMounted(async () => {
     topObserver.observe(topSentinel.value);
   }
 
-  // Auto-focus main content for keyboard shortcuts
   await nextTick();
   mainRef.value?.focus();
 
-  // Initial scheduling for very short chapters (no scroll possible).
   scheduleAutoLoadNext();
 });
-
-// Any chapter list change (append/prepend) should re-arm only after user scrolls again.
-watch(
-  () => readerStore.chapters.length,
-  () => {
-    const mainEl = mainRef.value;
-    if (!mainEl) return;
-    lastAutoLoadScrollTop = mainEl.scrollTop;
-    autoLoadArmed.value = false;
-    // Allow a few consecutive auto-loads when content is too short to scroll.
-    if (!isShortScrollableContent(mainEl)) {
-      autoLoadShortChainCount = 0;
-    }
-    scheduleAutoLoadNext();
-  }
-);
-
-watch(
-  () => configStore.behavior.preloadNext,
-  enabled => {
-    if (!enabled) {
-      clearAutoLoadTimer();
-      nextAutoLoadAt = 0;
-      autoLoadShortChainCount = 0;
-      return;
-    }
-    scheduleAutoLoadNext();
-  }
-);
 
 onUnmounted(() => {
   if (mainRef.value) {
@@ -1166,14 +531,11 @@ onUnmounted(() => {
     mainRef.value.removeEventListener('touchend', handleTouchEnd);
     mainRef.value.removeEventListener('touchcancel', handleTouchCancel);
   }
-  // Keyboard shortcuts cleanup is handled by useKeyboardShortcuts composable
 
-  // Cleanup IntersectionObservers
   topObserver?.disconnect();
   bottomObserver?.disconnect();
   topObserver = null;
   bottomObserver = null;
-  clearAutoLoadTimer();
 });
 </script>
 
@@ -1287,96 +649,6 @@ onUnmounted(() => {
   gap: 12px;
   padding: 24px;
   color: var(--mnr-text, #666);
-}
-
-.mnr-loading-spinner.small {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--mnr-border, #e0e0e0);
-  border-top-color: var(--mnr-link, #1976d2);
-  border-radius: 50%;
-  animation: mnr-spin 1s linear infinite;
-}
-
-/* Loading overlay */
-.mnr-loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  color: #333;
-  z-index: 1000;
-  transition: opacity 0.3s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  .mnr-loading-overlay {
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-  }
-}
-
-.mnr-loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(25, 118, 210, 0.2);
-  border-top-color: #1976d2;
-  border-radius: 50%;
-  animation: mnr-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-@keyframes mnr-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Toast */
-.mnr-toast {
-  position: fixed;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(30, 30, 30, 0.9);
-  backdrop-filter: blur(8px);
-  color: #fff;
-  padding: 14px 28px;
-  border-radius: 50px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  z-index: 1001;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 90vw;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mnr-toast--error {
-  background: rgba(211, 47, 47, 0.95);
-}
-
-.mnr-toast-enter-active,
-.mnr-toast-leave-active {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.mnr-toast-enter-from,
-.mnr-toast-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(40px) scale(0.9);
 }
 
 /* Mobile first - base styles are mobile */

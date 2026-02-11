@@ -44,7 +44,7 @@ function buildPathSelector(element: Element, doc: Document, maxDepth: number): s
       break;
     }
 
-    const parent = current.parentElement;
+    const parent: Element | null = current.parentElement;
     if (parent) {
       const siblings = (Array.from(parent.children) as Element[]).filter(
         sibling => sibling.tagName === current!.tagName

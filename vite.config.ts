@@ -23,8 +23,6 @@ export default defineConfig({
     __MNR_VERSION__: JSON.stringify(version),
     __MNR_BUILD_DATE__: JSON.stringify(buildDate),
     'process.env.NODE_ENV': JSON.stringify('production'),
-    'process.env': JSON.stringify({ NODE_ENV: 'production' }),
-    process: JSON.stringify({ env: { NODE_ENV: 'production' } }),
   },
   build: {
     outDir: 'scripts',
