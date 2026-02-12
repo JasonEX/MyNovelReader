@@ -1,7 +1,7 @@
 import { computed, type Ref, ref } from 'vue';
+import type { SiteRule } from '@/core/rules/types';
 import type { useReaderStore } from '@/ui/stores/reader';
 import type { useRuleStore } from '@/ui/stores/rule';
-import type { SiteRule } from '@/core/rules/types';
 
 export interface UseReaderUIControlsOptions {
   readerStore: ReturnType<typeof useReaderStore>;

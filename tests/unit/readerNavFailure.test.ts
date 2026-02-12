@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearNavFailure, getNavRetryState, recordNavFailure } from '@/ui/stores/reader/navFailure';
 import {
   calculateBackoff,
   extractBookId,
@@ -17,6 +16,7 @@ import {
   normalizeUrlForFetch,
   resolveUrl,
 } from '@/ui/stores/reader/utils';
+import { clearNavFailure, getNavRetryState, recordNavFailure } from '@/ui/stores/reader/navFailure';
 
 // Also import from barrel to cover index.ts re-exports
 import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from '@/ui/stores/reader/index';

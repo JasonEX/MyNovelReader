@@ -835,7 +835,7 @@ export class SiteProtection {
         } else {
           // Was on prototype or didn't exist — delete the own property so
           // the prototype value (if any) shows through again
-          delete (document as Record<string, unknown>)[prop];
+          delete (document as unknown as Record<string, unknown>)[prop];
         }
       } catch {
         // Property may be non-configurable in some environments; swallow the error
