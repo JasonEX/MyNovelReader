@@ -154,6 +154,13 @@ export default [
       'prettier/prettier': 'warn',
     },
   },
+  // Test files — allow `any` for partial store mocks
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
   // Ignore patterns
   {
     ignores: [
