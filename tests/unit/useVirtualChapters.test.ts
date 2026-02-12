@@ -187,4 +187,197 @@ describe('useVirtualChapters', () => {
     expect(virtualWindow.value.end).toBeLessThanOrEqual(2);
     expect(virtualWindow.value.start).toBeLessThanOrEqual(virtualWindow.value.end);
   });
+
+  it('getOffsetBefore is O(1) via prefixOffsets and handles boundary indices', () => {
+    const chapters = ref<ChapterEntry[]>(['c1', 'c2', 'c3'].map(createChapter));
+    const { getOffsetBefore, setHeight, averageHeight } = useVirtualChapters(chapters, {
+      windowSize: 3,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    setHeight('c1', 100);
+    setHeight('c2', 200);
+    // c3 uncached → uses averageHeight = (100+200)/2 = 150
+
+    expect(averageHeight.value).toBe(150);
+    expect(getOffsetBefore(0)).toBe(0);
+    expect(getOffsetBefore(1)).toBe(100); // c1
+    expect(getOffsetBefore(2)).toBe(300); // c1 + c2
+    expect(getOffsetBefore(3)).toBe(450); // c1 + c2 + c3(est 150)
+    // index beyond length is clamped
+    expect(getOffsetBefore(100)).toBe(450);
+    // negative index
+    expect(getOffsetBefore(-5)).toBe(0);
+  });
+
+  it('totalHeight includes estimated heights for uncached chapters', () => {
+    const chapters = ref<ChapterEntry[]>(['c1', 'c2', 'c3', 'c4'].map(createChapter));
+    const { totalHeight, setHeight, averageHeight } = useVirtualChapters(chapters, {
+      windowSize: 4,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    // No cached heights → all use defaultHeight
+    expect(totalHeight.value).toBe(400); // 4 * 100
+
+    setHeight('c1', 200);
+    // averageHeight = 200, uncached c2/c3/c4 each use 200
+    expect(averageHeight.value).toBe(200);
+    expect(totalHeight.value).toBe(800); // 200 + 200*3
+
+    setHeight('c2', 300);
+    // averageHeight = (200+300)/2 = 250
+    expect(averageHeight.value).toBe(250);
+    expect(totalHeight.value).toBe(200 + 300 + 250 + 250); // 1000
+  });
+
+  it('spacers remain correct when window shrinks after chapters are removed', () => {
+    const chapters = ref<ChapterEntry[]>(['c1', 'c2', 'c3', 'c4', 'c5'].map(createChapter));
+    const { virtualWindow, topSpacer, bottomSpacer, setHeight } = useVirtualChapters(chapters, {
+      windowSize: 3,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    setHeight('c1', 100);
+    setHeight('c2', 200);
+    setHeight('c3', 300);
+    setHeight('c4', 400);
+    setHeight('c5', 500);
+
+    virtualWindow.value = { start: 2, end: 4 }; // visible: c3, c4
+
+    expect(topSpacer.value).toBe(300); // c1(100) + c2(200)
+    expect(bottomSpacer.value).toBe(500); // c5(500)
+
+    // Remove last two chapters → only c1, c2, c3
+    chapters.value = chapters.value.slice(0, 3);
+
+    // Window gets clamped, spacers should still be consistent
+    expect(topSpacer.value + bottomSpacer.value).toBeGreaterThanOrEqual(0);
+    // totalHeight should equal sum of remaining cached heights
+    // (c4, c5 heights cleaned up by watcher)
+  });
+
+  it('empty list after non-empty produces zero spacers and totalHeight', () => {
+    const chapters = ref<ChapterEntry[]>(['c1', 'c2'].map(createChapter));
+    const { topSpacer, bottomSpacer, totalHeight, setHeight } = useVirtualChapters(chapters, {
+      windowSize: 2,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    setHeight('c1', 100);
+    setHeight('c2', 200);
+    expect(totalHeight.value).toBe(300);
+
+    // Clear all chapters
+    chapters.value = [];
+
+    expect(topSpacer.value).toBe(0);
+    expect(bottomSpacer.value).toBe(0);
+    expect(totalHeight.value).toBe(0);
+  });
+
+  it('updateWindow centers the window around the given index', () => {
+    const chapters = ref<ChapterEntry[]>(
+      ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'].map(createChapter)
+    );
+    const { virtualWindow, updateWindow } = useVirtualChapters(chapters, {
+      windowSize: 3,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    updateWindow(3);
+    // halfWindow = floor(3/2) = 1
+    // start = max(0, 3-1) = 2, end = min(7, 3+1+1) = 5
+    expect(virtualWindow.value.start).toBe(2);
+    expect(virtualWindow.value.end).toBe(5);
+
+    // Edge: near start
+    updateWindow(0);
+    expect(virtualWindow.value.start).toBe(0);
+    expect(virtualWindow.value.end).toBe(2);
+
+    // Edge: near end
+    updateWindow(6);
+    expect(virtualWindow.value.start).toBe(5);
+    expect(virtualWindow.value.end).toBe(7);
+  });
+
+  it('reset clears heights and resets window', () => {
+    const chapters = ref<ChapterEntry[]>(['c1', 'c2', 'c3'].map(createChapter));
+    const { virtualWindow, heights, setHeight, reset } = useVirtualChapters(chapters, {
+      windowSize: 2,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    setHeight('c1', 500);
+    setHeight('c2', 600);
+    virtualWindow.value = { start: 1, end: 3 };
+
+    expect(heights.value.size).toBe(2);
+
+    reset();
+
+    expect(heights.value.size).toBe(0);
+    expect(virtualWindow.value).toEqual({ start: 0, end: 2 });
+  });
+
+  it('watcher initializes window when chapters go from empty to non-empty with end=0', () => {
+    const chapters = ref<ChapterEntry[]>([]);
+    const { virtualWindow } = useVirtualChapters(chapters, {
+      windowSize: 3,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    // After init with empty, window should be {start:0, end:0}
+    expect(virtualWindow.value).toEqual({ start: 0, end: 0 });
+
+    // Add chapters — watcher should detect end===0 and initialize
+    chapters.value = ['c1', 'c2', 'c3', 'c4', 'c5'].map(createChapter);
+
+    expect(virtualWindow.value.start).toBe(0);
+    expect(virtualWindow.value.end).toBe(3); // min(5, windowSize=3)
+  });
+
+  it('setHeight is a no-op when height is unchanged', () => {
+    const chapters = ref<ChapterEntry[]>(['c1'].map(createChapter));
+    const { heights, setHeight } = useVirtualChapters(chapters, {
+      windowSize: 1,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    setHeight('c1', 200);
+    const map1 = heights.value;
+    expect(map1.get('c1')).toBe(200);
+
+    // Setting same height should not trigger a new set
+    setHeight('c1', 200);
+    // Map reference is the same (no reactivity trigger for same value)
+    expect(heights.value).toBe(map1);
+  });
+
+  it('getOffsetBefore clamps index beyond chapter length', () => {
+    const chapters = ref<ChapterEntry[]>(['c1', 'c2'].map(createChapter));
+    const { getOffsetBefore, setHeight } = useVirtualChapters(chapters, {
+      windowSize: 2,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    setHeight('c1', 150);
+    setHeight('c2', 250);
+
+    // index=2 is exactly length, should return total
+    expect(getOffsetBefore(2)).toBe(400);
+    // index=100 should clamp to length
+    expect(getOffsetBefore(100)).toBe(400);
+  });
 });

@@ -53,13 +53,34 @@ export function useVirtualChapters(
   const virtualWindow = ref<VirtualWindow>({ start: 0, end: windowSize });
 
   // === Computed ===
-  const totalHeight = computed(() =>
-    Array.from(heights.value.values()).reduce((sum, h) => sum + h, 0)
-  );
 
-  const averageHeight = computed(() =>
-    heights.value.size > 0 ? totalHeight.value / heights.value.size : defaultHeight
-  );
+  // averageHeight is computed directly from cached heights to avoid circular
+  // dependency with prefixOffsets / totalHeight.
+  const averageHeight = computed(() => {
+    const h = heights.value;
+    if (h.size === 0) return defaultHeight;
+    let sum = 0;
+    for (const v of h.values()) sum += v;
+    return sum / h.size;
+  });
+
+  // Prefix-sum array of length N+1 where prefixOffsets[i] is the total
+  // estimated offset before chapter i.  Lookup is O(1).
+  const prefixOffsets = computed(() => {
+    const chaps = chapters.value;
+    const avg = averageHeight.value;
+    const h = heights.value;
+    const offsets = new Float64Array(chaps.length + 1);
+    for (let i = 0; i < chaps.length; i++) {
+      offsets[i + 1] = offsets[i] + (h.get(chaps[i].chapter.url) ?? avg);
+    }
+    return offsets;
+  });
+
+  const totalHeight = computed(() => {
+    const o = prefixOffsets.value;
+    return o[o.length - 1];
+  });
 
   // The actual rendered range includes overscan; keep it in one place so
   // spacers and visible list stay aligned.
@@ -77,13 +98,18 @@ export function useVirtualChapters(
     }));
   });
 
-  const topSpacer = computed(() => getOffsetBefore(visibleRange.value.start));
+  const topSpacer = computed(() => {
+    const o = prefixOffsets.value;
+    const idx = visibleRange.value.start;
+    return idx >= 0 && idx < o.length ? o[idx] : 0;
+  });
 
   const bottomSpacer = computed(() => {
-    const endOffset = getOffsetBefore(visibleRange.value.end);
-    // Use getOffsetBefore for total to ensure consistent calculation basis
-    const totalOffset = getOffsetBefore(chapters.value.length);
-    return Math.max(0, totalOffset - endOffset);
+    const o = prefixOffsets.value;
+    const endIdx = visibleRange.value.end;
+    const total = o[o.length - 1];
+    const endOffset = endIdx >= 0 && endIdx < o.length ? o[endIdx] : total;
+    return Math.max(0, total - endOffset);
   });
 
   // === Methods ===
@@ -96,17 +122,10 @@ export function useVirtualChapters(
 
   function getOffsetBefore(index: number): number {
     if (index <= 0) return 0;
-    if (chapters.value.length === 0) return 0;
-
-    let offset = 0;
-    const len = Math.min(index, chapters.value.length);
-    for (let i = 0; i < len; i++) {
-      const entry = chapters.value[i];
-      if (!entry) continue; // Defensive check
-      const url = entry.chapter.url;
-      offset += heights.value.get(url) ?? averageHeight.value;
-    }
-    return offset;
+    const o = prefixOffsets.value;
+    if (o.length <= 1) return 0; // empty chapters list
+    const clamped = Math.min(index, o.length - 1);
+    return o[clamped];
   }
 
   function updateWindow(currentIndex: number): void {

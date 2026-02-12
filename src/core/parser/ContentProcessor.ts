@@ -31,6 +31,7 @@ export interface ProcessingOptions {
 
 export class ContentProcessor {
   private options: ProcessingOptions;
+  private regexCache = new Map<string, RegExp | null>();
 
   constructor(options: ProcessingOptions = {}) {
     this.options = {
@@ -304,17 +305,33 @@ export class ContentProcessor {
   }
 
   /**
+   * Get a cached RegExp, or compile and cache it. Returns null for invalid patterns.
+   */
+  private getCachedRegex(pattern: string, flags: string): RegExp | null {
+    const key = `${pattern}\0${flags}`;
+    if (this.regexCache.has(key)) {
+      return this.regexCache.get(key)!;
+    }
+    try {
+      const regex = new RegExp(pattern, flags);
+      this.regexCache.set(key, regex);
+      return regex;
+    } catch {
+      this.regexCache.set(key, null);
+      return null;
+    }
+  }
+
+  /**
    * Apply custom replace rules
    */
   private applyReplaceRules(html: string, rules: ReplaceRule[]): string {
     let result = html;
 
     for (const rule of rules) {
-      try {
-        const regex = new RegExp(rule.pattern, rule.flags || 'g');
+      const regex = this.getCachedRegex(rule.pattern, rule.flags || 'g');
+      if (regex) {
         result = result.replace(regex, rule.replacement);
-      } catch {
-        // Invalid regex, skip
       }
     }
 
@@ -451,6 +468,7 @@ export class ContentProcessor {
    */
   setOptions(options: Partial<ProcessingOptions>): void {
     this.options = { ...this.options, ...options };
+    this.regexCache.clear();
   }
 
   /**

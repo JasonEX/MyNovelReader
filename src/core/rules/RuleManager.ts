@@ -29,6 +29,7 @@ export class RuleManager {
   private builtInRules: SiteRule[] = [];
   private userRulesCache: Map<string, SiteRule> = new Map();
   private initialized: boolean = false;
+  private compiledCache = new WeakMap<SiteRule, { main: RegExp; excludes: RegExp[] }>();
 
   constructor() {
     this.storage = new RuleStorage();
@@ -98,19 +99,31 @@ export class RuleManager {
   }
 
   /**
+   * Get or compile and cache the RegExp objects for a rule.
+   * Uses WeakMap so entries are GC'd when the rule object is no longer referenced.
+   */
+  private getCompiledRule(rule: SiteRule): { main: RegExp; excludes: RegExp[] } {
+    const cached = this.compiledCache.get(rule);
+    if (cached) return cached;
+
+    const main = toRegExp(rule.match.pattern, rule.match.type);
+    const excludes = (rule.match.exclude ?? []).map(e => new RegExp(e, 'i'));
+    const compiled = { main, excludes };
+    this.compiledCache.set(rule, compiled);
+    return compiled;
+  }
+
+  /**
    * Check if a rule matches a URL
    */
   private matchesUrl(rule: SiteRule, url: string): boolean {
     try {
-      const regex = toRegExp(rule.match.pattern, rule.match.type);
-      if (!regex.test(url)) return false;
+      const { main, excludes } = this.getCompiledRule(rule);
+      if (!main.test(url)) return false;
 
-      // Check excludes
-      if (rule.match.exclude) {
-        for (const exclude of rule.match.exclude) {
-          if (new RegExp(exclude, 'i').test(url)) {
-            return false;
-          }
+      for (const exclude of excludes) {
+        if (exclude.test(url)) {
+          return false;
         }
       }
 

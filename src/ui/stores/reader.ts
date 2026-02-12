@@ -130,21 +130,36 @@ export const useReaderStore = defineStore('reader', () => {
   const confidence = computed(() => chapter.value?.confidence || 0);
   const method = computed(() => chapter.value?.method || 'detection');
 
-  // TOC with cache status
-  const tocWithStatus = computed<TocEntryWithStatus[]>(() => {
+  // TOC with cache status (incremental: normalize URLs once, pre-compute status map)
+  const normalizedTocUrls = computed(() => toc.value.map(entry => normalizeUrlForFetch(entry.url)));
+
+  const tocStatusMap = computed(() => {
     const currentUrl = chapter.value?.url;
-    return toc.value.map(entry => {
-      const url = normalizeUrlForFetch(entry.url);
-      return {
-        ...entry,
-        url,
+    const map = new Map<string, { isCached: boolean; isPersisted: boolean; isCurrent: boolean }>();
+    for (const url of normalizedTocUrls.value) {
+      map.set(url, {
         isCached:
           loadedUrls.value.has(url) ||
           cachedContents.value.has(url) ||
           persistedUrls.value.has(url),
         isPersisted: persistedUrls.value.has(url),
         isCurrent: url === currentUrl,
+      });
+    }
+    return map;
+  });
+
+  const tocWithStatus = computed<TocEntryWithStatus[]>(() => {
+    const urls = normalizedTocUrls.value;
+    const statusMap = tocStatusMap.value;
+    return toc.value.map((entry, i) => {
+      const url = urls[i];
+      const status = statusMap.get(url) || {
+        isCached: false,
+        isPersisted: false,
+        isCurrent: false,
       };
+      return { ...entry, url, ...status };
     });
   });
 

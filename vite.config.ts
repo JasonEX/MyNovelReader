@@ -22,6 +22,8 @@ export default defineConfig({
   define: {
     __MNR_VERSION__: JSON.stringify(version),
     __MNR_BUILD_DATE__: JSON.stringify(buildDate),
+    // NOTE: Only process.env.NODE_ENV is used; Vite replaces it at build time.
+    // No other process.env.* references exist in the codebase.
     'process.env.NODE_ENV': JSON.stringify('production'),
   },
   build: {

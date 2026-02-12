@@ -270,6 +270,122 @@ describe('SiteProtection (extra coverage)', () => {
     expect(blurListener).not.toHaveBeenCalled();
   });
 
+  it('blockVisibilityDetection restores original descriptors on deactivate', () => {
+    dom = createDom();
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+
+    // Capture the original descriptor from the prototype before activation
+    const proto = Object.getPrototypeOf(dom.window.document) as object;
+    const originalHiddenDesc = Object.getOwnPropertyDescriptor(proto, 'hidden');
+    const originalVisibilityDesc = Object.getOwnPropertyDescriptor(proto, 'visibilityState');
+
+    protection = new SiteProtection({
+      blockVisibilityDetection: true,
+      clearTimers: false,
+      blockRedirects: false,
+      enableRightClick: false,
+      enableSelection: false,
+      enableCopy: false,
+      unlockKeyboard: false,
+      blockPopups: false,
+      removeEventHijacking: false,
+    });
+    protection.activate();
+
+    // While active, our override is an own property on document
+    expect(Object.getOwnPropertyDescriptor(dom.window.document, 'hidden')).toBeDefined();
+    expect(dom.window.document.hidden).toBe(false);
+
+    protection.deactivate();
+
+    // After deactivation, the own property should be removed so the prototype shows through
+    const afterHiddenDesc = Object.getOwnPropertyDescriptor(dom.window.document, 'hidden');
+    expect(afterHiddenDesc).toBeUndefined();
+
+    // The prototype descriptor should still be intact
+    const protoHiddenDesc = Object.getOwnPropertyDescriptor(proto, 'hidden');
+    expect(protoHiddenDesc).toEqual(originalHiddenDesc);
+
+    const protoVisDesc = Object.getOwnPropertyDescriptor(proto, 'visibilityState');
+    expect(protoVisDesc).toEqual(originalVisibilityDesc);
+  });
+
+  it('blockVisibilityDetection restores instance-level descriptors on deactivate', () => {
+    dom = createDom();
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+
+    // Set a custom own-property descriptor on document before activation
+    const customGetter = () => true;
+    Object.defineProperty(dom.window.document, 'hidden', {
+      configurable: true,
+      get: customGetter,
+    });
+
+    protection = new SiteProtection({
+      blockVisibilityDetection: true,
+      clearTimers: false,
+      blockRedirects: false,
+      enableRightClick: false,
+      enableSelection: false,
+      enableCopy: false,
+      unlockKeyboard: false,
+      blockPopups: false,
+      removeEventHijacking: false,
+    });
+    protection.activate();
+
+    // While active, our override returns false
+    expect(dom.window.document.hidden).toBe(false);
+
+    protection.deactivate();
+
+    // After deactivation, the custom instance descriptor should be restored
+    const restored = Object.getOwnPropertyDescriptor(dom.window.document, 'hidden');
+    expect(restored).toBeDefined();
+    expect(restored!.get).toBe(customGetter);
+    expect(dom.window.document.hidden).toBe(true);
+  });
+
+  it('repeated activate/deactivate cycles do not leak visibility overrides', () => {
+    dom = createDom();
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+
+    const proto = Object.getPrototypeOf(dom.window.document) as object;
+    const originalHiddenDesc = Object.getOwnPropertyDescriptor(proto, 'hidden');
+
+    protection = new SiteProtection({
+      blockVisibilityDetection: true,
+      clearTimers: false,
+      blockRedirects: false,
+      enableRightClick: false,
+      enableSelection: false,
+      enableCopy: false,
+      unlockKeyboard: false,
+      blockPopups: false,
+      removeEventHijacking: false,
+    });
+
+    for (let i = 0; i < 5; i++) {
+      protection.activate();
+      expect(dom.window.document.hidden).toBe(false);
+      expect(dom.window.document.visibilityState).toBe('visible');
+
+      protection.deactivate();
+
+      // Own property should be cleaned up each time
+      expect(Object.getOwnPropertyDescriptor(dom.window.document, 'hidden')).toBeUndefined();
+      expect(
+        Object.getOwnPropertyDescriptor(dom.window.document, 'visibilityState')
+      ).toBeUndefined();
+    }
+
+    // Prototype descriptor should remain untouched after all cycles
+    expect(Object.getOwnPropertyDescriptor(proto, 'hidden')).toEqual(originalHiddenDesc);
+  });
+
   it('re-applies options when activate(options) is called while active', () => {
     dom = createDom();
     globalThis.document = dom.window.document;
@@ -768,6 +884,66 @@ describe('SiteProtection (extra coverage)', () => {
 
     expect(dom.window.open('http://[invalid')).toBeNull();
     expect(originalOpen).toHaveBeenCalledTimes(0);
+  });
+
+  it('blockVisibilityDetection: document.hidden returns false even after real visibility change', () => {
+    dom = createDom();
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+
+    protection = new SiteProtection({
+      blockVisibilityDetection: true,
+      clearTimers: false,
+      blockRedirects: false,
+      enableRightClick: false,
+      enableSelection: false,
+      enableCopy: false,
+      unlockKeyboard: false,
+      blockPopups: false,
+      removeEventHijacking: false,
+    });
+    protection.activate();
+
+    // Even after dispatching visibilitychange, our override keeps hidden=false
+    dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));
+    expect(dom.window.document.hidden).toBe(false);
+    expect(dom.window.document.visibilityState).toBe('visible');
+  });
+
+  it('repeated activate/deactivate does not leak event listeners', () => {
+    dom = createDom();
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+
+    protection = new SiteProtection({
+      blockVisibilityDetection: true,
+      enableCopy: true,
+      enableSelection: true,
+      enableRightClick: true,
+      clearTimers: false,
+      blockRedirects: false,
+      unlockKeyboard: false,
+      blockPopups: false,
+      removeEventHijacking: false,
+    });
+
+    // Run multiple cycles
+    for (let i = 0; i < 3; i++) {
+      protection.activate();
+      expect(dom.window.document.hidden).toBe(false);
+
+      protection.deactivate();
+    }
+
+    // After final deactivate, visibility override should be gone
+    const ownDesc = Object.getOwnPropertyDescriptor(dom.window.document, 'hidden');
+    expect(ownDesc).toBeUndefined();
+
+    // Re-activate one more time to confirm it still works
+    protection.activate();
+    expect(dom.window.document.hidden).toBe(false);
+    expect(dom.window.document.visibilityState).toBe('visible');
+    protection.deactivate();
   });
 
   it('unlockKeyboard tolerates documents without body and removes inline key handlers', () => {

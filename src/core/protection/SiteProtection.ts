@@ -765,6 +765,36 @@ export class SiteProtection {
    * Block visibility change detection (prevents pausing/ads on tab switch)
    */
   private blockVisibilityDetection(): void {
+    // Save original descriptors before overwriting.
+    // Check the instance (document) first, then fall back to the prototype (Document.prototype).
+    const docProto = Object.getPrototypeOf(document) as object | null;
+
+    const savedHidden: {
+      descriptor: PropertyDescriptor | undefined;
+      owner: 'instance' | 'prototype' | 'none';
+    } = (() => {
+      const ownDesc = Object.getOwnPropertyDescriptor(document, 'hidden');
+      if (ownDesc) return { descriptor: ownDesc, owner: 'instance' as const };
+      if (docProto) {
+        const protoDesc = Object.getOwnPropertyDescriptor(docProto, 'hidden');
+        if (protoDesc) return { descriptor: protoDesc, owner: 'prototype' as const };
+      }
+      return { descriptor: undefined, owner: 'none' as const };
+    })();
+
+    const savedVisibilityState: {
+      descriptor: PropertyDescriptor | undefined;
+      owner: 'instance' | 'prototype' | 'none';
+    } = (() => {
+      const ownDesc = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+      if (ownDesc) return { descriptor: ownDesc, owner: 'instance' as const };
+      if (docProto) {
+        const protoDesc = Object.getOwnPropertyDescriptor(docProto, 'visibilityState');
+        if (protoDesc) return { descriptor: protoDesc, owner: 'prototype' as const };
+      }
+      return { descriptor: undefined, owner: 'none' as const };
+    })();
+
     // Override visibility state
     Object.defineProperty(document, 'hidden', {
       configurable: true,
@@ -793,11 +823,32 @@ export class SiteProtection {
     window.addEventListener('blur', blurBlocker, true);
     window.addEventListener('focus', blurBlocker, true);
 
+    // Helper to restore a single property descriptor
+    const restoreDescriptor = (
+      prop: string,
+      saved: { descriptor: PropertyDescriptor | undefined; owner: string }
+    ) => {
+      try {
+        if (saved.owner === 'instance' && saved.descriptor) {
+          // Was an own property on document — restore it
+          Object.defineProperty(document, prop, saved.descriptor);
+        } else {
+          // Was on prototype or didn't exist — delete the own property so
+          // the prototype value (if any) shows through again
+          delete (document as Record<string, unknown>)[prop];
+        }
+      } catch {
+        // Property may be non-configurable in some environments; swallow the error
+      }
+    };
+
     this.cleanupFunctions.push(() => {
       document.removeEventListener('visibilitychange', visibilityBlocker, true);
       window.removeEventListener('blur', blurBlocker, true);
       window.removeEventListener('focus', blurBlocker, true);
-      // Note: Can't restore property descriptors easily
+
+      restoreDescriptor('hidden', savedHidden);
+      restoreDescriptor('visibilityState', savedVisibilityState);
     });
   }
 

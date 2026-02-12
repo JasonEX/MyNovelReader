@@ -3,6 +3,7 @@
  * Unified retry/backoff logic for chapter navigation failures.
  */
 
+import { calculateBackoff } from './utils';
 import { trimNavFailures } from './trim';
 
 type NavFailureMap = Map<string, { count: number; nextRetryAt: number }>;
@@ -18,7 +19,7 @@ export function recordNavFailure(
 ): number {
   const prev = failures.get(key);
   const count = (prev?.count || 0) + 1;
-  const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 30000);
+  const backoffMs = calculateBackoff(count);
   failures.set(key, { count, nextRetryAt: Date.now() + backoffMs });
   trimNavFailures(failures, opts.maxFailures);
   return count;

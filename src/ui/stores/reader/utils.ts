@@ -175,6 +175,16 @@ export function isValidTocPaginationUrl(candidateUrl: string, indexUrl: string):
 /**
  * Normalize text for VIP detection
  */
+/**
+ * Calculate exponential backoff delay in milliseconds.
+ * @param failureCount - Number of consecutive failures (1-based)
+ * @param baseMs - Base delay in ms (default: 1500)
+ * @param maxMs - Maximum delay cap in ms (default: 30000)
+ */
+export function calculateBackoff(failureCount: number, baseMs = 1500, maxMs = 30000): number {
+  return Math.min(baseMs * Math.pow(2, failureCount - 1), maxMs);
+}
+
 export function normalizeTextForVipDetection(text: string): string {
   return text
     .replace(/\s+/g, '')

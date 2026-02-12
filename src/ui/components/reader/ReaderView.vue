@@ -140,6 +140,7 @@ import {
 } from '@/ui/composables/reader/useReaderAutoLoad';
 import { useTouchGestures } from '@/ui/composables/reader/useTouchGestures';
 import { useChapterNavigation } from '@/ui/composables/reader/useChapterNavigation';
+import { useReaderUIControls } from '@/ui/composables/reader/useReaderUIControls';
 import { closeReader } from '@/bootstrap';
 import ProgressIndicator from './ProgressIndicator.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
@@ -147,7 +148,6 @@ import ChapterDrawer from './ChapterDrawer.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import RuleEditorPanel from '@/ui/components/editor/RuleEditorPanel.vue';
 import { MnrSpinner, MnrToast, MnrLoadingOverlay } from '@/ui/components/common';
-import type { SiteRule } from '@/core/rules/types';
 
 // Stores
 const readerStore = useReaderStore();
@@ -158,13 +158,27 @@ const ruleStore = useRuleStore();
 const mainRef = ref<HTMLElement | null>(null);
 const topSentinel = ref<HTMLElement | null>(null);
 const bottomSentinel = ref<HTMLElement | null>(null);
-const settingsVisible = ref(false);
-const ruleEditorVisible = ref(false);
-const isPickerActive = ref(false);
-const drawerOpen = ref(false);
 const isNavigating = ref(false);
 const showControls = ref(true);
 const chapterRefs = new Map<string, HTMLElement>();
+
+// UI controls composable
+const {
+  settingsVisible,
+  ruleEditorVisible,
+  isPickerActive,
+  drawerOpen,
+  currentRule,
+  currentDomain,
+  toggleDrawer,
+  openSettings,
+  openRuleEditor,
+  handleRuleSave,
+  handleRuleReset,
+  handleEscape,
+  toggleSettings,
+  toggleRuleEditor,
+} = useReaderUIControls({ readerStore, ruleStore, showControls });
 
 // IntersectionObserver instances
 let topObserver: globalThis.IntersectionObserver | null = null;
@@ -195,16 +209,6 @@ watch(isPickerActive, active => {
     if (readerRoot) {
       readerRoot.style.display = '';
     }
-  }
-});
-
-// Rule editor state
-const currentRule = computed(() => readerStore.rule);
-const currentDomain = computed(() => {
-  try {
-    return new URL(window.location.href).hostname;
-  } catch {
-    return '';
   }
 });
 
@@ -310,13 +314,6 @@ function navigate(direction: 'index') {
   }
 }
 
-function toggleDrawer() {
-  drawerOpen.value = !drawerOpen.value;
-  if (drawerOpen.value) {
-    readerStore.loadToc();
-  }
-}
-
 function handleChapterSelect(entry: TocEntryWithStatus) {
   if (entry.isCached) {
     jumpToCachedChapter(entry.url);
@@ -345,35 +342,6 @@ function handleContentClick(e: MouseEvent) {
 
 function clearError() {
   readerStore.clearError();
-}
-
-function openRuleEditor() {
-  settingsVisible.value = false;
-  ruleEditorVisible.value = true;
-  showControls.value = false;
-}
-
-async function handleRuleSave(rule: SiteRule) {
-  if (currentDomain.value) {
-    try {
-      await ruleStore.saveUserRule(currentDomain.value, rule);
-      await readerStore.reloadCurrentChapter();
-    } catch (e) {
-      console.error('[MNR] Save rule error:', e);
-      readerStore.showToast('保存失败', 'error');
-    }
-  }
-  ruleEditorVisible.value = false;
-}
-
-async function handleRuleReset() {
-  settingsVisible.value = false;
-  await readerStore.reloadCurrentChapter();
-}
-
-function openSettings() {
-  settingsVisible.value = true;
-  showControls.value = false;
 }
 
 async function handleTextConversionChange(mode: 'none' | 'sc' | 'tc') {
@@ -409,28 +377,6 @@ function exitReader() {
 }
 
 // === Keyboard shortcuts ===
-
-function handleEscape() {
-  if (drawerOpen.value) {
-    drawerOpen.value = false;
-  } else if (ruleEditorVisible.value) {
-    ruleEditorVisible.value = false;
-  } else if (settingsVisible.value) {
-    settingsVisible.value = false;
-  }
-}
-
-function toggleSettings() {
-  if (!ruleEditorVisible.value) {
-    settingsVisible.value = !settingsVisible.value;
-  }
-}
-
-function toggleRuleEditor() {
-  if (!settingsVisible.value) {
-    ruleEditorVisible.value = !ruleEditorVisible.value;
-  }
-}
 
 const keyboardEnabled = computed(
   () => configStore.behavior.keyboardNavigation && !isPickerActive.value

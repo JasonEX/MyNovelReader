@@ -24,6 +24,16 @@ const INVALID_URL_PATTERNS = [
   /^https?:\/\/[^/]+\/\?/i, // Root with query string (e.g., https://example.com/?ref=xxx)
 ];
 
+/** Pre-collected signal for a single <a> element */
+interface LinkSignal {
+  anchor: HTMLAnchorElement;
+  href: string; // resolved URL
+  text: string; // textContent trimmed
+  title: string; // title attribute
+  rel: string; // rel attribute
+  rect: { top: number } | null; // getBoundingClientRect result
+}
+
 export class NavigationDetector {
   private resolveBaseUrl(doc: Document, currentUrl?: string): string {
     const candidates: Array<string | undefined> = [
@@ -68,22 +78,65 @@ export class NavigationDetector {
   }
 
   /**
+   * Single-pass DOM scan: collect all link signals from the document.
+   */
+  private collectLinkSignals(doc: Document, baseUrl: string): LinkSignal[] {
+    const anchors = doc.querySelectorAll('a[href]');
+    const signals: LinkSignal[] = [];
+
+    for (const node of Array.from(anchors)) {
+      const anchor = node as HTMLAnchorElement;
+      const href = this.resolveLinkUrl(anchor, baseUrl);
+      if (!href) continue;
+
+      let rect: { top: number } | null = null;
+      try {
+        const r = anchor.getBoundingClientRect();
+        rect = { top: r.top };
+      } catch {
+        // getBoundingClientRect may fail in some contexts
+      }
+
+      signals.push({
+        anchor,
+        href,
+        text: anchor.textContent?.trim() || '',
+        title: anchor.title || '',
+        rel: (anchor.getAttribute('rel') || '').toLowerCase(),
+        rect,
+      });
+    }
+
+    return signals;
+  }
+
+  /**
    * Detect all navigation links in the document
    */
   detect(doc: Document, currentUrl?: string): NavigationResult {
     const resolvedCurrentUrl = this.resolveBaseUrl(doc, currentUrl);
+    const signals = this.collectLinkSignals(doc, resolvedCurrentUrl);
+
+    // Store signals for detectSection to reuse
+    this._lastSignals = signals;
+    this._lastBaseUrl = resolvedCurrentUrl;
+
     return {
-      next: this.findNavLink(doc, 'next', resolvedCurrentUrl),
-      prev: this.findNavLink(doc, 'prev', resolvedCurrentUrl),
-      index: this.findNavLink(doc, 'index', resolvedCurrentUrl),
+      next: this.findNavLink(signals, 'next', resolvedCurrentUrl),
+      prev: this.findNavLink(signals, 'prev', resolvedCurrentUrl),
+      index: this.findNavLink(signals, 'index', resolvedCurrentUrl),
     };
   }
 
+  /** Cached signals from the last detect() call, reused by detectSection() */
+  private _lastSignals: LinkSignal[] = [];
+  private _lastBaseUrl = '';
+
   /**
-   * Find a specific navigation link
+   * Find a specific navigation link from pre-collected signals
    */
   private findNavLink(
-    doc: Document,
+    signals: LinkSignal[],
     type: 'next' | 'prev' | 'index',
     currentUrl: string
   ): NavLinkResult | null {
@@ -91,26 +144,20 @@ export class NavigationDetector {
 
     // Strategy 1: rel attribute (highest confidence)
     if (type !== 'index') {
-      const relLink = doc.querySelector(`a[rel="${type}"]`);
-      const href = relLink ? this.resolveLinkUrl(relLink as HTMLAnchorElement, currentUrl) : null;
-      if (
-        relLink &&
-        href &&
-        this.isValidLink(relLink as HTMLAnchorElement, type, currentUrl, href)
-      ) {
+      const relSignal = signals.find(s => s.rel === type);
+      if (relSignal && this.isValidLink(relSignal.anchor, type, currentUrl, relSignal.href)) {
         return {
-          element: relLink as HTMLAnchorElement,
-          url: href,
-          selector: this.generateSelector(relLink as HTMLAnchorElement),
+          element: relSignal.anchor,
+          url: relSignal.href,
+          selector: this.generateSelector(relSignal.anchor),
           confidence: 0.95,
           method: 'rel-attribute',
-          text: relLink.textContent?.trim(),
+          text: relSignal.text,
         };
       }
     }
 
     // Strategy 2: Text matching
-    const links = doc.querySelectorAll('a[href]');
     const candidates: Array<{
       element: HTMLAnchorElement;
       score: number;
@@ -118,13 +165,11 @@ export class NavigationDetector {
       href: string;
     }> = [];
 
-    for (const link of Array.from(links)) {
-      const anchor = link as HTMLAnchorElement;
-      const text = anchor.textContent?.trim() || '';
-      const href = this.resolveLinkUrl(anchor, currentUrl);
+    for (const signal of signals) {
+      const { anchor, href, text, title, rect } = signal;
 
       // Skip invalid hrefs
-      if (!href || !this.isValidLink(anchor, type, currentUrl, href)) continue;
+      if (!this.isValidLink(anchor, type, currentUrl, href)) continue;
 
       // Score based on text matching
       let score = 0;
@@ -153,14 +198,12 @@ export class NavigationDetector {
           score += 8;
         }
         // URL points to directory (ends with / or is index.html)
-        const href = anchor.href;
         if (href.endsWith('/') || /\/index\.html?$/i.test(href)) {
           score += 3;
         }
       }
 
       // Check title attribute too
-      const title = anchor.title || '';
       for (const pattern of patterns) {
         if (pattern.test(title)) {
           score += 5;
@@ -168,13 +211,14 @@ export class NavigationDetector {
       }
 
       // Position bonus (nav links often at top/bottom of page)
-      try {
-        const rect = anchor.getBoundingClientRect();
-        if (rect.top < 300 || rect.top > document.documentElement.scrollHeight - 300) {
-          score += 2;
+      if (rect) {
+        try {
+          if (rect.top < 300 || rect.top > document.documentElement.scrollHeight - 300) {
+            score += 2;
+          }
+        } catch {
+          // scrollHeight may not be available
         }
-      } catch {
-        // getBoundingClientRect may fail in some contexts
       }
 
       // Penalty for long text (likely not a nav link)
@@ -374,6 +418,13 @@ export class NavigationDetector {
     currentUrl: string,
     navigation: NavigationResult
   ): SectionDetectionResult {
+    // Reuse signals from detect() if available, otherwise collect fresh
+    const baseUrl = this.resolveBaseUrl(doc, currentUrl);
+    const signals =
+      this._lastSignals.length > 0 && this._lastBaseUrl === baseUrl
+        ? this._lastSignals
+        : this.collectLinkSignals(doc, baseUrl);
+
     const result: SectionDetectionResult = {
       isSection: false,
       currentSection: null,
@@ -453,7 +504,7 @@ export class NavigationDetector {
     // Strategy 5: Even if navigation.next prefers "下一章", still try to find an explicit "下一页" link.
     // Some templates show both links, and we must not stop merging early.
     if (!result.nextSectionUrl) {
-      const nextSectionUrl = this.findNextSectionUrl(doc, currentUrl);
+      const nextSectionUrl = this.findNextSectionUrl(signals, currentUrl);
       if (nextSectionUrl) {
         result.isSection = true;
         result.nextSectionUrl = nextSectionUrl;
@@ -464,7 +515,7 @@ export class NavigationDetector {
 
     // If we detected a section but don't have nextChapterUrl, try to find it
     if (result.isSection && !result.nextChapterUrl) {
-      result.nextChapterUrl = this.findNextChapterUrl(doc, currentUrl, navigation);
+      result.nextChapterUrl = this.findNextChapterUrl(signals, currentUrl);
     }
 
     return result;
@@ -568,9 +619,7 @@ export class NavigationDetector {
     return matches / longer.length;
   }
 
-  private findNextSectionUrl(doc: Document, currentUrl: string): string | null {
-    const links = Array.from(doc.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-
+  private findNextSectionUrl(signals: LinkSignal[], currentUrl: string): string | null {
     const normalizeText = (text: string): string => text.replace(/\s+/g, '').trim();
     const isNextSectionText = (text: string): boolean => {
       const t = normalizeText(text);
@@ -592,27 +641,23 @@ export class NavigationDetector {
     };
 
     const candidates: Array<{ url: string; score: number }> = [];
-    for (const a of links) {
-      const text = (a.textContent || '').trim();
+    for (const signal of signals) {
+      const { anchor, href, text, rel } = signal;
       if (!text) continue;
-
-      const href = this.resolveLinkUrl(a, currentUrl);
-      if (!href) continue;
 
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       if (!isSection || isChapter) continue;
       if (!isNextSectionText(text)) continue;
-      if (!this.isValidLink(a, 'next', currentUrl, href)) continue;
+      if (!this.isValidLink(anchor, 'next', currentUrl, href)) continue;
 
       const comparison = this.compareUrlsForSection(currentUrl, href);
       if (!comparison.isSection) continue;
 
       let score = 50;
       if (text.length <= 5) score += 5;
-      const rel = (a.getAttribute('rel') || '').toLowerCase();
       if (rel.includes('next')) score += 5;
-      if (a.closest('.pager, .pagination, .page, nav, footer')) score += 2;
+      if (anchor.closest('.pager, .pagination, .page, nav, footer')) score += 2;
       score += Math.round(comparison.confidence * 10);
 
       candidates.push({ url: href, score });
@@ -626,19 +671,10 @@ export class NavigationDetector {
   /**
    * Try to find the next chapter URL (skipping remaining sections)
    */
-  private findNextChapterUrl(
-    doc: Document,
-    currentUrl: string,
-    _navigation: NavigationResult
-  ): string | null {
+  private findNextChapterUrl(signals: LinkSignal[], currentUrl: string): string | null {
     // Look for links with "下一章/下一节/后一章/next" text (forward only)
-    const links = doc.querySelectorAll('a[href]');
-
-    for (const link of Array.from(links)) {
-      const anchor = link as HTMLAnchorElement;
-      const text = anchor.textContent?.trim() || '';
-      const href = this.resolveLinkUrl(anchor, currentUrl);
-      if (!href) continue;
+    for (const signal of signals) {
+      const { anchor, href, text } = signal;
       const normalizedText = text.replace(/\s+/g, '').trim();
       const isForward =
         /下一/.test(normalizedText) ||

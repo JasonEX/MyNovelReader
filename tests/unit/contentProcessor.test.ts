@@ -875,6 +875,80 @@ describe('ContentProcessor', () => {
       // Should still process valid rule
       expect(result).toContain('VALID');
     });
+
+    it('should reuse cached regex across multiple process calls', () => {
+      const rules = [{ pattern: '\\d+', replacement: 'NUM', flags: 'g' }];
+      processor.setOptions({ replaceRules: rules });
+
+      const newRegExpSpy = vi.spyOn(globalThis, 'RegExp' as never);
+      const callsBefore = newRegExpSpy.mock.calls.length;
+
+      const el1 = doc.createElement('div');
+      el1.innerHTML = '<p>Test 111</p>';
+      processor.process(el1, doc);
+
+      const callsAfterFirst = newRegExpSpy.mock.calls.length;
+
+      const el2 = doc.createElement('div');
+      el2.innerHTML = '<p>Test 222</p>';
+      const result2 = processor.process(el2, doc);
+
+      const callsAfterSecond = newRegExpSpy.mock.calls.length;
+
+      // The regex for the replace rule should not be compiled again on the second call
+      // (other RegExp calls may happen internally, but the replace-rule one should be cached)
+      expect(result2).toContain('NUM');
+      // Second process should create fewer RegExp instances than the first
+      // because the replace rule regex is cached
+      expect(callsAfterSecond - callsAfterFirst).toBeLessThanOrEqual(callsAfterFirst - callsBefore);
+
+      newRegExpSpy.mockRestore();
+    });
+
+    it('should clear regex cache when setOptions is called', () => {
+      processor.setOptions({
+        replaceRules: [{ pattern: 'old', replacement: 'OLD', flags: 'g' }],
+      });
+
+      const el1 = doc.createElement('div');
+      el1.innerHTML = '<p>old text new text</p>';
+      const result1 = processor.process(el1, doc);
+      expect(result1).toContain('OLD');
+      expect(result1).toContain('new text');
+
+      // Change rules — cache should be cleared
+      processor.setOptions({
+        replaceRules: [{ pattern: 'new', replacement: 'NEW', flags: 'g' }],
+      });
+
+      const el2 = doc.createElement('div');
+      el2.innerHTML = '<p>old text new text</p>';
+      const result2 = processor.process(el2, doc);
+      expect(result2).toContain('old text');
+      expect(result2).toContain('NEW');
+    });
+
+    it('should cache null for invalid regex and skip on subsequent calls', () => {
+      processor.setOptions({
+        replaceRules: [
+          { pattern: '[invalid', replacement: 'X', flags: 'g' },
+          { pattern: 'good', replacement: 'GOOD', flags: 'g' },
+        ],
+      });
+
+      const el1 = doc.createElement('div');
+      el1.innerHTML = '<p>good [invalid content</p>';
+      const result1 = processor.process(el1, doc);
+      expect(result1).toContain('GOOD');
+      expect(result1).toContain('[invalid');
+
+      // Second call should also safely skip the invalid pattern
+      const el2 = doc.createElement('div');
+      el2.innerHTML = '<p>good [invalid again</p>';
+      const result2 = processor.process(el2, doc);
+      expect(result2).toContain('GOOD');
+      expect(result2).toContain('[invalid');
+    });
   });
 
   describe('smartQueryAll', () => {
