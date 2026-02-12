@@ -97,7 +97,7 @@
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-340f8e56]{border-radius:50%;animation:mnr-spin-340f8e56 .8s cubic-bezier(.4,0,.2,1) infinite}.mnr-spinner.small[data-v-340f8e56]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-340f8e56]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}.mnr-spinner.large[data-v-340f8e56]{width:64px;height:64px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}@keyframes mnr-spin-340f8e56{to{transform:rotate(360deg)}}.mnr-toast[data-v-53e91417]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-53e91417]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-53e91417],.mnr-toast-leave-active[data-v-53e91417]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-53e91417],.mnr-toast-leave-to[data-v-53e91417]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}.mnr-loading-overlay[data-v-f2b9dbb7]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-f2b9dbb7]{background:#0009;color:#fff}}.mnr-loading-overlay--inline[data-v-f2b9dbb7]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px;color:#333}.mnr-drawer[data-v-fe73b01a]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-fe73b01a]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-fe73b01a]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-drawer-empty[data-v-fe73b01a]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-fe73b01a]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-fe73b01a]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-fe73b01a]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-fe73b01a]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-fe73b01a]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-fe73b01a]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-3c301d71]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-3c301d71]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-3c301d71]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-3c301d71] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-3c301d71] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-3c301d71] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-3c301d71]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-3c301d71]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-3c301d71]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-3c301d71]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-3c301d71]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-3c301d71]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-3c301d71]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-3c301d71],.mnr-loading-next[data-v-3c301d71]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}@media(min-width:768px){.mnr-reader-content[data-v-3c301d71]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-3c301d71]{padding:40px}}.mnr-rule-editor-overlay[data-v-3c301d71]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-3c301d71]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-3c301d71]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-340f8e56]{border-radius:50%;animation:mnr-spin-340f8e56 .8s cubic-bezier(.4,0,.2,1) infinite}.mnr-spinner.small[data-v-340f8e56]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-340f8e56]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}.mnr-spinner.large[data-v-340f8e56]{width:64px;height:64px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}@keyframes mnr-spin-340f8e56{to{transform:rotate(360deg)}}.mnr-toast[data-v-83d04cea]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-83d04cea]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-83d04cea],.mnr-toast-leave-active[data-v-83d04cea]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-83d04cea],.mnr-toast-leave-to[data-v-83d04cea]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}.mnr-loading-overlay[data-v-01971069]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{background:#0009;color:#fff}}.mnr-loading-overlay--inline[data-v-01971069]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px;color:#333}.mnr-drawer[data-v-fe73b01a]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-fe73b01a]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-fe73b01a]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-drawer-empty[data-v-fe73b01a]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-fe73b01a]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-fe73b01a]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-fe73b01a]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-fe73b01a]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-fe73b01a]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-fe73b01a]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-e19dc4ab]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-e19dc4ab]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-e19dc4ab]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-e19dc4ab] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-e19dc4ab] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-e19dc4ab] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-e19dc4ab]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-e19dc4ab]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-e19dc4ab]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e19dc4ab]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-e19dc4ab]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-e19dc4ab]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-e19dc4ab]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-e19dc4ab],.mnr-loading-next[data-v-e19dc4ab]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}@media(min-width:768px){.mnr-reader-content[data-v-e19dc4ab]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-e19dc4ab]{padding:40px}}.mnr-rule-editor-overlay[data-v-e19dc4ab]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-e19dc4ab]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-e19dc4ab]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -2145,6 +2145,10 @@ createEmptyResult() {
 /^https?:\/\/[^/]+\/\?/i
 ];
   class NavigationDetector {
+    constructor() {
+      this._lastSignals = [];
+      this._lastBaseUrl = "";
+    }
     resolveBaseUrl(doc2, currentUrl) {
       var _a;
       const candidates = [
@@ -2179,38 +2183,61 @@ createEmptyResult() {
       }
       return parsedUrl.toString();
     }
+collectLinkSignals(doc2, baseUrl) {
+      var _a;
+      const anchors = doc2.querySelectorAll("a[href]");
+      const signals = [];
+      for (const node of Array.from(anchors)) {
+        const anchor = node;
+        const href = this.resolveLinkUrl(anchor, baseUrl);
+        if (!href) continue;
+        let rect = null;
+        try {
+          const r = anchor.getBoundingClientRect();
+          rect = { top: r.top };
+        } catch {
+        }
+        signals.push({
+          anchor,
+          href,
+          text: ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "",
+          title: anchor.title || "",
+          rel: (anchor.getAttribute("rel") || "").toLowerCase(),
+          rect
+        });
+      }
+      return signals;
+    }
 detect(doc2, currentUrl) {
       const resolvedCurrentUrl = this.resolveBaseUrl(doc2, currentUrl);
+      const signals = this.collectLinkSignals(doc2, resolvedCurrentUrl);
+      this._lastSignals = signals;
+      this._lastBaseUrl = resolvedCurrentUrl;
       return {
-        next: this.findNavLink(doc2, "next", resolvedCurrentUrl),
-        prev: this.findNavLink(doc2, "prev", resolvedCurrentUrl),
-        index: this.findNavLink(doc2, "index", resolvedCurrentUrl)
+        next: this.findNavLink(signals, "next", resolvedCurrentUrl),
+        prev: this.findNavLink(signals, "prev", resolvedCurrentUrl),
+        index: this.findNavLink(signals, "index", resolvedCurrentUrl)
       };
     }
-findNavLink(doc2, type, currentUrl) {
-      var _a, _b;
+findNavLink(signals, type, currentUrl) {
       const patterns = NAV_PATTERNS[type];
       if (type !== "index") {
-        const relLink = doc2.querySelector(`a[rel="${type}"]`);
-        const href = relLink ? this.resolveLinkUrl(relLink, currentUrl) : null;
-        if (relLink && href && this.isValidLink(relLink, type, currentUrl, href)) {
+        const relSignal = signals.find((s) => s.rel === type);
+        if (relSignal && this.isValidLink(relSignal.anchor, type, currentUrl, relSignal.href)) {
           return {
-            element: relLink,
-            url: href,
-            selector: this.generateSelector(relLink),
+            element: relSignal.anchor,
+            url: relSignal.href,
+            selector: this.generateSelector(relSignal.anchor),
             confidence: 0.95,
             method: "rel-attribute",
-            text: (_a = relLink.textContent) == null ? void 0 : _a.trim()
+            text: relSignal.text
           };
         }
       }
-      const links = doc2.querySelectorAll("a[href]");
       const candidates = [];
-      for (const link of Array.from(links)) {
-        const anchor = link;
-        const text2 = ((_b = anchor.textContent) == null ? void 0 : _b.trim()) || "";
-        const href = this.resolveLinkUrl(anchor, currentUrl);
-        if (!href || !this.isValidLink(anchor, type, currentUrl, href)) continue;
+      for (const signal of signals) {
+        const { anchor, href, text: text2, title, rect } = signal;
+        if (!this.isValidLink(anchor, type, currentUrl, href)) continue;
         let score = 0;
         for (const pattern of patterns) {
           if (pattern.test(text2)) {
@@ -2228,23 +2255,22 @@ findNavLink(doc2, type, currentUrl) {
           if (/^《.+》$/.test(text2)) {
             score += 8;
           }
-          const href2 = anchor.href;
-          if (href2.endsWith("/") || /\/index\.html?$/i.test(href2)) {
+          if (href.endsWith("/") || /\/index\.html?$/i.test(href)) {
             score += 3;
           }
         }
-        const title = anchor.title || "";
         for (const pattern of patterns) {
           if (pattern.test(title)) {
             score += 5;
           }
         }
-        try {
-          const rect = anchor.getBoundingClientRect();
-          if (rect.top < 300 || rect.top > document.documentElement.scrollHeight - 300) {
-            score += 2;
+        if (rect) {
+          try {
+            if (rect.top < 300 || rect.top > document.documentElement.scrollHeight - 300) {
+              score += 2;
+            }
+          } catch {
           }
-        } catch {
         }
         if (text2.length > 20) {
           score -= 5;
@@ -2366,6 +2392,8 @@ extractChapterNumber(url) {
     }
 detectSection(doc2, currentUrl, navigation) {
       var _a;
+      const baseUrl = this.resolveBaseUrl(doc2, currentUrl);
+      const signals = this._lastSignals.length > 0 && this._lastBaseUrl === baseUrl ? this._lastSignals : this.collectLinkSignals(doc2, baseUrl);
       const result = {
         isSection: false,
         currentSection: null,
@@ -2425,7 +2453,7 @@ detectSection(doc2, currentUrl, navigation) {
         }
       }
       if (!result.nextSectionUrl) {
-        const nextSectionUrl = this.findNextSectionUrl(doc2, currentUrl);
+        const nextSectionUrl = this.findNextSectionUrl(signals, currentUrl);
         if (nextSectionUrl) {
           result.isSection = true;
           result.nextSectionUrl = nextSectionUrl;
@@ -2434,7 +2462,7 @@ detectSection(doc2, currentUrl, navigation) {
         }
       }
       if (result.isSection && !result.nextChapterUrl) {
-        result.nextChapterUrl = this.findNextChapterUrl(doc2, currentUrl, navigation);
+        result.nextChapterUrl = this.findNextChapterUrl(signals, currentUrl);
       }
       return result;
     }
@@ -2496,8 +2524,7 @@ calculateUrlSimilarity(path1, path2) {
       }
       return matches / longer.length;
     }
-    findNextSectionUrl(doc2, currentUrl) {
-      const links = Array.from(doc2.querySelectorAll("a[href]"));
+    findNextSectionUrl(signals, currentUrl) {
       const normalizeText = (text2) => text2.replace(/\s+/g, "").trim();
       const isNextSectionText = (text2) => {
         const t = normalizeText(text2);
@@ -2511,23 +2538,20 @@ calculateUrlSimilarity(path1, path2) {
         return false;
       };
       const candidates = [];
-      for (const a of links) {
-        const text2 = (a.textContent || "").trim();
+      for (const signal of signals) {
+        const { anchor, href, text: text2, rel } = signal;
         if (!text2) continue;
-        const href = this.resolveLinkUrl(a, currentUrl);
-        if (!href) continue;
         const isSection = SECTION_TEXT_PATTERNS.some((p2) => p2.test(text2));
         const isChapter = CHAPTER_TEXT_PATTERNS.some((p2) => p2.test(text2));
         if (!isSection || isChapter) continue;
         if (!isNextSectionText(text2)) continue;
-        if (!this.isValidLink(a, "next", currentUrl, href)) continue;
+        if (!this.isValidLink(anchor, "next", currentUrl, href)) continue;
         const comparison = this.compareUrlsForSection(currentUrl, href);
         if (!comparison.isSection) continue;
         let score = 50;
         if (text2.length <= 5) score += 5;
-        const rel = (a.getAttribute("rel") || "").toLowerCase();
         if (rel.includes("next")) score += 5;
-        if (a.closest(".pager, .pagination, .page, nav, footer")) score += 2;
+        if (anchor.closest(".pager, .pagination, .page, nav, footer")) score += 2;
         score += Math.round(comparison.confidence * 10);
         candidates.push({ url: href, score });
       }
@@ -2535,14 +2559,9 @@ calculateUrlSimilarity(path1, path2) {
       candidates.sort((a, b) => b.score - a.score);
       return candidates[0].url;
     }
-findNextChapterUrl(doc2, currentUrl, _navigation) {
-      var _a;
-      const links = doc2.querySelectorAll("a[href]");
-      for (const link of Array.from(links)) {
-        const anchor = link;
-        const text2 = ((_a = anchor.textContent) == null ? void 0 : _a.trim()) || "";
-        const href = this.resolveLinkUrl(anchor, currentUrl);
-        if (!href) continue;
+findNextChapterUrl(signals, currentUrl) {
+      for (const signal of signals) {
+        const { anchor, href, text: text2 } = signal;
         const normalizedText = text2.replace(/\s+/g, "").trim();
         const isForward = /下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /next/i.test(normalizedText);
         if (!isForward) continue;
@@ -3077,6 +3096,7 @@ setThreshold(threshold) {
   }
   class ContentProcessor {
     constructor(options = {}) {
+      this.regexCache = new Map();
       this.options = {
         removeAds: true,
         normalizeWhitespace: true,
@@ -3256,13 +3276,26 @@ stripInlineStyles(element) {
         el.removeAttribute("bgcolor");
       });
     }
+getCachedRegex(pattern, flags) {
+      const key = `${pattern}\0${flags}`;
+      if (this.regexCache.has(key)) {
+        return this.regexCache.get(key);
+      }
+      try {
+        const regex = new RegExp(pattern, flags);
+        this.regexCache.set(key, regex);
+        return regex;
+      } catch {
+        this.regexCache.set(key, null);
+        return null;
+      }
+    }
 applyReplaceRules(html2, rules) {
       let result = html2;
       for (const rule of rules) {
-        try {
-          const regex = new RegExp(rule.pattern, rule.flags || "g");
+        const regex = this.getCachedRegex(rule.pattern, rule.flags || "g");
+        if (regex) {
           result = result.replace(regex, rule.replacement);
-        } catch {
         }
       }
       return result;
@@ -3334,6 +3367,7 @@ convertBrToParagraphs(html2) {
     }
 setOptions(options) {
       this.options = { ...this.options, ...options };
+      this.regexCache.clear();
     }
 cleanDuplicateInfo(html2, doc2) {
       var _a, _b, _c, _d;
@@ -5362,6 +5396,7 @@ deleteSitePreference(domain) {
       this.builtInRules = [];
       this.userRulesCache = new Map();
       this.initialized = false;
+      this.compiledCache = new WeakMap();
       this.storage = new RuleStorage();
     }
 async initialize() {
@@ -5403,15 +5438,22 @@ async matchRule(url) {
       }
       return null;
     }
+getCompiledRule(rule) {
+      const cached = this.compiledCache.get(rule);
+      if (cached) return cached;
+      const main = toRegExp(rule.match.pattern, rule.match.type);
+      const excludes = (rule.match.exclude ?? []).map((e) => new RegExp(e, "i"));
+      const compiled = { main, excludes };
+      this.compiledCache.set(rule, compiled);
+      return compiled;
+    }
 matchesUrl(rule, url) {
       try {
-        const regex = toRegExp(rule.match.pattern, rule.match.type);
-        if (!regex.test(url)) return false;
-        if (rule.match.exclude) {
-          for (const exclude of rule.match.exclude) {
-            if (new RegExp(exclude, "i").test(url)) {
-              return false;
-            }
+        const { main, excludes } = this.getCompiledRule(rule);
+        if (!main.test(url)) return false;
+        for (const exclude of excludes) {
+          if (exclude.test(url)) {
+            return false;
           }
         }
         return true;
@@ -6841,6 +6883,25 @@ removeEventHijacking() {
       });
     }
 blockVisibilityDetection() {
+      const docProto = Object.getPrototypeOf(document);
+      const savedHidden = (() => {
+        const ownDesc = Object.getOwnPropertyDescriptor(document, "hidden");
+        if (ownDesc) return { descriptor: ownDesc, owner: "instance" };
+        if (docProto) {
+          const protoDesc = Object.getOwnPropertyDescriptor(docProto, "hidden");
+          if (protoDesc) return { descriptor: protoDesc, owner: "prototype" };
+        }
+        return { descriptor: void 0, owner: "none" };
+      })();
+      const savedVisibilityState = (() => {
+        const ownDesc = Object.getOwnPropertyDescriptor(document, "visibilityState");
+        if (ownDesc) return { descriptor: ownDesc, owner: "instance" };
+        if (docProto) {
+          const protoDesc = Object.getOwnPropertyDescriptor(docProto, "visibilityState");
+          if (protoDesc) return { descriptor: protoDesc, owner: "prototype" };
+        }
+        return { descriptor: void 0, owner: "none" };
+      })();
       Object.defineProperty(document, "hidden", {
         configurable: true,
         get: () => false
@@ -6860,10 +6921,22 @@ blockVisibilityDetection() {
       };
       window.addEventListener("blur", blurBlocker, true);
       window.addEventListener("focus", blurBlocker, true);
+      const restoreDescriptor = (prop, saved) => {
+        try {
+          if (saved.owner === "instance" && saved.descriptor) {
+            Object.defineProperty(document, prop, saved.descriptor);
+          } else {
+            delete document[prop];
+          }
+        } catch {
+        }
+      };
       this.cleanupFunctions.push(() => {
         document.removeEventListener("visibilitychange", visibilityBlocker, true);
         window.removeEventListener("blur", blurBlocker, true);
         window.removeEventListener("focus", blurBlocker, true);
+        restoreDescriptor("hidden", savedHidden);
+        restoreDescriptor("visibilityState", savedVisibilityState);
       });
     }
 removeOverlays() {
@@ -7579,7 +7652,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-02-11";
+  const BUILD_DATE = "2026-02-12";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -15375,261 +15448,6 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
   const MAX_SESSION_CACHE = 500;
   const MAX_NAV_FAILURES = 200;
   const VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
-  function normalizeUrlForFetch(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return normalized.replace(/#.*$/, "");
-    }
-  }
-  function normalizeUrl(url) {
-    return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
-  }
-  function normalizeUrlForBlock(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
-    try {
-      const u = new URL(normalized);
-      u.hash = "";
-      return normalizeUrl(u.toString());
-    } catch {
-      return normalizeUrl(normalized.replace(/#.*$/, ""));
-    }
-  }
-  function resolveUrl(href, base) {
-    try {
-      return new URL(href, base).toString();
-    } catch {
-      return null;
-    }
-  }
-  function extractUrlPattern(url) {
-    try {
-      const u = new URL(url);
-      return u.pathname.replace(/\d+/g, "{N}");
-    } catch {
-      return url.replace(/\d+/g, "{N}");
-    }
-  }
-  function extractBookId(url) {
-    try {
-      const u = new URL(url);
-      const patterns = [
-        /\/book\/(\d+)/,
-        /\/chapter\/(\d+)\//,
-        /\/(\d+)\/\d+(?:\.html?)?$/,
-        /\/(\d+)_\d+(?:\.html?)?$/,
-        /[?&](?:book_?id|bid|id)=(\d+)/i
-      ];
-      for (const p2 of patterns) {
-        const m = u.pathname.match(p2) || u.search.match(p2);
-        if (m) return m[1];
-      }
-    } catch {
-    }
-    return null;
-  }
-  function extractChapterNumber(title) {
-    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
-    if (match1) return parseInt(match1[1], 10);
-    const match2 = title.match(/^(\d+)[.、\s]/);
-    if (match2) return parseInt(match2[1], 10);
-    const match3 = title.match(/Chapter\s*(\d+)/i);
-    if (match3) return parseInt(match3[1], 10);
-    return null;
-  }
-  function normalizeTocPagerText(text2) {
-    return text2.replace(/\s+/g, "").trim();
-  }
-  function isTocNextPageText(text2) {
-    const t = normalizeTocPagerText(text2).toLowerCase();
-    if (!t) return false;
-    if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
-      return true;
-    }
-    if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
-      return true;
-    }
-    return false;
-  }
-  function normalizeUrlForCompare(url) {
-    try {
-      const u = new URL(url);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return url;
-    }
-  }
-  function extractTocPaginationSeed(indexUrl) {
-    try {
-      const u = new URL(indexUrl);
-      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
-      return (m == null ? void 0 : m[1]) || null;
-    } catch {
-      return null;
-    }
-  }
-  function isValidTocPaginationUrl(candidateUrl, indexUrl) {
-    try {
-      const c = new URL(candidateUrl);
-      const idx = new URL(indexUrl);
-      if (c.protocol !== "http:" && c.protocol !== "https:") return false;
-      if (c.origin !== idx.origin) return false;
-      const seed = extractTocPaginationSeed(indexUrl);
-      if (seed && !c.pathname.includes(seed)) return false;
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  function normalizeTextForVipDetection(text2) {
-    return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、""''（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
-  }
-  function generateBookId(indexUrl) {
-    try {
-      const url = new URL(indexUrl);
-      return url.hostname + url.pathname.replace(/\//g, "_");
-    } catch {
-      return btoa(indexUrl).slice(0, 32);
-    }
-  }
-  function encodeBase64UrlUtf8(value) {
-    const bytes = new TextEncoder().encode(value);
-    let binary = "";
-    for (const b of bytes) binary += String.fromCharCode(b);
-    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-  }
-  function parseStoredJson(stored) {
-    if (stored === null || stored === void 0) return null;
-    if (typeof stored === "string") {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return null;
-      }
-    }
-    if (typeof stored === "object") {
-      return stored;
-    }
-    return null;
-  }
-  function getCacheV1Key(bookId) {
-    return `mnr_cache_${bookId}`;
-  }
-  function getCacheV2IndexKey(bookId) {
-    return `mnr_cache_v2_index_${bookId}`;
-  }
-  function getCacheV2ChapterKey(bookId, url) {
-    return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
-  }
-  function getCurrentBookCacheKey(indexUrl) {
-    if (!indexUrl) return null;
-    return { bookId: generateBookId(indexUrl), indexUrl };
-  }
-  function persistCachedChapter(cacheBook, url, cached) {
-    if (typeof GM_setValue === "undefined") return false;
-    try {
-      GM_setValue(getCacheV2ChapterKey(cacheBook.bookId, url), JSON.stringify(cached));
-      return true;
-    } catch (e) {
-      console.error("[MNR] Failed to persist cached chapter:", e);
-      return false;
-    }
-  }
-  function getPersistedCachedChapter(cacheBook, url) {
-    var _a, _b, _c;
-    if (typeof GM_getValue === "undefined") return null;
-    try {
-      const storedV2 = GM_getValue(getCacheV2ChapterKey(cacheBook.bookId, url), null);
-      const cachedV2 = parseStoredJson(storedV2);
-      if ((_a = cachedV2 == null ? void 0 : cachedV2.chapter) == null ? void 0 : _a.url) {
-        return cachedV2;
-      }
-      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
-      const dataV1 = parseStoredJson(storedV1);
-      const cachedV1 = (_b = dataV1 == null ? void 0 : dataV1.chapters) == null ? void 0 : _b[url];
-      if ((_c = cachedV1 == null ? void 0 : cachedV1.chapter) == null ? void 0 : _c.url) {
-        return cachedV1;
-      }
-    } catch (e) {
-      console.error("[MNR] Failed to load persisted chapter:", e);
-    }
-    return null;
-  }
-  function persistCache(cacheBook, cachedContents, persistedUrls) {
-    if (typeof GM_setValue === "undefined") return persistedUrls;
-    const persistedSet = new Set(persistedUrls);
-    for (const [url, cached] of cachedContents) {
-      const persisted = persistCachedChapter(cacheBook, url, cached);
-      if (persisted) {
-        persistedSet.add(url);
-      }
-    }
-    if (persistedSet.size === 0) return persistedSet;
-    const indexData = {
-      version: 2,
-      bookId: cacheBook.bookId,
-      indexUrl: cacheBook.indexUrl,
-      urls: Array.from(persistedSet),
-      lastUpdated: Date.now()
-    };
-    try {
-      GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
-    } catch (e) {
-      console.error("[MNR] Failed to persist cache index:", e);
-    }
-    return persistedSet;
-  }
-  function restoreCache(cacheBook) {
-    if (typeof GM_getValue === "undefined") return null;
-    try {
-      const storedV2 = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
-      const dataV2 = parseStoredJson(storedV2);
-      if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
-        return new Set(dataV2.urls);
-      }
-      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
-      const dataV1 = parseStoredJson(storedV1);
-      if ((dataV1 == null ? void 0 : dataV1.chapters) && typeof dataV1.chapters === "object") {
-        return new Set(Object.keys(dataV1.chapters));
-      }
-    } catch (e) {
-      console.error("[MNR] Failed to restore cache:", e);
-    }
-    return null;
-  }
-  function clearPersistedCache(cacheBook, persistedUrls) {
-    if (typeof GM_deleteValue === "undefined") return;
-    let urls = new Set(persistedUrls);
-    if (typeof GM_getValue !== "undefined") {
-      const storedIndex = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
-      const dataV2 = parseStoredJson(storedIndex);
-      if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
-        urls = new Set(dataV2.urls);
-      }
-    }
-    try {
-      const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
-      if (urls.size > 0) {
-        for (const url of urls) {
-          GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
-        }
-      } else if (typeof GM_listValues === "function") {
-        for (const key of GM_listValues()) {
-          if (key.startsWith(chapterKeyPrefix)) {
-            GM_deleteValue(key);
-          }
-        }
-      }
-      GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
-      GM_deleteValue(getCacheV1Key(cacheBook.bookId));
-    } catch (e) {
-      console.error("[MNR] Failed to clear cache:", e);
-    }
-  }
   const s_2_t = {
     "·": "‧",
     "―": "─",
@@ -21186,589 +21004,263 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }))
     );
   }
-  function isInvalidChapterUrl(url, currentChapterUrl) {
+  function generateBookId(indexUrl) {
     try {
-      const normalizedUrl = normalizeCiwemaoChapterUrl(url);
-      const parsed = new URL(normalizedUrl);
-      const pathname = parsed.pathname;
-      if (pathname === "/" || pathname === "") {
-        return true;
-      }
-      const pathParts = pathname.split("/").filter(Boolean);
-      if (pathParts.length < 2) {
-        const part = pathParts[0] || "";
-        if (!/\d/.test(part)) {
-          return true;
-        }
-      }
-      const invalidPatterns = [
-        /^https?:\/\/[^/]+\/?$/i,
-/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
-/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
-        /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
-/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
-        /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
-/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
-        /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
-        /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
-      ];
-      for (const pattern of invalidPatterns) {
-        if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
-          return true;
-        }
-      }
-      if (currentChapterUrl) {
-        const currentParsed = new URL(currentChapterUrl);
-        const currentParts = currentParsed.pathname.split("/").filter(Boolean);
-        if (currentParts.length >= 3 && pathParts.length < currentParts.length - 1) {
-          return true;
-        }
-        if (parsed.host !== currentParsed.host) {
-          return true;
-        }
-      }
-      return false;
+      const url = new URL(indexUrl);
+      return url.hostname + url.pathname.replace(/\//g, "_");
     } catch {
-      return false;
+      return btoa(indexUrl).slice(0, 32);
     }
   }
-  function isVipChapterPage(doc2) {
-    var _a;
-    const rawText = ((_a = doc2.body) == null ? void 0 : _a.textContent) || "";
-    if (!rawText) return false;
-    const text2 = normalizeTextForVipDetection(rawText);
-    const patterns = [
-      /本章(?:为|是)?vip章节/,
-      /(vip|付费|收费)(?:章节|内容)/,
-      /(未订阅|未购买|未解锁).{0,10}(本章|本章节|章节|内容)/,
-      /(本章|本章节|章节|内容).{0,12}(?:已)?锁定/,
-      /(本章|本章节|章节|内容).{0,12}(?:需|需要).{0,6}(订阅|购买|付费|解锁)/,
-      /(订阅|购买|付费|解锁).{0,12}(后|即可|才能|方可|才可).{0,12}(阅读|查看|继续阅读|继续查看)/,
-      /(请|需).{0,6}(订阅|购买|付费|解锁).{0,12}(阅读|查看|继续阅读|继续查看)/,
-      /立即(订阅|购买|解锁|充值)/,
-      /(订阅|购买|解锁)本章/
-    ];
-    if (patterns.some((re) => re.test(text2))) return true;
-    const ctaText = Array.from(
-      doc2.querySelectorAll('a,button,input[type="button"],input[type="submit"]')
-    ).map((el) => {
-      if (el instanceof HTMLInputElement) return el.value || "";
-      return el.textContent || "";
-    }).join(" ");
-    const cta = normalizeTextForVipDetection(ctaText);
-    if (/立即(订阅|购买|解锁|充值)/.test(cta) && /(vip|付费|订阅|购买|解锁|锁定)/.test(text2)) {
-      return true;
-    }
-    return false;
+  function encodeBase64UrlUtf8(value) {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
   }
-  function detectTocPage(content, pageUrl, currentChapterUrl) {
-    const tocUrlPatterns = [
-      /\/book\/\d+\.html?$/i,
-      /\/book\/\d+\/?$/i,
-      /\/novel\/\d+\/?$/i,
-      /\/xiaoshuo\/\d+\/?$/i,
-      /\/info\/\d+\.html?$/i,
-      /\/\d+\/index\.html?$/i,
-      /\/booklist/i,
-      /\/catalog/i,
-      /\/contents?\.html?$/i,
-      /\/list\.html?$/i,
-      /\/toc\.html?$/i
-    ];
-    for (const pattern of tocUrlPatterns) {
-      if (pattern.test(pageUrl)) {
-        return true;
-      }
-    }
-    try {
-      const currentPath2 = new URL(currentChapterUrl).pathname;
-      const pagePath = new URL(pageUrl).pathname;
-      const chapterPattern = /\/(txt|read|chapter|article)\/\d+\/\d+/i;
-      const bookPattern = /\/(book|novel|info|xiaoshuo)\/\d+/i;
-      if (chapterPattern.test(currentPath2) && bookPattern.test(pagePath)) {
-        return true;
-      }
-    } catch {
-    }
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = content;
-    const textContent = tempDiv.textContent || "";
-    const textLength = textContent.length;
-    const links = tempDiv.querySelectorAll("a");
-    const linkCount = links.length;
-    if (textLength < 500 && linkCount > 10) {
-      return true;
-    }
-    const linkTextLength = Array.from(links).reduce(
-      (sum, a) => {
-        var _a;
-        return sum + (((_a = a.textContent) == null ? void 0 : _a.length) || 0);
-      },
-      0
-    );
-    const linkRatio = textLength > 0 ? linkTextLength / textLength : 0;
-    if (linkRatio > 0.6 && linkCount > 8) {
-      return true;
-    }
-    const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
-    const chapterLinks = Array.from(links).filter((a) => {
-      const href = a.getAttribute("href") || "";
-      return chapterLinkPattern.test(href);
-    });
-    if (chapterLinks.length > 10) {
-      return true;
-    }
-    const normalizeUrlLocal = (url) => {
+  function parseStoredJson(stored) {
+    if (stored === null || stored === void 0) return null;
+    if (typeof stored === "string") {
       try {
-        const u = new URL(url, pageUrl);
-        return u.pathname.replace(/\/$/, "");
+        return JSON.parse(stored);
       } catch {
-        return url.replace(/\/$/, "");
+        return null;
       }
+    }
+    if (typeof stored === "object") {
+      return stored;
+    }
+    return null;
+  }
+  function getCacheV1Key(bookId) {
+    return `mnr_cache_${bookId}`;
+  }
+  function getCacheV2IndexKey(bookId) {
+    return `mnr_cache_v2_index_${bookId}`;
+  }
+  function getCacheV2ChapterKey(bookId, url) {
+    return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
+  }
+  function getCurrentBookCacheKey(indexUrl) {
+    if (!indexUrl) return null;
+    return { bookId: generateBookId(indexUrl), indexUrl };
+  }
+  function persistCachedChapter(cacheBook, url, cached) {
+    if (typeof GM_setValue === "undefined") return false;
+    try {
+      GM_setValue(getCacheV2ChapterKey(cacheBook.bookId, url), JSON.stringify(cached));
+      return true;
+    } catch (e) {
+      console.error("[MNR] Failed to persist cached chapter:", e);
+      return false;
+    }
+  }
+  function getPersistedCachedChapter(cacheBook, url) {
+    var _a, _b, _c;
+    if (typeof GM_getValue === "undefined") return null;
+    try {
+      const storedV2 = GM_getValue(getCacheV2ChapterKey(cacheBook.bookId, url), null);
+      const cachedV2 = parseStoredJson(storedV2);
+      if ((_a = cachedV2 == null ? void 0 : cachedV2.chapter) == null ? void 0 : _a.url) {
+        return cachedV2;
+      }
+      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
+      const dataV1 = parseStoredJson(storedV1);
+      const cachedV1 = (_b = dataV1 == null ? void 0 : dataV1.chapters) == null ? void 0 : _b[url];
+      if ((_c = cachedV1 == null ? void 0 : cachedV1.chapter) == null ? void 0 : _c.url) {
+        return cachedV1;
+      }
+    } catch (e) {
+      console.error("[MNR] Failed to load persisted chapter:", e);
+    }
+    return null;
+  }
+  function persistCache(cacheBook, cachedContents, persistedUrls) {
+    if (typeof GM_setValue === "undefined") return persistedUrls;
+    const persistedSet = new Set(persistedUrls);
+    for (const [url, cached] of cachedContents) {
+      const persisted = persistCachedChapter(cacheBook, url, cached);
+      if (persisted) {
+        persistedSet.add(url);
+      }
+    }
+    if (persistedSet.size === 0) return persistedSet;
+    const indexData = {
+      version: 2,
+      bookId: cacheBook.bookId,
+      indexUrl: cacheBook.indexUrl,
+      urls: Array.from(persistedSet),
+      lastUpdated: Date.now()
     };
-    const currentPath = normalizeUrlLocal(currentChapterUrl);
-    const hasLinkToCurrentChapter = Array.from(links).some((a) => {
-      const href = a.getAttribute("href");
-      if (!href) return false;
-      return normalizeUrlLocal(href) === currentPath;
-    });
-    if (hasLinkToCurrentChapter && linkCount > 5) {
+    try {
+      GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
+    } catch (e) {
+      console.error("[MNR] Failed to persist cache index:", e);
+    }
+    return persistedSet;
+  }
+  function restoreCache(cacheBook) {
+    if (typeof GM_getValue === "undefined") return null;
+    try {
+      const storedV2 = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
+      const dataV2 = parseStoredJson(storedV2);
+      if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
+        return new Set(dataV2.urls);
+      }
+      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
+      const dataV1 = parseStoredJson(storedV1);
+      if ((dataV1 == null ? void 0 : dataV1.chapters) && typeof dataV1.chapters === "object") {
+        return new Set(Object.keys(dataV1.chapters));
+      }
+    } catch (e) {
+      console.error("[MNR] Failed to restore cache:", e);
+    }
+    return null;
+  }
+  function clearPersistedCache(cacheBook, persistedUrls) {
+    if (typeof GM_deleteValue === "undefined") return;
+    let urls = new Set(persistedUrls);
+    if (typeof GM_getValue !== "undefined") {
+      const storedIndex = GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null);
+      const dataV2 = parseStoredJson(storedIndex);
+      if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
+        urls = new Set(dataV2.urls);
+      }
+    }
+    try {
+      const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
+      if (urls.size > 0) {
+        for (const url of urls) {
+          GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
+        }
+      } else if (typeof GM_listValues === "function") {
+        for (const key of GM_listValues()) {
+          if (key.startsWith(chapterKeyPrefix)) {
+            GM_deleteValue(key);
+          }
+        }
+      }
+      GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
+      GM_deleteValue(getCacheV1Key(cacheBook.bookId));
+    } catch (e) {
+      console.error("[MNR] Failed to clear cache:", e);
+    }
+  }
+  function normalizeUrlForFetch(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return normalized.replace(/#.*$/, "");
+    }
+  }
+  function normalizeUrl(url) {
+    return url.replace(/\/$/, "").replace(/\/index\.html?$/, "");
+  }
+  function normalizeUrlForBlock(url) {
+    const normalized = normalizeCiwemaoChapterUrl(url);
+    try {
+      const u = new URL(normalized);
+      u.hash = "";
+      return normalizeUrl(u.toString());
+    } catch {
+      return normalizeUrl(normalized.replace(/#.*$/, ""));
+    }
+  }
+  function resolveUrl(href, base) {
+    try {
+      return new URL(href, base).toString();
+    } catch {
+      return null;
+    }
+  }
+  function extractUrlPattern(url) {
+    try {
+      const u = new URL(url);
+      return u.pathname.replace(/\d+/g, "{N}");
+    } catch {
+      return url.replace(/\d+/g, "{N}");
+    }
+  }
+  function extractBookId(url) {
+    try {
+      const u = new URL(url);
+      const patterns = [
+        /\/book\/(\d+)/,
+        /\/chapter\/(\d+)\//,
+        /\/(\d+)\/\d+(?:\.html?)?$/,
+        /\/(\d+)_\d+(?:\.html?)?$/,
+        /[?&](?:book_?id|bid|id)=(\d+)/i
+      ];
+      for (const p2 of patterns) {
+        const m = u.pathname.match(p2) || u.search.match(p2);
+        if (m) return m[1];
+      }
+    } catch {
+    }
+    return null;
+  }
+  function extractChapterNumber(title) {
+    const match1 = title.match(/第\s*(\d+)\s*[章节回话篇集卷]/);
+    if (match1) return parseInt(match1[1], 10);
+    const match2 = title.match(/^(\d+)[.、\s]/);
+    if (match2) return parseInt(match2[1], 10);
+    const match3 = title.match(/Chapter\s*(\d+)/i);
+    if (match3) return parseInt(match3[1], 10);
+    return null;
+  }
+  function normalizeTocPagerText(text2) {
+    return text2.replace(/\s+/g, "").trim();
+  }
+  function isTocNextPageText(text2) {
+    const t = normalizeTocPagerText(text2).toLowerCase();
+    if (!t) return false;
+    if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) {
       return true;
     }
-    const tocKeywords = [
-      "目录",
-      "章节列表",
-      "章节目录",
-      "全部章节",
-      "最新章节",
-      "小说目录",
-      "table of contents",
-      "toc",
-      "catalog",
-      "index"
-    ];
-    const pageText = textContent.toLowerCase();
-    const keywordMatches = tocKeywords.filter((kw) => pageText.includes(kw.toLowerCase()));
-    if (keywordMatches.length >= 2 || keywordMatches.length >= 1 && linkCount > 15) {
-      return true;
-    }
-    const linkTexts = Array.from(links).map((a) => {
-      var _a;
-      return ((_a = a.textContent) == null ? void 0 : _a.trim()) || "";
-    }).filter((t) => t.length > 0);
-    const chapterNamePattern = /^第.{1,10}[章节回话篇集卷]/;
-    const chapterNameLinks = linkTexts.filter((t) => chapterNamePattern.test(t));
-    if (chapterNameLinks.length > 5) {
+    if (t.includes("next") && !t.includes("chapter") && (t.includes("page") || t === "next")) {
       return true;
     }
     return false;
   }
-  function trimCachedContents(cachedContents, maxSessionCache) {
-    if (cachedContents.size <= maxSessionCache) return;
-    const entries2 = Array.from(cachedContents.entries()).sort(
-      (a, b) => a[1].cachedAt - b[1].cachedAt
-    );
-    const toDelete = entries2.slice(0, entries2.length - maxSessionCache);
-    for (const [url] of toDelete) {
-      cachedContents.delete(url);
+  function normalizeUrlForCompare(url) {
+    try {
+      const u = new URL(url);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return url;
     }
   }
-  function trimNavFailures(navFailures, maxNavFailures) {
-    const limit = Math.max(0, maxNavFailures);
-    if (navFailures.size <= limit) return;
-    const entries2 = Array.from(navFailures.entries()).sort(
-      (a, b) => a[1].nextRetryAt - b[1].nextRetryAt
-    );
-    const toDeleteCount = Math.min(entries2.length, navFailures.size - limit);
-    for (let i = 0; i < toDeleteCount; i++) {
-      navFailures.delete(entries2[i][0]);
+  function extractTocPaginationSeed(indexUrl) {
+    try {
+      const u = new URL(indexUrl);
+      const m = u.pathname.match(/\/(\d{3,})(?:[/?]|$)/);
+      return (m == null ? void 0 : m[1]) || null;
+    } catch {
+      return null;
     }
   }
-  async function parseWithSectionMerge(parser, initialDoc, url, _referer) {
-    const merger = createSectionMerger(parser);
-    return merger.merge(initialDoc, url);
-  }
-  function recordNavFailure(failures, key, opts) {
-    const prev = failures.get(key);
-    const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
-    const backoffMs = Math.min(1500 * Math.pow(2, count - 1), 3e4);
-    failures.set(key, { count, nextRetryAt: Date.now() + backoffMs });
-    trimNavFailures(failures, opts.maxFailures);
-    return count;
-  }
-  function clearNavFailure(failures, key) {
-    failures.delete(key);
-  }
-  function createNavigation(ctx) {
-    async function insertCachedChapter(cached, position) {
-      const suffix = position === "append" ? "cached" : "cached-prev";
-      const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
-      const entry = {
-        chapter: { ...cached.chapter },
-        rule: cached.rule,
-        id
-      };
-      if (position === "append") {
-        ctx.chapters.value.push(entry);
-      } else {
-        ctx.chapters.value.unshift(entry);
-        ctx.currentChapterIndex.value++;
-      }
-      ctx.loadedUrls.value.add(entry.chapter.url);
-      ctx.originalContents.value.set(id, cached.chapter.content);
-      ctx.originalTitles.value.set(id, {
-        title: cached.chapter.title,
-        bookTitle: cached.chapter.bookTitle
-      });
-      if (ctx.currentConversionMode.value !== "none") {
-        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-      }
-      if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
-        if (position === "append" && ctx.currentChapterIndex.value > 2) {
-          const removed = ctx.chapters.value.shift();
-          if (removed) {
-            ctx.loadedUrls.value.delete(removed.chapter.url);
-            ctx.originalContents.value.delete(removed.id);
-            ctx.originalTitles.value.delete(removed.id);
-            ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-          }
-        } else if (position === "prepend") {
-          const removed = ctx.chapters.value.pop();
-          if (removed) {
-            ctx.loadedUrls.value.delete(removed.chapter.url);
-            ctx.originalContents.value.delete(removed.id);
-            ctx.originalTitles.value.delete(removed.id);
-          }
-        }
-      }
+  function isValidTocPaginationUrl(candidateUrl, indexUrl) {
+    try {
+      const c = new URL(candidateUrl);
+      const idx = new URL(indexUrl);
+      if (c.protocol !== "http:" && c.protocol !== "https:") return false;
+      if (c.origin !== idx.origin) return false;
+      const seed = extractTocPaginationSeed(indexUrl);
+      if (seed && !c.pathname.includes(seed)) return false;
       return true;
+    } catch {
+      return false;
     }
-    async function loadChapter(direction, source) {
-      const runId = ctx.viewId();
-      const isNext = direction === "next";
-      const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
-      const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
-      const pendingAbortRef = isNext ? ctx.pendingNextAbort : ctx.pendingPrevAbort;
-      const endMessage = isNext ? "已经是最后一章了" : "已经是第一章了";
-      const errorMessage = isNext ? "加载下一章失败" : "加载上一章失败";
-      if (isLoadingRef.value) {
-        return false;
-      }
-      const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
-      if (!rawTargetUrl) {
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      const targetUrl = normalizeUrlForFetch(rawTargetUrl);
-      if (targetUrl !== rawTargetUrl) {
-        if (isNext) {
-          refChapter.chapter.nextUrl = targetUrl;
-        } else {
-          refChapter.chapter.prevUrl = targetUrl;
-        }
-      }
-      if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
-        ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      if (ctx.vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
-        ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
-        return false;
-      }
-      const navKey = normalizeUrlForBlock(targetUrl);
-      if (ctx.blockedNavUrls.value.has(navKey)) {
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      const failure = ctx.navFailures.get(navKey);
-      if (failure && Date.now() < failure.nextRetryAt) {
-        if (source === "manual") {
-          ctx.showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
-        }
-        return false;
-      }
-      if (ctx.loadedUrls.value.has(targetUrl)) {
-        return false;
-      }
-      const cached = ctx.cachedContents.value.get(targetUrl);
-      if (cached) {
-        return insertCachedChapter(cached, isNext ? "append" : "prepend");
-      }
-      if (ctx.persistedUrls.value.has(targetUrl)) {
-        const persisted = await ctx.getPersistedCachedChapter(targetUrl);
-        if (ctx.isViewStale(runId)) return false;
-        if (persisted) {
-          const sessionCached = { ...persisted, cachedAt: Date.now() };
-          ctx.cachedContents.value.set(targetUrl, sessionCached);
-          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-          return insertCachedChapter(sessionCached, isNext ? "append" : "prepend");
-        }
-      }
-      isLoadingRef.value = true;
-      if (pendingAbortRef.value) {
-        pendingAbortRef.value();
-        pendingAbortRef.value = null;
-      }
-      if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
-        isLoadingRef.value = false;
-        ctx.blockedNavUrls.value.add(navKey);
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      try {
-        const referer = refChapter.chapter.url;
-        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-        if (ctx.isViewStale(runId)) {
-          abort();
-          return false;
-        }
-        pendingAbortRef.value = abort;
-        const result = await promise;
-        if (ctx.isViewStale(runId)) {
-          abort();
-          return false;
-        }
-        pendingAbortRef.value = null;
-        if (result.error === "abort") {
-          return false;
-        }
-        if (!result.doc) {
-          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
-          if (source === "manual" || count === 1) {
-            ctx.showToast(errorMessage, "error", 2500);
-          }
-          return false;
-        }
-        if (isCloudflareChallenge(result.doc)) {
-          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
-          if (source === "manual" || count === 1) {
-            ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
-          }
-          return false;
-        }
-        if (isVipChapterPage(result.doc)) {
-          ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
-          ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
-          return false;
-        }
-        const parser = getParser();
-        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
-        if (ctx.isViewStale(runId)) {
-          return false;
-        }
-        if (!parsed) {
-          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
-          if (source === "manual" || count === 1) {
-            ctx.showToast(errorMessage, "error", 2500);
-          }
-          return false;
-        }
-        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
-        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
-        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
-        const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
-        if (isTocPage) {
-          ctx.blockedNavUrls.value.add(navKey);
-          if (source === "manual") {
-            ctx.showToast(endMessage, "info");
-          }
-          return false;
-        }
-        if (!isNext) {
-          if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)) {
-          } else if (parsed.prevUrl && !parsed.nextUrl) {
-            ctx.blockedNavUrls.value.add(navKey);
-            return false;
-          }
-        }
-        const suffix = isNext ? "" : "prev-";
-        const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
-        const entry = {
-          chapter: parsed,
-          rule: parsed.rule,
-          id
-        };
-        if (isNext) {
-          ctx.chapters.value.push(entry);
-        } else {
-          ctx.chapters.value.unshift(entry);
-          ctx.currentChapterIndex.value++;
-        }
-        clearNavFailure(ctx.navFailures, navKey);
-        ctx.loadedUrls.value.add(parsed.url);
-        ctx.originalContents.value.set(id, parsed.content);
-        ctx.originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
-        ctx.cachedContents.value.set(parsed.url, {
-          chapter: parsed,
-          rule: parsed.rule,
-          cachedAt: Date.now()
-        });
-        trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-        if (ctx.currentConversionMode.value !== "none") {
-          await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-        }
-        if (!ctx.history.value.includes(parsed.url)) {
-          if (isNext) {
-            ctx.history.value.push(parsed.url);
-          } else {
-            ctx.history.value.unshift(parsed.url);
-          }
-        }
-        if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
-          if (isNext && ctx.currentChapterIndex.value > 2) {
-            const removed = ctx.chapters.value.shift();
-            if (removed) {
-              ctx.loadedUrls.value.delete(removed.chapter.url);
-              ctx.originalContents.value.delete(removed.id);
-              ctx.originalTitles.value.delete(removed.id);
-              ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-            }
-          } else if (!isNext) {
-            const removed = ctx.chapters.value.pop();
-            if (removed) {
-              ctx.loadedUrls.value.delete(removed.chapter.url);
-              ctx.originalContents.value.delete(removed.id);
-              ctx.originalTitles.value.delete(removed.id);
-            }
-          }
-        }
-        return true;
-      } catch (e) {
-        if (!ctx.isViewStale(runId)) {
-          console.error(`[MNR] Failed to load ${direction} chapter:`, e);
-          ctx.setError(errorMessage);
-        }
-        return false;
-      } finally {
-        if (!ctx.isViewStale(runId)) {
-          isLoadingRef.value = false;
-        }
-      }
-    }
-    async function loadNextChapter(source = "auto") {
-      return loadChapter("next", source);
-    }
-    async function loadPrevChapter(source = "manual") {
-      return loadChapter("prev", source);
-    }
-    async function rebuildChaptersAround(targetUrl) {
-      var _a, _b, _c, _d, _e, _f;
-      const runId = ctx.bumpView();
-      const url = normalizeUrlForFetch(targetUrl);
-      (_b = (_a = ctx.pendingNextAbort).value) == null ? void 0 : _b.call(_a);
-      ctx.pendingNextAbort.value = null;
-      (_d = (_c = ctx.pendingPrevAbort).value) == null ? void 0 : _d.call(_c);
-      ctx.pendingPrevAbort.value = null;
-      (_f = (_e = ctx.reloadAbort).value) == null ? void 0 : _f.call(_e);
-      ctx.reloadAbort.value = null;
-      ctx.isLoading.value = false;
-      ctx.isLoadingPrev.value = false;
-      ctx.isLoadingNext.value = false;
-      let cached = ctx.cachedContents.value.get(url);
-      if (!cached && ctx.persistedUrls.value.has(url)) {
-        const persisted = await ctx.getPersistedCachedChapter(url);
-        if (ctx.isViewStale(runId)) return false;
-        if (persisted) {
-          cached = { ...persisted, cachedAt: Date.now() };
-          ctx.cachedContents.value.set(url, cached);
-          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-        }
-      }
-      if (!cached) return false;
-      if (ctx.isViewStale(runId)) return false;
-      ctx.chapters.value = [];
-      ctx.currentChapterIndex.value = 0;
-      ctx.loadedUrls.value.clear();
-      ctx.originalContents.value.clear();
-      ctx.originalTitles.value.clear();
-      const id = `chapter-${Date.now()}-jump-0`;
-      ctx.chapters.value.push({
-        chapter: { ...cached.chapter },
-        rule: cached.rule,
-        id
-      });
-      ctx.loadedUrls.value.add(url);
-      ctx.originalContents.value.set(id, cached.chapter.content);
-      ctx.originalTitles.value.set(id, {
-        title: cached.chapter.title,
-        bookTitle: cached.chapter.bookTitle
-      });
-      if (ctx.currentConversionMode.value !== "none") {
-        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-      }
-      return true;
-    }
-    async function reloadCurrentChapter() {
-      var _a, _b;
-      const runId = ctx.viewId();
-      const current = ctx.chapters.value[ctx.currentChapterIndex.value];
-      if (!current) return;
-      const url = current.chapter.url;
-      ctx.showToast("正在重新加载...", "info");
-      (_b = (_a = ctx.reloadAbort).value) == null ? void 0 : _b.call(_a);
-      ctx.reloadAbort.value = null;
-      const { promise, abort } = fetchAndParseUrl(url, url);
-      if (!ctx.isViewStale(runId)) {
-        ctx.reloadAbort.value = abort;
-      }
-      const result = await promise;
-      if (ctx.isViewStale(runId)) {
-        abort();
-        return;
-      }
-      if (ctx.reloadAbort.value === abort) {
-        ctx.reloadAbort.value = null;
-      }
-      if (result.error === "abort") {
-        return;
-      }
-      if (!result.doc) {
-        ctx.showToast("重新加载失败", "error");
-        return;
-      }
-      const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, result.doc, url);
-      if (ctx.isViewStale(runId)) {
-        return;
-      }
-      if (parsed) {
-        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
-        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
-        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
-        current.chapter = parsed;
-        current.rule = parsed.rule;
-        ctx.originalContents.value.set(current.id, parsed.content);
-        ctx.cachedContents.value.set(parsed.url, {
-          chapter: parsed,
-          rule: parsed.rule,
-          cachedAt: Date.now()
-        });
-        if (ctx.currentConversionMode.value !== "none") {
-          const converted = await convertHTML(parsed.content, ctx.currentConversionMode.value);
-          current.chapter = { ...current.chapter, content: converted };
-        }
-        ctx.showToast("规则已应用", "info");
-      } else {
-        ctx.showToast("解析失败", "error");
-      }
-    }
-    return {
-      insertCachedChapter,
-      loadChapter,
-      loadNextChapter,
-      loadPrevChapter,
-      rebuildChaptersAround,
-      reloadCurrentChapter
-    };
+  }
+  function calculateBackoff(failureCount, baseMs = 1500, maxMs = 3e4) {
+    return Math.min(baseMs * Math.pow(2, failureCount - 1), maxMs);
+  }
+  function normalizeTextForVipDetection(text2) {
+    return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、""''（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
   }
   const MAX_TOC_PAGES = 120;
   const CHAPTER_TITLE_PATTERNS = [
@@ -22170,6 +21662,31 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
     return { setTocEntries, ensureIndexUrl, loadToc };
   }
+  async function parseWithSectionMerge(parser, initialDoc, url, _referer) {
+    const merger = createSectionMerger(parser);
+    return merger.merge(initialDoc, url);
+  }
+  function trimCachedContents(cachedContents, maxSessionCache) {
+    if (cachedContents.size <= maxSessionCache) return;
+    const entries2 = Array.from(cachedContents.entries()).sort(
+      (a, b) => a[1].cachedAt - b[1].cachedAt
+    );
+    const toDelete = entries2.slice(0, entries2.length - maxSessionCache);
+    for (const [url] of toDelete) {
+      cachedContents.delete(url);
+    }
+  }
+  function trimNavFailures(navFailures, maxNavFailures) {
+    const limit = Math.max(0, maxNavFailures);
+    if (navFailures.size <= limit) return;
+    const entries2 = Array.from(navFailures.entries()).sort(
+      (a, b) => a[1].nextRetryAt - b[1].nextRetryAt
+    );
+    const toDeleteCount = Math.min(entries2.length, navFailures.size - limit);
+    for (let i = 0; i < toDeleteCount; i++) {
+      navFailures.delete(entries2[i][0]);
+    }
+  }
   function createCacheAll(ctx) {
     async function startCacheAll(urls) {
       var _a, _b, _c, _d, _e;
@@ -22217,7 +21734,10 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       while (ctx.cacheProgress.value.running && nextUrl) {
         const targetUrl = normalizeUrlForFetch(nextUrl);
         if (seenUrls.has(targetUrl) || ctx.loadedUrls.value.has(targetUrl) || ctx.cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
-          ctx.cacheProgress.value = { ...ctx.cacheProgress.value, done: ctx.cacheProgress.value.done + 1 };
+          ctx.cacheProgress.value = {
+            ...ctx.cacheProgress.value,
+            done: ctx.cacheProgress.value.done + 1
+          };
           nextUrl = taskList.shift() ?? null;
           continue;
         }
@@ -22263,7 +21783,10 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
             persistedSet.add(parsed.url);
           }
         }
-        ctx.cacheProgress.value = { ...ctx.cacheProgress.value, done: ctx.cacheProgress.value.done + 1 };
+        ctx.cacheProgress.value = {
+          ...ctx.cacheProgress.value,
+          done: ctx.cacheProgress.value.done + 1
+        };
         referer = parsed.url;
         nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
         if (taskList.length === 0 && nextUrl) {
@@ -22296,6 +21819,565 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       ctx.cacheAbort.value = null;
     }
     return { startCacheAll, cancelCacheAll };
+  }
+  function recordNavFailure(failures, key, opts) {
+    const prev = failures.get(key);
+    const count = ((prev == null ? void 0 : prev.count) || 0) + 1;
+    const backoffMs = calculateBackoff(count);
+    failures.set(key, { count, nextRetryAt: Date.now() + backoffMs });
+    trimNavFailures(failures, opts.maxFailures);
+    return count;
+  }
+  function clearNavFailure(failures, key) {
+    failures.delete(key);
+  }
+  function isInvalidChapterUrl(url, currentChapterUrl) {
+    try {
+      const normalizedUrl = normalizeCiwemaoChapterUrl(url);
+      const parsed = new URL(normalizedUrl);
+      const pathname = parsed.pathname;
+      if (pathname === "/" || pathname === "") {
+        return true;
+      }
+      const pathParts = pathname.split("/").filter(Boolean);
+      if (pathParts.length < 2) {
+        const part = pathParts[0] || "";
+        if (!/\d/.test(part)) {
+          return true;
+        }
+      }
+      const invalidPatterns = [
+        /^https?:\/\/[^/]+\/?$/i,
+/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
+/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
+        /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
+/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
+        /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
+        /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
+        /\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
+      ];
+      for (const pattern of invalidPatterns) {
+        if (pattern.test(normalizedUrl) || pattern.test(pathname)) {
+          return true;
+        }
+      }
+      if (currentChapterUrl) {
+        const currentParsed = new URL(currentChapterUrl);
+        const currentParts = currentParsed.pathname.split("/").filter(Boolean);
+        if (currentParts.length >= 3 && pathParts.length < currentParts.length - 1) {
+          return true;
+        }
+        if (parsed.host !== currentParsed.host) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  function isVipChapterPage(doc2) {
+    var _a;
+    const rawText = ((_a = doc2.body) == null ? void 0 : _a.textContent) || "";
+    if (!rawText) return false;
+    const text2 = normalizeTextForVipDetection(rawText);
+    const patterns = [
+      /本章(?:为|是)?vip章节/,
+      /(vip|付费|收费)(?:章节|内容)/,
+      /(未订阅|未购买|未解锁).{0,10}(本章|本章节|章节|内容)/,
+      /(本章|本章节|章节|内容).{0,12}(?:已)?锁定/,
+      /(本章|本章节|章节|内容).{0,12}(?:需|需要).{0,6}(订阅|购买|付费|解锁)/,
+      /(订阅|购买|付费|解锁).{0,12}(后|即可|才能|方可|才可).{0,12}(阅读|查看|继续阅读|继续查看)/,
+      /(请|需).{0,6}(订阅|购买|付费|解锁).{0,12}(阅读|查看|继续阅读|继续查看)/,
+      /立即(订阅|购买|解锁|充值)/,
+      /(订阅|购买|解锁)本章/
+    ];
+    if (patterns.some((re) => re.test(text2))) return true;
+    const ctaText = Array.from(
+      doc2.querySelectorAll('a,button,input[type="button"],input[type="submit"]')
+    ).map((el) => {
+      if (el instanceof HTMLInputElement) return el.value || "";
+      return el.textContent || "";
+    }).join(" ");
+    const cta = normalizeTextForVipDetection(ctaText);
+    if (/立即(订阅|购买|解锁|充值)/.test(cta) && /(vip|付费|订阅|购买|解锁|锁定)/.test(text2)) {
+      return true;
+    }
+    return false;
+  }
+  function detectTocPage(content, pageUrl, currentChapterUrl) {
+    const tocUrlPatterns = [
+      /\/book\/\d+\.html?$/i,
+      /\/book\/\d+\/?$/i,
+      /\/novel\/\d+\/?$/i,
+      /\/xiaoshuo\/\d+\/?$/i,
+      /\/info\/\d+\.html?$/i,
+      /\/\d+\/index\.html?$/i,
+      /\/booklist/i,
+      /\/catalog/i,
+      /\/contents?\.html?$/i,
+      /\/list\.html?$/i,
+      /\/toc\.html?$/i
+    ];
+    for (const pattern of tocUrlPatterns) {
+      if (pattern.test(pageUrl)) {
+        return true;
+      }
+    }
+    try {
+      const currentPath2 = new URL(currentChapterUrl).pathname;
+      const pagePath = new URL(pageUrl).pathname;
+      const chapterPattern = /\/(txt|read|chapter|article)\/\d+\/\d+/i;
+      const bookPattern = /\/(book|novel|info|xiaoshuo)\/\d+/i;
+      if (chapterPattern.test(currentPath2) && bookPattern.test(pagePath)) {
+        return true;
+      }
+    } catch {
+    }
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const textContent = tempDiv.textContent || "";
+    const textLength = textContent.length;
+    const links = tempDiv.querySelectorAll("a");
+    const linkCount = links.length;
+    if (textLength < 500 && linkCount > 10) {
+      return true;
+    }
+    const linkTextLength = Array.from(links).reduce(
+      (sum, a) => {
+        var _a;
+        return sum + (((_a = a.textContent) == null ? void 0 : _a.length) || 0);
+      },
+      0
+    );
+    const linkRatio = textLength > 0 ? linkTextLength / textLength : 0;
+    if (linkRatio > 0.6 && linkCount > 8) {
+      return true;
+    }
+    const chapterLinkPattern = /\/(chapter|txt|read|book|novel|article)\/|\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
+    const chapterLinks = Array.from(links).filter((a) => {
+      const href = a.getAttribute("href") || "";
+      return chapterLinkPattern.test(href);
+    });
+    if (chapterLinks.length > 10) {
+      return true;
+    }
+    const normalizeUrlLocal = (url) => {
+      try {
+        const u = new URL(url, pageUrl);
+        return u.pathname.replace(/\/$/, "");
+      } catch {
+        return url.replace(/\/$/, "");
+      }
+    };
+    const currentPath = normalizeUrlLocal(currentChapterUrl);
+    const hasLinkToCurrentChapter = Array.from(links).some((a) => {
+      const href = a.getAttribute("href");
+      if (!href) return false;
+      return normalizeUrlLocal(href) === currentPath;
+    });
+    if (hasLinkToCurrentChapter && linkCount > 5) {
+      return true;
+    }
+    const tocKeywords = [
+      "目录",
+      "章节列表",
+      "章节目录",
+      "全部章节",
+      "最新章节",
+      "小说目录",
+      "table of contents",
+      "toc",
+      "catalog",
+      "index"
+    ];
+    const pageText = textContent.toLowerCase();
+    const keywordMatches = tocKeywords.filter((kw) => pageText.includes(kw.toLowerCase()));
+    if (keywordMatches.length >= 2 || keywordMatches.length >= 1 && linkCount > 15) {
+      return true;
+    }
+    const linkTexts = Array.from(links).map((a) => {
+      var _a;
+      return ((_a = a.textContent) == null ? void 0 : _a.trim()) || "";
+    }).filter((t) => t.length > 0);
+    const chapterNamePattern = /^第.{1,10}[章节回话篇集卷]/;
+    const chapterNameLinks = linkTexts.filter((t) => chapterNamePattern.test(t));
+    if (chapterNameLinks.length > 5) {
+      return true;
+    }
+    return false;
+  }
+  function createNavigation(ctx) {
+    async function insertCachedChapter(cached, position) {
+      const suffix = position === "append" ? "cached" : "cached-prev";
+      const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
+      const entry = {
+        chapter: { ...cached.chapter },
+        rule: cached.rule,
+        id
+      };
+      if (position === "append") {
+        ctx.chapters.value.push(entry);
+      } else {
+        ctx.chapters.value.unshift(entry);
+        ctx.currentChapterIndex.value++;
+      }
+      ctx.loadedUrls.value.add(entry.chapter.url);
+      ctx.originalContents.value.set(id, cached.chapter.content);
+      ctx.originalTitles.value.set(id, {
+        title: cached.chapter.title,
+        bookTitle: cached.chapter.bookTitle
+      });
+      if (ctx.currentConversionMode.value !== "none") {
+        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+      }
+      if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
+        if (position === "append" && ctx.currentChapterIndex.value > 2) {
+          const removed = ctx.chapters.value.shift();
+          if (removed) {
+            ctx.loadedUrls.value.delete(removed.chapter.url);
+            ctx.originalContents.value.delete(removed.id);
+            ctx.originalTitles.value.delete(removed.id);
+            ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
+          }
+        } else if (position === "prepend") {
+          const removed = ctx.chapters.value.pop();
+          if (removed) {
+            ctx.loadedUrls.value.delete(removed.chapter.url);
+            ctx.originalContents.value.delete(removed.id);
+            ctx.originalTitles.value.delete(removed.id);
+          }
+        }
+      }
+      return true;
+    }
+    async function loadChapter(direction, source) {
+      const runId = ctx.viewId();
+      const isNext = direction === "next";
+      const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
+      const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
+      const pendingAbortRef = isNext ? ctx.pendingNextAbort : ctx.pendingPrevAbort;
+      const endMessage = isNext ? "已经是最后一章了" : "已经是第一章了";
+      const errorMessage = isNext ? "加载下一章失败" : "加载上一章失败";
+      if (isLoadingRef.value) {
+        return false;
+      }
+      const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
+      if (!rawTargetUrl) {
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      const targetUrl = normalizeUrlForFetch(rawTargetUrl);
+      if (targetUrl !== rawTargetUrl) {
+        if (isNext) {
+          refChapter.chapter.nextUrl = targetUrl;
+        } else {
+          refChapter.chapter.prevUrl = targetUrl;
+        }
+      }
+      if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
+        ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      if (ctx.vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
+        ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+        return false;
+      }
+      const navKey = normalizeUrlForBlock(targetUrl);
+      if (ctx.blockedNavUrls.value.has(navKey)) {
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      const failure = ctx.navFailures.get(navKey);
+      if (failure && Date.now() < failure.nextRetryAt) {
+        if (source === "manual") {
+          ctx.showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
+        }
+        return false;
+      }
+      if (ctx.loadedUrls.value.has(targetUrl)) {
+        return false;
+      }
+      const cached = ctx.cachedContents.value.get(targetUrl);
+      if (cached) {
+        return insertCachedChapter(cached, isNext ? "append" : "prepend");
+      }
+      if (ctx.persistedUrls.value.has(targetUrl)) {
+        const persisted = await ctx.getPersistedCachedChapter(targetUrl);
+        if (ctx.isViewStale(runId)) return false;
+        if (persisted) {
+          const sessionCached = { ...persisted, cachedAt: Date.now() };
+          ctx.cachedContents.value.set(targetUrl, sessionCached);
+          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+          return insertCachedChapter(sessionCached, isNext ? "append" : "prepend");
+        }
+      }
+      isLoadingRef.value = true;
+      if (pendingAbortRef.value) {
+        pendingAbortRef.value();
+        pendingAbortRef.value = null;
+      }
+      if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
+        isLoadingRef.value = false;
+        ctx.blockedNavUrls.value.add(navKey);
+        if (source === "manual") {
+          ctx.showToast(endMessage, "info");
+        }
+        return false;
+      }
+      try {
+        const referer = refChapter.chapter.url;
+        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+        if (ctx.isViewStale(runId)) {
+          abort();
+          return false;
+        }
+        pendingAbortRef.value = abort;
+        const result = await promise;
+        if (ctx.isViewStale(runId)) {
+          abort();
+          return false;
+        }
+        pendingAbortRef.value = null;
+        if (result.error === "abort") {
+          return false;
+        }
+        if (!result.doc) {
+          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          if (source === "manual" || count === 1) {
+            ctx.showToast(errorMessage, "error", 2500);
+          }
+          return false;
+        }
+        if (isCloudflareChallenge(result.doc)) {
+          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          if (source === "manual" || count === 1) {
+            ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
+          }
+          return false;
+        }
+        if (isVipChapterPage(result.doc)) {
+          ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
+          ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+          return false;
+        }
+        const parser = getParser();
+        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
+        if (ctx.isViewStale(runId)) {
+          return false;
+        }
+        if (!parsed) {
+          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          if (source === "manual" || count === 1) {
+            ctx.showToast(errorMessage, "error", 2500);
+          }
+          return false;
+        }
+        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
+        const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
+        if (isTocPage) {
+          ctx.blockedNavUrls.value.add(navKey);
+          if (source === "manual") {
+            ctx.showToast(endMessage, "info");
+          }
+          return false;
+        }
+        if (!isNext) {
+          if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)) {
+          } else if (parsed.prevUrl && !parsed.nextUrl) {
+            ctx.blockedNavUrls.value.add(navKey);
+            return false;
+          }
+        }
+        const suffix = isNext ? "" : "prev-";
+        const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
+        const entry = {
+          chapter: parsed,
+          rule: parsed.rule,
+          id
+        };
+        if (isNext) {
+          ctx.chapters.value.push(entry);
+        } else {
+          ctx.chapters.value.unshift(entry);
+          ctx.currentChapterIndex.value++;
+        }
+        clearNavFailure(ctx.navFailures, navKey);
+        ctx.loadedUrls.value.add(parsed.url);
+        ctx.originalContents.value.set(id, parsed.content);
+        ctx.originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
+        ctx.cachedContents.value.set(parsed.url, {
+          chapter: parsed,
+          rule: parsed.rule,
+          cachedAt: Date.now()
+        });
+        trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+        if (ctx.currentConversionMode.value !== "none") {
+          await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+        }
+        if (!ctx.history.value.includes(parsed.url)) {
+          if (isNext) {
+            ctx.history.value.push(parsed.url);
+          } else {
+            ctx.history.value.unshift(parsed.url);
+          }
+        }
+        if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
+          if (isNext && ctx.currentChapterIndex.value > 2) {
+            const removed = ctx.chapters.value.shift();
+            if (removed) {
+              ctx.loadedUrls.value.delete(removed.chapter.url);
+              ctx.originalContents.value.delete(removed.id);
+              ctx.originalTitles.value.delete(removed.id);
+              ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
+            }
+          } else if (!isNext) {
+            const removed = ctx.chapters.value.pop();
+            if (removed) {
+              ctx.loadedUrls.value.delete(removed.chapter.url);
+              ctx.originalContents.value.delete(removed.id);
+              ctx.originalTitles.value.delete(removed.id);
+            }
+          }
+        }
+        return true;
+      } catch (e) {
+        if (!ctx.isViewStale(runId)) {
+          console.error(`[MNR] Failed to load ${direction} chapter:`, e);
+          ctx.setError(errorMessage);
+        }
+        return false;
+      } finally {
+        if (!ctx.isViewStale(runId)) {
+          isLoadingRef.value = false;
+        }
+      }
+    }
+    async function loadNextChapter(source = "auto") {
+      return loadChapter("next", source);
+    }
+    async function loadPrevChapter(source = "manual") {
+      return loadChapter("prev", source);
+    }
+    async function rebuildChaptersAround(targetUrl) {
+      var _a, _b, _c, _d, _e, _f;
+      const runId = ctx.bumpView();
+      const url = normalizeUrlForFetch(targetUrl);
+      (_b = (_a = ctx.pendingNextAbort).value) == null ? void 0 : _b.call(_a);
+      ctx.pendingNextAbort.value = null;
+      (_d = (_c = ctx.pendingPrevAbort).value) == null ? void 0 : _d.call(_c);
+      ctx.pendingPrevAbort.value = null;
+      (_f = (_e = ctx.reloadAbort).value) == null ? void 0 : _f.call(_e);
+      ctx.reloadAbort.value = null;
+      ctx.isLoading.value = false;
+      ctx.isLoadingPrev.value = false;
+      ctx.isLoadingNext.value = false;
+      let cached = ctx.cachedContents.value.get(url);
+      if (!cached && ctx.persistedUrls.value.has(url)) {
+        const persisted = await ctx.getPersistedCachedChapter(url);
+        if (ctx.isViewStale(runId)) return false;
+        if (persisted) {
+          cached = { ...persisted, cachedAt: Date.now() };
+          ctx.cachedContents.value.set(url, cached);
+          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+        }
+      }
+      if (!cached) return false;
+      if (ctx.isViewStale(runId)) return false;
+      ctx.chapters.value = [];
+      ctx.currentChapterIndex.value = 0;
+      ctx.loadedUrls.value.clear();
+      ctx.originalContents.value.clear();
+      ctx.originalTitles.value.clear();
+      const id = `chapter-${Date.now()}-jump-0`;
+      ctx.chapters.value.push({
+        chapter: { ...cached.chapter },
+        rule: cached.rule,
+        id
+      });
+      ctx.loadedUrls.value.add(url);
+      ctx.originalContents.value.set(id, cached.chapter.content);
+      ctx.originalTitles.value.set(id, {
+        title: cached.chapter.title,
+        bookTitle: cached.chapter.bookTitle
+      });
+      if (ctx.currentConversionMode.value !== "none") {
+        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+      }
+      return true;
+    }
+    async function reloadCurrentChapter() {
+      var _a, _b;
+      const runId = ctx.viewId();
+      const current = ctx.chapters.value[ctx.currentChapterIndex.value];
+      if (!current) return;
+      const url = current.chapter.url;
+      ctx.showToast("正在重新加载...", "info");
+      (_b = (_a = ctx.reloadAbort).value) == null ? void 0 : _b.call(_a);
+      ctx.reloadAbort.value = null;
+      const { promise, abort } = fetchAndParseUrl(url, url);
+      if (!ctx.isViewStale(runId)) {
+        ctx.reloadAbort.value = abort;
+      }
+      const result = await promise;
+      if (ctx.isViewStale(runId)) {
+        abort();
+        return;
+      }
+      if (ctx.reloadAbort.value === abort) {
+        ctx.reloadAbort.value = null;
+      }
+      if (result.error === "abort") {
+        return;
+      }
+      if (!result.doc) {
+        ctx.showToast("重新加载失败", "error");
+        return;
+      }
+      const parser = getParser();
+      const parsed = await parseWithSectionMerge(parser, result.doc, url);
+      if (ctx.isViewStale(runId)) {
+        return;
+      }
+      if (parsed) {
+        if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
+        if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
+        if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
+        current.chapter = parsed;
+        current.rule = parsed.rule;
+        ctx.originalContents.value.set(current.id, parsed.content);
+        ctx.cachedContents.value.set(parsed.url, {
+          chapter: parsed,
+          rule: parsed.rule,
+          cachedAt: Date.now()
+        });
+        if (ctx.currentConversionMode.value !== "none") {
+          const converted = await convertHTML(parsed.content, ctx.currentConversionMode.value);
+          current.chapter = { ...current.chapter, content: converted };
+        }
+        ctx.showToast("规则已应用", "info");
+      } else {
+        ctx.showToast("解析失败", "error");
+      }
+    }
+    return {
+      insertCachedChapter,
+      loadChapter,
+      loadNextChapter,
+      loadPrevChapter,
+      rebuildChaptersAround,
+      reloadCurrentChapter
+    };
   }
   const useReaderStore = defineStore("reader", () => {
     const isActive = ref(false);
@@ -22396,18 +22478,31 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       var _a;
       return ((_a = chapter.value) == null ? void 0 : _a.method) || "detection";
     });
-    const tocWithStatus = computed(() => {
+    const normalizedTocUrls = computed(() => toc.value.map((entry) => normalizeUrlForFetch(entry.url)));
+    const tocStatusMap = computed(() => {
       var _a;
       const currentUrl = (_a = chapter.value) == null ? void 0 : _a.url;
-      return toc.value.map((entry) => {
-        const url = normalizeUrlForFetch(entry.url);
-        return {
-          ...entry,
-          url,
+      const map = new Map();
+      for (const url of normalizedTocUrls.value) {
+        map.set(url, {
           isCached: loadedUrls.value.has(url) || cachedContents.value.has(url) || persistedUrls.value.has(url),
           isPersisted: persistedUrls.value.has(url),
           isCurrent: url === currentUrl
+        });
+      }
+      return map;
+    });
+    const tocWithStatus = computed(() => {
+      const urls = normalizedTocUrls.value;
+      const statusMap = tocStatusMap.value;
+      return toc.value.map((entry, i) => {
+        const url = urls[i];
+        const status = statusMap.get(url) || {
+          isCached: false,
+          isPersisted: false,
+          isCurrent: false
         };
+        return { ...entry, url, ...status };
       });
     });
     const currentChapterUrl = computed(() => {
@@ -23253,7 +23348,7 @@ ul, ol {
     };
     return { host, shadowRoot, mountPoint, cleanup };
   }
-  const _hoisted_1$9 = {
+  const _hoisted_1$a = {
     class: "mnr-prompt-card",
     role: "dialog",
     "aria-modal": "true"
@@ -23311,7 +23406,7 @@ ul, ol {
               class: "mnr-prompt-overlay",
               onClick: withModifiers(handleDismiss, ["self"])
             }, [
-              createBaseVNode("div", _hoisted_1$9, [
+              createBaseVNode("div", _hoisted_1$a, [
                 _cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [
                   createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"),
                   createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")
@@ -23385,12 +23480,27 @@ ul, ol {
     const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
     const heights = ref( new Map());
     const virtualWindow = ref({ start: 0, end: windowSize });
-    const totalHeight = computed(
-      () => Array.from(heights.value.values()).reduce((sum, h2) => sum + h2, 0)
-    );
-    const averageHeight = computed(
-      () => heights.value.size > 0 ? totalHeight.value / heights.value.size : defaultHeight
-    );
+    const averageHeight = computed(() => {
+      const h2 = heights.value;
+      if (h2.size === 0) return defaultHeight;
+      let sum = 0;
+      for (const v of h2.values()) sum += v;
+      return sum / h2.size;
+    });
+    const prefixOffsets = computed(() => {
+      const chaps = chapters.value;
+      const avg = averageHeight.value;
+      const h2 = heights.value;
+      const offsets = new Float64Array(chaps.length + 1);
+      for (let i = 0; i < chaps.length; i++) {
+        offsets[i + 1] = offsets[i] + (h2.get(chaps[i].chapter.url) ?? avg);
+      }
+      return offsets;
+    });
+    const totalHeight = computed(() => {
+      const o = prefixOffsets.value;
+      return o[o.length - 1];
+    });
     const visibleRange = computed(() => {
       const start = Math.max(0, virtualWindow.value.start - overscan);
       const end = Math.min(chapters.value.length, virtualWindow.value.end + overscan);
@@ -23403,11 +23513,17 @@ ul, ol {
         index: start + idx
       }));
     });
-    const topSpacer = computed(() => getOffsetBefore(visibleRange.value.start));
+    const topSpacer = computed(() => {
+      const o = prefixOffsets.value;
+      const idx = visibleRange.value.start;
+      return idx >= 0 && idx < o.length ? o[idx] : 0;
+    });
     const bottomSpacer = computed(() => {
-      const endOffset = getOffsetBefore(visibleRange.value.end);
-      const totalOffset = getOffsetBefore(chapters.value.length);
-      return Math.max(0, totalOffset - endOffset);
+      const o = prefixOffsets.value;
+      const endIdx = visibleRange.value.end;
+      const total = o[o.length - 1];
+      const endOffset = endIdx >= 0 && endIdx < o.length ? o[endIdx] : total;
+      return Math.max(0, total - endOffset);
     });
     function setHeight(url, height) {
       const prev = heights.value.get(url);
@@ -23417,16 +23533,10 @@ ul, ol {
     }
     function getOffsetBefore(index) {
       if (index <= 0) return 0;
-      if (chapters.value.length === 0) return 0;
-      let offset = 0;
-      const len = Math.min(index, chapters.value.length);
-      for (let i = 0; i < len; i++) {
-        const entry = chapters.value[i];
-        if (!entry) continue;
-        const url = entry.chapter.url;
-        offset += heights.value.get(url) ?? averageHeight.value;
-      }
-      return offset;
+      const o = prefixOffsets.value;
+      if (o.length <= 1) return 0;
+      const clamped = Math.min(index, o.length - 1);
+      return o[clamped];
     }
     function updateWindow(currentIndex) {
       const halfWindow = Math.floor(windowSize / 2);
@@ -23665,7 +23775,16 @@ setHeight,
   const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
   const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
   function useReaderAutoLoad(options) {
-    const { mainRef, readerStore, configStore, hasNext, isLoadingNext, isLoadingPrev, isLoading, isNavigating } = options;
+    const {
+      mainRef,
+      readerStore,
+      configStore,
+      hasNext,
+      isLoadingNext,
+      isLoadingPrev,
+      isLoading,
+      isNavigating
+    } = options;
     const autoLoadArmed = ref(false);
     const lastAutoLoadScrollTop = { value: 0 };
     const autoLoadShortChainCount = { value: 0 };
@@ -24032,7 +24151,88 @@ setHeight,
       scrollReader
     };
   }
-  const _hoisted_1$8 = {
+  function useReaderUIControls(options) {
+    const { readerStore, ruleStore, showControls } = options;
+    const settingsVisible = ref(false);
+    const ruleEditorVisible = ref(false);
+    const isPickerActive = ref(false);
+    const drawerOpen = ref(false);
+    const currentRule = computed(() => readerStore.rule);
+    const currentDomain = computed(() => {
+      try {
+        return new URL(window.location.href).hostname;
+      } catch {
+        return "";
+      }
+    });
+    function toggleDrawer() {
+      drawerOpen.value = !drawerOpen.value;
+      if (drawerOpen.value) {
+        readerStore.loadToc();
+      }
+    }
+    function openSettings() {
+      settingsVisible.value = true;
+      showControls.value = false;
+    }
+    function openRuleEditor() {
+      settingsVisible.value = false;
+      ruleEditorVisible.value = true;
+      showControls.value = false;
+    }
+    async function handleRuleSave(rule) {
+      if (currentDomain.value) {
+        try {
+          await ruleStore.saveUserRule(currentDomain.value, rule);
+          await readerStore.reloadCurrentChapter();
+        } catch (e) {
+          console.error("[MNR] Save rule error:", e);
+          readerStore.showToast("保存失败", "error");
+        }
+      }
+      ruleEditorVisible.value = false;
+    }
+    async function handleRuleReset() {
+      settingsVisible.value = false;
+      await readerStore.reloadCurrentChapter();
+    }
+    function handleEscape() {
+      if (drawerOpen.value) {
+        drawerOpen.value = false;
+      } else if (ruleEditorVisible.value) {
+        ruleEditorVisible.value = false;
+      } else if (settingsVisible.value) {
+        settingsVisible.value = false;
+      }
+    }
+    function toggleSettings() {
+      if (!ruleEditorVisible.value) {
+        settingsVisible.value = !settingsVisible.value;
+      }
+    }
+    function toggleRuleEditor() {
+      if (!settingsVisible.value) {
+        ruleEditorVisible.value = !ruleEditorVisible.value;
+      }
+    }
+    return {
+      settingsVisible,
+      ruleEditorVisible,
+      isPickerActive,
+      drawerOpen,
+      currentRule,
+      currentDomain,
+      toggleDrawer,
+      openSettings,
+      openRuleEditor,
+      handleRuleSave,
+      handleRuleReset,
+      handleEscape,
+      toggleSettings,
+      toggleRuleEditor
+    };
+  }
+  const _hoisted_1$9 = {
     key: 0,
     class: "mnr-progress-text"
   };
@@ -24085,13 +24285,13 @@ setHeight,
             class: "mnr-progress-bar",
             style: normalizeStyle({ width: `${percent.value}%` })
           }, null, 4),
-          __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$8, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)
+          __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$9, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)
         ], 2);
       };
     }
   });
   const ProgressIndicator = _export_sfc(_sfc_main$a, [["__scopeId", "data-v-08ca51a0"]]);
-  const _hoisted_1$7 = {
+  const _hoisted_1$8 = {
     key: 0,
     class: "mnr-floating-toolbar"
   };
@@ -24116,7 +24316,7 @@ setHeight,
       return (_ctx, _cache) => {
         return openBlock(), createBlock(Transition, { name: "mnr-fade-slide" }, {
           default: withCtx(() => [
-            __props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$7, [
+            __props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$8, [
               createBaseVNode("button", {
                 class: "mnr-fab",
                 title: "目录 (Tab)",
@@ -24167,6 +24367,7 @@ setHeight,
     }
   });
   const MnrSpinner = _export_sfc(_sfc_main$8, [["__scopeId", "data-v-340f8e56"]]);
+  const _hoisted_1$7 = ["role"];
   const _sfc_main$7 = defineComponent({
     __name: "MnrToast",
     props: {
@@ -24182,22 +24383,27 @@ setHeight,
             __props.visible ? (openBlock(), createElementBlock("div", {
               key: 0,
               class: normalizeClass(["mnr-toast", { "mnr-toast--error": __props.type === "error" }]),
+              role: __props.type === "error" ? "alert" : "status",
               onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("dismiss"))
-            }, toDisplayString(__props.message), 3)) : createCommentVNode("", true)
+            }, toDisplayString(__props.message), 11, _hoisted_1$7)) : createCommentVNode("", true)
           ]),
           _: 1
         });
       };
     }
   });
-  const MnrToast = _export_sfc(_sfc_main$7, [["__scopeId", "data-v-53e91417"]]);
+  const MnrToast = _export_sfc(_sfc_main$7, [["__scopeId", "data-v-83d04cea"]]);
   const _hoisted_1$6 = {
     key: 0,
-    class: "mnr-loading-overlay"
+    class: "mnr-loading-overlay",
+    role: "alert",
+    "aria-busy": "true"
   };
   const _hoisted_2$6 = {
     key: 1,
-    class: "mnr-loading-overlay--inline"
+    class: "mnr-loading-overlay--inline",
+    role: "alert",
+    "aria-busy": "true"
   };
   const _sfc_main$6 = defineComponent({
     __name: "MnrLoadingOverlay",
@@ -24216,7 +24422,7 @@ setHeight,
       };
     }
   });
-  const MnrLoadingOverlay = _export_sfc(_sfc_main$6, [["__scopeId", "data-v-f2b9dbb7"]]);
+  const MnrLoadingOverlay = _export_sfc(_sfc_main$6, [["__scopeId", "data-v-01971069"]]);
   const _hoisted_1$5 = { class: "mnr-drawer-header" };
   const _hoisted_2$5 = { class: "mnr-drawer-title" };
   const _hoisted_3$5 = {
@@ -25732,13 +25938,25 @@ ${value}`;
       const mainRef = ref(null);
       const topSentinel = ref(null);
       const bottomSentinel = ref(null);
-      const settingsVisible = ref(false);
-      const ruleEditorVisible = ref(false);
-      const isPickerActive = ref(false);
-      const drawerOpen = ref(false);
       const isNavigating = ref(false);
       const showControls = ref(true);
       const chapterRefs = new Map();
+      const {
+        settingsVisible,
+        ruleEditorVisible,
+        isPickerActive,
+        drawerOpen,
+        currentRule,
+        currentDomain,
+        toggleDrawer,
+        openSettings,
+        openRuleEditor,
+        handleRuleSave,
+        handleRuleReset,
+        handleEscape,
+        toggleSettings,
+        toggleRuleEditor
+      } = useReaderUIControls({ readerStore, ruleStore, showControls });
       let topObserver = null;
       let bottomObserver = null;
       watch(isPickerActive, (active) => {
@@ -25764,14 +25982,6 @@ ${value}`;
           if (readerRoot) {
             readerRoot.style.display = "";
           }
-        }
-      });
-      const currentRule = computed(() => readerStore.rule);
-      const currentDomain = computed(() => {
-        try {
-          return new URL(window.location.href).hostname;
-        } catch {
-          return "";
         }
       });
       const chapters = computed(() => readerStore.chapters);
@@ -25803,12 +26013,7 @@ ${value}`;
       const showProgress = computed(() => configStore.behavior.showProgress);
       const cacheProgress = computed(() => readerStore.cacheProgress);
       const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
-      const {
-        autoLoadArmed,
-        scheduleAutoLoadNext,
-        lastAutoLoadScrollTop,
-        autoLoadShortChainCount
-      } = useReaderAutoLoad({
+      const { autoLoadArmed, scheduleAutoLoadNext, lastAutoLoadScrollTop, autoLoadShortChainCount } = useReaderAutoLoad({
         mainRef,
         readerStore,
         configStore,
@@ -25836,12 +26041,7 @@ ${value}`;
         autoLoadShortChainCount,
         scheduleAutoLoadNext
       });
-      const {
-        navigateChapter,
-        jumpToCachedChapter,
-        scrollReader,
-        handleWheel
-      } = useChapterNavigation({
+      const { navigateChapter, jumpToCachedChapter, scrollReader, handleWheel } = useChapterNavigation({
         mainRef,
         chapters,
         chapterRefs,
@@ -25869,12 +26069,6 @@ ${value}`;
           window.location.href = indexUrl.value;
         }
       }
-      function toggleDrawer() {
-        drawerOpen.value = !drawerOpen.value;
-        if (drawerOpen.value) {
-          readerStore.loadToc();
-        }
-      }
       function handleChapterSelect(entry) {
         if (entry.isCached) {
           jumpToCachedChapter(entry.url);
@@ -25899,31 +26093,6 @@ ${value}`;
       }
       function clearError() {
         readerStore.clearError();
-      }
-      function openRuleEditor() {
-        settingsVisible.value = false;
-        ruleEditorVisible.value = true;
-        showControls.value = false;
-      }
-      async function handleRuleSave(rule) {
-        if (currentDomain.value) {
-          try {
-            await ruleStore.saveUserRule(currentDomain.value, rule);
-            await readerStore.reloadCurrentChapter();
-          } catch (e) {
-            console.error("[MNR] Save rule error:", e);
-            readerStore.showToast("保存失败", "error");
-          }
-        }
-        ruleEditorVisible.value = false;
-      }
-      async function handleRuleReset() {
-        settingsVisible.value = false;
-        await readerStore.reloadCurrentChapter();
-      }
-      function openSettings() {
-        settingsVisible.value = true;
-        showControls.value = false;
       }
       async function handleTextConversionChange(mode) {
         await readerStore.applyTextConversion(mode);
@@ -25951,25 +26120,6 @@ ${value}`;
       function exitReader() {
         closeReader();
       }
-      function handleEscape() {
-        if (drawerOpen.value) {
-          drawerOpen.value = false;
-        } else if (ruleEditorVisible.value) {
-          ruleEditorVisible.value = false;
-        } else if (settingsVisible.value) {
-          settingsVisible.value = false;
-        }
-      }
-      function toggleSettings() {
-        if (!ruleEditorVisible.value) {
-          settingsVisible.value = !settingsVisible.value;
-        }
-      }
-      function toggleRuleEditor() {
-        if (!settingsVisible.value) {
-          ruleEditorVisible.value = !ruleEditorVisible.value;
-        }
-      }
       const keyboardEnabled = computed(
         () => configStore.behavior.keyboardNavigation && !isPickerActive.value
       );
@@ -25987,11 +26137,25 @@ ${value}`;
           { key: ["s", ","], handler: toggleSettings, preventDefault: true },
           { key: "e", handler: toggleRuleEditor, preventDefault: true },
           { key: "q", handler: exitReader, preventDefault: true, stopPropagation: true },
-          { key: ["arrowleft", "p"], handler: () => navigateChapter("prev"), preventDefault: true, stopPropagation: true },
-          { key: ["arrowright", "n"], handler: () => navigateChapter("next"), preventDefault: true, stopPropagation: true },
+          {
+            key: ["arrowleft", "p"],
+            handler: () => navigateChapter("prev"),
+            preventDefault: true,
+            stopPropagation: true
+          },
+          {
+            key: ["arrowright", "n"],
+            handler: () => navigateChapter("next"),
+            preventDefault: true,
+            stopPropagation: true
+          },
           { key: "arrowup", handler: () => scrollReader("up"), preventDefault: true },
           { key: "arrowdown", handler: () => scrollReader("down"), preventDefault: true },
-          { key: " ", handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"), preventDefault: true }
+          {
+            key: " ",
+            handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"),
+            preventDefault: true
+          }
         ],
         { enabled: keyboardEnabled }
       );
@@ -26069,12 +26233,12 @@ ${value}`;
             "cache-done": cacheProgress.value.done,
             "cache-total": cacheProgress.value.total,
             "cache-disabled": cacheProgress.value.running && cacheProgress.value.total === 0,
-            onToggleDrawer: toggleDrawer,
+            onToggleDrawer: unref(toggleDrawer),
             onToggleCache: toggleCacheAll,
-            onOpenSettings: openSettings
-          }, null, 8, ["visible", "cache-running", "cache-done", "cache-total", "cache-disabled"]),
+            onOpenSettings: unref(openSettings)
+          }, null, 8, ["visible", "cache-running", "cache-done", "cache-total", "cache-disabled", "onToggleDrawer", "onOpenSettings"]),
           createVNode(ChapterDrawer, {
-            "is-open": drawerOpen.value,
+            "is-open": unref(drawerOpen),
             "book-title": bookTitle.value,
             chapters: unref(readerStore).tocWithStatus,
             loading: unref(readerStore).tocLoading,
@@ -26140,26 +26304,26 @@ ${value}`;
             ])) : createCommentVNode("", true)
           ], 512),
           createVNode(_sfc_main$4, {
-            visible: settingsVisible.value,
-            domain: currentDomain.value,
+            visible: unref(settingsVisible),
+            domain: unref(currentDomain),
             onClose: _cache[2] || (_cache[2] = ($event) => settingsVisible.value = false),
-            onEditRule: openRuleEditor,
-            onResetRule: handleRuleReset,
+            onEditRule: unref(openRuleEditor),
+            onResetRule: unref(handleRuleReset),
             onTextConversionChange: handleTextConversionChange,
             onCacheAll: handleCacheAll
-          }, null, 8, ["visible", "domain"]),
-          ruleEditorVisible.value ? (openBlock(), createElementBlock("div", {
+          }, null, 8, ["visible", "domain", "onEditRule", "onResetRule"]),
+          unref(ruleEditorVisible) ? (openBlock(), createElementBlock("div", {
             key: 1,
-            class: normalizeClass(["mnr-rule-editor-overlay", { "mnr-overlay-hidden": isPickerActive.value }])
+            class: normalizeClass(["mnr-rule-editor-overlay", { "mnr-overlay-hidden": unref(isPickerActive) }])
           }, [
             createBaseVNode("div", _hoisted_9, [
               createVNode(RuleEditorPanel, {
-                rule: currentRule.value,
-                domain: currentDomain.value,
-                onSave: handleRuleSave,
+                rule: unref(currentRule),
+                domain: unref(currentDomain),
+                onSave: unref(handleRuleSave),
                 onCancel: _cache[3] || (_cache[3] = ($event) => ruleEditorVisible.value = false),
                 onPickerStateChange: _cache[4] || (_cache[4] = ($event) => isPickerActive.value = $event)
-              }, null, 8, ["rule", "domain"])
+              }, null, 8, ["rule", "domain", "onSave"])
             ])
           ], 2)) : createCommentVNode("", true),
           isLoading.value ? (openBlock(), createBlock(unref(MnrLoadingOverlay), { key: 2 }, {
@@ -26178,7 +26342,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-3c301d71"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-e19dc4ab"]]);
   const appState = {
     isInitialized: false,
     autoEnableDone: false,
