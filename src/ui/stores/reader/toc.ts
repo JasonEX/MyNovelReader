@@ -16,6 +16,11 @@ import {
   normalizeUrlForFetch,
   resolveUrl,
 } from './utils';
+import {
+  type SpecialTocLoaderContext,
+  specialTocLoaders,
+  specialTocTitleCleaners,
+} from './tocProviders';
 import type { ConversionMode } from '@/core/converter';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import { getParser } from '@/core/parser';
@@ -106,6 +111,7 @@ export function extractTocLinkTitle(a: Element): string {
     '[class*="chapterItemTitle"]',
     '[class*="chapter-title"]',
     '[class*="chapterTitle"]',
+    '.line_1',
     'h2',
     'h3',
   ];
@@ -139,6 +145,16 @@ export function extractTocLinkTitle(a: Element): string {
   if (directText) return directText;
 
   return (a.textContent || '').trim();
+}
+
+function cleanTocTitleForUrl(title: string, url: string): string {
+  let cleaned = title.trim();
+
+  for (const cleaner of specialTocTitleCleaners) {
+    cleaned = cleaner.clean(cleaned, url);
+  }
+
+  return cleaned;
 }
 
 // ============ TOC Filtering and Sorting ============
@@ -337,7 +353,7 @@ export function collectTocCandidates(doc: Document, base: string, rule?: SiteRul
       continue;
     }
 
-    const title = text || `章节 ${candidates.length + 1}`;
+    const title = cleanTocTitleForUrl(text || `章节 ${candidates.length + 1}`, url);
     candidates.push({ title, url });
   }
 
@@ -415,6 +431,18 @@ export async function loadTocEntriesPaged(
   rule: SiteRule | undefined,
   setAbort: (abort: (() => void) | null) => void
 ): Promise<TocEntry[]> {
+  const loaderContext: SpecialTocLoaderContext = {
+    indexUrl,
+    currentUrl,
+    rule,
+    setAbort,
+  };
+
+  const loader = specialTocLoaders.find(item => item.matches(loaderContext));
+  if (loader) {
+    return loader.load(loaderContext);
+  }
+
   const visitedPages = new Set<string>();
   const seenChapterUrls = new Set<string>();
   const allCandidates: TocEntry[] = [];
@@ -494,8 +522,10 @@ export interface TocActionContext {
   currentConversionMode: Ref<ConversionMode>;
 
   // Session management
-  sessionId: () => number;
-  isSessionStale: (runId: number) => boolean;
+  runtime: {
+    isSessionStale: (runId: number) => boolean;
+    sessionId: () => number;
+  };
 
   // Callbacks
   showToast: (msg: string, type: 'info' | 'error', duration?: number) => void;
@@ -553,7 +583,7 @@ export function createTocActions(ctx: TocActionContext) {
   }
 
   async function loadToc(): Promise<void> {
-    const runId = ctx.sessionId();
+    const runId = ctx.runtime.sessionId();
     if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
 
     const currentUrl = ctx.chapter.value?.url || '';
@@ -577,40 +607,40 @@ export function createTocActions(ctx: TocActionContext) {
         currentUrl || indexUrl,
         ctx.rule.value ?? undefined,
         abort => {
-          if (!ctx.isSessionStale(runId)) {
+          if (!ctx.runtime.isSessionStale(runId)) {
             ctx.tocAbort.value = abort;
           }
         }
       );
-      if (ctx.isSessionStale(runId)) return;
+      if (ctx.runtime.isSessionStale(runId)) return;
       if (entries.length === 0) {
         // Retry once for transient request failures / slow dynamic pages.
         await new Promise<void>(resolve => window.setTimeout(resolve, 400));
-        if (ctx.isSessionStale(runId)) return;
+        if (ctx.runtime.isSessionStale(runId)) return;
         entries = await _loadTocEntriesPaged(
           indexUrl,
           currentUrl || indexUrl,
           ctx.rule.value ?? undefined,
           abort => {
-            if (!ctx.isSessionStale(runId)) {
+            if (!ctx.runtime.isSessionStale(runId)) {
               ctx.tocAbort.value = abort;
             }
           }
         );
-        if (ctx.isSessionStale(runId)) return;
+        if (ctx.runtime.isSessionStale(runId)) return;
       }
       await setTocEntries(entries);
-      if (ctx.isSessionStale(runId)) return;
+      if (ctx.runtime.isSessionStale(runId)) return;
       if (entries.length === 0) {
         ctx.showToast('目录解析为空，可稍后重试或刷新页面', 'info', 2500);
       }
     } catch (e) {
-      if (!ctx.isSessionStale(runId)) {
+      if (!ctx.runtime.isSessionStale(runId)) {
         console.error('[MNR] Failed to load TOC:', e);
         ctx.showToast('目录加载失败，可稍后重试', 'error', 2500);
       }
     } finally {
-      if (!ctx.isSessionStale(runId)) {
+      if (!ctx.runtime.isSessionStale(runId)) {
         ctx.tocLoading.value = false;
         ctx.tocAbort.value = null;
       }

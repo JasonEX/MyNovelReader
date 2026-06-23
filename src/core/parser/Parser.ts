@@ -4,7 +4,7 @@
 
 import { ContentProcessor, ProcessingOptions } from './ContentProcessor';
 import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
-import { RuleMatchResult, SiteRule } from '@/core/rules/types';
+import { HookFetchOptions, HookHelpers, RuleMatchResult, SiteRule } from '@/core/rules/types';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { resolveAndValidateHttpUrl } from '@/core/utils/network';
 
@@ -643,15 +643,20 @@ export class Parser {
   }
 
   private async runBeforeParseHook(rule: SiteRule, doc: Document, url?: string): Promise<void> {
-    if (!rule.hooks?.beforeParse) return;
+    const beforeParse = rule.hooks?.beforeParse;
+    if (!beforeParse) return;
 
     try {
-      const hookCode = rule.hooks.beforeParse;
+      if (typeof beforeParse === 'function') {
+        await beforeParse(doc, url, this.getHookHelpers());
+        return;
+      }
+
       const fn = new Function(
         'doc',
         'url',
         'helpers',
-        `return (async () => { ${hookCode} })();`
+        `return (async () => { ${beforeParse} })();`
       ) as (doc: Document, url?: string, helpers?: HookHelpers) => Promise<void>;
       await fn(doc, url, this.getHookHelpers());
     } catch (e) {
@@ -723,17 +728,6 @@ export class Parser {
     }
   }
 }
-
-type HookFetchOptions = {
-  timeoutMs?: number;
-  headers?: Record<string, string>;
-  withCredentials?: boolean;
-};
-
-type HookHelpers = {
-  fetchJson: (url: string, options?: HookFetchOptions) => Promise<Record<string, unknown> | null>;
-  fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
-};
 
 // Singleton instance
 let parserInstance: Parser | null = null;

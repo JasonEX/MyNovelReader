@@ -34,8 +34,10 @@ export interface CacheAllContext {
   chapters: Ref<Array<{ chapter: ParsedChapter }>>;
 
   // Session management
-  sessionId: () => number;
-  isSessionStale: (runId: number) => boolean;
+  runtime: {
+    isSessionStale: (runId: number) => boolean;
+    sessionId: () => number;
+  };
 
   // Callbacks
   restoreCache: () => Promise<void>;
@@ -50,14 +52,14 @@ export function createCacheAll(ctx: CacheAllContext) {
    * Persists chapters to storage (best-effort); in-memory cache is LRU-capped.
    */
   async function startCacheAll(urls?: string[]): Promise<void> {
-    const runId = ctx.sessionId();
+    const runId = ctx.runtime.sessionId();
     if (ctx.cacheProgress.value.running) return;
 
     const seenUrls = new Set<string>();
 
     // Ensure we have the latest persistedUrls before building the task list.
     await ctx.restoreCache();
-    if (ctx.isSessionStale(runId)) return;
+    if (ctx.runtime.isSessionStale(runId)) return;
     const persistedSet = new Set(ctx.persistedUrls.value);
     const cacheBook = getCurrentBookCacheKey(ctx.chapter.value?.indexUrl);
 
@@ -74,12 +76,12 @@ export function createCacheAll(ctx: CacheAllContext) {
           currentUrl || indexUrl,
           ctx.rule.value ?? undefined,
           abort => {
-            if (!ctx.isSessionStale(runId)) {
+            if (!ctx.runtime.isSessionStale(runId)) {
               ctx.cacheAbort.value = abort;
             }
           }
         );
-        if (ctx.isSessionStale(runId)) return;
+        if (ctx.runtime.isSessionStale(runId)) return;
         ctx.cacheAbort.value = null;
 
         const tocLinks = tocEntries.map(e => normalizeUrlForFetch(e.url)).slice(0, 10000);
@@ -94,7 +96,7 @@ export function createCacheAll(ctx: CacheAllContext) {
 
     // Total is actual list length
     const estimatedTotal = taskList.length;
-    if (ctx.isSessionStale(runId)) return;
+    if (ctx.runtime.isSessionStale(runId)) return;
     if (estimatedTotal === 0) {
       ctx.cacheProgress.value = { done: 0, total: 0, running: false };
       return;
@@ -124,13 +126,13 @@ export function createCacheAll(ctx: CacheAllContext) {
       }
 
       const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-      if (ctx.isSessionStale(runId)) {
+      if (ctx.runtime.isSessionStale(runId)) {
         abort();
         break;
       }
       ctx.cacheAbort.value = abort;
       const result = await promise;
-      if (ctx.isSessionStale(runId)) {
+      if (ctx.runtime.isSessionStale(runId)) {
         abort();
         break;
       }
@@ -145,7 +147,7 @@ export function createCacheAll(ctx: CacheAllContext) {
 
       const parser = getParser();
       const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
-      if (ctx.isSessionStale(runId)) {
+      if (ctx.runtime.isSessionStale(runId)) {
         break;
       }
       if (!parsed) {
@@ -200,7 +202,7 @@ export function createCacheAll(ctx: CacheAllContext) {
       }
     }
 
-    if (ctx.isSessionStale(runId)) return;
+    if (ctx.runtime.isSessionStale(runId)) return;
     // Final total update
     ctx.cacheProgress.value = {
       ...ctx.cacheProgress.value,

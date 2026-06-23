@@ -2,5 +2,6 @@
  * Protection module exports
  */
 
-export { SiteProtection, getSiteProtection, isCloudflareChallenge } from './SiteProtection';
-export type { ProtectionOptions } from './SiteProtection';
+export { SiteProtection, getSiteProtection } from './SiteProtection';
+export { isCloudflareChallenge } from './options';
+export type { ProtectionOptions } from './options';

@@ -24,6 +24,8 @@
 // @match        *://*/novel/*/*
 // @match        *://*/xs_*/*/*
 // @match        *://*/xs_*/*/*/*
+// @match        *://*/gb_*/*/*
+// @match        *://*/gb_*/*/*/*
 // @match        *://www.qidian.com/chapter/*/*
 // @match        *://m.qidian.com/chapter/*/*
 // @match        *://read.qidian.com/chapter/*
@@ -77,13 +79,27 @@
           const globalState = w.__MY_NOVEL_READER__ || (w.__MY_NOVEL_READER__ = {});
           globalState.styles = (globalState.styles || "") + cssCode;
           var styleId = "mnr-global-styles";
-          var existingStyle = document.getElementById(styleId);
-          if (!existingStyle) {
-            existingStyle = document.createElement("style");
-            existingStyle.id = styleId;
-            document.head.appendChild(existingStyle);
+          var injectGlobalStyle = function() {
+            var existingStyle = document.getElementById(styleId);
+            if (!existingStyle) {
+              var parent = document.head || document.documentElement;
+              if (!parent) return false;
+              existingStyle = document.createElement("style");
+              existingStyle.id = styleId;
+              parent.appendChild(existingStyle);
+            }
+            existingStyle.textContent = globalState.styles;
+            return true;
+          };
+          if (!injectGlobalStyle()) {
+            document.addEventListener(
+              "DOMContentLoaded",
+              function() {
+                injectGlobalStyle();
+              },
+              { once: true }
+            );
           }
-          existingStyle.textContent = globalState.styles;
           if (globalState.shadowRoot) {
             var shadowStyle = globalState.shadowRoot.querySelector("#mnr-app-styles");
             if (!shadowStyle) {
@@ -415,6 +431,17 @@ setThreshold(threshold) {
       return { chapterKey: match[1], section: 1 };
     }
     const parts = normalized.split("/").filter(Boolean);
+    if (parts.length >= 4) {
+      const pagePart = parts[parts.length - 1];
+      const chapterPart = parts[parts.length - 2];
+      const hasStableBookId = parts.slice(0, -2).some((p2) => /^\d{3,}$/.test(p2));
+      if (/^\d{1,2}$/.test(pagePart) && /^\d{1,6}$/.test(chapterPart) && hasStableBookId) {
+        const section = parseInt(pagePart, 10);
+        if (section >= 1 && section <= 99) {
+          return { chapterKey: `/${parts.slice(0, -1).join("/")}`, section };
+        }
+      }
+    }
     if (parts.length >= 3) {
       const pagePart = parts[parts.length - 1];
       const chapterPart = parts[parts.length - 2];
@@ -424,6 +451,13 @@ setThreshold(threshold) {
         if (numericSegments.length >= 2 && section >= 1 && section <= 99) {
           return { chapterKey: `/${parts.slice(0, -1).join("/")}`, section };
         }
+      }
+    }
+    if (parts.length >= 3) {
+      const chapterPart = parts[parts.length - 1];
+      const hasStableBookId = parts.slice(0, -1).some((p2) => /^\d{3,}$/.test(p2));
+      if (/^\d{1,6}$/.test(chapterPart) && hasStableBookId) {
+        return { chapterKey: `/${parts.join("/")}`, section: 1 };
       }
     }
     match = normalized.match(/^(.*\/\d{3,})(?:\/)?$/);
@@ -463,6 +497,19 @@ setThreshold(threshold) {
           const numericSegments = parts.slice(0, -1).filter((p2) => /^\d{3,}$/.test(p2));
           if (numericSegments.length >= 2) {
             parts[parts.length - 1] = "1";
+            u.pathname = `/${parts.join("/")}${hasTrailingSlash ? "/" : ""}`;
+            return u.toString();
+          }
+        }
+      }
+      if (parts.length >= 4) {
+        const pagePart = parts[parts.length - 1];
+        const chapterPart = parts[parts.length - 2];
+        const hasStableBookId = parts.slice(0, -2).some((p2) => /^\d{3,}$/.test(p2));
+        if (/^\d{1,2}$/.test(pagePart) && /^\d{1,6}$/.test(chapterPart) && hasStableBookId) {
+          const page = parseInt(pagePart, 10);
+          if (page > 1 && page <= 99) {
+            parts.pop();
             u.pathname = `/${parts.join("/")}${hasTrailingSlash ? "/" : ""}`;
             return u.toString();
           }
@@ -3660,6 +3707,207 @@ smartQueryAll(root, selector) {
       }
     }
   }
+  const gobooBeforeParse = async (doc2, url) => {
+    var _a;
+    try {
+      const fallbackUrl = typeof location !== "undefined" && typeof location.href === "string" ? location.href : "";
+      const pageUrl = url || ((_a = doc2.location) == null ? void 0 : _a.href) || fallbackUrl;
+      const path = pageUrl ? new URL(pageUrl).pathname : "";
+      const match = path.match(/^\/gb_(\d+)\/(\d+)\/\d+/);
+      if (match && !doc2.querySelector("#mnr-goboo-index")) {
+        const index = doc2.createElement("a");
+        index.id = "mnr-goboo-index";
+        index.href = `/ml_${match[1]}/${match[2]}`;
+        index.textContent = "目录";
+        index.style.display = "none";
+        doc2.body.appendChild(index);
+      }
+      if (typeof document !== "undefined" && doc2 === document && doc2.querySelector(".content button")) {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+      }
+      doc2.querySelectorAll(".content p").forEach((p2) => {
+        const text2 = (p2.textContent || "").replace(/\s+/g, "");
+        if (/小说免费阅读，请收藏.*goboo\.cc/i.test(text2) || /阅\|读\|模\|式\|或\|畅\|读\|模\|式/.test(text2) || /加\|载\|更\|多/.test(text2)) {
+          p2.remove();
+        }
+      });
+    } catch (e) {
+      console.warn("[MyNovelReader] Goboo beforeParse error:", e);
+    }
+  };
+  const gobooRule = {
+    id: "goboo-m",
+    name: "钢笔小说(手机版)",
+    version: 1,
+    match: {
+      pattern: "^https?://m\\.goboo\\.cc/gb_\\d+/\\d+/\\d+(?:/\\d+)?/?$"
+    },
+    content: {
+      selector: ".content",
+      remove: "script, iframe, ins, .page, .emgoouqv_b",
+      replace: [
+        {
+          pattern: "【[^】]+】小说免费阅读，请收藏\\s*钢笔小说【goboo\\.cc】",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "阅\\|读\\|模\\|式\\|或\\|畅\\|读\\|模\\|式\\|下，?无\\|法\\|显\\|示\\|本\\|章\\|节\\|全\\|部\\|内\\|容，请\\|返\\|回\\|原\\|网\\|页阅\\|读。?加\\|载\\|更\\|多",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "本章未完，点击\\[下一页\\]继续阅读-->",
+          replacement: "",
+          flags: "g"
+        }
+      ]
+    },
+    navigation: {
+      prev: ".page .left a",
+      index: '#mnr-goboo-index, .page .center a, a[href*="/ml_"]',
+      next: ".page .right a"
+    },
+    title: {
+      pattern: "^(.+?)(?:\\(\\d+/\\d+\\))?\\s+-\\s+(.+?)小说\\s+-\\s+钢笔小说$",
+      patternIndex: 1,
+      bookPatternIndex: 2
+    },
+    hooks: {
+      beforeParse: gobooBeforeParse
+    },
+    advanced: {
+      checkSection: true,
+      sectionDelayMs: 1200
+    },
+    meta: {
+      source: "builtin",
+      exampleUrl: "https://m.goboo.cc/gb_1/94443/1"
+    }
+  };
+  const __vite_glob_0_0$1 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    gobooRule
+  }, Symbol.toStringTag, { value: "Module" }));
+  function hasQidianChapterId(value) {
+    return value !== void 0 && value !== null && String(value) !== "-1" && String(value) !== "";
+  }
+  const qidianBeforeParse = (doc2, url) => {
+    var _a, _b, _c;
+    try {
+      const reviews = doc2.querySelectorAll("h1 .review");
+      reviews.forEach((el) => el.remove());
+    } catch (e) {
+      console.debug("[MNR] Failed to remove review elements:", e);
+    }
+    try {
+      const script = doc2.querySelector("#vite-plugin-ssr_pageContext");
+      if (!script) return;
+      const data = JSON.parse(script.textContent || "{}");
+      const pageData = (_b = (_a = data.pageContext) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.pageData;
+      if (!pageData) return;
+      const bookId = (_c = pageData.bookInfo) == null ? void 0 : _c.bookId;
+      const chapterInfo = pageData.chapterInfo;
+      const host = url ? new URL(url).hostname : location.hostname;
+      const navContainer = doc2.createElement("div");
+      navContainer.id = "mnr-qidian-nav";
+      navContainer.style.display = "none";
+      if (bookId && hasQidianChapterId(chapterInfo == null ? void 0 : chapterInfo.prev)) {
+        const prev = doc2.createElement("a");
+        prev.id = "mnr-qidian-prev";
+        prev.href = `//${host}/chapter/${bookId}/${chapterInfo.prev}/`;
+        prev.textContent = "上一章";
+        navContainer.appendChild(prev);
+      }
+      if (bookId && hasQidianChapterId(chapterInfo == null ? void 0 : chapterInfo.next)) {
+        const next = doc2.createElement("a");
+        next.id = "mnr-qidian-next";
+        next.href = `//${host}/chapter/${bookId}/${chapterInfo.next}/`;
+        next.textContent = "下一章";
+        navContainer.appendChild(next);
+      }
+      if (bookId) {
+        const index = doc2.createElement("a");
+        index.id = "mnr-qidian-index";
+        index.href = `//${host}/book/${bookId}/`;
+        index.textContent = "目录";
+        navContainer.appendChild(index);
+      }
+      doc2.body.appendChild(navContainer);
+    } catch (e) {
+      console.warn("[MyNovelReader] Qidian beforeParse error:", e);
+    }
+  };
+  const qidianRule = {
+    id: "qidian",
+    name: "起点中文网",
+    version: 8,
+    match: {
+      pattern: "^https?://(www|m)\\.qidian\\.com/chapter/.*"
+    },
+    content: {
+      selector: 'main[id^="c-"]',
+      remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]'
+    },
+    navigation: {
+
+prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
+      index: "#mnr-qidian-index",
+      next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")'
+    },
+    title: {
+      selector: "h1.title, h1.text-1\\.3em, #r-nav-chapter-title"
+    },
+    hooks: {
+      beforeParse: qidianBeforeParse
+    },
+    advanced: {
+      useIframe: true,
+      mutationSelector: 'main[id^="c-"]',
+      mutationChildCount: 0
+    },
+    meta: { source: "builtin" }
+  };
+  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    qidianRule
+  }, Symbol.toStringTag, { value: "Module" }));
+  const uureadRule = {
+    id: "uuread",
+    name: "UU看书",
+    version: 2,
+    match: {
+      pattern: "^https?://www\\.uuread\\.tw/chapter/\\d+/\\d+(?:_\\d+)?\\.html$"
+    },
+    content: {
+      selector: ".txt_tcontent"
+    },
+    navigation: {
+      next: "a.btn-primary:nth-child(4)",
+      prev: "a.btn-primary:nth-child(1)",
+      index: "a.btn-primary:nth-child(3)"
+    },
+    title: {
+      selector: ".chatit",
+      replace: "\\s*[（(]\\s*\\d+\\s*/\\s*\\d+\\s*[）)]\\s*$",
+      bookSelector: ".bread > li:nth-child(4) > a:nth-child(1)"
+    },
+    advanced: {
+      checkSection: true
+    },
+    meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html" }
+  };
+  const __vite_glob_0_2 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    uureadRule
+  }, Symbol.toStringTag, { value: "Module" }));
+  const modules$1 = Object.assign({ "./goboo.ts": __vite_glob_0_0$1, "./qidian.ts": __vite_glob_0_1$1, "./uuread.ts": __vite_glob_0_2 });
+  function isSiteRule(value) {
+    if (!value || typeof value !== "object") return false;
+    const maybe = value;
+    return typeof maybe.id === "string" && typeof maybe.version === "number" && !!maybe.match && typeof maybe.match.pattern === "string" && !!maybe.content && typeof maybe.content.selector === "string";
+  }
+  const siteRules = Object.keys(modules$1).sort().flatMap((path) => Object.values(modules$1[path]).filter(isSiteRule));
   const CIWEIMAO_BEFORE_PARSE = `
   try {
     const contentEl = doc.querySelector('#J_BookRead');
@@ -3900,85 +4148,210 @@ smartQueryAll(root, selector) {
     console.warn('[MyNovelReader] Ciweimao beforeParse error:', e);
   }
 `;
-  const specialRules = [
-{
-      id: "qidian",
-      name: "起点中文网",
-      version: 8,
-      match: {
-        pattern: "^https?://(www|m)\\.qidian\\.com/chapter/.*"
-      },
-      content: {
-        selector: 'main[id^="c-"]',
-        remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]'
-      },
-      navigation: {
+  const HETUSHU_BEFORE_PARSE = `
+  try {
+    const contentEl = doc.querySelector('#content');
+    if (!contentEl) return;
 
-prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
-        index: "#mnr-qidian-index",
-        next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")'
-      },
-      title: {
-        selector: "h1.title, h1.text-1\\.3em, #r-nav-chapter-title"
-      },
-      hooks: {
-beforeParse: `
-        // Remove review count from title
+    const win = doc.defaultView || (typeof window !== 'undefined' ? window : null);
+    const pageUrl = url || doc.location?.href || (typeof window !== 'undefined' ? window.location.href : '');
+    const titleEl = contentEl.querySelector('h2');
+    const watermarkSelector =
+      'acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins';
+    const normalizeWatermarkText = value =>
+      value
+        .replace(/[\\s\\u3000]+/g, '')
+        .replace(
+          /[ｗwＷW]+[.．•·。]*[hｈ][eｅ][tｔ][uｕ][sｓ][hｈ][uｕ][.．。]*(?:com|ｃｏｍ)(?:[.．。]*(?:com|ｃｏｍ))?/gi,
+          ''
+        );
+    const collectStyleText = async () => {
+      const texts = Array.from(doc.querySelectorAll('style'))
+        .map(style => style.textContent || '')
+        .filter(Boolean);
+      const links = Array.from(doc.querySelectorAll('link[rel~="stylesheet"][href]'));
+      for (const link of links) {
+        if (!helpers?.fetchText) continue;
         try {
-          const reviews = doc.querySelectorAll('h1 .review');
-          reviews.forEach(el => el.remove());
-        } catch (e) {
-          console.debug('[MNR] Failed to remove review elements:', e);
+          const href = link.getAttribute('href');
+          if (!href) continue;
+          const styleUrl = new URL(href, pageUrl).href;
+          const text = await helpers.fetchText(styleUrl, { timeoutMs: 4000, withCredentials: true });
+          if (text) texts.push(text);
+        } catch {
+          // ignore stylesheet fetch failures
         }
+      }
+      return texts.join('\\n');
+    };
+    const extractDisplayClasses = cssText => {
+      const block = new Set();
+      const none = new Set();
+      const ruleRe = /([^{}]+)\\{([^{}]+)\\}/g;
+      let match;
+      while ((match = ruleRe.exec(cssText))) {
+        const selector = match[1] || '';
+        const body = match[2] || '';
+        if (!selector.includes('#content')) continue;
+        const displayBlock = /display\\s*:\\s*block\\b/i.test(body);
+        const displayNone = /display\\s*:\\s*none\\b/i.test(body);
+        if (!displayBlock && !displayNone) continue;
+        const classRe = /#content\\s+\\.([A-Za-z0-9_-]+)/g;
+        let classMatch;
+        while ((classMatch = classRe.exec(selector))) {
+          if (displayBlock) block.add(classMatch[1]);
+          if (displayNone) none.add(classMatch[1]);
+        }
+      }
+      return { block, none };
+    };
+    const styleClasses = extractDisplayClasses(await collectStyleText());
+    const hasLayout = el => {
+      if (!win) return false;
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+    const isVisibleByClass = el => {
+      const classes = Array.from(el.classList || []);
+      if (!classes.length) return false;
+      if (classes.some(cls => styleClasses.none.has(cls))) return false;
+      if (styleClasses.block.size > 0) return classes.some(cls => styleClasses.block.has(cls));
+      return true;
+    };
+    const isVisible = el => {
+      if (!win || !hasLayout(el)) return isVisibleByClass(el);
+      const style = win.getComputedStyle(el);
+      if (style.display === 'none') return false;
+      if (style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+      if (Number(style.opacity) === 0) return false;
+      return true;
+    };
+    const cleanClone = el => {
+      const clone = el.cloneNode(true);
+      clone.querySelectorAll(watermarkSelector).forEach(node => node.remove());
+      const walker = doc.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+      textNodes.forEach(node => {
+        const cleaned = normalizeWatermarkText(node.nodeValue || '');
+        if (cleaned !== node.nodeValue) node.nodeValue = cleaned;
+      });
+      return clone;
+    };
 
-        try {
-          const script = doc.querySelector('#vite-plugin-ssr_pageContext');
-          if (script) {
-            const data = JSON.parse(script.textContent);
-            const pageData = data.pageContext?.pageProps?.pageData;
-            if (pageData) {
-              const bookId = pageData.bookInfo?.bookId;
-              const chapterInfo = pageData.chapterInfo;
-              const host = url ? new URL(url).hostname : location.hostname;
-              const navContainer = doc.createElement('div');
-              navContainer.id = 'mnr-qidian-nav';
-              navContainer.style.display = 'none';
-              if (chapterInfo?.prev && chapterInfo.prev !== -1) {
-                const prev = doc.createElement('a');
-                prev.id = 'mnr-qidian-prev';
-                prev.href = '//' + host + '/chapter/' + bookId + '/' + chapterInfo.prev + '/';
-                prev.textContent = '上一章';
-                navContainer.appendChild(prev);
-              }
-              if (chapterInfo?.next && chapterInfo.next !== -1) {
-                const next = doc.createElement('a');
-                next.id = 'mnr-qidian-next';
-                next.href = '//' + host + '/chapter/' + bookId + '/' + chapterInfo.next + '/';
-                next.textContent = '下一章';
-                navContainer.appendChild(next);
-              }
-              if (bookId) {
-                const index = doc.createElement('a');
-                index.id = 'mnr-qidian-index';
-                index.href = '//' + host + '/book/' + bookId + '/catalog/';
-                index.textContent = '目录';
-                navContainer.appendChild(index);
-              }
-              doc.body.appendChild(navContainer);
+    const rows = Array.from(contentEl.children)
+      .filter(el => el !== titleEl && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE')
+      .filter(isVisible)
+      .map((el, index) => {
+        const rect = win && hasLayout(el) ? el.getBoundingClientRect() : { top: index, left: 0 };
+        return {
+          index,
+          top: rect.top + (win ? win.scrollY : 0),
+          left: rect.left + (win ? win.scrollX : 0),
+          el,
+        };
+      })
+      .sort((a, b) => a.top - b.top || a.left - b.left || a.index - b.index);
+
+    if (!rows.length) return;
+    const fragment = doc.createDocumentFragment();
+    if (titleEl) fragment.appendChild(titleEl.cloneNode(true));
+    rows.forEach(({ el }) => {
+      const paragraph = doc.createElement('p');
+      const clone = cleanClone(el);
+      paragraph.innerHTML = clone.innerHTML || clone.textContent || '';
+      if (paragraph.textContent && paragraph.textContent.replace(/\\s+/g, '').trim()) {
+        fragment.appendChild(paragraph);
+      }
+    });
+
+    contentEl.innerHTML = '';
+    contentEl.appendChild(fragment);
+  } catch (e) {
+    console.warn('[MyNovelReader] Hetushu beforeParse error:', e);
+  }
+`;
+  function getDdxsmfAjaxContent(payload) {
+    const data = payload == null ? void 0 : payload.data;
+    if (!data || typeof data !== "object") return "";
+    const content = data.content;
+    return typeof content === "string" ? content : "";
+  }
+  const ddxsmfBeforeParse = async (doc2, url, helpers) => {
+    var _a;
+    try {
+      const contentEl = doc2.querySelector("#chapter-content");
+      if (!contentEl) return;
+      contentEl.setAttribute("data-mnr-loading", "1");
+      const currentUrl = url || ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
+      const urlObj = new URL(currentUrl);
+      const parts = urlObj.pathname.split("/").filter(Boolean);
+      try {
+        if (parts[0] === "read" && parts[1] && parts[2]) {
+          const aid = parseInt(parts[1], 10);
+          const cid = parseInt(parts[2].split(".")[0], 10);
+          if (aid && cid && (helpers == null ? void 0 : helpers.fetchJson)) {
+            const apiUrl = new URL("/modules/article/ajax_chapter.php", urlObj.origin);
+            apiUrl.searchParams.set("aid", String(aid));
+            apiUrl.searchParams.set("cid", String(cid));
+            const headers = {
+              "X-Requested-With": "XMLHttpRequest"
+            };
+            if (currentUrl) {
+              headers.Referer = currentUrl;
+            }
+            const payload = await helpers.fetchJson(apiUrl.toString(), {
+              timeoutMs: 4e3,
+              headers
+            });
+            const html2 = getDdxsmfAjaxContent(payload);
+            if (html2) {
+              contentEl.innerHTML = html2;
             }
           }
-        } catch (e) {
-          console.warn('[MyNovelReader] Qidian beforeParse error:', e);
         }
-      `
-      },
-      advanced: {
-        useIframe: true,
-        mutationSelector: 'main[id^="c-"]',
-        mutationChildCount: 0
-      },
-      meta: { source: "builtin" }
-    },
+      } catch (e) {
+        console.warn("[MyNovelReader] ddxsmf content fetch error:", e);
+      } finally {
+        contentEl.removeAttribute("data-mnr-loading");
+      }
+      const scripts = Array.from(doc2.querySelectorAll("script")).map((script) => script.textContent || "").join("\n");
+      const loadIndex = scripts.indexOf("function loadChapter");
+      if (loadIndex !== -1) {
+        const rest = scripts.slice(loadIndex);
+        const endIndex = rest.indexOf("function initPaginationButtons");
+        const block = endIndex !== -1 ? rest.slice(0, endIndex) : rest;
+        const prevMatch = block.match(
+          /direction\s*===\s*['"]prev['"][\s\S]*?chapterUrl\s*=\s*['"]([^'"]*)['"]/
+        );
+        const nextMatch = block.match(/else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]*)['"]/);
+        const normalize = (value) => {
+          var _a2;
+          try {
+            return new URL(value, ((_a2 = doc2.location) == null ? void 0 : _a2.href) || window.location.href).href;
+          } catch {
+            return value;
+          }
+        };
+        const prevRaw = (prevMatch == null ? void 0 : prevMatch[1]) || "";
+        const nextRaw = (nextMatch == null ? void 0 : nextMatch[1]) || "";
+        const prevUrl = prevRaw && prevRaw !== "#" ? normalize(prevRaw) : "";
+        const nextUrl = nextRaw && nextRaw !== "#" ? normalize(nextRaw) : "";
+        const prevEl = doc2.querySelector(".page-prev");
+        const nextEl = doc2.querySelector(".page-next");
+        if (prevEl && prevUrl && prevUrl !== "#") prevEl.setAttribute("href", prevUrl);
+        if (nextEl && nextUrl && nextUrl !== "#") nextEl.setAttribute("href", nextUrl);
+      }
+      const indexEl = doc2.querySelector(".page-index");
+      const indexHref = indexEl == null ? void 0 : indexEl.getAttribute("data-href");
+      if (indexEl && indexHref) {
+        indexEl.setAttribute("href", indexHref);
+      }
+    } catch (e) {
+      console.warn("[MyNovelReader] ddxsmf beforeParse error:", e);
+    }
+  };
+  const specialRules = [
 {
       id: "chuangshi",
       name: "创世中文网",
@@ -4134,6 +4507,9 @@ beforeParse: `
       title: {
         bookSelector: "#left h3"
       },
+      hooks: {
+        beforeParse: HETUSHU_BEFORE_PARSE
+      },
       advanced: {
         useIframe: true
       },
@@ -4256,83 +4632,7 @@ beforeParse: `
         selector: "h1"
       },
       hooks: {
-        beforeParse: `
-        try {
-          const contentEl = doc.querySelector('#chapter-content');
-          if (contentEl) {
-            contentEl.setAttribute('data-mnr-loading', '1');
-            const currentUrl = url || doc.location?.href || window.location.href;
-            const urlObj = new URL(currentUrl);
-            const parts = urlObj.pathname.split('/').filter(Boolean);
-            try {
-              if (parts[0] === 'read' && parts[1] && parts[2]) {
-                const aid = parseInt(parts[1], 10);
-                const cid = parseInt(parts[2].split('.')[0], 10);
-                if (aid && cid && helpers?.fetchJson) {
-                  const apiUrl = new URL('/modules/article/ajax_chapter.php', urlObj.origin);
-                  apiUrl.searchParams.set('aid', String(aid));
-                  apiUrl.searchParams.set('cid', String(cid));
-                  const headers = {
-                    'X-Requested-With': 'XMLHttpRequest',
-                  };
-                  if (currentUrl) {
-                    headers.Referer = currentUrl;
-                  }
-                  const payload = await helpers.fetchJson(apiUrl.toString(), {
-                    timeoutMs: 4000,
-                    headers,
-                  });
-                  const html = payload?.data?.content;
-                  if (html) {
-                    contentEl.innerHTML = html;
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn('[MyNovelReader] ddxsmf content fetch error:', e);
-            } finally {
-              contentEl.removeAttribute('data-mnr-loading');
-            }
-          }
-          const scripts = Array.from(doc.querySelectorAll('script'))
-            .map(script => script.textContent || '')
-            .join('\\n');
-          const loadIndex = scripts.indexOf('function loadChapter');
-          if (loadIndex !== -1) {
-            const rest = scripts.slice(loadIndex);
-            const endIndex = rest.indexOf('function initPaginationButtons');
-            const block = endIndex !== -1 ? rest.slice(0, endIndex) : rest;
-            const prevMatch = block.match(
-              /direction\\s*===\\s*['"]prev['"][\\s\\S]*?chapterUrl\\s*=\\s*['"]([^'"]*)['"]/
-            );
-            const nextMatch = block.match(
-              /else\\s*\\{[\\s\\S]*?chapterUrl\\s*=\\s*['"]([^'"]*)['"]/
-            );
-            const normalize = value => {
-              try {
-                return new URL(value, doc.location?.href || window.location.href).href;
-              } catch {
-                return value;
-              }
-            };
-            const prevRaw = prevMatch?.[1] || '';
-            const nextRaw = nextMatch?.[1] || '';
-            const prevUrl = prevRaw && prevRaw !== '#' ? normalize(prevRaw) : '';
-            const nextUrl = nextRaw && nextRaw !== '#' ? normalize(nextRaw) : '';
-            const prevEl = doc.querySelector('.page-prev');
-            const nextEl = doc.querySelector('.page-next');
-            if (prevEl && prevUrl && prevUrl !== '#') prevEl.setAttribute('href', prevUrl);
-            if (nextEl && nextUrl && nextUrl !== '#') nextEl.setAttribute('href', nextUrl);
-          }
-          const indexEl = doc.querySelector('.page-index');
-          const indexHref = indexEl?.getAttribute('data-href');
-          if (indexEl && indexHref) {
-            indexEl.setAttribute('href', indexHref);
-          }
-        } catch (e) {
-          console.warn('[MyNovelReader] ddxsmf beforeParse error:', e);
-        }
-      `
+        beforeParse: ddxsmfBeforeParse
       },
       advanced: {
         mutationSelector: "#chapter-content",
@@ -4809,30 +5109,6 @@ selector: ".readcotent, #contentbox, #content, #chaptercontent, #chapter_content
       },
       meta: { source: "builtin", exampleUrl: "https://www.qisxs.com/shenhaiyujin/7570735.html" }
     },
-{
-      id: "uuread",
-      name: "UU看书",
-      version: 1,
-      match: {
-        pattern: "https://www\\.uuread\\.tw/chapter/\\d+/\\d+(_\\d+)?\\.html"
-      },
-      content: {
-        selector: ".txt_tcontent"
-      },
-      navigation: {
-        next: "a.btn-primary:nth-child(4)",
-        prev: "a.btn-primary:nth-child(1)",
-        index: "a.btn-primary:nth-child(3)"
-      },
-      title: {
-        selector: ".chatit",
-        bookSelector: ".bread > li:nth-child(4) > a:nth-child(1)"
-      },
-      advanced: {
-        checkSection: true
-      },
-      meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/11681/3006418.html" }
-    },
 
 {
       id: "xs321",
@@ -5063,7 +5339,7 @@ checkSection: true
       }
     }
   ];
-  const builtInRules = [...specialRules, ...simplifiedRules];
+  const builtInRules = [...siteRules, ...specialRules, ...simplifiedRules];
   const STORAGE_KEYS = {
     USER_RULES: "mnr_user_rules",
     RULE_PREFIX: "mnr_rule_",
@@ -6274,14 +6550,18 @@ smartSelect(doc2, selector) {
     }
     async runBeforeParseHook(rule, doc2, url) {
       var _a;
-      if (!((_a = rule.hooks) == null ? void 0 : _a.beforeParse)) return;
+      const beforeParse = (_a = rule.hooks) == null ? void 0 : _a.beforeParse;
+      if (!beforeParse) return;
       try {
-        const hookCode = rule.hooks.beforeParse;
+        if (typeof beforeParse === "function") {
+          await beforeParse(doc2, url, this.getHookHelpers());
+          return;
+        }
         const fn = new Function(
           "doc",
           "url",
           "helpers",
-          `return (async () => { ${hookCode} })();`
+          `return (async () => { ${beforeParse} })();`
         );
         await fn(doc2, url, this.getHookHelpers());
       } catch (e) {
@@ -6351,6 +6631,166 @@ smartSelect(doc2, selector) {
     }
     return parserInstance;
   }
+  function enableRightClick() {
+    const handler = (e) => {
+      e.stopPropagation();
+      return true;
+    };
+    document.addEventListener("contextmenu", handler, true);
+    const originalOnContextMenu = document.oncontextmenu;
+    document.oncontextmenu = null;
+    if (document.body) {
+      document.body.oncontextmenu = null;
+    }
+    document.querySelectorAll("[oncontextmenu]").forEach((el) => {
+      el.removeAttribute("oncontextmenu");
+    });
+    return () => {
+      document.removeEventListener("contextmenu", handler, true);
+      document.oncontextmenu = originalOnContextMenu;
+    };
+  }
+  function enableSelection() {
+    const handler = (e) => {
+      e.stopPropagation();
+      return true;
+    };
+    document.addEventListener("selectstart", handler, true);
+    const style = document.createElement("style");
+    style.id = "mnr-enable-selection";
+    style.textContent = `
+      * {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+    `;
+    document.head.appendChild(style);
+    document.querySelectorAll("[onselectstart]").forEach((el) => {
+      el.removeAttribute("onselectstart");
+    });
+    document.querySelectorAll("[unselectable]").forEach((el) => {
+      el.removeAttribute("unselectable");
+    });
+    return () => {
+      document.removeEventListener("selectstart", handler, true);
+      style.remove();
+    };
+  }
+  function enableCopy() {
+    const handler = (e) => {
+      e.stopPropagation();
+      return true;
+    };
+    document.addEventListener("copy", handler, true);
+    document.addEventListener("cut", handler, true);
+    document.querySelectorAll("[oncopy], [oncut]").forEach((el) => {
+      el.removeAttribute("oncopy");
+      el.removeAttribute("oncut");
+    });
+    return () => {
+      document.removeEventListener("copy", handler, true);
+      document.removeEventListener("cut", handler, true);
+    };
+  }
+  function unlockKeyboard() {
+    const handler = (e) => {
+      const ke = e;
+      if (isMnrEvent(ke)) {
+        return;
+      }
+      ke.stopImmediatePropagation();
+      ke.stopPropagation();
+    };
+    const types = ["keydown", "keyup", "keypress"];
+    types.forEach((type) => document.addEventListener(type, handler, true));
+    const originalDocumentHandlers = {
+      keydown: document.onkeydown,
+      keyup: document.onkeyup,
+      keypress: document.onkeypress
+    };
+    const originalWindowHandlers = {
+      keydown: window.onkeydown,
+      keyup: window.onkeyup,
+      keypress: window.onkeypress
+    };
+    const originalBodyHandlers = document.body ? {
+      keydown: document.body.onkeydown,
+      keyup: document.body.onkeyup,
+      keypress: document.body.onkeypress
+    } : null;
+    const originalHtmlHandlers = {
+      keydown: document.documentElement.onkeydown,
+      keyup: document.documentElement.onkeyup,
+      keypress: document.documentElement.onkeypress
+    };
+    document.onkeydown = null;
+    document.onkeyup = null;
+    document.onkeypress = null;
+    window.onkeydown = null;
+    window.onkeyup = null;
+    window.onkeypress = null;
+    document.documentElement.onkeydown = null;
+    document.documentElement.onkeyup = null;
+    document.documentElement.onkeypress = null;
+    if (document.body) {
+      document.body.onkeydown = null;
+      document.body.onkeyup = null;
+      document.body.onkeypress = null;
+    }
+    document.querySelectorAll("[onkeydown], [onkeyup], [onkeypress]").forEach((el) => {
+      el.removeAttribute("onkeydown");
+      el.removeAttribute("onkeyup");
+      el.removeAttribute("onkeypress");
+    });
+    return () => {
+      types.forEach((type) => document.removeEventListener(type, handler, true));
+      document.onkeydown = originalDocumentHandlers.keydown;
+      document.onkeyup = originalDocumentHandlers.keyup;
+      document.onkeypress = originalDocumentHandlers.keypress;
+      window.onkeydown = originalWindowHandlers.keydown;
+      window.onkeyup = originalWindowHandlers.keyup;
+      window.onkeypress = originalWindowHandlers.keypress;
+      document.documentElement.onkeydown = originalHtmlHandlers.keydown;
+      document.documentElement.onkeyup = originalHtmlHandlers.keyup;
+      document.documentElement.onkeypress = originalHtmlHandlers.keypress;
+      if (document.body && originalBodyHandlers) {
+        document.body.onkeydown = originalBodyHandlers.keydown;
+        document.body.onkeyup = originalBodyHandlers.keyup;
+        document.body.onkeypress = originalBodyHandlers.keypress;
+      }
+    };
+  }
+  function isMnrEvent(e) {
+    var _a, _b;
+    const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+    for (const node of path) {
+      if (node instanceof ShadowRoot) {
+        const host = node.host;
+        if ((_a = host == null ? void 0 : host.id) == null ? void 0 : _a.startsWith("mnr-")) return true;
+      }
+      if (node instanceof Element) {
+        if ((_b = node.id) == null ? void 0 : _b.startsWith("mnr-")) return true;
+        for (const cls of Array.from(node.classList)) {
+          if (cls.startsWith("mnr-")) return true;
+        }
+      }
+    }
+    return false;
+  }
+  const DEFAULT_PROTECTION_OPTIONS = {
+    blockRedirects: true,
+    enableRightClick: true,
+    enableSelection: true,
+    enableCopy: true,
+    unlockKeyboard: true,
+    blockPopups: true,
+    removeEventHijacking: true,
+    blockVisibilityDetection: true,
+    clearTimers: true,
+    cleanupScripts: false
+  };
   const isCloudflareChallenge = (doc2 = document) => {
     var _a;
     const pathname = ((_a = doc2.location) == null ? void 0 : _a.pathname) || window.location.pathname;
@@ -6366,60 +6806,413 @@ smartSelect(doc2, selector) {
     ];
     return doc2.querySelector(selectors.join(",")) !== null;
   };
-  const DEFAULT_OPTIONS$1 = {
-    blockRedirects: true,
-    enableRightClick: true,
-    enableSelection: true,
-    enableCopy: true,
-    unlockKeyboard: true,
-    blockPopups: true,
-    removeEventHijacking: true,
-    blockVisibilityDetection: true,
-    clearTimers: true,
-    cleanupScripts: false
-  };
+  function withDefaultProtectionOptions(options = {}) {
+    return { ...DEFAULT_PROTECTION_OPTIONS, ...options };
+  }
+  function getEffectiveProtectionOptions(options, doc2 = document) {
+    if (!isCloudflareChallenge(doc2)) {
+      return options;
+    }
+    return {
+      ...options,
+      blockRedirects: false,
+      clearTimers: false,
+      removeEventHijacking: false
+    };
+  }
+  function blockPopups() {
+    const originalOpen = window.open;
+    window.open = (url, target, features) => {
+      var _a;
+      const isTrusted = (_a = window.event) == null ? void 0 : _a.isTrusted;
+      if (isTrusted) {
+        const urlStr = (url == null ? void 0 : url.toString()) || "";
+        try {
+          const targetUrl = new URL(urlStr, window.location.href);
+          if (targetUrl.origin === window.location.origin) {
+            return originalOpen.call(window, url, target, features);
+          }
+        } catch {
+        }
+      }
+      return null;
+    };
+    return () => {
+      window.open = originalOpen;
+    };
+  }
+  function blockRedirects(options = {}) {
+    var _a, _b;
+    const metaRefresh = document.querySelectorAll('meta[http-equiv="refresh"]');
+    metaRefresh.forEach((meta) => meta.remove());
+    const originalAssign = window.location.assign.bind(window.location);
+    const originalReplace = window.location.replace.bind(window.location);
+    const isAllowedNavigation = (url) => {
+      try {
+        const targetUrl = new URL(url, window.location.href);
+        const cloudflareHosts = ["challenges.cloudflare.com", "captcha.cloudflare.com"];
+        if (cloudflareHosts.some((h2) => targetUrl.hostname === h2)) {
+          return true;
+        }
+        if (targetUrl.origin === window.location.origin && targetUrl.pathname.startsWith("/cdn-cgi/")) {
+          return true;
+        }
+        if (targetUrl.origin === window.location.origin) {
+          const blockedPatterns = [
+            /(?:^|[/_-])ads?(?:[/_-]|$)/i,
+            /(?:^|[/_-])click[_-]?track/i,
+            /(?:^|[/_-])redirect(?:[/_-]|$)/i,
+            /(?:^|[/_-])jump[_-]?to/i,
+            /(?:^|[/_-])go[_-]?to[_-]?url/i,
+            /(?:^|[/_-])link[_-]?out/i,
+            /(?:^|[/_-])external(?:[/_-]|$)/i
+          ];
+          return !blockedPatterns.some((p2) => p2.test(targetUrl.pathname));
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+    let locationOverrideSucceeded = false;
+    const locationProto = Object.getPrototypeOf(window.location);
+    const originalHrefDesc = locationProto ? Object.getOwnPropertyDescriptor(locationProto, "href") : null;
+    try {
+      const target = locationProto || window.location;
+      Object.defineProperty(target, "assign", {
+        value: (url) => {
+          if (isAllowedNavigation(url)) originalAssign(url);
+        },
+        writable: true,
+        configurable: true
+      });
+      Object.defineProperty(target, "replace", {
+        value: (url) => {
+          if (isAllowedNavigation(url)) originalReplace(url);
+        },
+        writable: true,
+        configurable: true
+      });
+      if (locationProto) {
+        if ((originalHrefDesc == null ? void 0 : originalHrefDesc.set) && originalHrefDesc.get) {
+          Object.defineProperty(locationProto, "href", {
+            get: originalHrefDesc.get,
+            set: function(url) {
+              var _a2;
+              if (isAllowedNavigation(url)) {
+                (_a2 = originalHrefDesc.set) == null ? void 0 : _a2.call(this, url);
+              }
+            },
+            configurable: true
+          });
+        }
+      }
+      locationOverrideSucceeded = true;
+    } catch {
+    }
+    const originalSetTimeout = window.setTimeout;
+    const originalSetInterval = window.setInterval;
+    const suspiciousPatterns = [/location\s*[.=]/i, /window\.open/i, /href\s*=/i, /navigate/i];
+    const isSuspiciousCallback = (callback) => {
+      if (typeof callback === "string") {
+        return suspiciousPatterns.some((p2) => p2.test(callback));
+      }
+      return false;
+    };
+    window.setTimeout = (callback, delay, ...args) => {
+      if (isSuspiciousCallback(callback) && (delay || 0) > 0) {
+        return 0;
+      }
+      return originalSetTimeout(callback, delay, ...args);
+    };
+    window.setInterval = (callback, delay, ...args) => {
+      if (isSuspiciousCallback(callback)) {
+        return 0;
+      }
+      return originalSetInterval(callback, delay, ...args);
+    };
+    const isBlockedExternalUrl = (url, kind) => {
+      if (url.protocol !== "http:" && url.protocol !== "https:") return true;
+      if (url.origin === window.location.origin) return false;
+      const cfHosts = ["challenges.cloudflare.com", "captcha.cloudflare.com"];
+      if (cfHosts.some((h2) => url.hostname === h2)) return false;
+      if (url.pathname.startsWith("/cdn-cgi/")) return false;
+      return kind === "script" || kind === "iframe";
+    };
+    const isHighEntropyPath = (pathname) => {
+      return /^\/[A-Za-z0-9]{6,12}\/[A-Za-z0-9]{6,24}\.js(?:$|[?#])/.test(pathname);
+    };
+    const isLikelyAdScriptPath = (srcUrl) => {
+      if (srcUrl.origin !== window.location.origin) return true;
+      const path = srcUrl.pathname || "";
+      if (path.startsWith("/static/") || path.startsWith("/js/") || path.startsWith("/assets/")) {
+        return false;
+      }
+      return isHighEntropyPath(path);
+    };
+    const NodeCtor = window.Node;
+    const ScriptCtor = window.HTMLScriptElement;
+    const IFrameCtor = window.HTMLIFrameElement;
+    const ElementCtor = window.Element;
+    const DocumentFragmentCtor = window.DocumentFragment;
+    const originalAppendChild = NodeCtor.prototype.appendChild;
+    const originalInsertBefore = NodeCtor.prototype.insertBefore;
+    const shouldBlockNode = (node) => {
+      const checkScript = (script) => {
+        const src = script.getAttribute("src") || script.src || "";
+        if (!src) return false;
+        let u;
+        try {
+          u = new URL(src, window.location.href);
+        } catch {
+          return false;
+        }
+        if (isBlockedExternalUrl(u, "script")) return true;
+        if (options.cleanupScripts && isLikelyAdScriptPath(u)) return true;
+        return false;
+      };
+      const checkIFrame = (iframe) => {
+        const src = iframe.getAttribute("src") || iframe.src || "";
+        if (!src) return false;
+        let u;
+        try {
+          u = new URL(src, window.location.href);
+        } catch {
+          return false;
+        }
+        if (isBlockedExternalUrl(u, "iframe")) return true;
+        return false;
+      };
+      if (ScriptCtor && node instanceof ScriptCtor) return checkScript(node);
+      if (IFrameCtor && node instanceof IFrameCtor) return checkIFrame(node);
+      if (DocumentFragmentCtor && node instanceof DocumentFragmentCtor || ElementCtor && node instanceof ElementCtor) {
+        const scripts = node.querySelectorAll("script[src]");
+        for (const s of Array.from(scripts)) {
+          if (ScriptCtor && s instanceof ScriptCtor && checkScript(s)) return true;
+        }
+        const iframes = node.querySelectorAll("iframe[src]");
+        for (const f of Array.from(iframes)) {
+          if (IFrameCtor && f instanceof IFrameCtor && checkIFrame(f)) return true;
+        }
+      }
+      return false;
+    };
+    NodeCtor.prototype.appendChild = function(node) {
+      if (shouldBlockNode(node)) return node;
+      return originalAppendChild.call(this, node);
+    };
+    NodeCtor.prototype.insertBefore = function(newNode, referenceNode) {
+      if (shouldBlockNode(newNode)) return newNode;
+      return originalInsertBefore.call(this, newNode, referenceNode);
+    };
+    const originalWrite = (_a = document.write) == null ? void 0 : _a.bind(document);
+    const originalWriteln = (_b = document.writeln) == null ? void 0 : _b.bind(document);
+    let writeBuffer = "";
+    let isBufferingWrite = false;
+    const MAX_BUFFER_LEN = 4096;
+    const bufferLooksLikeScriptTag = (buf) => /<script/i.test(buf);
+    const bufferIsClosed = (buf) => /<\/script>/i.test(buf) || /<\\\/script>/i.test(buf);
+    const maybeExtractScriptSrc = (buf) => {
+      const m = buf.match(/<script[^>]*\ssrc\s*=\s*['"]([^'"]+)['"][^>]*>/i);
+      return (m == null ? void 0 : m[1]) || null;
+    };
+    const flushWriteBuffer = (writer) => {
+      if (!writeBuffer) return;
+      writer(writeBuffer);
+      writeBuffer = "";
+      isBufferingWrite = false;
+    };
+    const handleWriteLike = (writer, args) => {
+      if (!originalWrite || !originalWriteln) return writer(String(args.join("")));
+      const chunk = args.map((a) => String(a)).join("");
+      const startsScriptLike = /<script/i.test(chunk) || isBufferingWrite && bufferLooksLikeScriptTag(writeBuffer);
+      if (!isBufferingWrite && startsScriptLike) {
+        isBufferingWrite = true;
+        writeBuffer = "";
+      }
+      if (!isBufferingWrite) {
+        writer(chunk);
+        return;
+      }
+      writeBuffer += chunk;
+      if (writeBuffer.length > MAX_BUFFER_LEN) {
+        flushWriteBuffer(writer);
+        return;
+      }
+      if (!bufferIsClosed(writeBuffer)) return;
+      const src = maybeExtractScriptSrc(writeBuffer);
+      if (src) {
+        try {
+          const u = new URL(src, window.location.href);
+          const shouldBlock = isBlockedExternalUrl(u, "script") || isLikelyAdScriptPath(u);
+          if (shouldBlock) {
+            writeBuffer = "";
+            isBufferingWrite = false;
+            return;
+          }
+        } catch {
+        }
+      }
+      flushWriteBuffer(writer);
+    };
+    if (options.cleanupScripts && originalWrite && originalWriteln) {
+      document.write = (...args) => handleWriteLike(originalWrite, args);
+      document.writeln = (...args) => handleWriteLike(originalWriteln, args);
+    }
+    return () => {
+      if (locationOverrideSucceeded) {
+        try {
+          const target = locationProto || window.location;
+          Object.defineProperty(target, "assign", { value: originalAssign, configurable: true });
+          Object.defineProperty(target, "replace", { value: originalReplace, configurable: true });
+          if (locationProto && originalHrefDesc) {
+            Object.defineProperty(locationProto, "href", originalHrefDesc);
+          }
+        } catch {
+        }
+      }
+      window.setTimeout = originalSetTimeout;
+      window.setInterval = originalSetInterval;
+      NodeCtor.prototype.appendChild = originalAppendChild;
+      NodeCtor.prototype.insertBefore = originalInsertBefore;
+      if (originalWrite) {
+        document.write = originalWrite;
+      }
+      if (originalWriteln) {
+        document.writeln = originalWriteln;
+      }
+    };
+  }
+  function clearAllTimers() {
+    const highestId = window.setInterval(() => {
+    }, 0);
+    for (let i = 0; i <= highestId; i++) {
+      window.clearInterval(i);
+    }
+    const highestTimeoutId = window.setTimeout(() => {
+    }, 0);
+    for (let i = 0; i <= highestTimeoutId; i++) {
+      window.clearTimeout(i);
+    }
+  }
+  function removeOverlays() {
+    if (!document.body) return;
+    const hideElement = (el) => {
+      el.style.setProperty("display", "none", "important");
+      el.style.setProperty("pointer-events", "none", "important");
+    };
+    const overlaySelectors = [
+'[class*="overlay"]',
+      '[class*="modal"]',
+      '[class*="popup"]',
+      '[class*="mask"]',
+      '[class*="blocker"]',
+      '[id*="overlay"]',
+      '[id*="modal"]',
+      '[id*="popup"]'
+];
+    document.querySelectorAll(overlaySelectors.join(", ")).forEach((el) => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      const isFullPage = rect.width >= window.innerWidth * 0.8 && rect.height >= window.innerHeight * 0.8;
+      const isFixed = style.position === "fixed" || style.position === "absolute";
+      const zIndex = parseInt(style.zIndex, 10);
+      const hasHighZIndex = Number.isFinite(zIndex) && zIndex > 1e3;
+      if (isFullPage && isFixed && hasHighZIndex) {
+        hideElement(el);
+      }
+    });
+    const isTransparentColor = (color) => {
+      const c = (color || "").trim().toLowerCase();
+      return c === "transparent" || c === "rgba(0, 0, 0, 0)" || c === "rgba(0,0,0,0)";
+    };
+    const isMnrHost = (el) => el.id.startsWith("mnr-");
+    const hasVisibleContent = (el) => {
+      const text2 = (el.textContent || "").trim();
+      if (text2.length > 0) return true;
+      return el.querySelector("img, svg, canvas, video") !== null;
+    };
+    const looksLikeClickLayer = (el) => {
+      if (isMnrHost(el)) return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      if (style.pointerEvents === "none") return false;
+      if (style.position !== "fixed" && style.position !== "absolute") return false;
+      const zIndex = parseInt(style.zIndex, 10);
+      if (!Number.isFinite(zIndex) || zIndex <= 1e3) return false;
+      const rect = el.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return false;
+      const minWidth = window.innerWidth * 0.6;
+      const minHeight = 40;
+      const maxHeight = window.innerHeight * 0.6;
+      if (rect.width < minWidth || rect.height < minHeight || rect.height > maxHeight) return false;
+      const nearTop = rect.top <= 2;
+      const nearBottom = rect.bottom >= window.innerHeight - 2;
+      if (!nearTop && !nearBottom) return false;
+      if (hasVisibleContent(el)) return false;
+      const rawOpacity = style.opacity || el.style.opacity || "1";
+      const opacity = parseFloat(rawOpacity);
+      const bg = style.backgroundColor || el.style.backgroundColor || "";
+      const invisible = Number.isFinite(opacity) && opacity <= 0.08 || isTransparentColor(bg);
+      if (!invisible) return false;
+      const AnchorCtor = window.HTMLAnchorElement;
+      if (AnchorCtor && el instanceof AnchorCtor) return true;
+      if (el.tagName.toLowerCase() === "a" && el.hasAttribute("href")) return true;
+      if (el.querySelector("a[href]")) return true;
+      if (el.hasAttribute("onclick")) return true;
+      const maybeOnclick = el.onclick;
+      if (typeof maybeOnclick === "function") return true;
+      return false;
+    };
+    const candidates = Array.from(
+      document.body.querySelectorAll("a, div, span, section, header, footer, nav")
+    );
+    for (const el of candidates) {
+      if (looksLikeClickLayer(el)) {
+        hideElement(el);
+      }
+    }
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+  }
   class SiteProtection {
     constructor(options = {}) {
       this.cleanupFunctions = [];
       this.isActive = false;
-      this.options = { ...DEFAULT_OPTIONS$1, ...options };
+      this.options = withDefaultProtectionOptions(options);
     }
 activate(options) {
       if (options) {
-        this.options = { ...DEFAULT_OPTIONS$1, ...options };
+        this.options = withDefaultProtectionOptions(options);
       }
       if (this.isActive) {
         if (!options) return;
         this.deactivate();
       }
       this.isActive = true;
-      const isChallenge = isCloudflareChallenge();
-      const effectiveOptions = isChallenge ? {
-        ...this.options,
-        blockRedirects: false,
-        clearTimers: false,
-        removeEventHijacking: false
-      } : this.options;
+      const effectiveOptions = getEffectiveProtectionOptions(this.options);
       if (effectiveOptions.clearTimers) {
-        this.clearTimers();
+        clearAllTimers();
       }
       if (effectiveOptions.blockRedirects) {
-        this.blockRedirects();
+        this.cleanupFunctions.push(
+          blockRedirects({ cleanupScripts: !!effectiveOptions.cleanupScripts })
+        );
       }
       if (effectiveOptions.enableRightClick) {
-        this.enableRightClick();
+        this.cleanupFunctions.push(enableRightClick());
       }
       if (effectiveOptions.enableSelection) {
-        this.enableSelection();
+        this.cleanupFunctions.push(enableSelection());
       }
       if (effectiveOptions.enableCopy) {
-        this.enableCopy();
+        this.cleanupFunctions.push(enableCopy());
       }
       if (effectiveOptions.unlockKeyboard) {
-        this.unlockKeyboard();
+        this.cleanupFunctions.push(unlockKeyboard());
       }
       if (effectiveOptions.blockPopups) {
-        this.blockPopups();
+        this.cleanupFunctions.push(blockPopups());
       }
       if (effectiveOptions.cleanupScripts) {
         this.cleanupScripts();
@@ -6437,415 +7230,38 @@ deactivate() {
       this.cleanupFunctions = [];
       this.isActive = false;
     }
-blockRedirects() {
-      var _a, _b;
-      const metaRefresh = document.querySelectorAll('meta[http-equiv="refresh"]');
-      metaRefresh.forEach((meta) => meta.remove());
-      const originalAssign = window.location.assign.bind(window.location);
-      const originalReplace = window.location.replace.bind(window.location);
-      const isAllowedNavigation = (url) => {
+removeOverlays() {
+      removeOverlays();
+    }
+cleanupScripts() {
+      const suspiciousPatterns = [
+        /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i,
+        /(^|[\\/._-])ads([\\/._-]|$)/i,
+        /doubleclick/i,
+        /googlesyndication|googletagmanager|gtag/i,
+        /google-analytics/i,
+        /(^|[\\/._-])(analytics|track(er|ing)?|pixel|beacon|telemetry)([\\/._-]|$)/i
+      ];
+      const siteHost = window.location.hostname;
+      const isSameSite = (host) => {
+        return host === siteHost || host.endsWith(`.${siteHost}`);
+      };
+      document.querySelectorAll("script[src]").forEach((script) => {
+        const src = script.getAttribute("src") || "";
+        let url;
         try {
-          const targetUrl = new URL(url, window.location.href);
-          const cloudflareHosts = ["challenges.cloudflare.com", "captcha.cloudflare.com"];
-          if (cloudflareHosts.some((h2) => targetUrl.hostname === h2)) {
-            return true;
-          }
-          if (targetUrl.origin === window.location.origin && targetUrl.pathname.startsWith("/cdn-cgi/")) {
-            return true;
-          }
-          if (targetUrl.origin === window.location.origin) {
-            const blockedPatterns = [
-              /(?:^|[/_-])ads?(?:[/_-]|$)/i,
-              /(?:^|[/_-])click[_-]?track/i,
-              /(?:^|[/_-])redirect(?:[/_-]|$)/i,
-              /(?:^|[/_-])jump[_-]?to/i,
-              /(?:^|[/_-])go[_-]?to[_-]?url/i,
-              /(?:^|[/_-])link[_-]?out/i,
-              /(?:^|[/_-])external(?:[/_-]|$)/i
-            ];
-            return !blockedPatterns.some((p2) => p2.test(targetUrl.pathname));
-          }
-          return false;
+          url = new URL(src, window.location.href);
         } catch {
-          return false;
-        }
-      };
-      let locationOverrideSucceeded = false;
-      const locationProto = Object.getPrototypeOf(window.location);
-      const originalHrefDesc = locationProto ? Object.getOwnPropertyDescriptor(locationProto, "href") : null;
-      try {
-        const target = locationProto || window.location;
-        Object.defineProperty(target, "assign", {
-          value: (url) => {
-            if (isAllowedNavigation(url)) originalAssign(url);
-          },
-          writable: true,
-          configurable: true
-        });
-        Object.defineProperty(target, "replace", {
-          value: (url) => {
-            if (isAllowedNavigation(url)) originalReplace(url);
-          },
-          writable: true,
-          configurable: true
-        });
-        if (locationProto) {
-          if ((originalHrefDesc == null ? void 0 : originalHrefDesc.set) && originalHrefDesc.get) {
-            Object.defineProperty(locationProto, "href", {
-              get: originalHrefDesc.get,
-              set: function(url) {
-                var _a2;
-                if (isAllowedNavigation(url)) {
-                  (_a2 = originalHrefDesc.set) == null ? void 0 : _a2.call(this, url);
-                }
-              },
-              configurable: true
-            });
-          }
-        }
-        locationOverrideSucceeded = true;
-      } catch {
-      }
-      const originalSetTimeout = window.setTimeout;
-      const originalSetInterval = window.setInterval;
-      const suspiciousPatterns = [/location\s*[.=]/i, /window\.open/i, /href\s*=/i, /navigate/i];
-      const isSuspiciousCallback = (callback) => {
-        if (typeof callback === "string") {
-          return suspiciousPatterns.some((p2) => p2.test(callback));
-        }
-        return false;
-      };
-      window.setTimeout = (callback, delay, ...args) => {
-        if (isSuspiciousCallback(callback) && (delay || 0) > 0) {
-          return 0;
-        }
-        return originalSetTimeout(callback, delay, ...args);
-      };
-      window.setInterval = (callback, delay, ...args) => {
-        if (isSuspiciousCallback(callback)) {
-          return 0;
-        }
-        return originalSetInterval(callback, delay, ...args);
-      };
-      const isBlockedExternalUrl = (url, kind) => {
-        if (url.protocol !== "http:" && url.protocol !== "https:") return true;
-        if (url.origin === window.location.origin) return false;
-        const cfHosts = ["challenges.cloudflare.com", "captcha.cloudflare.com"];
-        if (cfHosts.some((h2) => url.hostname === h2)) return false;
-        if (url.pathname.startsWith("/cdn-cgi/")) return false;
-        return kind === "script" || kind === "iframe";
-      };
-      const isHighEntropyPath = (pathname) => {
-        return /^\/[A-Za-z0-9]{6,12}\/[A-Za-z0-9]{6,24}\.js(?:$|[?#])/.test(pathname);
-      };
-      const isLikelyAdScriptPath = (srcUrl) => {
-        if (srcUrl.origin !== window.location.origin) return true;
-        const path = srcUrl.pathname || "";
-        if (path.startsWith("/static/") || path.startsWith("/js/") || path.startsWith("/assets/")) {
-          return false;
-        }
-        return isHighEntropyPath(path);
-      };
-      const NodeCtor = window.Node;
-      const ScriptCtor = window.HTMLScriptElement;
-      const IFrameCtor = window.HTMLIFrameElement;
-      const ElementCtor = window.Element;
-      const DocumentFragmentCtor = window.DocumentFragment;
-      const originalAppendChild = NodeCtor.prototype.appendChild;
-      const originalInsertBefore = NodeCtor.prototype.insertBefore;
-      const shouldBlockNode = (node) => {
-        const checkScript = (script) => {
-          const src = script.getAttribute("src") || script.src || "";
-          if (!src) return false;
-          let u;
-          try {
-            u = new URL(src, window.location.href);
-          } catch {
-            return false;
-          }
-          if (isBlockedExternalUrl(u, "script")) return true;
-          if (this.options.cleanupScripts && isLikelyAdScriptPath(u)) return true;
-          return false;
-        };
-        const checkIFrame = (iframe) => {
-          const src = iframe.getAttribute("src") || iframe.src || "";
-          if (!src) return false;
-          let u;
-          try {
-            u = new URL(src, window.location.href);
-          } catch {
-            return false;
-          }
-          if (isBlockedExternalUrl(u, "iframe")) return true;
-          return false;
-        };
-        if (ScriptCtor && node instanceof ScriptCtor) return checkScript(node);
-        if (IFrameCtor && node instanceof IFrameCtor) return checkIFrame(node);
-        if (DocumentFragmentCtor && node instanceof DocumentFragmentCtor || ElementCtor && node instanceof ElementCtor) {
-          const scripts = node.querySelectorAll("script[src]");
-          for (const s of Array.from(scripts)) {
-            if (ScriptCtor && s instanceof ScriptCtor && checkScript(s)) return true;
-          }
-          const iframes = node.querySelectorAll("iframe[src]");
-          for (const f of Array.from(iframes)) {
-            if (IFrameCtor && f instanceof IFrameCtor && checkIFrame(f)) return true;
-          }
-        }
-        return false;
-      };
-      NodeCtor.prototype.appendChild = function(node) {
-        if (shouldBlockNode(node)) return node;
-        return originalAppendChild.call(this, node);
-      };
-      NodeCtor.prototype.insertBefore = function(newNode, referenceNode) {
-        if (shouldBlockNode(newNode)) return newNode;
-        return originalInsertBefore.call(this, newNode, referenceNode);
-      };
-      const originalWrite = (_a = document.write) == null ? void 0 : _a.bind(document);
-      const originalWriteln = (_b = document.writeln) == null ? void 0 : _b.bind(document);
-      let writeBuffer = "";
-      let isBufferingWrite = false;
-      const MAX_BUFFER_LEN = 4096;
-      const bufferLooksLikeScriptTag = (buf) => /<script/i.test(buf);
-      const bufferIsClosed = (buf) => /<\/script>/i.test(buf) || /<\\\/script>/i.test(buf);
-      const maybeExtractScriptSrc = (buf) => {
-        const m = buf.match(/<script[^>]*\ssrc\s*=\s*['"]([^'"]+)['"][^>]*>/i);
-        return (m == null ? void 0 : m[1]) || null;
-      };
-      const flushWriteBuffer = (writer) => {
-        if (!writeBuffer) return;
-        writer(writeBuffer);
-        writeBuffer = "";
-        isBufferingWrite = false;
-      };
-      const handleWriteLike = (writer, args) => {
-        if (!originalWrite || !originalWriteln) return writer(String(args.join("")));
-        const chunk = args.map((a) => String(a)).join("");
-        const startsScriptLike = /<script/i.test(chunk) || isBufferingWrite && bufferLooksLikeScriptTag(writeBuffer);
-        if (!isBufferingWrite && startsScriptLike) {
-          isBufferingWrite = true;
-          writeBuffer = "";
-        }
-        if (!isBufferingWrite) {
-          writer(chunk);
           return;
         }
-        writeBuffer += chunk;
-        if (writeBuffer.length > MAX_BUFFER_LEN) {
-          flushWriteBuffer(writer);
-          return;
+        const target = `${url.hostname}${url.pathname}`;
+        const isSuspicious = suspiciousPatterns.some((p2) => p2.test(target));
+        if (!isSuspicious) return;
+        const isThirdParty = !isSameSite(url.hostname);
+        const isHighConfidence = /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i.test(target);
+        if (isThirdParty || isHighConfidence) {
+          script.remove();
         }
-        if (!bufferIsClosed(writeBuffer)) return;
-        const src = maybeExtractScriptSrc(writeBuffer);
-        if (src) {
-          try {
-            const u = new URL(src, window.location.href);
-            const shouldBlock = isBlockedExternalUrl(u, "script") || isLikelyAdScriptPath(u);
-            if (shouldBlock) {
-              writeBuffer = "";
-              isBufferingWrite = false;
-              return;
-            }
-          } catch {
-          }
-        }
-        flushWriteBuffer(writer);
-      };
-      if (this.options.cleanupScripts && originalWrite && originalWriteln) {
-        document.write = (...args) => handleWriteLike(originalWrite, args);
-        document.writeln = (...args) => handleWriteLike(originalWriteln, args);
-      }
-      this.cleanupFunctions.push(() => {
-        if (locationOverrideSucceeded) {
-          try {
-            const target = locationProto || window.location;
-            Object.defineProperty(target, "assign", { value: originalAssign, configurable: true });
-            Object.defineProperty(target, "replace", { value: originalReplace, configurable: true });
-            if (locationProto && originalHrefDesc) {
-              Object.defineProperty(locationProto, "href", originalHrefDesc);
-            }
-          } catch {
-          }
-        }
-        window.setTimeout = originalSetTimeout;
-        window.setInterval = originalSetInterval;
-        NodeCtor.prototype.appendChild = originalAppendChild;
-        NodeCtor.prototype.insertBefore = originalInsertBefore;
-        if (originalWrite) {
-          document.write = originalWrite;
-        }
-        if (originalWriteln) {
-          document.writeln = originalWriteln;
-        }
-      });
-    }
-enableRightClick() {
-      const handler = (e) => {
-        e.stopPropagation();
-        return true;
-      };
-      document.addEventListener("contextmenu", handler, true);
-      const originalOnContextMenu = document.oncontextmenu;
-      document.oncontextmenu = null;
-      if (document.body) {
-        document.body.oncontextmenu = null;
-      }
-      document.querySelectorAll("[oncontextmenu]").forEach((el) => {
-        el.removeAttribute("oncontextmenu");
-      });
-      this.cleanupFunctions.push(() => {
-        document.removeEventListener("contextmenu", handler, true);
-        document.oncontextmenu = originalOnContextMenu;
-      });
-    }
-enableSelection() {
-      const handler = (e) => {
-        e.stopPropagation();
-        return true;
-      };
-      document.addEventListener("selectstart", handler, true);
-      const style = document.createElement("style");
-      style.id = "mnr-enable-selection";
-      style.textContent = `
-      * {
-        -webkit-user-select: text !important;
-        -moz-user-select: text !important;
-        -ms-user-select: text !important;
-        user-select: text !important;
-      }
-    `;
-      document.head.appendChild(style);
-      document.querySelectorAll("[onselectstart]").forEach((el) => {
-        el.removeAttribute("onselectstart");
-      });
-      document.querySelectorAll("[unselectable]").forEach((el) => {
-        el.removeAttribute("unselectable");
-      });
-      this.cleanupFunctions.push(() => {
-        document.removeEventListener("selectstart", handler, true);
-        style.remove();
-      });
-    }
-enableCopy() {
-      const handler = (e) => {
-        e.stopPropagation();
-        return true;
-      };
-      document.addEventListener("copy", handler, true);
-      document.addEventListener("cut", handler, true);
-      document.querySelectorAll("[oncopy], [oncut]").forEach((el) => {
-        el.removeAttribute("oncopy");
-        el.removeAttribute("oncut");
-      });
-      this.cleanupFunctions.push(() => {
-        document.removeEventListener("copy", handler, true);
-        document.removeEventListener("cut", handler, true);
-      });
-    }
-unlockKeyboard() {
-      const handler = (e) => {
-        const ke = e;
-        if (this.isMnrEvent(ke)) {
-          return;
-        }
-        ke.stopImmediatePropagation();
-        ke.stopPropagation();
-      };
-      const types = ["keydown", "keyup", "keypress"];
-      types.forEach((type) => document.addEventListener(type, handler, true));
-      const originalDocumentHandlers = {
-        keydown: document.onkeydown,
-        keyup: document.onkeyup,
-        keypress: document.onkeypress
-      };
-      const originalWindowHandlers = {
-        keydown: window.onkeydown,
-        keyup: window.onkeyup,
-        keypress: window.onkeypress
-      };
-      const originalBodyHandlers = document.body ? {
-        keydown: document.body.onkeydown,
-        keyup: document.body.onkeyup,
-        keypress: document.body.onkeypress
-      } : null;
-      const originalHtmlHandlers = {
-        keydown: document.documentElement.onkeydown,
-        keyup: document.documentElement.onkeyup,
-        keypress: document.documentElement.onkeypress
-      };
-      document.onkeydown = null;
-      document.onkeyup = null;
-      document.onkeypress = null;
-      window.onkeydown = null;
-      window.onkeyup = null;
-      window.onkeypress = null;
-      document.documentElement.onkeydown = null;
-      document.documentElement.onkeyup = null;
-      document.documentElement.onkeypress = null;
-      if (document.body) {
-        document.body.onkeydown = null;
-        document.body.onkeyup = null;
-        document.body.onkeypress = null;
-      }
-      document.querySelectorAll("[onkeydown], [onkeyup], [onkeypress]").forEach((el) => {
-        el.removeAttribute("onkeydown");
-        el.removeAttribute("onkeyup");
-        el.removeAttribute("onkeypress");
-      });
-      this.cleanupFunctions.push(() => {
-        types.forEach((type) => document.removeEventListener(type, handler, true));
-        document.onkeydown = originalDocumentHandlers.keydown;
-        document.onkeyup = originalDocumentHandlers.keyup;
-        document.onkeypress = originalDocumentHandlers.keypress;
-        window.onkeydown = originalWindowHandlers.keydown;
-        window.onkeyup = originalWindowHandlers.keyup;
-        window.onkeypress = originalWindowHandlers.keypress;
-        document.documentElement.onkeydown = originalHtmlHandlers.keydown;
-        document.documentElement.onkeyup = originalHtmlHandlers.keyup;
-        document.documentElement.onkeypress = originalHtmlHandlers.keypress;
-        if (document.body && originalBodyHandlers) {
-          document.body.onkeydown = originalBodyHandlers.keydown;
-          document.body.onkeyup = originalBodyHandlers.keyup;
-          document.body.onkeypress = originalBodyHandlers.keypress;
-        }
-      });
-    }
-    isMnrEvent(e) {
-      var _a, _b;
-      const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-      for (const node of path) {
-        if (node instanceof ShadowRoot) {
-          const host = node.host;
-          if ((_a = host == null ? void 0 : host.id) == null ? void 0 : _a.startsWith("mnr-")) return true;
-        }
-        if (node instanceof Element) {
-          if ((_b = node.id) == null ? void 0 : _b.startsWith("mnr-")) return true;
-          for (const cls of Array.from(node.classList)) {
-            if (cls.startsWith("mnr-")) return true;
-          }
-        }
-      }
-      return false;
-    }
-blockPopups() {
-      const originalOpen = window.open;
-      window.open = (url, target, features) => {
-        var _a;
-        const isTrusted = (_a = window.event) == null ? void 0 : _a.isTrusted;
-        if (isTrusted) {
-          const urlStr = (url == null ? void 0 : url.toString()) || "";
-          try {
-            const targetUrl = new URL(urlStr, window.location.href);
-            if (targetUrl.origin === window.location.origin) {
-              return originalOpen.call(window, url, target, features);
-            }
-          } catch {
-          }
-        }
-        return null;
-      };
-      this.cleanupFunctions.push(() => {
-        window.open = originalOpen;
       });
     }
 removeEventHijacking() {
@@ -6937,129 +7353,6 @@ blockVisibilityDetection() {
         window.removeEventListener("focus", blurBlocker, true);
         restoreDescriptor("hidden", savedHidden);
         restoreDescriptor("visibilityState", savedVisibilityState);
-      });
-    }
-removeOverlays() {
-      if (!document.body) return;
-      const hideElement = (el) => {
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("pointer-events", "none", "important");
-      };
-      const overlaySelectors = [
-'[class*="overlay"]',
-        '[class*="modal"]',
-        '[class*="popup"]',
-        '[class*="mask"]',
-        '[class*="blocker"]',
-        '[id*="overlay"]',
-        '[id*="modal"]',
-        '[id*="popup"]'
-];
-      document.querySelectorAll(overlaySelectors.join(", ")).forEach((el) => {
-        const style = window.getComputedStyle(el);
-        const rect = el.getBoundingClientRect();
-        const isFullPage = rect.width >= window.innerWidth * 0.8 && rect.height >= window.innerHeight * 0.8;
-        const isFixed = style.position === "fixed" || style.position === "absolute";
-        const zIndex = parseInt(style.zIndex, 10);
-        const hasHighZIndex = Number.isFinite(zIndex) && zIndex > 1e3;
-        if (isFullPage && isFixed && hasHighZIndex) {
-          hideElement(el);
-        }
-      });
-      const isTransparentColor = (color) => {
-        const c = (color || "").trim().toLowerCase();
-        return c === "transparent" || c === "rgba(0, 0, 0, 0)" || c === "rgba(0,0,0,0)";
-      };
-      const isMnrHost = (el) => el.id.startsWith("mnr-");
-      const hasVisibleContent = (el) => {
-        const text2 = (el.textContent || "").trim();
-        if (text2.length > 0) return true;
-        return el.querySelector("img, svg, canvas, video") !== null;
-      };
-      const looksLikeClickLayer = (el) => {
-        if (isMnrHost(el)) return false;
-        const style = window.getComputedStyle(el);
-        if (style.display === "none" || style.visibility === "hidden") return false;
-        if (style.pointerEvents === "none") return false;
-        if (style.position !== "fixed" && style.position !== "absolute") return false;
-        const zIndex = parseInt(style.zIndex, 10);
-        if (!Number.isFinite(zIndex) || zIndex <= 1e3) return false;
-        const rect = el.getBoundingClientRect();
-        if (!rect || rect.width <= 0 || rect.height <= 0) return false;
-        const minWidth = window.innerWidth * 0.6;
-        const minHeight = 40;
-        const maxHeight = window.innerHeight * 0.6;
-        if (rect.width < minWidth || rect.height < minHeight || rect.height > maxHeight) return false;
-        const nearTop = rect.top <= 2;
-        const nearBottom = rect.bottom >= window.innerHeight - 2;
-        if (!nearTop && !nearBottom) return false;
-        if (hasVisibleContent(el)) return false;
-        const rawOpacity = style.opacity || el.style.opacity || "1";
-        const opacity = parseFloat(rawOpacity);
-        const bg = style.backgroundColor || el.style.backgroundColor || "";
-        const invisible = Number.isFinite(opacity) && opacity <= 0.08 || isTransparentColor(bg);
-        if (!invisible) return false;
-        const AnchorCtor = window.HTMLAnchorElement;
-        if (AnchorCtor && el instanceof AnchorCtor) return true;
-        if (el.tagName.toLowerCase() === "a" && el.hasAttribute("href")) return true;
-        if (el.querySelector("a[href]")) return true;
-        if (el.hasAttribute("onclick")) return true;
-        const maybeOnclick = el.onclick;
-        if (typeof maybeOnclick === "function") return true;
-        return false;
-      };
-      const candidates = Array.from(
-        document.body.querySelectorAll("a, div, span, section, header, footer, nav")
-      );
-      for (const el of candidates) {
-        if (looksLikeClickLayer(el)) {
-          hideElement(el);
-        }
-      }
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    }
-clearTimers() {
-      const highestId = window.setInterval(() => {
-      }, 0);
-      for (let i = 0; i <= highestId; i++) {
-        window.clearInterval(i);
-      }
-      const highestTimeoutId = window.setTimeout(() => {
-      }, 0);
-      for (let i = 0; i <= highestTimeoutId; i++) {
-        window.clearTimeout(i);
-      }
-    }
-cleanupScripts() {
-      const suspiciousPatterns = [
-        /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i,
-        /(^|[\\/._-])ads([\\/._-]|$)/i,
-        /doubleclick/i,
-        /googlesyndication|googletagmanager|gtag/i,
-        /google-analytics/i,
-        /(^|[\\/._-])(analytics|track(er|ing)?|pixel|beacon|telemetry)([\\/._-]|$)/i
-      ];
-      const siteHost = window.location.hostname;
-      const isSameSite = (host) => {
-        return host === siteHost || host.endsWith(`.${siteHost}`);
-      };
-      document.querySelectorAll("script[src]").forEach((script) => {
-        const src = script.getAttribute("src") || "";
-        let url;
-        try {
-          url = new URL(src, window.location.href);
-        } catch {
-          return;
-        }
-        const target = `${url.hostname}${url.pathname}`;
-        const isSuspicious = suspiciousPatterns.some((p2) => p2.test(target));
-        if (!isSuspicious) return;
-        const isThirdParty = !isSameSite(url.hostname);
-        const isHighConfidence = /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i.test(target);
-        if (isThirdParty || isHighConfidence) {
-          script.remove();
-        }
       });
     }
   }
@@ -7185,7 +7478,7 @@ enhanceRule(existingRule, detection) {
       this.parser = parser;
     }
 async merge(doc2, url, options = {}) {
-      var _a, _b, _c, _d;
+      var _a, _b, _c, _d, _e, _f;
       const maxPages = Math.max(1, options.maxPages ?? 10);
       const confidenceThreshold = options.confidenceThreshold ?? 0.8;
       const baseUrl = getSectionBaseUrl(url);
@@ -7216,9 +7509,18 @@ async merge(doc2, url, options = {}) {
         }
         return first;
       }
-      return this.mergeSections(startUrl, first, section, maxPages, options.fetcher, options.signal);
+      const sectionDelayMs = options.fetcher ? 0 : Math.max(0, ((_f = (_e = first.rule) == null ? void 0 : _e.advanced) == null ? void 0 : _f.sectionDelayMs) ?? 0);
+      return this.mergeSections(
+        startUrl,
+        first,
+        section,
+        maxPages,
+        sectionDelayMs,
+        options.fetcher,
+        options.signal
+      );
     }
-async mergeSections(startUrl, first, section, maxPages, fetcher, signal) {
+async mergeSections(startUrl, first, section, maxPages, sectionDelayMs, fetcher, signal) {
       let mergedContent = first.content;
       let mergedRaw = first.rawContent;
       let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
@@ -7234,6 +7536,10 @@ async mergeSections(startUrl, first, section, maxPages, fetcher, signal) {
         const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
         if (seen.has(absNextSection)) break;
         seen.add(absNextSection);
+        if (sectionDelayMs > 0) {
+          await this.sleep(sectionDelayMs, signal);
+          if (signal == null ? void 0 : signal.aborted) break;
+        }
         const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
         if (!nextDoc) break;
         const nextParsed = await this.parser.parse(nextDoc, absNextSection);
@@ -7260,6 +7566,21 @@ async mergeSections(startUrl, first, section, maxPages, fetcher, signal) {
         rawContent: mergedRaw,
         nextUrl: nextChapterUrl || first.nextUrl
       };
+    }
+    async sleep(ms, signal) {
+      if (ms <= 0 || (signal == null ? void 0 : signal.aborted)) return;
+      await new Promise((resolve) => {
+        const timer = globalThis.setTimeout(resolve, ms);
+        if (!signal) return;
+        signal.addEventListener(
+          "abort",
+          () => {
+            globalThis.clearTimeout(timer);
+            resolve();
+          },
+          { once: true }
+        );
+      });
     }
 async fetchUrl(url, referrer, customFetcher, signal) {
       if (signal == null ? void 0 : signal.aborted) {
@@ -7634,7 +7955,7 @@ async manualEnable(doc2 = document) {
         const currentUrl = ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
         const chapter = await this.sectionMerger.merge(doc2, currentUrl);
         if (chapter && this.launchCallback) {
-          this.launchCallback(chapter, void 0);
+          this.launchCallback(chapter, chapter.rule);
           this.rememberSiteEnabled(doc2);
         }
       } catch (e) {
@@ -7652,7 +7973,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-02-12";
+  const BUILD_DATE = "2026-06-23";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -21262,6 +21583,228 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
   function normalizeTextForVipDetection(text2) {
     return text2.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、""''（）()【】[\]<>《》:：;；·~…—-]/g, "").toLowerCase();
   }
+  function cleanGobooTocTitleForUrl(title, url) {
+    const trimmed = title.trim();
+    try {
+      const parsed = new URL(url);
+      const gobooChapter = parsed.pathname.match(/^\/gb_\d+\/\d+\/(\d+)(?:\/|$)/);
+      if (!gobooChapter) return trimmed;
+      const chapterPathId = gobooChapter[1];
+      if (!trimmed.startsWith(chapterPathId)) return trimmed;
+      const rest = trimmed.slice(chapterPathId.length).trimStart();
+      if (/^(?:\d{3,4}|第)/.test(rest)) {
+        return rest;
+      }
+    } catch {
+    }
+    return trimmed;
+  }
+  const gobooTocTitleCleaner = {
+    id: "goboo",
+    clean: cleanGobooTocTitleForUrl
+  };
+  const __vite_glob_0_0 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    gobooTocTitleCleaner
+  }, Symbol.toStringTag, { value: "Module" }));
+  function isQidianHost(hostname) {
+    return /(^|\.)qidian\.com$/i.test(hostname);
+  }
+  function getCookieValue(name) {
+    if (typeof document === "undefined" || !document.cookie) return null;
+    const encodedName = encodeURIComponent(name);
+    for (const part of document.cookie.split(";")) {
+      const trimmed = part.trim();
+      const eq = trimmed.indexOf("=");
+      if (eq < 0) continue;
+      const key = trimmed.slice(0, eq);
+      if (key === name || key === encodedName) {
+        return decodeURIComponent(trimmed.slice(eq + 1));
+      }
+    }
+    return null;
+  }
+  function resolveQidianPageUrl(indexUrl, currentUrl) {
+    const fallbackBase = typeof location !== "undefined" && typeof location.href === "string" && location.href || "https://www.qidian.com/";
+    for (const candidate of [currentUrl, indexUrl]) {
+      const abs = resolveUrl(candidate, fallbackBase);
+      if (!abs) continue;
+      try {
+        const url = new URL(abs);
+        if (isQidianHost(url.hostname)) return url;
+      } catch {
+      }
+    }
+    return null;
+  }
+  function isQidianTocRequest(indexUrl, currentUrl, rule) {
+    if ((rule == null ? void 0 : rule.id) === "qidian") return true;
+    return !!resolveQidianPageUrl(indexUrl, currentUrl);
+  }
+  function buildQidianCategoryUrl(indexUrl, currentUrl) {
+    const bookId = extractBookId(currentUrl) || extractBookId(indexUrl);
+    const pageUrl = resolveQidianPageUrl(indexUrl, currentUrl);
+    if (!bookId || !pageUrl) return null;
+    const apiUrl = new URL("/webcommon/book/category", pageUrl.origin);
+    const csrfToken = getCookieValue("_csrfToken");
+    if (csrfToken) {
+      apiUrl.searchParams.set("_csrfToken", csrfToken);
+    }
+    apiUrl.searchParams.set("bookId", bookId);
+    return apiUrl.toString();
+  }
+  function getNativeFetch() {
+    if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") {
+      return unsafeWindow.fetch.bind(unsafeWindow);
+    }
+    if (typeof window !== "undefined" && typeof window.fetch === "function") {
+      return window.fetch.bind(window);
+    }
+    if (typeof fetch === "function") {
+      return fetch;
+    }
+    return null;
+  }
+  async function requestQidianCategoryNative(apiUrl, setAbort) {
+    const fetcher = getNativeFetch();
+    if (!fetcher) return null;
+    const controller = new AbortController();
+    setAbort(() => controller.abort());
+    try {
+      const response = await fetcher(apiUrl, {
+        credentials: "include",
+        headers: {
+          Accept: "application/json, text/javascript, */*; q=0.01",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        signal: controller.signal
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
+    } finally {
+      setAbort(null);
+    }
+  }
+  async function requestQidianCategoryGm(apiUrl, currentUrl, setAbort) {
+    const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
+    if (!gmXhr) return null;
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        setAbort(null);
+        resolve(value);
+      };
+      const headers = {
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest"
+      };
+      if (currentUrl) {
+        headers.Referer = currentUrl;
+      }
+      const request = gmXhr({
+        method: "GET",
+        url: apiUrl,
+        headers,
+        timeout: 1e4,
+        withCredentials: true,
+        onload: (response) => {
+          if (response.status < 200 || response.status >= 300) {
+            finish(null);
+            return;
+          }
+          try {
+            finish(JSON.parse(response.responseText));
+          } catch {
+            finish(null);
+          }
+        },
+        onerror: () => finish(null),
+        onabort: () => finish(null),
+        ontimeout: () => finish(null)
+      });
+      setAbort(() => {
+        try {
+          request.abort();
+        } catch {
+        }
+        finish(null);
+      });
+    });
+  }
+  function dedupeQidianTocEntries(candidates) {
+    const seenUrls = new Set();
+    const results = [];
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const entry = candidates[i];
+      if (seenUrls.has(entry.url)) continue;
+      seenUrls.add(entry.url);
+      results.unshift(entry);
+    }
+    return results;
+  }
+  function qidianCategoryToEntries(response, indexUrl, currentUrl) {
+    var _a;
+    if (!response || response.code !== 0) return [];
+    const bookId = extractBookId(currentUrl) || extractBookId(indexUrl);
+    const pageUrl = resolveQidianPageUrl(indexUrl, currentUrl);
+    if (!bookId || !pageUrl) return [];
+    const entries2 = [];
+    const volumes = ((_a = response.data) == null ? void 0 : _a.vs) || [];
+    for (const volume of volumes) {
+      for (const chapter of volume.cs || []) {
+        const rawTitle = chapter.cN || chapter.chapterName || "";
+        const title = rawTitle.trim() || `章节 ${entries2.length + 1}`;
+        const explicitUrl = typeof chapter.cU === "string" ? chapter.cU.trim() : "";
+        const chapterId = chapter.id ?? chapter.chapterId;
+        let url = explicitUrl ? resolveUrl(explicitUrl, pageUrl.href) : null;
+        if (!url && chapterId !== void 0 && chapterId !== null) {
+          url = new URL(`/chapter/${bookId}/${String(chapterId)}/`, pageUrl.origin).toString();
+        }
+        if (!url) continue;
+        entries2.push({
+          title,
+          url: normalizeUrlForFetch(url)
+        });
+      }
+    }
+    return dedupeQidianTocEntries(entries2);
+  }
+  async function loadQidianTocEntries(indexUrl, currentUrl, setAbort) {
+    const apiUrl = buildQidianCategoryUrl(indexUrl, currentUrl);
+    if (!apiUrl) return [];
+    const nativeResponse = await requestQidianCategoryNative(apiUrl, setAbort);
+    if ((nativeResponse == null ? void 0 : nativeResponse.code) === 0) {
+      return qidianCategoryToEntries(nativeResponse, indexUrl, currentUrl);
+    }
+    const gmResponse = await requestQidianCategoryGm(apiUrl, currentUrl || indexUrl, setAbort);
+    return qidianCategoryToEntries(gmResponse, indexUrl, currentUrl);
+  }
+  const qidianTocLoader = {
+    id: "qidian",
+    matches: (context) => isQidianTocRequest(context.indexUrl, context.currentUrl, context.rule),
+    load: (context) => loadQidianTocEntries(context.indexUrl, context.currentUrl, context.setAbort)
+  };
+  const __vite_glob_0_1 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    qidianTocLoader
+  }, Symbol.toStringTag, { value: "Module" }));
+  const modules = Object.assign({ "./goboo.ts": __vite_glob_0_0, "./qidian.ts": __vite_glob_0_1 });
+  function isSpecialTocLoader(value) {
+    if (!value || typeof value !== "object") return false;
+    const maybe = value;
+    return typeof maybe.id === "string" && typeof maybe.matches === "function" && typeof maybe.load === "function";
+  }
+  function isSpecialTocTitleCleaner(value) {
+    if (!value || typeof value !== "object") return false;
+    const maybe = value;
+    return typeof maybe.id === "string" && typeof maybe.clean === "function";
+  }
+  const specialTocLoaders = Object.keys(modules).sort().flatMap((path) => Object.values(modules[path]).filter(isSpecialTocLoader));
+  const specialTocTitleCleaners = Object.keys(modules).sort().flatMap((path) => Object.values(modules[path]).filter(isSpecialTocTitleCleaner));
   const MAX_TOC_PAGES = 120;
   const CHAPTER_TITLE_PATTERNS = [
     /^.{0,10}第.{1,10}[章节回话篇集卷]/,
@@ -21311,6 +21854,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       '[class*="chapterItemTitle"]',
       '[class*="chapter-title"]',
       '[class*="chapterTitle"]',
+      ".line_1",
       "h2",
       "h3"
     ];
@@ -21338,6 +21882,13 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     directText = directText.trim();
     if (directText) return directText;
     return (a.textContent || "").trim();
+  }
+  function cleanTocTitleForUrl(title, url) {
+    let cleaned = title.trim();
+    for (const cleaner of specialTocTitleCleaners) {
+      cleaned = cleaner.clean(cleaned, url);
+    }
+    return cleaned;
   }
   function filterTocEntries(entries2) {
     if (entries2.length < 5) return entries2;
@@ -21475,7 +22026,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       if (!(textPattern.test(text2) || urlPattern.test(href))) {
         continue;
       }
-      const title = text2 || `章节 ${candidates.length + 1}`;
+      const title = cleanTocTitleForUrl(text2 || `章节 ${candidates.length + 1}`, url);
       candidates.push({ title, url });
     }
     return candidates;
@@ -21518,6 +22069,16 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     return candidates[0].url;
   }
   async function loadTocEntriesPaged(indexUrl, currentUrl, rule, setAbort) {
+    const loaderContext = {
+      indexUrl,
+      currentUrl,
+      rule,
+      setAbort
+    };
+    const loader = specialTocLoaders.find((item) => item.matches(loaderContext));
+    if (loader) {
+      return loader.load(loaderContext);
+    }
     const visitedPages = new Set();
     const seenChapterUrls = new Set();
     const allCandidates = [];
@@ -21604,7 +22165,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
     async function loadToc() {
       var _a, _b;
-      const runId = ctx.sessionId();
+      const runId = ctx.runtime.sessionId();
       if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
       const currentUrl = ((_a = ctx.chapter.value) == null ? void 0 : _a.url) || "";
       let indexUrl = (_b = ctx.chapter.value) == null ? void 0 : _b.indexUrl;
@@ -21622,39 +22183,39 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           currentUrl || indexUrl,
           ctx.rule.value ?? void 0,
           (abort) => {
-            if (!ctx.isSessionStale(runId)) {
+            if (!ctx.runtime.isSessionStale(runId)) {
               ctx.tocAbort.value = abort;
             }
           }
         );
-        if (ctx.isSessionStale(runId)) return;
+        if (ctx.runtime.isSessionStale(runId)) return;
         if (entries2.length === 0) {
           await new Promise((resolve) => window.setTimeout(resolve, 400));
-          if (ctx.isSessionStale(runId)) return;
+          if (ctx.runtime.isSessionStale(runId)) return;
           entries2 = await _loadTocEntriesPaged(
             indexUrl,
             currentUrl || indexUrl,
             ctx.rule.value ?? void 0,
             (abort) => {
-              if (!ctx.isSessionStale(runId)) {
+              if (!ctx.runtime.isSessionStale(runId)) {
                 ctx.tocAbort.value = abort;
               }
             }
           );
-          if (ctx.isSessionStale(runId)) return;
+          if (ctx.runtime.isSessionStale(runId)) return;
         }
         await setTocEntries(entries2);
-        if (ctx.isSessionStale(runId)) return;
+        if (ctx.runtime.isSessionStale(runId)) return;
         if (entries2.length === 0) {
           ctx.showToast("目录解析为空，可稍后重试或刷新页面", "info", 2500);
         }
       } catch (e) {
-        if (!ctx.isSessionStale(runId)) {
+        if (!ctx.runtime.isSessionStale(runId)) {
           console.error("[MNR] Failed to load TOC:", e);
           ctx.showToast("目录加载失败，可稍后重试", "error", 2500);
         }
       } finally {
-        if (!ctx.isSessionStale(runId)) {
+        if (!ctx.runtime.isSessionStale(runId)) {
           ctx.tocLoading.value = false;
           ctx.tocAbort.value = null;
         }
@@ -21690,11 +22251,11 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
   function createCacheAll(ctx) {
     async function startCacheAll(urls) {
       var _a, _b, _c, _d, _e;
-      const runId = ctx.sessionId();
+      const runId = ctx.runtime.sessionId();
       if (ctx.cacheProgress.value.running) return;
       const seenUrls = new Set();
       await ctx.restoreCache();
-      if (ctx.isSessionStale(runId)) return;
+      if (ctx.runtime.isSessionStale(runId)) return;
       const persistedSet = new Set(ctx.persistedUrls.value);
       const cacheBook = getCurrentBookCacheKey((_a = ctx.chapter.value) == null ? void 0 : _a.indexUrl);
       let taskList = urls ? [...urls] : [];
@@ -21708,12 +22269,12 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
             currentUrl || indexUrl,
             ctx.rule.value ?? void 0,
             (abort) => {
-              if (!ctx.isSessionStale(runId)) {
+              if (!ctx.runtime.isSessionStale(runId)) {
                 ctx.cacheAbort.value = abort;
               }
             }
           );
-          if (ctx.isSessionStale(runId)) return;
+          if (ctx.runtime.isSessionStale(runId)) return;
           ctx.cacheAbort.value = null;
           const tocLinks = tocEntries.map((e) => normalizeUrlForFetch(e.url)).slice(0, 1e4);
           taskList = tocLinks.filter(
@@ -21723,7 +22284,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         }
       }
       const estimatedTotal = taskList.length;
-      if (ctx.isSessionStale(runId)) return;
+      if (ctx.runtime.isSessionStale(runId)) return;
       if (estimatedTotal === 0) {
         ctx.cacheProgress.value = { done: 0, total: 0, running: false };
         return;
@@ -21742,13 +22303,13 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           continue;
         }
         const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-        if (ctx.isSessionStale(runId)) {
+        if (ctx.runtime.isSessionStale(runId)) {
           abort();
           break;
         }
         ctx.cacheAbort.value = abort;
         const result = await promise;
-        if (ctx.isSessionStale(runId)) {
+        if (ctx.runtime.isSessionStale(runId)) {
           abort();
           break;
         }
@@ -21762,7 +22323,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         }
         const parser = getParser();
         const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl);
-        if (ctx.isSessionStale(runId)) {
+        if (ctx.runtime.isSessionStale(runId)) {
           break;
         }
         if (!parsed) {
@@ -21799,7 +22360,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
           }
         }
       }
-      if (ctx.isSessionStale(runId)) return;
+      if (ctx.runtime.isSessionStale(runId)) return;
       ctx.cacheProgress.value = {
         ...ctx.cacheProgress.value,
         total: ctx.cacheProgress.value.done,
@@ -22009,6 +22570,79 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     return false;
   }
   function createNavigation(ctx) {
+    function loadDocumentInIframe(url, timeoutMs = 15e3) {
+      let iframe = null;
+      let timeoutId = null;
+      let settled = false;
+      let resolveResult = null;
+      const clearTimer = () => {
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      };
+      const cleanup = () => {
+        clearTimer();
+        if (iframe) {
+          iframe.remove();
+          iframe = null;
+        }
+      };
+      const finish = (result) => {
+        if (settled) return;
+        settled = true;
+        if (result) {
+          clearTimer();
+        } else {
+          cleanup();
+        }
+        resolveResult == null ? void 0 : resolveResult(result);
+      };
+      const promise = new Promise((resolve) => {
+        resolveResult = resolve;
+        iframe = document.createElement("iframe");
+        iframe.setAttribute("aria-hidden", "true");
+        iframe.tabIndex = -1;
+        iframe.style.cssText = [
+          "position:absolute",
+          "display:block!important",
+          "left:-10000px",
+          "top:0",
+          "width:1200px",
+          "height:8000px",
+          "opacity:0",
+          "pointer-events:none",
+          "border:0"
+        ].join(";");
+        iframe.onload = () => {
+          window.setTimeout(() => {
+            try {
+              const doc2 = iframe == null ? void 0 : iframe.contentDocument;
+              if (!doc2) {
+                finish(null);
+                return;
+              }
+              finish({ doc: doc2, cleanup });
+            } catch {
+              finish(null);
+            }
+          }, 300);
+        };
+        iframe.onerror = () => finish(null);
+        timeoutId = window.setTimeout(() => finish(null), timeoutMs);
+        const parent = document.body || document.documentElement;
+        if (!parent) {
+          finish(null);
+          return;
+        }
+        parent.appendChild(iframe);
+        iframe.src = url;
+      });
+      return {
+        promise,
+        abort: () => finish(null)
+      };
+    }
     async function insertCachedChapter(cached, position) {
       const suffix = position === "append" ? "cached" : "cached-prev";
       const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
@@ -22053,7 +22687,8 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       return true;
     }
     async function loadChapter(direction, source) {
-      const runId = ctx.viewId();
+      var _a, _b;
+      const runId = ctx.runtime.viewId();
       const isNext = direction === "next";
       const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
       const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
@@ -22112,7 +22747,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
       if (ctx.persistedUrls.value.has(targetUrl)) {
         const persisted = await ctx.getPersistedCachedChapter(targetUrl);
-        if (ctx.isViewStale(runId)) return false;
+        if (ctx.runtime.isViewStale(runId)) return false;
         if (persisted) {
           const sessionCached = { ...persisted, cachedAt: Date.now() };
           ctx.cachedContents.value.set(targetUrl, sessionCached);
@@ -22135,43 +22770,51 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
       try {
         const referer = refChapter.chapter.url;
-        const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-        if (ctx.isViewStale(runId)) {
+        const iframeLoader = ((_b = (_a = refChapter.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.useIframe) ? loadDocumentInIframe(targetUrl) : null;
+        const fetchLoader = iframeLoader ? null : fetchAndParseUrl(targetUrl, referer);
+        const abort = iframeLoader ? iframeLoader.abort : fetchLoader.abort;
+        if (ctx.runtime.isViewStale(runId)) {
           abort();
           return false;
         }
         pendingAbortRef.value = abort;
-        const result = await promise;
-        if (ctx.isViewStale(runId)) {
+        const iframeResult = iframeLoader ? await iframeLoader.promise : null;
+        const fetchResult = fetchLoader ? await fetchLoader.promise : null;
+        if (ctx.runtime.isViewStale(runId)) {
           abort();
           return false;
         }
         pendingAbortRef.value = null;
-        if (result.error === "abort") {
+        if ((fetchResult == null ? void 0 : fetchResult.error) === "abort") {
           return false;
         }
-        if (!result.doc) {
+        const doc2 = (iframeResult == null ? void 0 : iframeResult.doc) || (fetchResult == null ? void 0 : fetchResult.doc) || null;
+        const cleanupIframe = iframeResult == null ? void 0 : iframeResult.cleanup;
+        if (!doc2) {
           const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
           if (source === "manual" || count === 1) {
             ctx.showToast(errorMessage, "error", 2500);
           }
           return false;
         }
-        if (isCloudflareChallenge(result.doc)) {
+        if (isCloudflareChallenge(doc2)) {
           const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
           if (source === "manual" || count === 1) {
             ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
           }
+          cleanupIframe == null ? void 0 : cleanupIframe();
           return false;
         }
-        if (isVipChapterPage(result.doc)) {
+        if (isVipChapterPage(doc2)) {
           ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
           ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+          cleanupIframe == null ? void 0 : cleanupIframe();
           return false;
         }
         const parser = getParser();
-        const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
-        if (ctx.isViewStale(runId)) {
+        const parsed = await parseWithSectionMerge(parser, doc2, targetUrl, referer);
+        cleanupIframe == null ? void 0 : cleanupIframe();
+        if (ctx.runtime.isViewStale(runId)) {
           return false;
         }
         if (!parsed) {
@@ -22252,13 +22895,13 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         }
         return true;
       } catch (e) {
-        if (!ctx.isViewStale(runId)) {
+        if (!ctx.runtime.isViewStale(runId)) {
           console.error(`[MNR] Failed to load ${direction} chapter:`, e);
           ctx.setError(errorMessage);
         }
         return false;
       } finally {
-        if (!ctx.isViewStale(runId)) {
+        if (!ctx.runtime.isViewStale(runId)) {
           isLoadingRef.value = false;
         }
       }
@@ -22271,7 +22914,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
     async function rebuildChaptersAround(targetUrl) {
       var _a, _b, _c, _d, _e, _f;
-      const runId = ctx.bumpView();
+      const runId = ctx.runtime.bumpView();
       const url = normalizeUrlForFetch(targetUrl);
       (_b = (_a = ctx.pendingNextAbort).value) == null ? void 0 : _b.call(_a);
       ctx.pendingNextAbort.value = null;
@@ -22285,7 +22928,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       let cached = ctx.cachedContents.value.get(url);
       if (!cached && ctx.persistedUrls.value.has(url)) {
         const persisted = await ctx.getPersistedCachedChapter(url);
-        if (ctx.isViewStale(runId)) return false;
+        if (ctx.runtime.isViewStale(runId)) return false;
         if (persisted) {
           cached = { ...persisted, cachedAt: Date.now() };
           ctx.cachedContents.value.set(url, cached);
@@ -22293,7 +22936,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
         }
       }
       if (!cached) return false;
-      if (ctx.isViewStale(runId)) return false;
+      if (ctx.runtime.isViewStale(runId)) return false;
       ctx.chapters.value = [];
       ctx.currentChapterIndex.value = 0;
       ctx.loadedUrls.value.clear();
@@ -22318,7 +22961,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
     async function reloadCurrentChapter() {
       var _a, _b;
-      const runId = ctx.viewId();
+      const runId = ctx.runtime.viewId();
       const current = ctx.chapters.value[ctx.currentChapterIndex.value];
       if (!current) return;
       const url = current.chapter.url;
@@ -22326,11 +22969,11 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       (_b = (_a = ctx.reloadAbort).value) == null ? void 0 : _b.call(_a);
       ctx.reloadAbort.value = null;
       const { promise, abort } = fetchAndParseUrl(url, url);
-      if (!ctx.isViewStale(runId)) {
+      if (!ctx.runtime.isViewStale(runId)) {
         ctx.reloadAbort.value = abort;
       }
       const result = await promise;
-      if (ctx.isViewStale(runId)) {
+      if (ctx.runtime.isViewStale(runId)) {
         abort();
         return;
       }
@@ -22346,7 +22989,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       }
       const parser = getParser();
       const parsed = await parseWithSectionMerge(parser, result.doc, url);
-      if (ctx.isViewStale(runId)) {
+      if (ctx.runtime.isViewStale(runId)) {
         return;
       }
       if (parsed) {
@@ -22377,6 +23020,25 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       loadPrevChapter,
       rebuildChaptersAround,
       reloadCurrentChapter
+    };
+  }
+  function createReaderRuntime() {
+    let sessionId = 0;
+    let viewId = 0;
+    return {
+      bumpSession: () => {
+        sessionId += 1;
+        viewId += 1;
+        return sessionId;
+      },
+      bumpView: () => {
+        viewId += 1;
+        return viewId;
+      },
+      isSessionStale: (runId) => runId !== sessionId,
+      isViewStale: (runId) => runId !== viewId,
+      sessionId: () => sessionId,
+      viewId: () => viewId
     };
   }
   const useReaderStore = defineStore("reader", () => {
@@ -22410,19 +23072,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     const tocAbort = ref(null);
     const cachedContents = ref( new Map());
     const persistedUrls = ref( new Set());
-    let sessionId = 0;
-    let viewId = 0;
-    const bumpSession = () => {
-      sessionId += 1;
-      viewId += 1;
-      return sessionId;
-    };
-    const bumpView = () => {
-      viewId += 1;
-      return viewId;
-    };
-    const isSessionStale = (runId) => runId !== sessionId;
-    const isViewStale = (runId) => runId !== viewId;
+    const runtime = createReaderRuntime();
     const chapter = computed(() => {
       var _a;
       return ((_a = chapters.value[currentChapterIndex.value]) == null ? void 0 : _a.chapter) || null;
@@ -22566,21 +23216,21 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
     async function persistCache$1() {
       var _a;
-      const runId = sessionId;
+      const runId = runtime.sessionId();
       const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
       if (!cacheBook) return;
       const result = persistCache(cacheBook, cachedContents.value, persistedUrls.value);
-      if (!isSessionStale(runId)) {
+      if (!runtime.isSessionStale(runId)) {
         persistedUrls.value = result;
       }
     }
     async function restoreCache$1() {
       var _a;
-      const runId = sessionId;
+      const runId = runtime.sessionId();
       const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
       if (!cacheBook) return;
       const restored = restoreCache(cacheBook);
-      if (restored && !isSessionStale(runId)) {
+      if (restored && !runtime.isSessionStale(runId)) {
         persistedUrls.value = restored;
       }
     }
@@ -22610,9 +23260,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       currentConversionMode,
       navFailures,
       history,
-      viewId: () => viewId,
-      bumpView,
-      isViewStale,
+      runtime,
       showToast,
       setError,
       applyConversionToChapterEntry: applyConversionToChapterEntry$1,
@@ -22628,8 +23276,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       chapter,
       rule,
       chapters,
-      sessionId: () => sessionId,
-      isSessionStale,
+      runtime,
       restoreCache: restoreCache$1,
       persistCache: persistCache$1
     });
@@ -22642,8 +23289,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       chapter,
       rule,
       currentConversionMode,
-      sessionId: () => sessionId,
-      isSessionStale,
+      runtime,
       showToast,
       applyTocConversion: applyTocConversion$1,
       loadTocEntriesPaged
@@ -22687,22 +23333,23 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       error.value = null;
     }
     function deactivate() {
-      bumpSession();
+      runtime.bumpSession();
       isActive.value = false;
       cancelAllInFlight();
       clearAllData();
     }
     function setChapter(newChapter, newRule) {
-      bumpSession();
+      runtime.bumpSession();
       cancelAllInFlight();
       toc.value = [];
       tocOriginal.value = [];
+      const effectiveRule = newRule || newChapter.rule;
       if (newChapter.url) newChapter.url = normalizeUrlForFetch(newChapter.url);
       if (newChapter.prevUrl) newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
       if (newChapter.nextUrl) newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
       if (newChapter.indexUrl) newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
       const id = `chapter-${Date.now()}-0`;
-      chapters.value = [{ chapter: newChapter, rule: newRule, id }];
+      chapters.value = [{ chapter: newChapter, rule: effectiveRule, id }];
       currentChapterIndex.value = 0;
       error.value = null;
       loadedUrls.value.clear();
@@ -22718,7 +23365,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       originalTitles.value.set(id, { title: newChapter.title, bookTitle: newChapter.bookTitle });
       cachedContents.value.set(newChapter.url, {
         chapter: newChapter,
-        rule: newRule,
+        rule: effectiveRule,
         cachedAt: Date.now()
       });
       if (newChapter.url && !history.value.includes(newChapter.url)) {
@@ -22762,7 +23409,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       };
     }
     function $reset() {
-      bumpSession();
+      runtime.bumpSession();
       isActive.value = false;
       cancelAllInFlight();
       clearAllData();

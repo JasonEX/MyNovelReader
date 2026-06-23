@@ -399,6 +399,40 @@ describe('AutoEnableManager', () => {
     expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 
+  it('manualEnable passes the parsed rule to the launch callback', async () => {
+    const rule = {
+      id: 'iframe-rule',
+      version: 1,
+      match: { pattern: 'example' },
+      content: { selector: '#content' },
+      advanced: { useIframe: true },
+      meta: { source: 'builtin' as const },
+    };
+    mockedSectionMerger.merge.mockResolvedValueOnce({
+      title: 'Chapter 1',
+      content: '<p>content</p>',
+      rawContent: '<p>raw</p>',
+      url: 'https://example.com/chapter/1',
+      prevUrl: null,
+      nextUrl: null,
+      indexUrl: null,
+      confidence: 1,
+      method: 'rule',
+      rule,
+    });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    const doc = createDoc('https://example.com/chapter/1');
+    await manager.manualEnable(doc);
+
+    expect(launchCallback).toHaveBeenCalledWith(expect.objectContaining({ rule }), rule);
+  });
+
   it('manualEnable logs and swallows merge errors', async () => {
     mockedSectionMerger.merge.mockRejectedValueOnce(new Error('merge failed'));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

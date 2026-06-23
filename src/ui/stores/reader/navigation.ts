@@ -41,9 +41,11 @@ export interface NavigationContext {
   history: Ref<string[]>;
 
   // Stale guards
-  viewId: () => number;
-  bumpView: () => number;
-  isViewStale: (runId: number) => boolean;
+  runtime: {
+    bumpView: () => number;
+    isViewStale: (runId: number) => boolean;
+    viewId: () => number;
+  };
 
   // Callbacks
   showToast: (msg: string, type: 'info' | 'error', duration?: number) => void;
@@ -55,6 +57,91 @@ export interface NavigationContext {
 // ============ Factory ============
 
 export function createNavigation(ctx: NavigationContext) {
+  function loadDocumentInIframe(
+    url: string,
+    timeoutMs: number = 15000
+  ): { promise: Promise<{ doc: Document; cleanup: () => void } | null>; abort: () => void } {
+    let iframe: HTMLIFrameElement | null = null;
+    let timeoutId: number | null = null;
+    let settled = false;
+    let resolveResult: ((result: { doc: Document; cleanup: () => void } | null) => void) | null =
+      null;
+
+    const clearTimer = () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    const cleanup = () => {
+      clearTimer();
+      if (iframe) {
+        iframe.remove();
+        iframe = null;
+      }
+    };
+
+    const finish = (result: { doc: Document; cleanup: () => void } | null) => {
+      if (settled) return;
+      settled = true;
+      if (result) {
+        clearTimer();
+      } else {
+        cleanup();
+      }
+      resolveResult?.(result);
+    };
+
+    const promise = new Promise<{ doc: Document; cleanup: () => void } | null>(resolve => {
+      resolveResult = resolve;
+      iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.tabIndex = -1;
+      iframe.style.cssText = [
+        'position:absolute',
+        'display:block!important',
+        'left:-10000px',
+        'top:0',
+        'width:1200px',
+        'height:8000px',
+        'opacity:0',
+        'pointer-events:none',
+        'border:0',
+      ].join(';');
+
+      iframe.onload = () => {
+        window.setTimeout(() => {
+          try {
+            const doc = iframe?.contentDocument;
+            if (!doc) {
+              finish(null);
+              return;
+            }
+            finish({ doc, cleanup });
+          } catch {
+            finish(null);
+          }
+        }, 300);
+      };
+      iframe.onerror = () => finish(null);
+
+      timeoutId = window.setTimeout(() => finish(null), timeoutMs);
+      const parent = document.body || document.documentElement;
+      if (!parent) {
+        finish(null);
+        return;
+      }
+      parent.appendChild(iframe);
+      iframe.src = url;
+    });
+
+    return {
+      promise,
+      abort: () => finish(null),
+    };
+  }
+
   /** Helper: Insert a chapter from cache to chapters list */
   async function insertCachedChapter(
     cached: CachedChapter,
@@ -114,7 +201,7 @@ export function createNavigation(ctx: NavigationContext) {
 
   /** Unified chapter loading function */
   async function loadChapter(direction: 'next' | 'prev', source: LoadSource): Promise<boolean> {
-    const runId = ctx.viewId();
+    const runId = ctx.runtime.viewId();
     const isNext = direction === 'next';
     const refChapter = isNext
       ? ctx.chapters.value[ctx.chapters.value.length - 1]
@@ -190,7 +277,7 @@ export function createNavigation(ctx: NavigationContext) {
     }
     if (ctx.persistedUrls.value.has(targetUrl)) {
       const persisted = await ctx.getPersistedCachedChapter(targetUrl);
-      if (ctx.isViewStale(runId)) return false;
+      if (ctx.runtime.isViewStale(runId)) return false;
       if (persisted) {
         const sessionCached: CachedChapter = { ...persisted, cachedAt: Date.now() };
         ctx.cachedContents.value.set(targetUrl, sessionCached);
@@ -219,23 +306,30 @@ export function createNavigation(ctx: NavigationContext) {
 
     try {
       const referer = refChapter.chapter.url;
-      const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-      if (ctx.isViewStale(runId)) {
+      const iframeLoader = refChapter.rule?.advanced?.useIframe
+        ? loadDocumentInIframe(targetUrl)
+        : null;
+      const fetchLoader = iframeLoader ? null : fetchAndParseUrl(targetUrl, referer);
+      const abort = iframeLoader ? iframeLoader.abort : fetchLoader!.abort;
+      if (ctx.runtime.isViewStale(runId)) {
         abort();
         return false;
       }
       pendingAbortRef.value = abort;
 
-      const result = await promise;
-      if (ctx.isViewStale(runId)) {
+      const iframeResult = iframeLoader ? await iframeLoader.promise : null;
+      const fetchResult = fetchLoader ? await fetchLoader.promise : null;
+      if (ctx.runtime.isViewStale(runId)) {
         abort();
         return false;
       }
       pendingAbortRef.value = null;
-      if (result.error === 'abort') {
+      if (fetchResult?.error === 'abort') {
         return false;
       }
-      if (!result.doc) {
+      const doc = iframeResult?.doc || fetchResult?.doc || null;
+      const cleanupIframe = iframeResult?.cleanup;
+      if (!doc) {
         const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
         if (source === 'manual' || count === 1) {
           ctx.showToast(errorMessage, 'error', 2500);
@@ -245,24 +339,27 @@ export function createNavigation(ctx: NavigationContext) {
 
       // Cloudflare challenge page: the actual chapter was not returned.
       // Treat as a transient failure so the backoff/retry mechanism kicks in.
-      if (isCloudflareChallenge(result.doc)) {
+      if (isCloudflareChallenge(doc)) {
         const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
         if (source === 'manual' || count === 1) {
           ctx.showToast('Cloudflare 验证页面，请在新标签页中完成验证后重试', 'info', 4000);
         }
+        cleanupIframe?.();
         return false;
       }
 
       // VIP page detection: do not parse / load, just toast and block it for this session
-      if (isVipChapterPage(result.doc)) {
+      if (isVipChapterPage(doc)) {
         ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
         ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
+        cleanupIframe?.();
         return false;
       }
 
       const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
-      if (ctx.isViewStale(runId)) {
+      const parsed = await parseWithSectionMerge(parser, doc, targetUrl, referer);
+      cleanupIframe?.();
+      if (ctx.runtime.isViewStale(runId)) {
         return false;
       }
       if (!parsed) {
@@ -369,13 +466,13 @@ export function createNavigation(ctx: NavigationContext) {
 
       return true;
     } catch (e) {
-      if (!ctx.isViewStale(runId)) {
+      if (!ctx.runtime.isViewStale(runId)) {
         console.error(`[MNR] Failed to load ${direction} chapter:`, e);
         ctx.setError(errorMessage);
       }
       return false;
     } finally {
-      if (!ctx.isViewStale(runId)) {
+      if (!ctx.runtime.isViewStale(runId)) {
         isLoadingRef.value = false;
       }
     }
@@ -395,7 +492,7 @@ export function createNavigation(ctx: NavigationContext) {
    * Rebuild chapters array around a target URL (for jumping to cached chapter)
    */
   async function rebuildChaptersAround(targetUrl: string): Promise<boolean> {
-    const runId = ctx.bumpView();
+    const runId = ctx.runtime.bumpView();
     const url = normalizeUrlForFetch(targetUrl);
     ctx.pendingNextAbort.value?.();
     ctx.pendingNextAbort.value = null;
@@ -411,7 +508,7 @@ export function createNavigation(ctx: NavigationContext) {
     let cached = ctx.cachedContents.value.get(url);
     if (!cached && ctx.persistedUrls.value.has(url)) {
       const persisted = await ctx.getPersistedCachedChapter(url);
-      if (ctx.isViewStale(runId)) return false;
+      if (ctx.runtime.isViewStale(runId)) return false;
       if (persisted) {
         cached = { ...persisted, cachedAt: Date.now() };
         ctx.cachedContents.value.set(url, cached);
@@ -419,7 +516,7 @@ export function createNavigation(ctx: NavigationContext) {
       }
     }
     if (!cached) return false;
-    if (ctx.isViewStale(runId)) return false;
+    if (ctx.runtime.isViewStale(runId)) return false;
 
     ctx.chapters.value = [];
     ctx.currentChapterIndex.value = 0;
@@ -452,7 +549,7 @@ export function createNavigation(ctx: NavigationContext) {
    * Reload current chapter - refetch and reparse with current rules
    */
   async function reloadCurrentChapter(): Promise<void> {
-    const runId = ctx.viewId();
+    const runId = ctx.runtime.viewId();
     const current = ctx.chapters.value[ctx.currentChapterIndex.value];
     if (!current) return;
 
@@ -463,11 +560,11 @@ export function createNavigation(ctx: NavigationContext) {
     ctx.reloadAbort.value?.();
     ctx.reloadAbort.value = null;
     const { promise, abort } = fetchAndParseUrl(url, url);
-    if (!ctx.isViewStale(runId)) {
+    if (!ctx.runtime.isViewStale(runId)) {
       ctx.reloadAbort.value = abort;
     }
     const result = await promise;
-    if (ctx.isViewStale(runId)) {
+    if (ctx.runtime.isViewStale(runId)) {
       abort();
       return;
     }
@@ -484,7 +581,7 @@ export function createNavigation(ctx: NavigationContext) {
 
     const parser = getParser();
     const parsed = await parseWithSectionMerge(parser, result.doc, url, url);
-    if (ctx.isViewStale(runId)) {
+    if (ctx.runtime.isViewStale(runId)) {
       return;
     }
 

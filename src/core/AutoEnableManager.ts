@@ -401,7 +401,7 @@ export class AutoEnableManager {
       const chapter = await this.sectionMerger.merge(doc, currentUrl);
 
       if (chapter && this.launchCallback) {
-        this.launchCallback(chapter, undefined);
+        this.launchCallback(chapter, chapter.rule);
         this.rememberSiteEnabled(doc);
       }
     } catch (e) {

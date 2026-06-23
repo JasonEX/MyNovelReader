@@ -1,0 +1,96 @@
+import type { BeforeParseHook, SiteRule } from '../types';
+
+const gobooBeforeParse: BeforeParseHook = async (doc, url) => {
+  try {
+    const fallbackUrl =
+      typeof location !== 'undefined' && typeof location.href === 'string' ? location.href : '';
+    const pageUrl = url || doc.location?.href || fallbackUrl;
+    const path = pageUrl ? new URL(pageUrl).pathname : '';
+    const match = path.match(/^\/gb_(\d+)\/(\d+)\/\d+/);
+    if (match && !doc.querySelector('#mnr-goboo-index')) {
+      const index = doc.createElement('a');
+      index.id = 'mnr-goboo-index';
+      index.href = `/ml_${match[1]}/${match[2]}`;
+      index.textContent = '目录';
+      index.style.display = 'none';
+      doc.body.appendChild(index);
+    }
+
+    if (
+      typeof document !== 'undefined' &&
+      doc === document &&
+      doc.querySelector('.content button')
+    ) {
+      await new Promise<void>(resolve => setTimeout(resolve, 1200));
+    }
+
+    doc.querySelectorAll('.content p').forEach(p => {
+      const text = (p.textContent || '').replace(/\s+/g, '');
+      if (
+        /小说免费阅读，请收藏.*goboo\.cc/i.test(text) ||
+        /阅\|读\|模\|式\|或\|畅\|读\|模\|式/.test(text) ||
+        /加\|载\|更\|多/.test(text)
+      ) {
+        p.remove();
+      }
+    });
+  } catch (e) {
+    console.warn('[MyNovelReader] Goboo beforeParse error:', e);
+  }
+};
+
+// 钢笔小说 (m.goboo.cc)
+// - 章节页：/gb_1/{bookId}/{chapterNo}
+// - 分页章节：/gb_1/{bookId}/{chapterNo}/{pageNo}
+// - 目录页：/ml_1/{bookId}
+export const gobooRule: SiteRule = {
+  id: 'goboo-m',
+  name: '钢笔小说(手机版)',
+  version: 1,
+  match: {
+    pattern: '^https?://m\\.goboo\\.cc/gb_\\d+/\\d+/\\d+(?:/\\d+)?/?$',
+  },
+  content: {
+    selector: '.content',
+    remove: 'script, iframe, ins, .page, .emgoouqv_b',
+    replace: [
+      {
+        pattern: '【[^】]+】小说免费阅读，请收藏\\s*钢笔小说【goboo\\.cc】',
+        replacement: '',
+        flags: 'g',
+      },
+      {
+        pattern:
+          '阅\\|读\\|模\\|式\\|或\\|畅\\|读\\|模\\|式\\|下，?无\\|法\\|显\\|示\\|本\\|章\\|节\\|全\\|部\\|内\\|容，请\\|返\\|回\\|原\\|网\\|页阅\\|读。?加\\|载\\|更\\|多',
+        replacement: '',
+        flags: 'g',
+      },
+      {
+        pattern: '本章未完，点击\\[下一页\\]继续阅读-->',
+        replacement: '',
+        flags: 'g',
+      },
+    ],
+  },
+  navigation: {
+    prev: '.page .left a',
+    index: '#mnr-goboo-index, .page .center a, a[href*="/ml_"]',
+    next: '.page .right a',
+  },
+  title: {
+    pattern: '^(.+?)(?:\\(\\d+/\\d+\\))?\\s+-\\s+(.+?)小说\\s+-\\s+钢笔小说$',
+    patternIndex: 1,
+    bookPatternIndex: 2,
+  },
+  hooks: {
+    beforeParse: gobooBeforeParse,
+  },
+  advanced: {
+    checkSection: true,
+    sectionDelayMs: 1200,
+  },
+  meta: {
+    source: 'builtin',
+    exampleUrl: 'https://m.goboo.cc/gb_1/94443/1',
+  },
+};

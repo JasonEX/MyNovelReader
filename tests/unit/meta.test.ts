@@ -16,6 +16,7 @@ describe('userscript meta', () => {
     expect(block).toContain('// @version        1.2.3');
     expect(block).toContain('// @build-date     2025-01-01');
     expect(block).toContain('// @match          *://*/*.html');
+    expect(block).toContain('// @match          *://*/gb_*/*/*');
     expect(block).toContain('// @require        https://example.com/dep.js');
     expect(block).toContain('// @resource       demo https://example.com/demo.css');
     expect(block.trimEnd().endsWith('// ==/UserScript==')).toBe(true);

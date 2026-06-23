@@ -67,6 +67,8 @@ export const META_BASE = {
     // Template-style routes used by a bunch of mobile novel sites (no .html)
     '*://*/xs_*/*/*',
     '*://*/xs_*/*/*/*',
+    '*://*/gb_*/*/*',
+    '*://*/gb_*/*/*/*',
 
     // Major novel platforms (explicit for better UX)
     '*://www.qidian.com/chapter/*/*',

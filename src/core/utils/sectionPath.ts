@@ -49,8 +49,24 @@ export function parseChapterSectionFromPathname(pathname: string): ChapterSectio
     return { chapterKey: match[1], section: 1 };
   }
 
-  // 4) Extensionless pagination: /{...}/{chapterId}/{page}
+  // 4) Extensionless pagination with small chapter numbers:
+  // /{...}/{bookId}/{chapterNo}/{page}
+  // Example: /gb_1/94443/1/2 -> chapterKey /gb_1/94443/1, section 2.
   const parts = normalized.split('/').filter(Boolean);
+  if (parts.length >= 4) {
+    const pagePart = parts[parts.length - 1];
+    const chapterPart = parts[parts.length - 2];
+    const hasStableBookId = parts.slice(0, -2).some(p => /^\d{3,}$/.test(p));
+
+    if (/^\d{1,2}$/.test(pagePart) && /^\d{1,6}$/.test(chapterPart) && hasStableBookId) {
+      const section = parseInt(pagePart, 10);
+      if (section >= 1 && section <= 99) {
+        return { chapterKey: `/${parts.slice(0, -1).join('/')}`, section };
+      }
+    }
+  }
+
+  // 5) Extensionless pagination: /{...}/{chapterId}/{page}
   if (parts.length >= 3) {
     const pagePart = parts[parts.length - 1];
     const chapterPart = parts[parts.length - 2];
@@ -66,7 +82,17 @@ export function parseChapterSectionFromPathname(pathname: string): ChapterSectio
     }
   }
 
-  // 5) Extensionless chapter: /{...}/{chapterId}
+  // 6) Extensionless chapter under a stable book id:
+  // /{...}/{bookId}/{chapterNo}
+  if (parts.length >= 3) {
+    const chapterPart = parts[parts.length - 1];
+    const hasStableBookId = parts.slice(0, -1).some(p => /^\d{3,}$/.test(p));
+    if (/^\d{1,6}$/.test(chapterPart) && hasStableBookId) {
+      return { chapterKey: `/${parts.join('/')}`, section: 1 };
+    }
+  }
+
+  // 7) Extensionless chapter: /{...}/{chapterId}
   match = normalized.match(/^(.*\/\d{3,})(?:\/)?$/);
   if (match) {
     return { chapterKey: match[1], section: 1 };

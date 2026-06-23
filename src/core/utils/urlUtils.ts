@@ -60,6 +60,21 @@ export function getSectionBaseUrl(url: string): string | null {
         }
       }
     }
+
+    if (parts.length >= 4) {
+      const pagePart = parts[parts.length - 1];
+      const chapterPart = parts[parts.length - 2];
+      const hasStableBookId = parts.slice(0, -2).some(p => /^\d{3,}$/.test(p));
+
+      if (/^\d{1,2}$/.test(pagePart) && /^\d{1,6}$/.test(chapterPart) && hasStableBookId) {
+        const page = parseInt(pagePart, 10);
+        if (page > 1 && page <= 99) {
+          parts.pop();
+          u.pathname = `/${parts.join('/')}${hasTrailingSlash ? '/' : ''}`;
+          return u.toString();
+        }
+      }
+    }
   } catch {
     // ignore
   }

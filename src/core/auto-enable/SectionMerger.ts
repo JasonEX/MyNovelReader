@@ -104,7 +104,18 @@ export class SectionMerger {
     }
 
     // Merge sections
-    return this.mergeSections(startUrl, first, section, maxPages, options.fetcher, options.signal);
+    const sectionDelayMs = options.fetcher
+      ? 0
+      : Math.max(0, first.rule?.advanced?.sectionDelayMs ?? 0);
+    return this.mergeSections(
+      startUrl,
+      first,
+      section,
+      maxPages,
+      sectionDelayMs,
+      options.fetcher,
+      options.signal
+    );
   }
 
   /**
@@ -115,6 +126,7 @@ export class SectionMerger {
     first: ParsedChapter,
     section: SectionInfo | undefined,
     maxPages: number,
+    sectionDelayMs: number,
     fetcher?: SectionMergeOptions['fetcher'],
     signal?: AbortSignal
   ): Promise<ParsedChapter> {
@@ -140,6 +152,11 @@ export class SectionMerger {
       const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
       if (seen.has(absNextSection)) break;
       seen.add(absNextSection);
+
+      if (sectionDelayMs > 0) {
+        await this.sleep(sectionDelayMs, signal);
+        if (signal?.aborted) break;
+      }
 
       const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
       if (!nextDoc) break;
@@ -176,6 +193,24 @@ export class SectionMerger {
       rawContent: mergedRaw,
       nextUrl: nextChapterUrl || first.nextUrl,
     };
+  }
+
+  private async sleep(ms: number, signal?: AbortSignal): Promise<void> {
+    if (ms <= 0 || signal?.aborted) return;
+
+    await new Promise<void>(resolve => {
+      const timer = globalThis.setTimeout(resolve, ms);
+      if (!signal) return;
+
+      signal.addEventListener(
+        'abort',
+        () => {
+          globalThis.clearTimeout(timer);
+          resolve();
+        },
+        { once: true }
+      );
+    });
   }
 
   /**

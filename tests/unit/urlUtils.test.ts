@@ -138,6 +138,9 @@ describe('isSectionLikeUrl', () => {
         'https://example.com/xs_bkt9oo/89812/1358/2'
       )
     ).toBe(true);
+    expect(
+      isSectionLikeUrl('https://m.goboo.cc/gb_1/94443/1', 'https://m.goboo.cc/gb_1/94443/1/2')
+    ).toBe(true);
 
     // Avoid misclassifying /{bookId}/{chapterNo} as "page 2" of the same chapter.
     expect(isSectionLikeUrl('https://example.com/89812/1', 'https://example.com/89812/2')).toBe(
@@ -146,6 +149,9 @@ describe('isSectionLikeUrl', () => {
     expect(
       isSectionLikeUrl('https://example.com/book/89812/1', 'https://example.com/book/89812/2')
     ).toBe(false);
+    expect(
+      isSectionLikeUrl('https://m.goboo.cc/gb_1/94443/1', 'https://m.goboo.cc/gb_1/94443/2')
+    ).toBe(false);
   });
 });
 
@@ -153,6 +159,9 @@ describe('getSectionBaseUrl', () => {
   it('normalizes extensionless pagination to the first page when URL shape is unambiguous', () => {
     expect(getSectionBaseUrl('https://example.com/xs_bkt9oo/89812/1358/2')).toBe(
       'https://example.com/xs_bkt9oo/89812/1358/1'
+    );
+    expect(getSectionBaseUrl('https://m.goboo.cc/gb_1/94443/1/2')).toBe(
+      'https://m.goboo.cc/gb_1/94443/1'
     );
   });
 

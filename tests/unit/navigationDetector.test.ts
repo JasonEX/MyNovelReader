@@ -576,6 +576,14 @@ describe('NavigationDetector', () => {
         chapterKey: '/12345',
         section: 1,
       });
+      expect(parseChapterSectionFromPathname('/gb_1/94443/1')).toMatchObject({
+        chapterKey: '/gb_1/94443/1',
+        section: 1,
+      });
+      expect(parseChapterSectionFromPathname('/gb_1/94443/1/2')).toMatchObject({
+        chapterKey: '/gb_1/94443/1',
+        section: 2,
+      });
       expect(parseChapterSectionFromPathname('/abc')).toBeNull();
     });
   });

@@ -14,7 +14,8 @@
  * - Auto-detection coverage increased to ~85%
  */
 
-import { SiteRule } from './types';
+import type { BeforeParseHook, SiteRule } from './types';
+import { siteRules } from './sites';
 
 const CIWEIMAO_BEFORE_PARSE = `
   try {
@@ -257,93 +258,222 @@ const CIWEIMAO_BEFORE_PARSE = `
   }
 `;
 
+const HETUSHU_BEFORE_PARSE = `
+  try {
+    const contentEl = doc.querySelector('#content');
+    if (!contentEl) return;
+
+    const win = doc.defaultView || (typeof window !== 'undefined' ? window : null);
+    const pageUrl = url || doc.location?.href || (typeof window !== 'undefined' ? window.location.href : '');
+    const titleEl = contentEl.querySelector('h2');
+    const watermarkSelector =
+      'acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins';
+    const normalizeWatermarkText = value =>
+      value
+        .replace(/[\\s\\u3000]+/g, '')
+        .replace(
+          /[ｗwＷW]+[.．•·。]*[hｈ][eｅ][tｔ][uｕ][sｓ][hｈ][uｕ][.．。]*(?:com|ｃｏｍ)(?:[.．。]*(?:com|ｃｏｍ))?/gi,
+          ''
+        );
+    const collectStyleText = async () => {
+      const texts = Array.from(doc.querySelectorAll('style'))
+        .map(style => style.textContent || '')
+        .filter(Boolean);
+      const links = Array.from(doc.querySelectorAll('link[rel~="stylesheet"][href]'));
+      for (const link of links) {
+        if (!helpers?.fetchText) continue;
+        try {
+          const href = link.getAttribute('href');
+          if (!href) continue;
+          const styleUrl = new URL(href, pageUrl).href;
+          const text = await helpers.fetchText(styleUrl, { timeoutMs: 4000, withCredentials: true });
+          if (text) texts.push(text);
+        } catch {
+          // ignore stylesheet fetch failures
+        }
+      }
+      return texts.join('\\n');
+    };
+    const extractDisplayClasses = cssText => {
+      const block = new Set();
+      const none = new Set();
+      const ruleRe = /([^{}]+)\\{([^{}]+)\\}/g;
+      let match;
+      while ((match = ruleRe.exec(cssText))) {
+        const selector = match[1] || '';
+        const body = match[2] || '';
+        if (!selector.includes('#content')) continue;
+        const displayBlock = /display\\s*:\\s*block\\b/i.test(body);
+        const displayNone = /display\\s*:\\s*none\\b/i.test(body);
+        if (!displayBlock && !displayNone) continue;
+        const classRe = /#content\\s+\\.([A-Za-z0-9_-]+)/g;
+        let classMatch;
+        while ((classMatch = classRe.exec(selector))) {
+          if (displayBlock) block.add(classMatch[1]);
+          if (displayNone) none.add(classMatch[1]);
+        }
+      }
+      return { block, none };
+    };
+    const styleClasses = extractDisplayClasses(await collectStyleText());
+    const hasLayout = el => {
+      if (!win) return false;
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+    const isVisibleByClass = el => {
+      const classes = Array.from(el.classList || []);
+      if (!classes.length) return false;
+      if (classes.some(cls => styleClasses.none.has(cls))) return false;
+      if (styleClasses.block.size > 0) return classes.some(cls => styleClasses.block.has(cls));
+      return true;
+    };
+    const isVisible = el => {
+      if (!win || !hasLayout(el)) return isVisibleByClass(el);
+      const style = win.getComputedStyle(el);
+      if (style.display === 'none') return false;
+      if (style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+      if (Number(style.opacity) === 0) return false;
+      return true;
+    };
+    const cleanClone = el => {
+      const clone = el.cloneNode(true);
+      clone.querySelectorAll(watermarkSelector).forEach(node => node.remove());
+      const walker = doc.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+      textNodes.forEach(node => {
+        const cleaned = normalizeWatermarkText(node.nodeValue || '');
+        if (cleaned !== node.nodeValue) node.nodeValue = cleaned;
+      });
+      return clone;
+    };
+
+    const rows = Array.from(contentEl.children)
+      .filter(el => el !== titleEl && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE')
+      .filter(isVisible)
+      .map((el, index) => {
+        const rect = win && hasLayout(el) ? el.getBoundingClientRect() : { top: index, left: 0 };
+        return {
+          index,
+          top: rect.top + (win ? win.scrollY : 0),
+          left: rect.left + (win ? win.scrollX : 0),
+          el,
+        };
+      })
+      .sort((a, b) => a.top - b.top || a.left - b.left || a.index - b.index);
+
+    if (!rows.length) return;
+    const fragment = doc.createDocumentFragment();
+    if (titleEl) fragment.appendChild(titleEl.cloneNode(true));
+    rows.forEach(({ el }) => {
+      const paragraph = doc.createElement('p');
+      const clone = cleanClone(el);
+      paragraph.innerHTML = clone.innerHTML || clone.textContent || '';
+      if (paragraph.textContent && paragraph.textContent.replace(/\\s+/g, '').trim()) {
+        fragment.appendChild(paragraph);
+      }
+    });
+
+    contentEl.innerHTML = '';
+    contentEl.appendChild(fragment);
+  } catch (e) {
+    console.warn('[MyNovelReader] Hetushu beforeParse error:', e);
+  }
+`;
+
+function getDdxsmfAjaxContent(payload: Record<string, unknown> | null): string {
+  const data = payload?.data;
+  if (!data || typeof data !== 'object') return '';
+
+  const content = (data as { content?: unknown }).content;
+  return typeof content === 'string' ? content : '';
+}
+
+const ddxsmfBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
+  try {
+    const contentEl = doc.querySelector('#chapter-content');
+    if (!contentEl) return;
+
+    contentEl.setAttribute('data-mnr-loading', '1');
+    const currentUrl = url || doc.location?.href || window.location.href;
+    const urlObj = new URL(currentUrl);
+    const parts = urlObj.pathname.split('/').filter(Boolean);
+
+    try {
+      if (parts[0] === 'read' && parts[1] && parts[2]) {
+        const aid = parseInt(parts[1], 10);
+        const cid = parseInt(parts[2].split('.')[0], 10);
+        if (aid && cid && helpers?.fetchJson) {
+          const apiUrl = new URL('/modules/article/ajax_chapter.php', urlObj.origin);
+          apiUrl.searchParams.set('aid', String(aid));
+          apiUrl.searchParams.set('cid', String(cid));
+          const headers: Record<string, string> = {
+            'X-Requested-With': 'XMLHttpRequest',
+          };
+          if (currentUrl) {
+            headers.Referer = currentUrl;
+          }
+          const payload = await helpers.fetchJson(apiUrl.toString(), {
+            timeoutMs: 4000,
+            headers,
+          });
+          const html = getDdxsmfAjaxContent(payload);
+          if (html) {
+            contentEl.innerHTML = html;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[MyNovelReader] ddxsmf content fetch error:', e);
+    } finally {
+      contentEl.removeAttribute('data-mnr-loading');
+    }
+
+    const scripts = Array.from(doc.querySelectorAll('script'))
+      .map(script => script.textContent || '')
+      .join('\n');
+    const loadIndex = scripts.indexOf('function loadChapter');
+    if (loadIndex !== -1) {
+      const rest = scripts.slice(loadIndex);
+      const endIndex = rest.indexOf('function initPaginationButtons');
+      const block = endIndex !== -1 ? rest.slice(0, endIndex) : rest;
+      const prevMatch = block.match(
+        /direction\s*===\s*['"]prev['"][\s\S]*?chapterUrl\s*=\s*['"]([^'"]*)['"]/
+      );
+      const nextMatch = block.match(/else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]*)['"]/);
+      const normalize = (value: string): string => {
+        try {
+          return new URL(value, doc.location?.href || window.location.href).href;
+        } catch {
+          return value;
+        }
+      };
+      const prevRaw = prevMatch?.[1] || '';
+      const nextRaw = nextMatch?.[1] || '';
+      const prevUrl = prevRaw && prevRaw !== '#' ? normalize(prevRaw) : '';
+      const nextUrl = nextRaw && nextRaw !== '#' ? normalize(nextRaw) : '';
+      const prevEl = doc.querySelector('.page-prev');
+      const nextEl = doc.querySelector('.page-next');
+      if (prevEl && prevUrl && prevUrl !== '#') prevEl.setAttribute('href', prevUrl);
+      if (nextEl && nextUrl && nextUrl !== '#') nextEl.setAttribute('href', nextUrl);
+    }
+
+    const indexEl = doc.querySelector('.page-index');
+    const indexHref = indexEl?.getAttribute('data-href');
+    if (indexEl && indexHref) {
+      indexEl.setAttribute('href', indexHref);
+    }
+  } catch (e) {
+    console.warn('[MyNovelReader] ddxsmf beforeParse error:', e);
+  }
+};
+
 /**
  * Category C: Rules with special processing
  * These require special processing (beforeParse hook, dynamic content handling, iframe/mutations, etc.)
  */
 const specialRules: SiteRule[] = [
-  // Qidian (起点) - VIP chapters, dynamic content
-  {
-    id: 'qidian',
-    name: '起点中文网',
-    version: 8,
-    match: {
-      pattern: '^https?://(www|m)\\.qidian\\.com/chapter/.*',
-    },
-    content: {
-      selector: 'main[id^="c-"]',
-      remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]',
-    },
-    navigation: {
-      // #mnr-qidian-* are created by beforeParse hook from JSON data
-      // Fallback selectors for DOM-based navigation
-      prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
-      index: '#mnr-qidian-index',
-      next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")',
-    },
-    title: {
-      selector: 'h1.title, h1.text-1\\.3em, #r-nav-chapter-title',
-    },
-    hooks: {
-      // Build navigation links from pageContext JSON (SSR data)
-      beforeParse: `
-        // Remove review count from title
-        try {
-          const reviews = doc.querySelectorAll('h1 .review');
-          reviews.forEach(el => el.remove());
-        } catch (e) {
-          console.debug('[MNR] Failed to remove review elements:', e);
-        }
-
-        try {
-          const script = doc.querySelector('#vite-plugin-ssr_pageContext');
-          if (script) {
-            const data = JSON.parse(script.textContent);
-            const pageData = data.pageContext?.pageProps?.pageData;
-            if (pageData) {
-              const bookId = pageData.bookInfo?.bookId;
-              const chapterInfo = pageData.chapterInfo;
-              const host = url ? new URL(url).hostname : location.hostname;
-              const navContainer = doc.createElement('div');
-              navContainer.id = 'mnr-qidian-nav';
-              navContainer.style.display = 'none';
-              if (chapterInfo?.prev && chapterInfo.prev !== -1) {
-                const prev = doc.createElement('a');
-                prev.id = 'mnr-qidian-prev';
-                prev.href = '//' + host + '/chapter/' + bookId + '/' + chapterInfo.prev + '/';
-                prev.textContent = '上一章';
-                navContainer.appendChild(prev);
-              }
-              if (chapterInfo?.next && chapterInfo.next !== -1) {
-                const next = doc.createElement('a');
-                next.id = 'mnr-qidian-next';
-                next.href = '//' + host + '/chapter/' + bookId + '/' + chapterInfo.next + '/';
-                next.textContent = '下一章';
-                navContainer.appendChild(next);
-              }
-              if (bookId) {
-                const index = doc.createElement('a');
-                index.id = 'mnr-qidian-index';
-                index.href = '//' + host + '/book/' + bookId + '/catalog/';
-                index.textContent = '目录';
-                navContainer.appendChild(index);
-              }
-              doc.body.appendChild(navContainer);
-            }
-          }
-        } catch (e) {
-          console.warn('[MyNovelReader] Qidian beforeParse error:', e);
-        }
-      `,
-    },
-    advanced: {
-      useIframe: true,
-      mutationSelector: 'main[id^="c-"]',
-      mutationChildCount: 0,
-    },
-    meta: { source: 'builtin' },
-  },
-
   // Chuangshi (创世) - Complex getContent
   {
     id: 'chuangshi',
@@ -512,6 +642,9 @@ const specialRules: SiteRule[] = [
     title: {
       bookSelector: '#left h3',
     },
+    hooks: {
+      beforeParse: HETUSHU_BEFORE_PARSE,
+    },
     advanced: {
       useIframe: true,
     },
@@ -644,83 +777,7 @@ const specialRules: SiteRule[] = [
       selector: 'h1',
     },
     hooks: {
-      beforeParse: `
-        try {
-          const contentEl = doc.querySelector('#chapter-content');
-          if (contentEl) {
-            contentEl.setAttribute('data-mnr-loading', '1');
-            const currentUrl = url || doc.location?.href || window.location.href;
-            const urlObj = new URL(currentUrl);
-            const parts = urlObj.pathname.split('/').filter(Boolean);
-            try {
-              if (parts[0] === 'read' && parts[1] && parts[2]) {
-                const aid = parseInt(parts[1], 10);
-                const cid = parseInt(parts[2].split('.')[0], 10);
-                if (aid && cid && helpers?.fetchJson) {
-                  const apiUrl = new URL('/modules/article/ajax_chapter.php', urlObj.origin);
-                  apiUrl.searchParams.set('aid', String(aid));
-                  apiUrl.searchParams.set('cid', String(cid));
-                  const headers = {
-                    'X-Requested-With': 'XMLHttpRequest',
-                  };
-                  if (currentUrl) {
-                    headers.Referer = currentUrl;
-                  }
-                  const payload = await helpers.fetchJson(apiUrl.toString(), {
-                    timeoutMs: 4000,
-                    headers,
-                  });
-                  const html = payload?.data?.content;
-                  if (html) {
-                    contentEl.innerHTML = html;
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn('[MyNovelReader] ddxsmf content fetch error:', e);
-            } finally {
-              contentEl.removeAttribute('data-mnr-loading');
-            }
-          }
-          const scripts = Array.from(doc.querySelectorAll('script'))
-            .map(script => script.textContent || '')
-            .join('\\n');
-          const loadIndex = scripts.indexOf('function loadChapter');
-          if (loadIndex !== -1) {
-            const rest = scripts.slice(loadIndex);
-            const endIndex = rest.indexOf('function initPaginationButtons');
-            const block = endIndex !== -1 ? rest.slice(0, endIndex) : rest;
-            const prevMatch = block.match(
-              /direction\\s*===\\s*['"]prev['"][\\s\\S]*?chapterUrl\\s*=\\s*['"]([^'"]*)['"]/
-            );
-            const nextMatch = block.match(
-              /else\\s*\\{[\\s\\S]*?chapterUrl\\s*=\\s*['"]([^'"]*)['"]/
-            );
-            const normalize = value => {
-              try {
-                return new URL(value, doc.location?.href || window.location.href).href;
-              } catch {
-                return value;
-              }
-            };
-            const prevRaw = prevMatch?.[1] || '';
-            const nextRaw = nextMatch?.[1] || '';
-            const prevUrl = prevRaw && prevRaw !== '#' ? normalize(prevRaw) : '';
-            const nextUrl = nextRaw && nextRaw !== '#' ? normalize(nextRaw) : '';
-            const prevEl = doc.querySelector('.page-prev');
-            const nextEl = doc.querySelector('.page-next');
-            if (prevEl && prevUrl && prevUrl !== '#') prevEl.setAttribute('href', prevUrl);
-            if (nextEl && nextUrl && nextUrl !== '#') nextEl.setAttribute('href', nextUrl);
-          }
-          const indexEl = doc.querySelector('.page-index');
-          const indexHref = indexEl?.getAttribute('data-href');
-          if (indexEl && indexHref) {
-            indexEl.setAttribute('href', indexHref);
-          }
-        } catch (e) {
-          console.warn('[MyNovelReader] ddxsmf beforeParse error:', e);
-        }
-      `,
+      beforeParse: ddxsmfBeforeParse,
     },
     advanced: {
       mutationSelector: '#chapter-content',
@@ -1259,32 +1316,6 @@ const simplifiedRules: SiteRule[] = [
     meta: { source: 'builtin', exampleUrl: 'https://www.qisxs.com/shenhaiyujin/7570735.html' },
   },
 
-  // UUread
-  {
-    id: 'uuread',
-    name: 'UU看书',
-    version: 1,
-    match: {
-      pattern: 'https://www\\.uuread\\.tw/chapter/\\d+/\\d+(_\\d+)?\\.html',
-    },
-    content: {
-      selector: '.txt_tcontent',
-    },
-    navigation: {
-      next: 'a.btn-primary:nth-child(4)',
-      prev: 'a.btn-primary:nth-child(1)',
-      index: 'a.btn-primary:nth-child(3)',
-    },
-    title: {
-      selector: '.chatit',
-      bookSelector: '.bread > li:nth-child(4) > a:nth-child(1)',
-    },
-    advanced: {
-      checkSection: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://www.uuread.tw/chapter/11681/3006418.html' },
-  },
-
   // ==================== Section-related rules (checkSection/noSection) ====================
 
   // 小说321 - checkSection
@@ -1553,14 +1584,20 @@ const simplifiedRules: SiteRule[] = [
 /**
  * All built-in rules combined
  */
-export const builtInRules: SiteRule[] = [...specialRules, ...simplifiedRules];
+export const builtInRules: SiteRule[] = [...siteRules, ...specialRules, ...simplifiedRules];
 
 /**
  * Get built-in rules count
  */
-export function getBuiltInRulesCount(): { total: number; special: number; simplified: number } {
+export function getBuiltInRulesCount(): {
+  total: number;
+  site: number;
+  special: number;
+  simplified: number;
+} {
   return {
     total: builtInRules.length,
+    site: siteRules.length,
     special: specialRules.length,
     simplified: simplifiedRules.length,
   };

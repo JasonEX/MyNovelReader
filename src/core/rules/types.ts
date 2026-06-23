@@ -106,6 +106,11 @@ export interface AdvancedConfig {
    */
   checkSection?: boolean;
   /**
+   * Delay between fetching consecutive section pages.
+   * Useful for sites with aggressive request-frequency limits.
+   */
+  sectionDelayMs?: number;
+  /**
    * Disable section merging
    * When true, treats each page as independent chapter even if URL looks like section
    */
@@ -117,18 +122,37 @@ export interface AdvancedConfig {
   withReferer?: boolean;
 }
 
+export interface HookFetchOptions {
+  timeoutMs?: number;
+  headers?: Record<string, string>;
+  withCredentials?: boolean;
+}
+
+export interface HookHelpers {
+  fetchJson: (url: string, options?: HookFetchOptions) => Promise<Record<string, unknown> | null>;
+  fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
+}
+
+export type BeforeParseHook = (
+  doc: Document,
+  url?: string,
+  helpers?: HookHelpers
+) => Promise<void> | void;
+
 /** JavaScript hooks for advanced customization */
 export interface HooksConfig {
   /**
-   * JS code to run before parsing.
+   * JS code or a typed built-in function to run before parsing.
    *
-   * This is executed as async code with signature:
+   * String hooks are executed as async code with signature:
    *   (doc: Document, url?: string, helpers?: { fetchJson, fetchText }) => Promise<void>
+   * Function hooks are intended for built-in rules only; user rules are persisted as JSON and keep
+   * using string hooks.
    *
    * Note: Only `beforeParse` is supported. Other legacy hook fields are intentionally not supported
    * to keep the rules schema simple and predictable.
    */
-  beforeParse?: string;
+  beforeParse?: string | BeforeParseHook;
 }
 
 /** Rule metadata */

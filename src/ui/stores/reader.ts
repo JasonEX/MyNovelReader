@@ -35,6 +35,7 @@ import { createTocActions, loadTocEntriesPaged } from './reader/toc';
 import { normalizeUrlForBlock, normalizeUrlForFetch } from './reader/utils';
 import { createCacheAll } from './reader/cacheAll';
 import { createNavigation } from './reader/navigation';
+import { createReaderRuntime } from './reader/runtime';
 
 // Re-export types for backward compatibility
 export type {
@@ -78,20 +79,7 @@ export const useReaderStore = defineStore('reader', () => {
   const tocAbort = ref<(() => void) | null>(null);
   const cachedContents = ref<Map<string, CachedChapter>>(new Map());
   const persistedUrls = ref<Set<string>>(new Set());
-
-  let sessionId = 0;
-  let viewId = 0;
-  const bumpSession = (): number => {
-    sessionId += 1;
-    viewId += 1;
-    return sessionId;
-  };
-  const bumpView = (): number => {
-    viewId += 1;
-    return viewId;
-  };
-  const isSessionStale = (runId: number): boolean => runId !== sessionId;
-  const isViewStale = (runId: number): boolean => runId !== viewId;
+  const runtime = createReaderRuntime();
 
   // Getters
   const chapter = computed(() => chapters.value[currentChapterIndex.value]?.chapter || null);
@@ -232,21 +220,21 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   async function persistCache(): Promise<void> {
-    const runId = sessionId;
+    const runId = runtime.sessionId();
     const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
     if (!cacheBook) return;
     const result = persistCacheImpl(cacheBook, cachedContents.value, persistedUrls.value);
-    if (!isSessionStale(runId)) {
+    if (!runtime.isSessionStale(runId)) {
       persistedUrls.value = result;
     }
   }
 
   async function restoreCache(): Promise<void> {
-    const runId = sessionId;
+    const runId = runtime.sessionId();
     const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
     if (!cacheBook) return;
     const restored = restoreCacheImpl(cacheBook);
-    if (restored && !isSessionStale(runId)) {
+    if (restored && !runtime.isSessionStale(runId)) {
       persistedUrls.value = restored;
     }
   }
@@ -278,9 +266,7 @@ export const useReaderStore = defineStore('reader', () => {
     currentConversionMode,
     navFailures,
     history,
-    viewId: () => viewId,
-    bumpView,
-    isViewStale,
+    runtime,
     showToast,
     setError,
     applyConversionToChapterEntry,
@@ -297,8 +283,7 @@ export const useReaderStore = defineStore('reader', () => {
     chapter,
     rule,
     chapters,
-    sessionId: () => sessionId,
-    isSessionStale,
+    runtime,
     restoreCache,
     persistCache,
   });
@@ -312,8 +297,7 @@ export const useReaderStore = defineStore('reader', () => {
     chapter,
     rule,
     currentConversionMode,
-    sessionId: () => sessionId,
-    isSessionStale,
+    runtime,
     showToast,
     applyTocConversion,
     loadTocEntriesPaged,
@@ -364,17 +348,18 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function deactivate() {
-    bumpSession();
+    runtime.bumpSession();
     isActive.value = false;
     cancelAllInFlight();
     clearAllData();
   }
 
   function setChapter(newChapter: ParsedChapter, newRule?: SiteRule) {
-    bumpSession();
+    runtime.bumpSession();
     cancelAllInFlight();
     toc.value = [];
     tocOriginal.value = [];
+    const effectiveRule = newRule || newChapter.rule;
 
     // Canonicalize URLs (strip hashes etc.) to stabilize caching and navigation.
     if (newChapter.url) newChapter.url = normalizeUrlForFetch(newChapter.url);
@@ -383,7 +368,7 @@ export const useReaderStore = defineStore('reader', () => {
     if (newChapter.indexUrl) newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
 
     const id = `chapter-${Date.now()}-0`;
-    chapters.value = [{ chapter: newChapter, rule: newRule, id }];
+    chapters.value = [{ chapter: newChapter, rule: effectiveRule, id }];
     currentChapterIndex.value = 0;
     error.value = null;
     loadedUrls.value.clear();
@@ -403,7 +388,7 @@ export const useReaderStore = defineStore('reader', () => {
     // Also store in cachedContents for quick jump
     cachedContents.value.set(newChapter.url, {
       chapter: newChapter,
-      rule: newRule,
+      rule: effectiveRule,
       cachedAt: Date.now(),
     });
 
@@ -459,7 +444,7 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function $reset() {
-    bumpSession();
+    runtime.bumpSession();
     isActive.value = false;
     cancelAllInFlight();
     clearAllData();

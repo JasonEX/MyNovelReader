@@ -8,6 +8,7 @@ Thumbs.db
 *.sublime-workspace
 AGENTS.md
 coverage/
+test-results/
 
 # TypeScript
 *.tsbuildinfo

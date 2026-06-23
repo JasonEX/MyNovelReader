@@ -62,13 +62,27 @@ export default defineConfig({
             // Also inject to document.head for light DOM components (ElementPicker, etc.)
             // Use a unique ID to prevent duplicate injection
             var styleId = 'mnr-global-styles';
-            var existingStyle = document.getElementById(styleId);
-            if (!existingStyle) {
-              existingStyle = document.createElement('style');
-              existingStyle.id = styleId;
-              document.head.appendChild(existingStyle);
+            var injectGlobalStyle = function () {
+              var existingStyle = document.getElementById(styleId);
+              if (!existingStyle) {
+                var parent = document.head || document.documentElement;
+                if (!parent) return false;
+                existingStyle = document.createElement('style');
+                existingStyle.id = styleId;
+                parent.appendChild(existingStyle);
+              }
+              existingStyle.textContent = globalState.styles;
+              return true;
+            };
+            if (!injectGlobalStyle()) {
+              document.addEventListener(
+                'DOMContentLoaded',
+                function () {
+                  injectGlobalStyle();
+                },
+                { once: true }
+              );
             }
-            existingStyle.textContent = globalState.styles;
 
             // If Shadow DOM already exists, also inject there
             if (globalState.shadowRoot) {
