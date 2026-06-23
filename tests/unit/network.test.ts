@@ -15,6 +15,14 @@ const makeXhrResponse = (
   ...overrides,
 });
 
+function hexToArrayBuffer(hex: string): ArrayBuffer {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes.buffer;
+}
+
 describe('network utilities', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -183,6 +191,31 @@ describe('network utilities', () => {
 
     expect(res.error).toBeNull();
     expect(res.doc?.querySelector('base')?.getAttribute('href')).toContain('https://example.com/');
+  });
+
+  it('fetch path decodes legacy GBK HTML from meta charset', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const gbkHtml =
+      '3c21646f63747970652068746d6c3e3c68746d6c3e3c686561643e3c6d65746120636861727365743d2267626b223e3c2f686561643e3c626f64793e3c6120687265663d222f7478742f31223eb5da31d5c220b2e2cad43c2f613e3c2f626f64793e3c2f68746d6c3e';
+
+    const fetchMock = vi.fn(async () => ({
+      status: 200,
+      url: 'https://example.com/book/',
+      headers: { get: () => null },
+      arrayBuffer: async () => hexToArrayBuffer(gbkHtml),
+      text: async () => '',
+    }));
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchAndParseUrl('https://example.com/book/', 'https://example.com/', {
+      retries: 0,
+      timeoutMs: 1000,
+    }).promise;
+
+    expect(res.error).toBeNull();
+    expect(res.doc?.querySelector('a')?.textContent).toBe('第1章 测试');
   });
 
   it('fetch path returns http error for non-2xx', async () => {

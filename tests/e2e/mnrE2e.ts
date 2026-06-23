@@ -408,6 +408,47 @@ function createGmMockScript(): string {
     window.__mnrMenuCommands.push({ caption, fn });
     return window.__mnrMenuCommands.length;
   };
+  const normalizeCharset = charset => {
+    const normalized = String(charset || '').trim().replace(/^["']|["']$/g, '').toLowerCase();
+    if (!normalized) return '';
+    if (normalized === 'utf8') return 'utf-8';
+    if (normalized === 'gbk' || normalized === 'gb2312' || normalized === 'gb18030') return 'gb18030';
+    return normalized;
+  };
+  const extractCharset = value => {
+    const match = String(value || '').match(/charset\\s*=\\s*["']?([^;"'\\s>]+)/i);
+    return normalizeCharset(match && match[1]);
+  };
+  const sniffCharset = buffer => {
+    const bytes = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 4096));
+    let ascii = '';
+    for (const byte of bytes) {
+      ascii += byte >= 0x20 && byte <= 0x7e ? String.fromCharCode(byte) : ' ';
+    }
+    const charsetMeta = ascii.match(/<meta[^>]+charset\\s*=\\s*["']?([^"' />]+)/i);
+    if (charsetMeta && charsetMeta[1]) return normalizeCharset(charsetMeta[1]);
+    const contentTypeMeta = ascii.match(
+      /<meta[^>]+http-equiv\\s*=\\s*["']?content-type["']?[^>]+content\\s*=\\s*["']([^"']+)["']/i
+    );
+    return extractCharset(contentTypeMeta && contentTypeMeta[1]);
+  };
+  const decodeResponseText = async (resp, overrideMimeType) => {
+    if (typeof resp.arrayBuffer !== 'function' || typeof TextDecoder === 'undefined') {
+      return resp.text();
+    }
+    const buffer = await resp.arrayBuffer();
+    const charset =
+      extractCharset(overrideMimeType) ||
+      extractCharset(resp.headers.get('content-type')) ||
+      sniffCharset(buffer) ||
+      normalizeCharset(document.characterSet) ||
+      'utf-8';
+    try {
+      return new TextDecoder(charset).decode(buffer);
+    } catch {
+      return new TextDecoder('utf-8').decode(buffer);
+    }
+  };
   window.GM_xmlhttpRequest = details => {
     const controller = new AbortController();
     fetch(details.url, {
@@ -417,7 +458,7 @@ function createGmMockScript(): string {
       credentials: details.withCredentials ? 'include' : 'same-origin',
       signal: controller.signal,
     }).then(async resp => {
-      const responseText = await resp.text();
+      const responseText = await decodeResponseText(resp, details.overrideMimeType);
       const responseHeaders = Array.from(resp.headers.entries())
         .map(([key, value]) => key + ': ' + value)
         .join('\\r\\n');

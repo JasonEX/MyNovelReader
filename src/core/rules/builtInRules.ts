@@ -469,35 +469,6 @@ const specialRules: SiteRule[] = [
     meta: { source: 'builtin', exampleUrl: 'https://www.gongzicp.com/read-246381.html' },
   },
 
-  // 69shu - iframe + referer
-  {
-    id: '69shu',
-    name: '69书吧',
-    version: 1,
-    match: {
-      pattern:
-        'https?://(www\\.)?69(shu|yuedu)[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c|r)/',
-    },
-    content: {
-      selector: '.txtnav',
-      remove: '.txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2',
-      replace: [{ pattern: '.*[6六].*[9九].*书.*吧.*', replacement: '' }],
-    },
-    navigation: {
-      next: '.page1 a:nth-child(4)',
-      prev: '.page1 a:nth-child(1)',
-      index: '.page1 a:nth-child(3)',
-    },
-    title: {
-      selector: 'h1',
-      bookSelector: '.txtinfo a:first-child, .con_top a:nth-child(3)',
-    },
-    advanced: {
-      useIframe: true,
-    },
-    meta: { source: 'builtin', exampleUrl: 'https://www.69shuba.com/txt/46867/31307961' },
-  },
-
   // Weread (微信读书) - Canvas rendering
   {
     id: 'weread',

@@ -44,8 +44,6 @@ npm run e2e:warmup           # 打开持久化浏览器 profile，手动通过 C
 npm run e2e:smoke            # 构建并在真实章节页注入脚本，验证阅读器实际渲染
 npm run e2e:smoke:headed     # 有些站点不信任 headless 时，用有界面浏览器跑同一套 smoke
 npm run e2e:smoke:cdp        # 连接已开启远程调试端口的真实 Chrome 会话做 smoke
-npm run e2e:hetushu          # Hetushu 深度手动启用验收：前后翻章、10章阅读流、目录、缓存
-npm run e2e:hetushu:headed   # 有界面运行 Hetushu 深度验收
 npm run lint                 # 基础语法检查
 npm run lint:strict          # 不允许有 warnings
 npm run lint:fix             # 自动修复可修复的 lint 问题
@@ -94,7 +92,6 @@ npm run e2e:smoke:cdp
 - `MNR_E2E_CDP_ENDPOINT`：真实 Chrome 的 CDP 地址，例如 `http://127.0.0.1:9222`
 - `MNR_E2E_HEADLESS=false`：用有界面浏览器跑 smoke；等价于常用场景下的 `npm run e2e:smoke:headed`
 - `MNR_E2E_MIN_CONTENT_CHARS`：阅读器正文最少字符数断言，默认 `1000`
-- `MNR_HETUSHU_READ_DELAY_MS`：Hetushu 深度验收的每次翻章等待时间，默认 `3500`
 
 ### 项目结构
 

@@ -108,6 +108,76 @@ function parseHttpUrl(url: string): URL | null {
   }
 }
 
+function normalizeCharset(charset: string | null | undefined): string | null {
+  const normalized = (charset || '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'utf8') return 'utf-8';
+  if (normalized === 'gbk' || normalized === 'gb2312' || normalized === 'gb18030') {
+    return 'gb18030';
+  }
+  return normalized;
+}
+
+function extractCharsetFromMime(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const match = value.match(/charset\s*=\s*["']?([^;"'\s>]+)/i);
+  return normalizeCharset(match?.[1]);
+}
+
+function extractCharsetFromHtmlBytes(buffer: ArrayBuffer): string | null {
+  const bytes = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 4096));
+  let ascii = '';
+  for (const byte of bytes) {
+    ascii += byte >= 0x20 && byte <= 0x7e ? String.fromCharCode(byte) : ' ';
+  }
+
+  const charsetMeta = ascii.match(/<meta[^>]+charset\s*=\s*["']?([^"' />]+)/i);
+  if (charsetMeta?.[1]) return normalizeCharset(charsetMeta[1]);
+
+  const contentTypeMeta = ascii.match(
+    /<meta[^>]+http-equiv\s*=\s*["']?content-type["']?[^>]+content\s*=\s*["']([^"']+)["']/i
+  );
+  return extractCharsetFromMime(contentTypeMeta?.[1]);
+}
+
+function getCurrentDocumentCharset(): string | null {
+  if (typeof document === 'undefined') return null;
+  return normalizeCharset(document.characterSet || document.charset);
+}
+
+function decodeHtmlBytes(
+  buffer: ArrayBuffer,
+  contentType?: string | null,
+  fallbackCharset?: string | null
+): string {
+  const charset =
+    extractCharsetFromMime(contentType) ||
+    extractCharsetFromHtmlBytes(buffer) ||
+    normalizeCharset(fallbackCharset) ||
+    getCurrentDocumentCharset() ||
+    'utf-8';
+
+  try {
+    return new TextDecoder(charset).decode(buffer);
+  } catch {
+    return new TextDecoder('utf-8').decode(buffer);
+  }
+}
+
+async function readFetchResponseText(response: Response): Promise<string> {
+  if (typeof response.arrayBuffer !== 'function' || typeof TextDecoder === 'undefined') {
+    return response.text();
+  }
+
+  const contentType =
+    typeof response.headers?.get === 'function' ? response.headers.get('content-type') : null;
+  const buffer = await response.arrayBuffer();
+  return decodeHtmlBytes(buffer, contentType);
+}
+
 export function resolveAndValidateHttpUrl(url: string, base?: string): string | null {
   const normalized = normalizeUrlForFetch(url);
 
@@ -313,7 +383,7 @@ export function fetchAndParseUrl(
         const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
         const status = response.status;
         if (status >= 200 && status < 300) {
-          const html = await response.text();
+          const html = await readFetchResponseText(response);
           const parsed = parseHtmlToDoc(html, finalUrl);
           const result: FetchAndParseResult = { ...parsed, status, finalUrl };
           return result;

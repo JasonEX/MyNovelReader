@@ -4018,6 +4018,102 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     __proto__: null,
     qidianRule
   }, Symbol.toStringTag, { value: "Module" }));
+  const shu69BeforeParse = (doc2, url) => {
+    var _a;
+    try {
+      const fallbackUrl = typeof location !== "undefined" && typeof location.href === "string" ? location.href : "";
+      const pageUrl = url || ((_a = doc2.location) == null ? void 0 : _a.href) || fallbackUrl;
+      const script = Array.from(doc2.querySelectorAll("script")).find(
+        (item) => (item.textContent || "").includes("bookinfo")
+      );
+      const text2 = (script == null ? void 0 : script.textContent) || "";
+      if (!text2) return;
+      const extractString = (key) => {
+        var _a2;
+        const match = text2.match(new RegExp(`${key}\\s*:\\s*(["'])([^"'\\r\\n]{1,300})\\1`, "i"));
+        return ((_a2 = match == null ? void 0 : match[2]) == null ? void 0 : _a2.trim()) || "";
+      };
+      const normalizeUrl2 = (value) => {
+        if (!value) return "";
+        try {
+          return new URL(value, pageUrl).href;
+        } catch {
+          return value;
+        }
+      };
+      const ensureAnchor = (id, href, label) => {
+        if (!href || doc2.querySelector(`#${id}`)) return;
+        const anchor = doc2.createElement("a");
+        anchor.id = id;
+        anchor.href = normalizeUrl2(href);
+        anchor.textContent = label;
+        anchor.style.display = "none";
+        doc2.body.appendChild(anchor);
+      };
+      const bookTitle = extractString("articlename");
+      const chapterTitle = extractString("chaptername");
+      const indexUrl = extractString("index_page");
+      const prevUrl = extractString("preview_page");
+      const nextUrl = extractString("next_page");
+      ensureAnchor("mnr-69shu-book", indexUrl || prevUrl, bookTitle);
+      ensureAnchor("mnr-69shu-index", indexUrl, "目录");
+      ensureAnchor("mnr-69shu-prev", prevUrl, "上一章");
+      ensureAnchor("mnr-69shu-next", nextUrl, "下一章");
+      if (chapterTitle && !doc2.querySelector("#mnr-69shu-title")) {
+        const title = doc2.createElement("h1");
+        title.id = "mnr-69shu-title";
+        title.textContent = chapterTitle;
+        title.style.display = "none";
+        doc2.body.appendChild(title);
+      }
+    } catch (e) {
+      console.warn("[MyNovelReader] 69shu beforeParse error:", e);
+    }
+  };
+  const shu69Rule = {
+    id: "69shu",
+    name: "69书吧",
+    version: 2,
+    match: {
+      pattern: "^https?://(?:www\\.)?69(?:shu|yuedu)[a-z0-9]*?\\.(?:pro|top|com|cx|net|co|me|biz)/(?:txt|c|r)/\\d+/\\d+/?(?:[?#].*)?$"
+    },
+    content: {
+      selector: "#txtcontent, .txtnav",
+      remove: "script, style, iframe, ins, .txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2, .page1, .readinline, .ad_content",
+      replace: [
+        {
+          pattern: ".*[6六].*[9九].*书.*吧.*",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "请收藏本站.*?最新网址.*?(?:<br\\s*/?>)?",
+          replacement: "",
+          flags: "g"
+        }
+      ]
+    },
+    navigation: {
+      prev: '#mnr-69shu-prev, .page1 a:contains("上一章"), .page1 a:nth-child(1)',
+      index: '#mnr-69shu-index, .page1 a:contains("目录"), .page1 a:contains("書目"), .page1 a:nth-child(3)',
+      next: '#mnr-69shu-next, .page1 a:contains("下一章"), .page1 a:nth-child(4)'
+    },
+    title: {
+      selector: "#mnr-69shu-title, h1",
+      bookSelector: '#mnr-69shu-book, .mytitle .bread a[href*="/book/"][href$=".htm"], .txtinfo a:first-child, .con_top a:nth-child(3)'
+    },
+    hooks: {
+      beforeParse: shu69BeforeParse
+    },
+    advanced: {
+      useIframe: true
+    },
+    meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/58672/38147713" }
+  };
+  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    shu69Rule
+  }, Symbol.toStringTag, { value: "Module" }));
   const twkanRule = {
     id: "twkan",
     name: "台灣小說網",
@@ -4081,7 +4177,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       exampleUrl: "https://twkan.com/txt/93181/53052605"
     }
   };
-  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
     __proto__: null,
     twkanRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4110,11 +4206,11 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html" }
   };
-  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
     __proto__: null,
     uureadRule
   }, Symbol.toStringTag, { value: "Module" }));
-  const modules$1 = Object.assign({ "./goboo.ts": __vite_glob_0_0$1, "./hetushu.ts": __vite_glob_0_1$1, "./qidian.ts": __vite_glob_0_2$1, "./twkan.ts": __vite_glob_0_3, "./uuread.ts": __vite_glob_0_4 });
+  const modules$1 = Object.assign({ "./goboo.ts": __vite_glob_0_0$1, "./hetushu.ts": __vite_glob_0_1$1, "./qidian.ts": __vite_glob_0_2$1, "./shu69.ts": __vite_glob_0_3, "./twkan.ts": __vite_glob_0_4, "./uuread.ts": __vite_glob_0_5 });
   function isSiteRule(value) {
     if (!value || typeof value !== "object") return false;
     const maybe = value;
@@ -4551,32 +4647,6 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
         mutationChildCount: 2
       },
       meta: { source: "builtin", exampleUrl: "https://www.gongzicp.com/read-246381.html" }
-    },
-{
-      id: "69shu",
-      name: "69书吧",
-      version: 1,
-      match: {
-        pattern: "https?://(www\\.)?69(shu|yuedu)[a-z0-9]*?\\.(pro|top|com|cx|net|co|me|biz)/(txt|c|r)/"
-      },
-      content: {
-        selector: ".txtnav",
-        remove: ".txtinfo.hide720, #txtright, .bottom-ad, .bottom-ad2",
-        replace: [{ pattern: ".*[6六].*[9九].*书.*吧.*", replacement: "" }]
-      },
-      navigation: {
-        next: ".page1 a:nth-child(4)",
-        prev: ".page1 a:nth-child(1)",
-        index: ".page1 a:nth-child(3)"
-      },
-      title: {
-        selector: "h1",
-        bookSelector: ".txtinfo a:first-child, .con_top a:nth-child(3)"
-      },
-      advanced: {
-        useIframe: true
-      },
-      meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/46867/31307961" }
     },
 {
       id: "weread",
@@ -5925,6 +5995,54 @@ getStats() {
       return null;
     }
   }
+  function normalizeCharset(charset) {
+    const normalized = (charset || "").trim().replace(/^["']|["']$/g, "").toLowerCase();
+    if (!normalized) return null;
+    if (normalized === "utf8") return "utf-8";
+    if (normalized === "gbk" || normalized === "gb2312" || normalized === "gb18030") {
+      return "gb18030";
+    }
+    return normalized;
+  }
+  function extractCharsetFromMime(value) {
+    if (!value) return null;
+    const match = value.match(/charset\s*=\s*["']?([^;"'\s>]+)/i);
+    return normalizeCharset(match == null ? void 0 : match[1]);
+  }
+  function extractCharsetFromHtmlBytes(buffer) {
+    const bytes = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 4096));
+    let ascii = "";
+    for (const byte of bytes) {
+      ascii += byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : " ";
+    }
+    const charsetMeta = ascii.match(/<meta[^>]+charset\s*=\s*["']?([^"' />]+)/i);
+    if (charsetMeta == null ? void 0 : charsetMeta[1]) return normalizeCharset(charsetMeta[1]);
+    const contentTypeMeta = ascii.match(
+      /<meta[^>]+http-equiv\s*=\s*["']?content-type["']?[^>]+content\s*=\s*["']([^"']+)["']/i
+    );
+    return extractCharsetFromMime(contentTypeMeta == null ? void 0 : contentTypeMeta[1]);
+  }
+  function getCurrentDocumentCharset() {
+    if (typeof document === "undefined") return null;
+    return normalizeCharset(document.characterSet || document.charset);
+  }
+  function decodeHtmlBytes(buffer, contentType, fallbackCharset) {
+    const charset = extractCharsetFromMime(contentType) || extractCharsetFromHtmlBytes(buffer) || normalizeCharset(fallbackCharset) || getCurrentDocumentCharset() || "utf-8";
+    try {
+      return new TextDecoder(charset).decode(buffer);
+    } catch {
+      return new TextDecoder("utf-8").decode(buffer);
+    }
+  }
+  async function readFetchResponseText(response) {
+    var _a;
+    if (typeof response.arrayBuffer !== "function" || typeof TextDecoder === "undefined") {
+      return response.text();
+    }
+    const contentType = typeof ((_a = response.headers) == null ? void 0 : _a.get) === "function" ? response.headers.get("content-type") : null;
+    const buffer = await response.arrayBuffer();
+    return decodeHtmlBytes(buffer, contentType);
+  }
   function resolveAndValidateHttpUrl(url, base) {
     const normalized = normalizeUrlForFetch$1(url);
     let resolved = null;
@@ -6091,7 +6209,7 @@ getStats() {
         const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
         const status = response.status;
         if (status >= 200 && status < 300) {
-          const html2 = await response.text();
+          const html2 = await readFetchResponseText(response);
           const parsed = parseHtmlToDoc(html2, finalUrl);
           const result2 = { ...parsed, status, finalUrl };
           return result2;

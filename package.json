@@ -19,8 +19,6 @@
     "e2e:smoke": "npm run build && playwright test tests/e2e/real-site-smoke.spec.ts --workers=1",
     "e2e:smoke:headed": "npm run build && playwright test tests/e2e/real-site-smoke.spec.ts --headed --workers=1",
     "e2e:smoke:cdp": "npm run build && playwright test tests/e2e/real-chrome-cdp-smoke.spec.ts --workers=1",
-    "e2e:hetushu": "npm run build && playwright test tests/e2e/hetushu-manual-deep.spec.ts --workers=1",
-    "e2e:hetushu:headed": "npm run build && playwright test tests/e2e/hetushu-manual-deep.spec.ts --headed --workers=1",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "validate": "tsc --noEmit && eslint . && vitest run",
     "prepare": "husky"
