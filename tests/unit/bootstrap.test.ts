@@ -23,17 +23,20 @@ let readerStore: {
 const {
   mockActivateProtection,
   mockGetAutoEnableManager,
+  mockGetRuleManager,
   mockGetSitePreference,
   mockSetSitePreference,
 } = vi.hoisted(() => ({
   mockActivateProtection: vi.fn(),
   mockGetAutoEnableManager: vi.fn(),
+  mockGetRuleManager: vi.fn(),
   mockGetSitePreference: vi.fn(),
   mockSetSitePreference: vi.fn(),
 }));
 
 vi.mock('@/core', () => ({
   getAutoEnableManager: (opts: unknown) => mockGetAutoEnableManager(opts),
+  getRuleManager: () => mockGetRuleManager(),
   getSiteProtection: () => ({ activate: mockActivateProtection }),
 }));
 
@@ -90,8 +93,13 @@ describe('bootstrap', () => {
     vi.resetModules();
     mockActivateProtection.mockReset();
     mockGetAutoEnableManager.mockReset();
+    mockGetRuleManager.mockReset();
     mockGetSitePreference.mockReset();
     mockSetSitePreference.mockReset();
+    mockGetRuleManager.mockReturnValue({
+      initialize: vi.fn(async () => {}),
+      matchRule: vi.fn(async () => null),
+    });
 
     configStore = {
       load: vi.fn(async () => {}),
@@ -178,6 +186,57 @@ describe('bootstrap', () => {
     expect(manager.check).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);
     expect(ruleStore.initialize).toHaveBeenCalledTimes(1);
+  });
+
+  it('auto-bootstraps ambiguous section pages when an explicit rule matches', async () => {
+    dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/24/18442_6.html',
+      pretendToBeVisual: true,
+    });
+
+    // @ts-expect-error - test env: assigning jsdom window to globalThis
+    globalThis.window = dom.window;
+    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    globalThis.document = dom.window.document;
+    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    globalThis.sessionStorage = dom.window.sessionStorage;
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete',
+    });
+
+    const ruleManager = {
+      initialize: vi.fn(async () => {}),
+      matchRule: vi.fn(async () => ({
+        rule: {
+          id: 'paged-section',
+          version: 1,
+          match: { pattern: 'example' },
+          content: { selector: '.con' },
+        },
+        source: 'builtin',
+        matchedPattern: 'example',
+      })),
+    };
+    mockGetRuleManager.mockReturnValue(ruleManager);
+
+    const manager = {
+      check: vi.fn(async () => ({ shouldEnable: true, method: 'builtin-rule' })),
+      setPromptCallback: vi.fn(),
+      setLaunchCallback: vi.fn(),
+      execute: vi.fn(async () => {}),
+      manualEnable: vi.fn(async () => {}),
+    };
+    mockGetAutoEnableManager.mockReturnValue(manager);
+
+    await import('@/bootstrap');
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(ruleManager.matchRule).toHaveBeenCalledWith('https://example.com/24/18442_6.html');
+    expect(configStore.load).toHaveBeenCalledTimes(1);
+    expect(ruleStore.initialize).toHaveBeenCalledTimes(1);
+    expect(manager.check).toHaveBeenCalledTimes(1);
+    expect(manager.execute).toHaveBeenCalledTimes(1);
   });
 
   it('runs auto-enable prompt and mounts reader UI when accepted', async () => {

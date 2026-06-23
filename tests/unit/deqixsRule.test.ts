@@ -1,0 +1,237 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
+
+import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
+import { findBuiltInRule } from '@/core/rules/builtInRules';
+import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
+import { Parser } from '@/core/parser';
+
+const page1Url = 'https://www.deqixs.org/24/18442.html';
+const page2Url = 'https://www.deqixs.org/24/18442_2.html';
+const page3Url = 'https://www.deqixs.org/24/18442_3.html';
+const page4Url = 'https://www.deqixs.org/24/18442_4.html';
+const page5Url = 'https://www.deqixs.org/24/18442_5.html';
+const page6Url = 'https://www.deqixs.org/24/18442_6.html';
+const page7Url = 'https://www.deqixs.org/24/18442_7.html';
+const nextChapterUrl = 'https://www.deqixs.org/24/18443.html';
+const indexUrl = 'https://www.deqixs.org/24/';
+
+function chapterHtml(options: {
+  body: string;
+  nextHref: string;
+  nextText: string;
+  prevHref: string;
+  prevText: string;
+}): string {
+  return `
+    <!doctype html>
+    <html>
+      <head>
+        <title>苟在两界修仙 第1章 转世(元旦快乐！)-文抄公小说-手打最新章节-得奇小说网</title>
+      </head>
+      <body>
+        <div class="container">
+          <div class="submenu">
+            <h1><a href="https://www.deqixs.org/24/">苟在两界修仙</a> &gt; 第1章 转世(元旦快乐！)</h1>
+          </div>
+          <div class="con">
+            ${options.body}<br /><br />
+          </div>
+          <div class="prenext">
+            <span><a href="${options.prevHref}">${options.prevText}</a></span>
+            <a href="https://www.deqixs.org/24/">目录</a>
+            <span><a href="${options.nextHref}">${options.nextText}</a></span>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+function makeDoc(html: string, url: string): Document {
+  return new JSDOM(html, { url }).window.document;
+}
+
+function sectionBody(label: string): string {
+  return `${label} ${'分页正文。'.repeat(140)}`;
+}
+
+const page1Html = chapterHtml({
+  body: sectionBody('PAGE1'),
+  nextHref: '/24/18442_2.html',
+  nextText: '下一页',
+  prevHref: '/24/',
+  prevText: '上一章',
+});
+
+const page2Html = chapterHtml({
+  body: sectionBody('PAGE2'),
+  nextHref: '/24/18442_3.html',
+  nextText: '下一页',
+  prevHref: '/24/18442_1.html',
+  prevText: '上一页',
+});
+
+const page3Html = chapterHtml({
+  body: sectionBody('PAGE3'),
+  nextHref: '/24/18442_4.html',
+  nextText: '下一页',
+  prevHref: '/24/18442_2.html',
+  prevText: '上一页',
+});
+
+const page4Html = chapterHtml({
+  body: sectionBody('PAGE4'),
+  nextHref: '/24/18442_5.html',
+  nextText: '下一页',
+  prevHref: '/24/18442_3.html',
+  prevText: '上一页',
+});
+
+const page5Html = chapterHtml({
+  body: sectionBody('PAGE5'),
+  nextHref: '/24/18442_6.html',
+  nextText: '下一页',
+  prevHref: '/24/18442_4.html',
+  prevText: '上一页',
+});
+
+const page6Html = chapterHtml({
+  body: sectionBody('PAGE6'),
+  nextHref: '/24/18442_7.html',
+  nextText: '下一页',
+  prevHref: '/24/18442_5.html',
+  prevText: '上一页',
+});
+
+const page7Html = chapterHtml({
+  body: sectionBody('PAGE7'),
+  nextHref: '/24/18443.html',
+  nextText: '下一章',
+  prevHref: '/24/18442_6.html',
+  prevText: '上一页',
+});
+
+const tocHtml = `
+  <!doctype html>
+  <html>
+    <body>
+      <div class="container">
+        <ul class="new">
+          <li><a href="/24/73837.html">第512章 擂台</a></li>
+        </ul>
+        <h2><a href="/24/18442.html">开始阅读</a><a href="/24/txt.html#dir">TXT下载</a></h2>
+        <div id="list" class="dir clear">
+          <ul>
+            <li><a href="/24/18442.html">第1章 转世(元旦快乐！)</a></li>
+            <li><a href="/24/18443.html">第2章 道生(求收藏！)</a></li>
+            <li><a href="/24/18444.html">第3章 龙王诞(求推荐！ )</a></li>
+            <li><a href="/24/18445.html">第4章 再现(求收藏)</a></li>
+            <li><a href="/24/18446.html">第5章 祭祀开始(求推荐)</a></li>
+          </ul>
+        </div>
+      </div>
+    </body>
+  </html>
+`;
+
+describe('Deqixs rule', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    Object.assign(globalThis, {
+      GM_deleteValue: () => {},
+      GM_getValue: () => null,
+      GM_listValues: () => [],
+      GM_setValue: () => {},
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('is auto-discovered as a site rule', () => {
+    const rule = findBuiltInRule(page6Url);
+
+    expect(rule?.id).toBe('deqixs');
+    expect(rule?.version).toBe(1);
+    expect(rule?.advanced?.checkSection).toBe(true);
+  });
+
+  it('parses title, book title, navigation and content from a section page', async () => {
+    const chapter = await new Parser().parse(makeDoc(page6Html, page6Url), page6Url);
+
+    expect(chapter?.rule?.id).toBe('deqixs');
+    expect(chapter?.title).toBe('第1章 转世(元旦快乐！)');
+    expect(chapter?.bookTitle).toBe('苟在两界修仙');
+    expect(chapter?.prevUrl).toBe(page5Url);
+    expect(chapter?.indexUrl).toBe(indexUrl);
+    expect(chapter?.nextUrl).toBe(page7Url);
+    expect(chapter?.content).toContain('PAGE6');
+  });
+
+  it('normalizes a later section to page one, merges all sections, and keeps real next chapter', async () => {
+    const pages = new Map<string, string>([
+      [page1Url, page1Html],
+      [page2Url, page2Html],
+      [page3Url, page3Html],
+      [page4Url, page4Html],
+      [page5Url, page5Html],
+      [page6Url, page6Html],
+      [page7Url, page7Html],
+    ]);
+
+    const parser = new Parser();
+    const merger = createSectionMerger(parser);
+    const fetchedUrls: string[] = [];
+    const result = await merger.merge(makeDoc(page6Html, page6Url), page6Url, {
+      fetcher: async url => {
+        fetchedUrls.push(url);
+        return makeDoc(pages.get(url)!, url);
+      },
+      maxPages: 10,
+    });
+
+    expect(result?.url).toBe(page1Url);
+    expect(result?.prevUrl).toBeUndefined();
+    expect(result?.nextUrl).toBe(nextChapterUrl);
+    expect(fetchedUrls).not.toContain(page6Url);
+    expect(fetchedUrls).toContain(page7Url);
+    for (let i = 1; i <= 7; i++) {
+      expect(result?.content).toContain(`PAGE${i}`);
+    }
+  });
+
+  it('loads catalog entries from the book index page', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        readyState: 4,
+        responseHeaders: '',
+        responseText: tocHtml,
+        status: 200,
+        statusText: 'OK',
+        finalUrl: opts.url,
+      });
+      return { abort: vi.fn() };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const entries = await loadTocEntriesPaged(
+      indexUrl,
+      page6Url,
+      findBuiltInRule(page6Url),
+      vi.fn()
+    );
+
+    expect(gm).toHaveBeenCalledTimes(1);
+    expect(entries.map(entry => entry.title)).toEqual([
+      '第1章 转世(元旦快乐！)',
+      '第2章 道生(求收藏！)',
+      '第3章 龙王诞(求推荐！ )',
+      '第4章 再现(求收藏)',
+      '第5章 祭祀开始(求推荐)',
+    ]);
+  });
+});

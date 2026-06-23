@@ -11,6 +11,7 @@
 import {
   type AutoEnableDecision,
   getAutoEnableManager,
+  getRuleManager,
   getSiteProtection,
   type ParsedChapter,
   type ProtectionOptions,
@@ -499,7 +500,7 @@ async function bootstrap(): Promise<void> {
 
   const url = window.location.href;
   const pageKind = getPageKind(url, document);
-  if (pageKind !== 'chapter') return;
+  if (!(await shouldBootstrapForPage(url, pageKind))) return;
 
   // If user disabled auto-enable for this site, avoid heavy initialization and show the floating button.
   try {
@@ -514,6 +515,20 @@ async function bootstrap(): Promise<void> {
   }
 
   await initialize();
+}
+
+async function shouldBootstrapForPage(url: string, pageKind: PageKind): Promise<boolean> {
+  if (pageKind === 'chapter') return true;
+  if (pageKind === 'toc') return false;
+
+  try {
+    const manager = getRuleManager();
+    await manager.initialize();
+    return (await manager.matchRule(url)) !== null;
+  } catch (e) {
+    console.debug('[MNR] Failed to match bootstrap rule:', e);
+    return false;
+  }
 }
 
 if (document.readyState === 'loading') {

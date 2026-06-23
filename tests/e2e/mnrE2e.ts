@@ -17,6 +17,7 @@ export interface MnrE2eConfig {
   minContentChars: number;
   profileDir: string;
   proxyServer: string | null;
+  readerTimeoutMs: number;
   targetUrl: string;
   userScriptPath: string;
   warmupMinBodyChars: number;
@@ -85,6 +86,7 @@ export function getMnrE2eConfig(): MnrE2eConfig {
     minContentChars: envNumber('MNR_E2E_MIN_CONTENT_CHARS', 1000),
     profileDir: process.env.MNR_E2E_PROFILE_DIR || path.join(repoRoot, '.test', 'mnr-e2e-profile'),
     proxyServer: getProxyServer(),
+    readerTimeoutMs: envNumber('MNR_E2E_READER_TIMEOUT_MS', 90_000),
     targetUrl: process.env.MNR_E2E_URL || DEFAULT_TARGET_URL,
     userScriptPath:
       process.env.MNR_E2E_USERSCRIPT || path.join(repoRoot, 'scripts', 'MyNovelReader.user.js'),
@@ -252,6 +254,8 @@ export async function waitForReadableNonCloudflarePage(page: Page): Promise<MnrP
 }
 
 export async function waitForMnrReader(page: Page): Promise<MnrPageState> {
+  const config = getMnrE2eConfig();
+
   await page
     .waitForFunction(
       () =>
@@ -262,7 +266,7 @@ export async function waitForMnrReader(page: Page): Promise<MnrPageState> {
         document.querySelector('[id*="cf-chl"], [class*="cf-chl"], form[action*="/cdn-cgi/"]') !==
           null,
       undefined,
-      { timeout: 25_000 }
+      { timeout: config.readerTimeoutMs }
     )
     .catch(() => undefined);
 
@@ -451,6 +455,34 @@ function createGmMockScript(): string {
   };
   window.GM_xmlhttpRequest = details => {
     const controller = new AbortController();
+    let settled = false;
+    let timeoutTimer = null;
+    const finish = callback => {
+      if (settled) return false;
+      settled = true;
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+      callback();
+      return true;
+    };
+    const timeoutMs = Number(details.timeout || 0);
+    if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
+      timeoutTimer = setTimeout(() => {
+        controller.abort();
+        finish(() => {
+          details.ontimeout?.({
+            readyState: 4,
+            responseHeaders: '',
+            responseText: '',
+            status: 0,
+            statusText: 'timeout',
+            finalUrl: details.url,
+          });
+        });
+      }, timeoutMs);
+    }
     fetch(details.url, {
       method: details.method || 'GET',
       headers: details.headers,
@@ -462,25 +494,37 @@ function createGmMockScript(): string {
       const responseHeaders = Array.from(resp.headers.entries())
         .map(([key, value]) => key + ': ' + value)
         .join('\\r\\n');
-      details.onload?.({
+      finish(() => details.onload?.({
         readyState: 4,
         responseHeaders,
         responseText,
         status: resp.status,
         statusText: resp.statusText,
         finalUrl: resp.url,
-      });
+      }));
     }).catch(error => {
-      details.onerror?.({
+      finish(() => details.onerror?.({
         readyState: 4,
         responseHeaders: '',
         responseText: String(error),
         status: 0,
         statusText: 'error',
         finalUrl: details.url,
-      });
+      }));
     });
-    return { abort: () => controller.abort() };
+    return {
+      abort: () => {
+        controller.abort();
+        finish(() => details.onabort?.({
+          readyState: 4,
+          responseHeaders: '',
+          responseText: '',
+          status: 0,
+          statusText: 'abort',
+          finalUrl: details.url,
+        }));
+      }
+    };
   };
 })();
 `;

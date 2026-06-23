@@ -253,6 +253,31 @@ describe('AutoEnableManager', () => {
     });
   });
 
+  it('allows explicit rules to override ambiguous page-kind detection', async () => {
+    mockedRuleManager.matchRule.mockResolvedValue({
+      rule: {
+        id: 'paged-section',
+        match: { pattern: 'example', type: 'regex' },
+        meta: { source: 'builtin' },
+      },
+      source: 'builtin',
+      matchedPattern: 'example',
+    });
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+
+    const doc = createDoc('https://example.com/24/18442_6.html');
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: true,
+      method: 'builtin-rule',
+      confidence: 1,
+    });
+    expect(mockedRuleManager.matchRule).toHaveBeenCalledWith('https://example.com/24/18442_6.html');
+  });
+
   it('getDecision returns the last decision and reset clears it', async () => {
     const { AutoEnableManager } = await import('@/core/AutoEnableManager');
     const manager = new AutoEnableManager();

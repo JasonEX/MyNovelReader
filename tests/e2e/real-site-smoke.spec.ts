@@ -11,6 +11,9 @@ import {
 } from './mnrE2e';
 import { test } from '@playwright/test';
 
+const smokeConfig = getMnrE2eConfig();
+test.setTimeout(Math.max(120_000, smokeConfig.readerTimeoutMs + 60_000));
+
 test('injects MyNovelReader into a real chapter page and renders reader UI', async ({
   browserName: _browserName,
 }, testInfo) => {

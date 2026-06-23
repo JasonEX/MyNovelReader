@@ -179,15 +179,6 @@ export class AutoEnableManager {
       });
     }
 
-    if (pageKind !== 'chapter') {
-      return decide({
-        shouldEnable: false,
-        method: 'manual',
-        confidence: 0,
-        reasons: ['非正文页，跳过自动启用'],
-      });
-    }
-
     let hostname: string | null = null;
     try {
       hostname = new URL(url).hostname;
@@ -239,6 +230,15 @@ export class AutoEnableManager {
         };
         return decide(decision);
       }
+    }
+
+    if (pageKind !== 'chapter') {
+      return decide({
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['非正文页，跳过自动启用'],
+      });
     }
 
     // Quick check before running full detection

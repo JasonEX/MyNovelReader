@@ -64,6 +64,7 @@ export class SectionMerger {
     const baseUrl = getSectionBaseUrl(url);
     let startUrl = url;
     let startDoc = doc;
+    const knownDocs = new Map<string, Document>([[normalizeAbsoluteUrl(url, url), doc]]);
 
     // If user opens a later section page, normalize to the first page
     if (baseUrl && baseUrl !== url) {
@@ -71,6 +72,7 @@ export class SectionMerger {
       if (baseDoc) {
         startUrl = baseUrl;
         startDoc = baseDoc;
+        knownDocs.set(normalizeAbsoluteUrl(baseUrl, url), baseDoc);
       }
     }
 
@@ -114,6 +116,7 @@ export class SectionMerger {
       maxPages,
       sectionDelayMs,
       options.fetcher,
+      knownDocs,
       options.signal
     );
   }
@@ -128,6 +131,7 @@ export class SectionMerger {
     maxPages: number,
     sectionDelayMs: number,
     fetcher?: SectionMergeOptions['fetcher'],
+    knownDocs?: Map<string, Document>,
     signal?: AbortSignal
   ): Promise<ParsedChapter> {
     let mergedContent = first.content;
@@ -158,10 +162,18 @@ export class SectionMerger {
         if (signal?.aborted) break;
       }
 
-      const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
+      const cachedDoc = knownDocs?.get(absNextSection) ?? null;
+      let nextDoc = cachedDoc ?? (await this.fetchUrl(absNextSection, lastUrl, fetcher, signal));
       if (!nextDoc) break;
 
-      const nextParsed = await this.parser.parse(nextDoc, absNextSection);
+      let nextParsed = await this.parser.parse(nextDoc, absNextSection);
+      if (!nextParsed && cachedDoc) {
+        const fetchedDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
+        if (!fetchedDoc) break;
+        knownDocs?.set(absNextSection, fetchedDoc);
+        nextDoc = fetchedDoc;
+        nextParsed = await this.parser.parse(nextDoc, absNextSection);
+      }
       if (!nextParsed) break;
 
       // Merge content

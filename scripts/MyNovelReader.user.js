@@ -3722,6 +3722,43 @@ smartQueryAll(root, selector) {
       }
     }
   }
+  const deqixsRule = {
+    id: "deqixs",
+    name: "得奇小说网",
+    version: 1,
+    match: {
+      pattern: "^https?://www\\.deqixs\\.org/\\d+/\\d+(?:_\\d+)?\\.html(?:[?#].*)?$"
+    },
+    content: {
+      selector: ".con",
+      remove: "script, style, iframe, ins"
+    },
+    navigation: {
+      prev: '.prenext span:first-child a[href$=".html"]',
+      index: ".prenext > a",
+      next: '.prenext span:last-child a[href$=".html"]'
+    },
+    title: {
+      selector: ".submenu h1",
+      replace: "^.*?>\\s*",
+      bookSelector: '.submenu h1 > a[href$="/"]'
+    },
+    toc: {
+      excludeAncestors: ".new, .item, h1, h2"
+    },
+    advanced: {
+      checkSection: true,
+      sectionDelayMs: 800
+    },
+    meta: {
+      source: "builtin",
+      exampleUrl: "https://www.deqixs.org/24/18442_6.html"
+    }
+  };
+  const __vite_glob_0_0$1 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    deqixsRule
+  }, Symbol.toStringTag, { value: "Module" }));
   const dingdianzwwRule = {
     id: "dingdianzww",
     name: "顶点小说",
@@ -3758,7 +3795,7 @@ smartQueryAll(root, selector) {
       exampleUrl: "https://dingdianzww.org/27543/13341609.html?page=1"
     }
   };
-  const __vite_glob_0_0$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
     __proto__: null,
     dingdianzwwRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -3840,7 +3877,7 @@ smartQueryAll(root, selector) {
       exampleUrl: "https://m.goboo.cc/gb_1/94443/1"
     }
   };
-  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_2$1 = Object.freeze( Object.defineProperty({
     __proto__: null,
     gobooRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -3986,7 +4023,7 @@ smartQueryAll(root, selector) {
     },
     meta: { source: "builtin", exampleUrl: "https://www.hetushu.com/book/9145/6567989.html" }
   };
-  const __vite_glob_0_2$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
     __proto__: null,
     hetushuRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4069,7 +4106,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin" }
   };
-  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
     __proto__: null,
     qidianRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4165,7 +4202,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/58672/38147713" }
   };
-  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
     __proto__: null,
     shu69Rule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4202,7 +4239,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       exampleUrl: "https://www.sudugu.org/109/1226047.html"
     }
   };
-  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_6 = Object.freeze( Object.defineProperty({
     __proto__: null,
     suduguRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4269,7 +4306,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       exampleUrl: "https://twkan.com/txt/93181/53052605"
     }
   };
-  const __vite_glob_0_6 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_7 = Object.freeze( Object.defineProperty({
     __proto__: null,
     twkanRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4298,11 +4335,11 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html" }
   };
-  const __vite_glob_0_7 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_8 = Object.freeze( Object.defineProperty({
     __proto__: null,
     uureadRule
   }, Symbol.toStringTag, { value: "Module" }));
-  const modules$1 = Object.assign({ "./dingdianzww.ts": __vite_glob_0_0$1, "./goboo.ts": __vite_glob_0_1$1, "./hetushu.ts": __vite_glob_0_2$1, "./qidian.ts": __vite_glob_0_3, "./shu69.ts": __vite_glob_0_4, "./sudugu.ts": __vite_glob_0_5, "./twkan.ts": __vite_glob_0_6, "./uuread.ts": __vite_glob_0_7 });
+  const modules$1 = Object.assign({ "./deqixs.ts": __vite_glob_0_0$1, "./dingdianzww.ts": __vite_glob_0_1$1, "./goboo.ts": __vite_glob_0_2$1, "./hetushu.ts": __vite_glob_0_3, "./qidian.ts": __vite_glob_0_4, "./shu69.ts": __vite_glob_0_5, "./sudugu.ts": __vite_glob_0_6, "./twkan.ts": __vite_glob_0_7, "./uuread.ts": __vite_glob_0_8 });
   function isSiteRule(value) {
     if (!value || typeof value !== "object") return false;
     const maybe = value;
@@ -7645,11 +7682,13 @@ async merge(doc2, url, options = {}) {
       const baseUrl = getSectionBaseUrl(url);
       let startUrl = url;
       let startDoc = doc2;
+      const knownDocs = new Map([[normalizeAbsoluteUrl(url, url), doc2]]);
       if (baseUrl && baseUrl !== url) {
         const baseDoc = await this.fetchUrl(baseUrl, url, options.fetcher, options.signal);
         if (baseDoc) {
           startUrl = baseUrl;
           startDoc = baseDoc;
+          knownDocs.set(normalizeAbsoluteUrl(baseUrl, url), baseDoc);
         }
       }
       const first = await this.parser.parse(startDoc, startUrl);
@@ -7678,10 +7717,11 @@ async merge(doc2, url, options = {}) {
         maxPages,
         sectionDelayMs,
         options.fetcher,
+        knownDocs,
         options.signal
       );
     }
-async mergeSections(startUrl, first, section, maxPages, sectionDelayMs, fetcher, signal) {
+async mergeSections(startUrl, first, section, maxPages, sectionDelayMs, fetcher, knownDocs, signal) {
       let mergedContent = first.content;
       let mergedRaw = first.rawContent;
       let nextSectionUrl = (section == null ? void 0 : section.nextSectionUrl) || null;
@@ -7701,9 +7741,17 @@ async mergeSections(startUrl, first, section, maxPages, sectionDelayMs, fetcher,
           await this.sleep(sectionDelayMs, signal);
           if (signal == null ? void 0 : signal.aborted) break;
         }
-        const nextDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
+        const cachedDoc = (knownDocs == null ? void 0 : knownDocs.get(absNextSection)) ?? null;
+        let nextDoc = cachedDoc ?? await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
         if (!nextDoc) break;
-        const nextParsed = await this.parser.parse(nextDoc, absNextSection);
+        let nextParsed = await this.parser.parse(nextDoc, absNextSection);
+        if (!nextParsed && cachedDoc) {
+          const fetchedDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
+          if (!fetchedDoc) break;
+          knownDocs == null ? void 0 : knownDocs.set(absNextSection, fetchedDoc);
+          nextDoc = fetchedDoc;
+          nextParsed = await this.parser.parse(nextDoc, absNextSection);
+        }
         if (!nextParsed) break;
         mergedContent = joinHtml(mergedContent, nextParsed.content);
         mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
@@ -7959,14 +8007,6 @@ async check(doc2 = document) {
           reasons: ["目录页，跳过自动启用"]
         });
       }
-      if (pageKind !== "chapter") {
-        return decide({
-          shouldEnable: false,
-          method: "manual",
-          confidence: 0,
-          reasons: ["非正文页，跳过自动启用"]
-        });
-      }
       let hostname = null;
       try {
         hostname = new URL(url).hostname;
@@ -8010,6 +8050,14 @@ async check(doc2 = document) {
           };
           return decide(decision2);
         }
+      }
+      if (pageKind !== "chapter") {
+        return decide({
+          shouldEnable: false,
+          method: "manual",
+          confidence: 0,
+          reasons: ["非正文页，跳过自动启用"]
+        });
       }
       if (!this.detectionEngine.quickCheck(doc2)) {
         return decide({
@@ -27616,7 +27664,7 @@ ${value}`;
     if (appState.isActive) return;
     const url = window.location.href;
     const pageKind = getPageKind(url, document);
-    if (pageKind !== "chapter") return;
+    if (!await shouldBootstrapForPage(url, pageKind)) return;
     try {
       const hostname = new URL(url).hostname;
       const pref = getRuleStorage().getSitePreference(hostname);
@@ -27628,6 +27676,18 @@ ${value}`;
       console.debug("[MNR] Failed to read site preference:", e);
     }
     await initialize();
+  }
+  async function shouldBootstrapForPage(url, pageKind) {
+    if (pageKind === "chapter") return true;
+    if (pageKind === "toc") return false;
+    try {
+      const manager = getRuleManager();
+      await manager.initialize();
+      return await manager.matchRule(url) !== null;
+    } catch (e) {
+      console.debug("[MNR] Failed to match bootstrap rule:", e);
+      return false;
+    }
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
