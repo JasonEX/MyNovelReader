@@ -4169,6 +4169,43 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     __proto__: null,
     shu69Rule
   }, Symbol.toStringTag, { value: "Module" }));
+  const suduguRule = {
+    id: "sudugu",
+    name: "速读谷",
+    version: 1,
+    match: {
+      pattern: "^https?://www\\.sudugu\\.org/\\d+/\\d+(?:-\\d+)?\\.html(?:[?#].*)?$"
+    },
+    content: {
+      selector: ".con",
+      remove: "script, style, iframe, ins"
+    },
+    navigation: {
+      prev: ".prenext span:first-child a",
+      index: '.prenext > a[href*="#dir"]',
+      next: ".prenext span:last-child a"
+    },
+    title: {
+      selector: ".submenu h1",
+      replace: "^.*?>\\s*",
+      bookSelector: '.submenu h1 > a[href^="/"][href$="/"]'
+    },
+    toc: {
+      excludeAncestors: ".new, .item, h1, h2"
+    },
+    advanced: {
+      checkSection: true,
+      sectionDelayMs: 800
+    },
+    meta: {
+      source: "builtin",
+      exampleUrl: "https://www.sudugu.org/109/1226047.html"
+    }
+  };
+  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    suduguRule
+  }, Symbol.toStringTag, { value: "Module" }));
   const twkanRule = {
     id: "twkan",
     name: "台灣小說網",
@@ -4232,7 +4269,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       exampleUrl: "https://twkan.com/txt/93181/53052605"
     }
   };
-  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_6 = Object.freeze( Object.defineProperty({
     __proto__: null,
     twkanRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4261,11 +4298,11 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html" }
   };
-  const __vite_glob_0_6 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_7 = Object.freeze( Object.defineProperty({
     __proto__: null,
     uureadRule
   }, Symbol.toStringTag, { value: "Module" }));
-  const modules$1 = Object.assign({ "./dingdianzww.ts": __vite_glob_0_0$1, "./goboo.ts": __vite_glob_0_1$1, "./hetushu.ts": __vite_glob_0_2$1, "./qidian.ts": __vite_glob_0_3, "./shu69.ts": __vite_glob_0_4, "./twkan.ts": __vite_glob_0_5, "./uuread.ts": __vite_glob_0_6 });
+  const modules$1 = Object.assign({ "./dingdianzww.ts": __vite_glob_0_0$1, "./goboo.ts": __vite_glob_0_1$1, "./hetushu.ts": __vite_glob_0_2$1, "./qidian.ts": __vite_glob_0_3, "./shu69.ts": __vite_glob_0_4, "./sudugu.ts": __vite_glob_0_5, "./twkan.ts": __vite_glob_0_6, "./uuread.ts": __vite_glob_0_7 });
   function isSiteRule(value) {
     if (!value || typeof value !== "object") return false;
     const maybe = value;
