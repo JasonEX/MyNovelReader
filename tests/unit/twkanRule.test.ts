@@ -1,0 +1,96 @@
+import { describe, expect, it } from 'vitest';
+import { JSDOM } from 'jsdom';
+
+import { findBuiltInRule } from '@/core/rules/builtInRules';
+import { Parser } from '@/core/parser';
+
+function makeDoc(): Document {
+  const url = 'https://twkan.com/txt/93181/53052605';
+  const dom = new JSDOM(
+    `
+      <!doctype html>
+      <html>
+        <head>
+          <title>第120章 進化〖暴龍獸〗！力量湧上來了！-誰說我做的魔法卡牌有問題？-作者-言情小說-台灣小說網</title>
+        </head>
+        <body>
+          <div class="crumb">
+            <a href="/">首頁</a>
+            <a href="/book/93181/index.html">誰說我做的魔法卡牌有問題？</a>
+          </div>
+          <div class="topbar">
+            <a href="/book/93181/index.html">書頁</a>
+            <a href="/book/93181/index.html">目錄</a>
+          </div>
+          <div class="txtnav">
+            <h1>第120章 進化〖暴龍獸〗！力量湧上來了！</h1>
+            <p>第120章 進化〖暴龍獸〗！力量湧上來了！</p>
+            <div id="txtcontent0">
+              第120章 進化〖暴龍獸〗！力量湧上來了！<br>
+              <br>
+              決鬥場上的光芒正在匯聚。<br>
+              <br>
+              （請記住臺灣小説網，網址 twkan.com）<br>
+              <br>
+              〖分享給朋友一起看，請支持本站運營〗<br>
+              <br>
+              【写到这里我希望读者记一下我们域名 读台湾好书选台湾小说网，🆃🆆🅺🅰🅽.🅲🅾🅼超讚 】<br>
+              <br>
+              （请记住臺湾小説网→𝓉𝓌𝓀𝒶𝓃.𝒸ℴ𝓂网站，观看最快的章节更新）<br>
+              <br>
+              暴龍獸在光中抬起頭，力量湧上來了。
+            </div>
+          </div>
+          <div class="page1">
+            <a href="/txt/93181/53052420">上一章</a>
+            <a href="/book/93181/index.html">目錄</a>
+            <a href="/txt/93181/53052783">下一章</a>
+          </div>
+        </body>
+      </html>
+    `,
+    { url, pretendToBeVisual: true }
+  );
+
+  return dom.window.document;
+}
+
+describe('Twkan rule', () => {
+  it('is auto-discovered as a site rule', () => {
+    const rule = findBuiltInRule('https://twkan.com/txt/93181/53052605');
+
+    expect(rule?.id).toBe('twkan');
+    expect(rule?.version).toBe(1);
+  });
+
+  it('extracts chapter content, book title and navigation', async () => {
+    Object.assign(globalThis, {
+      GM_deleteValue: () => {},
+      GM_getValue: () => null,
+      GM_listValues: () => [],
+      GM_setValue: () => {},
+    });
+
+    const url = 'https://twkan.com/txt/93181/53052605';
+    const chapter = await new Parser().parse(makeDoc(), url);
+
+    expect(chapter?.rule?.id).toBe('twkan');
+    expect(chapter?.title).toBe('第120章 進化〖暴龍獸〗！力量湧上來了！');
+    expect(chapter?.bookTitle).toBe('誰說我做的魔法卡牌有問題？');
+    expect(chapter?.prevUrl).toBe('https://twkan.com/txt/93181/53052420');
+    expect(chapter?.indexUrl).toBe('https://twkan.com/book/93181/index.html');
+    expect(chapter?.nextUrl).toBe('https://twkan.com/txt/93181/53052783');
+
+    const content = chapter?.content || '';
+    expect(content).toContain('決鬥場上的光芒正在匯聚。');
+    expect(content).toContain('暴龍獸在光中抬起頭');
+    expect(content).not.toContain('2026-01-05');
+    expect(content).not.toContain('作者');
+    expect(content).not.toContain('第120章 進化〖暴龍獸〗！力量湧上來了！');
+    expect(content).not.toContain('請記住臺灣小説網');
+    expect(content).not.toContain('台湾好书');
+    expect(content).not.toContain('章节更新');
+    expect(content).not.toContain('域名');
+    expect(content).not.toContain('支持本站運營');
+  });
+});

@@ -3789,6 +3789,152 @@ smartQueryAll(root, selector) {
     __proto__: null,
     gobooRule
   }, Symbol.toStringTag, { value: "Module" }));
+  const hetushuBeforeParse = async (doc2, url, helpers) => {
+    var _a, _b;
+    try {
+      const contentEl = doc2.querySelector("#content");
+      if (!contentEl) return;
+      const win = doc2.defaultView || (typeof window !== "undefined" ? window : null);
+      const fallbackUrl = typeof window !== "undefined" && typeof ((_a = window.location) == null ? void 0 : _a.href) === "string" ? window.location.href : "";
+      const pageUrl = url || ((_b = doc2.location) == null ? void 0 : _b.href) || fallbackUrl;
+      const titleEl = contentEl.querySelector("h2");
+      const watermarkSelector = "acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins";
+      const normalizeWatermarkText = (value) => value.replace(/[\s\u3000]+/g, "").replace(
+        /[ｗwＷW]+[.．•·。]*[hｈ][eｅ][tｔ][uｕ][sｓ][hｈ][uｕ][.．。]*(?:com|ｃｏｍ)(?:[.．。]*(?:com|ｃｏｍ))?/gi,
+        ""
+      );
+      const collectStyleText = async () => {
+        const texts = Array.from(doc2.querySelectorAll("style")).map((style) => style.textContent || "").filter(Boolean);
+        const links = Array.from(doc2.querySelectorAll('link[rel~="stylesheet"][href]'));
+        for (const link of links) {
+          if (!(helpers == null ? void 0 : helpers.fetchText)) continue;
+          try {
+            const href = link.getAttribute("href");
+            if (!href) continue;
+            const styleUrl = new URL(href, pageUrl).href;
+            const text2 = await helpers.fetchText(styleUrl, {
+              timeoutMs: 4e3,
+              withCredentials: true
+            });
+            if (text2) texts.push(text2);
+          } catch {
+          }
+        }
+        return texts.join("\n");
+      };
+      const extractDisplayClasses = (cssText) => {
+        const block = new Set();
+        const none = new Set();
+        const ruleRe = /([^{}]+)\{([^{}]+)\}/g;
+        let match;
+        while (match = ruleRe.exec(cssText)) {
+          const selector = match[1] || "";
+          const body = match[2] || "";
+          if (!selector.includes("#content")) continue;
+          const displayBlock = /display\s*:\s*block\b/i.test(body);
+          const displayNone = /display\s*:\s*none\b/i.test(body);
+          if (!displayBlock && !displayNone) continue;
+          const classRe = /#content\s+\.([A-Za-z0-9_-]+)/g;
+          let classMatch;
+          while (classMatch = classRe.exec(selector)) {
+            if (displayBlock) block.add(classMatch[1]);
+            if (displayNone) none.add(classMatch[1]);
+          }
+        }
+        return { block, none };
+      };
+      const styleClasses = extractDisplayClasses(await collectStyleText());
+      const hasLayout = (el) => {
+        if (!win) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+      const isVisibleByClass = (el) => {
+        const classes = Array.from(el.classList || []);
+        if (!classes.length) return false;
+        if (classes.some((cls) => styleClasses.none.has(cls))) return false;
+        if (styleClasses.block.size > 0) return classes.some((cls) => styleClasses.block.has(cls));
+        return true;
+      };
+      const isVisible = (el) => {
+        if (!win || !hasLayout(el)) return isVisibleByClass(el);
+        const style = win.getComputedStyle(el);
+        if (style.display === "none") return false;
+        if (style.visibility === "hidden" || style.visibility === "collapse") return false;
+        if (Number(style.opacity) === 0) return false;
+        return true;
+      };
+      const cleanClone = (el) => {
+        var _a2, _b2;
+        const clone2 = el.cloneNode(true);
+        clone2.querySelectorAll(watermarkSelector).forEach((node) => node.remove());
+        const showText = ((_b2 = (_a2 = doc2.defaultView) == null ? void 0 : _a2.NodeFilter) == null ? void 0 : _b2.SHOW_TEXT) ?? 4;
+        const walker = doc2.createTreeWalker(clone2, showText);
+        const textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
+        textNodes.forEach((node) => {
+          const cleaned = normalizeWatermarkText(node.nodeValue || "");
+          if (cleaned !== node.nodeValue) node.nodeValue = cleaned;
+        });
+        return clone2;
+      };
+      const rows = Array.from(contentEl.children).filter((el) => el !== titleEl && el.tagName !== "SCRIPT" && el.tagName !== "STYLE").filter(isVisible).map((el, index) => {
+        const rect = win && hasLayout(el) ? el.getBoundingClientRect() : { top: index, left: 0 };
+        return {
+          index,
+          top: rect.top + (win ? win.scrollY : 0),
+          left: rect.left + (win ? win.scrollX : 0),
+          el
+        };
+      }).sort((a, b) => a.top - b.top || a.left - b.left || a.index - b.index);
+      if (!rows.length) return;
+      const fragment = doc2.createDocumentFragment();
+      if (titleEl) fragment.appendChild(titleEl.cloneNode(true));
+      rows.forEach(({ el }) => {
+        const paragraph = doc2.createElement("p");
+        const clone2 = cleanClone(el);
+        paragraph.innerHTML = clone2.innerHTML || clone2.textContent || "";
+        if (paragraph.textContent && paragraph.textContent.replace(/\s+/g, "").trim()) {
+          fragment.appendChild(paragraph);
+        }
+      });
+      contentEl.innerHTML = "";
+      contentEl.appendChild(fragment);
+    } catch (e) {
+      console.warn("[MyNovelReader] Hetushu beforeParse error:", e);
+    }
+  };
+  const hetushuRule = {
+    id: "hetushu",
+    name: "和图书",
+    version: 2,
+    match: {
+      pattern: "^https?://www\\.hetushu\\.com/book/\\d+/\\d+\\.html$"
+    },
+    content: {
+      selector: "#content",
+      remove: "h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins"
+    },
+    navigation: {
+      next: "a#next",
+      prev: "a#pre",
+      index: "#left h3 a"
+    },
+    title: {
+      bookSelector: "#left h3"
+    },
+    hooks: {
+      beforeParse: hetushuBeforeParse
+    },
+    advanced: {
+      useIframe: true
+    },
+    meta: { source: "builtin", exampleUrl: "https://www.hetushu.com/book/9145/6567989.html" }
+  };
+  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    hetushuRule
+  }, Symbol.toStringTag, { value: "Module" }));
   function hasQidianChapterId(value) {
     return value !== void 0 && value !== null && String(value) !== "-1" && String(value) !== "";
   }
@@ -3868,9 +4014,76 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin" }
   };
-  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_2$1 = Object.freeze( Object.defineProperty({
     __proto__: null,
     qidianRule
+  }, Symbol.toStringTag, { value: "Module" }));
+  const twkanRule = {
+    id: "twkan",
+    name: "台灣小說網",
+    version: 1,
+    match: {
+      pattern: "^https?://twkan\\.com/txt/\\d+/\\d+/?(?:[?#].*)?$"
+    },
+    content: {
+      selector: "#txtcontent0, .txtnav",
+      remove: "script, style, iframe, ins, .page1, .readinline, .read-link, .ad_content, .top-ad, .bottom-ad",
+      replace: [
+        {
+          pattern: "^[\\s\\u00a0\\u3000\\u2000-\\u200a]*第[一二三四五六七八九十百千\\d]+(?:章|节|節|回|话|話|篇|集|卷)[^<]{0,120}(?:<br\\s*/?>\\s*)+",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "（?請記住臺灣小説網[^<\\n]*?）?",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "（?请记住[臺台]湾小[説说]网[^<\\n]{0,160}(?:章节更新|網站|网站)[^<\\n]{0,40}）?",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "〖[^〗]*分享[^〗]*運營[^〗]*〗",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "【[^】]{0,100}(?:域名|[臺台]湾小[説说]网|[臺台]湾好书)[^】]{0,160}】",
+          replacement: "",
+          flags: "g"
+        },
+        {
+          pattern: "本章完。?",
+          replacement: "",
+          flags: "g"
+        }
+      ]
+    },
+    navigation: {
+      prev: 'a:contains("上一章")',
+      index: 'a:contains("目錄"), a:contains("目录"), a:contains("書頁"), a:contains("书页")',
+      next: 'a:contains("下一章")'
+    },
+    title: {
+      selector: ".txtnav > h1, h1",
+      pattern: "^(.+?)-(.+?)-[^-]+-.*?台灣小說網$",
+      patternIndex: 1,
+      bookPatternIndex: 2,
+      bookSelector: 'a[href*="/book/"][href$="/index.html"]'
+    },
+    advanced: {
+      useIframe: true
+    },
+    meta: {
+      source: "builtin",
+      exampleUrl: "https://twkan.com/txt/93181/53052605"
+    }
+  };
+  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    twkanRule
   }, Symbol.toStringTag, { value: "Module" }));
   const uureadRule = {
     id: "uuread",
@@ -3897,11 +4110,11 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html" }
   };
-  const __vite_glob_0_2 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
     __proto__: null,
     uureadRule
   }, Symbol.toStringTag, { value: "Module" }));
-  const modules$1 = Object.assign({ "./goboo.ts": __vite_glob_0_0$1, "./qidian.ts": __vite_glob_0_1$1, "./uuread.ts": __vite_glob_0_2 });
+  const modules$1 = Object.assign({ "./goboo.ts": __vite_glob_0_0$1, "./hetushu.ts": __vite_glob_0_1$1, "./qidian.ts": __vite_glob_0_2$1, "./twkan.ts": __vite_glob_0_3, "./uuread.ts": __vite_glob_0_4 });
   function isSiteRule(value) {
     if (!value || typeof value !== "object") return false;
     const maybe = value;
@@ -4148,129 +4361,6 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     console.warn('[MyNovelReader] Ciweimao beforeParse error:', e);
   }
 `;
-  const HETUSHU_BEFORE_PARSE = `
-  try {
-    const contentEl = doc.querySelector('#content');
-    if (!contentEl) return;
-
-    const win = doc.defaultView || (typeof window !== 'undefined' ? window : null);
-    const pageUrl = url || doc.location?.href || (typeof window !== 'undefined' ? window.location.href : '');
-    const titleEl = contentEl.querySelector('h2');
-    const watermarkSelector =
-      'acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins';
-    const normalizeWatermarkText = value =>
-      value
-        .replace(/[\\s\\u3000]+/g, '')
-        .replace(
-          /[ｗwＷW]+[.．•·。]*[hｈ][eｅ][tｔ][uｕ][sｓ][hｈ][uｕ][.．。]*(?:com|ｃｏｍ)(?:[.．。]*(?:com|ｃｏｍ))?/gi,
-          ''
-        );
-    const collectStyleText = async () => {
-      const texts = Array.from(doc.querySelectorAll('style'))
-        .map(style => style.textContent || '')
-        .filter(Boolean);
-      const links = Array.from(doc.querySelectorAll('link[rel~="stylesheet"][href]'));
-      for (const link of links) {
-        if (!helpers?.fetchText) continue;
-        try {
-          const href = link.getAttribute('href');
-          if (!href) continue;
-          const styleUrl = new URL(href, pageUrl).href;
-          const text = await helpers.fetchText(styleUrl, { timeoutMs: 4000, withCredentials: true });
-          if (text) texts.push(text);
-        } catch {
-          // ignore stylesheet fetch failures
-        }
-      }
-      return texts.join('\\n');
-    };
-    const extractDisplayClasses = cssText => {
-      const block = new Set();
-      const none = new Set();
-      const ruleRe = /([^{}]+)\\{([^{}]+)\\}/g;
-      let match;
-      while ((match = ruleRe.exec(cssText))) {
-        const selector = match[1] || '';
-        const body = match[2] || '';
-        if (!selector.includes('#content')) continue;
-        const displayBlock = /display\\s*:\\s*block\\b/i.test(body);
-        const displayNone = /display\\s*:\\s*none\\b/i.test(body);
-        if (!displayBlock && !displayNone) continue;
-        const classRe = /#content\\s+\\.([A-Za-z0-9_-]+)/g;
-        let classMatch;
-        while ((classMatch = classRe.exec(selector))) {
-          if (displayBlock) block.add(classMatch[1]);
-          if (displayNone) none.add(classMatch[1]);
-        }
-      }
-      return { block, none };
-    };
-    const styleClasses = extractDisplayClasses(await collectStyleText());
-    const hasLayout = el => {
-      if (!win) return false;
-      const rect = el.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0;
-    };
-    const isVisibleByClass = el => {
-      const classes = Array.from(el.classList || []);
-      if (!classes.length) return false;
-      if (classes.some(cls => styleClasses.none.has(cls))) return false;
-      if (styleClasses.block.size > 0) return classes.some(cls => styleClasses.block.has(cls));
-      return true;
-    };
-    const isVisible = el => {
-      if (!win || !hasLayout(el)) return isVisibleByClass(el);
-      const style = win.getComputedStyle(el);
-      if (style.display === 'none') return false;
-      if (style.visibility === 'hidden' || style.visibility === 'collapse') return false;
-      if (Number(style.opacity) === 0) return false;
-      return true;
-    };
-    const cleanClone = el => {
-      const clone = el.cloneNode(true);
-      clone.querySelectorAll(watermarkSelector).forEach(node => node.remove());
-      const walker = doc.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
-      const textNodes = [];
-      while (walker.nextNode()) textNodes.push(walker.currentNode);
-      textNodes.forEach(node => {
-        const cleaned = normalizeWatermarkText(node.nodeValue || '');
-        if (cleaned !== node.nodeValue) node.nodeValue = cleaned;
-      });
-      return clone;
-    };
-
-    const rows = Array.from(contentEl.children)
-      .filter(el => el !== titleEl && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE')
-      .filter(isVisible)
-      .map((el, index) => {
-        const rect = win && hasLayout(el) ? el.getBoundingClientRect() : { top: index, left: 0 };
-        return {
-          index,
-          top: rect.top + (win ? win.scrollY : 0),
-          left: rect.left + (win ? win.scrollX : 0),
-          el,
-        };
-      })
-      .sort((a, b) => a.top - b.top || a.left - b.left || a.index - b.index);
-
-    if (!rows.length) return;
-    const fragment = doc.createDocumentFragment();
-    if (titleEl) fragment.appendChild(titleEl.cloneNode(true));
-    rows.forEach(({ el }) => {
-      const paragraph = doc.createElement('p');
-      const clone = cleanClone(el);
-      paragraph.innerHTML = clone.innerHTML || clone.textContent || '';
-      if (paragraph.textContent && paragraph.textContent.replace(/\\s+/g, '').trim()) {
-        fragment.appendChild(paragraph);
-      }
-    });
-
-    contentEl.innerHTML = '';
-    contentEl.appendChild(fragment);
-  } catch (e) {
-    console.warn('[MyNovelReader] Hetushu beforeParse error:', e);
-  }
-`;
   function getDdxsmfAjaxContent(payload) {
     const data = payload == null ? void 0 : payload.data;
     if (!data || typeof data !== "object") return "";
@@ -4487,33 +4577,6 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
         useIframe: true
       },
       meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/46867/31307961" }
-    },
-{
-      id: "hetushu",
-      name: "和图书",
-      version: 1,
-      match: {
-        pattern: "^https?://www.hetushu.com/book/\\d+/\\d+.html"
-      },
-      content: {
-        selector: "#content",
-        remove: "h2, acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins"
-      },
-      navigation: {
-        next: "a#next",
-        prev: "a#pre",
-        index: "#left h3 a"
-      },
-      title: {
-        bookSelector: "#left h3"
-      },
-      hooks: {
-        beforeParse: HETUSHU_BEFORE_PARSE
-      },
-      advanced: {
-        useIframe: true
-      },
-      meta: { source: "builtin", exampleUrl: "http://www.hetushu.com/book/1421/964983.html" }
     },
 {
       id: "weread",
@@ -21653,7 +21716,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     apiUrl.searchParams.set("bookId", bookId);
     return apiUrl.toString();
   }
-  function getNativeFetch() {
+  function getNativeFetch$1() {
     if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") {
       return unsafeWindow.fetch.bind(unsafeWindow);
     }
@@ -21666,7 +21729,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     return null;
   }
   async function requestQidianCategoryNative(apiUrl, setAbort) {
-    const fetcher = getNativeFetch();
+    const fetcher = getNativeFetch$1();
     if (!fetcher) return null;
     const controller = new AbortController();
     setAbort(() => controller.abort());
@@ -21792,7 +21855,172 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     __proto__: null,
     qidianTocLoader
   }, Symbol.toStringTag, { value: "Module" }));
-  const modules = Object.assign({ "./goboo.ts": __vite_glob_0_0, "./qidian.ts": __vite_glob_0_1 });
+  function isTwkanHost(hostname) {
+    return /^twkan\.com$/i.test(hostname);
+  }
+  function resolveTwkanPageUrl(indexUrl, currentUrl) {
+    const fallbackBase = typeof location !== "undefined" && typeof location.href === "string" && location.href || "https://twkan.com/";
+    for (const candidate of [currentUrl, indexUrl]) {
+      const abs = resolveUrl(candidate, fallbackBase);
+      if (!abs) continue;
+      try {
+        const url = new URL(abs);
+        if (isTwkanHost(url.hostname)) return url;
+      } catch {
+      }
+    }
+    return null;
+  }
+  function extractTwkanBookId(indexUrl, currentUrl) {
+    for (const candidate of [currentUrl, indexUrl]) {
+      const pageUrl = resolveTwkanPageUrl(candidate, currentUrl);
+      if (!pageUrl) continue;
+      const match = pageUrl.pathname.match(/^\/(?:txt|book)\/(\d+)(?:\/|$)/);
+      if (match) return match[1];
+    }
+    return null;
+  }
+  function isTwkanTocRequest(indexUrl, currentUrl, rule) {
+    if ((rule == null ? void 0 : rule.id) === "twkan") return true;
+    return !!resolveTwkanPageUrl(indexUrl, currentUrl);
+  }
+  function buildTwkanChapterListUrl(indexUrl, currentUrl) {
+    const pageUrl = resolveTwkanPageUrl(indexUrl, currentUrl);
+    const bookId = extractTwkanBookId(indexUrl, currentUrl);
+    if (!pageUrl || !bookId) return null;
+    return new URL(`/ajax_novels/chapterlist/${bookId}.html`, pageUrl.origin).toString();
+  }
+  function getNativeFetch() {
+    if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") {
+      return unsafeWindow.fetch.bind(unsafeWindow);
+    }
+    if (typeof window !== "undefined" && typeof window.fetch === "function") {
+      return window.fetch.bind(window);
+    }
+    if (typeof fetch === "function") {
+      return fetch;
+    }
+    return null;
+  }
+  async function requestTwkanChapterListNative(apiUrl, setAbort) {
+    const fetcher = getNativeFetch();
+    if (!fetcher) return null;
+    const controller = new AbortController();
+    setAbort(() => controller.abort());
+    try {
+      const response = await fetcher(apiUrl, {
+        credentials: "include",
+        headers: {
+          Accept: "text/html, */*; q=0.01",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        signal: controller.signal
+      });
+      if (!response.ok) return null;
+      return await response.text();
+    } catch {
+      return null;
+    } finally {
+      setAbort(null);
+    }
+  }
+  async function requestTwkanChapterListGm(apiUrl, referer, setAbort) {
+    const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
+    if (!gmXhr) return null;
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        setAbort(null);
+        resolve(value);
+      };
+      const headers = {
+        Accept: "text/html, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest"
+      };
+      if (referer) {
+        headers.Referer = referer;
+      }
+      const request = gmXhr({
+        method: "GET",
+        url: apiUrl,
+        headers,
+        timeout: 1e4,
+        withCredentials: true,
+        onload: (response) => {
+          if (response.status < 200 || response.status >= 300) {
+            finish(null);
+            return;
+          }
+          finish(response.responseText);
+        },
+        onerror: () => finish(null),
+        onabort: () => finish(null),
+        ontimeout: () => finish(null)
+      });
+      setAbort(() => {
+        try {
+          request.abort();
+        } catch {
+        }
+        finish(null);
+      });
+    });
+  }
+  function cleanTwkanTocTitle(title) {
+    return title.replace(/^\s*\d+[.、\s]+/, "").trim();
+  }
+  function parseTwkanChapterList(html2, apiUrl) {
+    var _a;
+    if (!html2.trim() || typeof DOMParser === "undefined") return [];
+    const doc2 = new DOMParser().parseFromString(html2, "text/html");
+    const anchors = Array.from(doc2.querySelectorAll('ul li a[href], a[href*="/txt/"]'));
+    const seen = new Set();
+    const entries2 = [];
+    for (const anchor of anchors) {
+      const rawHref = (_a = anchor.getAttribute("href")) == null ? void 0 : _a.trim();
+      if (!rawHref) continue;
+      const url = resolveUrl(rawHref, apiUrl);
+      if (!url) continue;
+      let parsed;
+      try {
+        parsed = new URL(url);
+      } catch {
+        continue;
+      }
+      if (!isTwkanHost(parsed.hostname) || !/^\/txt\/\d+\/\d+\/?$/.test(parsed.pathname)) continue;
+      const normalizedUrl = normalizeUrlForFetch(parsed.toString());
+      if (seen.has(normalizedUrl)) continue;
+      const title = cleanTwkanTocTitle(anchor.textContent || "") || `章节 ${entries2.length + 1}`;
+      seen.add(normalizedUrl);
+      entries2.push({
+        title,
+        url: normalizedUrl
+      });
+    }
+    return entries2;
+  }
+  async function loadTwkanTocEntries(indexUrl, currentUrl, setAbort) {
+    const apiUrl = buildTwkanChapterListUrl(indexUrl, currentUrl);
+    if (!apiUrl) return [];
+    const nativeHtml = await requestTwkanChapterListNative(apiUrl, setAbort);
+    let entries2 = nativeHtml ? parseTwkanChapterList(nativeHtml, apiUrl) : [];
+    if (entries2.length > 0) return entries2;
+    const gmHtml = await requestTwkanChapterListGm(apiUrl, currentUrl || indexUrl, setAbort);
+    entries2 = gmHtml ? parseTwkanChapterList(gmHtml, apiUrl) : [];
+    return entries2;
+  }
+  const twkanTocLoader = {
+    id: "twkan",
+    matches: (context) => isTwkanTocRequest(context.indexUrl, context.currentUrl, context.rule),
+    load: (context) => loadTwkanTocEntries(context.indexUrl, context.currentUrl, context.setAbort)
+  };
+  const __vite_glob_0_2 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    twkanTocLoader
+  }, Symbol.toStringTag, { value: "Module" }));
+  const modules = Object.assign({ "./goboo.ts": __vite_glob_0_0, "./qidian.ts": __vite_glob_0_1, "./twkan.ts": __vite_glob_0_2 });
   function isSpecialTocLoader(value) {
     if (!value || typeof value !== "object") return false;
     const maybe = value;
