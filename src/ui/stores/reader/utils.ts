@@ -2,13 +2,13 @@
  * Reader Store Utility Functions
  */
 
-import { normalizeCiwemaoChapterUrl } from '@/core/utils';
+import { normalizeCiwemaoChapterUrl, normalizeRedundantFirstPageParam } from '@/core/utils';
 
 /**
  * Normalize URL for fetching (remove hash, canonicalize)
  */
 export function normalizeUrlForFetch(url: string): string {
-  const normalized = normalizeCiwemaoChapterUrl(url);
+  const normalized = normalizeRedundantFirstPageParam(normalizeCiwemaoChapterUrl(url));
   try {
     const u = new URL(normalized);
     u.hash = '';

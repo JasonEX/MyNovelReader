@@ -8,6 +8,7 @@ import {
   isSectionLikeUrl,
   normalizeAbsoluteUrl,
   normalizeCiwemaoChapterUrl,
+  normalizeRedundantFirstPageParam,
 } from '@/core/utils/urlUtils';
 
 afterEach(() => {
@@ -71,6 +72,30 @@ describe('normalizeCiwemaoChapterUrl', () => {
   it('should keep original URL when chapter_id is missing', () => {
     const input = 'https://wap.ciweimao.com/chapter/get_par_tsu_list?data-pgid=0';
     expect(normalizeCiwemaoChapterUrl(input)).toBe(input);
+  });
+});
+
+describe('normalizeRedundantFirstPageParam', () => {
+  it('removes a sole page=1 query from HTML chapter URLs', () => {
+    expect(normalizeRedundantFirstPageParam('https://example.com/book/1.html?page=1')).toBe(
+      'https://example.com/book/1.html'
+    );
+  });
+
+  it('keeps later page markers and extra query params', () => {
+    expect(normalizeRedundantFirstPageParam('https://example.com/book/1.html?page=2')).toBe(
+      'https://example.com/book/1.html?page=2'
+    );
+    expect(normalizeRedundantFirstPageParam('https://example.com/book/1.html?cid=1&page=1')).toBe(
+      'https://example.com/book/1.html?cid=1&page=1'
+    );
+  });
+
+  it('keeps query-driven chapter URLs and malformed URLs unchanged', () => {
+    expect(normalizeRedundantFirstPageParam('https://example.com/read.php?page=1')).toBe(
+      'https://example.com/read.php?page=1'
+    );
+    expect(normalizeRedundantFirstPageParam('not-a-url?page=1')).toBe('not-a-url?page=1');
   });
 });
 

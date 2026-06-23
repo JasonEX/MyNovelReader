@@ -224,3 +224,29 @@ export function normalizeCiwemaoChapterUrl(url: string): string {
     return url;
   }
 }
+
+/**
+ * Remove redundant first-page query markers from HTML chapter URLs.
+ *
+ * Some sites link or expose `/chapter.html?page=1` while their catalog uses
+ * `/chapter.html`. Keep this deliberately narrow so query-driven chapter URLs
+ * such as `read.php?chapter=1` are not rewritten.
+ */
+export function normalizeRedundantFirstPageParam(url: string): string {
+  try {
+    const u = new URL(url);
+    if (!/\.html?$/i.test(u.pathname)) return url;
+
+    const params = Array.from(u.searchParams.entries());
+    if (params.length !== 1) return url;
+
+    const [name, value] = params[0];
+    const pageKeys = ['page', 'p', 'pg', 'pageno', 'page_no', 'pagenum', 'pageindex', 'pn'];
+    if (!pageKeys.includes(name.toLowerCase()) || value !== '1') return url;
+
+    u.search = '';
+    return u.toString();
+  } catch {
+    return url;
+  }
+}

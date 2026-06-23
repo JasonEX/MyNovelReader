@@ -8,6 +8,7 @@ export {
   normalizeAbsoluteUrl,
   joinHtml,
   normalizeCiwemaoChapterUrl,
+  normalizeRedundantFirstPageParam,
   isSectionLikeUrl,
   getSectionBaseUrl,
 } from './urlUtils';

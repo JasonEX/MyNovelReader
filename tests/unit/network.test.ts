@@ -44,6 +44,18 @@ describe('network utilities', () => {
     expect(normalizeUrlForFetch('https://example.com/a#b')).toBe('https://example.com/a');
   });
 
+  it('normalizeUrlForFetch removes redundant first-page query markers', () => {
+    expect(normalizeUrlForFetch('https://example.com/a.html?page=1#b')).toBe(
+      'https://example.com/a.html'
+    );
+  });
+
+  it('normalizeUrlForFetch keeps query-driven chapter params', () => {
+    expect(normalizeUrlForFetch('https://example.com/a.html?cid=1&page=1')).toBe(
+      'https://example.com/a.html?cid=1&page=1'
+    );
+  });
+
   it('normalizeUrlForFetch tolerates non-absolute URLs', () => {
     expect(normalizeUrlForFetch('/a#b')).toBe('/a');
   });

@@ -228,6 +228,18 @@ describe('normalizeUrlForFetch', () => {
     );
   });
 
+  it('removes redundant page=1 from HTML chapter URLs', () => {
+    expect(normalizeUrlForFetch('https://example.com/book/1.html?page=1#section')).toBe(
+      'https://example.com/book/1.html'
+    );
+  });
+
+  it('keeps non-redundant query params', () => {
+    expect(normalizeUrlForFetch('https://example.com/book/1.html?chapter=1&page=1')).toBe(
+      'https://example.com/book/1.html?chapter=1&page=1'
+    );
+  });
+
   it('handles invalid URL by stripping hash with regex', () => {
     expect(normalizeUrlForFetch('not-a-url#hash')).toBe('not-a-url');
   });

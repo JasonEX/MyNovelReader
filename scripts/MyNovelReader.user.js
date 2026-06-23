@@ -620,6 +620,21 @@ setThreshold(threshold) {
       return url;
     }
   }
+  function normalizeRedundantFirstPageParam(url) {
+    try {
+      const u = new URL(url);
+      if (!/\.html?$/i.test(u.pathname)) return url;
+      const params = Array.from(u.searchParams.entries());
+      if (params.length !== 1) return url;
+      const [name, value] = params[0];
+      const pageKeys = ["page", "p", "pg", "pageno", "page_no", "pagenum", "pageindex", "pn"];
+      if (!pageKeys.includes(name.toLowerCase()) || value !== "1") return url;
+      u.search = "";
+      return u.toString();
+    } catch {
+      return url;
+    }
+  }
   /*! @license DOMPurify 3.3.1 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.3.1/LICENSE */
   const {
     entries,
@@ -3707,6 +3722,46 @@ smartQueryAll(root, selector) {
       }
     }
   }
+  const dingdianzwwRule = {
+    id: "dingdianzww",
+    name: "顶点小说",
+    version: 1,
+    match: {
+      pattern: "^https?://dingdianzww\\.org/\\d+/\\d+\\.html(?:[?#].*)?$"
+    },
+    content: {
+      selector: ".txtnav",
+      remove: "script, style, iframe, ins, .txtinfo.hide720, .readinline, .ad_content",
+      replace: [
+        {
+          pattern: "PC站点如章节文字不全请用手机访问dingdianzww\\.org",
+          replacement: "",
+          flags: "g"
+        }
+      ]
+    },
+    navigation: {
+      prev: '.page1 a:contains("上一章")',
+      index: '.page1 a:contains("章节目录"), .page1 a:contains("目录")',
+      next: '.page1 a:contains("下一章")'
+    },
+    title: {
+      selector: ".txtnav > h1, h1",
+      bookSelector: '.bread a[href^="/"]:not([href="/index.html"])[href$="/"]'
+    },
+    advanced: {
+      useIframe: true,
+      noSection: true
+    },
+    meta: {
+      source: "builtin",
+      exampleUrl: "https://dingdianzww.org/27543/13341609.html?page=1"
+    }
+  };
+  const __vite_glob_0_0$1 = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    dingdianzwwRule
+  }, Symbol.toStringTag, { value: "Module" }));
   const gobooBeforeParse = async (doc2, url) => {
     var _a;
     try {
@@ -3785,7 +3840,7 @@ smartQueryAll(root, selector) {
       exampleUrl: "https://m.goboo.cc/gb_1/94443/1"
     }
   };
-  const __vite_glob_0_0$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
     __proto__: null,
     gobooRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -3931,7 +3986,7 @@ smartQueryAll(root, selector) {
     },
     meta: { source: "builtin", exampleUrl: "https://www.hetushu.com/book/9145/6567989.html" }
   };
-  const __vite_glob_0_1$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_2$1 = Object.freeze( Object.defineProperty({
     __proto__: null,
     hetushuRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4014,7 +4069,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin" }
   };
-  const __vite_glob_0_2$1 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
     __proto__: null,
     qidianRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4110,7 +4165,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/58672/38147713" }
   };
-  const __vite_glob_0_3 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
     __proto__: null,
     shu69Rule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4177,7 +4232,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       exampleUrl: "https://twkan.com/txt/93181/53052605"
     }
   };
-  const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
     __proto__: null,
     twkanRule
   }, Symbol.toStringTag, { value: "Module" }));
@@ -4206,11 +4261,11 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     },
     meta: { source: "builtin", exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html" }
   };
-  const __vite_glob_0_5 = Object.freeze( Object.defineProperty({
+  const __vite_glob_0_6 = Object.freeze( Object.defineProperty({
     __proto__: null,
     uureadRule
   }, Symbol.toStringTag, { value: "Module" }));
-  const modules$1 = Object.assign({ "./goboo.ts": __vite_glob_0_0$1, "./hetushu.ts": __vite_glob_0_1$1, "./qidian.ts": __vite_glob_0_2$1, "./shu69.ts": __vite_glob_0_3, "./twkan.ts": __vite_glob_0_4, "./uuread.ts": __vite_glob_0_5 });
+  const modules$1 = Object.assign({ "./dingdianzww.ts": __vite_glob_0_0$1, "./goboo.ts": __vite_glob_0_1$1, "./hetushu.ts": __vite_glob_0_2$1, "./qidian.ts": __vite_glob_0_3, "./shu69.ts": __vite_glob_0_4, "./twkan.ts": __vite_glob_0_5, "./uuread.ts": __vite_glob_0_6 });
   function isSiteRule(value) {
     if (!value || typeof value !== "object") return false;
     const maybe = value;
@@ -4457,86 +4512,6 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     console.warn('[MyNovelReader] Ciweimao beforeParse error:', e);
   }
 `;
-  function getDdxsmfAjaxContent(payload) {
-    const data = payload == null ? void 0 : payload.data;
-    if (!data || typeof data !== "object") return "";
-    const content = data.content;
-    return typeof content === "string" ? content : "";
-  }
-  const ddxsmfBeforeParse = async (doc2, url, helpers) => {
-    var _a;
-    try {
-      const contentEl = doc2.querySelector("#chapter-content");
-      if (!contentEl) return;
-      contentEl.setAttribute("data-mnr-loading", "1");
-      const currentUrl = url || ((_a = doc2.location) == null ? void 0 : _a.href) || window.location.href;
-      const urlObj = new URL(currentUrl);
-      const parts = urlObj.pathname.split("/").filter(Boolean);
-      try {
-        if (parts[0] === "read" && parts[1] && parts[2]) {
-          const aid = parseInt(parts[1], 10);
-          const cid = parseInt(parts[2].split(".")[0], 10);
-          if (aid && cid && (helpers == null ? void 0 : helpers.fetchJson)) {
-            const apiUrl = new URL("/modules/article/ajax_chapter.php", urlObj.origin);
-            apiUrl.searchParams.set("aid", String(aid));
-            apiUrl.searchParams.set("cid", String(cid));
-            const headers = {
-              "X-Requested-With": "XMLHttpRequest"
-            };
-            if (currentUrl) {
-              headers.Referer = currentUrl;
-            }
-            const payload = await helpers.fetchJson(apiUrl.toString(), {
-              timeoutMs: 4e3,
-              headers
-            });
-            const html2 = getDdxsmfAjaxContent(payload);
-            if (html2) {
-              contentEl.innerHTML = html2;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("[MyNovelReader] ddxsmf content fetch error:", e);
-      } finally {
-        contentEl.removeAttribute("data-mnr-loading");
-      }
-      const scripts = Array.from(doc2.querySelectorAll("script")).map((script) => script.textContent || "").join("\n");
-      const loadIndex = scripts.indexOf("function loadChapter");
-      if (loadIndex !== -1) {
-        const rest = scripts.slice(loadIndex);
-        const endIndex = rest.indexOf("function initPaginationButtons");
-        const block = endIndex !== -1 ? rest.slice(0, endIndex) : rest;
-        const prevMatch = block.match(
-          /direction\s*===\s*['"]prev['"][\s\S]*?chapterUrl\s*=\s*['"]([^'"]*)['"]/
-        );
-        const nextMatch = block.match(/else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]*)['"]/);
-        const normalize = (value) => {
-          var _a2;
-          try {
-            return new URL(value, ((_a2 = doc2.location) == null ? void 0 : _a2.href) || window.location.href).href;
-          } catch {
-            return value;
-          }
-        };
-        const prevRaw = (prevMatch == null ? void 0 : prevMatch[1]) || "";
-        const nextRaw = (nextMatch == null ? void 0 : nextMatch[1]) || "";
-        const prevUrl = prevRaw && prevRaw !== "#" ? normalize(prevRaw) : "";
-        const nextUrl = nextRaw && nextRaw !== "#" ? normalize(nextRaw) : "";
-        const prevEl = doc2.querySelector(".page-prev");
-        const nextEl = doc2.querySelector(".page-next");
-        if (prevEl && prevUrl && prevUrl !== "#") prevEl.setAttribute("href", prevUrl);
-        if (nextEl && nextUrl && nextUrl !== "#") nextEl.setAttribute("href", nextUrl);
-      }
-      const indexEl = doc2.querySelector(".page-index");
-      const indexHref = indexEl == null ? void 0 : indexEl.getAttribute("data-href");
-      if (indexEl && indexHref) {
-        indexEl.setAttribute("href", indexHref);
-      }
-    } catch (e) {
-      console.warn("[MyNovelReader] ddxsmf beforeParse error:", e);
-    }
-  };
   const specialRules = [
 {
       id: "chuangshi",
@@ -4745,38 +4720,6 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
         iframeSandbox: "allow-same-origin allow-scripts"
       },
       meta: { source: "builtin", exampleUrl: "https://69shux.com/txt/59608/41087519" }
-    },
-{
-      id: "ddxsmf",
-      name: "顶点小说",
-      version: 1,
-      match: {
-        pattern: "^https?://(?:www\\.)?ddxsmf\\.com/read/\\d+/\\d+\\.html(?:[?#].*)?$"
-      },
-      content: {
-        selector: "#chapter-content"
-      },
-      navigation: {
-        prev: ".page-prev",
-        next: ".page-next",
-        index: ".page-index"
-      },
-      title: {
-        selector: "h1"
-      },
-      hooks: {
-        beforeParse: ddxsmfBeforeParse
-      },
-      advanced: {
-        mutationSelector: "#chapter-content",
-        mutationChildCount: 1,
-        timeout: 2e3,
-        noSection: true
-      },
-      meta: {
-        source: "builtin",
-        exampleUrl: "https://www.ddxsmf.com/read/27543/9719752.html"
-      }
     }
   ];
   const simplifiedRules = [
@@ -5939,7 +5882,7 @@ getStats() {
     return null;
   }
   function normalizeUrlForFetch$1(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
+    const normalized = normalizeRedundantFirstPageParam(normalizeCiwemaoChapterUrl(url));
     try {
       const u = new URL(normalized);
       u.hash = "";
@@ -21649,7 +21592,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
     }
   }
   function normalizeUrlForFetch(url) {
-    const normalized = normalizeCiwemaoChapterUrl(url);
+    const normalized = normalizeRedundantFirstPageParam(normalizeCiwemaoChapterUrl(url));
     try {
       const u = new URL(normalized);
       u.hash = "";
