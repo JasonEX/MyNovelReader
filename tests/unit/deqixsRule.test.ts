@@ -15,6 +15,10 @@ const page6Url = 'https://www.deqixs.org/24/18442_6.html';
 const page7Url = 'https://www.deqixs.org/24/18442_7.html';
 const nextChapterUrl = 'https://www.deqixs.org/24/18443.html';
 const indexUrl = 'https://www.deqixs.org/24/';
+const coChapterUrl = 'https://www.deqixs.co/books/325/266271.html';
+const coPrevChapterUrl = 'https://www.deqixs.co/books/325/266270.html';
+const coNextChapterUrl = 'https://www.deqixs.co/books/325/266272.html';
+const coIndexUrl = 'https://www.deqixs.co/books/325/';
 
 function chapterHtml(options: {
   body: string;
@@ -135,6 +139,45 @@ const tocHtml = `
   </html>
 `;
 
+const deqixsCoHtml = `
+  <!doctype html>
+  <html>
+    <head>
+      <title>四合院里的大国宗师无错精校版_第1477章 特种金属缺货了（4k）_得奇小说网</title>
+      <script src="https://www.deqixs.co/scripts/chapter.js.php?aid=325&cid=266271&referrer=https://www.deqixs.co/books/325/266271.html"></script>
+      <script>
+        function loadChapter(direction) {
+          let chapterUrl = '';
+          if (direction === 'prev') {
+            chapterUrl = 'https://www.deqixs.co/books/325/266270.html';
+          } else {
+            chapterUrl = 'https://www.deqixs.co/books/325/266272.html';
+          }
+        }
+
+        $(document).ready(function() {});
+      </script>
+    </head>
+    <body>
+      <ol class="breadcrumb">
+        <li><a href="/" title="得奇小说网">首页</a></li>
+        <li><a href="https://www.deqixs.co/sort/2/1.html">都市小说</a></li>
+        <li><a href="https://www.deqixs.co/books/325/">四合院里的大国宗师</a></li>
+        <li class="active">第1477章 特种金属缺货了（4k）</li>
+      </ol>
+      <h1 class="pt10"> 第1477章 特种金属缺货了（4k）(第1/4页)</h1>
+      <div class="readcontent" id="rtext">
+        <div id="chapter-content"><div class="loading">正在加载章节内容...</div></div>
+        <p class="text-center">
+          <a href="javascript:void(0)" class="btn btn-default page-link page-prev" data-action="prev">上一页</a>
+          <a href="javascript:void(0)" class="btn btn-default page-link page-index" data-href="/325/">目录</a>
+          <a href="javascript:void(0)" class="btn btn-default page-link page-next" data-action="next">下一页</a>
+        </p>
+      </div>
+    </body>
+  </html>
+`;
+
 describe('Deqixs rule', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -158,6 +201,14 @@ describe('Deqixs rule', () => {
     expect(rule?.id).toBe('deqixs');
     expect(rule?.version).toBe(1);
     expect(rule?.advanced?.checkSection).toBe(true);
+  });
+
+  it('is auto-discovered as a deqixs.co dynamic site rule', () => {
+    const rule = findBuiltInRule(coChapterUrl);
+
+    expect(rule?.id).toBe('deqixs-co');
+    expect(rule?.version).toBe(1);
+    expect(rule?.hooks?.beforeParse).toBeTypeOf('function');
   });
 
   it('parses title, book title, navigation and content from a section page', async () => {
@@ -233,5 +284,53 @@ describe('Deqixs rule', () => {
       '第4章 再现(求收藏)',
       '第5章 祭祀开始(求推荐)',
     ]);
+  });
+
+  it('loads full deqixs.co dynamic content and extracts hidden navigation', async () => {
+    const tokenScript = `
+      var chapterToken = 'token-abc';
+      var timestamp = 1782205800000;
+      var nonce = 'nonce-xyz';
+    `;
+    const fullContent = `第1481章 特种金属缺货了（4k）<br /><br />${'完整正文。'.repeat(300)}`;
+    const requestedUrls: string[] = [];
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      requestedUrls.push(opts.url);
+      const responseText = opts.url.includes('/scripts/chapter.js.php')
+        ? tokenScript
+        : JSON.stringify({
+            status: 1,
+            message: '获取成功',
+            data: { article_id: 325, chapter_id: 266271, content: fullContent },
+          });
+      opts.onload?.({
+        readyState: 4,
+        responseHeaders: '',
+        responseText,
+        status: 200,
+        statusText: 'OK',
+        finalUrl: opts.url,
+      });
+      return { abort: vi.fn() };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const chapter = await new Parser().parse(makeDoc(deqixsCoHtml, coChapterUrl), coChapterUrl);
+
+    expect(chapter?.rule?.id).toBe('deqixs-co');
+    expect(chapter?.title).toBe('第1477章 特种金属缺货了（4k）');
+    expect(chapter?.bookTitle).toBe('四合院里的大国宗师');
+    expect(chapter?.prevUrl).toBe(coPrevChapterUrl);
+    expect(chapter?.indexUrl).toBe(coIndexUrl);
+    expect(chapter?.nextUrl).toBe(coNextChapterUrl);
+    expect(chapter?.rawContent).toContain('第1481章 特种金属缺货了（4k）');
+    expect(chapter?.content).toContain('完整正文');
+    expect(chapter?.content.length).toBeGreaterThan(1000);
+    expect(requestedUrls).toHaveLength(2);
+    expect(requestedUrls[0]).toContain('/scripts/chapter.js.php');
+    expect(requestedUrls[1]).toContain('/modules/article/ajax2.php?');
+    expect(requestedUrls[1]).toContain('token=token-abc');
+    expect(requestedUrls[1]).toContain('timestamp=1782205800000');
+    expect(requestedUrls[1]).toContain('nonce=nonce-xyz');
   });
 });
