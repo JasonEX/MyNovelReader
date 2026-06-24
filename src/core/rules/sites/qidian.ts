@@ -76,29 +76,71 @@ const qidianBeforeParse: BeforeParseHook = (doc, url) => {
   }
 };
 
+const qidianContent: SiteRule['content'] = {
+  selector: 'main[id^="c-"]',
+  remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]',
+};
+
+const qidianNavigation: SiteRule['navigation'] = {
+  // #mnr-qidian-* are created by beforeParse hook from JSON data.
+  // Fallback selectors cover older DOM-rendered pages.
+  prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
+  index: '#mnr-qidian-index',
+  next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")',
+};
+
+const qidianTitle: SiteRule['title'] = {
+  selector: 'h1.title, h1.text-1\\.3em, #r-nav-chapter-title',
+};
+
+const qidianHooks: SiteRule['hooks'] = {
+  beforeParse: qidianBeforeParse,
+};
+
+export const qidianMobileRule: SiteRule = {
+  id: 'qidian-mobile',
+  name: '起点中文网手机版',
+  version: 1,
+  match: {
+    pattern: '^https?://m\\.qidian\\.com/chapter/.*',
+  },
+  content: {
+    ...qidianContent,
+  },
+  navigation: {
+    ...qidianNavigation,
+  },
+  title: {
+    ...qidianTitle,
+  },
+  hooks: {
+    ...qidianHooks,
+  },
+  advanced: {
+    mutationSelector: 'main[id^="c-"]',
+    mutationChildCount: 0,
+  },
+  meta: { source: 'builtin' },
+};
+
 export const qidianRule: SiteRule = {
   id: 'qidian',
   name: '起点中文网',
-  version: 8,
+  version: 9,
   match: {
-    pattern: '^https?://(www|m)\\.qidian\\.com/chapter/.*',
+    pattern: '^https?://www\\.qidian\\.com/chapter/.*',
   },
   content: {
-    selector: 'main[id^="c-"]',
-    remove: '.review, #r-titlePage, .tooltip-wrapper, .chapter-end-qrcode, section[id^="r-"]',
+    ...qidianContent,
   },
   navigation: {
-    // #mnr-qidian-* are created by beforeParse hook from JSON data.
-    // Fallback selectors cover older DOM-rendered pages.
-    prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:contains("上一章")',
-    index: '#mnr-qidian-index',
-    next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")',
+    ...qidianNavigation,
   },
   title: {
-    selector: 'h1.title, h1.text-1\\.3em, #r-nav-chapter-title',
+    ...qidianTitle,
   },
   hooks: {
-    beforeParse: qidianBeforeParse,
+    ...qidianHooks,
   },
   advanced: {
     useIframe: true,

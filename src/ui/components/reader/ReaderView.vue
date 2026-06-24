@@ -289,7 +289,13 @@ const { handleScroll } = useReaderScroll({
 });
 
 // Chapter navigation composable
-const { navigateChapter, jumpToCachedChapter, scrollReader, handleWheel } = useChapterNavigation({
+const {
+  navigateChapter,
+  jumpToCachedChapter,
+  scrollReader,
+  loadPrevWithScrollAdjust,
+  handleWheel,
+} = useChapterNavigation({
   mainRef,
   chapters,
   chapterRefs,
@@ -387,6 +393,9 @@ function guardTouchBoundary(event: Event): void {
     triggerNextAppendFromBoundary();
   } else if (deltaY < 0 && isAtTop(mainEl)) {
     preventIfCancelable(event);
+    if (hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+      void loadPrevWithScrollAdjust();
+    }
   }
 }
 

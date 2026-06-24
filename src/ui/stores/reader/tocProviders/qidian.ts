@@ -64,7 +64,7 @@ function resolveQidianPageUrl(indexUrl: string, currentUrl: string): URL | null 
 }
 
 function isQidianTocRequest(indexUrl: string, currentUrl: string, rule?: SiteRule): boolean {
-  if (rule?.id === 'qidian') return true;
+  if (rule?.id === 'qidian' || rule?.id === 'qidian-mobile') return true;
   return !!resolveQidianPageUrl(indexUrl, currentUrl);
 }
 

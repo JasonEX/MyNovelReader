@@ -97,4 +97,62 @@ describe('builtInRules helpers', () => {
     expect(chapter?.indexUrl).toBe('https://www.qidian.com/book/1045659200/');
     expect(chapter?.nextUrl).toBe('https://www.qidian.com/chapter/1045659200/850662591/');
   });
+
+  it('uses native fetch instead of iframe for mobile Qidian chapters', async () => {
+    Object.assign(globalThis, {
+      GM_deleteValue: () => {},
+      GM_getValue: () => null,
+      GM_listValues: () => [],
+      GM_setValue: () => {},
+    });
+
+    const mobileUrl = 'https://m.qidian.com/chapter/1049115805/903889110/';
+    const desktopUrl = 'https://www.qidian.com/chapter/1049115805/903889110/';
+    const mobileRule = findBuiltInRule(mobileUrl);
+    const desktopRule = findBuiltInRule(desktopUrl);
+
+    expect(mobileRule?.id).toBe('qidian-mobile');
+    expect(mobileRule?.advanced?.useIframe).not.toBe(true);
+    expect(desktopRule?.id).toBe('qidian');
+    expect(desktopRule?.advanced?.useIframe).toBe(true);
+
+    const pageContext = {
+      pageContext: {
+        pageProps: {
+          pageData: {
+            bookInfo: {
+              bookId: 1049115805,
+              bookName: '苟在仙宗打铁，悄悄修成道祖',
+            },
+            chapterInfo: {
+              chapterName: '第7章 指间陀螺',
+              content: '<p>午后。</p>',
+              next: 903937574,
+              prev: 903692507,
+            },
+          },
+        },
+      },
+    };
+    const doc = new JSDOM(
+      `<!doctype html>
+      <html>
+        <head><title>第7章 指间陀螺 _小说在线阅读 - 起点中文网手机版</title></head>
+        <body>
+          <script id="vite-plugin-ssr_pageContext" type="application/json">${JSON.stringify(
+            pageContext
+          )}</script>
+          <main id="c-903889110"><h1 class="title">第7章 指间陀螺</h1><p>午后。</p></main>
+        </body>
+      </html>`,
+      { url: mobileUrl }
+    ).window.document;
+
+    const chapter = await new Parser().parse(doc, mobileUrl);
+
+    expect(chapter?.rule?.id).toBe('qidian-mobile');
+    expect(chapter?.indexUrl).toBe('https://m.qidian.com/book/1049115805/');
+    expect(chapter?.prevUrl).toBe('https://m.qidian.com/chapter/1049115805/903692507/');
+    expect(chapter?.nextUrl).toBe('https://m.qidian.com/chapter/1049115805/903937574/');
+  });
 });
