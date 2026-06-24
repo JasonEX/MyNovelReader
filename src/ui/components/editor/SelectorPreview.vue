@@ -301,7 +301,7 @@ onUnmounted(() => {
 
 .mnr-preview-btn.mnr-btn-active {
   background: var(--mnr-link, #1976d2);
-  color: #fff;
+  color: var(--mnr-on-link, #fff);
   border-color: var(--mnr-link, #1976d2);
 }
 

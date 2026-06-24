@@ -93,7 +93,7 @@ textarea {
 
 /* Link defaults */
 a {
-  color: #1976d2;
+  color: var(--mnr-link, #1976d2);
   text-decoration: none;
 }
 

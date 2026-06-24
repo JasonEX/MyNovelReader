@@ -29,15 +29,15 @@ withDefaults(
 .mnr-spinner.medium {
   width: 48px;
   height: 48px;
-  border: 4px solid rgba(25, 118, 210, 0.2);
-  border-top-color: #1976d2;
+  border: 4px solid var(--mnr-border, #e0e0e0);
+  border-top-color: var(--mnr-link, #1976d2);
 }
 
 .mnr-spinner.large {
   width: 64px;
   height: 64px;
-  border: 4px solid rgba(25, 118, 210, 0.2);
-  border-top-color: #1976d2;
+  border: 4px solid var(--mnr-border, #e0e0e0);
+  border-top-color: var(--mnr-link, #1976d2);
 }
 
 @keyframes mnr-spin {

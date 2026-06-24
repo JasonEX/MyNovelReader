@@ -12,6 +12,7 @@ export interface Theme {
   background: string;
   text: string;
   link: string;
+  onLink: string;
   border: string;
 }
 
@@ -75,39 +76,44 @@ export const THEMES: Theme[] = [
     background: '#ffffff',
     text: '#1a1a1a',
     link: '#0066cc',
+    onLink: '#ffffff',
     border: '#e5e5e5',
   },
   {
     id: 'dark',
     name: '深色',
     background: '#1e1e1e',
-    text: '#d4d4d4',
-    link: '#4fc1ff',
-    border: '#3c3c3c',
+    text: '#c8c8c8',
+    link: '#78bdf2',
+    onLink: '#111111',
+    border: '#3a3a3a',
   },
   {
     id: 'sepia',
     name: '护眼',
     background: '#f8f1e3',
     text: '#4a4137',
-    link: '#8b5a2b',
+    link: '#7a4f26',
+    onLink: '#ffffff',
     border: '#e8dcc8',
   },
   {
     id: 'green',
     name: '绿色',
-    background: '#e8f5e9',
-    text: '#1b5e20',
-    link: '#2e7d32',
-    border: '#c8e6c9',
+    background: '#edf6ed',
+    text: '#243429',
+    link: '#2f6f3d',
+    onLink: '#ffffff',
+    border: '#c9ddc9',
   },
   {
     id: 'blue',
     name: '蓝色',
-    background: '#e3f2fd',
-    text: '#0d47a1',
-    link: '#1565c0',
-    border: '#bbdefb',
+    background: '#eaf3fb',
+    text: '#263746',
+    link: '#2563a8',
+    onLink: '#ffffff',
+    border: '#c7d8e8',
   },
   {
     id: 'night',
@@ -115,7 +121,8 @@ export const THEMES: Theme[] = [
     background: '#0d0d0d',
     text: '#a0a0a0',
     link: '#5dade2',
-    border: '#2a2a2a',
+    onLink: '#0b0b0b',
+    border: '#303030',
   },
 ];
 
@@ -195,6 +202,7 @@ export const useConfigStore = defineStore('config', () => {
     root.style.setProperty('--mnr-bg', t.background);
     root.style.setProperty('--mnr-text', t.text);
     root.style.setProperty('--mnr-link', t.link);
+    root.style.setProperty('--mnr-on-link', t.onLink);
     root.style.setProperty('--mnr-border', t.border);
   }
 

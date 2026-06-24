@@ -238,7 +238,7 @@ function handleDismiss() {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #1976d2;
+  accent-color: var(--mnr-link, #1976d2);
 }
 
 .mnr-prompt-actions {
@@ -267,12 +267,12 @@ function handleDismiss() {
 }
 
 .mnr-btn-primary {
-  background: #1976d2;
-  color: #fff;
+  background: var(--mnr-link, #1976d2);
+  color: var(--mnr-on-link, #fff);
 }
 
 .mnr-btn-primary:hover {
-  background: #1565c0;
+  filter: brightness(0.92);
 }
 
 /* Transitions */

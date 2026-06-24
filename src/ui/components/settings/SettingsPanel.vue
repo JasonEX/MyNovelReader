@@ -23,7 +23,8 @@
                 :style="{
                   background: theme.background,
                   color: theme.text,
-                  borderColor: theme.border,
+                  borderColor:
+                    currentTheme === theme.id ? 'var(--mnr-link, #1976d2)' : theme.border,
                 }"
                 @click="setTheme(theme.id)"
               >
@@ -467,7 +468,7 @@ watch(
 }
 
 .mnr-theme-btn.active {
-  border-color: #1976d2;
+  border-color: var(--mnr-link, #1976d2);
 }
 
 /* Sliders */
@@ -478,13 +479,17 @@ watch(
 }
 
 .mnr-slider-label {
-  width: 24px;
+  flex: 0 0 34px;
+  width: 34px;
   text-align: center;
+  line-height: 1;
+  white-space: nowrap;
   color: var(--mnr-text, #666);
 }
 
 .mnr-slider {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
@@ -496,14 +501,25 @@ watch(
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background: #1976d2;
+  background: var(--mnr-link, #1976d2);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.mnr-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--mnr-link, #1976d2);
+  border: none;
   border-radius: 50%;
   cursor: pointer;
 }
 
 .mnr-slider-value {
-  width: 50px;
+  flex: 0 0 64px;
+  width: 64px;
   text-align: right;
+  white-space: nowrap;
   font-size: 13px;
   color: var(--mnr-text, #666);
 }
@@ -547,8 +563,8 @@ watch(
 }
 
 .mnr-segment.active {
-  background: #1976d2;
-  color: #fff;
+  background: var(--mnr-link, #1976d2);
+  color: var(--mnr-on-link, #fff);
 }
 
 .mnr-hint {
@@ -571,7 +587,7 @@ watch(
 .mnr-switch-row input {
   width: 40px;
   height: 22px;
-  accent-color: #1976d2;
+  accent-color: var(--mnr-link, #1976d2);
 }
 
 /* Action buttons */

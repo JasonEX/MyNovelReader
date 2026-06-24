@@ -83,7 +83,7 @@ onUnmounted(() => {
 
 .mnr-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #1976d2, #42a5f5);
+  background: var(--mnr-link, #1976d2);
   transition: width 0.1s ease-out;
 }
 

@@ -117,7 +117,7 @@ defineEmits<{
   top: -4px;
   right: -4px;
   background: var(--mnr-link, #1976d2);
-  color: #fff;
+  color: var(--mnr-on-link, #fff);
   font-size: 10px;
   font-weight: bold;
   padding: 2px 6px;

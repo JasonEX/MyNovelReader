@@ -7,6 +7,24 @@ import { createGmStorageMock, stubGmStorage } from '../testUtils/gmStorage';
 import { createDom } from '../testUtils/dom';
 import { setupPinia } from '../testUtils/pinia';
 
+function luminance(hex: string): number {
+  const value = hex.replace('#', '');
+  const toLinear = (channel: number) =>
+    channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  const r = toLinear(parseInt(value.slice(0, 2), 16) / 255);
+  const g = toLinear(parseInt(value.slice(2, 4), 16) / 255);
+  const b = toLinear(parseInt(value.slice(4, 6), 16) / 255);
+
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(a: string, b: string): number {
+  const lighter = Math.max(luminance(a), luminance(b));
+  const darker = Math.min(luminance(a), luminance(b));
+
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 describe('ConfigStore - behavior', () => {
   beforeEach(() => {
     createDom('https://example.com/');
@@ -31,6 +49,17 @@ describe('ConfigStore - behavior', () => {
     expect(document.documentElement.style.getPropertyValue('--mnr-bg')).toBe(
       THEMES.find(t => t.id === 'dark')!.background
     );
+    expect(document.documentElement.style.getPropertyValue('--mnr-on-link')).toBe(
+      THEMES.find(t => t.id === 'dark')!.onLink
+    );
+  });
+
+  it('keeps built-in theme colors readable for long-form reading and accent controls', () => {
+    for (const theme of THEMES) {
+      expect(contrastRatio(theme.background, theme.text), theme.id).toBeGreaterThanOrEqual(7);
+      expect(contrastRatio(theme.background, theme.link), theme.id).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(theme.link, theme.onLink), theme.id).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it('applyReading writes reading settings to CSS variables', () => {
