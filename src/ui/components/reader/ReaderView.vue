@@ -4,9 +4,12 @@
     @click="shieldEvent"
     @mousedown="shieldEvent"
     @mouseup="shieldEvent"
+    @wheel="shieldEvent"
     @touchstart="shieldEvent"
+    @touchmove="shieldEvent"
     @touchend="shieldEvent"
     @pointerdown="shieldEvent"
+    @pointermove="shieldEvent"
     @pointerup="shieldEvent"
   >
     <!-- Progress indicator -->

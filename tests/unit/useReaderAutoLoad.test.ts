@@ -189,10 +189,26 @@ describe('useReaderAutoLoad', () => {
     expect(result.autoLoadArmed.value).toBe(false);
   });
 
+  it('scheduleAutoLoadNext bypasses cooldown at the interactive bottom', () => {
+    const mainEl = document.createElement('div');
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+    Object.defineProperty(mainEl, 'scrollTop', { value: 1250, writable: true });
+    Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    const result = useReaderAutoLoad(opts);
+    result.autoLoadArmed.value = true;
+
+    result.scheduleAutoLoadNext();
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+    expect(result.autoLoadArmed.value).toBe(false);
+  });
+
   it('clearAutoLoadTimer clears the pending timer', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
-    Object.defineProperty(mainEl, 'scrollTop', { value: 1300, writable: true });
+    Object.defineProperty(mainEl, 'scrollTop', { value: 1100, writable: true });
     Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
 
     const opts = createAutoLoadOptions({ mainRef: mainEl });
