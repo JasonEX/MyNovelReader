@@ -198,6 +198,11 @@ async function runAutoEnable(): Promise<void> {
 
   // Execute the flow (will use cached decision)
   await manager.execute(document);
+
+  // If an explicit/detected chapter page failed to auto-launch, keep a manual entry visible.
+  if (!appState.isActive && decision.shouldEnable) {
+    showFloatingButton();
+  }
 }
 
 /**
@@ -260,7 +265,8 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
 
   // Save original URL before reader modifies it
   appState.originalUrl = window.location.href;
-  appState.entryPageKind = getPageKind(window.location.href, document);
+  const pageKind = getPageKind(window.location.href, document);
+  appState.entryPageKind = pageKind === 'chapter' || rule || chapter.rule ? 'chapter' : pageKind;
 
   // Update reader store
   const readerStore = useReaderStore(pinia);
@@ -444,6 +450,7 @@ function hideFloatingButton(): void {
  * Manual enable (for toolbar button)
  */
 export async function manualEnable(): Promise<void> {
+  const currentUrl = window.location.href;
   hideFloatingButton();
 
   await ensureInitialized();
@@ -458,6 +465,9 @@ export async function manualEnable(): Promise<void> {
   });
   manager.setLaunchCallback(launchReader);
   await manager.manualEnable(document);
+  if (!appState.isActive && (await shouldShowManualEntryForPage(currentUrl, document))) {
+    showFloatingButton();
+  }
 }
 
 /**
@@ -527,6 +537,24 @@ async function shouldBootstrapForPage(url: string, pageKind: PageKind): Promise<
     return (await manager.matchRule(url)) !== null;
   } catch (e) {
     console.debug('[MNR] Failed to match bootstrap rule:', e);
+    return false;
+  }
+}
+
+async function shouldShowManualEntryForPage(
+  url: string,
+  doc: Document = document
+): Promise<boolean> {
+  const pageKind = getPageKind(url, doc);
+  if (pageKind === 'chapter') return true;
+  if (pageKind === 'toc') return false;
+
+  try {
+    const manager = getRuleManager();
+    await manager.initialize();
+    return (await manager.matchRule(url)) !== null;
+  } catch (e) {
+    console.debug('[MNR] Failed to match manual-entry rule:', e);
     return false;
   }
 }

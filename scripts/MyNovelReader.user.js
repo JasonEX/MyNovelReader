@@ -40,6 +40,12 @@
 // @match        *://www.tadu.com/book/*/*/
 // @match        *://tieba.baidu.com/p/*
 // @match        *://masiro.me/admin/novelReading*
+// @match        *://dingdianzww.org/*
+// @match        *://www.dingdianzww.org/*
+// @match        *://deqixs.org/*
+// @match        *://www.deqixs.org/*
+// @match        *://deqixs.co/*
+// @match        *://www.deqixs.co/*
 // @match        *://*/*.php?*
 // @match        *://*/*_*.html
 // @match        *://*/book/*/*.html
@@ -25472,6 +25478,9 @@ ${value}`;
     manager.setPromptCallback(showPrompt);
     manager.setLaunchCallback(launchReader);
     await manager.execute(document);
+    if (!appState.isActive && decision.shouldEnable) {
+      showFloatingButton();
+    }
   }
   async function showPrompt(decision) {
     return new Promise((resolve) => {
@@ -25511,7 +25520,8 @@ ${value}`;
       return;
     }
     appState.originalUrl = window.location.href;
-    appState.entryPageKind = getPageKind(window.location.href, document);
+    const pageKind = getPageKind(window.location.href, document);
+    appState.entryPageKind = pageKind === "chapter" || rule || chapter.rule ? "chapter" : pageKind;
     const readerStore = useReaderStore(pinia);
     readerStore.activate();
     readerStore.setChapter(chapter, rule);
@@ -25632,6 +25642,7 @@ ${value}`;
     }
   }
   async function manualEnable() {
+    const currentUrl = window.location.href;
     hideFloatingButton();
     await ensureInitialized();
     if (!pinia) return;
@@ -25643,6 +25654,9 @@ ${value}`;
     });
     manager.setLaunchCallback(launchReader);
     await manager.manualEnable(document);
+    if (!appState.isActive && await shouldShowManualEntryForPage(currentUrl, document)) {
+      showFloatingButton();
+    }
   }
   function isTopFrame() {
     try {
@@ -25686,6 +25700,19 @@ ${value}`;
       return await manager.matchRule(url) !== null;
     } catch (e) {
       console.debug("[MNR] Failed to match bootstrap rule:", e);
+      return false;
+    }
+  }
+  async function shouldShowManualEntryForPage(url, doc2 = document) {
+    const pageKind = getPageKind(url, doc2);
+    if (pageKind === "chapter") return true;
+    if (pageKind === "toc") return false;
+    try {
+      const manager = getRuleManager();
+      await manager.initialize();
+      return await manager.matchRule(url) !== null;
+    } catch (e) {
+      console.debug("[MNR] Failed to match manual-entry rule:", e);
       return false;
     }
   }

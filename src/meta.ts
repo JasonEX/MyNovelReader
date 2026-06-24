@@ -86,6 +86,15 @@ export const META_BASE = {
     '*://tieba.baidu.com/p/*',
     '*://masiro.me/admin/novelReading*',
 
+    // Explicitly supported sites with numeric/custom routes. Keep these explicit so the
+    // userscript menu and manual entry are available even when generic path patterns miss.
+    '*://dingdianzww.org/*',
+    '*://www.dingdianzww.org/*',
+    '*://deqixs.org/*',
+    '*://www.deqixs.org/*',
+    '*://deqixs.co/*',
+    '*://www.deqixs.co/*',
+
     // PHP patterns
     '*://*/*.php?*',
 

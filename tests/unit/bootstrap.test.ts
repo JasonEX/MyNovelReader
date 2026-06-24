@@ -361,6 +361,71 @@ describe('bootstrap', () => {
     expect(bootstrap.isActive()).toBe(false);
   });
 
+  it('closeReader keeps manual entry for rule-matched ambiguous chapter URLs', async () => {
+    const domInit = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/index.html',
+      pretendToBeVisual: true,
+    });
+    // @ts-expect-error - test env: assigning jsdom window to globalThis
+    globalThis.window = domInit.window;
+    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    globalThis.document = domInit.window.document;
+    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    globalThis.sessionStorage = domInit.window.sessionStorage;
+
+    const bootstrap = await import('@/bootstrap');
+
+    const domChapter = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://www.deqixs.org/24/18442_6.html',
+      pretendToBeVisual: true,
+    });
+    // @ts-expect-error - test env: assigning jsdom window to globalThis
+    globalThis.window = domChapter.window;
+    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    globalThis.document = domChapter.window.document;
+    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    globalThis.sessionStorage = domChapter.window.sessionStorage;
+
+    const rule = {
+      id: 'deqixs',
+      version: 1,
+      match: { pattern: 'deqixs' },
+      content: { selector: '.con' },
+      meta: { source: 'builtin' },
+    };
+    const chapter = {
+      title: 't',
+      content: 'c',
+      rawContent: 'c',
+      url: domChapter.window.location.href,
+    };
+    let launchCb: ((c: unknown, r?: unknown) => void) | null = null;
+
+    const manager = {
+      check: vi.fn(async () => ({ shouldEnable: true, method: 'builtin-rule', rule })),
+      setPromptCallback: vi.fn(),
+      setLaunchCallback: vi.fn((cb: (c: unknown, r?: unknown) => void) => {
+        launchCb = cb;
+      }),
+      execute: vi.fn(async () => {
+        launchCb?.(chapter, rule);
+      }),
+      manualEnable: vi.fn(async () => {}),
+    };
+    mockGetAutoEnableManager.mockReturnValue(manager);
+
+    await bootstrap.initialize();
+    expect(bootstrap.isActive()).toBe(true);
+
+    bootstrap.closeReader();
+
+    expect(mockSetSitePreference).toHaveBeenCalledWith(
+      'www.deqixs.org',
+      expect.objectContaining({ enabled: false })
+    );
+    expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
+  });
+
   it('manualEnable hides floating button and calls manager.manualEnable', async () => {
     dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/index.html',
