@@ -113,7 +113,7 @@
       } catch (e) {
         console.error("[MNR] CSS injection error:", e);
       }
-    })(".mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-340f8e56]{border-radius:50%;animation:mnr-spin-340f8e56 .8s cubic-bezier(.4,0,.2,1) infinite}.mnr-spinner.small[data-v-340f8e56]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-340f8e56]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}.mnr-spinner.large[data-v-340f8e56]{width:64px;height:64px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}@keyframes mnr-spin-340f8e56{to{transform:rotate(360deg)}}.mnr-toast[data-v-83d04cea]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-83d04cea]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-83d04cea],.mnr-toast-leave-active[data-v-83d04cea]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-83d04cea],.mnr-toast-leave-to[data-v-83d04cea]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}.mnr-loading-overlay[data-v-01971069]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{background:#0009;color:#fff}}.mnr-loading-overlay--inline[data-v-01971069]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px;color:#333}.mnr-drawer[data-v-fe73b01a]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-fe73b01a]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-fe73b01a]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-drawer-empty[data-v-fe73b01a]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-fe73b01a]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-fe73b01a]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-fe73b01a]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-fe73b01a]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-fe73b01a]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-fe73b01a]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-e19dc4ab]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-e19dc4ab]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-e19dc4ab]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var(--mnr-font-family, system-ui);font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-e19dc4ab] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-e19dc4ab] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-e19dc4ab] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-e19dc4ab]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-e19dc4ab]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-e19dc4ab]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e19dc4ab]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-e19dc4ab]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-e19dc4ab]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-e19dc4ab]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-e19dc4ab],.mnr-loading-next[data-v-e19dc4ab]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}@media(min-width:768px){.mnr-reader-content[data-v-e19dc4ab]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-e19dc4ab]{padding:40px}}.mnr-rule-editor-overlay[data-v-e19dc4ab]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-e19dc4ab]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-e19dc4ab]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}");
+    })('.mnr-prompt-overlay[data-v-91cf13cd]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;display:flex;align-items:center;justify-content:center;z-index:999999;padding:16px}.mnr-prompt-card[data-v-91cf13cd]{background:#fff;border-radius:12px;box-shadow:0 4px 24px #00000026;max-width:360px;width:100%;padding:20px;animation:mnr-slide-up-91cf13cd .3s ease-out}@keyframes mnr-slide-up-91cf13cd{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-91cf13cd]{display:flex;align-items:center;gap:12px;margin-bottom:16px}.mnr-prompt-icon[data-v-91cf13cd]{font-size:28px}.mnr-prompt-title[data-v-91cf13cd]{margin:0;font-size:18px;font-weight:600;color:#333}.mnr-confidence[data-v-91cf13cd]{margin-bottom:16px}.mnr-confidence-bar[data-v-91cf13cd]{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:6px}.mnr-confidence-fill[data-v-91cf13cd]{height:100%;border-radius:3px;transition:width .3s ease}.mnr-confidence-fill.high[data-v-91cf13cd]{background:#4caf50}.mnr-confidence-fill.medium[data-v-91cf13cd]{background:#ff9800}.mnr-confidence-fill.low[data-v-91cf13cd]{background:#f44336}.mnr-confidence-text[data-v-91cf13cd]{font-size:13px;color:#666}.mnr-results[data-v-91cf13cd]{list-style:none;padding:0;margin:0 0 16px}.mnr-result-item[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px}.mnr-result-item.success[data-v-91cf13cd]{color:#2e7d32}.mnr-result-item.warning[data-v-91cf13cd]{color:#ed6c02}.mnr-result-icon[data-v-91cf13cd]{font-weight:700}.mnr-checkbox-label[data-v-91cf13cd]{display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 0;font-size:14px;color:#555;border-top:1px solid #eee;margin-bottom:16px}.mnr-checkbox[data-v-91cf13cd]{width:18px;height:18px;cursor:pointer;accent-color:#1976d2}.mnr-prompt-actions[data-v-91cf13cd]{display:flex;gap:12px}.mnr-btn[data-v-91cf13cd]{flex:1;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease}.mnr-btn-secondary[data-v-91cf13cd]{background:#f5f5f5;color:#666}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-91cf13cd]{background:#1976d2;color:#fff}.mnr-btn-primary[data-v-91cf13cd]:hover{background:#1565c0}.mnr-fade-enter-active[data-v-91cf13cd],.mnr-fade-leave-active[data-v-91cf13cd]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-91cf13cd],.mnr-fade-leave-to[data-v-91cf13cd]{opacity:0}@media(prefers-color-scheme:dark){.mnr-prompt-card[data-v-91cf13cd]{background:#2a2a2a}.mnr-prompt-title[data-v-91cf13cd]{color:#e0e0e0}.mnr-confidence-bar[data-v-91cf13cd]{background:#444}.mnr-confidence-text[data-v-91cf13cd]{color:#aaa}.mnr-checkbox-label[data-v-91cf13cd]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-91cf13cd]{background:#3a3a3a;color:#ccc}.mnr-btn-secondary[data-v-91cf13cd]:hover{background:#4a4a4a}}@media(max-width:480px){.mnr-prompt-card[data-v-91cf13cd]{padding:16px;margin:8px}.mnr-prompt-title[data-v-91cf13cd]{font-size:16px}.mnr-btn[data-v-91cf13cd]{padding:12px 16px}}.mnr-progress[data-v-08ca51a0]{position:fixed;top:0;left:0;right:0;height:3px;z-index:1000;transition:opacity .3s ease}.mnr-progress.hidden[data-v-08ca51a0]{opacity:0}.mnr-progress-bar[data-v-08ca51a0]{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);transition:width .1s ease-out}.mnr-progress-text[data-v-08ca51a0]{position:absolute;right:8px;top:8px;background:#000000b3;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px}.mnr-floating-toolbar[data-v-63e5b047]{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:100}.mnr-fab[data-v-63e5b047]{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);border:1px solid var(--mnr-border, #e5e5e5);box-shadow:0 4px 12px #00000026;cursor:pointer;position:relative;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.25,.8,.25,1);-webkit-tap-highlight-color:transparent}.mnr-fab[data-v-63e5b047]:hover{background:var(--mnr-border, #f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-63e5b047]:active{transform:scale(.95)}.mnr-fab[data-v-63e5b047]:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}.mnr-fab-group[data-v-63e5b047]{display:flex;gap:12px}.mnr-fab-badge[data-v-63e5b047]{position:absolute;top:-4px;right:-4px;background:var(--mnr-link, #1976d2);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;line-height:1;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-63e5b047]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-63e5b047],.mnr-fade-slide-leave-active[data-v-63e5b047]{transition:opacity .3s ease,transform .3s ease}.mnr-fade-slide-enter-from[data-v-63e5b047],.mnr-fade-slide-leave-to[data-v-63e5b047]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-340f8e56]{border-radius:50%;animation:mnr-spin-340f8e56 .8s cubic-bezier(.4,0,.2,1) infinite}.mnr-spinner.small[data-v-340f8e56]{width:24px;height:24px;border:2px solid var(--mnr-border, #e0e0e0);border-top-color:var(--mnr-link, #1976d2);animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-340f8e56]{width:48px;height:48px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}.mnr-spinner.large[data-v-340f8e56]{width:64px;height:64px;border:4px solid rgba(25,118,210,.2);border-top-color:#1976d2}@keyframes mnr-spin-340f8e56{to{transform:rotate(360deg)}}.mnr-toast[data-v-83d04cea]{position:fixed;bottom:32px;left:50%;transform:translate(-50%);background:#1e1e1ee6;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:500;cursor:pointer;z-index:1001;box-shadow:0 8px 24px #0003;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mnr-toast--error[data-v-83d04cea]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-83d04cea],.mnr-toast-leave-active[data-v-83d04cea]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-83d04cea],.mnr-toast-leave-to[data-v-83d04cea]{opacity:0;transform:translate(-50%) translateY(40px) scale(.9)}.mnr-loading-overlay[data-v-01971069]{position:fixed;top:0;left:0;right:0;bottom:0;background:#fffc;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#333;z-index:1000;transition:opacity .3s ease}@media(prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{background:#0009;color:#fff}}.mnr-loading-overlay--inline[data-v-01971069]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px;color:#333}.mnr-drawer[data-v-fe73b01a]{position:fixed;top:0;left:0;bottom:0;width:85%;max-width:320px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transform:translate(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1001;display:flex;flex-direction:column;box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{position:fixed;top:0;right:0;bottom:0;left:0;background:#00000080;z-index:1000}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s ease}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);flex-shrink:0}.mnr-drawer-title[data-v-fe73b01a]{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;border:none;background:transparent;color:var(--mnr-text, #333);font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border, #e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}.mnr-drawer-loading[data-v-fe73b01a]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;color:var(--mnr-text, #666)}.mnr-drawer-empty[data-v-fe73b01a]{padding:40px 20px;text-align:center;color:var(--mnr-text, #666);opacity:.7}.mnr-cache-progress-bar[data-v-fe73b01a]{position:sticky;top:0;background:var(--mnr-bg, #fff);padding:12px 16px;border-bottom:1px solid var(--mnr-border, #e5e5e5);z-index:1}.mnr-cache-progress-text[data-v-fe73b01a]{font-size:12px;color:var(--mnr-link, #1976d2);margin-bottom:6px}.mnr-cache-progress-track[data-v-fe73b01a]{height:4px;background:var(--mnr-border, #e0e0e0);border-radius:2px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{height:100%;background:var(--mnr-link, #1976d2);border-radius:2px;transition:width .3s ease}.mnr-cache-stats[data-v-fe73b01a]{padding:8px 16px;font-size:12px;border-bottom:1px solid var(--mnr-border, #e5e5e5);display:flex;gap:12px}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{list-style:none;margin:0;padding:8px 0}.mnr-chapter-list li[data-v-fe73b01a]{padding:12px 16px;cursor:pointer;border-left:3px solid transparent;font-size:14px;line-height:1.4;transition:all .15s ease;scroll-margin-block:24px;display:flex;align-items:flex-start;gap:4px}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{background:#1976d21a;border-left-color:var(--mnr-link, #1976d2);font-weight:500;color:var(--mnr-link, #1976d2)}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;font-size:12px;flex-shrink:0;margin-top:2px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;font-size:12px;flex-shrink:0;margin-top:2px}@media(min-width:1024px){.mnr-drawer[data-v-fe73b01a]{max-width:320px;width:320px}}.mnr-settings-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:1000;display:flex;justify-content:flex-end}.mnr-settings-panel{width:100%;max-width:360px;height:100%;background:var(--mnr-bg, #fff);display:flex;flex-direction:column;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-settings-header h3{margin:0;font-size:18px;color:var(--mnr-text, #333)}.mnr-shortcut-hint{margin-left:auto;margin-right:12px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-close-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--mnr-text, #666)}.mnr-settings-content{flex:1;overflow:auto;padding:16px}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #555)}.mnr-theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mnr-theme-btn{padding:12px 8px;border:2px solid transparent;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s ease}.mnr-theme-btn.active{border-color:#1976d2}.mnr-slider-row{display:flex;align-items:center;gap:12px}.mnr-slider-label{width:24px;text-align:center;color:var(--mnr-text, #666)}.mnr-slider{flex:1;height:4px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background:var(--mnr-border, #e0e0e0);border-radius:2px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#1976d2;border-radius:50%;cursor:pointer}.mnr-slider-value{width:50px;text-align:right;font-size:13px;color:var(--mnr-text, #666)}.mnr-select{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px}.mnr-segmented-control{display:flex;border:1px solid var(--mnr-border, #ddd);border-radius:8px;overflow:hidden}.mnr-segment{flex:1;padding:10px 16px;border:none;background:var(--mnr-bg, #fff);color:var(--mnr-text, #666);font-size:14px;cursor:pointer;transition:all .2s ease}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border, #ddd)}.mnr-segment:hover{background:var(--mnr-border, #f0f0f0)}.mnr-segment.active{background:#1976d2;color:#fff}.mnr-hint{margin-top:8px;font-size:12px;color:var(--mnr-text, #888);opacity:.8}.mnr-switch-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer;color:var(--mnr-text, #333)}.mnr-switch-row input{width:40px;height:22px;accent-color:#1976d2}.mnr-action-buttons{display:flex;flex-direction:column;gap:8px}.mnr-rule-row{display:flex;gap:8px}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{display:flex;gap:8px}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{width:100%;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);font-size:14px;cursor:pointer}.mnr-action-btn:hover{background:var(--mnr-border, #f5f5f5)}.mnr-action-btn--danger{background:#dc3545;color:#fff;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{margin-left:4px;opacity:.8}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s ease}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media(max-width:480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;pointer-events:none}.mnr-picker-highlight[data-v-69ce3430]{position:fixed;border:2px solid #1976d2;background:#1976d21a;pointer-events:none;transition:all .05s ease;box-sizing:border-box;z-index:999999}.mnr-picker-tooltip[data-v-69ce3430]{position:fixed;background:#333;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;max-width:400px;pointer-events:none;z-index:1000000;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{position:fixed;bottom:20px;left:50%;transform:translate(-50%);background:#1976d2;color:#fff;padding:12px 20px;border-radius:8px;display:flex;align-items:center;gap:16px;font-size:14px;pointer-events:auto;box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{background:#fff3;border:none;color:#fff;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media(max-width:480px){.mnr-picker-controls[data-v-69ce3430]{left:10px;right:10px;transform:none;flex-wrap:wrap;justify-content:center}}.mnr-selector-preview[data-v-31cda065]{background:var(--mnr-border, #f8f9fa);border-radius:8px;padding:12px;margin-bottom:12px}.mnr-preview-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mnr-preview-label[data-v-31cda065]{font-size:13px;font-weight:600;color:var(--mnr-text, #555)}.mnr-preview-actions[data-v-31cda065]{display:flex;gap:4px}.mnr-preview-btn[data-v-31cda065]{background:none;border:1px solid var(--mnr-border, #ddd);border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--mnr-text, #666)}.mnr-preview-btn[data-v-31cda065]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-31cda065]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-31cda065]{background:var(--mnr-link, #1976d2);color:#fff;border-color:var(--mnr-link, #1976d2)}.mnr-preview-input-row[data-v-31cda065]{margin-bottom:8px}.mnr-preview-input[data-v-31cda065]{width:100%;padding:8px 10px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-preview-input[data-v-31cda065]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-preview-selector[data-v-31cda065]{font-family:monospace;font-size:13px;color:var(--mnr-text, #666)}.mnr-preview-match[data-v-31cda065]{font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px}.mnr-preview-match.success[data-v-31cda065]{background:#e8f5e9;color:#2e7d32}.mnr-preview-match.warning[data-v-31cda065]{background:#fff3e0;color:#e65100}.mnr-preview-match.error[data-v-31cda065]{background:#ffebee;color:#c62828}.mnr-preview-content[data-v-31cda065]{border-top:1px solid var(--mnr-border, #e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-31cda065]{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mnr-text, #666);margin-bottom:6px}.mnr-preview-expand[data-v-31cda065]{background:none;border:none;color:var(--mnr-link, #1976d2);cursor:pointer;font-size:12px}.mnr-preview-text[data-v-31cda065]{font-size:12px;line-height:1.5;color:var(--mnr-text, #444);max-height:80px;overflow:hidden;background:var(--mnr-bg, #fff);padding:8px;border-radius:4px;border:1px solid var(--mnr-border, #e0e0e0)}.mnr-preview-text.expanded[data-v-31cda065]{max-height:300px;overflow:auto}.mnr-highlight-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999998}.mnr-highlight-box{border:3px solid #4caf50;background:#4caf5026;box-sizing:border-box;transition:all .15s ease}.mnr-highlight-label{position:absolute;top:-24px;left:0;background:#4caf50;color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px 4px 0 0;font-family:sans-serif}.mnr-rule-editor[data-v-9661dd82]{display:flex;flex-direction:column;height:100%;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333);transition:opacity .2s ease,transform .2s ease}.mnr-rule-editor.mnr-editor-hidden[data-v-9661dd82]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-9661dd82]{position:relative;padding:16px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-editor-title[data-v-9661dd82]{margin:0 0 12px;font-size:18px;font-weight:600;color:var(--mnr-text, #333)}.mnr-shortcut-hint[data-v-9661dd82]{position:absolute;top:16px;right:16px;padding:2px 8px;background:var(--mnr-border, #e0e0e0);border-radius:4px;font-size:12px;font-family:monospace;color:var(--mnr-text, #666)}.mnr-editor-tabs[data-v-9661dd82]{display:flex;gap:4px}.mnr-tab-btn[data-v-9661dd82]{padding:8px 16px;background:var(--mnr-border, #f5f5f5);border:none;border-radius:6px;cursor:pointer;font-size:14px;color:var(--mnr-text, #666)}.mnr-tab-btn.active[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-editor-content[data-v-9661dd82]{flex:1;overflow:auto;padding:16px}.mnr-form-section[data-v-9661dd82]{margin-bottom:24px}.mnr-section-title[data-v-9661dd82]{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--mnr-text, #333);padding-bottom:8px;border-bottom:1px solid var(--mnr-border, #e0e0e0)}.mnr-form-group[data-v-9661dd82]{margin-bottom:16px}.mnr-form-group label[data-v-9661dd82]{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:var(--mnr-text, #555)}.mnr-form-group input[data-v-9661dd82],.mnr-form-group textarea[data-v-9661dd82]{width:100%;padding:10px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-size:14px;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-form-group input[data-v-9661dd82]:focus,.mnr-form-group textarea[data-v-9661dd82]:focus{outline:none;border-color:var(--mnr-link, #1976d2)}.mnr-hint[data-v-9661dd82]{display:block;margin-top:4px;font-size:12px;color:var(--mnr-text, #888);opacity:.7}.mnr-checkbox-row[data-v-9661dd82]{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}.mnr-checkbox-row input[data-v-9661dd82]{width:18px;height:18px}.mnr-code-toolbar[data-v-9661dd82]{display:flex;gap:8px;margin-bottom:8px}.mnr-format-select[data-v-9661dd82]{padding:6px 12px;border:1px solid var(--mnr-border, #ddd);border-radius:4px;font-size:13px;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]{padding:6px 12px;background:var(--mnr-border, #f5f5f5);border:1px solid var(--mnr-border, #ddd);border-radius:4px;cursor:pointer;font-size:13px;color:var(--mnr-text, #333)}.mnr-toolbar-btn[data-v-9661dd82]:hover{opacity:.8}.mnr-code-editor[data-v-9661dd82]{width:100%;min-height:400px;padding:12px;border:1px solid var(--mnr-border, #ddd);border-radius:6px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;background:var(--mnr-bg, #fff);color:var(--mnr-text, #333)}.mnr-code-error[data-v-9661dd82]{margin-top:8px;padding:8px 12px;background:#ffebee;color:#c62828;border-radius:4px;font-size:13px}.mnr-hook-editor[data-v-9661dd82],.mnr-css-editor[data-v-9661dd82]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-9661dd82]{display:flex;justify-content:flex-end;gap:12px;padding:16px;border-top:1px solid var(--mnr-border, #e0e0e0)}.mnr-btn[data-v-9661dd82]{padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:none}.mnr-btn-secondary[data-v-9661dd82]{background:var(--mnr-border, #f5f5f5);color:var(--mnr-text, #666)}.mnr-btn-primary[data-v-9661dd82]{background:var(--mnr-link, #1976d2);color:#fff}.mnr-btn-primary[data-v-9661dd82]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-d3057a66]{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:var(--mnr-bg, #ffffff);color:var(--mnr-text, #1a1a1a);overflow:hidden;display:flex;flex-direction:column}.mnr-reader-main[data-v-d3057a66]{flex:1;overflow:auto;padding-top:68px;padding-bottom:40px;overscroll-behavior:contain}.mnr-reader-content[data-v-d3057a66]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:var(--mnr-padding, 20px);font-family:var( --mnr-font-family, "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif );font-size:var(--mnr-font-size, 18px);line-height:var(--mnr-line-height, 1.8);letter-spacing:var(--mnr-letter-spacing, .05em)}.mnr-reader-content[data-v-d3057a66] p{text-indent:var(--mnr-paragraph-indent, 2em);margin:0 0 1em}.mnr-reader-content[data-v-d3057a66] img{max-width:100%;height:auto;display:block;margin:1em auto}.mnr-reader-content[data-v-d3057a66] a{color:var(--mnr-link, #1976d2)}.mnr-chapter-title[data-v-d3057a66]{font-size:1.5em;font-weight:700;margin:0 0 1em;color:var(--mnr-text, #1a1a1a);line-height:1.4;text-align:center}.mnr-chapter-end[data-v-d3057a66]{max-width:var(--mnr-max-width, 800px);margin:0 auto;padding:40px 20px;text-align:center}.mnr-chapter-end-text[data-v-d3057a66]{color:var(--mnr-text, #666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-d3057a66]{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}.mnr-chapter-link[data-v-d3057a66]{padding:12px 24px;color:var(--mnr-link, #1976d2);text-decoration:none;border:1px solid var(--mnr-border, #e0e0e0);border-radius:8px;transition:all .2s ease}.mnr-chapter-link[data-v-d3057a66]:hover{background:var(--mnr-border, #f0f0f0)}.mnr-sentinel[data-v-d3057a66]{height:1px;width:100%;visibility:hidden}.mnr-loading-prev[data-v-d3057a66],.mnr-loading-next[data-v-d3057a66]{display:flex;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--mnr-text, #666)}@media(min-width:768px){.mnr-reader-content[data-v-d3057a66]{padding:30px}}@media(min-width:1024px){.mnr-reader-content[data-v-d3057a66]{padding:40px}}.mnr-rule-editor-overlay[data-v-d3057a66]{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .2s ease,visibility .2s ease}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-d3057a66]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-d3057a66]{background:var(--mnr-bg, #fff);border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}');
   })();
   const DEFAULT_THRESHOLD = 0.6;
   const DEFAULT_WEIGHTS = {
@@ -635,23 +635,50 @@ setThreshold(threshold) {
       return url;
     }
   }
-  /*! @license DOMPurify 3.3.1 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.3.1/LICENSE */
-  const {
-    entries,
-    setPrototypeOf,
-    isFrozen,
-    getPrototypeOf,
-    getOwnPropertyDescriptor
-  } = Object;
-  let {
-    freeze,
-    seal,
-    create
-  } = Object;
-  let {
-    apply: apply$1,
-    construct
-  } = typeof Reflect !== "undefined" && Reflect;
+  /*! @license DOMPurify 3.4.11 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.4.11/LICENSE */
+  function _arrayLikeToArray(r, a) {
+    (null == a || a > r.length) && (a = r.length);
+    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+    return n;
+  }
+  function _arrayWithHoles(r) {
+    if (Array.isArray(r)) return r;
+  }
+  function _iterableToArrayLimit(r, l) {
+    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (null != t) {
+      var e, n, i, u, a = [], f = true, o = false;
+      try {
+        if (i = (t = t.call(r)).next, 0 === l) ;
+        else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = true) ;
+      } catch (r2) {
+        o = true, n = r2;
+      } finally {
+        try {
+          if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+        } finally {
+          if (o) throw n;
+        }
+      }
+      return a;
+    }
+  }
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+  function _slicedToArray(r, e) {
+    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+  }
+  function _unsupportedIterableToArray(r, a) {
+    if (r) {
+      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+      var t = {}.toString.call(r).slice(8, -1);
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+    }
+  }
+  const entries = Object.entries, setPrototypeOf = Object.setPrototypeOf, isFrozen = Object.isFrozen, getPrototypeOf = Object.getPrototypeOf, getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+  let freeze = Object.freeze, seal = Object.seal, create = Object.create;
+  let _ref = typeof Reflect !== "undefined" && Reflect, apply$1 = _ref.apply, construct = _ref.construct;
   if (!freeze) {
     freeze = function freeze2(x) {
       return x;
@@ -683,13 +710,19 @@ setThreshold(threshold) {
   const arrayPop = unapply(Array.prototype.pop);
   const arrayPush = unapply(Array.prototype.push);
   const arraySplice = unapply(Array.prototype.splice);
+  const arrayIsArray = Array.isArray;
   const stringToLowerCase = unapply(String.prototype.toLowerCase);
   const stringToString = unapply(String.prototype.toString);
   const stringMatch = unapply(String.prototype.match);
   const stringReplace = unapply(String.prototype.replace);
   const stringIndexOf = unapply(String.prototype.indexOf);
   const stringTrim = unapply(String.prototype.trim);
+  const numberToString = unapply(Number.prototype.toString);
+  const booleanToString = unapply(Boolean.prototype.toString);
+  const bigintToString = typeof BigInt === "undefined" ? null : unapply(BigInt.prototype.toString);
+  const symbolToString = typeof Symbol === "undefined" ? null : unapply(Symbol.prototype.toString);
   const objectHasOwnProperty = unapply(Object.prototype.hasOwnProperty);
+  const objectToString$1 = unapply(Object.prototype.toString);
   const regExpTest = unapply(RegExp.prototype.test);
   const typeErrorCreate = unconstruct(TypeError);
   function unapply(func) {
@@ -715,6 +748,9 @@ setThreshold(threshold) {
     let transformCaseFunc = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : stringToLowerCase;
     if (setPrototypeOf) {
       setPrototypeOf(set, null);
+    }
+    if (!arrayIsArray(array)) {
+      return set;
     }
     let l = array.length;
     while (l--) {
@@ -743,10 +779,13 @@ setThreshold(threshold) {
   }
   function clone(object) {
     const newObject = create(null);
-    for (const [property, value] of entries(object)) {
+    for (const _ref2 of entries(object)) {
+      var _ref3 = _slicedToArray(_ref2, 2);
+      const property = _ref3[0];
+      const value = _ref3[1];
       const isPropertyExist = objectHasOwnProperty(object, property);
       if (isPropertyExist) {
-        if (Array.isArray(value)) {
+        if (arrayIsArray(value)) {
           newObject[property] = cleanArray(value);
         } else if (value && typeof value === "object" && value.constructor === Object) {
           newObject[property] = clone(value);
@@ -756,6 +795,44 @@ setThreshold(threshold) {
       }
     }
     return newObject;
+  }
+  function stringifyValue(value) {
+    switch (typeof value) {
+      case "string": {
+        return value;
+      }
+      case "number": {
+        return numberToString(value);
+      }
+      case "boolean": {
+        return booleanToString(value);
+      }
+      case "bigint": {
+        return bigintToString ? bigintToString(value) : "0";
+      }
+      case "symbol": {
+        return symbolToString ? symbolToString(value) : "Symbol()";
+      }
+      case "undefined": {
+        return objectToString$1(value);
+      }
+      case "function":
+      case "object": {
+        if (value === null) {
+          return objectToString$1(value);
+        }
+        const valueAsRecord = value;
+        const valueToString = lookupGetter(valueAsRecord, "toString");
+        if (typeof valueToString === "function") {
+          const stringified = valueToString(valueAsRecord);
+          return typeof stringified === "string" ? stringified : objectToString$1(stringified);
+        }
+        return objectToString$1(value);
+      }
+      default: {
+        return objectToString$1(value);
+      }
+    }
   }
   function lookupGetter(object, prop) {
     while (object !== null) {
@@ -775,6 +852,14 @@ setThreshold(threshold) {
     }
     return fallbackValue;
   }
+  function isRegex(value) {
+    try {
+      regExpTest(value, "");
+      return true;
+    } catch (_unused) {
+      return false;
+    }
+  }
   const html$1 = freeze(["a", "abbr", "acronym", "address", "area", "article", "aside", "audio", "b", "bdi", "bdo", "big", "blink", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "content", "data", "datalist", "dd", "decorator", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "element", "em", "fieldset", "figcaption", "figure", "font", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "img", "input", "ins", "kbd", "label", "legend", "li", "main", "map", "mark", "marquee", "menu", "menuitem", "meter", "nav", "nobr", "ol", "optgroup", "option", "output", "p", "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "search", "section", "select", "shadow", "slot", "small", "source", "spacer", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"]);
   const svg$1 = freeze(["svg", "a", "altglyph", "altglyphdef", "altglyphitem", "animatecolor", "animatemotion", "animatetransform", "circle", "clippath", "defs", "desc", "ellipse", "enterkeyhint", "exportparts", "filter", "font", "g", "glyph", "glyphref", "hkern", "image", "inputmode", "line", "lineargradient", "marker", "mask", "metadata", "mpath", "part", "path", "pattern", "polygon", "polyline", "radialgradient", "rect", "stop", "style", "switch", "symbol", "text", "textpath", "title", "tref", "tspan", "view", "vkern"]);
   const svgFilters = freeze(["feBlend", "feColorMatrix", "feComponentTransfer", "feComposite", "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow", "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge", "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight", "feTile", "feTurbulence"]);
@@ -782,13 +867,13 @@ setThreshold(threshold) {
   const mathMl$1 = freeze(["math", "menclose", "merror", "mfenced", "mfrac", "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo", "mover", "mpadded", "mphantom", "mroot", "mrow", "ms", "mspace", "msqrt", "mstyle", "msub", "msup", "msubsup", "mtable", "mtd", "mtext", "mtr", "munder", "munderover", "mprescripts"]);
   const mathMlDisallowed = freeze(["maction", "maligngroup", "malignmark", "mlongdiv", "mscarries", "mscarry", "msgroup", "mstack", "msline", "msrow", "semantics", "annotation", "annotation-xml", "mprescripts", "none"]);
   const text = freeze(["#text"]);
-  const html = freeze(["accept", "action", "align", "alt", "autocapitalize", "autocomplete", "autopictureinpicture", "autoplay", "background", "bgcolor", "border", "capture", "cellpadding", "cellspacing", "checked", "cite", "class", "clear", "color", "cols", "colspan", "controls", "controlslist", "coords", "crossorigin", "datetime", "decoding", "default", "dir", "disabled", "disablepictureinpicture", "disableremoteplayback", "download", "draggable", "enctype", "enterkeyhint", "exportparts", "face", "for", "headers", "height", "hidden", "high", "href", "hreflang", "id", "inert", "inputmode", "integrity", "ismap", "kind", "label", "lang", "list", "loading", "loop", "low", "max", "maxlength", "media", "method", "min", "minlength", "multiple", "muted", "name", "nonce", "noshade", "novalidate", "nowrap", "open", "optimum", "part", "pattern", "placeholder", "playsinline", "popover", "popovertarget", "popovertargetaction", "poster", "preload", "pubdate", "radiogroup", "readonly", "rel", "required", "rev", "reversed", "role", "rows", "rowspan", "spellcheck", "scope", "selected", "shape", "size", "sizes", "slot", "span", "srclang", "start", "src", "srcset", "step", "style", "summary", "tabindex", "title", "translate", "type", "usemap", "valign", "value", "width", "wrap", "xmlns", "slot"]);
+  const html = freeze(["accept", "action", "align", "alt", "autocapitalize", "autocomplete", "autopictureinpicture", "autoplay", "background", "bgcolor", "border", "capture", "cellpadding", "cellspacing", "checked", "cite", "class", "clear", "color", "cols", "colspan", "command", "commandfor", "controls", "controlslist", "coords", "crossorigin", "datetime", "decoding", "default", "dir", "disabled", "disablepictureinpicture", "disableremoteplayback", "download", "draggable", "enctype", "enterkeyhint", "exportparts", "face", "for", "headers", "height", "hidden", "high", "href", "hreflang", "id", "inert", "inputmode", "integrity", "ismap", "kind", "label", "lang", "list", "loading", "loop", "low", "max", "maxlength", "media", "method", "min", "minlength", "multiple", "muted", "name", "nonce", "noshade", "novalidate", "nowrap", "open", "optimum", "part", "pattern", "placeholder", "playsinline", "popover", "popovertarget", "popovertargetaction", "poster", "preload", "pubdate", "radiogroup", "readonly", "rel", "required", "rev", "reversed", "role", "rows", "rowspan", "spellcheck", "scope", "selected", "shape", "size", "sizes", "slot", "span", "srclang", "start", "src", "srcset", "step", "style", "summary", "tabindex", "title", "translate", "type", "usemap", "valign", "value", "width", "wrap", "xmlns"]);
   const svg = freeze(["accent-height", "accumulate", "additive", "alignment-baseline", "amplitude", "ascent", "attributename", "attributetype", "azimuth", "basefrequency", "baseline-shift", "begin", "bias", "by", "class", "clip", "clippathunits", "clip-path", "clip-rule", "color", "color-interpolation", "color-interpolation-filters", "color-profile", "color-rendering", "cx", "cy", "d", "dx", "dy", "diffuseconstant", "direction", "display", "divisor", "dur", "edgemode", "elevation", "end", "exponent", "fill", "fill-opacity", "fill-rule", "filter", "filterunits", "flood-color", "flood-opacity", "font-family", "font-size", "font-size-adjust", "font-stretch", "font-style", "font-variant", "font-weight", "fx", "fy", "g1", "g2", "glyph-name", "glyphref", "gradientunits", "gradienttransform", "height", "href", "id", "image-rendering", "in", "in2", "intercept", "k", "k1", "k2", "k3", "k4", "kerning", "keypoints", "keysplines", "keytimes", "lang", "lengthadjust", "letter-spacing", "kernelmatrix", "kernelunitlength", "lighting-color", "local", "marker-end", "marker-mid", "marker-start", "markerheight", "markerunits", "markerwidth", "maskcontentunits", "maskunits", "max", "mask", "mask-type", "media", "method", "mode", "min", "name", "numoctaves", "offset", "operator", "opacity", "order", "orient", "orientation", "origin", "overflow", "paint-order", "path", "pathlength", "patterncontentunits", "patterntransform", "patternunits", "points", "preservealpha", "preserveaspectratio", "primitiveunits", "r", "rx", "ry", "radius", "refx", "refy", "repeatcount", "repeatdur", "restart", "result", "rotate", "scale", "seed", "shape-rendering", "slope", "specularconstant", "specularexponent", "spreadmethod", "startoffset", "stddeviation", "stitchtiles", "stop-color", "stop-opacity", "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit", "stroke-opacity", "stroke", "stroke-width", "style", "surfacescale", "systemlanguage", "tabindex", "tablevalues", "targetx", "targety", "transform", "transform-origin", "text-anchor", "text-decoration", "text-rendering", "textlength", "type", "u1", "u2", "unicode", "values", "viewbox", "visibility", "version", "vert-adv-y", "vert-origin-x", "vert-origin-y", "width", "word-spacing", "wrap", "writing-mode", "xchannelselector", "ychannelselector", "x", "x1", "x2", "xmlns", "y", "y1", "y2", "z", "zoomandpan"]);
-  const mathMl = freeze(["accent", "accentunder", "align", "bevelled", "close", "columnsalign", "columnlines", "columnspan", "denomalign", "depth", "dir", "display", "displaystyle", "encoding", "fence", "frame", "height", "href", "id", "largeop", "length", "linethickness", "lspace", "lquote", "mathbackground", "mathcolor", "mathsize", "mathvariant", "maxsize", "minsize", "movablelimits", "notation", "numalign", "open", "rowalign", "rowlines", "rowspacing", "rowspan", "rspace", "rquote", "scriptlevel", "scriptminsize", "scriptsizemultiplier", "selection", "separator", "separators", "stretchy", "subscriptshift", "supscriptshift", "symmetric", "voffset", "width", "xmlns"]);
+  const mathMl = freeze(["accent", "accentunder", "align", "bevelled", "close", "columnalign", "columnlines", "columnspacing", "columnspan", "denomalign", "depth", "dir", "display", "displaystyle", "encoding", "fence", "frame", "height", "href", "id", "largeop", "length", "linethickness", "lquote", "lspace", "mathbackground", "mathcolor", "mathsize", "mathvariant", "maxsize", "minsize", "movablelimits", "notation", "numalign", "open", "rowalign", "rowlines", "rowspacing", "rowspan", "rspace", "rquote", "scriptlevel", "scriptminsize", "scriptsizemultiplier", "selection", "separator", "separators", "stretchy", "subscriptshift", "supscriptshift", "symmetric", "voffset", "width", "xmlns"]);
   const xml = freeze(["xlink:href", "xml:id", "xlink:title", "xml:space", "xmlns:xlink"]);
-  const MUSTACHE_EXPR = seal(/\{\{[\w\W]*|[\w\W]*\}\}/gm);
-  const ERB_EXPR = seal(/<%[\w\W]*|[\w\W]*%>/gm);
-  const TMPLIT_EXPR = seal(/\$\{[\w\W]*/gm);
+  const MUSTACHE_EXPR = seal(/{{[\w\W]*|^[\w\W]*}}/g);
+  const ERB_EXPR = seal(/<%[\w\W]*|^[\w\W]*%>/g);
+  const TMPLIT_EXPR = seal(/\${[\w\W]*/g);
   const DATA_ATTR = seal(/^data-[\-\w.\u00B7-\uFFFF]+$/);
   const ARIA_ATTR = seal(/^aria-[\-\w]+$/);
   const IS_ALLOWED_URI = seal(
@@ -800,26 +885,24 @@ setThreshold(threshold) {
 );
   const DOCTYPE_NAME = seal(/^html$/i);
   const CUSTOM_ELEMENT = seal(/^[a-z][.\w]*(-[.\w]+)+$/i);
-  var EXPRESSIONS = Object.freeze({
-    __proto__: null,
-    ARIA_ATTR,
-    ATTR_WHITESPACE,
-    CUSTOM_ELEMENT,
-    DATA_ATTR,
-    DOCTYPE_NAME,
-    ERB_EXPR,
-    IS_ALLOWED_URI,
-    IS_SCRIPT_OR_DATA,
-    MUSTACHE_EXPR,
-    TMPLIT_EXPR
-  });
+  const ELEMENT_MARKUP_PROBE = seal(/<[/\w!]/g);
+  const COMMENT_MARKUP_PROBE = seal(/<[/\w]/g);
+  const FALLBACK_TAG_CLOSE = seal(/<\/no(script|embed|frames)/i);
+  const SELF_CLOSING_TAG = seal(/\/>/i);
   const NODE_TYPE = {
     element: 1,
+    attribute: 2,
     text: 3,
-progressingInstruction: 7,
+    cdataSection: 4,
+    entityReference: 5,
+entityNode: 6,
+processingInstruction: 7,
     comment: 8,
-    document: 9
-  };
+    document: 9,
+    documentType: 10,
+    documentFragment: 11,
+    notation: 12
+};
   const getGlobal = function getGlobal2() {
     return typeof window === "undefined" ? null : window;
   };
@@ -860,37 +943,36 @@ progressingInstruction: 7,
       uponSanitizeShadowNode: []
     };
   };
+  const _resolveSetOption = function _resolveSetOption2(cfg, key, fallback, options) {
+    return objectHasOwnProperty(cfg, key) && arrayIsArray(cfg[key]) ? addToSet(options.base ? clone(options.base) : {}, cfg[key], options.transform) : fallback;
+  };
   function createDOMPurify() {
     let window2 = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : getGlobal();
     const DOMPurify = (root) => createDOMPurify(root);
-    DOMPurify.version = "3.3.1";
+    DOMPurify.version = "3.4.11";
     DOMPurify.removed = [];
     if (!window2 || !window2.document || window2.document.nodeType !== NODE_TYPE.document || !window2.Element) {
       DOMPurify.isSupported = false;
       return DOMPurify;
     }
-    let {
-      document: document2
-    } = window2;
+    let document2 = window2.document;
     const originalDocument = document2;
     const currentScript = originalDocument.currentScript;
-    const {
-      DocumentFragment,
-      HTMLTemplateElement,
-      Node: Node2,
-      Element: Element2,
-      NodeFilter: NodeFilter2,
-      NamedNodeMap = window2.NamedNodeMap || window2.MozNamedAttrMap,
-      HTMLFormElement,
-      DOMParser: DOMParser2,
-      trustedTypes
-    } = window2;
+    window2.DocumentFragment;
+    const HTMLTemplateElement = window2.HTMLTemplateElement, Node2 = window2.Node, Element2 = window2.Element, NodeFilter2 = window2.NodeFilter, _window$NamedNodeMap = window2.NamedNodeMap;
+    _window$NamedNodeMap === void 0 ? window2.NamedNodeMap || window2.MozNamedAttrMap : _window$NamedNodeMap;
+    window2.HTMLFormElement;
+    const DOMParser2 = window2.DOMParser, trustedTypes = window2.trustedTypes;
     const ElementPrototype = Element2.prototype;
     const cloneNode = lookupGetter(ElementPrototype, "cloneNode");
     const remove2 = lookupGetter(ElementPrototype, "remove");
     const getNextSibling = lookupGetter(ElementPrototype, "nextSibling");
     const getChildNodes = lookupGetter(ElementPrototype, "childNodes");
     const getParentNode = lookupGetter(ElementPrototype, "parentNode");
+    const getShadowRoot = lookupGetter(ElementPrototype, "shadowRoot");
+    const getAttributes = lookupGetter(ElementPrototype, "attributes");
+    const getNodeType = Node2 && Node2.prototype ? lookupGetter(Node2.prototype, "nodeType") : null;
+    const getNodeName = Node2 && Node2.prototype ? lookupGetter(Node2.prototype, "nodeName") : null;
     if (typeof HTMLTemplateElement === "function") {
       const template = document2.createElement("template");
       if (template.content && template.content.ownerDocument) {
@@ -899,30 +981,45 @@ progressingInstruction: 7,
     }
     let trustedTypesPolicy;
     let emptyHTML = "";
-    const {
-      implementation,
-      createNodeIterator,
-      createDocumentFragment,
-      getElementsByTagName
-    } = document2;
-    const {
-      importNode
-    } = originalDocument;
+    let defaultTrustedTypesPolicy;
+    let defaultTrustedTypesPolicyResolved = false;
+    let IN_TRUSTED_TYPES_POLICY = 0;
+    const _assertNotInTrustedTypesPolicy = function _assertNotInTrustedTypesPolicy2() {
+      if (IN_TRUSTED_TYPES_POLICY > 0) {
+        throw typeErrorCreate('A configured TRUSTED_TYPES_POLICY callback (createHTML or createScriptURL) must not call DOMPurify.sanitize, as that causes infinite recursion. Do not pass a policy whose callbacks wrap DOMPurify as TRUSTED_TYPES_POLICY; see the "DOMPurify and Trusted Types" section of the README.');
+      }
+    };
+    const _createTrustedHTML = function _createTrustedHTML2(html2) {
+      _assertNotInTrustedTypesPolicy();
+      IN_TRUSTED_TYPES_POLICY++;
+      try {
+        return trustedTypesPolicy.createHTML(html2);
+      } finally {
+        IN_TRUSTED_TYPES_POLICY--;
+      }
+    };
+    const _createTrustedScriptURL = function _createTrustedScriptURL2(scriptUrl) {
+      _assertNotInTrustedTypesPolicy();
+      IN_TRUSTED_TYPES_POLICY++;
+      try {
+        return trustedTypesPolicy.createScriptURL(scriptUrl);
+      } finally {
+        IN_TRUSTED_TYPES_POLICY--;
+      }
+    };
+    const _getDefaultTrustedTypesPolicy = function _getDefaultTrustedTypesPolicy2() {
+      if (!defaultTrustedTypesPolicyResolved) {
+        defaultTrustedTypesPolicy = _createTrustedTypesPolicy(trustedTypes, currentScript);
+        defaultTrustedTypesPolicyResolved = true;
+      }
+      return defaultTrustedTypesPolicy;
+    };
+    const _document = document2, implementation = _document.implementation, createNodeIterator = _document.createNodeIterator, createDocumentFragment = _document.createDocumentFragment, getElementsByTagName = _document.getElementsByTagName;
+    const importNode = originalDocument.importNode;
     let hooks = _createHooksMap();
     DOMPurify.isSupported = typeof entries === "function" && typeof getParentNode === "function" && implementation && implementation.createHTMLDocument !== void 0;
-    const {
-      MUSTACHE_EXPR: MUSTACHE_EXPR2,
-      ERB_EXPR: ERB_EXPR2,
-      TMPLIT_EXPR: TMPLIT_EXPR2,
-      DATA_ATTR: DATA_ATTR2,
-      ARIA_ATTR: ARIA_ATTR2,
-      IS_SCRIPT_OR_DATA: IS_SCRIPT_OR_DATA2,
-      ATTR_WHITESPACE: ATTR_WHITESPACE2,
-      CUSTOM_ELEMENT: CUSTOM_ELEMENT2
-    } = EXPRESSIONS;
-    let {
-      IS_ALLOWED_URI: IS_ALLOWED_URI$1
-    } = EXPRESSIONS;
+    const MUSTACHE_EXPR$1 = MUSTACHE_EXPR, ERB_EXPR$1 = ERB_EXPR, TMPLIT_EXPR$1 = TMPLIT_EXPR, DATA_ATTR$1 = DATA_ATTR, ARIA_ATTR$1 = ARIA_ATTR, IS_SCRIPT_OR_DATA$1 = IS_SCRIPT_OR_DATA, ATTR_WHITESPACE$1 = ATTR_WHITESPACE, CUSTOM_ELEMENT$1 = CUSTOM_ELEMENT;
+    let IS_ALLOWED_URI$1 = IS_ALLOWED_URI;
     let ALLOWED_TAGS = null;
     const DEFAULT_ALLOWED_TAGS = addToSet({}, [...html$1, ...svg$1, ...svgFilters, ...mathMl$1, ...text]);
     let ALLOWED_ATTR = null;
@@ -971,6 +1068,8 @@ progressingInstruction: 7,
     let SAFE_FOR_XML = true;
     let WHOLE_DOCUMENT = false;
     let SET_CONFIG = false;
+    let SET_CONFIG_ALLOWED_TAGS = null;
+    let SET_CONFIG_ALLOWED_ATTR = null;
     let FORCE_BODY = false;
     let RETURN_DOM = false;
     let RETURN_DOM_FRAGMENT = false;
@@ -982,7 +1081,42 @@ progressingInstruction: 7,
     let IN_PLACE = false;
     let USE_PROFILES = {};
     let FORBID_CONTENTS = null;
-    const DEFAULT_FORBID_CONTENTS = addToSet({}, ["annotation-xml", "audio", "colgroup", "desc", "foreignobject", "head", "iframe", "math", "mi", "mn", "mo", "ms", "mtext", "noembed", "noframes", "noscript", "plaintext", "script", "style", "svg", "template", "thead", "title", "video", "xmp"]);
+    const DEFAULT_FORBID_CONTENTS = addToSet({}, [
+      "annotation-xml",
+      "audio",
+      "colgroup",
+      "desc",
+      "foreignobject",
+      "head",
+      "iframe",
+      "math",
+      "mi",
+      "mn",
+      "mo",
+      "ms",
+      "mtext",
+      "noembed",
+      "noframes",
+      "noscript",
+      "plaintext",
+      "script",
+
+
+
+
+
+
+
+
+"selectedcontent",
+      "style",
+      "svg",
+      "template",
+      "thead",
+      "title",
+      "video",
+      "xmp"
+    ]);
     let DATA_URI_TAGS = null;
     const DEFAULT_DATA_URI_TAGS = addToSet({}, ["audio", "video", "img", "source", "image", "track"]);
     let URI_SAFE_ATTRIBUTES = null;
@@ -994,8 +1128,10 @@ progressingInstruction: 7,
     let IS_EMPTY_INPUT = false;
     let ALLOWED_NAMESPACES = null;
     const DEFAULT_ALLOWED_NAMESPACES = addToSet({}, [MATHML_NAMESPACE, SVG_NAMESPACE, HTML_NAMESPACE], stringToString);
-    let MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ["mi", "mo", "mn", "ms", "mtext"]);
-    let HTML_INTEGRATION_POINTS = addToSet({}, ["annotation-xml"]);
+    const DEFAULT_MATHML_TEXT_INTEGRATION_POINTS = freeze(["mi", "mo", "mn", "ms", "mtext"]);
+    let MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, DEFAULT_MATHML_TEXT_INTEGRATION_POINTS);
+    const DEFAULT_HTML_INTEGRATION_POINTS = freeze(["annotation-xml"]);
+    let HTML_INTEGRATION_POINTS = addToSet({}, DEFAULT_HTML_INTEGRATION_POINTS);
     const COMMON_SVG_AND_HTML_ELEMENTS = addToSet({}, ["title", "style", "font", "a", "script"]);
     let PARSER_MEDIA_TYPE = null;
     const SUPPORTED_PARSER_MEDIA_TYPES = ["application/xhtml+xml", "text/html"];
@@ -1018,15 +1154,33 @@ progressingInstruction: 7,
       PARSER_MEDIA_TYPE =
 SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
       transformCaseFunc = PARSER_MEDIA_TYPE === "application/xhtml+xml" ? stringToString : stringToLowerCase;
-      ALLOWED_TAGS = objectHasOwnProperty(cfg, "ALLOWED_TAGS") ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
-      ALLOWED_ATTR = objectHasOwnProperty(cfg, "ALLOWED_ATTR") ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
-      ALLOWED_NAMESPACES = objectHasOwnProperty(cfg, "ALLOWED_NAMESPACES") ? addToSet({}, cfg.ALLOWED_NAMESPACES, stringToString) : DEFAULT_ALLOWED_NAMESPACES;
-      URI_SAFE_ATTRIBUTES = objectHasOwnProperty(cfg, "ADD_URI_SAFE_ATTR") ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES), cfg.ADD_URI_SAFE_ATTR, transformCaseFunc) : DEFAULT_URI_SAFE_ATTRIBUTES;
-      DATA_URI_TAGS = objectHasOwnProperty(cfg, "ADD_DATA_URI_TAGS") ? addToSet(clone(DEFAULT_DATA_URI_TAGS), cfg.ADD_DATA_URI_TAGS, transformCaseFunc) : DEFAULT_DATA_URI_TAGS;
-      FORBID_CONTENTS = objectHasOwnProperty(cfg, "FORBID_CONTENTS") ? addToSet({}, cfg.FORBID_CONTENTS, transformCaseFunc) : DEFAULT_FORBID_CONTENTS;
-      FORBID_TAGS = objectHasOwnProperty(cfg, "FORBID_TAGS") ? addToSet({}, cfg.FORBID_TAGS, transformCaseFunc) : clone({});
-      FORBID_ATTR = objectHasOwnProperty(cfg, "FORBID_ATTR") ? addToSet({}, cfg.FORBID_ATTR, transformCaseFunc) : clone({});
-      USE_PROFILES = objectHasOwnProperty(cfg, "USE_PROFILES") ? cfg.USE_PROFILES : false;
+      ALLOWED_TAGS = _resolveSetOption(cfg, "ALLOWED_TAGS", DEFAULT_ALLOWED_TAGS, {
+        transform: transformCaseFunc
+      });
+      ALLOWED_ATTR = _resolveSetOption(cfg, "ALLOWED_ATTR", DEFAULT_ALLOWED_ATTR, {
+        transform: transformCaseFunc
+      });
+      ALLOWED_NAMESPACES = _resolveSetOption(cfg, "ALLOWED_NAMESPACES", DEFAULT_ALLOWED_NAMESPACES, {
+        transform: stringToString
+      });
+      URI_SAFE_ATTRIBUTES = _resolveSetOption(cfg, "ADD_URI_SAFE_ATTR", DEFAULT_URI_SAFE_ATTRIBUTES, {
+        transform: transformCaseFunc,
+        base: DEFAULT_URI_SAFE_ATTRIBUTES
+      });
+      DATA_URI_TAGS = _resolveSetOption(cfg, "ADD_DATA_URI_TAGS", DEFAULT_DATA_URI_TAGS, {
+        transform: transformCaseFunc,
+        base: DEFAULT_DATA_URI_TAGS
+      });
+      FORBID_CONTENTS = _resolveSetOption(cfg, "FORBID_CONTENTS", DEFAULT_FORBID_CONTENTS, {
+        transform: transformCaseFunc
+      });
+      FORBID_TAGS = _resolveSetOption(cfg, "FORBID_TAGS", clone({}), {
+        transform: transformCaseFunc
+      });
+      FORBID_ATTR = _resolveSetOption(cfg, "FORBID_ATTR", clone({}), {
+        transform: transformCaseFunc
+      });
+      USE_PROFILES = objectHasOwnProperty(cfg, "USE_PROFILES") ? cfg.USE_PROFILES && typeof cfg.USE_PROFILES === "object" ? clone(cfg.USE_PROFILES) : cfg.USE_PROFILES : false;
       ALLOW_ARIA_ATTR = cfg.ALLOW_ARIA_ATTR !== false;
       ALLOW_DATA_ATTR = cfg.ALLOW_DATA_ATTR !== false;
       ALLOW_UNKNOWN_PROTOCOLS = cfg.ALLOW_UNKNOWN_PROTOCOLS || false;
@@ -1042,20 +1196,22 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
       SANITIZE_NAMED_PROPS = cfg.SANITIZE_NAMED_PROPS || false;
       KEEP_CONTENT = cfg.KEEP_CONTENT !== false;
       IN_PLACE = cfg.IN_PLACE || false;
-      IS_ALLOWED_URI$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI;
-      NAMESPACE = cfg.NAMESPACE || HTML_NAMESPACE;
-      MATHML_TEXT_INTEGRATION_POINTS = cfg.MATHML_TEXT_INTEGRATION_POINTS || MATHML_TEXT_INTEGRATION_POINTS;
-      HTML_INTEGRATION_POINTS = cfg.HTML_INTEGRATION_POINTS || HTML_INTEGRATION_POINTS;
-      CUSTOM_ELEMENT_HANDLING = cfg.CUSTOM_ELEMENT_HANDLING || {};
-      if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck)) {
-        CUSTOM_ELEMENT_HANDLING.tagNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck;
+      IS_ALLOWED_URI$1 = isRegex(cfg.ALLOWED_URI_REGEXP) ? cfg.ALLOWED_URI_REGEXP : IS_ALLOWED_URI;
+      NAMESPACE = typeof cfg.NAMESPACE === "string" ? cfg.NAMESPACE : HTML_NAMESPACE;
+      MATHML_TEXT_INTEGRATION_POINTS = objectHasOwnProperty(cfg, "MATHML_TEXT_INTEGRATION_POINTS") && cfg.MATHML_TEXT_INTEGRATION_POINTS && typeof cfg.MATHML_TEXT_INTEGRATION_POINTS === "object" ? clone(cfg.MATHML_TEXT_INTEGRATION_POINTS) : addToSet({}, DEFAULT_MATHML_TEXT_INTEGRATION_POINTS);
+      HTML_INTEGRATION_POINTS = objectHasOwnProperty(cfg, "HTML_INTEGRATION_POINTS") && cfg.HTML_INTEGRATION_POINTS && typeof cfg.HTML_INTEGRATION_POINTS === "object" ? clone(cfg.HTML_INTEGRATION_POINTS) : addToSet({}, DEFAULT_HTML_INTEGRATION_POINTS);
+      const customElementHandling = objectHasOwnProperty(cfg, "CUSTOM_ELEMENT_HANDLING") && cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING === "object" ? clone(cfg.CUSTOM_ELEMENT_HANDLING) : create(null);
+      CUSTOM_ELEMENT_HANDLING = create(null);
+      if (objectHasOwnProperty(customElementHandling, "tagNameCheck") && isRegexOrFunction(customElementHandling.tagNameCheck)) {
+        CUSTOM_ELEMENT_HANDLING.tagNameCheck = customElementHandling.tagNameCheck;
       }
-      if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck)) {
-        CUSTOM_ELEMENT_HANDLING.attributeNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck;
+      if (objectHasOwnProperty(customElementHandling, "attributeNameCheck") && isRegexOrFunction(customElementHandling.attributeNameCheck)) {
+        CUSTOM_ELEMENT_HANDLING.attributeNameCheck = customElementHandling.attributeNameCheck;
       }
-      if (cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements === "boolean") {
-        CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements;
+      if (objectHasOwnProperty(customElementHandling, "allowCustomizedBuiltInElements") && typeof customElementHandling.allowCustomizedBuiltInElements === "boolean") {
+        CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = customElementHandling.allowCustomizedBuiltInElements;
       }
+      seal(CUSTOM_ELEMENT_HANDLING);
       if (SAFE_FOR_TEMPLATES) {
         ALLOW_DATA_ATTR = false;
       }
@@ -1064,7 +1220,7 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
       }
       if (USE_PROFILES) {
         ALLOWED_TAGS = addToSet({}, text);
-        ALLOWED_ATTR = [];
+        ALLOWED_ATTR = create(null);
         if (USE_PROFILES.html === true) {
           addToSet(ALLOWED_TAGS, html$1);
           addToSet(ALLOWED_ATTR, html);
@@ -1085,36 +1241,38 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
           addToSet(ALLOWED_ATTR, xml);
         }
       }
-      if (cfg.ADD_TAGS) {
+      EXTRA_ELEMENT_HANDLING.tagCheck = null;
+      EXTRA_ELEMENT_HANDLING.attributeCheck = null;
+      if (objectHasOwnProperty(cfg, "ADD_TAGS")) {
         if (typeof cfg.ADD_TAGS === "function") {
           EXTRA_ELEMENT_HANDLING.tagCheck = cfg.ADD_TAGS;
-        } else {
+        } else if (arrayIsArray(cfg.ADD_TAGS)) {
           if (ALLOWED_TAGS === DEFAULT_ALLOWED_TAGS) {
             ALLOWED_TAGS = clone(ALLOWED_TAGS);
           }
           addToSet(ALLOWED_TAGS, cfg.ADD_TAGS, transformCaseFunc);
         }
       }
-      if (cfg.ADD_ATTR) {
+      if (objectHasOwnProperty(cfg, "ADD_ATTR")) {
         if (typeof cfg.ADD_ATTR === "function") {
           EXTRA_ELEMENT_HANDLING.attributeCheck = cfg.ADD_ATTR;
-        } else {
+        } else if (arrayIsArray(cfg.ADD_ATTR)) {
           if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) {
             ALLOWED_ATTR = clone(ALLOWED_ATTR);
           }
           addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
         }
       }
-      if (cfg.ADD_URI_SAFE_ATTR) {
+      if (objectHasOwnProperty(cfg, "ADD_URI_SAFE_ATTR") && arrayIsArray(cfg.ADD_URI_SAFE_ATTR)) {
         addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
       }
-      if (cfg.FORBID_CONTENTS) {
+      if (objectHasOwnProperty(cfg, "FORBID_CONTENTS") && arrayIsArray(cfg.FORBID_CONTENTS)) {
         if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
           FORBID_CONTENTS = clone(FORBID_CONTENTS);
         }
         addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
       }
-      if (cfg.ADD_FORBID_CONTENTS) {
+      if (objectHasOwnProperty(cfg, "ADD_FORBID_CONTENTS") && arrayIsArray(cfg.ADD_FORBID_CONTENTS)) {
         if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
           FORBID_CONTENTS = clone(FORBID_CONTENTS);
         }
@@ -1137,14 +1295,23 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
         if (typeof cfg.TRUSTED_TYPES_POLICY.createScriptURL !== "function") {
           throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');
         }
+        const previousTrustedTypesPolicy = trustedTypesPolicy;
         trustedTypesPolicy = cfg.TRUSTED_TYPES_POLICY;
-        emptyHTML = trustedTypesPolicy.createHTML("");
+        try {
+          emptyHTML = _createTrustedHTML("");
+        } catch (error) {
+          trustedTypesPolicy = previousTrustedTypesPolicy;
+          throw error;
+        }
+      } else if (cfg.TRUSTED_TYPES_POLICY === null) {
+        trustedTypesPolicy = void 0;
+        emptyHTML = "";
       } else {
         if (trustedTypesPolicy === void 0) {
-          trustedTypesPolicy = _createTrustedTypesPolicy(trustedTypes, currentScript);
+          trustedTypesPolicy = _getDefaultTrustedTypesPolicy();
         }
-        if (trustedTypesPolicy !== null && typeof emptyHTML === "string") {
-          emptyHTML = trustedTypesPolicy.createHTML("");
+        if (trustedTypesPolicy && typeof emptyHTML === "string") {
+          emptyHTML = _createTrustedHTML("");
         }
       }
       if (freeze) {
@@ -1154,6 +1321,33 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
     };
     const ALL_SVG_TAGS = addToSet({}, [...svg$1, ...svgFilters, ...svgDisallowed]);
     const ALL_MATHML_TAGS = addToSet({}, [...mathMl$1, ...mathMlDisallowed]);
+    const _checkSvgNamespace = function _checkSvgNamespace2(tagName, parent, parentTagName) {
+      if (parent.namespaceURI === HTML_NAMESPACE) {
+        return tagName === "svg";
+      }
+      if (parent.namespaceURI === MATHML_NAMESPACE) {
+        return tagName === "svg" && (parentTagName === "annotation-xml" || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
+      }
+      return Boolean(ALL_SVG_TAGS[tagName]);
+    };
+    const _checkMathMlNamespace = function _checkMathMlNamespace2(tagName, parent, parentTagName) {
+      if (parent.namespaceURI === HTML_NAMESPACE) {
+        return tagName === "math";
+      }
+      if (parent.namespaceURI === SVG_NAMESPACE) {
+        return tagName === "math" && HTML_INTEGRATION_POINTS[parentTagName];
+      }
+      return Boolean(ALL_MATHML_TAGS[tagName]);
+    };
+    const _checkHtmlNamespace = function _checkHtmlNamespace2(tagName, parent, parentTagName) {
+      if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
+        return false;
+      }
+      if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
+        return false;
+      }
+      return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
+    };
     const _checkValidNamespace = function _checkValidNamespace2(element) {
       let parent = getParentNode(element);
       if (!parent || !parent.tagName) {
@@ -1168,31 +1362,13 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
         return false;
       }
       if (element.namespaceURI === SVG_NAMESPACE) {
-        if (parent.namespaceURI === HTML_NAMESPACE) {
-          return tagName === "svg";
-        }
-        if (parent.namespaceURI === MATHML_NAMESPACE) {
-          return tagName === "svg" && (parentTagName === "annotation-xml" || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
-        }
-        return Boolean(ALL_SVG_TAGS[tagName]);
+        return _checkSvgNamespace(tagName, parent, parentTagName);
       }
       if (element.namespaceURI === MATHML_NAMESPACE) {
-        if (parent.namespaceURI === HTML_NAMESPACE) {
-          return tagName === "math";
-        }
-        if (parent.namespaceURI === SVG_NAMESPACE) {
-          return tagName === "math" && HTML_INTEGRATION_POINTS[parentTagName];
-        }
-        return Boolean(ALL_MATHML_TAGS[tagName]);
+        return _checkMathMlNamespace(tagName, parent, parentTagName);
       }
       if (element.namespaceURI === HTML_NAMESPACE) {
-        if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
-          return false;
-        }
-        if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
-          return false;
-        }
-        return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
+        return _checkHtmlNamespace(tagName, parent, parentTagName);
       }
       if (PARSER_MEDIA_TYPE === "application/xhtml+xml" && ALLOWED_NAMESPACES[element.namespaceURI]) {
         return true;
@@ -1207,6 +1383,37 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
         getParentNode(node).removeChild(node);
       } catch (_) {
         remove2(node);
+        if (!getParentNode(node)) {
+          throw typeErrorCreate("a node selected for removal could not be detached from its tree and cannot be safely returned; refusing to sanitize in place");
+        }
+      }
+    };
+    const _neutralizeRoot = function _neutralizeRoot2(root) {
+      const childNodes = getChildNodes(root);
+      if (childNodes) {
+        const snapshot = [];
+        arrayForEach(childNodes, (child) => {
+          arrayPush(snapshot, child);
+        });
+        arrayForEach(snapshot, (child) => {
+          try {
+            remove2(child);
+          } catch (_) {
+          }
+        });
+      }
+      const attributes = getAttributes(root);
+      if (attributes) {
+        for (let i = attributes.length - 1; i >= 0; --i) {
+          const attribute = attributes[i];
+          const name = attribute && attribute.name;
+          if (typeof name === "string") {
+            try {
+              root.removeAttribute(name);
+            } catch (_) {
+            }
+          }
+        }
       }
     };
     const _removeAttribute = function _removeAttribute2(name, element) {
@@ -1236,6 +1443,39 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
         }
       }
     };
+    const _stripDisallowedAttributes = function _stripDisallowedAttributes2(element) {
+      const attributes = getAttributes(element);
+      if (!attributes) {
+        return;
+      }
+      for (let i = attributes.length - 1; i >= 0; --i) {
+        const attribute = attributes[i];
+        const name = attribute && attribute.name;
+        if (typeof name !== "string" || ALLOWED_ATTR[transformCaseFunc(name)]) {
+          continue;
+        }
+        try {
+          element.removeAttribute(name);
+        } catch (_) {
+        }
+      }
+    };
+    const _neutralizeSubtree = function _neutralizeSubtree2(root) {
+      const stack2 = [root];
+      while (stack2.length > 0) {
+        const node = stack2.pop();
+        const nodeType = getNodeType ? getNodeType(node) : node.nodeType;
+        if (nodeType === NODE_TYPE.element) {
+          _stripDisallowedAttributes(node);
+        }
+        const childNodes = getChildNodes(node);
+        if (childNodes) {
+          for (let i = childNodes.length - 1; i >= 0; --i) {
+            stack2.push(childNodes[i]);
+          }
+        }
+      }
+    };
     const _initDocument = function _initDocument2(dirty) {
       let doc2 = null;
       let leadingWhitespace = null;
@@ -1248,7 +1488,7 @@ SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PAR
       if (PARSER_MEDIA_TYPE === "application/xhtml+xml" && NAMESPACE === HTML_NAMESPACE) {
         dirty = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' + dirty + "</body></html>";
       }
-      const dirtyPayload = trustedTypesPolicy ? trustedTypesPolicy.createHTML(dirty) : dirty;
+      const dirtyPayload = trustedTypesPolicy ? _createTrustedHTML(dirty) : dirty;
       if (NAMESPACE === HTML_NAMESPACE) {
         try {
           doc2 = new DOMParser2().parseFromString(dirtyPayload, PARSER_MEDIA_TYPE);
@@ -1279,78 +1519,163 @@ NodeFilter2.SHOW_ELEMENT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_TEXT | No
         null
       );
     };
+    const _stripTemplateExpressions = function _stripTemplateExpressions2(value) {
+      value = stringReplace(value, MUSTACHE_EXPR$1, " ");
+      value = stringReplace(value, ERB_EXPR$1, " ");
+      value = stringReplace(value, TMPLIT_EXPR$1, " ");
+      return value;
+    };
+    const _scrubTemplateExpressions2 = function _scrubTemplateExpressions(node) {
+      var _node$querySelectorAl;
+      node.normalize();
+      const walker = createNodeIterator.call(
+        node.ownerDocument || node,
+        node,
+NodeFilter2.SHOW_TEXT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_CDATA_SECTION | NodeFilter2.SHOW_PROCESSING_INSTRUCTION,
+        null
+      );
+      let currentNode = walker.nextNode();
+      while (currentNode) {
+        currentNode.data = _stripTemplateExpressions(currentNode.data);
+        currentNode = walker.nextNode();
+      }
+      const templates = (_node$querySelectorAl = node.querySelectorAll) === null || _node$querySelectorAl === void 0 ? void 0 : _node$querySelectorAl.call(node, "template");
+      if (templates) {
+        arrayForEach(templates, (tmpl) => {
+          if (_isDocumentFragment(tmpl.content)) {
+            _scrubTemplateExpressions2(tmpl.content);
+          }
+        });
+      }
+    };
     const _isClobbered = function _isClobbered2(element) {
-      return element instanceof HTMLFormElement && (typeof element.nodeName !== "string" || typeof element.textContent !== "string" || typeof element.removeChild !== "function" || !(element.attributes instanceof NamedNodeMap) || typeof element.removeAttribute !== "function" || typeof element.setAttribute !== "function" || typeof element.namespaceURI !== "string" || typeof element.insertBefore !== "function" || typeof element.hasChildNodes !== "function");
+      const realTagName = getNodeName ? getNodeName(element) : null;
+      if (typeof realTagName !== "string") {
+        return false;
+      }
+      if (transformCaseFunc(realTagName) !== "form") {
+        return false;
+      }
+      return typeof element.nodeName !== "string" || typeof element.textContent !== "string" || typeof element.removeChild !== "function" ||
+
+
+
+
+element.attributes !== getAttributes(element) || typeof element.removeAttribute !== "function" || typeof element.setAttribute !== "function" || typeof element.namespaceURI !== "string" || typeof element.insertBefore !== "function" || typeof element.hasChildNodes !== "function" ||
+
+
+
+
+
+
+element.nodeType !== getNodeType(element) ||
+
+
+
+
+
+
+
+
+
+
+element.childNodes !== getChildNodes(element);
+    };
+    const _isDocumentFragment = function _isDocumentFragment2(value) {
+      if (!getNodeType || typeof value !== "object" || value === null) {
+        return false;
+      }
+      try {
+        return getNodeType(value) === NODE_TYPE.documentFragment;
+      } catch (_) {
+        return false;
+      }
     };
     const _isNode = function _isNode2(value) {
-      return typeof Node2 === "function" && value instanceof Node2;
+      if (!getNodeType || typeof value !== "object" || value === null) {
+        return false;
+      }
+      try {
+        return typeof getNodeType(value) === "number";
+      } catch (_) {
+        return false;
+      }
     };
     function _executeHooks(hooks2, currentNode, data) {
+      if (hooks2.length === 0) {
+        return;
+      }
       arrayForEach(hooks2, (hook) => {
         hook.call(DOMPurify, currentNode, data, CONFIG);
       });
     }
+    const _isUnsafeNode = function _isUnsafeNode2(currentNode, tagName) {
+      if (SAFE_FOR_XML && currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(ELEMENT_MARKUP_PROBE, currentNode.textContent) && regExpTest(ELEMENT_MARKUP_PROBE, currentNode.innerHTML)) {
+        return true;
+      }
+      if (SAFE_FOR_XML && currentNode.namespaceURI === HTML_NAMESPACE && tagName === "style" && _isNode(currentNode.firstElementChild)) {
+        return true;
+      }
+      if (currentNode.nodeType === NODE_TYPE.processingInstruction) {
+        return true;
+      }
+      if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(COMMENT_MARKUP_PROBE, currentNode.data)) {
+        return true;
+      }
+      return false;
+    };
+    const _sanitizeDisallowedNode = function _sanitizeDisallowedNode2(currentNode, tagName) {
+      if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
+        if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) {
+          return false;
+        }
+        if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) {
+          return false;
+        }
+      }
+      if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
+        const parentNode = getParentNode(currentNode);
+        const childNodes = getChildNodes(currentNode);
+        if (childNodes && parentNode) {
+          const childCount = childNodes.length;
+          for (let i = childCount - 1; i >= 0; --i) {
+            const hoisted = IN_PLACE ? childNodes[i] : cloneNode(childNodes[i], true);
+            parentNode.insertBefore(hoisted, getNextSibling(currentNode));
+          }
+        }
+      }
+      _forceRemove(currentNode);
+      return true;
+    };
     const _sanitizeElements = function _sanitizeElements2(currentNode) {
-      let content = null;
       _executeHooks(hooks.beforeSanitizeElements, currentNode, null);
       if (_isClobbered(currentNode)) {
         _forceRemove(currentNode);
         return true;
       }
-      const tagName = transformCaseFunc(currentNode.nodeName);
+      const tagName = transformCaseFunc(getNodeName ? getNodeName(currentNode) : currentNode.nodeName);
       _executeHooks(hooks.uponSanitizeElement, currentNode, {
         tagName,
         allowedTags: ALLOWED_TAGS
       });
-      if (SAFE_FOR_XML && currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(/<[/\w!]/g, currentNode.innerHTML) && regExpTest(/<[/\w!]/g, currentNode.textContent)) {
+      if (_isUnsafeNode(currentNode, tagName)) {
         _forceRemove(currentNode);
         return true;
       }
-      if (currentNode.nodeType === NODE_TYPE.progressingInstruction) {
+      if (FORBID_TAGS[tagName] || !(EXTRA_ELEMENT_HANDLING.tagCheck instanceof Function && EXTRA_ELEMENT_HANDLING.tagCheck(tagName)) && !ALLOWED_TAGS[tagName]) {
+        return _sanitizeDisallowedNode(currentNode, tagName);
+      }
+      const nt = getNodeType ? getNodeType(currentNode) : currentNode.nodeType;
+      if (nt === NODE_TYPE.element && !_checkValidNamespace(currentNode)) {
         _forceRemove(currentNode);
         return true;
       }
-      if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(/<[/\w]/g, currentNode.data)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-      if (!(EXTRA_ELEMENT_HANDLING.tagCheck instanceof Function && EXTRA_ELEMENT_HANDLING.tagCheck(tagName)) && (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName])) {
-        if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
-          if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) {
-            return false;
-          }
-          if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) {
-            return false;
-          }
-        }
-        if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
-          const parentNode = getParentNode(currentNode) || currentNode.parentNode;
-          const childNodes = getChildNodes(currentNode) || currentNode.childNodes;
-          if (childNodes && parentNode) {
-            const childCount = childNodes.length;
-            for (let i = childCount - 1; i >= 0; --i) {
-              const childClone = cloneNode(childNodes[i], true);
-              childClone.__removalCount = (currentNode.__removalCount || 0) + 1;
-              parentNode.insertBefore(childClone, getNextSibling(currentNode));
-            }
-          }
-        }
-        _forceRemove(currentNode);
-        return true;
-      }
-      if (currentNode instanceof Element2 && !_checkValidNamespace(currentNode)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-      if ((tagName === "noscript" || tagName === "noembed" || tagName === "noframes") && regExpTest(/<\/no(script|embed|frames)/i, currentNode.innerHTML)) {
+      if ((tagName === "noscript" || tagName === "noembed" || tagName === "noframes") && regExpTest(FALLBACK_TAG_CLOSE, currentNode.innerHTML)) {
         _forceRemove(currentNode);
         return true;
       }
       if (SAFE_FOR_TEMPLATES && currentNode.nodeType === NODE_TYPE.text) {
-        content = currentNode.textContent;
-        arrayForEach([MUSTACHE_EXPR2, ERB_EXPR2, TMPLIT_EXPR2], (expr) => {
-          content = stringReplace(content, expr, " ");
-        });
+        const content = _stripTemplateExpressions(currentNode.textContent);
         if (currentNode.textContent !== content) {
           arrayPush(DOMPurify.removed, {
             element: currentNode.cloneNode()
@@ -1362,13 +1687,16 @@ NodeFilter2.SHOW_ELEMENT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_TEXT | No
       return false;
     };
     const _isValidAttribute = function _isValidAttribute2(lcTag, lcName, value) {
+      if (FORBID_ATTR[lcName]) {
+        return false;
+      }
       if (SANITIZE_DOM && (lcName === "id" || lcName === "name") && (value in document2 || value in formElement)) {
         return false;
       }
-      if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR2, lcName)) ;
-      else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR2, lcName)) ;
-      else if (EXTRA_ELEMENT_HANDLING.attributeCheck instanceof Function && EXTRA_ELEMENT_HANDLING.attributeCheck(lcName, lcTag)) ;
-      else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
+      const nameIsPermitted = ALLOWED_ATTR[lcName] || EXTRA_ELEMENT_HANDLING.attributeCheck instanceof Function && EXTRA_ELEMENT_HANDLING.attributeCheck(lcName, lcTag);
+      if (ALLOW_DATA_ATTR && regExpTest(DATA_ATTR$1, lcName)) ;
+      else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR$1, lcName)) ;
+      else if (!nameIsPermitted) {
         if (
 
 
@@ -1380,22 +1708,50 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
           return false;
         }
       } else if (URI_SAFE_ATTRIBUTES[lcName]) ;
-      else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE2, ""))) ;
+      else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE$1, ""))) ;
       else if ((lcName === "src" || lcName === "xlink:href" || lcName === "href") && lcTag !== "script" && stringIndexOf(value, "data:") === 0 && DATA_URI_TAGS[lcTag]) ;
-      else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA2, stringReplace(value, ATTR_WHITESPACE2, ""))) ;
+      else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA$1, stringReplace(value, ATTR_WHITESPACE$1, ""))) ;
       else if (value) {
         return false;
       } else ;
       return true;
     };
+    const RESERVED_CUSTOM_ELEMENT_NAMES = addToSet({}, ["annotation-xml", "color-profile", "font-face", "font-face-format", "font-face-name", "font-face-src", "font-face-uri", "missing-glyph"]);
     const _isBasicCustomElement = function _isBasicCustomElement2(tagName) {
-      return tagName !== "annotation-xml" && stringMatch(tagName, CUSTOM_ELEMENT2);
+      return !RESERVED_CUSTOM_ELEMENT_NAMES[stringToLowerCase(tagName)] && regExpTest(CUSTOM_ELEMENT$1, tagName);
+    };
+    const _applyTrustedTypesToAttribute = function _applyTrustedTypesToAttribute2(lcTag, lcName, namespaceURI, value) {
+      if (trustedTypesPolicy && typeof trustedTypes === "object" && typeof trustedTypes.getAttributeType === "function" && !namespaceURI) {
+        switch (trustedTypes.getAttributeType(lcTag, lcName)) {
+          case "TrustedHTML": {
+            return _createTrustedHTML(value);
+          }
+          case "TrustedScriptURL": {
+            return _createTrustedScriptURL(value);
+          }
+        }
+      }
+      return value;
+    };
+    const _setAttributeValue = function _setAttributeValue2(currentNode, name, namespaceURI, value) {
+      try {
+        if (namespaceURI) {
+          currentNode.setAttributeNS(namespaceURI, name, value);
+        } else {
+          currentNode.setAttribute(name, value);
+        }
+        if (_isClobbered(currentNode)) {
+          _forceRemove(currentNode);
+        } else {
+          arrayPop(DOMPurify.removed);
+        }
+      } catch (_) {
+        _removeAttribute(name, currentNode);
+      }
     };
     const _sanitizeAttributes = function _sanitizeAttributes2(currentNode) {
       _executeHooks(hooks.beforeSanitizeAttributes, currentNode, null);
-      const {
-        attributes
-      } = currentNode;
+      const attributes = currentNode.attributes;
       if (!attributes || _isClobbered(currentNode)) {
         return;
       }
@@ -1407,13 +1763,10 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
         forceKeepAttr: void 0
       };
       let l = attributes.length;
+      const lcTag = transformCaseFunc(currentNode.nodeName);
       while (l--) {
         const attr = attributes[l];
-        const {
-          name,
-          namespaceURI,
-          value: attrValue
-        } = attr;
+        const name = attr.name, namespaceURI = attr.namespaceURI, attrValue = attr.value;
         const lcName = transformCaseFunc(name);
         const initValue = attrValue;
         let value = name === "value" ? initValue : stringTrim(initValue);
@@ -1423,11 +1776,11 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
         hookEvent.forceKeepAttr = void 0;
         _executeHooks(hooks.uponSanitizeAttribute, currentNode, hookEvent);
         value = hookEvent.attrValue;
-        if (SANITIZE_NAMED_PROPS && (lcName === "id" || lcName === "name")) {
+        if (SANITIZE_NAMED_PROPS && (lcName === "id" || lcName === "name") && stringIndexOf(value, SANITIZE_NAMED_PROPS_PREFIX) !== 0) {
           _removeAttribute(name, currentNode);
           value = SANITIZE_NAMED_PROPS_PREFIX + value;
         }
-        if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|title|textarea)/i, value)) {
+        if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|script|title|xmp|textarea|noscript|iframe|noembed|noframes)/i, value)) {
           _removeAttribute(name, currentNode);
           continue;
         }
@@ -1442,55 +1795,25 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
           _removeAttribute(name, currentNode);
           continue;
         }
-        if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(/\/>/i, value)) {
+        if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(SELF_CLOSING_TAG, value)) {
           _removeAttribute(name, currentNode);
           continue;
         }
         if (SAFE_FOR_TEMPLATES) {
-          arrayForEach([MUSTACHE_EXPR2, ERB_EXPR2, TMPLIT_EXPR2], (expr) => {
-            value = stringReplace(value, expr, " ");
-          });
+          value = _stripTemplateExpressions(value);
         }
-        const lcTag = transformCaseFunc(currentNode.nodeName);
         if (!_isValidAttribute(lcTag, lcName, value)) {
           _removeAttribute(name, currentNode);
           continue;
         }
-        if (trustedTypesPolicy && typeof trustedTypes === "object" && typeof trustedTypes.getAttributeType === "function") {
-          if (namespaceURI) ;
-          else {
-            switch (trustedTypes.getAttributeType(lcTag, lcName)) {
-              case "TrustedHTML": {
-                value = trustedTypesPolicy.createHTML(value);
-                break;
-              }
-              case "TrustedScriptURL": {
-                value = trustedTypesPolicy.createScriptURL(value);
-                break;
-              }
-            }
-          }
-        }
+        value = _applyTrustedTypesToAttribute(lcTag, lcName, namespaceURI, value);
         if (value !== initValue) {
-          try {
-            if (namespaceURI) {
-              currentNode.setAttributeNS(namespaceURI, name, value);
-            } else {
-              currentNode.setAttribute(name, value);
-            }
-            if (_isClobbered(currentNode)) {
-              _forceRemove(currentNode);
-            } else {
-              arrayPop(DOMPurify.removed);
-            }
-          } catch (_) {
-            _removeAttribute(name, currentNode);
-          }
+          _setAttributeValue(currentNode, name, namespaceURI, value);
         }
       }
       _executeHooks(hooks.afterSanitizeAttributes, currentNode, null);
     };
-    const _sanitizeShadowDOM = function _sanitizeShadowDOM2(fragment) {
+    const _sanitizeShadowDOM2 = function _sanitizeShadowDOM(fragment) {
       let shadowNode = null;
       const shadowIterator = _createNodeIterator(fragment);
       _executeHooks(hooks.beforeSanitizeShadowDOM, fragment, null);
@@ -1498,11 +1821,68 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
         _executeHooks(hooks.uponSanitizeShadowNode, shadowNode, null);
         _sanitizeElements(shadowNode);
         _sanitizeAttributes(shadowNode);
-        if (shadowNode.content instanceof DocumentFragment) {
+        if (_isDocumentFragment(shadowNode.content)) {
           _sanitizeShadowDOM2(shadowNode.content);
+        }
+        const shadowNodeType = getNodeType ? getNodeType(shadowNode) : shadowNode.nodeType;
+        if (shadowNodeType === NODE_TYPE.element) {
+          const innerSr = getShadowRoot(shadowNode);
+          if (_isDocumentFragment(innerSr)) {
+            _sanitizeAttachedShadowRoots(innerSr);
+            _sanitizeShadowDOM2(innerSr);
+          }
         }
       }
       _executeHooks(hooks.afterSanitizeShadowDOM, fragment, null);
+    };
+    const _sanitizeAttachedShadowRoots = function _sanitizeAttachedShadowRoots2(root) {
+      const stack2 = [{
+        node: root,
+        shadow: null
+      }];
+      while (stack2.length > 0) {
+        const item = stack2.pop();
+        if (item.shadow) {
+          _sanitizeShadowDOM2(item.shadow);
+          continue;
+        }
+        const node = item.node;
+        const nodeType = getNodeType ? getNodeType(node) : node.nodeType;
+        const isElement = nodeType === NODE_TYPE.element;
+        const childNodes = getChildNodes(node);
+        if (childNodes) {
+          for (let i = childNodes.length - 1; i >= 0; --i) {
+            stack2.push({
+              node: childNodes[i],
+              shadow: null
+            });
+          }
+        }
+        if (isElement) {
+          const rootName = getNodeName ? getNodeName(node) : null;
+          if (typeof rootName === "string" && transformCaseFunc(rootName) === "template") {
+            const content = node.content;
+            if (_isDocumentFragment(content)) {
+              stack2.push({
+                node: content,
+                shadow: null
+              });
+            }
+          }
+        }
+        if (isElement) {
+          const sr = getShadowRoot(node);
+          if (_isDocumentFragment(sr)) {
+            stack2.push({
+              node: null,
+              shadow: sr
+            }, {
+              node: sr,
+              shadow: null
+            });
+          }
+        }
+      }
     };
     DOMPurify.sanitize = function(dirty) {
       let cfg = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
@@ -1515,33 +1895,46 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
         dirty = "<!-->";
       }
       if (typeof dirty !== "string" && !_isNode(dirty)) {
-        if (typeof dirty.toString === "function") {
-          dirty = dirty.toString();
-          if (typeof dirty !== "string") {
-            throw typeErrorCreate("dirty is not a string, aborting");
-          }
-        } else {
-          throw typeErrorCreate("toString is not a function");
+        dirty = stringifyValue(dirty);
+        if (typeof dirty !== "string") {
+          throw typeErrorCreate("dirty is not a string, aborting");
         }
       }
       if (!DOMPurify.isSupported) {
         return dirty;
       }
-      if (!SET_CONFIG) {
+      if (SET_CONFIG) {
+        ALLOWED_TAGS = SET_CONFIG_ALLOWED_TAGS;
+        ALLOWED_ATTR = SET_CONFIG_ALLOWED_ATTR;
+      } else {
         _parseConfig(cfg);
       }
-      DOMPurify.removed = [];
-      if (typeof dirty === "string") {
-        IN_PLACE = false;
+      if (hooks.uponSanitizeElement.length > 0 || hooks.uponSanitizeAttribute.length > 0) {
+        ALLOWED_TAGS = clone(ALLOWED_TAGS);
       }
-      if (IN_PLACE) {
-        if (dirty.nodeName) {
-          const tagName = transformCaseFunc(dirty.nodeName);
+      if (hooks.uponSanitizeAttribute.length > 0) {
+        ALLOWED_ATTR = clone(ALLOWED_ATTR);
+      }
+      DOMPurify.removed = [];
+      const inPlace = IN_PLACE && typeof dirty !== "string" && _isNode(dirty);
+      if (inPlace) {
+        const nn = getNodeName ? getNodeName(dirty) : dirty.nodeName;
+        if (typeof nn === "string") {
+          const tagName = transformCaseFunc(nn);
           if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
             throw typeErrorCreate("root node is forbidden and cannot be sanitized in-place");
           }
         }
-      } else if (dirty instanceof Node2) {
+        if (_isClobbered(dirty)) {
+          throw typeErrorCreate("root node is clobbered and cannot be sanitized in-place");
+        }
+        try {
+          _sanitizeAttachedShadowRoots(dirty);
+        } catch (error) {
+          _neutralizeRoot(dirty);
+          throw error;
+        }
+      } else if (_isNode(dirty)) {
         body = _initDocument("<!---->");
         importedNode = body.ownerDocument.importNode(dirty, true);
         if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === "BODY") {
@@ -1551,10 +1944,11 @@ lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CU
         } else {
           body.appendChild(importedNode);
         }
+        _sanitizeAttachedShadowRoots(importedNode);
       } else {
         if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT &&
 dirty.indexOf("<") === -1) {
-          return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
+          return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? _createTrustedHTML(dirty) : dirty;
         }
         body = _initDocument(dirty);
         if (!body) {
@@ -1564,18 +1958,36 @@ dirty.indexOf("<") === -1) {
       if (body && FORCE_BODY) {
         _forceRemove(body.firstChild);
       }
-      const nodeIterator = _createNodeIterator(IN_PLACE ? dirty : body);
-      while (currentNode = nodeIterator.nextNode()) {
-        _sanitizeElements(currentNode);
-        _sanitizeAttributes(currentNode);
-        if (currentNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(currentNode.content);
+      const nodeIterator = _createNodeIterator(inPlace ? dirty : body);
+      try {
+        while (currentNode = nodeIterator.nextNode()) {
+          _sanitizeElements(currentNode);
+          _sanitizeAttributes(currentNode);
+          if (_isDocumentFragment(currentNode.content)) {
+            _sanitizeShadowDOM2(currentNode.content);
+          }
         }
+      } catch (error) {
+        if (inPlace) {
+          _neutralizeRoot(dirty);
+        }
+        throw error;
       }
-      if (IN_PLACE) {
+      if (inPlace) {
+        arrayForEach(DOMPurify.removed, (entry) => {
+          if (entry.element) {
+            _neutralizeSubtree(entry.element);
+          }
+        });
+        if (SAFE_FOR_TEMPLATES) {
+          _scrubTemplateExpressions2(dirty);
+        }
         return dirty;
       }
       if (RETURN_DOM) {
+        if (SAFE_FOR_TEMPLATES) {
+          _scrubTemplateExpressions2(body);
+        }
         if (RETURN_DOM_FRAGMENT) {
           returnNode = createDocumentFragment.call(body.ownerDocument);
           while (body.firstChild) {
@@ -1594,20 +2006,24 @@ dirty.indexOf("<") === -1) {
         serializedHTML = "<!DOCTYPE " + body.ownerDocument.doctype.name + ">\n" + serializedHTML;
       }
       if (SAFE_FOR_TEMPLATES) {
-        arrayForEach([MUSTACHE_EXPR2, ERB_EXPR2, TMPLIT_EXPR2], (expr) => {
-          serializedHTML = stringReplace(serializedHTML, expr, " ");
-        });
+        serializedHTML = _stripTemplateExpressions(serializedHTML);
       }
-      return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
+      return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? _createTrustedHTML(serializedHTML) : serializedHTML;
     };
     DOMPurify.setConfig = function() {
       let cfg = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
       _parseConfig(cfg);
       SET_CONFIG = true;
+      SET_CONFIG_ALLOWED_TAGS = ALLOWED_TAGS;
+      SET_CONFIG_ALLOWED_ATTR = ALLOWED_ATTR;
     };
     DOMPurify.clearConfig = function() {
       CONFIG = null;
       SET_CONFIG = false;
+      SET_CONFIG_ALLOWED_TAGS = null;
+      SET_CONFIG_ALLOWED_ATTR = null;
+      trustedTypesPolicy = defaultTrustedTypesPolicy;
+      emptyHTML = "";
     };
     DOMPurify.isValidAttribute = function(tag, attr, value) {
       if (!CONFIG) {
@@ -1621,9 +2037,15 @@ dirty.indexOf("<") === -1) {
       if (typeof hookFunction !== "function") {
         return;
       }
+      if (!objectHasOwnProperty(hooks, entryPoint)) {
+        return;
+      }
       arrayPush(hooks[entryPoint], hookFunction);
     };
     DOMPurify.removeHook = function(entryPoint, hookFunction) {
+      if (!objectHasOwnProperty(hooks, entryPoint)) {
+        return void 0;
+      }
       if (hookFunction !== void 0) {
         const index = arrayLastIndexOf(hooks[entryPoint], hookFunction);
         return index === -1 ? void 0 : arraySplice(hooks[entryPoint], index, 1)[0];
@@ -1631,6 +2053,9 @@ dirty.indexOf("<") === -1) {
       return arrayPop(hooks[entryPoint]);
     };
     DOMPurify.removeHooks = function(entryPoint) {
+      if (!objectHasOwnProperty(hooks, entryPoint)) {
+        return;
+      }
       hooks[entryPoint] = [];
     };
     DOMPurify.removeAllHooks = function() {
@@ -8316,7 +8741,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-06-23";
+  const BUILD_DATE = "2026-06-24";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -16112,6 +16537,214 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
   const MAX_SESSION_CACHE = 500;
   const MAX_NAV_FAILURES = 200;
   const VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
+  const dict_HKVariantsRevPhrases = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|七星巖 七星巖|世胄 世胄|介胄 介冑|傅巖 傅巖|免胄 免冑|冠胄 冠冑|千巖競秀 千巖競秀|千巖萬壑 千巖萬壑|千巖萬谷 千巖萬谷|口吃 口吃|台山 台山|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|名胄 名胄|國胄 國胄|圍巖 圍巖|地胄 地胄|壓胄子 壓冑子|士胄 士胄|大巖桐 大巖桐|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|天潢貴胄 天潢貴胄|奇巖 奇巖|寶胄 寶胄|小巖洞 小巖洞|岫巖縣 岫巖縣|峯巖 峯巖|嵌巖 嵌巖|巉巖 巉巖|巖壁 巖壁|巖居 巖居|巖居穴處 巖居穴處|巖居谷飲 巖居谷飲|巖岸 巖岸|巖巉 巖巉|巖巖 巖巖|巖徼 巖徼|巖手縣 巖手縣|巖村 巖村|巖洞 巖洞|巖流圈 巖流圈|巖牆 巖牆|巖牆之下 巖牆之下|巖畫 巖畫|巖穴 巖穴|巖穴之士 巖穴之士|巖薔薇 巖薔薇|巖邑 巖邑|巖郎 巖郎|巖阻 巖阻|巖陛 巖陛|帝胄 帝胄|幽巖 幽巖|幽棲巖谷 幽棲巖谷|張口 張口|懸巖 懸巖|懸巖峭壁 懸巖峭壁|懸胄 懸冑|控制台 控制台|攀巖 攀巖|支胄 支胄|教胄 教胄|景胄 景胄|望胄 望胄|末胄 末胄|村胄 村胄|枕巖漱流 枕巖漱流|枝胄 枝胄|氏胄 氏胄|洪胄 洪胄|浙江天台縣 浙江天台縣|清胄 清胄|灰巖殘丘 灰巖殘丘|玄胄 玄胄|甲胄 甲冑|甲胄魚類 甲冑魚類|皇胄 皇胄|石灰巖洞 石灰巖洞|神胄 神胄|簪纓世胄 簪纓世胄|系胄 系胄|紅巖 紅巖|絕巖 絕巖|緒胄 緒胄|纂胄 纂胄|胃口 胃口|胄嗣 胄嗣|胄子 胄子|胄序 胄序|胄族 胄族|胄甲 冑甲|胄監 胄監|胄科 冑科|胄緒 胄緒|胄胤 胄胤|胄裔 胄裔|胄裔繁衍 胄裔繁衍|胄閥 胄閥|胡雪巖 胡雪巖|胤胄 胤胄|苗胄 苗胄|英胄 英胄|華胄 華胄|血胄 血胄|裔胄 裔胄|訓胄 訓胄|試胄 試胄|豪門貴胄 豪門貴胄|貝胄 貝冑|貴胄 貴胄|賢胄 賢胄|蹇吃 蹇吃|躬擐甲胄 躬擐甲冑|遐胄 遐胄|遙胄 遙胄|遙遙華胄 遙遙華胄|遠胄 遠胄|遺胄 遺胄|鄧艾吃 鄧艾吃|重巖疊嶂 重巖疊嶂|金胄 金胄|鎧胄 鎧冑|鑿巖 鑿巖|門胄 門胄|開口 開口|雲巖區 雲巖區|非層巖 非層巖|韓侂胄 韓侂冑|飮胄 飮冑|骨巖巖 骨巖巖|高胄 高胄|魚胄 魚冑|鮮胄 鮮胄|鴻胄 鴻胄|黃巖區 黃巖區|黃巖島 黃巖島|黃炎貴胄 黃炎貴胄|齒胄 齒胄|龍巖 龍巖|龍巖市 龍巖市|龍巖村 龍巖村|龍胄 龍胄";
+  const dict_HKVariantsRev = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|才 纔|抬 擡|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|核 覈|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煙 菸|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
+  const from_hk = [[dict_HKVariantsRevPhrases, dict_HKVariantsRev]];
+  const dict_TWVariantsRevPhrases = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|凶事 凶事|凶信 凶信|凶兆 凶兆|凶吉 凶吉|凶地 凶地|凶多吉少 凶多吉少|凶宅 凶宅|凶年 凶年|凶德 凶德|凶怪 凶怪|凶日 凶日|凶服 凶服|凶歲 凶歲|凶死 凶死|凶氣 凶氣|凶煞 凶煞|凶燄 凶燄|凶神 凶神|凶禮 凶禮|凶耗 凶耗|凶肆 凶肆|凶荒 凶荒|凶訊 凶訊|凶豎 凶豎|凶身 凶身|凶逆 凶逆|凶門 凶門|口吃 口吃|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|合著 合著|吉凶 吉凶|名著 名著|四凶 四凶|大凶 大凶|巨著 巨著|張口 張口|昭著 昭著|歲凶 歲凶|胃口 胃口|著作 著作|著名 著名|著式 著式|著志 著志|著於 著於|著書 著書|著白 著白|著稱 著稱|著者 著者|著述 著述|著錄 著錄|蹇吃 蹇吃|逢凶 逢凶|避凶 避凶|鄧艾吃 鄧艾吃|鉅著 鉅著|開口 開口|閔凶 閔凶|顯著 顯著";
+  const dict_TWVariantsRev = "么 幺|偽 僞|參 蔘|吃 喫|唇 脣|啟 啓|媯 嬀|嫻 嫺|峰 峯|床 牀|才 纔|抬 擡|核 覈|汙 污|洩 泄|溈 潙|潀 潨|灶 竈|為 爲|痴 癡|痺 痹|皂 皁|眾 衆|睪 睾|秘 祕|稜 棱|簷 檐|粽 糉|缽 鉢|群 羣|著 着|蒍 蔿|裡 裏|踴 踊|針 鍼|韁 繮|顎 齶|鯰 鮎|麵 麪";
+  const from_tw = [[dict_TWVariantsRevPhrases, dict_TWVariantsRev]];
+  const dict_TWPhrasesRev = "PN接面 PN結|SQL隱碼攻擊 SQL注入|三極體 三極管|下拉式清單 下拉列表|丟擲 拋出|中介軟體 中間件|主機板 主板|主開機記錄 主引導記錄|乙太網 以太網|乙太網路 以太網|乙太網路由器 以太網路由器|乙太網路路由器 以太網路由器|乳酪 奶酪|二極體 二極管|互動 交互|互動式 交互式|亞塞拜然 阿塞拜疆|人工智慧 人工智能|介面 接口|介面卡 適配器|代碼 代碼|伺服器 服務器|佇列 隊列|位元 比特|位元率 比特率|位元組 字節|位元速率 碼率|位址 地址|位址列 地址欄|低級 低級|低階 低級|佛漢·威廉斯 沃恩·威廉斯|佛瑞 福雷|作業系統 操作系統|使用者 用戶|使用者名稱 用戶名|來電轉接 呼叫轉移|例項 實例|信號 信號|停用 禁用|偵錯 調試|偵錯程式 調試器|傅立葉 傅里葉|傳送 發送|傷心小棧 紅心大戰|價效比 性價比|優先順序 優先級|儲存 保存|元件 組件|光碟 光盤|光碟機 光驅|克羅埃西亞 克羅地亞|克萊門第 克萊門蒂|入口網站 門戶網站|內建 內置|內碼表 代碼頁|全域性 全局|全形 全角|全球資訊網 萬維網|公元紀年 公元紀年|冰棒 冰棍|冷盤 涼菜|凱吉 凱奇|函式 函數|函數語言程式設計 函數式編程|刀鋒伺服器 刀片服務器|分割槽 分區|分散式 分佈式|分時多工 時分複用|分時多重進接 時分多址|分碼多重進接 碼分多址|分空間多重進接 空分多址|分頻多工 頻分複用|分頻多重進接 頻分多址|列印 打印|列支敦斯登 列支敦士登|列舉 枚舉|利蓋悌 利蓋蒂|前處理器 預處理器|剪下 剪切|剪貼簿 剪貼板|副檔名 擴展名|加彭 加蓬|包羅定 鮑羅丁|匯入 導入|匯出 導出|匯流排 總線|區域性 局部|區域網 局域網|千里達及托巴哥 特立尼達和多巴哥|半形 半角|卡達 卡塔爾|印表機 打印機|即時 實時|厄利垂亞 厄立特里亞|厄瓜多 厄瓜多爾|原始檔 源文件|原始碼 原代碼|原生代碼 本地代碼|參數列 參數表|取樣 採樣|取樣率 採樣率|叢集 集羣|史克里亞賓 斯克里亞賓|史卡拉第 斯卡拉蒂|史托克豪森 施托克豪森|史特勞斯 施特勞斯|史特拉汶斯基 斯特拉文斯基|史瓦濟蘭 斯威士蘭|史麥塔納 斯美塔那|司法程序 司法程序|吉布地 吉布堤|吉里巴斯 基里巴斯|名字空間 命名空間|名稱空間 命名空間|吐瓦魯 圖瓦盧|向量 矢量|呼叫 調用|命令列 命令行|咖哩 咖喱|哈薩克 哈薩克斯坦|哥斯大黎加 哥斯達黎加|啟用 激活|喫茶小舖 喫茶小舖|喬治亞 格魯吉亞|單核心 宏內核|回撥 回調|圖示 圖標|土庫曼 土庫曼斯坦|地址 地址|坦尚尼亞 坦桑尼亞|型別 類型|埠 端口|執行 運行|執行檔 可執行文件|執行緒 線程|執行長 首席執行官|堆疊 堆棧|場效電晶體 場效應管|塑膠 塑料|塔吉克 塔吉克斯坦|塞席爾 塞舌爾|塞普勒斯 塞浦路斯|壁紙 壁紙|夏農 香農|外掛 插件|外接 外置|外部索引鍵 外鍵|多型 多態|多執行緒 多線程|多尼采第 多尼采蒂|多工 多任務|多明尼加 多米尼加|大數據 大數據|太空梭 航天飛機|奈及利亞 尼日利亞|奈米 納米|奧福 奧爾夫|子音 輔音|字串 字符串|字元 字符|字元集 字符集|字型 字體|字型檔 字庫|字尾 後綴|字節跳動 字節跳動|字首 前綴|存取 訪問|存檔 存盤|孟德爾頌 門德爾松|安地卡及巴布達 安提瓜和巴布達|宏都拉斯 洪都拉斯|宕機 死機|定址 尋址|宣告 聲明|實例 實例|實體地址 物理地址|實體記憶體 物理內存|寬頻 寬帶|寮國 老撾|專案 項目|對映 映射|對話方塊 對話框|對象 對象|尚比亞 贊比亞|尤拉 歐拉|尼日 尼日爾|巢狀 嵌套|工作列 任務欄|工作管理員 任務管理器|巨集 宏|巨集函式 宏函數|巨集呼叫 宏調用|巨集命令 宏命令|巨集定義 宏定義|巨集展開 宏展開|巨集指令 宏指令|巨集替換 宏替換|巨集程式設計 宏編程|巨集處理 宏處理|巨集語言 宏語言|巴布亞紐幾內亞 巴布亞新幾內亞|巴貝多 巴巴多斯|布吉納法索 布基納法索|布拉姆斯 勃拉姆斯|布林 布爾|布瑞頓 布里頓|布萊茲 布列茲|帛琉 帕勞|平行計算 並行計算|幾內亞比索 幾內亞比紹|序列 串行|序列埠 串口|序號產生器 註冊機|建構函式 構造函數|建構子 構造器|建立 創建|引數 參數|彙編 彙編|影像 圖像|影印 複印|影片 視頻|後設資料 元數據|循環 循環|微控制器 單片機|德布西 德彪西|德弗札克 德沃夏克|快取 緩存|快取記憶體 高速緩存|快捷半導體 仙童半導體|快閃記憶體 閃存|感測 傳感|憂鬱症 抑鬱症|截圖 截屏|戴奧辛 二噁英|戴流士 戴留斯|打開 打開|批次 批量|技術長 首席技術官|拉摩 拉莫|拉羅 拉洛|拉赫曼尼諾夫 拉赫瑪尼諾夫|指令式程式設計 命令式編程|指令碼 腳本|指標 指針|捲軸 滾動條|掃描器 掃描儀|排程 調度|控制代碼 句柄|控制元件 控件|提佩特 蒂佩特|搜尋 搜索|摩爾線程 摩爾線程|摺積 捲積|撥出 呼出|擴充套件 擴展|擴音 免提|擷取 截取|攜帶型 便攜式|攝護腺 前列腺|支持者 支持者|支援 支持|效能 性能|整合 集成|數位 數字|數位印刷 數字印刷|數位電子 數字電子|數位電路 數字電路|數字 數字|數據 數據|數據機 調製解調器|文件 文檔|文書處理 文字處理|斯洛維尼亞 斯洛文尼亞|新增 添加|方程式 方程式|映象 鏡像|映象管 顯像管|時脈頻率 時鐘頻率|普羅高菲夫 普羅科菲耶夫|普賽爾 珀塞爾|晶片 芯片|智慧 智能|智慧財產權 知識產權|暫存器 寄存器|最佳化 優化|有失真壓縮 有損壓縮|李彥宏 李彥宏|林姆斯基-高沙可夫 里姆斯基-科薩科夫|查德 乍得|查詢 查找|柯普蘭 科普蘭|柯雷利 科雷利|核取按鈕 複選按鈕|核取方塊 複選框|核心 內核|格瑞那達 格林納達|桌上型 桌面型|桌上型電腦 臺式機|桌布 壁紙|梅湘 梅西安|楊納傑克 雅納切克|標頭檔案 頭文件|模擬 仿真|模組 模塊|模里西斯 毛里求斯|機率 幾率|檔名 文件名|檔案 文件|檢視 查看|欄位 字段|歐巴馬 奧巴馬|正當程序 正當程序|正規化 範式|正規表示式 正則表達式|母音 元音|比特幣 比特幣|氣泡排序 冒泡排序|永珍 萬象|永續性 持久性|汶萊 文萊|沙烏地阿拉伯 沙特阿拉伯|泡麵 方便麪|波凱里尼 博凱里尼|波士尼亞赫塞哥維納 波斯尼亞黑塞哥維那|波札那 博茨瓦納|波長分波多工 波分複用|海內存知己 海內存知己|海飛茲 海菲茨|消息 消息|游標 光標|溢位 溢出|滑鼠 鼠標|演算法 算法|漢他病毒 漢坦病毒|潘德列茲基 潘德列茨基|烏茲別克 烏茲別克斯坦|無失真壓縮 無損壓縮|燒錄 刻錄|營運長 首席運營官|片語 詞組|物件 對象|物件導向 面向對象|狀態列 狀態欄|獅子山 塞拉利昂|瓜地馬拉 危地馬拉|甘比亞 岡比亞|畫素 像素|登入 登錄|登出 註銷|登錄檔 註冊表|白遼士 柏遼茲|盧安達 盧旺達|目的碼 目標代碼|直譯器 解釋器|相容 兼容|相簿 圖庫|真實模式 實模式|矽 硅|砈 砹|破圖 花屏|硬碟 硬盤|硬體 硬件|碟片 盤片|磁碟 磁盤|磁碟機代號 盤符|磁軌 磁道|社區 社區|社群 社區|程序 進程|程序不正義 程序不正義|程序導向 面向過程|程序式程式設計 過程式編程|程序正義 程序正義|程式 程序|程式碼 代碼|程式設計 編程|程式設計師 程序員|程式語言 編程語言|稽核 審覈|穆索斯基 穆索爾斯基|積體電路 集成電路|空氣清淨機 空氣淨化器|空間多工 空分複用|突尼西亞 突尼斯|筆記型電腦 筆記本電腦|範式 範式|簡報 演示文稿|簡訊 短信|簽帳金融卡 借記卡|粘貼 粘貼|紐西蘭 新西蘭|純喫茶 純喫茶|索羅門群島 所羅門羣島|索馬利亞 索馬里|終端使用者 最終用戶|組合語言 彙編語言|組譯 彙編|組譯器 彙編器|結束通話 掛斷|維德角 佛得角|網咖 網吧|網絡卡 網卡|網路 網絡|網路上的芳鄰 網上鄰居|網際網路 互聯網|線上 在線|縮圖 縮略圖|縮排 縮進|繫結 綁定|義大利 意大利|聖克里斯多福及尼維斯 聖基茨和尼維斯|聖文森及格瑞那丁 聖文森特和格林納丁斯|聖露西亞 聖盧西亞|聖馬利諾 聖馬力諾|聯結器 連接器|聯絡 聯繫|肯亞 肯尼亞|胰臟 胰腺|腳踏車 自行車|自動旋轉螢幕 自動轉屏|興德密特 欣德米特|艾爾加 埃爾加|茅利塔尼亞 毛里塔尼亞|荀白克 勳伯格|莫三比克 莫桑比克|莫札特 莫扎特|菜單 菜單|華格納 瓦格納|華爾頓 沃爾頓|萊許 賴希|萬用字元 通配符|萬那杜 瓦努阿圖|葉門 也門|葛令卡 格林卡|葛利格 格里格|葛拉斯 格拉斯|葛摩 科摩羅|蒲隆地 布隆迪|蓋亞那 圭亞那|蓋希文 格什溫|蕭士塔高維契 肖斯塔科維奇|蕭邦 肖邦|薩拉沙泰 薩拉薩蒂|薩提 薩蒂|藍色畫面 藍屏|蘇利南 蘇里南|處理程序 處理程序|虛擬函式 虛函數|虛擬機器 虛擬機|虛擬碼 僞代碼|螢幕 屏幕|行內函數 內聯函數|行動式 便攜式|行動數據 移動數據|行動硬碟 移動硬盤|行動網路 移動網絡|行動通訊 移動通信|行動電話 移動電話|行程 進程|衣索比亞 埃塞俄比亞|表示式 表達式|裝置 設備|複製 拷貝|西元 公元|西貝流士 西貝柳斯|視窗 窗口|視覺化 可視化|視訊 視頻|視訊會議 視頻會議|視訊記憶體 顯存|視訊通話 視頻通話|解析度 分辨率|解構函式 析構函數|解構子 析構函數|解除安裝 卸載|觸控 觸摸|觸控式螢幕 觸摸屏|計程車 出租車|訊息 消息|訊號 信號|訊雜比 信噪比|記憶體 內存|訪問 訪問|設定 設置|許可權 權限|訴訟程序 訴訟程序|調色盤 調色板|調變 調製|諾魯 瑙魯|識別符號 標識符|變數 變量|象牙海岸 科特迪瓦|貝南 貝寧|貝里尼 貝利尼|貝里斯 伯利茲|貼上 粘貼|資料 數據|資料來源 數據源|資料倉儲 數據倉庫|資料包 數據報|資料夾 文件夾|資料庫 數據庫|資料探勘 數據挖掘|資訊 信息|資訊安全 信息安全|資訊理論 信息論|資訊科技 信息技術|資訊長 首席信息官|賓士 奔馳|賴比瑞亞 利比里亞|賴索托 萊索托|超程式設計 元編程|跳脫字元 轉義字符|軟碟機 軟驅|軟體 軟件|軟體動物 軟體動物|載入 加載|載入程式 引導程序|輝達 英偉達|辛巴威 津巴布韋|迦納 加納|迴圈 循環|通訊 通信|通話卡 通訊卡|通話記錄 聯繫歷史|通道 信道|速食麵 方便麪|連結 鏈接|連結串列 鏈表|連線 連接|進位制 進制|進程 進程|進階 高端|運算元 操作數|運算子 操作符|運算式 表達式|過載 重載|遞迴 遞歸|遠端 遠程|遮蔽 屏蔽|選單 菜單|邏輯閘 邏輯門|那杜 溫納圖萬|部落格 博客|都會網路 城域網|醯 酰|釋出 發佈|重新命名 重命名|重新整理 刷新|重灌 重裝|金氧半導體 金屬氧化物半導體|金鑰 密鑰|鈽 鈈|鉲 鐦|鉳 錇|鋂 鎇|錄影 錄像|錼 鎿|鍅 鈁|鎝 鍀|鎦 鑥|鑀 鎄|開啟 打開|閘流體 晶閘管|閘道器 網關|閘電路 門電路|關聯式資料庫 關係數據庫|防寫 寫保護|防毒 殺毒|阿拉伯聯合大公國 阿拉伯聯合酋長國|陣列 數組|除錯 調試|隨身碟 U盤|雜湊 哈希|離線 脫機|雲端儲存 雲存儲|雲端計算 雲計算|雷射 激光|電晶體 晶體管|電腦保安 計算機安全|電腦科學 計算機科學|霍洛維茲 霍洛維茨|非同步 異步|韋本 韋伯恩|韋瓦第 維瓦爾第|韌體 固件|韓德爾 亨德爾|音效卡 聲卡|音訊 音頻|頁尾 頁腳|頁首 頁眉|預設 預設|預設值 默認值|頻寬 帶寬|類别範本 類模板|類比 模擬|類比電子 模擬電子|類比電路 模擬電路|顧爾德 古爾德|顯示卡 顯卡|飛航模式 飛行模式|馬利共和國 馬里共和國|馬爾地夫 馬爾代夫|駭客 黑客|高效能運算 高性能計算|高畫質 高清|高空彈跳 蹦極|高級 高級|高階 高端|黃宏 黃宏|點選 點擊|點陣圖 位圖";
+  const from_twp = [[dict_TWPhrasesRev, dict_TWVariantsRevPhrases, dict_TWVariantsRev]];
+  const JPShinjitaiPhrases = "一獲千金 一攫千金|丁寧 叮嚀|丁重 鄭重|三差路 三叉路|世論 輿論|亜鈴 啞鈴|交差 交叉|供宴 饗宴|俊馬 駿馬|保塁 堡壘|個条書 箇条書|偏平 扁平|停泊 碇泊|優俊 優駿|先兵 尖兵|先鋭 尖鋭|共役 共軛|冗舌 饒舌|凶器 兇器|削岩 鑿岩|包丁 庖丁|包帯 繃帯|区画 區劃|厳然 儼然|友宜 友誼|反乱 叛乱|収集 蒐集|叙情 抒情|台頭 擡頭|合弁 合辦|喜遊曲 嬉遊曲|嘆願 歎願|回転 廻転|回遊 回游|奉持 捧持|委縮 萎縮|展転 輾轉|希少 稀少|幻惑 眩惑|広範 廣汎|広野 曠野|廃虚 廢墟|建坪率 建蔽率|弁当 辨當|弁膜 瓣膜|弁護 辯護|弁髪 辮髮|弦歌 絃歌|恩義 恩誼|意向 意嚮|慰謝料 慰藉料|憶断 臆断|憶病 臆病|戦没 戰歿|扇情 煽情|手帳 手帖|技量 伎倆|抜粋 抜萃|披歴 披瀝|抵触 牴触|抽選 抽籤|拘引 勾引|拠出 醵出|拠金 醵金|掘削 掘鑿|控除 扣除|援護 掩護|放棄 抛棄|散水 撒水|敬謙 敬虔|敷延 敷衍|断固 断乎|族生 簇生|昇叙 陞敘|暖房 煖房|暗唱 暗誦|暗夜 闇夜|暴露 曝露|枯渇 涸渇|格好 恰好|格幅 恰幅|棄損 毀損|模索 摸索|橋頭保 橋頭堡|欠缺 欠缺|死体 屍體|殿部 臀部|母指 拇指|気迫 気魄|決別 訣別|決壊 決潰|沈殿 沈澱|油送船 油槽船|波乱 波瀾|注釈 註釋|洗浄 洗滌|活発 活潑|浸透 滲透|浸食 浸蝕|消却 銷卻|混然 渾然|湾曲 彎曲|溶接 熔接|漁労 漁撈|漂然 飄然|激高 激昂|火炎 火焰|焦燥 焦躁|班点 斑点|留飲 溜飲|略奪 掠奪|疎通 疏通|発酵 醱酵|白亜 白堊|相克 相剋|知恵 智慧|破棄 破毀|確固 確乎|禁固 禁錮|符丁 符牒|粉装 扮装|紫班 紫斑|終息 終熄|総合 綜合|編集 編輯|義援 義捐|耕運機 耕耘機|肝心 肝腎|肩甲骨 肩胛骨|背徳 悖德|脈拍 脈搏|膨張 膨脹|芳純 芳醇|英知 叡智|蒸留 蒸溜|薫蒸 燻蒸|薫製 燻製|衣装 衣裳|衰退 衰退|裕然 悠然|補佐 輔佐|訓戒 訓誡|試練 試煉|詭弁 詭辯|講和 媾和|象眼 象嵌|貫録 貫禄|買弁 買辦|賛辞 讚辭|踏襲 蹈襲|車両 車輛|転倒 顛倒|輪郭 輪廓|退色 褪色|途絶 杜絶|連係 連繫|連合 聯合|選考 銓衡|酢酸 醋酸|野卑 野鄙|鉱石 礦石|間欠 間歇|関数 函數|防御 防禦|険阻 嶮岨|障壁 牆壁|障害 障礙|隠滅 湮滅|集落 聚落|雇用 雇傭|風諭 諷喩|飛語 蜚語|香典 香奠|骨格 骨骼|高進 亢進|鳥観 鳥瞰";
+  const JPShinjitaiCharacters = "両 兩|弁 辨|欠 缺|浜 濱|糸 絲|芸 藝";
+  const JPVariantsRev = "万 萬|与 與|両 兩|乗 乘|乱 亂|亀 龜|予 豫|争 爭|亘 亙|亜 亞|仏 佛|仮 假|会 會|伝 傳|体 體|余 餘|価 價|倹 儉|偽 僞|兎 兔|児 兒|党 黨|内 內|円 圓|写 寫|処 處|刹 剎|剣 劍|剤 劑|剰 剩|励 勵|労 勞|効 效|勅 敕|勧 勸|勲 勳|匀 勻|区 區|医 醫|単 單|却 卻|厠 廁|厳 嚴|参 參|双 雙|収 收|叙 敘|台 臺|号 號|呉 吳|呪 咒|唇 脣|唖 啞|営 營|嘘 噓|嘱 囑|噛 嚙|団 團|囲 圍|図 圖|国 國|圏 圈|圧 壓|堕 墮|塁 壘|塩 鹽|増 增|壊 壞|壌 壤|壮 壯|声 聲|壱 壹|売 賣|変 變|奥 奧|奨 獎|嬢 孃|学 學|宝 寶|実 實|寛 寬|寝 寢|対 對|寿 壽|専 專|将 將|尽 盡|届 屆|属 屬|岳 嶽|峡 峽|峰 峯|巌 巖|巣 巢|巻 卷|帯 帶|帰 歸|庁 廳|広 廣|庄 莊|床 牀|廃 廢|弁 瓣|弐 貳|弥 彌|弯 彎|弾 彈|当 當|彦 彥|径 徑|従 從|御 禦|徳 德|徴 徵|応 應|恋 戀|恒 恆|恵 惠|悦 悅|悩 惱|悪 惡|惨 慘|懐 懷|戦 戰|戯 戲|戸 戶|戻 戾|才 纔|払 拂|抜 拔|択 擇|担 擔|拝 拜|拠 據|拡 擴|挙 舉|挟 挾|挿 插|捜 搜|掲 揭|掴 摑|掻 搔|揺 搖|摂 攝|撃 擊|撹 攪|数 數|斉 齊|斎 齋|断 斷|旧 舊|昼 晝|晋 晉|晩 晚|暁 曉|暦 曆|曁 暨|曽 曾|条 條|来 來|枢 樞|査 查|栄 榮|桜 櫻|桝 枡|桟 棧|検 檢|楡 榆|楼 樓|楽 樂|様 樣|権 權|横 橫|欠 缺|欧 歐|歓 歡|歩 步|歯 齒|歳 歲|歴 歷|残 殘|殴 毆|殻 殼|毎 每|気 氣|氷 冰|汚 污|没 沒|沢 澤|沪 濾|浄 淨|浅 淺|浜 濱|涙 淚|涛 濤|渇 渴|済 濟|渉 涉|渋 澀|渓 溪|温 溫|湾 灣|湿 溼|満 滿|溌 潑|滝 瀧|滞 滯|潜 潛|瀬 瀨|灯 燈|炉 爐|点 點|為 爲|焔 焰|焼 燒|煙 菸|犠 犧|状 狀|独 獨|狭 狹|猟 獵|猫 貓|献 獻|獣 獸|産 產|画 畫|畳 疊|疏 疎|痩 瘦|痴 癡|痺 痹|発 發|皐 皋|盗 盜|県 縣|砕 碎|砺 礪|礼 禮|祷 禱|禄 祿|禅 禪|秘 祕|称 稱|税 稅|稜 棱|稲 稻|穂 穗|穏 穩|穣 穰|窃 竊|竃 竈|竜 龍|粋 粹|粛 肅|粧 妝|粽 糉|糸 絲|経 經|絵 繪|絶 絕|継 繼|続 續|総 總|緑 綠|緒 緖|縁 緣|縄 繩|縦 縱|繊 纖|繋 繫|繍 繡|缶 罐|群 羣|聡 聰|聴 聽|胆 膽|脚 腳|脱 脫|脳 腦|臓 臟|舎 舍|舗 鋪|芦 蘆|芸 藝|茎 莖|茘 荔|荘 莊|莱 萊|葱 蔥|蒋 蔣|蔵 藏|薫 薰|薬 藥|虚 虛|虫 蟲|蚕 蠶|蛍 螢|蛮 蠻|蝋 蠟|装 裝|覇 霸|覚 覺|覧 覽|観 觀|触 觸|訳 譯|証 證|誉 譽|説 說|読 讀|謡 謠|譲 讓|豊 豐|賛 贊|贋 贗|践 踐|転 轉|軽 輕|輌 輛|辞 辭|辺 邊|逓 遞|連 聯|遅 遲|遙 遥|郷 鄉|酔 醉|醋 酢|醗 醱|醤 醬|醸 釀|釈 釋|鉄 鐵|鉱 鑛|銭 錢|鋳 鑄|錬 鍊|録 錄|関 關|閲 閱|闘 鬥|陥 陷|険 險|随 隨|隠 隱|雑 雜|霊 靈|静 靜|頴 穎|頼 賴|顔 顏|顕 顯|駅 驛|駆 驅|騒 騷|験 驗|髄 髓|髪 髮|鴎 鷗|鶏 雞|鹸 鹼|麦 麥|麹 麴|麺 麪|黄 黃|黒 黑|黙 默|鼈 鱉|齢 齡";
+  const from_jp = [[JPShinjitaiPhrases, JPShinjitaiCharacters, JPVariantsRev]];
+  const dict_TSPhrases = "一目瞭然 一目了然|上鍊 上链|不瞭解 不了解|么麼 幺麽|么麽 幺麽|乾乾淨淨 干干净净|乾乾脆脆 干干脆脆|乾佑縣 乾佑县|乾元 乾元|乾卦 乾卦|乾嘉 乾嘉|乾圖 乾图|乾坤 乾坤|乾坤一擲 乾坤一掷|乾坤再造 乾坤再造|乾坤大挪移 乾坤大挪移|乾宅 乾宅|乾安縣 乾安县|乾安鎮 乾安镇|乾州 乾州|乾斷 乾断|乾旦 乾旦|乾曜 乾曜|乾清宮 乾清宫|乾盛世 乾盛世|乾紅 乾红|乾綱 乾纲|乾縣 乾县|乾象 乾象|乾造 乾造|乾道 乾道|乾陵 乾陵|乾隆 乾隆|乾隆年間 乾隆年间|乾隆皇帝 乾隆皇帝|二噁英 二𫫇英|以免藉口 以免借口|以功覆過 以功复过|侔德覆載 侔德复载|傢俱 家具|傷亡枕藉 伤亡枕藉|八濛山 八濛山|凌藉 凌借|出醜狼藉 出丑狼藉|函覆 函复|千鍾粟 千锺粟|反反覆覆 反反复复|反覆 反复|反覆思維 反复思维|反覆思量 反复思量|反覆性 反复性|名覆金甌 名复金瓯|哪吒 哪吒|回覆 回复|壺裏乾坤 壶里乾坤|大目乾連冥間救母變文 大目乾连冥间救母变文|宫商角徵羽 宫商角徵羽|尼乾子 尼乾子|尼乾陀 尼乾陀|幺麼 幺麽|幺麼小丑 幺麽小丑|幺麼小醜 幺麽小丑|康乾 康乾|張法乾 张法乾|彷彿 仿佛|彷徨 彷徨|徵弦 徵弦|徵絃 徵弦|徵羽摩柯 徵羽摩柯|徵聲 徵声|徵調 徵调|徵音 徵音|情有獨鍾 情有独钟|憑藉 凭借|憑藉着 凭借着|手鍊 手链|扭轉乾坤 扭转乾坤|找藉口 找借口|拉鍊 拉链|拉鍊工程 拉链工程|拜覆 拜复|據瞭解 据了解|文錦覆阱 文锦复阱|於世成 於世成|於乎 於乎|於仲完 於仲完|於倫 於伦|於其一 於其一|於則 於则|於勇明 於勇明|於呼哀哉 於呼哀哉|於單 於单|於坦 於坦|於崇文 於崇文|於忠祥 於忠祥|於惟一 於惟一|於戲 於戏|於敖 於敖|於梨華 於梨华|於清言 於清言|於潛 於潜|於琳 於琳|於穆 於穆|於竹屋 於竹屋|於菟 於菟|於邑 於邑|於陵子 於陵子|旋乾轉坤 旋乾转坤|旋轉乾坤 旋转乾坤|旋轉乾坤之力 旋转乾坤之力|明瞭 明了|明覆 明复|書中自有千鍾粟 书中自有千锺粟|有序 有序|朝乾夕惕 朝乾夕惕|木吒 木吒|李乾德 李乾德|李澤鉅 李泽钜|李鍊福 李链福|李鍾郁 李锺郁|樊於期 樊於期|沈沒 沉没|沈沒成本 沉没成本|沈積 沉积|沈船 沉船|沈默 沉默|流徵 流徵|浪蕩乾坤 浪荡乾坤|滑藉 滑借|無序 无序|牴牾 抵牾|牴觸 抵触|狐藉虎威 狐借虎威|珍珠項鍊 珍珠项链|甚鉅 甚钜|申覆 申复|畢昇 毕昇|發覆 发复|瞭如 了如|瞭如指掌 了如指掌|瞭望 瞭望|瞭然 了然|瞭然於心 了然于心|瞭若指掌 了若指掌|瞭解 了解|瞭解到 了解到|示覆 示复|神祇 神祇|稟覆 禀复|竺乾 竺乾|答覆 答复|篤麼 笃麽|簡單明瞭 简单明了|籌畫 筹划|素藉 素借|老態龍鍾 老态龙钟|肘手鍊足 肘手链足|茵藉 茵借|萬鍾 万锺|蒜薹 蒜薹|蕓薹 芸薹|蕩覆 荡复|蕭乾 萧乾|藉代 借代|藉以 借以|藉助 借助|藉助於 借助于|藉卉 借卉|藉口 借口|藉喻 借喻|藉寇兵 借寇兵|藉寇兵齎盜糧 借寇兵赍盗粮|藉手 借手|藉據 借据|藉故 借故|藉故推辭 借故推辞|藉方 借方|藉條 借条|藉槁 借槁|藉機 借机|藉此 借此|藉此機會 借此机会|藉甚 借甚|藉由 借由|藉着 借着|藉端 借端|藉端生事 借端生事|藉箸代籌 借箸代筹|藉草枕塊 借草枕块|藉藉 藉藉|藉藉无名 藉藉无名|藉詞 借词|藉讀 借读|藉資 借资|衹得 只得|衹見樹木 只见树木|衹見樹木不見森林 只见树木不见森林|袖裏乾坤 袖里乾坤|覆上 复上|覆住 复住|覆信 复信|覆冒 复冒|覆呈 复呈|覆命 复命|覆墓 复墓|覆宗 复宗|覆帳 复帐|覆幬 复帱|覆成 复成|覆按 复按|覆文 复文|覆杯 复杯|覆校 复校|覆瓿 复瓿|覆盂 复盂|覆盆 覆盆|覆盆子 覆盆子|覆盤 覆盘|覆育 复育|覆蕉尋鹿 复蕉寻鹿|覆逆 复逆|覆醢 复醢|覆醬瓿 复酱瓿|覆電 复电|覆露 复露|覆鹿尋蕉 复鹿寻蕉|覆鹿遺蕉 复鹿遗蕉|覆鼎 复鼎|見覆 见复|角徵 角徵|角徵羽 角徵羽|計畫 计划|變徵 变徵|變徵之聲 变徵之声|變徵之音 变徵之音|貂覆額 貂复额|買臣覆水 买臣复水|踅門瞭戶 踅门了户|躪藉 躏借|郭子乾 郭子乾|酒逢知己千鍾少 酒逢知己千锺少|酒逢知己千鍾少話不投機半句多 酒逢知己千锺少话不投机半句多|醞藉 酝借|重覆 重复|金吒 金吒|金鍊 金链|鈞覆 钧复|鉅子 钜子|鉅萬 钜万|鉅防 钜防|鉸鍊 铰链|銀鍊 银链|錢鍾書 钱锺书|鍊墜 链坠|鍊子 链子|鍊形 链形|鍊條 链条|鍊錘 链锤|鍊鎖 链锁|鍛鍾 锻锺|鍾繇 钟繇|鍾萬梅 锺万梅|鍾重發 锺重发|鍾鍛 锺锻|鍾馗 锺馗|鎖鍊 锁链|鐵鍊 铁链|鑽石項鍊 钻石项链|雁杳魚沈 雁杳鱼沉|雖覆能復 虽覆能复|電覆 电复|露覆 露复|項鍊 项链|頗覆 颇复|頸鍊 颈链|顛乾倒坤 颠乾倒坤|顛倒乾坤 颠倒乾坤|顧藉 顾借|麼些族 麽些族|黄鍾公 黄锺公|龍鍾 龙钟";
+  const dict_TSCharacters = "㑮 𫝈|㑯 㑔|㑳 㑇|㑶 㐹|㒓 𠉂|㓄 𪠟|㓨 刾|㔋 𪟎|㖮 𪠵|㗲 𠵾|㗿 𪡛|㘉 𠰱|㘓 𪢌|㘔 𫬐|㘚 㘎|㛝 𫝦|㜄 㚯|㜏 㛣|㜐 𫝧|㜗 𡞋|㜢 𡞱|㜷 𡝠|㞞 𪨊|㟺 𪩇|㠏 㟆|㠣 𫵷|㢗 𪪑|㢝 𢋈|㥮 㤘|㦎 𢛯|㦛 𢗓|㦞 𪫷|㨻 𪮃|㩋 𪮋|㩜 㨫|㩳 㧐|㩵 擜|㪎 𪯋|㯤 𣘐|㰙 𣗙|㵗 𣳆|㵾 𪷍|㶆 𫞛|㷍 𤆢|㷿 𤈷|㸇 𤎺|㹽 𫞣|㺏 𤠋|㺜 𪺻|㻶 𪼋|㿖 𪽮|㿗 𤻊|㿧 𤽯|䀉 𥁢|䀹 𥅴|䁪 𥇢|䁻 䀥|䂎 𥎝|䃮 鿎|䅐 𫀨|䅳 𫀬|䆉 𫁂|䉑 𫁲|䉙 𥬀|䉬 𫂈|䉲 𥮜|䉶 𫁷|䊭 𥺅|䊷 䌶|䊺 𫄚|䋃 𫄜|䋔 𫄞|䋙 䌺|䋚 䌻|䋦 𫄩|䋹 䌿|䋻 䌾|䋼 𫄮|䋿 𦈓|䌈 𦈖|䌋 𦈘|䌖 𦈜|䌝 𦈟|䌟 𦈞|䌥 𦈠|䌰 𦈙|䍤 𫅅|䍦 䍠|䍽 𦍠|䎙 𫅭|䎱 䎬|䓣 𬜯|䕤 𫟕|䕳 𦰴|䖅 𫟑|䗅 𫊪|䗿 𧉞|䙔 𫋲|䙡 䙌|䙱 𧜭|䚩 𫌯|䛄 𫍠|䛳 𫍫|䜀 䜧|䜖 𫟢|䝭 𫎧|䝻 𧹕|䝼 䞍|䞈 𧹑|䞋 𫎪|䞓 𫎭|䟃 𫎺|䟆 𫎳|䟐 𫎱|䠆 𫏃|䠱 𨅛|䡐 𫟤|䡩 𫟥|䡵 𫟦|䢨 𨑹|䤤 𫟺|䥄 𫠀|䥇 䦂|䥑 鿏|䥕 𬭯|䥗 𫔋|䥩 𨱖|䥯 𫔆|䥱 䥾|䦘 𨸄|䦛 䦶|䦟 䦷|䦯 𫔵|䦳 𨷿|䧢 𨸟|䪊 𫖅|䪏 𩏼|䪗 𩐀|䪘 𩏿|䪴 𫖫|䪾 𫖬|䫀 𫖱|䫂 𫖰|䫟 𫖲|䫴 𩖗|䫶 𫖺|䫻 𫗇|䫾 𫠈|䬓 𫗊|䬘 𩙮|䬝 𩙯|䬞 𩙧|䬧 𫗟|䭀 𩠇|䭃 𩠈|䭑 𫗱|䭔 𫗰|䭿 𩧭|䮄 𫠊|䮝 𩧰|䮞 𩨁|䮠 𩧿|䮫 𩨇|䮰 𫘮|䮳 𩨏|䮾 𩧪|䯀 䯅|䯤 𩩈|䰾 鲃|䱀 𫚐|䱁 𫚏|䱙 𩾈|䱧 𫚠|䱬 𩾊|䱰 𩾋|䱷 䲣|䱸 𫠑|䱽 䲝|䲁 鳚|䲅 𫚜|䲖 𩾂|䲘 鳤|䲰 𪉂|䳜 𫛬|䳢 𫛰|䳤 𫛮|䳧 𫛺|䳫 𫛼|䴉 鹮|䴋 𫜅|䴬 𪎈|䴱 𫜒|䴴 𪎋|䴽 𫜔|䵳 𪑅|䵴 𫜙|䶕 𫜨|䶲 𫜳|丟 丢|並 并|乾 干|亂 乱|亙 亘|亞 亚|佇 伫|佈 布|佔 占|併 并|來 来|侖 仑|侶 侣|侷 局|俁 俣|係 系|俓 𠇹|俔 伣|俠 侠|俥 伡|俬 私|倀 伥|倆 俩|倈 俫|倉 仓|個 个|們 们|倖 幸|倫 伦|倲 㑈|偉 伟|偑 㐽|側 侧|偵 侦|偽 伪|傌 㐷|傑 杰|傖 伧|傘 伞|備 备|傢 家|傭 佣|傯 偬|傳 传|傴 伛|債 债|傷 伤|傾 倾|僂 偻|僅 仅|僉 佥|僑 侨|僕 仆|僞 伪|僤 𫢸|僥 侥|僨 偾|僱 雇|價 价|儀 仪|儁 俊|儂 侬|億 亿|儈 侩|儉 俭|儎 傤|儐 傧|儔 俦|儕 侪|儘 尽|償 偿|儣 𠆲|優 优|儭 𠋆|儲 储|儷 俪|儸 㑩|儺 傩|儻 傥|儼 俨|兇 凶|兌 兑|兒 儿|兗 兖|內 内|兩 两|冊 册|冑 胄|冪 幂|凈 净|凍 冻|凙 𪞝|凜 凛|凱 凯|別 别|刪 删|剄 刭|則 则|剋 克|剎 刹|剗 刬|剛 刚|剝 剥|剮 剐|剴 剀|創 创|剷 铲|剾 𠛅|劃 划|劇 剧|劉 刘|劊 刽|劌 刿|劍 剑|劏 㓥|劑 剂|劚 㔉|勁 劲|勑 𠡠|動 动|務 务|勛 勋|勝 胜|勞 劳|勢 势|勣 𪟝|勩 勚|勱 劢|勳 勋|勵 励|勸 劝|勻 匀|匭 匦|匯 汇|匱 匮|區 区|協 协|卹 恤|卻 却|卽 即|厙 厍|厠 厕|厤 历|厭 厌|厲 厉|厴 厣|參 参|叄 叁|叢 丛|吒 咤|吳 吴|吶 呐|呂 吕|咼 呙|員 员|哯 𠯟|唄 呗|唓 𪠳|唸 念|問 问|啓 启|啞 哑|啟 启|啢 唡|喎 㖞|喚 唤|喪 丧|喫 吃|喬 乔|單 单|喲 哟|嗆 呛|嗇 啬|嗊 唝|嗎 吗|嗚 呜|嗩 唢|嗰 𠮶|嗶 哔|嗹 𪡏|嘆 叹|嘍 喽|嘓 啯|嘔 呕|嘖 啧|嘗 尝|嘜 唛|嘩 哗|嘪 𪡃|嘮 唠|嘯 啸|嘰 叽|嘳 𪡞|嘵 哓|嘸 呒|嘺 𪡀|嘽 啴|噁 恶|噅 𠯠|噓 嘘|噚 㖊|噝 咝|噞 𪡋|噠 哒|噥 哝|噦 哕|噯 嗳|噲 哙|噴 喷|噸 吨|噹 当|嚀 咛|嚇 吓|嚌 哜|嚐 尝|嚕 噜|嚙 啮|嚛 𪠸|嚥 咽|嚦 呖|嚧 𠰷|嚨 咙|嚮 向|嚲 亸|嚳 喾|嚴 严|嚶 嘤|嚽 𪢕|囀 啭|囁 嗫|囂 嚣|囃 𠱞|囅 冁|囈 呓|囉 啰|囌 苏|囑 嘱|囒 𪢠|囪 囱|圇 囵|國 国|圍 围|園 园|圓 圆|圖 图|團 团|圞 𪢮|垻 坝|埡 垭|埨 𫭢|埬 𪣆|埰 采|執 执|堅 坚|堊 垩|堖 垴|堚 𪣒|堝 埚|堯 尧|報 报|場 场|塊 块|塋 茔|塏 垲|塒 埘|塗 涂|塚 冢|塢 坞|塤 埙|塵 尘|塸 𫭟|塹 堑|塿 𪣻|墊 垫|墜 坠|墠 𫮃|墮 堕|墰 坛|墲 𪢸|墳 坟|墶 垯|墻 墙|墾 垦|壇 坛|壈 𡒄|壋 垱|壎 埙|壓 压|壗 𡋤|壘 垒|壙 圹|壚 垆|壜 坛|壞 坏|壟 垄|壠 垅|壢 坜|壣 𪤚|壩 坝|壪 塆|壯 壮|壺 壶|壼 壸|壽 寿|夠 够|夢 梦|夥 伙|夾 夹|奐 奂|奧 奥|奩 奁|奪 夺|奬 奖|奮 奋|奼 姹|妝 妆|姍 姗|姦 奸|娙 𫰛|娛 娱|婁 娄|婡 𫝫|婦 妇|婭 娅|媈 𫝨|媧 娲|媯 妫|媰 㛀|媼 媪|媽 妈|嫋 袅|嫗 妪|嫵 妩|嫺 娴|嫻 娴|嫿 婳|嬀 妫|嬃 媭|嬇 𫝬|嬈 娆|嬋 婵|嬌 娇|嬙 嫱|嬡 嫒|嬣 𪥰|嬤 嬷|嬦 𫝩|嬪 嫔|嬰 婴|嬸 婶|嬻 𪥿|孃 娘|孄 𫝮|孆 𫝭|孇 𪥫|孋 㛤|孌 娈|孎 𡠟|孫 孙|學 学|孻 𡥧|孾 𪧀|孿 孪|宮 宫|寀 采|寠 𪧘|寢 寝|實 实|寧 宁|審 审|寫 写|寬 宽|寵 宠|寶 宝|將 将|專 专|尋 寻|對 对|導 导|尷 尴|屆 届|屍 尸|屓 屃|屜 屉|屢 屡|層 层|屨 屦|屩 𪨗|屬 属|岡 冈|峯 峰|峴 岘|島 岛|峽 峡|崍 崃|崑 昆|崗 岗|崙 仑|崢 峥|崬 岽|嵐 岚|嵗 岁|嵼 𡶴|嵽 𫶇|嵾 㟥|嶁 嵝|嶄 崭|嶇 岖|嶈 𡺃|嶔 嵚|嶗 崂|嶘 𡺄|嶠 峤|嶢 峣|嶧 峄|嶨 峃|嶮 崄|嶸 嵘|嶹 𫝵|嶺 岭|嶼 屿|嶽 岳|巊 𪩎|巋 岿|巒 峦|巔 巅|巖 岩|巗 𪨷|巘 𪩘|巰 巯|巹 卺|帥 帅|師 师|帳 帐|帶 带|幀 帧|幃 帏|幓 㡎|幗 帼|幘 帻|幝 𪩷|幟 帜|幣 币|幩 𪩸|幫 帮|幬 帱|幹 干|幾 几|庫 库|廁 厕|廂 厢|廄 厩|廈 厦|廎 庼|廕 荫|廚 厨|廝 厮|廞 𫷷|廟 庙|廠 厂|廡 庑|廢 废|廣 广|廧 𪪞|廩 廪|廬 庐|廳 厅|弒 弑|弔 吊|弳 弪|張 张|強 强|彃 𪪼|彄 𫸩|彆 别|彈 弹|彌 弥|彎 弯|彔 录|彙 汇|彠 彟|彥 彦|彫 雕|彲 彨|彿 佛|後 后|徑 径|從 从|徠 徕|復 复|徵 征|徹 彻|徿 𪫌|恆 恒|恥 耻|悅 悦|悞 悮|悵 怅|悶 闷|悽 凄|惡 恶|惱 恼|惲 恽|惻 恻|愛 爱|愜 惬|愨 悫|愴 怆|愷 恺|愻 𢙏|愾 忾|慄 栗|態 态|慍 愠|慘 惨|慚 惭|慟 恸|慣 惯|慤 悫|慪 怄|慫 怂|慮 虑|慳 悭|慶 庆|慺 㥪|慼 戚|慾 欲|憂 忧|憊 惫|憐 怜|憑 凭|憒 愦|憖 慭|憚 惮|憢 𢙒|憤 愤|憫 悯|憮 怃|憲 宪|憶 忆|憸 𪫺|憹 𢙐|懀 𢙓|懇 恳|應 应|懌 怿|懍 懔|懎 𢠁|懞 蒙|懟 怼|懣 懑|懤 㤽|懨 恹|懲 惩|懶 懒|懷 怀|懸 悬|懺 忏|懼 惧|懾 慑|戀 恋|戇 戆|戔 戋|戧 戗|戩 戬|戰 战|戱 戯|戲 戏|戶 户|拋 抛|挩 捝|挱 挲|挾 挟|捨 舍|捫 扪|捱 挨|捲 卷|掃 扫|掄 抡|掆 㧏|掗 挜|掙 挣|掚 𪭵|掛 挂|採 采|揀 拣|揚 扬|換 换|揮 挥|揯 搄|損 损|搖 摇|搗 捣|搵 揾|搶 抢|摋 𢫬|摐 𪭢|摑 掴|摜 掼|摟 搂|摯 挚|摳 抠|摶 抟|摺 折|摻 掺|撈 捞|撊 𪭾|撏 挦|撐 撑|撓 挠|撝 㧑|撟 挢|撣 掸|撥 拨|撧 𪮖|撫 抚|撲 扑|撳 揿|撻 挞|撾 挝|撿 捡|擁 拥|擄 掳|擇 择|擊 击|擋 挡|擓 㧟|擔 担|據 据|擟 𪭧|擠 挤|擣 捣|擫 𢬍|擬 拟|擯 摈|擰 拧|擱 搁|擲 掷|擴 扩|擷 撷|擺 摆|擻 擞|擼 撸|擽 㧰|擾 扰|攄 摅|攆 撵|攋 𪮶|攏 拢|攔 拦|攖 撄|攙 搀|攛 撺|攜 携|攝 摄|攢 攒|攣 挛|攤 摊|攪 搅|攬 揽|敎 教|敓 敚|敗 败|敘 叙|敵 敌|數 数|斂 敛|斃 毙|斅 𢽾|斆 敩|斕 斓|斬 斩|斷 断|斸 𣃁|於 于|旂 旗|旣 既|昇 升|時 时|晉 晋|晛 𬀪|晝 昼|暈 晕|暉 晖|暐 𬀩|暘 旸|暢 畅|暫 暂|曄 晔|曆 历|曇 昙|曉 晓|曊 𪰶|曏 向|曖 暧|曠 旷|曥 𣆐|曨 昽|曬 晒|書 书|會 会|朥 𦛨|朧 胧|朮 术|東 东|枴 拐|柵 栅|柺 拐|査 查|桱 𣐕|桿 杆|梔 栀|梖 𪱷|梘 枧|梜 𬂩|條 条|梟 枭|梲 棁|棄 弃|棊 棋|棖 枨|棗 枣|棟 栋|棡 㭎|棧 栈|棲 栖|棶 梾|椏 桠|椲 㭏|楇 𣒌|楊 杨|楓 枫|楨 桢|業 业|極 极|榘 矩|榦 干|榪 杩|榮 荣|榲 榅|榿 桤|構 构|槍 枪|槓 杠|槤 梿|槧 椠|槨 椁|槫 𣏢|槮 椮|槳 桨|槶 椢|槼 椝|樁 桩|樂 乐|樅 枞|樑 梁|樓 楼|標 标|樞 枢|樠 𣗊|樢 㭤|樣 样|樤 𣔌|樧 榝|樫 㭴|樳 桪|樸 朴|樹 树|樺 桦|樿 椫|橈 桡|橋 桥|機 机|橢 椭|橫 横|橯 𣓿|檁 檩|檉 柽|檔 档|檜 桧|檟 槚|檢 检|檣 樯|檭 𣘴|檮 梼|檯 台|檳 槟|檵 𪲛|檸 柠|檻 槛|櫃 柜|櫅 𪲎|櫍 𬃊|櫓 橹|櫚 榈|櫛 栉|櫝 椟|櫞 橼|櫟 栎|櫠 𪲮|櫥 橱|櫧 槠|櫨 栌|櫪 枥|櫫 橥|櫬 榇|櫱 蘖|櫳 栊|櫸 榉|櫻 樱|欄 栏|欅 榉|欇 𪳍|權 权|欍 𣐤|欏 椤|欐 𪲔|欑 𪴙|欒 栾|欓 𣗋|欖 榄|欘 𣚚|欞 棂|欽 钦|歎 叹|歐 欧|歟 欤|歡 欢|歲 岁|歷 历|歸 归|歿 殁|殘 残|殞 殒|殢 𣨼|殤 殇|殨 㱮|殫 殚|殭 僵|殮 殓|殯 殡|殰 㱩|殲 歼|殺 杀|殻 壳|殼 壳|毀 毁|毆 殴|毊 𪵑|毿 毵|氂 牦|氈 毡|氌 氇|氣 气|氫 氢|氬 氩|氭 𣱝|氳 氲|氾 泛|汎 泛|汙 污|決 决|沒 没|沖 冲|況 况|泝 溯|洩 泄|洶 汹|浹 浃|浿 𬇙|涇 泾|涗 涚|涼 凉|淒 凄|淚 泪|淥 渌|淨 净|淩 凌|淪 沦|淵 渊|淶 涞|淺 浅|渙 涣|減 减|渢 沨|渦 涡|測 测|渾 浑|湊 凑|湋 𣲗|湞 浈|湧 涌|湯 汤|溈 沩|準 准|溝 沟|溡 𪶄|溫 温|溮 浉|溳 涢|溼 湿|滄 沧|滅 灭|滌 涤|滎 荥|滙 汇|滬 沪|滯 滞|滲 渗|滷 卤|滸 浒|滻 浐|滾 滚|滿 满|漁 渔|漊 溇|漍 𬇹|漚 沤|漢 汉|漣 涟|漬 渍|漲 涨|漵 溆|漸 渐|漿 浆|潁 颍|潑 泼|潔 洁|潕 𣲘|潙 沩|潚 㴋|潛 潜|潣 𫞗|潤 润|潯 浔|潰 溃|潷 滗|潿 涠|澀 涩|澅 𣶩|澆 浇|澇 涝|澐 沄|澗 涧|澠 渑|澤 泽|澦 滪|澩 泶|澫 𬇕|澬 𫞚|澮 浍|澱 淀|澾 㳠|濁 浊|濃 浓|濄 㳡|濆 𣸣|濕 湿|濘 泞|濚 溁|濛 蒙|濜 浕|濟 济|濤 涛|濧 㳔|濫 滥|濰 潍|濱 滨|濺 溅|濼 泺|濾 滤|濿 𪵱|瀂 澛|瀃 𣽷|瀅 滢|瀆 渎|瀇 㲿|瀉 泻|瀋 沈|瀏 浏|瀕 濒|瀘 泸|瀝 沥|瀟 潇|瀠 潆|瀦 潴|瀧 泷|瀨 濑|瀰 弥|瀲 潋|瀾 澜|灃 沣|灄 滠|灍 𫞝|灑 洒|灒 𪷽|灕 漓|灘 滩|灙 𣺼|灝 灏|灡 㳕|灣 湾|灤 滦|灧 滟|灩 滟|災 灾|為 为|烏 乌|烴 烃|無 无|煇 𪸩|煉 炼|煒 炜|煙 烟|煢 茕|煥 焕|煩 烦|煬 炀|煱 㶽|熂 𪸕|熅 煴|熉 𤈶|熌 𤇄|熒 荧|熓 𤆡|熗 炝|熚 𤇹|熡 𤋏|熰 𬉼|熱 热|熲 颎|熾 炽|燀 𬊤|燁 烨|燈 灯|燉 炖|燒 烧|燖 𬊈|燙 烫|燜 焖|營 营|燦 灿|燬 毁|燭 烛|燴 烩|燶 㶶|燻 熏|燼 烬|燾 焘|爃 𫞡|爄 𤇃|爇 𦶟|爍 烁|爐 炉|爖 𤇭|爛 烂|爥 𪹳|爧 𫞠|爭 争|爲 为|爺 爷|爾 尔|牀 床|牆 墙|牘 牍|牽 牵|犖 荦|犛 牦|犞 𪺭|犢 犊|犧 牺|狀 状|狹 狭|狽 狈|猌 𪺽|猙 狰|猶 犹|猻 狲|獁 犸|獃 呆|獄 狱|獅 狮|獊 𪺷|獎 奖|獨 独|獩 𤞃|獪 狯|獫 猃|獮 狝|獰 狞|獱 㺍|獲 获|獵 猎|獷 犷|獸 兽|獺 獭|獻 献|獼 猕|玀 猡|玁 𤞤|珼 𫞥|現 现|琱 雕|琺 珐|琿 珲|瑋 玮|瑒 玚|瑣 琐|瑤 瑶|瑩 莹|瑪 玛|瑲 玱|瑻 𪻲|瑽 𪻐|璉 琏|璊 𫞩|璕 𬍤|璗 𬍡|璝 𪻺|璡 琎|璣 玑|璦 瑷|璫 珰|璯 㻅|環 环|璵 玙|璸 瑸|璼 𫞨|璽 玺|璾 𫞦|璿 璇|瓄 𪻨|瓅 𬍛|瓊 琼|瓏 珑|瓔 璎|瓕 𤦀|瓚 瓒|瓛 𤩽|甌 瓯|甕 瓮|產 产|産 产|甦 苏|甯 宁|畝 亩|畢 毕|畫 画|異 异|畵 画|當 当|畼 𪽈|疇 畴|疊 叠|痙 痉|痠 酸|痮 𪽪|痾 疴|瘂 痖|瘋 疯|瘍 疡|瘓 痪|瘞 瘗|瘡 疮|瘧 疟|瘮 瘆|瘱 𪽷|瘲 疭|瘺 瘘|瘻 瘘|療 疗|癆 痨|癇 痫|癉 瘅|癐 𤶊|癒 愈|癘 疠|癟 瘪|癡 痴|癢 痒|癤 疖|癥 症|癧 疬|癩 癞|癬 癣|癭 瘿|癮 瘾|癰 痈|癱 瘫|癲 癫|發 发|皁 皂|皚 皑|皟 𤾀|皰 疱|皸 皲|皺 皱|盃 杯|盜 盗|盞 盏|盡 尽|監 监|盤 盘|盧 卢|盨 𪾔|盪 荡|眝 𪾣|眞 真|眥 眦|眾 众|睍 𪾢|睏 困|睜 睁|睞 睐|瞘 眍|瞜 䁖|瞞 瞒|瞤 𥆧|瞶 瞆|瞼 睑|矇 蒙|矉 𪾸|矑 𪾦|矓 眬|矚 瞩|矯 矫|硃 朱|硜 硁|硤 硖|硨 砗|硯 砚|碕 埼|碙 𥐻|碩 硕|碭 砀|碸 砜|確 确|碼 码|碽 䂵|磑 硙|磚 砖|磠 硵|磣 碜|磧 碛|磯 矶|磽 硗|磾 䃅|礄 硚|礆 硷|礎 础|礐 𬒈|礒 𥐟|礙 碍|礦 矿|礪 砺|礫 砾|礬 矾|礮 𪿫|礱 砻|祕 秘|祿 禄|禍 祸|禎 祯|禕 祎|禡 祃|禦 御|禪 禅|禮 礼|禰 祢|禱 祷|禿 秃|秈 籼|稅 税|稈 秆|稏 䅉|稜 棱|稟 禀|種 种|稱 称|穀 谷|穇 䅟|穌 稣|積 积|穎 颖|穠 秾|穡 穑|穢 秽|穩 稳|穫 获|穭 穞|窩 窝|窪 洼|窮 穷|窯 窑|窵 窎|窶 窭|窺 窥|竄 窜|竅 窍|竇 窦|竈 灶|竊 窃|竚 𥩟|竪 竖|竱 𫁟|競 竞|筆 笔|筍 笋|筧 笕|筴 䇲|箇 个|箋 笺|箏 筝|節 节|範 范|築 筑|篋 箧|篔 筼|篘 𥬠|篠 筿|篢 𬕂|篤 笃|篩 筛|篳 筚|篸 𥮾|簀 箦|簂 𫂆|簍 篓|簑 蓑|簞 箪|簡 简|簢 𫂃|簣 篑|簫 箫|簹 筜|簽 签|簾 帘|籃 篮|籅 𥫣|籋 𥬞|籌 筹|籔 䉤|籙 箓|籛 篯|籜 箨|籟 籁|籠 笼|籤 签|籩 笾|籪 簖|籬 篱|籮 箩|籲 吁|粵 粤|糉 粽|糝 糁|糞 粪|糧 粮|糰 团|糲 粝|糴 籴|糶 粜|糹 纟|糺 𫄙|糾 纠|紀 纪|紂 纣|紃 𬘓|約 约|紅 红|紆 纡|紇 纥|紈 纨|紉 纫|紋 纹|納 纳|紐 纽|紓 纾|純 纯|紕 纰|紖 纼|紗 纱|紘 纮|紙 纸|級 级|紛 纷|紜 纭|紝 纴|紞 𬘘|紟 𫄛|紡 纺|紬 䌷|紮 扎|細 细|紱 绂|紲 绁|紳 绅|紵 纻|紹 绍|紺 绀|紼 绋|紿 绐|絀 绌|絁 𫄟|終 终|絃 弦|組 组|絅 䌹|絆 绊|絍 𫟃|絎 绗|結 结|絕 绝|絙 𫄠|絛 绦|絝 绔|絞 绞|絡 络|絢 绚|絥 𫄢|給 给|絧 𫄡|絨 绒|絪 𬘡|絰 绖|統 统|絲 丝|絳 绛|絶 绝|絹 绢|絺 𫄨|綀 𦈌|綁 绑|綃 绡|綄 𬘫|綆 绠|綇 𦈋|綈 绨|綉 绣|綋 𫟄|綌 绤|綎 𬘩|綏 绥|綐 䌼|綑 捆|經 经|綖 𫄧|綜 综|綝 𬘭|綞 缍|綟 𫄫|綠 绿|綡 𫟅|綢 绸|綣 绻|綧 𬘯|綪 𬘬|綫 线|綬 绶|維 维|綯 绹|綰 绾|綱 纲|網 网|綳 绷|綴 缀|綵 彩|綸 纶|綹 绺|綺 绮|綻 绽|綽 绰|綾 绫|綿 绵|緄 绲|緇 缁|緊 紧|緋 绯|緍 𦈏|緑 绿|緒 绪|緓 绬|緔 绱|緗 缃|緘 缄|緙 缂|線 线|緝 缉|緞 缎|緟 𫟆|締 缔|緡 缗|緣 缘|緤 𫄬|緦 缌|編 编|緩 缓|緬 缅|緮 𫄭|緯 纬|緰 𦈕|緱 缑|緲 缈|練 练|緶 缏|緷 𦈉|緸 𦈑|緹 缇|緻 致|緼 缊|縈 萦|縉 缙|縊 缢|縋 缒|縍 𫄰|縎 𦈔|縐 绉|縑 缣|縕 缊|縗 缞|縛 缚|縝 缜|縞 缟|縟 缛|縣 县|縧 绦|縫 缝|縬 𦈚|縭 缡|縮 缩|縯 𬙂|縰 𫄳|縱 纵|縲 缧|縳 䌸|縴 纤|縵 缦|縶 絷|縷 缕|縸 𫄲|縹 缥|縺 𦈐|總 总|績 绩|繂 𫄴|繃 绷|繅 缫|繆 缪|繈 𫄶|繏 𦈝|繐 𰬸|繒 缯|繓 𦈛|織 织|繕 缮|繚 缭|繞 绕|繟 𦈎|繡 绣|繢 缋|繨 𫄤|繩 绳|繪 绘|繫 系|繬 𫄱|繭 茧|繮 缰|繯 缳|繰 缲|繳 缴|繶 𫄷|繷 𫄣|繸 䍁|繹 绎|繻 𦈡|繼 继|繽 缤|繾 缱|繿 䍀|纁 𫄸|纆 𬙊|纇 颣|纈 缬|纊 纩|續 续|纍 累|纏 缠|纓 缨|纔 才|纕 𬙋|纖 纤|纗 𫄹|纘 缵|纚 𫄥|纜 缆|缽 钵|罃 䓨|罈 坛|罌 罂|罎 坛|罰 罚|罵 骂|罷 罢|羅 罗|羆 罴|羈 羁|羋 芈|羣 群|羥 羟|羨 羡|義 义|羵 𫅗|羶 膻|習 习|翫 玩|翬 翚|翹 翘|翽 翙|耬 耧|耮 耢|聖 圣|聞 闻|聯 联|聰 聪|聲 声|聳 耸|聵 聩|聶 聂|職 职|聹 聍|聻 𫆏|聽 听|聾 聋|肅 肃|脅 胁|脈 脉|脛 胫|脣 唇|脥 𣍰|脩 修|脫 脱|脹 胀|腎 肾|腖 胨|腡 脶|腦 脑|腪 𣍯|腫 肿|腳 脚|腸 肠|膃 腽|膕 腘|膚 肤|膞 䏝|膠 胶|膢 𦝼|膩 腻|膹 𪱥|膽 胆|膾 脍|膿 脓|臉 脸|臍 脐|臏 膑|臗 𣎑|臘 腊|臚 胪|臟 脏|臠 脔|臢 臜|臥 卧|臨 临|臺 台|與 与|興 兴|舉 举|舊 旧|舘 馆|艙 舱|艣 𫇛|艤 舣|艦 舰|艫 舻|艱 艰|艷 艳|芻 刍|苧 苎|茲 兹|荊 荆|莊 庄|莖 茎|莢 荚|莧 苋|菕 𰰨|華 华|菴 庵|菸 烟|萇 苌|萊 莱|萬 万|萴 荝|萵 莴|葉 叶|葒 荭|葝 𫈎|葤 荮|葦 苇|葯 药|葷 荤|蒍 𫇭|蒐 搜|蒓 莼|蒔 莳|蒕 蒀|蒞 莅|蒭 𫇴|蒼 苍|蓀 荪|蓆 席|蓋 盖|蓧 𦰏|蓮 莲|蓯 苁|蓴 莼|蓽 荜|蔄 𬜬|蔔 卜|蔘 参|蔞 蒌|蔣 蒋|蔥 葱|蔦 茑|蔭 荫|蔯 𫈟|蔿 𫇭|蕁 荨|蕆 蒇|蕎 荞|蕒 荬|蕓 芸|蕕 莸|蕘 荛|蕝 𫈵|蕢 蒉|蕩 荡|蕪 芜|蕭 萧|蕳 𫈉|蕷 蓣|蕽 𫇽|薀 蕰|薆 𫉁|薈 荟|薊 蓟|薌 芗|薑 姜|薔 蔷|薘 荙|薟 莶|薦 荐|薩 萨|薳 䓕|薴 苧|薵 䓓|薹 苔|薺 荠|藍 蓝|藎 荩|藝 艺|藥 药|藪 薮|藭 䓖|藴 蕴|藶 苈|藷 𫉄|藹 蔼|藺 蔺|蘀 萚|蘄 蕲|蘆 芦|蘇 苏|蘊 蕴|蘋 苹|蘚 藓|蘞 蔹|蘟 𦻕|蘢 茏|蘭 兰|蘺 蓠|蘿 萝|虆 蔂|虉 𬟁|處 处|虛 虚|虜 虏|號 号|虧 亏|虯 虬|蛺 蛱|蛻 蜕|蜆 蚬|蝀 𬟽|蝕 蚀|蝟 猬|蝦 虾|蝨 虱|蝸 蜗|螄 蛳|螞 蚂|螢 萤|螮 䗖|螻 蝼|螿 螀|蟂 𫋇|蟄 蛰|蟈 蝈|蟎 螨|蟘 𫋌|蟜 𫊸|蟣 虮|蟬 蝉|蟯 蛲|蟲 虫|蟳 𫊻|蟶 蛏|蟻 蚁|蠀 𧏗|蠁 蚃|蠅 蝇|蠆 虿|蠍 蝎|蠐 蛴|蠑 蝾|蠔 蚝|蠙 𧏖|蠟 蜡|蠣 蛎|蠦 𫊮|蠨 蟏|蠱 蛊|蠶 蚕|蠻 蛮|蠾 𧑏|衆 众|衊 蔑|術 术|衕 同|衚 胡|衛 卫|衝 冲|袞 衮|裊 袅|裏 里|補 补|裝 装|裡 里|製 制|複 复|褌 裈|褘 袆|褲 裤|褳 裢|褸 褛|褻 亵|襀 𫌀|襇 裥|襉 裥|襏 袯|襓 𫋹|襖 袄|襗 𫋷|襘 𫋻|襝 裣|襠 裆|襤 褴|襪 袜|襬 摆|襯 衬|襰 𧝝|襲 袭|襴 襕|襵 𫌇|覈 核|見 见|覎 觃|規 规|覓 觅|視 视|覘 觇|覛 𫌪|覡 觋|覥 觍|覦 觎|親 亲|覬 觊|覯 觏|覲 觐|覷 觑|覹 𫌭|覺 觉|覼 𫌨|覽 览|覿 觌|觀 观|觴 觞|觶 觯|觸 触|訁 讠|訂 订|訃 讣|計 计|訊 讯|訌 讧|討 讨|訏 𬣙|訐 讦|訑 𫍙|訒 讱|訓 训|訕 讪|訖 讫|託 托|記 记|訛 讹|訜 𫍛|訝 讶|訞 𫍚|訟 讼|訢 䜣|訣 诀|訥 讷|訨 𫟞|訩 讻|訪 访|設 设|許 许|訴 诉|訶 诃|診 诊|註 注|証 证|詀 𧮪|詁 诂|詆 诋|詊 𫟟|詎 讵|詐 诈|詑 𫍡|詒 诒|詓 𫍜|詔 诏|評 评|詖 诐|詗 诇|詘 诎|詛 诅|詝 𬣞|詞 词|詠 咏|詡 诩|詢 询|詣 诣|試 试|詩 诗|詪 𬣳|詫 诧|詬 诟|詭 诡|詮 诠|詰 诘|話 话|該 该|詳 详|詵 诜|詷 𫍣|詼 诙|詿 诖|誂 𫍥|誄 诔|誅 诛|誆 诓|誇 夸|誋 𫍪|誌 志|認 认|誑 诳|誒 诶|誕 诞|誘 诱|誚 诮|語 语|誠 诚|誡 诫|誣 诬|誤 误|誥 诰|誦 诵|誨 诲|說 说|誫 𫍨|説 说|誰 谁|課 课|誳 𫍮|誴 𫟡|誶 谇|誷 𫍬|誹 诽|誺 𫍧|誼 谊|誾 訚|調 调|諂 谄|諄 谆|談 谈|諉 诿|請 请|諍 诤|諏 诹|諑 诼|諒 谅|諓 𬣡|論 论|諗 谂|諛 谀|諜 谍|諝 谞|諞 谝|諟 𬤊|諡 谥|諢 诨|諣 𫍩|諤 谔|諥 𫍳|諦 谛|諧 谐|諫 谏|諭 谕|諮 咨|諯 𫍱|諰 𫍰|諱 讳|諲 𬤇|諳 谙|諴 𫍯|諶 谌|諷 讽|諸 诸|諺 谚|諼 谖|諾 诺|謀 谋|謁 谒|謂 谓|謄 誊|謅 诌|謆 𫍸|謉 𫍷|謊 谎|謎 谜|謏 𫍲|謐 谧|謔 谑|謖 谡|謗 谤|謙 谦|謚 谥|講 讲|謝 谢|謠 谣|謡 谣|謨 谟|謫 谪|謬 谬|謭 谫|謯 𫍹|謱 𫍴|謳 讴|謸 𫍵|謹 谨|謾 谩|譁 哗|譂 𫟠|譅 𰶎|譆 𫍻|證 证|譊 𫍢|譎 谲|譏 讥|譑 𫍤|譓 𬤝|譖 谮|識 识|譙 谯|譚 谭|譜 谱|譞 𫍽|譟 噪|譨 𫍦|譫 谵|譭 毁|譯 译|議 议|譴 谴|護 护|譸 诪|譽 誉|譾 谫|讀 读|讅 谉|變 变|讋 詟|讌 䜩|讎 雠|讒 谗|讓 让|讕 谰|讖 谶|讚 赞|讜 谠|讞 谳|豈 岂|豎 竖|豐 丰|豔 艳|豬 猪|豵 𫎆|豶 豮|貓 猫|貗 𫎌|貙 䝙|貝 贝|貞 贞|貟 贠|負 负|財 财|貢 贡|貧 贫|貨 货|販 贩|貪 贪|貫 贯|責 责|貯 贮|貰 贳|貲 赀|貳 贰|貴 贵|貶 贬|買 买|貸 贷|貺 贶|費 费|貼 贴|貽 贻|貿 贸|賀 贺|賁 贲|賂 赂|賃 赁|賄 贿|賅 赅|資 资|賈 贾|賊 贼|賑 赈|賒 赊|賓 宾|賕 赇|賙 赒|賚 赉|賜 赐|賝 𫎩|賞 赏|賟 𧹖|賠 赔|賡 赓|賢 贤|賣 卖|賤 贱|賦 赋|賧 赕|質 质|賫 赍|賬 账|賭 赌|賰 䞐|賴 赖|賵 赗|賺 赚|賻 赙|購 购|賽 赛|賾 赜|贃 𧹗|贄 贽|贅 赘|贇 赟|贈 赠|贉 𫎫|贊 赞|贋 赝|贍 赡|贏 赢|贐 赆|贑 𫎬|贓 赃|贔 赑|贖 赎|贗 赝|贚 𫎦|贛 赣|贜 赃|赬 赪|趕 赶|趙 赵|趨 趋|趲 趱|跡 迹|踐 践|踰 逾|踴 踊|蹌 跄|蹔 𫏐|蹕 跸|蹟 迹|蹠 跖|蹣 蹒|蹤 踪|蹳 𫏆|蹺 跷|蹻 𫏋|躂 跶|躉 趸|躊 踌|躋 跻|躍 跃|躎 䟢|躑 踯|躒 跞|躓 踬|躕 蹰|躘 𨀁|躚 跹|躝 𨅬|躡 蹑|躥 蹿|躦 躜|躪 躏|軀 躯|軉 𨉗|車 车|軋 轧|軌 轨|軍 军|軏 𫐄|軑 轪|軒 轩|軔 轫|軕 𫐅|軗 𨐅|軛 轭|軜 𫐇|軝 𬨂|軟 软|軤 轷|軨 𫐉|軫 轸|軬 𫐊|軲 轱|軷 𫐈|軸 轴|軹 轵|軺 轺|軻 轲|軼 轶|軾 轼|軿 𫐌|較 较|輄 𨐈|輅 辂|輇 辁|輈 辀|載 载|輊 轾|輋 𪨶|輒 辄|輓 挽|輔 辅|輕 轻|輖 𫐏|輗 𫐐|輛 辆|輜 辎|輝 辉|輞 辋|輟 辍|輢 𫐎|輥 辊|輦 辇|輨 𫐑|輩 辈|輪 轮|輬 辌|輮 𫐓|輯 辑|輳 辏|輶 𬨎|輷 𫐒|輸 输|輻 辐|輼 辒|輾 辗|輿 舆|轀 辒|轂 毂|轄 辖|轅 辕|轆 辘|轇 𫐖|轉 转|轊 𫐕|轍 辙|轎 轿|轐 𫐗|轔 辚|轗 𫐘|轟 轰|轠 𫐙|轡 辔|轢 轹|轣 𫐆|轤 轳|辦 办|辭 辞|辮 辫|辯 辩|農 农|迴 回|逕 迳|這 这|連 连|週 周|進 进|遊 游|運 运|過 过|達 达|違 违|遙 遥|遜 逊|遞 递|遠 远|遡 溯|適 适|遱 𫐷|遲 迟|遷 迁|選 选|遺 遗|遼 辽|邁 迈|還 还|邇 迩|邊 边|邏 逻|邐 逦|郟 郏|郵 邮|鄆 郓|鄉 乡|鄒 邹|鄔 邬|鄖 郧|鄟 𫑘|鄧 邓|鄩 𬩽|鄭 郑|鄰 邻|鄲 郸|鄳 𫑡|鄴 邺|鄶 郐|鄺 邝|酇 酂|酈 郦|醃 腌|醖 酝|醜 丑|醞 酝|醟 蒏|醣 糖|醫 医|醬 酱|醱 酦|醲 𬪩|醶 𫑷|釀 酿|釁 衅|釃 酾|釅 酽|釋 释|釐 厘|釒 钅|釓 钆|釔 钇|釕 钌|釗 钊|釘 钉|釙 钋|釚 𫟲|針 针|釟 𫓥|釣 钓|釤 钐|釦 扣|釧 钏|釨 𫓦|釩 钒|釲 𫟳|釳 𨰿|釴 𬬩|釵 钗|釷 钍|釹 钕|釺 钎|釾 䥺|釿 𬬱|鈀 钯|鈁 钫|鈃 钘|鈄 钭|鈅 钥|鈆 𫓪|鈇 𫓧|鈈 钚|鈉 钠|鈋 𨱂|鈍 钝|鈎 钩|鈐 钤|鈑 钣|鈒 钑|鈔 钞|鈕 钮|鈖 𫟴|鈗 𫟵|鈛 𫓨|鈞 钧|鈠 𨱁|鈡 钟|鈣 钙|鈥 钬|鈦 钛|鈧 钪|鈮 铌|鈯 𨱄|鈰 铈|鈲 𨱃|鈳 钶|鈴 铃|鈷 钴|鈸 钹|鈹 铍|鈺 钰|鈽 钸|鈾 铀|鈿 钿|鉀 钾|鉁 𨱅|鉅 巨|鉆 钻|鉈 铊|鉉 铉|鉊 𬬿|鉋 铇|鉍 铋|鉑 铂|鉔 𫓬|鉕 钷|鉗 钳|鉚 铆|鉛 铅|鉝 𫟷|鉞 钺|鉠 𫓭|鉢 钵|鉤 钩|鉥 𬬸|鉦 钲|鉧 𬭁|鉬 钼|鉭 钽|鉮 𬬹|鉳 锫|鉶 铏|鉷 𫟹|鉸 铰|鉺 铒|鉻 铬|鉽 𫟸|鉾 𫓴|鉿 铪|銀 银|銁 𫓲|銂 𫟻|銃 铳|銅 铜|銈 𫓯|銊 𫓰|銍 铚|銏 𫟶|銑 铣|銓 铨|銖 铢|銘 铭|銚 铫|銛 铦|銜 衔|銠 铑|銣 铷|銥 铱|銦 铟|銨 铵|銩 铥|銪 铕|銫 铯|銬 铐|銱 铞|銳 锐|銶 𨱇|銷 销|銹 锈|銻 锑|銼 锉|鋁 铝|鋂 𰾄|鋃 锒|鋅 锌|鋇 钡|鋉 𨱈|鋌 铤|鋏 铗|鋐 𬭎|鋒 锋|鋗 𫓶|鋙 铻|鋝 锊|鋟 锓|鋠 𫓵|鋣 铘|鋤 锄|鋥 锃|鋦 锔|鋨 锇|鋩 铓|鋪 铺|鋭 锐|鋮 铖|鋯 锆|鋰 锂|鋱 铽|鋶 锍|鋸 锯|鋹 𬬮|鋼 钢|錀 𬬭|錁 锞|錂 𨱋|錄 录|錆 锖|錇 锫|錈 锩|錏 铔|錐 锥|錒 锕|錕 锟|錘 锤|錙 锱|錚 铮|錛 锛|錜 𫓻|錝 𫓽|錞 𬭚|錟 锬|錠 锭|錡 锜|錢 钱|錤 𫓹|錥 𫓾|錦 锦|錨 锚|錩 锠|錫 锡|錮 锢|錯 错|録 录|錳 锰|錶 表|錸 铼|錼 镎|錽 𫓸|鍀 锝|鍁 锨|鍃 锪|鍄 𨱉|鍅 钫|鍆 钔|鍇 锴|鍈 锳|鍉 𫔂|鍊 炼|鍋 锅|鍍 镀|鍒 𫔄|鍔 锷|鍘 铡|鍚 钖|鍛 锻|鍠 锽|鍤 锸|鍥 锲|鍩 锘|鍬 锹|鍭 𬭤|鍮 𨱎|鍰 锾|鍵 键|鍶 锶|鍺 锗|鍼 针|鍾 钟|鎂 镁|鎄 锿|鎇 镅|鎈 𫟿|鎊 镑|鎌 镰|鎍 𫔅|鎓 𬭩|鎔 镕|鎖 锁|鎘 镉|鎙 𫔈|鎚 锤|鎛 镈|鎝 𨱏|鎞 𫔇|鎡 镃|鎢 钨|鎣 蓥|鎦 镏|鎧 铠|鎩 铩|鎪 锼|鎬 镐|鎭 镇|鎮 镇|鎯 𨱍|鎰 镒|鎲 镋|鎳 镍|鎵 镓|鎶 鿔|鎷 𨰾|鎸 镌|鎿 镎|鏃 镞|鏆 𨱌|鏇 旋|鏈 链|鏉 𨱒|鏌 镆|鏍 镙|鏏 𬭬|鏐 镠|鏑 镝|鏗 铿|鏘 锵|鏚 𬭭|鏜 镗|鏝 镘|鏞 镛|鏟 铲|鏡 镜|鏢 镖|鏤 镂|鏥 𫔊|鏦 𫓩|鏨 錾|鏰 镚|鏵 铧|鏷 镤|鏹 镪|鏺 䥽|鏻 𬭸|鏽 锈|鏾 𫔌|鐃 铙|鐄 𨱑|鐇 𫔍|鐈 𫓱|鐋 铴|鐍 𫔎|鐎 𨱓|鐏 𨱔|鐐 镣|鐒 铹|鐓 镦|鐔 镡|鐘 钟|鐙 镫|鐝 镢|鐠 镨|鐥 䦅|鐦 锎|鐧 锏|鐨 镄|鐩 𬭼|鐪 𫓺|鐫 镌|鐮 镰|鐯 䦃|鐲 镯|鐳 镭|鐵 铁|鐶 镮|鐸 铎|鐺 铛|鐼 𫔁|鐽 𫟼|鐿 镱|鑀 𰾭|鑄 铸|鑉 𫠁|鑊 镬|鑌 镔|鑑 鉴|鑒 鉴|鑔 镲|鑕 锧|鑞 镴|鑠 铄|鑣 镳|鑥 镥|鑪 𬬻|鑭 镧|鑰 钥|鑱 镵|鑲 镶|鑴 𫔔|鑷 镊|鑹 镩|鑼 锣|鑽 钻|鑾 銮|鑿 凿|钁 镢|钂 镋|長 长|門 门|閂 闩|閃 闪|閆 闫|閈 闬|閉 闭|開 开|閌 闶|閍 𨸂|閎 闳|閏 闰|閐 𨸃|閑 闲|閒 闲|間 间|閔 闵|閗 𫔯|閘 闸|閝 𫠂|閞 𫔰|閡 阂|閣 阁|閤 合|閥 阀|閨 闺|閩 闽|閫 阃|閬 阆|閭 闾|閱 阅|閲 阅|閵 𫔴|閶 阊|閹 阉|閻 阎|閼 阏|閽 阍|閾 阈|閿 阌|闃 阒|闆 板|闇 暗|闈 闱|闉 𬮱|闊 阔|闋 阕|闌 阑|闍 阇|闐 阗|闑 𫔶|闒 阘|闓 闿|闔 阖|闕 阙|闖 闯|關 关|闞 阚|闠 阓|闡 阐|闢 辟|闤 阛|闥 闼|陘 陉|陝 陕|陞 升|陣 阵|陰 阴|陳 陈|陸 陆|陽 阳|隉 陧|隊 队|階 阶|隑 𬮿|隕 陨|際 际|隤 𬯎|隨 随|險 险|隮 𬯀|隯 陦|隱 隐|隴 陇|隸 隶|隻 只|雋 隽|雖 虽|雙 双|雛 雏|雜 杂|雞 鸡|離 离|難 难|雲 云|電 电|霑 沾|霢 霡|霣 𫕥|霧 雾|霼 𪵣|霽 霁|靂 雳|靄 霭|靆 叇|靈 灵|靉 叆|靚 靓|靜 静|靝 靔|靦 腼|靧 𫖃|靨 靥|鞏 巩|鞝 绱|鞦 秋|鞽 鞒|鞾 𫖇|韁 缰|韃 鞑|韆 千|韉 鞯|韋 韦|韌 韧|韍 韨|韓 韩|韙 韪|韚 𫠅|韛 𫖔|韜 韬|韝 鞲|韞 韫|韠 𫖒|韻 韵|響 响|頁 页|頂 顶|頃 顷|項 项|順 顺|頇 顸|須 须|頊 顼|頌 颂|頍 𫠆|頎 颀|頏 颃|預 预|頑 顽|頒 颁|頓 顿|頔 𬱖|頗 颇|領 领|頜 颌|頠 𬱟|頡 颉|頤 颐|頦 颏|頫 𫖯|頭 头|頮 颒|頰 颊|頲 颋|頴 颕|頵 𫖳|頷 颔|頸 颈|頹 颓|頻 频|頽 颓|顂 𩓋|顃 𩖖|顅 𫖶|顆 颗|題 题|額 额|顎 颚|顏 颜|顒 颙|顓 颛|顔 颜|顗 𫖮|願 愿|顙 颡|顛 颠|類 类|顢 颟|顣 𫖹|顥 颢|顧 顾|顫 颤|顬 颥|顯 显|顰 颦|顱 颅|顳 颞|顴 颧|風 风|颭 飐|颮 飑|颯 飒|颰 𩙥|颱 台|颳 刮|颶 飓|颷 𩙪|颸 飔|颺 飏|颻 飖|颼 飕|颾 𩙫|飀 飗|飄 飘|飆 飙|飈 飚|飋 𫗋|飛 飞|飠 饣|飢 饥|飣 饤|飥 饦|飦 𫗞|飩 饨|飪 饪|飫 饫|飭 饬|飯 饭|飱 飧|飲 饮|飴 饴|飵 𫗢|飶 𫗣|飼 饲|飽 饱|飾 饰|飿 饳|餃 饺|餄 饸|餅 饼|餈 糍|餉 饷|養 养|餌 饵|餎 饹|餏 饻|餑 饽|餒 馁|餓 饿|餔 𫗦|餕 馂|餖 饾|餗 𫗧|餘 余|餚 肴|餛 馄|餜 馃|餞 饯|餡 馅|餦 𫗠|餧 𫗪|館 馆|餪 𫗬|餫 𫗥|餬 糊|餭 𫗮|餱 糇|餳 饧|餵 喂|餶 馉|餷 馇|餸 𩠌|餺 馎|餼 饩|餾 馏|餿 馊|饁 馌|饃 馍|饅 馒|饈 馐|饉 馑|饊 馓|饋 馈|饌 馔|饑 饥|饒 饶|饗 飨|饘 𫗴|饜 餍|饞 馋|饟 𫗵|饠 𫗩|饢 馕|馬 马|馭 驭|馮 冯|馯 𫘛|馱 驮|馳 驰|馴 驯|馹 驲|馼 𫘜|駁 驳|駃 𫘝|駉 𬳶|駊 𫘟|駎 𩧨|駐 驻|駑 驽|駒 驹|駓 𬳵|駔 驵|駕 驾|駘 骀|駙 驸|駚 𩧫|駛 驶|駝 驼|駞 𫘞|駟 驷|駡 骂|駢 骈|駤 𫘠|駧 𩧲|駩 𩧴|駪 𬳽|駫 𫘡|駭 骇|駰 骃|駱 骆|駶 𩧺|駸 骎|駻 𫘣|駼 𬳿|駿 骏|騁 骋|騂 骍|騃 𫘤|騄 𫘧|騅 骓|騉 𫘥|騊 𫘦|騌 骔|騍 骒|騎 骑|騏 骐|騑 𬴂|騔 𩨀|騖 骛|騙 骗|騚 𩨊|騜 𫘩|騝 𩨃|騞 𬴃|騟 𩨈|騠 𫘨|騤 骙|騧 䯄|騪 𩨄|騫 骞|騭 骘|騮 骝|騰 腾|騱 𫘬|騴 𫘫|騵 𫘪|騶 驺|騷 骚|騸 骟|騻 𫘭|騼 𫠋|騾 骡|驀 蓦|驁 骜|驂 骖|驃 骠|驄 骢|驅 驱|驊 骅|驋 𩧯|驌 骕|驍 骁|驎 𬴊|驏 骣|驓 𫘯|驕 骄|驗 验|驙 𫘰|驚 惊|驛 驿|驟 骤|驢 驴|驤 骧|驥 骥|驦 骦|驨 𫘱|驪 骊|驫 骉|骯 肮|髏 髅|髒 脏|體 体|髕 髌|髖 髋|髮 发|鬆 松|鬍 胡|鬖 𩭹|鬚 须|鬠 𫘽|鬢 鬓|鬥 斗|鬧 闹|鬨 哄|鬩 阋|鬮 阄|鬱 郁|鬹 鬶|魎 魉|魘 魇|魚 鱼|魛 鱽|魟 𫚉|魢 鱾|魥 𩽹|魦 𫚌|魨 鲀|魯 鲁|魴 鲂|魵 𫚍|魷 鱿|魺 鲄|魽 𫠐|鮀 𬶍|鮁 鲅|鮃 鲆|鮄 𫚒|鮅 𫚑|鮆 𫚖|鮈 𬶋|鮊 鲌|鮋 鲉|鮍 鲏|鮎 鲇|鮐 鲐|鮑 鲍|鮒 鲋|鮓 鲊|鮚 鲒|鮜 鲘|鮝 鲞|鮞 鲕|鮟 𩽾|鮠 𬶏|鮡 𬶐|鮣 䲟|鮤 𫚓|鮦 鲖|鮪 鲔|鮫 鲛|鮭 鲑|鮮 鲜|鮯 𫚗|鮰 𫚔|鮳 鲓|鮵 𫚛|鮶 鲪|鮸 𩾃|鮺 鲝|鮿 𫚚|鯀 鲧|鯁 鲠|鯄 𩾁|鯆 𫚙|鯇 鲩|鯉 鲤|鯊 鲨|鯒 鲬|鯔 鲻|鯕 鲯|鯖 鲭|鯗 鲞|鯛 鲷|鯝 鲴|鯞 𫚡|鯡 鲱|鯢 鲵|鯤 鲲|鯧 鲳|鯨 鲸|鯪 鲮|鯫 鲰|鯬 𫚞|鯰 鲶|鯱 𩾇|鯴 鲺|鯶 𩽼|鯷 鳀|鯻 𬶟|鯽 鲫|鯾 𫚣|鯿 鳊|鰁 鳈|鰂 鲗|鰃 鳂|鰆 䲠|鰈 鲽|鰉 鳇|鰊 𬶠|鰋 𫚢|鰌 䲡|鰍 鳅|鰏 鲾|鰐 鳄|鰑 𫚊|鰒 鳆|鰓 鳃|鰕 𫚥|鰛 鳁|鰜 鳒|鰟 鳑|鰠 鳋|鰣 鲥|鰤 𫚕|鰥 鳏|鰦 𫚤|鰧 䲢|鰨 鳎|鰩 鳐|鰫 𫚦|鰭 鳍|鰮 鳁|鰱 鲢|鰲 鳌|鰳 鳓|鰵 鳘|鰶 𬶭|鰷 鲦|鰹 鲣|鰺 鲹|鰻 鳗|鰼 鳛|鰽 𫚧|鰾 鳔|鱀 𬶨|鱂 鳉|鱄 𫚋|鱅 鳙|鱆 𫠒|鱇 𩾌|鱈 鳕|鱉 鳖|鱊 𫚪|鱒 鳟|鱔 鳝|鱖 鳜|鱗 鳞|鱘 鲟|鱚 𬶮|鱝 鲼|鱟 鲎|鱠 鲙|鱢 𫚫|鱣 鳣|鱤 鳡|鱧 鳢|鱨 鲿|鱭 鲚|鱮 𫚈|鱯 鳠|鱲 𫚭|鱷 鳄|鱸 鲈|鱺 鲡|鳥 鸟|鳧 凫|鳩 鸠|鳬 凫|鳲 鸤|鳳 凤|鳴 鸣|鳶 鸢|鳷 𫛛|鳼 𪉃|鳽 𫛚|鳾 䴓|鴀 𫛜|鴃 𫛞|鴅 𫛝|鴆 鸩|鴇 鸨|鴉 鸦|鴐 𫛤|鴒 鸰|鴔 𫛡|鴕 鸵|鴗 𫁡|鴛 鸳|鴜 𪉈|鴝 鸲|鴞 鸮|鴟 鸱|鴣 鸪|鴥 𫛣|鴦 鸯|鴨 鸭|鴮 𫛦|鴯 鸸|鴰 鸹|鴲 𪉆|鴳 𫛩|鴴 鸻|鴷 䴕|鴻 鸿|鴽 𫛪|鴿 鸽|鵁 䴔|鵂 鸺|鵃 鸼|鵊 𫛥|鵏 𬷕|鵐 鹀|鵑 鹃|鵒 鹆|鵓 鹁|鵚 𪉍|鵜 鹈|鵝 鹅|鵟 𫛭|鵠 鹄|鵡 鹉|鵧 𫛨|鵩 𫛳|鵪 鹌|鵫 𫛱|鵬 鹏|鵮 鹐|鵯 鹎|鵰 雕|鵲 鹊|鵷 鹓|鵾 鹍|鶄 䴖|鶇 鸫|鶉 鹑|鶊 鹒|鶌 𫛵|鶒 𫛶|鶓 鹋|鶖 鹙|鶗 𫛸|鶘 鹕|鶚 鹗|鶠 𬸘|鶡 鹖|鶥 鹛|鶦 𫛷|鶩 鹜|鶪 䴗|鶬 鸧|鶭 𫛯|鶯 莺|鶰 𫛫|鶱 𬸣|鶲 鹟|鶴 鹤|鶹 鹠|鶺 鹡|鶻 鹘|鶼 鹣|鶿 鹚|鷀 鹚|鷁 鹢|鷂 鹞|鷄 鸡|鷅 𫛽|鷉 䴘|鷊 鹝|鷐 𫜀|鷓 鹧|鷔 𪉑|鷖 鹥|鷗 鸥|鷙 鸷|鷚 鹨|鷟 𬸦|鷣 𫜃|鷤 𫛴|鷥 鸶|鷦 鹪|鷨 𪉊|鷩 𫜁|鷫 鹔|鷭 𬸪|鷯 鹩|鷲 鹫|鷳 鹇|鷴 鹇|鷷 𫜄|鷸 鹬|鷹 鹰|鷺 鹭|鷽 鸴|鷿 𬸯|鸂 㶉|鸇 鹯|鸊 䴙|鸋 𫛢|鸌 鹱|鸏 鹲|鸑 𬸚|鸕 鸬|鸗 𫛟|鸘 鹴|鸚 鹦|鸛 鹳|鸝 鹂|鸞 鸾|鹵 卤|鹹 咸|鹺 鹾|鹼 碱|鹽 盐|麗 丽|麥 麦|麨 𪎊|麩 麸|麪 面|麫 面|麬 𤿲|麯 曲|麲 𪎉|麳 𪎌|麴 曲|麵 面|麷 𫜑|麼 么|麽 么|黃 黄|黌 黉|點 点|黨 党|黲 黪|黴 霉|黶 黡|黷 黩|黽 黾|黿 鼋|鼂 鼌|鼉 鼍|鼕 冬|鼴 鼹|齊 齐|齋 斋|齎 赍|齏 齑|齒 齿|齔 龀|齕 龁|齗 龂|齘 𬹼|齙 龅|齜 龇|齟 龃|齠 龆|齡 龄|齣 出|齦 龈|齧 啮|齩 𫜪|齪 龊|齬 龉|齭 𫜭|齮 𬺈|齯 𫠜|齰 𫜬|齲 龋|齴 𫜮|齶 腭|齷 龌|齼 𬺓|齾 𫜰|龍 龙|龎 厐|龐 庞|龑 䶮|龓 𫜲|龔 龚|龕 龛|龜 龟|龭 𩨎|龯 𨱆|鿁 䜤|鿓 鿒|𠁞 𠀾|𠌥 𠆿|𠏢 𠉗|𠐊 𫝋|𠗣 㓆|𠞆 𠛆|𠠎 𠚳|𠬙 𪠡|𠽃 𪠺|𠿕 𪜎|𡂡 𪢒|𡃄 𪡺|𡃕 𠴛|𡃤 𪢐|𡄔 𠴢|𡄣 𠵸|𡅏 𠲥|𡅯 𪢖|𡑍 𫭼|𡑭 𡋗|𡓁 𪤄|𡓾 𡋀|𡔖 𡍣|𡞵 㛟|𡟫 𫝪|𡠹 㛿|𡢃 㛠|𡮉 𡭜|𡮣 𡭬|𡳳 𡳃|𡸗 𪨩|𡹬 𪨹|𡻕 岁|𡽗 𡸃|𡾱 㟜|𡿖 𪩛|𢍰 𪪴|𢠼 𢙑|𢣐 𪬚|𢣚 𢘝|𢣭 𢘞|𢤩 𪫡|𢤱 𢘙|𢤿 𪬯|𢯷 𪭝|𢶒 𪭯|𢶫 𢫞|𢷮 𢫊|𢹿 𢬦|𢺳 𪮳|𣈶 暅|𣋋 𣈣|𣍐 𫧃|𣙎 㭣|𣜬 𪳗|𣝕 𣘷|𣞻 𣘓|𣠩 𣞎|𣠲 𣑶|𣯩 𣯣|𣯴 𣭤|𣯶 毶|𣽏 𪶮|𣾷 㳢|𣿉 𣶫|𤁣 𣺽|𤄷 𪶒|𤅶 𣷷|𤑳 𤎻|𤑹 𪹀|𤒎 𤊀|𤒻 𪹹|𤓌 𪹠|𤓎 𤎺|𤓩 𤊰|𤘀 𪺣|𤛮 𤙯|𤛱 𫞢|𤜆 𪺪|𤠮 𪺸|𤢟 𤝢|𤢻 𢢐|𤩂 𫞧|𤪺 㻘|𤫩 㻏|𤬅 𪼴|𤳷 𪽝|𤳸 𤳄|𤷃 𪽭|𤸫 𤶧|𤺔 𪽴|𥊝 𥅿|𥌃 𥅘|𥏝 𪿊|𥕥 𥐰|𥖅 𥐯|𥖲 𪿞|𥗇 𪿵|𥗽 𬒗|𥜐 𫀓|𥜰 𫀌|𥞵 𥞦|𥢢 䅪|𥢶 𫞷|𥢷 𫀮|𥨐 𥧂|𥪂 𥩺|𥯤 𫁳|𥴨 𫂖|𥴼 𫁺|𥵃 𥱔|𥵊 𥭉|𥶽 𫁱|𥸠 𥮋|𥻦 𫂿|𥼽 𥹥|𥽖 𥺇|𥾯 𫄝|𥿊 𦈈|𦀖 𫄦|𦂅 𦈒|𦃄 𦈗|𦃩 𫄯|𦅇 𫄪|𦅈 𫄵|𦆲 𫟇|𦒀 𫅥|𦔖 𫅼|𦘧 𡳒|𦟼 𫆝|𦠅 𫞅|𦡝 𫆫|𦢈 𣍨|𦣎 𦟗|𦧺 𫇘|𦪙 䑽|𦪽 𦨩|𦱌 𫇪|𦾟 𦶻|𧎈 𧌥|𧒯 𫊹|𧔥 𧒭|𧕟 𧉐|𧜗 䘞|𧜵 䙊|𧝞 䘛|𧞫 𫌋|𧟀 𧝧|𧡴 𫌫|𧢄 𫌬|𧦝 𫍞|𧦧 𫍟|𧩕 𫍭|𧩙 䜥|𧩼 𫍶|𧫝 𫍺|𧬤 𫍼|𧭈 𫍾|𧭹 𫍐|𧳟 𧳕|𧵳 䞌|𧶔 𧹓|𧶧 䞎|𧷎 𪠀|𧸘 𫎨|𧹈 𪥠|𧽯 𫎸|𨂐 𫏌|𨄣 𨀱|𨅍 𨁴|𨆪 𫏕|𨇁 𧿈|𨇞 𨅫|𨇤 𫏨|𨇰 𫏞|𨇽 𫏑|𨈊 𨂺|𨈌 𨄄|𨊰 䢀|𨊸 䢁|𨊻 𨐆|𨋢 䢂|𨌈 𫐍|𨍰 𫐔|𨎌 𫐋|𨎮 𨐉|𨏠 𨐇|𨏥 𨐊|𨞺 𫟫|𨟊 𫟬|𨢿 𨡙|𨣈 𨡺|𨣞 𨟳|𨣧 𨠨|𨤻 𨤰|𨥛 𨱀|𨥟 𫓫|𨦫 䦀|𨧀 𬭊|𨧜 䦁|𨧰 𫟽|𨧱 𨱊|𨨏 𬭛|𨨛 𫓼|𨨢 𫓿|𨩰 𫟾|𨪕 𫓮|𨫒 𨱐|𨬖 𫔏|𨭆 𬭶|𨭎 𬭳|𨭖 𫔑|𨭸 𫔐|𨮂 𨱕|𨮳 𫔒|𨯅 䥿|𨯟 𫔓|𨰃 𫔉|𨰋 𫓳|𨰥 𫔕|𨰲 𫔃|𨲳 𫔖|𨳑 𨸁|𨳕 𨸀|𨴗 𨸅|𨴹 𫔲|𨵩 𨸆|𨵸 𨸇|𨶀 𨸉|𨶏 𨸊|𨶮 𨸌|𨶲 𨸋|𨷲 𨸎|𨼳 𫔽|𨽏 𨸘|𩀨 𫕚|𩅙 𫕨|𩎖 𫖑|𩎢 𩏾|𩏂 𫖓|𩏠 𫖖|𩏪 𩏽|𩏷 𫃗|𩑔 𫖪|𩒎 𫖭|𩓣 𩖕|𩓥 𫖵|𩔑 𫖷|𩔳 𫖴|𩖰 𫠇|𩗀 𩙦|𩗓 𫗈|𩗴 𫗉|𩘀 𩙩|𩘝 𩙭|𩘹 𩙨|𩘺 𩙬|𩙈 𩙰|𩚛 𩟿|𩚥 𩠀|𩚩 𫗡|𩚵 𩠁|𩛆 𩠂|𩛌 𫗤|𩛡 𫗨|𩛩 𩠃|𩜇 𩠉|𩜦 𩠆|𩜵 𩠊|𩝔 𩠋|𩝽 𫗳|𩞄 𩠎|𩞦 𩠏|𩞯 䭪|𩟐 𩠅|𩟗 𫗚|𩠴 𩠠|𩡣 𩡖|𩡺 𩧦|𩢡 𩧬|𩢴 𩧵|𩢸 𩧳|𩢾 𩧮|𩣏 𩧶|𩣑 䯃|𩣫 𩧸|𩣵 𩧻|𩣺 𩧼|𩤊 𩧩|𩤙 𩨆|𩤲 𩨉|𩤸 𩨅|𩥄 𩨋|𩥇 𩨍|𩥉 𩧱|𩥑 𩨌|𩦠 𫠌|𩧆 𩨐|𩭙 𩬣|𩯁 𫙂|𩯳 𩯒|𩰀 𩬤|𩰹 𩰰|𩳤 𩲒|𩴵 𩴌|𩵦 𫠏|𩵩 𩽺|𩵹 𩽻|𩶁 𫚎|𩶘 䲞|𩶰 𩽿|𩶱 𩽽|𩷰 𩾄|𩸃 𩾅|𩸄 𫚝|𩸡 𫚟|𩸦 𩾆|𩻗 𫚨|𩻬 𫚩|𩻮 𫚘|𩼶 𫚬|𩽇 𩾎|𩿅 𫠖|𩿤 𫛠|𩿪 𪉄|𪀖 𫛧|𪀦 𪉅|𪀾 𪉋|𪁈 𪉉|𪁖 𪉌|𪂆 𪉎|𪃍 𪉐|𪃏 𪉏|𪃒 𫛻|𪃧 𫛹|𪄆 𪉔|𪄕 𪉒|𪅂 𫜂|𪆷 𫛾|𪇳 𪉕|𪈼 𱊜|𪉸 𫜊|𪋿 𫧮|𪌭 𫜓|𪍠 𫜕|𪓰 𫜟|𪔵 𪔭|𪘀 𪚏|𪘯 𪚐|𪙏 𫜯|𪟖 𠛾|𪷓 𣶭|𫒡 𫓷|𫜦 𫜫";
+  const to_cn = [[dict_TSPhrases, dict_TSCharacters]];
+  const fromDicts = {
+    hk: from_hk,
+    tw: from_tw,
+    twp: from_twp,
+    jp: from_jp
+  };
+  const toDicts = {
+    cn: to_cn
+  };
+  const configs = {
+    hk2s: { segmentation: dict_TSPhrases, conversionChain: [[dict_HKVariantsRevPhrases, dict_HKVariantsRev], [dict_TSPhrases, dict_TSCharacters]] },
+    t2s: { segmentation: dict_TSPhrases, conversionChain: [[dict_TSPhrases, dict_TSCharacters]] },
+    tw2s: { segmentation: dict_TSPhrases, conversionChain: [[dict_TWVariantsRevPhrases, dict_TWVariantsRev], [dict_TSPhrases, dict_TSCharacters]] },
+    tw2sp: { segmentation: dict_TSPhrases, conversionChain: [[dict_TWPhrasesRev, dict_TWVariantsRevPhrases, dict_TWVariantsRev], [dict_TSPhrases, dict_TSCharacters]] }
+  };
+  const t2cnPreset = Object.freeze( Object.defineProperty({
+    __proto__: null,
+    configs,
+    from: fromDicts,
+    to: toDicts
+  }, Symbol.toStringTag, { value: "Module" }));
+  class Trie {
+
+
+
+constructor() {
+      this.map = new Map();
+    }
+addWord(s, v) {
+      let { map } = this;
+      for (const c of s) {
+        const cp = c.codePointAt(0);
+        const nextMap = map.get(cp);
+        if (nextMap == null) {
+          const tmp = new Map();
+          map.set(cp, tmp);
+          map = tmp;
+        } else {
+          map = nextMap;
+        }
+      }
+      map.trie_val = v;
+    }
+loadDict(d) {
+      if (typeof d === "string") {
+        d = d.split("|");
+        for (const line of d) {
+          const [l, r] = line.split(" ");
+          this.addWord(l, r);
+        }
+      } else {
+        for (let arr of d) {
+          const [l, r] = arr;
+          this.addWord(l, r);
+        }
+      }
+    }
+loadDictGroup(arr) {
+      arr.slice().reverse().forEach((d) => {
+        this.loadDict(d);
+      });
+    }
+    matchPrefix(s, i) {
+      const n = s.length;
+      let t_curr = this.map, k = 0, v;
+      for (let j = i; j < n; ) {
+        const x = s.codePointAt(j);
+        j += x > 65535 ? 2 : 1;
+        const t_next = t_curr.get(x);
+        if (typeof t_next === "undefined") {
+          break;
+        }
+        t_curr = t_next;
+        const v_curr = t_curr.trie_val;
+        if (typeof v_curr !== "undefined") {
+          k = j;
+          v = v_curr;
+        }
+      }
+      if (k > 0) {
+        return { end: k, value: v };
+      }
+      return null;
+    }
+    segment(s) {
+      const n = s.length, segments = [];
+      let orig_i = null;
+      for (let i = 0; i < n; ) {
+        const matched = this.matchPrefix(s, i);
+        if (matched) {
+          if (orig_i !== null) {
+            segments.push(s.slice(orig_i, i));
+            orig_i = null;
+          }
+          segments.push(s.slice(i, matched.end));
+          i = matched.end;
+        } else {
+          if (orig_i === null) {
+            orig_i = i;
+          }
+          i += s.codePointAt(i) > 65535 ? 2 : 1;
+        }
+      }
+      if (orig_i !== null) {
+        segments.push(s.slice(orig_i, n));
+      }
+      return segments;
+    }
+convert(s) {
+      const n = s.length, arr = [];
+      let orig_i = null;
+      for (let i = 0; i < n; ) {
+        const matched = this.matchPrefix(s, i);
+        if (matched) {
+          if (orig_i !== null) {
+            arr.push(s.slice(orig_i, i));
+            orig_i = null;
+          }
+          arr.push(matched.value);
+          i = matched.end;
+        } else {
+          if (orig_i === null) {
+            orig_i = i;
+          }
+          i += s.codePointAt(i) > 65535 ? 2 : 1;
+        }
+      }
+      if (orig_i !== null) {
+        arr.push(s.slice(orig_i, n));
+      }
+      return arr.join("");
+    }
+  }
+  function ConverterFactory(...dictGroups) {
+    const trieArr = dictGroups.map((grp) => {
+      const t = new Trie();
+      t.loadDictGroup(grp);
+      return t;
+    });
+    function convert(s) {
+      return trieArr.reduce((res, t) => {
+        return t.convert(res);
+      }, s);
+    }
+    return convert;
+  }
+  function ConverterFactoryWithSegmentation(segmentationDict, ...dictGroups) {
+    const segmentation = new Trie();
+    segmentation.loadDict(segmentationDict);
+    const trieArr = dictGroups.map((grp) => {
+      const t = new Trie();
+      t.loadDictGroup(grp);
+      return t;
+    });
+    return function convert(s) {
+      return trieArr.reduce((segments, t) => segments.map((segment) => t.convert(segment)), segmentation.segment(s)).join("");
+    };
+  }
+  function ConverterBuilder(localePreset) {
+    function getConfigName(from, to) {
+      if (from === "cn") {
+        return `s2${to}`;
+      }
+      if (to === "cn") {
+        return from === "twp" ? "tw2sp" : `${from}2s`;
+      }
+      return `${from}2${to}`;
+    }
+    function normalizeDictGroups(dictGroup) {
+      if (Array.isArray(dictGroup) && Array.isArray(dictGroup[0])) {
+        return dictGroup;
+      }
+      return [dictGroup];
+    }
+    return function Converter(options) {
+      if (localePreset.configs) {
+        const config = localePreset.configs[getConfigName(options.from, options.to)];
+        if (config) {
+          return ConverterFactoryWithSegmentation(config.segmentation, ...config.conversionChain);
+        }
+      }
+      let dictGroups = [];
+      ["from", "to"].forEach((type) => {
+        if (typeof options[type] !== "string") {
+          throw new Error("Please provide the `" + type + "` option");
+        }
+        if (options[type] !== "t") {
+          dictGroups.push(...normalizeDictGroups(localePreset[type][options[type]]));
+        }
+      });
+      return ConverterFactory.apply(null, dictGroups);
+    };
+  }
   const s_2_t = {
     "·": "‧",
     "―": "─",
@@ -18660,2942 +19293,160 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       );
     }
     let $$text = isString2 ? text2 : "";
-    $$text = ($$text == null ? void 0 : $$text.replace(/[^\x00-\xFF]/g, replaceFn$1)) || "";
+    $$text = ($$text == null ? void 0 : $$text.replace(/[^\x00-\xFF]/g, replaceFn)) || "";
     return $$text;
   }
-  function replaceFn$1(char) {
+  function replaceFn(char) {
     if (char in s_2_t) {
       return s_2_t[char];
     }
     return char;
   }
-  const t_2_s = {
-    "¯": "ˉ",
-    "‥": "¨",
-    "‧": "·",
-    "‵": "｀",
-    "≒": "≈",
-    "≦": "≤",
-    "≧": "≥",
-    "╱": "／",
-    "╲": "＼",
-    "╴": "＿",
-    "「": "“",
-    "」": "”",
-    "『": "‘",
-    "』": "’",
-    "㑳": "㑇",
-    "㘚": "㘎",
-    "㥮": "㤘",
-    "㩳": "㧐",
-    "䎱": "䎬",
-    "䙡": "䙌",
-    "䝼": "䞍",
-    "䥇": "䦂",
-    "䦛": "䦶",
-    "䦟": "䦷",
-    "䱷": "䲣",
-    "丟": "丢",
-    "並": "并",
-    "丼": "井",
-    "乾": "干",
-    "亂": "乱",
-    "亙": "亘",
-    "亞": "亚",
-    "伕": "夫",
-    "佇": "伫",
-    "佈": "布",
-    "佔": "占",
-    "佪": "徊",
-    "併": "并",
-    "來": "来",
-    "侖": "仑",
-    "侚": "徇",
-    "侶": "侣",
-    "侷": "局",
-    "俁": "俣",
-    "係": "系",
-    "俠": "侠",
-    "倀": "伥",
-    "倆": "俩",
-    "倉": "仓",
-    "個": "个",
-    "們": "们",
-    "倖": "幸",
-    "倣": "仿",
-    "倫": "伦",
-    "偉": "伟",
-    "偪": "逼",
-    "側": "侧",
-    "偵": "侦",
-    "偺": "咱",
-    "偽": "伪",
-    "傑": "杰",
-    "傖": "伧",
-    "傘": "伞",
-    "備": "备",
-    "傚": "效",
-    "傢": "家",
-    "傭": "佣",
-    "傯": "偬",
-    "傳": "传",
-    "傴": "伛",
-    "債": "债",
-    "傷": "伤",
-    "傾": "倾",
-    "僂": "偻",
-    "僅": "仅",
-    "僉": "佥",
-    "僊": "仙",
-    "僑": "侨",
-    "僕": "仆",
-    "僞": "伪",
-    "僣": "僭",
-    "僥": "侥",
-    "僨": "偾",
-    "僱": "雇",
-    "價": "价",
-    "儀": "仪",
-    "儂": "侬",
-    "億": "亿",
-    "儅": "当",
-    "儈": "侩",
-    "儉": "俭",
-    "儐": "傧",
-    "儔": "俦",
-    "儕": "侪",
-    "儘": "尽",
-    "償": "偿",
-    "優": "优",
-    "儲": "储",
-    "儷": "俪",
-    "儸": "罗",
-    "儺": "傩",
-    "儻": "傥",
-    "儼": "俨",
-    "兇": "凶",
-    "兌": "兑",
-    "兒": "儿",
-    "兗": "兖",
-    "內": "内",
-    "兩": "两",
-    "冊": "册",
-    "冑": "胄",
-    "冪": "幂",
-    "凅": "涸",
-    "凈": "净",
-    "凍": "冻",
-    "凜": "凛",
-    "凱": "凯",
-    "別": "别",
-    "刪": "删",
-    "剄": "刭",
-    "則": "则",
-    "剉": "锉",
-    "剋": "克",
-    "剎": "刹",
-    "剗": "刬",
-    "剛": "刚",
-    "剝": "剥",
-    "剮": "剐",
-    "剴": "剀",
-    "創": "创",
-    "剷": "铲",
-    "劃": "划",
-    "劄": "札",
-    "劇": "剧",
-    "劉": "刘",
-    "劊": "刽",
-    "劌": "刿",
-    "劍": "剑",
-    "劑": "剂",
-    "劻": "匡",
-    "勁": "劲",
-    "動": "动",
-    "勗": "勖",
-    "務": "务",
-    "勛": "勋",
-    "勝": "胜",
-    "勞": "劳",
-    "勢": "势",
-    "勣": "绩",
-    "勦": "剿",
-    "勩": "勚",
-    "勱": "劢",
-    "勳": "勋",
-    "勵": "励",
-    "勸": "劝",
-    "勻": "匀",
-    "匋": "陶",
-    "匭": "匦",
-    "匯": "汇",
-    "匱": "匮",
-    "區": "区",
-    "卄": "廿",
-    "協": "协",
-    "卬": "昂",
-    "卹": "恤",
-    "卻": "却",
-    "厙": "厍",
-    "厭": "厌",
-    "厲": "厉",
-    "厴": "厣",
-    "參": "参",
-    "叡": "睿",
-    "叢": "丛",
-    "吋": "寸",
-    "后": "后",
-    "吳": "吴",
-    "吶": "呐",
-    "呂": "吕",
-    "呎": "尺",
-    "咷": "啕",
-    "咼": "呙",
-    "員": "员",
-    "唄": "呗",
-    "唝": "嗊",
-    "唸": "念",
-    "問": "问",
-    "啓": "启",
-    "啗": "啖",
-    "啞": "哑",
-    "啟": "启",
-    "啢": "唡",
-    "啣": "衔",
-    "喎": "㖞",
-    "喚": "唤",
-    "喪": "丧",
-    "喫": "吃",
-    "喬": "乔",
-    "單": "单",
-    "喲": "哟",
-    "嗆": "呛",
-    "嗇": "啬",
-    "嗎": "吗",
-    "嗚": "呜",
-    "嗩": "唢",
-    "嗶": "哔",
-    "嘆": "叹",
-    "嘍": "喽",
-    "嘔": "呕",
-    "嘖": "啧",
-    "嘗": "尝",
-    "嘜": "唛",
-    "嘩": "哗",
-    "嘮": "唠",
-    "嘯": "啸",
-    "嘰": "叽",
-    "嘵": "哓",
-    "嘸": "呒",
-    "噁": "恶",
-    "噓": "嘘",
-    "噝": "咝",
-    "噠": "哒",
-    "噥": "哝",
-    "噦": "哕",
-    "噯": "嗳",
-    "噲": "哙",
-    "噴": "喷",
-    "噸": "吨",
-    "噹": "当",
-    "嚀": "咛",
-    "嚇": "吓",
-    "嚌": "哜",
-    "嚐": "尝",
-    "嚕": "噜",
-    "嚙": "啮",
-    "嚥": "咽",
-    "嚦": "呖",
-    "嚨": "咙",
-    "嚮": "向",
-    "嚳": "喾",
-    "嚴": "严",
-    "嚶": "嘤",
-    "囀": "啭",
-    "囁": "嗫",
-    "囂": "嚣",
-    "囅": "冁",
-    "囈": "呓",
-    "囉": "啰",
-    "囌": "苏",
-    "囑": "嘱",
-    "囓": "啮",
-    "囪": "囱",
-    "圇": "囵",
-    "國": "国",
-    "圍": "围",
-    "圏": "圈",
-    "園": "园",
-    "圓": "圆",
-    "圖": "图",
-    "團": "团",
-    "坵": "丘",
-    "埜": "野",
-    "埡": "垭",
-    "執": "执",
-    "埼": "崎",
-    "堅": "坚",
-    "堊": "垩",
-    "堖": "垴",
-    "堝": "埚",
-    "堯": "尧",
-    "報": "报",
-    "場": "场",
-    "塊": "块",
-    "塋": "茔",
-    "塏": "垲",
-    "塒": "埘",
-    "塗": "涂",
-    "塚": "冢",
-    "塢": "坞",
-    "塤": "埙",
-    "塵": "尘",
-    "塹": "堑",
-    "墊": "垫",
-    "墑": "墒",
-    "墜": "坠",
-    "墫": "樽",
-    "墮": "堕",
-    "墳": "坟",
-    "墻": "墙",
-    "墾": "垦",
-    "壇": "坛",
-    "壎": "埙",
-    "壓": "压",
-    "壘": "垒",
-    "壙": "圹",
-    "壚": "垆",
-    "壞": "坏",
-    "壟": "垄",
-    "壢": "坜",
-    "壩": "坝",
-    "壯": "壮",
-    "壺": "壶",
-    "壽": "寿",
-    "夠": "够",
-    "夢": "梦",
-    "夾": "夹",
-    "奐": "奂",
-    "奧": "奥",
-    "奩": "奁",
-    "奪": "夺",
-    "奮": "奋",
-    "妝": "妆",
-    "姍": "姗",
-    "姦": "奸",
-    "姪": "侄",
-    "娛": "娱",
-    "婁": "娄",
-    "婦": "妇",
-    "婬": "淫",
-    "婭": "娅",
-    "媧": "娲",
-    "媮": "偷",
-    "媯": "妫",
-    "媼": "媪",
-    "媽": "妈",
-    "媿": "愧",
-    "嫋": "袅",
-    "嫗": "妪",
-    "嫵": "妩",
-    "嫻": "娴",
-    "嫿": "婳",
-    "嬈": "娆",
-    "嬋": "婵",
-    "嬌": "娇",
-    "嬙": "嫱",
-    "嬝": "袅",
-    "嬡": "嫒",
-    "嬤": "嬷",
-    "嬪": "嫔",
-    "嬭": "奶",
-    "嬰": "婴",
-    "嬸": "婶",
-    "孃": "娘",
-    "孌": "娈",
-    "孫": "孙",
-    "學": "学",
-    "孿": "孪",
-    "宮": "宫",
-    "寘": "置",
-    "寢": "寝",
-    "實": "实",
-    "寧": "宁",
-    "審": "审",
-    "寫": "写",
-    "寬": "宽",
-    "寵": "宠",
-    "寶": "宝",
-    "將": "将",
-    "專": "专",
-    "尋": "寻",
-    "對": "对",
-    "導": "导",
-    "尷": "尴",
-    "屆": "届",
-    "屍": "尸",
-    "屜": "屉",
-    "屝": "扉",
-    "屢": "屡",
-    "層": "层",
-    "屨": "屦",
-    "屬": "属",
-    "岡": "冈",
-    "峴": "岘",
-    "島": "岛",
-    "峽": "峡",
-    "崍": "崃",
-    "崑": "昆",
-    "崗": "岗",
-    "崙": "仑",
-    "崠": "岽",
-    "崢": "峥",
-    "崳": "嵛",
-    "嵐": "岚",
-    "嵒": "岩",
-    "嶁": "嵝",
-    "嶄": "崭",
-    "嶇": "岖",
-    "嶔": "嵚",
-    "嶗": "崂",
-    "嶠": "峤",
-    "嶢": "峣",
-    "嶧": "峄",
-    "嶨": "峃",
-    "嶸": "嵘",
-    "嶺": "岭",
-    "嶼": "屿",
-    "嶽": "岳",
-    "巋": "岿",
-    "巒": "峦",
-    "巔": "巅",
-    "巖": "岩",
-    "巰": "巯",
-    "巹": "卺",
-    "帥": "帅",
-    "師": "师",
-    "帳": "帐",
-    "帶": "带",
-    "幀": "帧",
-    "幃": "帏",
-    "幗": "帼",
-    "幘": "帻",
-    "幟": "帜",
-    "幣": "币",
-    "幫": "帮",
-    "幬": "帱",
-    "幵": "开",
-    "幷": "并",
-    "幹": "干",
-    "幾": "几",
-    "庂": "仄",
-    "庫": "库",
-    "廁": "厕",
-    "廂": "厢",
-    "廄": "厩",
-    "廈": "厦",
-    "廎": "庼",
-    "廚": "厨",
-    "廝": "厮",
-    "廟": "庙",
-    "廠": "厂",
-    "廡": "庑",
-    "廢": "废",
-    "廣": "广",
-    "廩": "廪",
-    "廬": "庐",
-    "廱": "痈",
-    "廳": "厅",
-    "弒": "弑",
-    "弔": "吊",
-    "弳": "弪",
-    "張": "张",
-    "強": "强",
-    "彆": "别",
-    "彈": "弹",
-    "彌": "弥",
-    "彎": "弯",
-    "彙": "汇",
-    "彚": "汇",
-    "彥": "彦",
-    "彫": "雕",
-    "彿": "佛",
-    "後": "后",
-    "徑": "径",
-    "從": "从",
-    "徠": "徕",
-    "復": "复",
-    "徬": "旁",
-    "徵": "征",
-    "徹": "彻",
-    "恆": "恒",
-    "恥": "耻",
-    "悅": "悦",
-    "悵": "怅",
-    "悶": "闷",
-    "悽": "凄",
-    "惇": "敦",
-    "惡": "恶",
-    "惱": "恼",
-    "惲": "恽",
-    "惷": "蠢",
-    "惻": "恻",
-    "愛": "爱",
-    "愜": "惬",
-    "愨": "悫",
-    "愴": "怆",
-    "愷": "恺",
-    "愾": "忾",
-    "慄": "栗",
-    "慇": "殷",
-    "態": "态",
-    "慍": "愠",
-    "慘": "惨",
-    "慚": "惭",
-    "慟": "恸",
-    "慣": "惯",
-    "慪": "怄",
-    "慫": "怂",
-    "慮": "虑",
-    "慳": "悭",
-    "慶": "庆",
-    "慼": "戚",
-    "慾": "欲",
-    "憂": "忧",
-    "憊": "惫",
-    "憐": "怜",
-    "憑": "凭",
-    "憒": "愦",
-    "憚": "惮",
-    "憤": "愤",
-    "憫": "悯",
-    "憮": "怃",
-    "憲": "宪",
-    "憶": "忆",
-    "懃": "勤",
-    "懇": "恳",
-    "應": "应",
-    "懌": "怿",
-    "懍": "懔",
-    "懞": "蒙",
-    "懟": "怼",
-    "懣": "懑",
-    "懨": "恹",
-    "懲": "惩",
-    "懶": "懒",
-    "懷": "怀",
-    "懸": "悬",
-    "懺": "忏",
-    "懼": "惧",
-    "懾": "慑",
-    "戀": "恋",
-    "戇": "戆",
-    "戉": "钺",
-    "戔": "戋",
-    "戧": "戗",
-    "戩": "戬",
-    "戰": "战",
-    "戲": "戏",
-    "戶": "户",
-    "扐": "仂",
-    "扞": "捍",
-    "扱": "插",
-    "扺": "抵",
-    "抃": "拚",
-    "抔": "抱",
-    "抴": "曳",
-    "拋": "抛",
-    "拑": "钳",
-    "挌": "格",
-    "挶": "局",
-    "挾": "挟",
-    "捨": "舍",
-    "捫": "扪",
-    "捲": "卷",
-    "掃": "扫",
-    "掄": "抡",
-    "掆": "㧏",
-    "掗": "挜",
-    "掙": "挣",
-    "掛": "挂",
-    "採": "采",
-    "揀": "拣",
-    "揚": "扬",
-    "換": "换",
-    "揮": "挥",
-    "揹": "背",
-    "搆": "构",
-    "損": "损",
-    "搖": "摇",
-    "搗": "捣",
-    "搟": "擀",
-    "搥": "捶",
-    "搨": "打",
-    "搯": "掏",
-    "搶": "抢",
-    "搾": "榨",
-    "摀": "捂",
-    "摃": "扛",
-    "摑": "掴",
-    "摜": "掼",
-    "摟": "搂",
-    "摯": "挚",
-    "摳": "抠",
-    "摶": "抟",
-    "摻": "掺",
-    "撈": "捞",
-    "撏": "挦",
-    "撐": "撑",
-    "撓": "挠",
-    "撚": "拈",
-    "撟": "挢",
-    "撢": "掸",
-    "撣": "掸",
-    "撥": "拨",
-    "撦": "扯",
-    "撫": "抚",
-    "撲": "扑",
-    "撳": "揿",
-    "撻": "挞",
-    "撾": "挝",
-    "撿": "捡",
-    "擁": "拥",
-    "擄": "掳",
-    "擇": "择",
-    "擊": "击",
-    "擋": "挡",
-    "擓": "㧟",
-    "擔": "担",
-    "據": "据",
-    "擠": "挤",
-    "擡": "抬",
-    "擣": "捣",
-    "擬": "拟",
-    "擯": "摈",
-    "擰": "拧",
-    "擱": "搁",
-    "擲": "掷",
-    "擴": "扩",
-    "擷": "撷",
-    "擺": "摆",
-    "擻": "擞",
-    "擼": "撸",
-    "擾": "扰",
-    "攄": "摅",
-    "攆": "撵",
-    "攏": "拢",
-    "攔": "拦",
-    "攖": "撄",
-    "攙": "搀",
-    "攛": "撺",
-    "攜": "携",
-    "攝": "摄",
-    "攢": "攒",
-    "攣": "挛",
-    "攤": "摊",
-    "攪": "搅",
-    "攬": "揽",
-    "攷": "考",
-    "敗": "败",
-    "敘": "叙",
-    "敵": "敌",
-    "數": "数",
-    "斂": "敛",
-    "斃": "毙",
-    "斕": "斓",
-    "斬": "斩",
-    "斷": "断",
-    "於": "于",
-    "旂": "旗",
-    "旛": "幡",
-    "昇": "升",
-    "時": "时",
-    "晉": "晋",
-    "晝": "昼",
-    "晞": "曦",
-    "晢": "晰",
-    "晳": "晰",
-    "晻": "暗",
-    "暈": "晕",
-    "暉": "晖",
-    "暘": "阳",
-    "暢": "畅",
-    "暫": "暂",
-    "暱": "昵",
-    "暸": "了",
-    "曄": "晔",
-    "曆": "历",
-    "曇": "昙",
-    "曉": "晓",
-    "曏": "向",
-    "曖": "暧",
-    "曠": "旷",
-    "曨": "昽",
-    "曬": "晒",
-    "書": "书",
-    "會": "会",
-    "朢": "望",
-    "朧": "胧",
-    "朮": "术",
-    "杇": "圬",
-    "東": "东",
-    "枴": "拐",
-    "柵": "栅",
-    "柺": "拐",
-    "栒": "旬",
-    "桮": "杯",
-    "桿": "杆",
-    "梔": "栀",
-    "梘": "枧",
-    "條": "条",
-    "梟": "枭",
-    "梱": "捆",
-    "棄": "弃",
-    "棖": "枨",
-    "棗": "枣",
-    "棟": "栋",
-    "棡": "㭎",
-    "棧": "栈",
-    "棲": "栖",
-    "椏": "桠",
-    "楄": "匾",
-    "楊": "杨",
-    "楓": "枫",
-    "楙": "茂",
-    "楜": "胡",
-    "楨": "桢",
-    "業": "业",
-    "極": "极",
-    "榦": "干",
-    "榪": "杩",
-    "榮": "荣",
-    "榿": "桤",
-    "槃": "盘",
-    "構": "构",
-    "槍": "枪",
-    "槓": "杠",
-    "槧": "椠",
-    "槨": "椁",
-    "槳": "桨",
-    "樁": "桩",
-    "樂": "乐",
-    "樅": "枞",
-    "樑": "梁",
-    "樓": "楼",
-    "標": "标",
-    "樞": "枢",
-    "樣": "样",
-    "樸": "朴",
-    "樹": "树",
-    "樺": "桦",
-    "橈": "桡",
-    "橋": "桥",
-    "機": "机",
-    "橢": "椭",
-    "橦": "幢",
-    "橫": "横",
-    "檁": "檩",
-    "檉": "柽",
-    "檔": "档",
-    "檜": "桧",
-    "檟": "槚",
-    "檢": "检",
-    "檣": "樯",
-    "檯": "台",
-    "檳": "槟",
-    "檸": "柠",
-    "檻": "槛",
-    "櫂": "棹",
-    "櫃": "柜",
-    "櫐": "累",
-    "櫓": "橹",
-    "櫚": "榈",
-    "櫛": "栉",
-    "櫝": "椟",
-    "櫞": "橼",
-    "櫟": "栎",
-    "櫥": "橱",
-    "櫧": "槠",
-    "櫨": "栌",
-    "櫪": "枥",
-    "櫫": "橥",
-    "櫬": "榇",
-    "櫳": "栊",
-    "櫸": "榉",
-    "櫺": "棂",
-    "櫻": "樱",
-    "欄": "栏",
-    "權": "权",
-    "欏": "椤",
-    "欒": "栾",
-    "欖": "榄",
-    "欞": "棂",
-    "欸": "唉",
-    "欽": "钦",
-    "歎": "叹",
-    "歐": "欧",
-    "歟": "欤",
-    "歡": "欢",
-    "歲": "岁",
-    "歷": "历",
-    "歸": "归",
-    "歿": "殁",
-    "殀": "夭",
-    "殘": "残",
-    "殞": "殒",
-    "殤": "殇",
-    "殫": "殚",
-    "殭": "僵",
-    "殮": "殓",
-    "殯": "殡",
-    "殲": "歼",
-    "殺": "杀",
-    "殼": "壳",
-    "殽": "肴",
-    "毀": "毁",
-    "毆": "殴",
-    "毌": "毋",
-    "毘": "毗",
-    "毬": "球",
-    "毿": "毵",
-    "氈": "毡",
-    "氌": "氇",
-    "氣": "气",
-    "氫": "氢",
-    "氬": "氩",
-    "氳": "氲",
-    "氾": "泛",
-    "汍": "丸",
-    "汎": "泛",
-    "汙": "污",
-    "決": "决",
-    "沍": "冱",
-    "沒": "没",
-    "沖": "冲",
-    "況": "况",
-    "泝": "溯",
-    "洟": "涕",
-    "洩": "泄",
-    "洶": "汹",
-    "浬": "里",
-    "浹": "浃",
-    "涇": "泾",
-    "涼": "凉",
-    "淒": "凄",
-    "淚": "泪",
-    "淥": "渌",
-    "淨": "净",
-    "淪": "沦",
-    "淵": "渊",
-    "淶": "涞",
-    "淺": "浅",
-    "渙": "涣",
-    "減": "减",
-    "渢": "沨",
-    "渦": "涡",
-    "測": "测",
-    "渾": "浑",
-    "湊": "凑",
-    "湞": "浈",
-    "湣": "闵",
-    "湧": "涌",
-    "湯": "汤",
-    "溈": "沩",
-    "準": "准",
-    "溝": "沟",
-    "溫": "温",
-    "溮": "浉",
-    "溳": "涢",
-    "溼": "湿",
-    "滄": "沧",
-    "滅": "灭",
-    "滌": "涤",
-    "滎": "荥",
-    "滬": "沪",
-    "滯": "滞",
-    "滲": "渗",
-    "滷": "卤",
-    "滸": "浒",
-    "滻": "浐",
-    "滾": "滚",
-    "滿": "满",
-    "漁": "渔",
-    "漊": "溇",
-    "漚": "沤",
-    "漢": "汉",
-    "漣": "涟",
-    "漬": "渍",
-    "漲": "涨",
-    "漵": "溆",
-    "漸": "渐",
-    "漿": "浆",
-    "潁": "颍",
-    "潑": "泼",
-    "潔": "洁",
-    "潛": "潜",
-    "潟": "舄",
-    "潤": "润",
-    "潯": "浔",
-    "潰": "溃",
-    "潷": "滗",
-    "潿": "涠",
-    "澀": "涩",
-    "澂": "澄",
-    "澆": "浇",
-    "澇": "涝",
-    "澔": "浩",
-    "澗": "涧",
-    "澠": "渑",
-    "澤": "泽",
-    "澦": "滪",
-    "澩": "泶",
-    "澮": "浍",
-    "澱": "淀",
-    "澾": "㳠",
-    "濁": "浊",
-    "濃": "浓",
-    "濕": "湿",
-    "濘": "泞",
-    "濛": "蒙",
-    "濜": "浕",
-    "濟": "济",
-    "濤": "涛",
-    "濫": "滥",
-    "濬": "浚",
-    "濰": "潍",
-    "濱": "滨",
-    "濺": "溅",
-    "濼": "泺",
-    "濾": "滤",
-    "瀁": "漾",
-    "瀅": "滢",
-    "瀆": "渎",
-    "瀉": "泻",
-    "瀋": "沈",
-    "瀏": "浏",
-    "瀕": "濒",
-    "瀘": "泸",
-    "瀝": "沥",
-    "瀟": "潇",
-    "瀠": "潆",
-    "瀦": "潴",
-    "瀧": "泷",
-    "瀨": "濑",
-    "瀰": "弥",
-    "瀲": "潋",
-    "瀾": "澜",
-    "灃": "沣",
-    "灄": "滠",
-    "灑": "洒",
-    "灕": "漓",
-    "灘": "滩",
-    "灝": "灏",
-    "灣": "湾",
-    "灤": "滦",
-    "灩": "滟",
-    "災": "灾",
-    "炤": "照",
-    "炰": "炮",
-    "為": "为",
-    "烏": "乌",
-    "烴": "烃",
-    "無": "无",
-    "煉": "炼",
-    "煒": "炜",
-    "煖": "暖",
-    "煙": "烟",
-    "煢": "茕",
-    "煥": "焕",
-    "煩": "烦",
-    "煬": "炀",
-    "熒": "荧",
-    "熗": "炝",
-    "熱": "热",
-    "熾": "炽",
-    "燁": "烨",
-    "燄": "焰",
-    "燈": "灯",
-    "燉": "炖",
-    "燐": "磷",
-    "燒": "烧",
-    "燙": "烫",
-    "燜": "焖",
-    "營": "营",
-    "燦": "灿",
-    "燬": "毁",
-    "燭": "烛",
-    "燴": "烩",
-    "燻": "熏",
-    "燼": "烬",
-    "燾": "焘",
-    "燿": "耀",
-    "爍": "烁",
-    "爐": "炉",
-    "爛": "烂",
-    "爭": "争",
-    "爲": "为",
-    "爺": "爷",
-    "爾": "尔",
-    "牆": "墙",
-    "牘": "牍",
-    "牠": "它",
-    "牴": "抵",
-    "牽": "牵",
-    "犖": "荦",
-    "犛": "牦",
-    "犢": "犊",
-    "犧": "牺",
-    "狀": "状",
-    "狚": "旦",
-    "狹": "狭",
-    "狽": "狈",
-    "猙": "狰",
-    "猶": "犹",
-    "猻": "狲",
-    "獁": "犸",
-    "獃": "呆",
-    "獄": "狱",
-    "獅": "狮",
-    "獎": "奖",
-    "獨": "独",
-    "獪": "狯",
-    "獫": "猃",
-    "獮": "狝",
-    "獰": "狞",
-    "獲": "获",
-    "獵": "猎",
-    "獷": "犷",
-    "獸": "兽",
-    "獺": "獭",
-    "獻": "献",
-    "獼": "猕",
-    "玀": "猡",
-    "玅": "妙",
-    "玆": "兹",
-    "玨": "珏",
-    "珪": "圭",
-    "珮": "佩",
-    "現": "现",
-    "琱": "雕",
-    "琺": "珐",
-    "琿": "珲",
-    "瑋": "玮",
-    "瑣": "琐",
-    "瑤": "瑶",
-    "瑩": "莹",
-    "瑪": "玛",
-    "瑯": "琅",
-    "瑲": "玱",
-    "璉": "琏",
-    "璡": "琎",
-    "璣": "玑",
-    "璦": "瑷",
-    "環": "环",
-    "璽": "玺",
-    "璿": "璇",
-    "瓊": "琼",
-    "瓏": "珑",
-    "瓔": "璎",
-    "瓖": "镶",
-    "瓚": "瓒",
-    "甌": "瓯",
-    "甕": "瓮",
-    "產": "产",
-    "産": "产",
-    "甦": "苏",
-    "甪": "角",
-    "畝": "亩",
-    "畢": "毕",
-    "畫": "画",
-    "畬": "畲",
-    "異": "异",
-    "當": "当",
-    "疇": "畴",
-    "疊": "叠",
-    "疿": "痱",
-    "痙": "痉",
-    "痠": "酸",
-    "痲": "麻",
-    "痳": "麻",
-    "痺": "痹",
-    "痾": "疴",
-    "瘂": "痖",
-    "瘉": "愈",
-    "瘋": "疯",
-    "瘍": "疡",
-    "瘓": "痪",
-    "瘞": "瘗",
-    "瘡": "疮",
-    "瘧": "疟",
-    "瘺": "瘘",
-    "瘻": "瘘",
-    "療": "疗",
-    "癆": "痨",
-    "癇": "痫",
-    "癉": "瘅",
-    "癒": "愈",
-    "癘": "疠",
-    "癟": "瘪",
-    "癡": "痴",
-    "癢": "痒",
-    "癤": "疖",
-    "癥": "症",
-    "癧": "疬",
-    "癩": "癞",
-    "癬": "癣",
-    "癭": "瘿",
-    "癮": "瘾",
-    "癰": "痈",
-    "癱": "瘫",
-    "癲": "癫",
-    "發": "发",
-    "皁": "皂",
-    "皚": "皑",
-    "皰": "疱",
-    "皸": "皲",
-    "皺": "皱",
-    "盃": "杯",
-    "盜": "盗",
-    "盞": "盏",
-    "盡": "尽",
-    "監": "监",
-    "盤": "盘",
-    "盧": "卢",
-    "盪": "荡",
-    "眥": "眦",
-    "眾": "众",
-    "睏": "困",
-    "睜": "睁",
-    "睞": "睐",
-    "睪": "睾",
-    "瞇": "眯",
-    "瞘": "眍",
-    "瞜": "䁖",
-    "瞞": "瞒",
-    "瞼": "睑",
-    "矇": "蒙",
-    "矓": "眬",
-    "矚": "瞩",
-    "矯": "矫",
-    "砲": "炮",
-    "硃": "朱",
-    "硤": "硖",
-    "硨": "砗",
-    "硯": "砚",
-    "碕": "崎",
-    "碩": "硕",
-    "碪": "砧",
-    "碭": "砀",
-    "碸": "砜",
-    "確": "确",
-    "碼": "码",
-    "磑": "硙",
-    "磚": "砖",
-    "磣": "碜",
-    "磧": "碛",
-    "磯": "矶",
-    "磽": "硗",
-    "礄": "硚",
-    "礎": "础",
-    "礙": "碍",
-    "礦": "矿",
-    "礪": "砺",
-    "礫": "砾",
-    "礬": "矾",
-    "礱": "砻",
-    "祂": "他",
-    "祅": "祆",
-    "祇": "只",
-    "祐": "佑",
-    "祼": "裸",
-    "祿": "禄",
-    "禍": "祸",
-    "禎": "祯",
-    "禕": "祎",
-    "禦": "御",
-    "禪": "禅",
-    "禮": "礼",
-    "禱": "祷",
-    "禿": "秃",
-    "秈": "籼",
-    "秏": "耗",
-    "稅": "税",
-    "稈": "秆",
-    "稜": "棱",
-    "稟": "禀",
-    "稨": "扁",
-    "種": "种",
-    "稱": "称",
-    "穀": "谷",
-    "穇": "䅟",
-    "穌": "稣",
-    "積": "积",
-    "穎": "颖",
-    "穡": "穑",
-    "穢": "秽",
-    "穨": "颓",
-    "穩": "稳",
-    "穫": "获",
-    "窩": "窝",
-    "窪": "洼",
-    "窮": "穷",
-    "窯": "窑",
-    "窵": "窎",
-    "窶": "窭",
-    "窺": "窥",
-    "竄": "窜",
-    "竅": "窍",
-    "竇": "窦",
-    "竊": "窃",
-    "競": "竞",
-    "笻": "筇",
-    "筆": "笔",
-    "筍": "笋",
-    "筧": "笕",
-    "筴": "策",
-    "箄": "箅",
-    "箇": "个",
-    "箋": "笺",
-    "箏": "筝",
-    "箠": "棰",
-    "節": "节",
-    "範": "范",
-    "築": "筑",
-    "篋": "箧",
-    "篛": "箬",
-    "篠": "筱",
-    "篤": "笃",
-    "篩": "筛",
-    "篲": "彗",
-    "篳": "筚",
-    "簀": "箦",
-    "簍": "篓",
-    "簑": "蓑",
-    "簞": "箪",
-    "簡": "简",
-    "簣": "篑",
-    "簫": "箫",
-    "簷": "檐",
-    "簽": "签",
-    "簾": "帘",
-    "籃": "篮",
-    "籌": "筹",
-    "籐": "藤",
-    "籙": "箓",
-    "籜": "箨",
-    "籟": "籁",
-    "籠": "笼",
-    "籤": "签",
-    "籥": "龠",
-    "籩": "笾",
-    "籪": "簖",
-    "籬": "篱",
-    "籮": "箩",
-    "籲": "吁",
-    "粧": "妆",
-    "粵": "粤",
-    "糝": "糁",
-    "糞": "粪",
-    "糧": "粮",
-    "糰": "团",
-    "糲": "粝",
-    "糴": "籴",
-    "糶": "粜",
-    "糾": "纠",
-    "紀": "纪",
-    "紂": "纣",
-    "約": "约",
-    "紅": "红",
-    "紆": "纡",
-    "紇": "纥",
-    "紈": "纨",
-    "紉": "纫",
-    "紋": "纹",
-    "納": "纳",
-    "紐": "纽",
-    "紓": "纾",
-    "純": "纯",
-    "紕": "纰",
-    "紖": "纼",
-    "紗": "纱",
-    "紘": "纮",
-    "紙": "纸",
-    "級": "级",
-    "紛": "纷",
-    "紜": "纭",
-    "紝": "纴",
-    "紡": "纺",
-    "紬": "䌷",
-    "紮": "扎",
-    "細": "细",
-    "紱": "绂",
-    "紲": "绁",
-    "紳": "绅",
-    "紹": "绍",
-    "紺": "绀",
-    "紼": "绋",
-    "紿": "绐",
-    "絀": "绌",
-    "終": "终",
-    "絃": "弦",
-    "組": "组",
-    "絆": "绊",
-    "絎": "绗",
-    "結": "结",
-    "絕": "绝",
-    "絛": "绦",
-    "絝": "绔",
-    "絞": "绞",
-    "絡": "络",
-    "絢": "绚",
-    "給": "给",
-    "絨": "绒",
-    "絰": "绖",
-    "統": "统",
-    "絲": "丝",
-    "絳": "绛",
-    "絹": "绢",
-    "綁": "绑",
-    "綃": "绡",
-    "綆": "绠",
-    "綈": "绨",
-    "綏": "绥",
-    "綑": "捆",
-    "經": "经",
-    "綜": "综",
-    "綞": "缍",
-    "綠": "绿",
-    "綢": "绸",
-    "綣": "绻",
-    "綫": "线",
-    "綬": "绶",
-    "維": "维",
-    "綰": "绾",
-    "綱": "纲",
-    "網": "网",
-    "綴": "缀",
-    "綵": "彩",
-    "綸": "纶",
-    "綹": "绺",
-    "綺": "绮",
-    "綻": "绽",
-    "綽": "绰",
-    "綾": "绫",
-    "綿": "绵",
-    "緄": "绲",
-    "緇": "缁",
-    "緊": "紧",
-    "緋": "绯",
-    "緒": "绪",
-    "緔": "绱",
-    "緗": "缃",
-    "緘": "缄",
-    "緙": "缂",
-    "線": "线",
-    "緝": "缉",
-    "緞": "缎",
-    "締": "缔",
-    "緡": "缗",
-    "緣": "缘",
-    "緦": "缌",
-    "編": "编",
-    "緩": "缓",
-    "緬": "缅",
-    "緯": "纬",
-    "緱": "缑",
-    "緲": "缈",
-    "練": "练",
-    "緶": "缏",
-    "緹": "缇",
-    "緻": "致",
-    "縈": "萦",
-    "縉": "缙",
-    "縊": "缢",
-    "縋": "缒",
-    "縐": "绉",
-    "縑": "缣",
-    "縕": "缊",
-    "縗": "缞",
-    "縚": "绦",
-    "縛": "缚",
-    "縝": "缜",
-    "縞": "缟",
-    "縟": "缛",
-    "縣": "县",
-    "縫": "缝",
-    "縭": "缡",
-    "縮": "缩",
-    "縯": "演",
-    "縱": "纵",
-    "縲": "缧",
-    "縳": "缚",
-    "縴": "纤",
-    "縵": "缦",
-    "縶": "絷",
-    "縷": "缕",
-    "縹": "缥",
-    "總": "总",
-    "績": "绩",
-    "繃": "绷",
-    "繅": "缫",
-    "繆": "缪",
-    "繈": "襁",
-    "繒": "缯",
-    "織": "织",
-    "繕": "缮",
-    "繙": "翻",
-    "繚": "缭",
-    "繞": "绕",
-    "繡": "绣",
-    "繢": "缋",
-    "繩": "绳",
-    "繪": "绘",
-    "繫": "系",
-    "繭": "茧",
-    "繯": "缳",
-    "繰": "缲",
-    "繳": "缴",
-    "繹": "绎",
-    "繼": "继",
-    "繽": "缤",
-    "繾": "缱",
-    "纈": "缬",
-    "纊": "纩",
-    "續": "续",
-    "纍": "累",
-    "纏": "缠",
-    "纓": "缨",
-    "纔": "才",
-    "纖": "纤",
-    "纘": "缵",
-    "纜": "缆",
-    "缽": "钵",
-    "缾": "瓶",
-    "罈": "坛",
-    "罌": "罂",
-    "罦": "罘",
-    "罰": "罚",
-    "罵": "骂",
-    "罷": "罢",
-    "羅": "罗",
-    "羆": "罴",
-    "羈": "羁",
-    "羋": "芈",
-    "羥": "羟",
-    "羨": "羡",
-    "義": "义",
-    "羶": "膻",
-    "習": "习",
-    "翬": "翚",
-    "翹": "翘",
-    "耑": "端",
-    "耡": "助",
-    "耤": "藉",
-    "耬": "耧",
-    "耮": "耢",
-    "聖": "圣",
-    "聞": "闻",
-    "聯": "联",
-    "聰": "聪",
-    "聲": "声",
-    "聳": "耸",
-    "聵": "聩",
-    "聶": "聂",
-    "職": "职",
-    "聹": "聍",
-    "聽": "听",
-    "聾": "聋",
-    "肅": "肃",
-    "肏": "操",
-    "肐": "胳",
-    "胇": "肺",
-    "胊": "朐",
-    "脅": "胁",
-    "脈": "脉",
-    "脛": "胫",
-    "脣": "唇",
-    "脩": "修",
-    "脫": "脱",
-    "脹": "胀",
-    "腎": "肾",
-    "腖": "胨",
-    "腡": "脶",
-    "腦": "脑",
-    "腫": "肿",
-    "腳": "脚",
-    "腸": "肠",
-    "膃": "腽",
-    "膆": "嗉",
-    "膕": "腘",
-    "膚": "肤",
-    "膞": "䏝",
-    "膠": "胶",
-    "膩": "腻",
-    "膽": "胆",
-    "膾": "脍",
-    "膿": "脓",
-    "臉": "脸",
-    "臍": "脐",
-    "臏": "膑",
-    "臕": "膘",
-    "臘": "腊",
-    "臙": "胭",
-    "臚": "胪",
-    "臟": "脏",
-    "臠": "脔",
-    "臢": "臜",
-    "臥": "卧",
-    "臨": "临",
-    "臺": "台",
-    "與": "与",
-    "興": "兴",
-    "舉": "举",
-    "舊": "旧",
-    "舋": "衅",
-    "舖": "铺",
-    "艙": "舱",
-    "艣": "橹",
-    "艤": "舣",
-    "艦": "舰",
-    "艫": "舻",
-    "艱": "艰",
-    "艷": "艳",
-    "艸": "艹",
-    "芻": "刍",
-    "苧": "苎",
-    "苺": "莓",
-    "茍": "苟",
-    "茲": "兹",
-    "荅": "答",
-    "荊": "荆",
-    "荳": "豆",
-    "莊": "庄",
-    "莖": "茎",
-    "莢": "荚",
-    "莧": "苋",
-    "菫": "堇",
-    "華": "华",
-    "菴": "庵",
-    "萇": "苌",
-    "萊": "莱",
-    "萬": "万",
-    "萵": "莴",
-    "葉": "叶",
-    "葒": "荭",
-    "著": "着",
-    "葤": "荮",
-    "葦": "苇",
-    "葯": "药",
-    "葷": "荤",
-    "蒐": "搜",
-    "蒔": "莳",
-    "蒞": "莅",
-    "蒼": "苍",
-    "蓀": "荪",
-    "蓆": "席",
-    "蓋": "盖",
-    "蓮": "莲",
-    "蓯": "苁",
-    "蓴": "莼",
-    "蓽": "荜",
-    "蔆": "菱",
-    "蔔": "卜",
-    "蔞": "蒌",
-    "蔣": "蒋",
-    "蔥": "葱",
-    "蔦": "茑",
-    "蔭": "荫",
-    "蕁": "荨",
-    "蕆": "蒇",
-    "蕎": "荞",
-    "蕒": "荬",
-    "蕕": "莸",
-    "蕘": "荛",
-    "蕢": "蒉",
-    "蕩": "荡",
-    "蕪": "芜",
-    "蕭": "萧",
-    "蕷": "蓣",
-    "薈": "荟",
-    "薊": "蓟",
-    "薌": "芗",
-    "薑": "姜",
-    "薔": "蔷",
-    "薙": "剃",
-    "薟": "莶",
-    "薦": "荐",
-    "薩": "萨",
-    "薺": "荠",
-    "藍": "蓝",
-    "藎": "荩",
-    "藝": "艺",
-    "藥": "药",
-    "藪": "薮",
-    "藭": "䓖",
-    "藶": "苈",
-    "藷": "薯",
-    "藹": "蔼",
-    "藺": "蔺",
-    "蘀": "萚",
-    "蘄": "蕲",
-    "蘆": "芦",
-    "蘇": "苏",
-    "蘊": "蕴",
-    "蘋": "苹",
-    "蘗": "蘖",
-    "蘚": "藓",
-    "蘞": "蔹",
-    "蘢": "茏",
-    "蘭": "兰",
-    "蘺": "蓠",
-    "蘿": "萝",
-    "處": "处",
-    "虖": "呼",
-    "虛": "虚",
-    "虜": "虏",
-    "號": "号",
-    "虧": "亏",
-    "虯": "虬",
-    "蛺": "蛱",
-    "蛻": "蜕",
-    "蜆": "蚬",
-    "蜺": "霓",
-    "蝕": "蚀",
-    "蝟": "猬",
-    "蝦": "虾",
-    "蝨": "虱",
-    "蝸": "蜗",
-    "螄": "蛳",
-    "螞": "蚂",
-    "螢": "萤",
-    "螻": "蝼",
-    "蟄": "蛰",
-    "蟈": "蝈",
-    "蟎": "螨",
-    "蟣": "虮",
-    "蟬": "蝉",
-    "蟯": "蛲",
-    "蟲": "虫",
-    "蟶": "蛏",
-    "蟺": "蟮",
-    "蟻": "蚁",
-    "蠅": "蝇",
-    "蠆": "虿",
-    "蠍": "蝎",
-    "蠐": "蛴",
-    "蠑": "蝾",
-    "蠔": "蚝",
-    "蠟": "蜡",
-    "蠣": "蛎",
-    "蠨": "蟏",
-    "蠱": "蛊",
-    "蠶": "蚕",
-    "蠷": "蠼",
-    "蠻": "蛮",
-    "衆": "众",
-    "衊": "蔑",
-    "衒": "炫",
-    "術": "术",
-    "衚": "胡",
-    "衛": "卫",
-    "衝": "冲",
-    "衹": "只",
-    "袞": "衮",
-    "袪": "祛",
-    "裊": "袅",
-    "裏": "里",
-    "補": "补",
-    "裝": "装",
-    "裡": "里",
-    "製": "制",
-    "複": "复",
-    "褎": "袖",
-    "褲": "裤",
-    "褳": "裢",
-    "褸": "褛",
-    "褻": "亵",
-    "襉": "裥",
-    "襖": "袄",
-    "襝": "裣",
-    "襠": "裆",
-    "襤": "褴",
-    "襪": "袜",
-    "襬": "摆",
-    "襯": "衬",
-    "襲": "袭",
-    "襾": "西",
-    "覈": "核",
-    "見": "见",
-    "覎": "觃",
-    "規": "规",
-    "覓": "觅",
-    "視": "视",
-    "覘": "觇",
-    "覜": "眺",
-    "覡": "觋",
-    "覦": "觎",
-    "親": "亲",
-    "覬": "觊",
-    "覯": "觏",
-    "覲": "觐",
-    "覷": "觑",
-    "覺": "觉",
-    "覽": "览",
-    "覿": "觌",
-    "觀": "观",
-    "觔": "筋",
-    "觝": "抵",
-    "觴": "觞",
-    "觶": "觯",
-    "觸": "触",
-    "訂": "订",
-    "訃": "讣",
-    "計": "计",
-    "訊": "讯",
-    "訌": "讧",
-    "討": "讨",
-    "訐": "讦",
-    "訓": "训",
-    "訕": "讪",
-    "訖": "讫",
-    "託": "托",
-    "記": "记",
-    "訛": "讹",
-    "訝": "讶",
-    "訟": "讼",
-    "訢": "欣",
-    "訣": "诀",
-    "訥": "讷",
-    "訩": "讻",
-    "訪": "访",
-    "設": "设",
-    "許": "许",
-    "訴": "诉",
-    "訶": "诃",
-    "診": "诊",
-    "註": "注",
-    "証": "证",
-    "詁": "诂",
-    "詆": "诋",
-    "詎": "讵",
-    "詐": "诈",
-    "詒": "诒",
-    "詔": "诏",
-    "評": "评",
-    "詗": "诇",
-    "詘": "诎",
-    "詛": "诅",
-    "詞": "词",
-    "詠": "咏",
-    "詡": "诩",
-    "詢": "询",
-    "詣": "诣",
-    "試": "试",
-    "詩": "诗",
-    "詫": "诧",
-    "詬": "诟",
-    "詭": "诡",
-    "詮": "诠",
-    "詰": "诘",
-    "話": "话",
-    "該": "该",
-    "詳": "详",
-    "詵": "诜",
-    "詶": "酬",
-    "詻": "咯",
-    "詼": "诙",
-    "詿": "诖",
-    "誄": "诔",
-    "誅": "诛",
-    "誆": "诓",
-    "誇": "夸",
-    "誌": "志",
-    "認": "认",
-    "誑": "诳",
-    "誒": "诶",
-    "誕": "诞",
-    "誘": "诱",
-    "誚": "诮",
-    "語": "语",
-    "誠": "诚",
-    "誡": "诫",
-    "誣": "诬",
-    "誤": "误",
-    "誥": "诰",
-    "誦": "诵",
-    "誨": "诲",
-    "說": "说",
-    "説": "说",
-    "誰": "谁",
-    "課": "课",
-    "誶": "谇",
-    "誹": "诽",
-    "誼": "谊",
-    "調": "调",
-    "諂": "谄",
-    "諄": "谆",
-    "談": "谈",
-    "諉": "诿",
-    "請": "请",
-    "諍": "诤",
-    "諏": "诹",
-    "諑": "诼",
-    "諒": "谅",
-    "論": "论",
-    "諗": "谂",
-    "諛": "谀",
-    "諜": "谍",
-    "諝": "谞",
-    "諞": "谝",
-    "諠": "喧",
-    "諢": "诨",
-    "諤": "谔",
-    "諦": "谛",
-    "諧": "谐",
-    "諫": "谏",
-    "諭": "谕",
-    "諮": "谘",
-    "諱": "讳",
-    "諳": "谙",
-    "諶": "谌",
-    "諷": "讽",
-    "諸": "诸",
-    "諺": "谚",
-    "諼": "谖",
-    "諾": "诺",
-    "謀": "谋",
-    "謁": "谒",
-    "謂": "谓",
-    "謄": "誊",
-    "謅": "诌",
-    "謊": "谎",
-    "謎": "谜",
-    "謐": "谧",
-    "謔": "谑",
-    "謖": "谡",
-    "謗": "谤",
-    "謙": "谦",
-    "謚": "谥",
-    "講": "讲",
-    "謝": "谢",
-    "謠": "谣",
-    "謨": "谟",
-    "謫": "谪",
-    "謬": "谬",
-    "謳": "讴",
-    "謹": "谨",
-    "謼": "呼",
-    "謾": "谩",
-    "譁": "哗",
-    "譆": "嘻",
-    "證": "证",
-    "譎": "谲",
-    "譏": "讥",
-    "譔": "撰",
-    "譖": "谮",
-    "識": "识",
-    "譙": "谯",
-    "譚": "谭",
-    "譜": "谱",
-    "譟": "噪",
-    "譫": "谵",
-    "譭": "毁",
-    "譯": "译",
-    "議": "议",
-    "譴": "谴",
-    "護": "护",
-    "譽": "誉",
-    "譾": "谫",
-    "讀": "读",
-    "讅": "谉",
-    "變": "变",
-    "讌": "宴",
-    "讎": "雠",
-    "讒": "谗",
-    "讓": "让",
-    "讕": "谰",
-    "讖": "谶",
-    "讚": "赞",
-    "讜": "谠",
-    "讞": "谳",
-    "谿": "溪",
-    "豈": "岂",
-    "豎": "竖",
-    "豐": "丰",
-    "豔": "艳",
-    "豖": "亍",
-    "豬": "猪",
-    "豶": "豮",
-    "貍": "狸",
-    "貓": "猫",
-    "貝": "贝",
-    "貞": "贞",
-    "負": "负",
-    "財": "财",
-    "貢": "贡",
-    "貧": "贫",
-    "貨": "货",
-    "販": "贩",
-    "貪": "贪",
-    "貫": "贯",
-    "責": "责",
-    "貯": "贮",
-    "貰": "贳",
-    "貲": "赀",
-    "貳": "贰",
-    "貴": "贵",
-    "貶": "贬",
-    "買": "买",
-    "貸": "贷",
-    "貺": "贶",
-    "費": "费",
-    "貼": "贴",
-    "貽": "贻",
-    "貿": "贸",
-    "賀": "贺",
-    "賁": "贲",
-    "賂": "赂",
-    "賃": "赁",
-    "賄": "贿",
-    "賅": "赅",
-    "資": "资",
-    "賈": "贾",
-    "賊": "贼",
-    "賑": "赈",
-    "賒": "赊",
-    "賓": "宾",
-    "賕": "赇",
-    "賙": "赒",
-    "賚": "赉",
-    "賜": "赐",
-    "賞": "赏",
-    "賠": "赔",
-    "賡": "赓",
-    "賢": "贤",
-    "賣": "卖",
-    "賤": "贱",
-    "賦": "赋",
-    "賧": "赕",
-    "質": "质",
-    "賬": "账",
-    "賭": "赌",
-    "賴": "赖",
-    "賵": "赗",
-    "賸": "剩",
-    "賺": "赚",
-    "賻": "赙",
-    "購": "购",
-    "賽": "赛",
-    "賾": "赜",
-    "贄": "贽",
-    "贅": "赘",
-    "贈": "赠",
-    "贊": "赞",
-    "贋": "赝",
-    "贍": "赡",
-    "贏": "赢",
-    "贐": "赆",
-    "贓": "赃",
-    "贖": "赎",
-    "贛": "赣",
-    "趕": "赶",
-    "趙": "赵",
-    "趨": "趋",
-    "趲": "趱",
-    "跡": "迹",
-    "跼": "局",
-    "踐": "践",
-    "踡": "蜷",
-    "踫": "碰",
-    "踰": "逾",
-    "踴": "踊",
-    "蹌": "跄",
-    "蹕": "跸",
-    "蹟": "迹",
-    "蹠": "跖",
-    "蹣": "蹒",
-    "蹤": "踪",
-    "蹧": "糟",
-    "蹺": "跷",
-    "躉": "趸",
-    "躊": "踌",
-    "躋": "跻",
-    "躍": "跃",
-    "躑": "踯",
-    "躒": "跞",
-    "躓": "踬",
-    "躕": "蹰",
-    "躚": "跹",
-    "躡": "蹑",
-    "躥": "蹿",
-    "躦": "躜",
-    "躪": "躏",
-    "軀": "躯",
-    "車": "车",
-    "軋": "轧",
-    "軌": "轨",
-    "軍": "军",
-    "軒": "轩",
-    "軔": "轫",
-    "軛": "轭",
-    "軟": "软",
-    "軤": "轷",
-    "軫": "轸",
-    "軲": "轱",
-    "軸": "轴",
-    "軹": "轵",
-    "軺": "轺",
-    "軻": "轲",
-    "軼": "轶",
-    "軾": "轼",
-    "較": "较",
-    "輅": "辂",
-    "輇": "辁",
-    "載": "载",
-    "輊": "轾",
-    "輒": "辄",
-    "輓": "挽",
-    "輔": "辅",
-    "輕": "轻",
-    "輛": "辆",
-    "輜": "辎",
-    "輝": "辉",
-    "輞": "辋",
-    "輟": "辍",
-    "輥": "辊",
-    "輦": "辇",
-    "輩": "辈",
-    "輪": "轮",
-    "輯": "辑",
-    "輳": "辏",
-    "輸": "输",
-    "輻": "辐",
-    "輾": "辗",
-    "輿": "舆",
-    "轂": "毂",
-    "轄": "辖",
-    "轅": "辕",
-    "轆": "辘",
-    "轉": "转",
-    "轍": "辙",
-    "轎": "轿",
-    "轔": "辚",
-    "轟": "轰",
-    "轡": "辔",
-    "轢": "轹",
-    "轤": "轳",
-    "辦": "办",
-    "辭": "辞",
-    "辮": "辫",
-    "辯": "辩",
-    "農": "农",
-    "迆": "迤",
-    "迴": "回",
-    "迺": "乃",
-    "逕": "迳",
-    "這": "这",
-    "連": "连",
-    "週": "周",
-    "進": "进",
-    "遊": "游",
-    "運": "运",
-    "過": "过",
-    "達": "达",
-    "違": "违",
-    "遙": "遥",
-    "遜": "逊",
-    "遞": "递",
-    "遠": "远",
-    "適": "适",
-    "遲": "迟",
-    "遷": "迁",
-    "選": "选",
-    "遺": "遗",
-    "遼": "辽",
-    "邁": "迈",
-    "還": "还",
-    "邇": "迩",
-    "邊": "边",
-    "邏": "逻",
-    "邐": "逦",
-    "郟": "郏",
-    "郵": "邮",
-    "鄆": "郓",
-    "鄉": "乡",
-    "鄒": "邹",
-    "鄔": "邬",
-    "鄖": "郧",
-    "鄧": "邓",
-    "鄭": "郑",
-    "鄰": "邻",
-    "鄲": "郸",
-    "鄴": "邺",
-    "鄶": "郐",
-    "鄺": "邝",
-    "酈": "郦",
-    "酖": "鸩",
-    "醃": "腌",
-    "醆": "盏",
-    "醜": "丑",
-    "醞": "酝",
-    "醫": "医",
-    "醬": "酱",
-    "醱": "发",
-    "醼": "宴",
-    "釀": "酿",
-    "釁": "衅",
-    "釃": "酾",
-    "釅": "酽",
-    "釆": "采",
-    "釋": "释",
-    "釐": "厘",
-    "釓": "钆",
-    "釔": "钇",
-    "釕": "钌",
-    "釗": "钊",
-    "釘": "钉",
-    "釙": "钋",
-    "針": "针",
-    "釣": "钓",
-    "釤": "钐",
-    "釦": "扣",
-    "釧": "钏",
-    "釩": "钒",
-    "釵": "钗",
-    "釷": "钍",
-    "釹": "钕",
-    "釺": "钎",
-    "釾": "䥺",
-    "鈀": "钯",
-    "鈁": "钫",
-    "鈃": "钘",
-    "鈄": "钭",
-    "鈈": "钚",
-    "鈉": "钠",
-    "鈍": "钝",
-    "鈐": "钤",
-    "鈑": "钣",
-    "鈔": "钞",
-    "鈕": "钮",
-    "鈞": "钧",
-    "鈣": "钙",
-    "鈥": "钬",
-    "鈦": "钛",
-    "鈧": "钪",
-    "鈮": "铌",
-    "鈰": "铈",
-    "鈳": "钶",
-    "鈴": "铃",
-    "鈷": "钴",
-    "鈸": "钹",
-    "鈹": "铍",
-    "鈺": "钰",
-    "鈽": "钸",
-    "鈾": "铀",
-    "鈿": "钿",
-    "鉀": "钾",
-    "鉅": "钜",
-    "鉆": "钻",
-    "鉈": "铊",
-    "鉉": "铉",
-    "鉋": "刨",
-    "鉍": "铋",
-    "鉑": "铂",
-    "鉕": "钷",
-    "鉗": "钳",
-    "鉚": "铆",
-    "鉛": "铅",
-    "鉞": "钺",
-    "鉢": "钵",
-    "鉤": "钩",
-    "鉦": "钲",
-    "鉬": "钼",
-    "鉭": "钽",
-    "鉶": "铏",
-    "鉸": "铰",
-    "鉺": "铒",
-    "鉻": "铬",
-    "鉿": "铪",
-    "銀": "银",
-    "銃": "铳",
-    "銅": "铜",
-    "銑": "铣",
-    "銓": "铨",
-    "銖": "铢",
-    "銘": "铭",
-    "銚": "铫",
-    "銜": "衔",
-    "銠": "铑",
-    "銣": "铷",
-    "銥": "铱",
-    "銦": "铟",
-    "銨": "铵",
-    "銩": "铥",
-    "銪": "铕",
-    "銫": "铯",
-    "銬": "铐",
-    "銱": "铞",
-    "銲": "焊",
-    "銳": "锐",
-    "銷": "销",
-    "銹": "锈",
-    "銻": "锑",
-    "銼": "锉",
-    "鋁": "铝",
-    "鋃": "锒",
-    "鋅": "锌",
-    "鋇": "钡",
-    "鋌": "铤",
-    "鋏": "铗",
-    "鋒": "锋",
-    "鋝": "锊",
-    "鋟": "锓",
-    "鋣": "铘",
-    "鋤": "锄",
-    "鋥": "锃",
-    "鋦": "锔",
-    "鋨": "锇",
-    "鋩": "铓",
-    "鋪": "铺",
-    "鋮": "铖",
-    "鋯": "锆",
-    "鋰": "锂",
-    "鋱": "铽",
-    "鋶": "锍",
-    "鋸": "锯",
-    "鋻": "鉴",
-    "鋼": "钢",
-    "錁": "锞",
-    "錄": "录",
-    "錆": "锖",
-    "錇": "锫",
-    "錈": "锩",
-    "錐": "锥",
-    "錒": "锕",
-    "錕": "锟",
-    "錘": "锤",
-    "錙": "锱",
-    "錚": "铮",
-    "錛": "锛",
-    "錟": "锬",
-    "錠": "锭",
-    "錢": "钱",
-    "錦": "锦",
-    "錨": "锚",
-    "錫": "锡",
-    "錮": "锢",
-    "錯": "错",
-    "錳": "锰",
-    "錶": "表",
-    "錸": "铼",
-    "鍀": "锝",
-    "鍁": "锨",
-    "鍃": "锪",
-    "鍆": "钔",
-    "鍇": "锴",
-    "鍊": "炼",
-    "鍋": "锅",
-    "鍍": "镀",
-    "鍔": "锷",
-    "鍘": "铡",
-    "鍚": "钖",
-    "鍛": "锻",
-    "鍤": "锸",
-    "鍥": "锲",
-    "鍩": "锘",
-    "鍬": "锹",
-    "鍰": "锾",
-    "鍵": "键",
-    "鍶": "锶",
-    "鍺": "锗",
-    "鍼": "针",
-    "鍾": "钟",
-    "鎂": "镁",
-    "鎄": "锿",
-    "鎇": "镅",
-    "鎊": "镑",
-    "鎌": "镰",
-    "鎔": "镕",
-    "鎖": "锁",
-    "鎗": "枪",
-    "鎘": "镉",
-    "鎚": "锤",
-    "鎡": "镃",
-    "鎢": "钨",
-    "鎣": "蓥",
-    "鎦": "镏",
-    "鎧": "铠",
-    "鎩": "铩",
-    "鎪": "锼",
-    "鎬": "镐",
-    "鎮": "镇",
-    "鎰": "镒",
-    "鎳": "镍",
-    "鎵": "镓",
-    "鎿": "镎",
-    "鏃": "镞",
-    "鏇": "镟",
-    "鏈": "链",
-    "鏌": "镆",
-    "鏍": "镙",
-    "鏑": "镝",
-    "鏗": "铿",
-    "鏘": "锵",
-    "鏜": "镗",
-    "鏝": "镘",
-    "鏞": "镛",
-    "鏟": "铲",
-    "鏡": "镜",
-    "鏢": "镖",
-    "鏤": "镂",
-    "鏨": "錾",
-    "鏰": "镚",
-    "鏵": "铧",
-    "鏷": "镤",
-    "鏹": "镪",
-    "鏺": "䥽",
-    "鏽": "锈",
-    "鐃": "铙",
-    "鐉": "铣",
-    "鐋": "铴",
-    "鐐": "镣",
-    "鐒": "铹",
-    "鐓": "镦",
-    "鐔": "镡",
-    "鐘": "钟",
-    "鐙": "镫",
-    "鐝": "镢",
-    "鐠": "镨",
-    "鐥": "䦅",
-    "鐦": "锎",
-    "鐧": "锏",
-    "鐨": "镄",
-    "鐫": "镌",
-    "鐮": "镰",
-    "鐯": "䦃",
-    "鐲": "镯",
-    "鐳": "镭",
-    "鐵": "铁",
-    "鐶": "镮",
-    "鐸": "铎",
-    "鐺": "铛",
-    "鐿": "镱",
-    "鑄": "铸",
-    "鑊": "镬",
-    "鑌": "镔",
-    "鑑": "鉴",
-    "鑒": "鉴",
-    "鑔": "镲",
-    "鑕": "锧",
-    "鑞": "镴",
-    "鑠": "铄",
-    "鑣": "镳",
-    "鑤": "刨",
-    "鑥": "镥",
-    "鑪": "炉",
-    "鑭": "镧",
-    "鑰": "钥",
-    "鑲": "镶",
-    "鑵": "罐",
-    "鑷": "镊",
-    "鑹": "镩",
-    "鑼": "锣",
-    "鑽": "钻",
-    "鑾": "銮",
-    "鑿": "凿",
-    "钁": "䦆",
-    "钂": "镋",
-    "長": "长",
-    "門": "门",
-    "閂": "闩",
-    "閃": "闪",
-    "閆": "闫",
-    "閉": "闭",
-    "開": "开",
-    "閌": "闶",
-    "閎": "闳",
-    "閏": "闰",
-    "閑": "闲",
-    "閒": "闲",
-    "間": "间",
-    "閔": "闵",
-    "閘": "闸",
-    "閡": "阂",
-    "閣": "阁",
-    "閤": "合",
-    "閥": "阀",
-    "閨": "闺",
-    "閩": "闽",
-    "閫": "阃",
-    "閬": "阆",
-    "閭": "闾",
-    "閱": "阅",
-    "閶": "阊",
-    "閹": "阉",
-    "閻": "阎",
-    "閼": "阏",
-    "閽": "阍",
-    "閾": "阈",
-    "閿": "阌",
-    "闃": "阒",
-    "闆": "板",
-    "闇": "暗",
-    "闈": "闱",
-    "闊": "阔",
-    "闋": "阕",
-    "闌": "阑",
-    "闐": "阗",
-    "闓": "闿",
-    "闔": "阖",
-    "闕": "阙",
-    "闖": "闯",
-    "關": "关",
-    "闞": "阚",
-    "闡": "阐",
-    "闢": "辟",
-    "闥": "闼",
-    "阨": "厄",
-    "阬": "坑",
-    "阯": "址",
-    "陏": "隋",
-    "陘": "陉",
-    "陝": "陕",
-    "陞": "升",
-    "陣": "阵",
-    "陰": "阴",
-    "陳": "陈",
-    "陸": "陆",
-    "陽": "阳",
-    "隄": "堤",
-    "隉": "陧",
-    "隊": "队",
-    "階": "阶",
-    "隕": "陨",
-    "際": "际",
-    "隤": "颓",
-    "隨": "随",
-    "險": "险",
-    "隱": "隐",
-    "隴": "陇",
-    "隸": "隶",
-    "隻": "只",
-    "雋": "隽",
-    "雖": "虽",
-    "雙": "双",
-    "雛": "雏",
-    "雜": "杂",
-    "雞": "鸡",
-    "離": "离",
-    "難": "难",
-    "雲": "云",
-    "電": "电",
-    "霤": "溜",
-    "霧": "雾",
-    "霽": "霁",
-    "靂": "雳",
-    "靄": "霭",
-    "靆": "叇",
-    "靈": "灵",
-    "靉": "叆",
-    "靚": "靓",
-    "靜": "静",
-    "靦": "腼",
-    "靨": "靥",
-    "鞏": "巩",
-    "鞦": "秋",
-    "韁": "缰",
-    "韃": "鞑",
-    "韆": "千",
-    "韉": "鞯",
-    "韋": "韦",
-    "韌": "韧",
-    "韍": "韨",
-    "韓": "韩",
-    "韙": "韪",
-    "韜": "韬",
-    "韞": "韫",
-    "韻": "韵",
-    "響": "响",
-    "頁": "页",
-    "頂": "顶",
-    "頃": "顷",
-    "項": "项",
-    "順": "顺",
-    "頇": "顸",
-    "須": "须",
-    "頊": "顼",
-    "頌": "颂",
-    "頎": "颀",
-    "頏": "颃",
-    "預": "预",
-    "頑": "顽",
-    "頒": "颁",
-    "頓": "顿",
-    "頗": "颇",
-    "領": "领",
-    "頜": "颌",
-    "頡": "颉",
-    "頤": "颐",
-    "頦": "颏",
-    "頫": "俯",
-    "頭": "头",
-    "頰": "颊",
-    "頲": "颋",
-    "頷": "颔",
-    "頸": "颈",
-    "頹": "颓",
-    "頻": "频",
-    "顆": "颗",
-    "題": "题",
-    "額": "额",
-    "顎": "腭",
-    "顏": "颜",
-    "顒": "颙",
-    "顓": "颛",
-    "顔": "颜",
-    "願": "愿",
-    "顙": "颡",
-    "顛": "颠",
-    "類": "类",
-    "顢": "颟",
-    "顥": "颢",
-    "顧": "顾",
-    "顫": "颤",
-    "顬": "颥",
-    "顯": "显",
-    "顰": "颦",
-    "顱": "颅",
-    "顳": "颞",
-    "顴": "颧",
-    "風": "风",
-    "颮": "飑",
-    "颯": "飒",
-    "颱": "台",
-    "颳": "刮",
-    "颶": "飓",
-    "颸": "飔",
-    "颺": "扬",
-    "颼": "飕",
-    "飀": "飗",
-    "飄": "飘",
-    "飆": "飙",
-    "飈": "飚",
-    "飛": "飞",
-    "飢": "饥",
-    "飥": "饦",
-    "飩": "饨",
-    "飪": "饪",
-    "飫": "饫",
-    "飭": "饬",
-    "飯": "饭",
-    "飲": "饮",
-    "飴": "饴",
-    "飼": "饲",
-    "飽": "饱",
-    "飾": "饰",
-    "飿": "饳",
-    "餃": "饺",
-    "餄": "饸",
-    "餅": "饼",
-    "餈": "糍",
-    "餉": "饷",
-    "養": "养",
-    "餌": "饵",
-    "餎": "饹",
-    "餏": "饻",
-    "餑": "饽",
-    "餒": "馁",
-    "餓": "饿",
-    "餔": "哺",
-    "餘": "余",
-    "餚": "肴",
-    "餛": "馄",
-    "餜": "馃",
-    "餞": "饯",
-    "餡": "馅",
-    "館": "馆",
-    "餬": "糊",
-    "餱": "糇",
-    "餳": "饧",
-    "餵": "喂",
-    "餶": "馉",
-    "餷": "馇",
-    "餺": "馎",
-    "餼": "饩",
-    "餽": "馈",
-    "餾": "馏",
-    "餿": "馊",
-    "饃": "馍",
-    "饅": "馒",
-    "饈": "馐",
-    "饉": "馑",
-    "饊": "馓",
-    "饋": "馈",
-    "饌": "馔",
-    "饑": "饥",
-    "饒": "饶",
-    "饗": "飨",
-    "饜": "餍",
-    "饞": "馋",
-    "饟": "馕",
-    "馬": "马",
-    "馭": "驭",
-    "馮": "冯",
-    "馱": "驮",
-    "馳": "驰",
-    "馴": "驯",
-    "駁": "驳",
-    "駐": "驻",
-    "駑": "驽",
-    "駒": "驹",
-    "駔": "驵",
-    "駕": "驾",
-    "駘": "骀",
-    "駙": "驸",
-    "駛": "驶",
-    "駝": "驼",
-    "駟": "驷",
-    "駢": "骈",
-    "駭": "骇",
-    "駮": "驳",
-    "駱": "骆",
-    "駸": "骎",
-    "駿": "骏",
-    "騁": "骋",
-    "騃": "呆",
-    "騅": "骓",
-    "騍": "骒",
-    "騎": "骑",
-    "騏": "骐",
-    "騖": "骛",
-    "騙": "骗",
-    "騣": "鬃",
-    "騫": "骞",
-    "騭": "骘",
-    "騮": "骝",
-    "騰": "腾",
-    "騶": "驺",
-    "騷": "骚",
-    "騸": "骟",
-    "騾": "骡",
-    "驀": "蓦",
-    "驁": "骜",
-    "驂": "骖",
-    "驃": "骠",
-    "驄": "骢",
-    "驅": "驱",
-    "驊": "骅",
-    "驍": "骁",
-    "驏": "骣",
-    "驕": "骄",
-    "驗": "验",
-    "驚": "惊",
-    "驛": "驿",
-    "驟": "骤",
-    "驢": "驴",
-    "驤": "骧",
-    "驥": "骥",
-    "驪": "骊",
-    "骯": "肮",
-    "髏": "髅",
-    "髒": "脏",
-    "體": "体",
-    "髕": "髌",
-    "髖": "髋",
-    "髣": "仿",
-    "髮": "发",
-    "鬆": "松",
-    "鬍": "胡",
-    "鬚": "须",
-    "鬢": "鬓",
-    "鬥": "斗",
-    "鬧": "闹",
-    "鬨": "哄",
-    "鬩": "阋",
-    "鬮": "阄",
-    "鬱": "郁",
-    "魎": "魉",
-    "魘": "魇",
-    "魚": "鱼",
-    "魛": "鱽",
-    "魨": "豚",
-    "魯": "鲁",
-    "魴": "鲂",
-    "魷": "鱿",
-    "鮁": "鲅",
-    "鮃": "鲆",
-    "鮍": "鲏",
-    "鮐": "鲐",
-    "鮑": "鲍",
-    "鮒": "鲋",
-    "鮓": "鲊",
-    "鮚": "鲒",
-    "鮞": "鲕",
-    "鮣": "䲟",
-    "鮦": "鲖",
-    "鮪": "鲔",
-    "鮫": "鲛",
-    "鮭": "鲑",
-    "鮮": "鲜",
-    "鮺": "鲝",
-    "鯀": "鲧",
-    "鯁": "鲠",
-    "鯇": "鲩",
-    "鯉": "鲤",
-    "鯊": "鲨",
-    "鯔": "鲻",
-    "鯖": "鲭",
-    "鯗": "鲞",
-    "鯛": "鲷",
-    "鯝": "鲴",
-    "鯡": "鲱",
-    "鯢": "鲵",
-    "鯤": "鲲",
-    "鯧": "鲳",
-    "鯨": "鲸",
-    "鯪": "鲮",
-    "鯫": "鲰",
-    "鯰": "鲇",
-    "鯴": "鲺",
-    "鯽": "鲫",
-    "鯿": "鳊",
-    "鰂": "鲗",
-    "鰈": "鲽",
-    "鰉": "鳇",
-    "鰌": "䲡",
-    "鰍": "鳅",
-    "鰒": "鳆",
-    "鰓": "鳃",
-    "鰛": "鳁",
-    "鰜": "鳒",
-    "鰟": "鳑",
-    "鰠": "鳋",
-    "鰣": "鲥",
-    "鰥": "鳏",
-    "鰧": "䲢",
-    "鰨": "鳎",
-    "鰩": "鳐",
-    "鰭": "鳍",
-    "鰱": "鲢",
-    "鰲": "鳌",
-    "鰳": "鳓",
-    "鰵": "鳘",
-    "鰷": "鲦",
-    "鰹": "鲣",
-    "鰻": "鳗",
-    "鰼": "鳛",
-    "鰾": "鳔",
-    "鱅": "鳙",
-    "鱈": "鳕",
-    "鱉": "鳖",
-    "鱒": "鳟",
-    "鱔": "鳝",
-    "鱖": "鳜",
-    "鱗": "鳞",
-    "鱘": "鲟",
-    "鱝": "鲼",
-    "鱟": "鲎",
-    "鱠": "鲙",
-    "鱣": "鳣",
-    "鱧": "鳢",
-    "鱨": "鲿",
-    "鱭": "鲚",
-    "鱷": "鳄",
-    "鱸": "鲈",
-    "鱺": "鲡",
-    "鳥": "鸟",
-    "鳧": "凫",
-    "鳩": "鸠",
-    "鳳": "凤",
-    "鳴": "鸣",
-    "鳶": "鸢",
-    "鳾": "䴓",
-    "鴆": "鸩",
-    "鴇": "鸨",
-    "鴈": "雁",
-    "鴉": "鸦",
-    "鴒": "鸰",
-    "鴕": "鸵",
-    "鴛": "鸳",
-    "鴝": "鸲",
-    "鴞": "鸮",
-    "鴟": "鸱",
-    "鴣": "鸪",
-    "鴦": "鸯",
-    "鴨": "鸭",
-    "鴯": "鸸",
-    "鴰": "鸹",
-    "鴴": "鸻",
-    "鴷": "䴕",
-    "鴻": "鸿",
-    "鴿": "鸽",
-    "鵁": "䴔",
-    "鵂": "鸺",
-    "鵃": "鸼",
-    "鵑": "鹃",
-    "鵒": "鹆",
-    "鵓": "鹁",
-    "鵜": "鹈",
-    "鵝": "鹅",
-    "鵠": "鹄",
-    "鵡": "鹉",
-    "鵪": "鹌",
-    "鵬": "鹏",
-    "鵮": "鹐",
-    "鵯": "鹎",
-    "鵰": "雕",
-    "鵲": "鹊",
-    "鶄": "䴖",
-    "鶇": "鸫",
-    "鶉": "鹑",
-    "鶊": "鹒",
-    "鶏": "鸡",
-    "鶓": "鹋",
-    "鶖": "鹙",
-    "鶘": "鹕",
-    "鶚": "鹗",
-    "鶡": "鹖",
-    "鶥": "鹛",
-    "鶩": "鹜",
-    "鶪": "䴗",
-    "鶬": "鸧",
-    "鶯": "莺",
-    "鶱": "骞",
-    "鶴": "鹤",
-    "鶺": "鹡",
-    "鶻": "鹘",
-    "鶼": "鹣",
-    "鶿": "鹚",
-    "鷂": "鹞",
-    "鷉": "䴘",
-    "鷓": "鹧",
-    "鷖": "鹥",
-    "鷗": "鸥",
-    "鷙": "鸷",
-    "鷚": "鹨",
-    "鷥": "鸶",
-    "鷦": "鹪",
-    "鷯": "鹩",
-    "鷰": "燕",
-    "鷲": "鹫",
-    "鷳": "鹇",
-    "鷴": "鹇",
-    "鷸": "鹬",
-    "鷹": "鹰",
-    "鷺": "鹭",
-    "鸇": "鹯",
-    "鸊": "䴙",
-    "鸌": "鹱",
-    "鸕": "鸬",
-    "鸚": "鹦",
-    "鸛": "鹳",
-    "鸝": "鹂",
-    "鸞": "鸾",
-    "鹵": "卤",
-    "鹹": "咸",
-    "鹺": "鹾",
-    "鹼": "硷",
-    "鹽": "盐",
-    "麗": "丽",
-    "麥": "麦",
-    "麩": "麸",
-    "麵": "面",
-    "麼": "么",
-    "黃": "黄",
-    "黌": "黉",
-    "點": "点",
-    "黨": "党",
-    "黲": "黪",
-    "黴": "霉",
-    "黶": "黡",
-    "黷": "黩",
-    "黽": "黾",
-    "黿": "鼋",
-    "鼇": "鳌",
-    "鼉": "鼍",
-    "鼕": "冬",
-    "鼴": "鼹",
-    "齊": "齐",
-    "齋": "斋",
-    "齎": "赍",
-    "齏": "齑",
-    "齒": "齿",
-    "齔": "龀",
-    "齙": "龅",
-    "齜": "龇",
-    "齟": "龃",
-    "齠": "龆",
-    "齡": "龄",
-    "齣": "出",
-    "齦": "龈",
-    "齧": "啮",
-    "齪": "龊",
-    "齬": "龉",
-    "齲": "龋",
-    "齶": "腭",
-    "齷": "龌",
-    "龍": "龙",
-    "龐": "庞",
-    "龑": "䶮",
-    "龔": "龚",
-    "龕": "龛",
-    "龜": "龟",
-    "兀": "兀",
-    "︰": "∶",
-    "︱": "｜",
-    "︳": "｜",
-    "︿": "∧",
-    "﹀": "∨",
-    "﹐": "，",
-    "﹑": "、",
-    "﹒": "．",
-    "﹔": "；",
-    "﹕": "：",
-    "﹖": "？",
-    "﹗": "！",
-    "﹙": "（",
-    "﹚": "）",
-    "﹛": "｛",
-    "﹜": "｝",
-    "﹝": "［",
-    "﹞": "］",
-    "﹟": "＃",
-    "﹠": "＆",
-    "﹡": "＊",
-    "﹢": "＋",
-    "﹣": "－",
-    "﹤": "＜",
-    "﹥": "＞",
-    "﹦": "＝",
-    "﹩": "＄",
-    "﹪": "％",
-    "﹫": "＠"
-
-};
-  function sify(text2) {
-    const isString2 = typeof text2 === "string";
-    if (!isString2) {
-      console.error(
-        "The expected text signature is undefined | null | string, but an unexpected value was passed in:",
-        typeof text2
-      );
-    }
-    let $$text = isString2 ? text2 : "";
-    $$text = ($$text == null ? void 0 : $$text.replace(/[^\x00-\xFF]/g, replaceFn)) || "";
-    return $$text;
+  let simplifiedConverter = null;
+  const japaneseVariantMap = {
+    亜: "亚",
+    仏: "佛",
+    仮: "假",
+    価: "价",
+    児: "儿",
+    円: "圆",
+    剣: "剑",
+    剤: "剂",
+    労: "劳",
+    単: "单",
+    囲: "围",
+    団: "团",
+    図: "图",
+    圧: "压",
+    壊: "坏",
+    実: "实",
+    対: "对",
+    専: "专",
+    峡: "峡",
+    巣: "巢",
+    帯: "带",
+    広: "广",
+    弾: "弹",
+    徳: "德",
+    悪: "恶",
+    応: "应",
+    抜: "拔",
+    拡: "扩",
+    揺: "摇",
+    桜: "樱",
+    様: "样",
+    権: "权",
+    欧: "欧",
+    歓: "欢",
+    歩: "步",
+    歳: "岁",
+    殻: "壳",
+    気: "气",
+    沢: "泽",
+    涙: "泪",
+    渋: "涩",
+    浜: "滨",
+    満: "满",
+    滝: "泷",
+    焼: "烧",
+    獣: "兽",
+    発: "发",
+    県: "县",
+    絵: "绘",
+    絶: "绝",
+    継: "继",
+    続: "续",
+    緑: "绿",
+    縄: "绳",
+    総: "总",
+    芸: "艺",
+    薬: "药",
+    蛍: "萤",
+    説: "说",
+    読: "读",
+    転: "转",
+    鉄: "铁",
+    黒: "黑",
+    竜: "龙"
+  };
+  const japaneseVariantPattern = new RegExp(`[${Object.keys(japaneseVariantMap).join("")}]`, "g");
+  const protectedZhuWords = [
+    "著作",
+    "著名",
+    "著称",
+    "著書",
+    "著书",
+    "著述",
+    "著錄",
+    "著录",
+    "著者",
+    "著於",
+    "著于",
+    "著有",
+    "著成",
+    "著文",
+    "名著",
+    "原著",
+    "巨著",
+    "專著",
+    "专著",
+    "編著",
+    "编著",
+    "譯著",
+    "译著",
+    "合著",
+    "拙著",
+    "新著",
+    "舊著",
+    "旧著",
+    "遺著",
+    "遗著",
+    "土著",
+    "顯著",
+    "显著",
+    "卓著",
+    "昭著",
+    "較著",
+    "较著",
+    "見微知著",
+    "见微知著",
+    "臭名昭著",
+    "彰明較著",
+    "彰明较著"
+  ];
+  function getSimplifiedConverter() {
+    simplifiedConverter ?? (simplifiedConverter = ConverterBuilder(t2cnPreset)({ from: "t", to: "cn" }));
+    return simplifiedConverter;
   }
-  function replaceFn(char) {
-    if (char in t_2_s) {
-      return t_2_s[char];
+  function normalizeJapaneseVariantsForSimplified(text2) {
+    return text2.replace(japaneseVariantPattern, (char) => japaneseVariantMap[char] || char);
+  }
+  function normalizeZheForSimplified(text2) {
+    if (!text2.includes("著")) return text2;
+    const placeholders = [];
+    let converted = text2;
+    for (const word of protectedZhuWords) {
+      if (!converted.includes(word)) continue;
+      const token = `${placeholders.length}`;
+      placeholders.push(word);
+      converted = converted.split(word).join(token);
     }
-    return char;
+    converted = converted.replace(/著/g, "着");
+    return converted.replace(/\uE000(\d+)\uE001/g, (_, index) => placeholders[Number(index)]);
+  }
+  function getConverter(mode) {
+    if (mode === "sc") {
+      const converter = getSimplifiedConverter();
+      return (text2) => normalizeZheForSimplified(normalizeJapaneseVariantsForSimplified(converter(text2)));
+    }
+    return tify;
   }
   async function convertText(text2, mode) {
     if (mode === "none" || !text2) {
       return text2;
     }
     try {
-      const converter = mode === "sc" ? sify : tify;
+      const converter = getConverter(mode);
       return converter(text2);
     } catch (error) {
       console.error("[ChineseConverter] Text conversion error:", error);
@@ -21607,7 +19458,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       return html2;
     }
     try {
-      const converter = mode === "sc" ? sify : tify;
+      const converter = getConverter(mode);
       const template = document.createElement("template");
       template.innerHTML = html2;
       const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT, null);
@@ -23931,6 +21782,7 @@ pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
       isLoadingNext,
       chapters,
       currentChapterIndex,
+      currentConversionMode,
       chapter,
       rule,
       error,
@@ -27070,7 +24922,7 @@ ${value}`;
     key: 0,
     class: "mnr-loading-prev"
   };
-  const _hoisted_2 = ["data-chapter-url"];
+  const _hoisted_2 = ["data-chapter-url", "lang"];
   const _hoisted_3 = { class: "mnr-chapter-title" };
   const _hoisted_4 = ["innerHTML"];
   const _hoisted_5 = {
@@ -27168,6 +25020,11 @@ ${value}`;
       const showProgress = computed(() => configStore.behavior.showProgress);
       const cacheProgress = computed(() => readerStore.cacheProgress);
       const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
+      const contentLang = computed(() => {
+        if (readerStore.currentConversionMode === "sc") return "zh-CN";
+        if (readerStore.currentConversionMode === "tc") return "zh-TW";
+        return void 0;
+      });
       const { autoLoadArmed, scheduleAutoLoadNext, lastAutoLoadScrollTop, autoLoadShortChainCount } = useReaderAutoLoad({
         mainRef,
         readerStore,
@@ -27426,6 +25283,7 @@ ${value}`;
                 ref: setChapterRef(entry.chapter.url),
                 class: "mnr-reader-content",
                 "data-chapter-url": entry.chapter.url,
+                lang: contentLang.value,
                 onClick: handleContentClick
               }, [
                 createBaseVNode("h1", _hoisted_3, toDisplayString(entry.chapter.title), 1),
@@ -27497,7 +25355,7 @@ ${value}`;
       };
     }
   });
-  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-e19dc4ab"]]);
+  const ReaderView = _export_sfc(_sfc_main, [["__scopeId", "data-v-d3057a66"]]);
   const appState = {
     isInitialized: false,
     autoEnableDone: false,

@@ -459,6 +459,7 @@ export const useReaderStore = defineStore('reader', () => {
     isLoadingNext,
     chapters,
     currentChapterIndex,
+    currentConversionMode,
     chapter,
     rule,
     error,

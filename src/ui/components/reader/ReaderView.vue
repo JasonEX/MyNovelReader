@@ -54,6 +54,7 @@
           :ref="setChapterRef(entry.chapter.url)"
           class="mnr-reader-content"
           :data-chapter-url="entry.chapter.url"
+          :lang="contentLang"
           @click="handleContentClick"
         >
           <h1 class="mnr-chapter-title">{{ entry.chapter.title }}</h1>
@@ -242,6 +243,11 @@ const scrollPercent = computed(() => readerStore.scrollPercent);
 const showProgress = computed(() => configStore.behavior.showProgress);
 const cacheProgress = computed(() => readerStore.cacheProgress);
 const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
+const contentLang = computed(() => {
+  if (readerStore.currentConversionMode === 'sc') return 'zh-CN';
+  if (readerStore.currentConversionMode === 'tc') return 'zh-TW';
+  return undefined;
+});
 
 // === Composables ===
 
@@ -514,7 +520,14 @@ onUnmounted(() => {
   max-width: var(--mnr-max-width, 800px);
   margin: 0 auto;
   padding: var(--mnr-padding, 20px);
-  font-family: var(--mnr-font-family, system-ui);
+  font-family: var(
+    --mnr-font-family,
+    'Microsoft YaHei',
+    'PingFang SC',
+    'Noto Sans CJK SC',
+    system-ui,
+    sans-serif
+  );
   font-size: var(--mnr-font-size, 18px);
   line-height: var(--mnr-line-height, 1.8);
   letter-spacing: var(--mnr-letter-spacing, 0.05em);

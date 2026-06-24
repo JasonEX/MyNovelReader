@@ -1,12 +1,166 @@
 /**
  * Chinese Simplified/Traditional Converter
- * Minimal, dependency-light implementation for UserScript
- * Uses character-level maps from chinese-conv (MIT, ~270 KB bundled)
+ * Keeps Simplified -> Traditional dependency-light while using OpenCC for
+ * Traditional/variant/Japanese-shinjitai -> Simplified conversion.
  */
 
-import { sify, tify } from 'chinese-conv';
+import * as t2cnPreset from 'opencc-js/preset/t2cn';
+import { ConverterBuilder, type ConverterFunction } from 'opencc-js/core';
+import { tify } from 'chinese-conv';
 
 export type ConversionMode = 'none' | 'sc' | 'tc';
+
+let simplifiedConverter: ConverterFunction | null = null;
+
+const japaneseVariantMap: Record<string, string> = {
+  亜: '亚',
+  仏: '佛',
+  仮: '假',
+  価: '价',
+  児: '儿',
+  円: '圆',
+  剣: '剑',
+  剤: '剂',
+  労: '劳',
+  単: '单',
+  囲: '围',
+  団: '团',
+  図: '图',
+  圧: '压',
+  壊: '坏',
+  実: '实',
+  対: '对',
+  専: '专',
+  峡: '峡',
+  巣: '巢',
+  帯: '带',
+  広: '广',
+  弾: '弹',
+  徳: '德',
+  悪: '恶',
+  応: '应',
+  抜: '拔',
+  拡: '扩',
+  揺: '摇',
+  桜: '樱',
+  様: '样',
+  権: '权',
+  欧: '欧',
+  歓: '欢',
+  歩: '步',
+  歳: '岁',
+  殻: '壳',
+  気: '气',
+  沢: '泽',
+  涙: '泪',
+  渋: '涩',
+  浜: '滨',
+  満: '满',
+  滝: '泷',
+  焼: '烧',
+  獣: '兽',
+  発: '发',
+  県: '县',
+  絵: '绘',
+  絶: '绝',
+  継: '继',
+  続: '续',
+  緑: '绿',
+  縄: '绳',
+  総: '总',
+  芸: '艺',
+  薬: '药',
+  蛍: '萤',
+  説: '说',
+  読: '读',
+  転: '转',
+  鉄: '铁',
+  黒: '黑',
+  竜: '龙',
+};
+
+const japaneseVariantPattern = new RegExp(`[${Object.keys(japaneseVariantMap).join('')}]`, 'g');
+
+const protectedZhuWords = [
+  '著作',
+  '著名',
+  '著称',
+  '著書',
+  '著书',
+  '著述',
+  '著錄',
+  '著录',
+  '著者',
+  '著於',
+  '著于',
+  '著有',
+  '著成',
+  '著文',
+  '名著',
+  '原著',
+  '巨著',
+  '專著',
+  '专著',
+  '編著',
+  '编著',
+  '譯著',
+  '译著',
+  '合著',
+  '拙著',
+  '新著',
+  '舊著',
+  '旧著',
+  '遺著',
+  '遗著',
+  '土著',
+  '顯著',
+  '显著',
+  '卓著',
+  '昭著',
+  '較著',
+  '较著',
+  '見微知著',
+  '见微知著',
+  '臭名昭著',
+  '彰明較著',
+  '彰明较著',
+];
+
+function getSimplifiedConverter(): ConverterFunction {
+  simplifiedConverter ??= ConverterBuilder(t2cnPreset)({ from: 't', to: 'cn' });
+  return simplifiedConverter;
+}
+
+function normalizeJapaneseVariantsForSimplified(text: string): string {
+  return text.replace(japaneseVariantPattern, char => japaneseVariantMap[char] || char);
+}
+
+function normalizeZheForSimplified(text: string): string {
+  if (!text.includes('著')) return text;
+
+  const placeholders: string[] = [];
+  let converted = text;
+
+  for (const word of protectedZhuWords) {
+    if (!converted.includes(word)) continue;
+    const token = `\uE000${placeholders.length}\uE001`;
+    placeholders.push(word);
+    converted = converted.split(word).join(token);
+  }
+
+  converted = converted.replace(/著/g, '着');
+
+  return converted.replace(/\uE000(\d+)\uE001/g, (_, index: string) => placeholders[Number(index)]);
+}
+
+function getConverter(mode: Exclude<ConversionMode, 'none'>): ConverterFunction {
+  if (mode === 'sc') {
+    const converter = getSimplifiedConverter();
+    return text =>
+      normalizeZheForSimplified(normalizeJapaneseVariantsForSimplified(converter(text)));
+  }
+  return tify;
+}
 
 /**
  * Convert plain text between Simplified/Traditional
@@ -17,7 +171,7 @@ export async function convertText(text: string, mode: ConversionMode): Promise<s
   }
 
   try {
-    const converter = mode === 'sc' ? sify : tify;
+    const converter = getConverter(mode);
     return converter(text);
   } catch (error) {
     console.error('[ChineseConverter] Text conversion error:', error);
@@ -35,7 +189,7 @@ export async function convertHTML(html: string, mode: ConversionMode): Promise<s
   }
 
   try {
-    const converter = mode === 'sc' ? sify : tify;
+    const converter = getConverter(mode);
 
     // Parse HTML and convert text nodes only
     const template = document.createElement('template');
