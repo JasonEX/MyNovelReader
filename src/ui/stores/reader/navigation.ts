@@ -5,8 +5,8 @@
 
 import type { CachedChapter, ChapterEntry, LoadSource } from './types';
 import { type ConversionMode, convertHTML } from '@/core/converter';
+import { getParser, type ParsedChapter } from '@/core/parser';
 import { fetchAndParseUrl } from '@/core/utils/network';
-import { getParser } from '@/core/parser';
 import { isCloudflareChallenge } from '@/core/protection';
 import type { Ref } from 'vue';
 
@@ -306,67 +306,132 @@ export function createNavigation(ctx: NavigationContext) {
 
     try {
       const referer = refChapter.chapter.url;
-      const iframeLoader = refChapter.rule?.advanced?.useIframe
-        ? loadDocumentInIframe(targetUrl)
-        : null;
-      const fetchLoader = iframeLoader ? null : fetchAndParseUrl(targetUrl, referer);
-      const abort = iframeLoader ? iframeLoader.abort : fetchLoader!.abort;
-      if (ctx.runtime.isViewStale(runId)) {
-        abort();
-        return false;
-      }
-      pendingAbortRef.value = abort;
+      const parser = getParser();
+      let cleanupIframe: (() => void) | null = null;
 
-      const iframeResult = iframeLoader ? await iframeLoader.promise : null;
-      const fetchResult = fetchLoader ? await fetchLoader.promise : null;
-      if (ctx.runtime.isViewStale(runId)) {
-        abort();
-        return false;
-      }
-      pendingAbortRef.value = null;
-      if (fetchResult?.error === 'abort') {
-        return false;
-      }
-      const doc = iframeResult?.doc || fetchResult?.doc || null;
-      const cleanupIframe = iframeResult?.cleanup;
-      if (!doc) {
+      const clearPendingAbort = (abort: () => void) => {
+        if (pendingAbortRef.value === abort) {
+          pendingAbortRef.value = null;
+        }
+      };
+
+      const recordLoadFailure = () => {
         const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
         if (source === 'manual' || count === 1) {
           ctx.showToast(errorMessage, 'error', 2500);
         }
-        return false;
-      }
+      };
 
-      // Cloudflare challenge page: the actual chapter was not returned.
-      // Treat as a transient failure so the backoff/retry mechanism kicks in.
-      if (isCloudflareChallenge(doc)) {
-        const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
-        if (source === 'manual' || count === 1) {
-          ctx.showToast('Cloudflare 验证页面，请在新标签页中完成验证后重试', 'info', 4000);
+      const loadFetchDocument = async (): Promise<Document | 'abort' | null> => {
+        const fetchLoader = fetchAndParseUrl(targetUrl, referer);
+        const abort = fetchLoader.abort;
+        if (ctx.runtime.isViewStale(runId)) {
+          abort();
+          return 'abort';
         }
-        cleanupIframe?.();
-        return false;
+        pendingAbortRef.value = abort;
+
+        const fetchResult = await fetchLoader.promise;
+        if (ctx.runtime.isViewStale(runId)) {
+          abort();
+          return 'abort';
+        }
+        clearPendingAbort(abort);
+
+        if (fetchResult.error === 'abort') {
+          return 'abort';
+        }
+        return fetchResult.doc;
+      };
+
+      const parseCandidateDocument = async (
+        doc: Document
+      ): Promise<ParsedChapter | 'abort' | 'blocked' | null> => {
+        // Cloudflare challenge page: the actual chapter was not returned.
+        // Treat as a transient failure so the backoff/retry mechanism kicks in.
+        if (isCloudflareChallenge(doc)) {
+          const count = recordNavFailure(ctx.navFailures, navKey, {
+            maxFailures: MAX_NAV_FAILURES,
+          });
+          if (source === 'manual' || count === 1) {
+            ctx.showToast('Cloudflare 验证页面，请在新标签页中完成验证后重试', 'info', 4000);
+          }
+          return 'blocked';
+        }
+
+        // VIP page detection: do not parse / load, just toast and block it for this session
+        if (isVipChapterPage(doc)) {
+          ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
+          ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
+          return 'blocked';
+        }
+
+        const parsed = await parseWithSectionMerge(parser, doc, targetUrl, referer);
+        if (ctx.runtime.isViewStale(runId)) {
+          return 'abort';
+        }
+        return parsed;
+      };
+
+      let parsed: ParsedChapter | null = null;
+
+      if (refChapter.rule?.advanced?.useIframe) {
+        const iframeLoader = loadDocumentInIframe(targetUrl);
+        const abort = iframeLoader.abort;
+        if (ctx.runtime.isViewStale(runId)) {
+          abort();
+          return false;
+        }
+        pendingAbortRef.value = abort;
+
+        const iframeResult = await iframeLoader.promise;
+        if (ctx.runtime.isViewStale(runId)) {
+          iframeResult?.cleanup();
+          abort();
+          return false;
+        }
+        clearPendingAbort(abort);
+        cleanupIframe = iframeResult?.cleanup || null;
+
+        if (iframeResult?.doc) {
+          let iframeParsed: ParsedChapter | 'abort' | 'blocked' | null = null;
+          try {
+            iframeParsed = await parseCandidateDocument(iframeResult.doc);
+          } finally {
+            cleanupIframe?.();
+            cleanupIframe = null;
+          }
+          if (iframeParsed === 'abort' || iframeParsed === 'blocked') {
+            return false;
+          }
+          parsed = iframeParsed;
+        }
       }
 
-      // VIP page detection: do not parse / load, just toast and block it for this session
-      if (isVipChapterPage(doc)) {
-        ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
-        ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
-        cleanupIframe?.();
-        return false;
-      }
-
-      const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, doc, targetUrl, referer);
       cleanupIframe?.();
+
+      if (!parsed) {
+        const fetchDoc = await loadFetchDocument();
+        if (fetchDoc === 'abort') {
+          return false;
+        }
+        if (!fetchDoc) {
+          recordLoadFailure();
+          return false;
+        }
+
+        const fetchParsed = await parseCandidateDocument(fetchDoc);
+        if (fetchParsed === 'abort' || fetchParsed === 'blocked') {
+          return false;
+        }
+        parsed = fetchParsed;
+      }
+
       if (ctx.runtime.isViewStale(runId)) {
         return false;
       }
       if (!parsed) {
-        const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
-        if (source === 'manual' || count === 1) {
-          ctx.showToast(errorMessage, 'error', 2500);
-        }
+        recordLoadFailure();
         return false;
       }
 

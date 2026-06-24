@@ -47,6 +47,7 @@ describe('useChapterNavigation', () => {
     const isNavigating = ref(false);
     const isLoadingPrev = computed(() => overrides.isLoadingPrev ?? false);
     const isLoadingNext = computed(() => overrides.isLoadingNext ?? false);
+    const preloadNext = computed(() => overrides.preloadNext ?? true);
     const hasPrev = computed(() => overrides.hasPrev ?? false);
     const hasNext = computed(() => overrides.hasNext ?? false);
     const topSpacer = computed(() => overrides.topSpacer ?? 0);
@@ -74,6 +75,7 @@ describe('useChapterNavigation', () => {
       isNavigating,
       isLoadingPrev,
       isLoadingNext,
+      preloadNext,
       hasPrev,
       hasNext,
       topSpacer,
@@ -301,15 +303,21 @@ describe('useChapterNavigation', () => {
       });
       const { handleWheel } = useChapterNavigation(opts);
 
-      const wheelEvent = { deltaY: -10 } as WheelEvent;
+      const wheelEvent = {
+        deltaY: -10,
+        preventDefault: vi.fn(),
+      } as unknown as WheelEvent;
       handleWheel(wheelEvent);
 
+      expect(wheelEvent.preventDefault).toHaveBeenCalled();
       expect(opts.readerStore.loadPrevChapter).toHaveBeenCalled();
     });
 
-    it('does nothing on downward scroll', () => {
+    it('does nothing on downward scroll away from bottom', () => {
       const mainEl = document.createElement('div');
       Object.defineProperty(mainEl, 'scrollTop', { value: 0, writable: true });
+      Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
 
       const opts = createNavigationOptions({
         mainRef: mainEl,
@@ -317,8 +325,59 @@ describe('useChapterNavigation', () => {
       });
       const { handleWheel } = useChapterNavigation(opts);
 
-      handleWheel({ deltaY: 10 } as WheelEvent);
+      const wheelEvent = {
+        deltaY: 10,
+        preventDefault: vi.fn(),
+      } as unknown as WheelEvent;
+      handleWheel(wheelEvent);
+      expect(wheelEvent.preventDefault).not.toHaveBeenCalled();
       expect(opts.readerStore.loadPrevChapter).not.toHaveBeenCalled();
+      expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+    });
+
+    it('appends next chapter on downward scroll at bottom', () => {
+      const mainEl = document.createElement('div');
+      Object.defineProperty(mainEl, 'scrollTop', { value: 1400, writable: true });
+      Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+
+      const opts = createNavigationOptions({
+        mainRef: mainEl,
+        hasNext: true,
+      });
+      const { handleWheel } = useChapterNavigation(opts);
+
+      const wheelEvent = {
+        deltaY: 10,
+        preventDefault: vi.fn(),
+      } as unknown as WheelEvent;
+      handleWheel(wheelEvent);
+
+      expect(wheelEvent.preventDefault).toHaveBeenCalled();
+      expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+    });
+
+    it('blocks bottom boundary wheel without appending when preload is disabled', () => {
+      const mainEl = document.createElement('div');
+      Object.defineProperty(mainEl, 'scrollTop', { value: 1400, writable: true });
+      Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+
+      const opts = createNavigationOptions({
+        mainRef: mainEl,
+        hasNext: true,
+        preloadNext: false,
+      });
+      const { handleWheel } = useChapterNavigation(opts);
+
+      const wheelEvent = {
+        deltaY: 10,
+        preventDefault: vi.fn(),
+      } as unknown as WheelEvent;
+      handleWheel(wheelEvent);
+
+      expect(wheelEvent.preventDefault).toHaveBeenCalled();
+      expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
     });
 
     it('does nothing when mainRef is null', () => {

@@ -16,12 +16,15 @@ export interface UseChapterNavigationOptions {
   isNavigating: Ref<boolean>;
   isLoadingPrev: ComputedRef<boolean>;
   isLoadingNext: ComputedRef<boolean>;
+  preloadNext: ComputedRef<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
   topSpacer: ComputedRef<number>;
   setChapterHeight: (url: string, height: number) => void;
   updateWindow: (index: number) => void;
 }
+
+const SCROLL_BOUNDARY_EPSILON_PX = 4;
 
 export function useChapterNavigation(options: UseChapterNavigationOptions) {
   const {
@@ -32,6 +35,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isNavigating,
     isLoadingPrev,
     isLoadingNext,
+    preloadNext,
     hasPrev,
     hasNext,
     topSpacer,
@@ -40,6 +44,30 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   } = options;
 
   let isLoadingPrevLocal = false;
+
+  function isAtTop(mainEl: HTMLElement): boolean {
+    return mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX;
+  }
+
+  function isAtBottom(mainEl: HTMLElement): boolean {
+    return (
+      mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= SCROLL_BOUNDARY_EPSILON_PX
+    );
+  }
+
+  function preventBoundaryDefault(e: WheelEvent): void {
+    if (e.cancelable === false) return;
+    if (typeof e.preventDefault !== 'function') return;
+    e.preventDefault();
+  }
+
+  function loadNextAtBoundary(): void {
+    if (!preloadNext.value) return;
+    if (!hasNext.value) return;
+    if (isLoadingNext.value || isLoadingPrev.value || isNavigating.value) return;
+
+    void readerStore.loadNextChapter('auto');
+  }
 
   /**
    * Scroll to a specific chapter in the view
@@ -199,21 +227,25 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   }
 
   /**
-   * Handle wheel event for loading previous chapter when already at top
+   * Handle wheel event at scroll boundaries.
+   * Preventing the default boundary wheel is required to keep the host page from
+   * receiving the gesture after the reader's internal scroller reaches its edge.
    */
   function handleWheel(e: WheelEvent) {
     const mainEl = mainRef.value;
     if (!mainEl) return;
 
-    // Only handle upward scroll when at top
-    if (
-      e.deltaY < 0 &&
-      mainEl.scrollTop <= 0 &&
-      hasPrev.value &&
-      !isLoadingPrev.value &&
-      !isNavigating.value
-    ) {
-      loadPrevWithScrollAdjust();
+    if (e.deltaY < 0 && isAtTop(mainEl)) {
+      preventBoundaryDefault(e);
+      if (hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+        loadPrevWithScrollAdjust();
+      }
+      return;
+    }
+
+    if (e.deltaY > 0 && isAtBottom(mainEl)) {
+      preventBoundaryDefault(e);
+      loadNextAtBoundary();
     }
   }
 

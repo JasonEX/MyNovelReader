@@ -240,6 +240,7 @@ const isLoadingPrev = computed(() => readerStore.isLoadingPrev);
 const isLoadingNext = computed(() => readerStore.isLoadingNext);
 const hasNext = computed(() => readerStore.hasNext);
 const hasPrev = computed(() => readerStore.hasPrev);
+const preloadNext = computed(() => configStore.behavior.preloadNext);
 const error = computed(() => readerStore.error);
 const toastType = computed(() => readerStore.toastType);
 const scrollPercent = computed(() => readerStore.scrollPercent);
@@ -296,6 +297,7 @@ const { navigateChapter, jumpToCachedChapter, scrollReader, handleWheel } = useC
   isNavigating,
   isLoadingPrev,
   isLoadingNext,
+  preloadNext,
   hasPrev,
   hasNext,
   topSpacer,
@@ -313,8 +315,94 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } =
 
 // === UI event handlers ===
 
+type TouchPointLike = {
+  clientX: number;
+  clientY: number;
+};
+
+type SingleTouchEventLike = Event & {
+  touches: ArrayLike<TouchPointLike>;
+};
+
+const SCROLL_BOUNDARY_EPSILON_PX = 4;
+let lastTouchPoint: TouchPointLike | null = null;
+
 function shieldEvent(event: Event) {
   event.stopPropagation();
+}
+
+function isSingleTouchEvent(event: Event): event is SingleTouchEventLike {
+  const candidate = event as Partial<SingleTouchEventLike>;
+  return Boolean(candidate.touches && candidate.touches.length === 1);
+}
+
+function isAtTop(mainEl: HTMLElement): boolean {
+  return mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX;
+}
+
+function isAtBottom(mainEl: HTMLElement): boolean {
+  return (
+    mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= SCROLL_BOUNDARY_EPSILON_PX
+  );
+}
+
+function triggerNextAppendFromBoundary(): void {
+  if (!preloadNext.value) return;
+  if (!hasNext.value) return;
+  if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
+
+  void readerStore.loadNextChapter('auto');
+}
+
+function preventIfCancelable(event: Event): void {
+  if (event.cancelable === false) return;
+  event.preventDefault();
+}
+
+function handleReaderTouchStart(event: Event): void {
+  if (isSingleTouchEvent(event)) {
+    const touch = event.touches[0];
+    lastTouchPoint = { clientX: touch.clientX, clientY: touch.clientY };
+  } else {
+    lastTouchPoint = null;
+  }
+
+  handleTouchStart(event);
+}
+
+function guardTouchBoundary(event: Event): void {
+  const mainEl = mainRef.value;
+  if (!mainEl || !isSingleTouchEvent(event) || !lastTouchPoint) return;
+
+  const touch = event.touches[0];
+  const deltaX = lastTouchPoint.clientX - touch.clientX;
+  const deltaY = lastTouchPoint.clientY - touch.clientY;
+  lastTouchPoint = { clientX: touch.clientX, clientY: touch.clientY };
+
+  if (Math.abs(deltaY) < 2) return;
+  if (Math.abs(deltaY) < Math.abs(deltaX)) return;
+
+  if (deltaY > 0 && isAtBottom(mainEl)) {
+    preventIfCancelable(event);
+    triggerNextAppendFromBoundary();
+  } else if (deltaY < 0 && isAtTop(mainEl)) {
+    preventIfCancelable(event);
+  }
+}
+
+function handleReaderTouchMove(event: Event): void {
+  handleTouchMove(event);
+  guardTouchBoundary(event);
+}
+
+function handleReaderTouchEnd(event: Event): void {
+  lastTouchPoint = null;
+  handleTouchEnd(event);
+}
+
+function handleReaderTouchCancel(): void {
+  lastTouchPoint = null;
+  handleTouchCancel();
 }
 
 function navigate(direction: 'index') {
@@ -442,11 +530,11 @@ onMounted(async () => {
 
   if (mainRef.value) {
     mainRef.value.addEventListener('scroll', handleScroll, { passive: true });
-    mainRef.value.addEventListener('wheel', handleWheel, { passive: true });
-    mainRef.value.addEventListener('touchstart', handleTouchStart, { passive: true });
-    mainRef.value.addEventListener('touchmove', handleTouchMove, { passive: true });
-    mainRef.value.addEventListener('touchend', handleTouchEnd, { passive: true });
-    mainRef.value.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+    mainRef.value.addEventListener('wheel', handleWheel, { passive: false });
+    mainRef.value.addEventListener('touchstart', handleReaderTouchStart, { passive: true });
+    mainRef.value.addEventListener('touchmove', handleReaderTouchMove, { passive: false });
+    mainRef.value.addEventListener('touchend', handleReaderTouchEnd, { passive: true });
+    mainRef.value.addEventListener('touchcancel', handleReaderTouchCancel, { passive: true });
   }
 
   const observerOptions = {
@@ -481,10 +569,10 @@ onUnmounted(() => {
   if (mainRef.value) {
     mainRef.value.removeEventListener('scroll', handleScroll);
     mainRef.value.removeEventListener('wheel', handleWheel);
-    mainRef.value.removeEventListener('touchstart', handleTouchStart);
-    mainRef.value.removeEventListener('touchmove', handleTouchMove);
-    mainRef.value.removeEventListener('touchend', handleTouchEnd);
-    mainRef.value.removeEventListener('touchcancel', handleTouchCancel);
+    mainRef.value.removeEventListener('touchstart', handleReaderTouchStart);
+    mainRef.value.removeEventListener('touchmove', handleReaderTouchMove);
+    mainRef.value.removeEventListener('touchend', handleReaderTouchEnd);
+    mainRef.value.removeEventListener('touchcancel', handleReaderTouchCancel);
   }
 
   topObserver?.disconnect();
@@ -505,6 +593,7 @@ onUnmounted(() => {
   background: var(--mnr-bg, #ffffff);
   color: var(--mnr-text, #1a1a1a);
   overflow: hidden;
+  overscroll-behavior: none;
   display: flex;
   flex-direction: column;
 }
@@ -516,7 +605,8 @@ onUnmounted(() => {
   padding-top: 68px;
   padding-bottom: 40px;
   /* Prevent rubber-band bounce from propagating and messing with prev-chapter positioning */
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mnr-reader-content {

@@ -10,11 +10,10 @@ import type { useConfigStore } from '@/ui/stores/config';
 import type { useReaderStore } from '@/ui/stores/reader';
 
 // === Constants ===
-export const INTERSECTION_ROOT_MARGIN_PX = 800;
+export const INTERSECTION_ROOT_MARGIN_PX = 1600;
 const AUTO_LOAD_COOLDOWN_MIN_MS = 3000;
 const AUTO_LOAD_COOLDOWN_MAX_MS = 5000;
 const AUTO_LOAD_ARM_SCROLL_DELTA_PX = 180;
-const AUTO_LOAD_IMMEDIATE_BOTTOM_DISTANCE_PX = 160;
 const AUTO_LOAD_SHORT_CHAIN_LIMIT = 10;
 
 export interface UseReaderAutoLoadOptions {
@@ -63,10 +62,6 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     return getDistanceToBottom(mainEl) <= INTERSECTION_ROOT_MARGIN_PX;
   }
 
-  function isAtInteractiveBottom(mainEl: HTMLElement): boolean {
-    return getDistanceToBottom(mainEl) <= AUTO_LOAD_IMMEDIATE_BOTTOM_DISTANCE_PX;
-  }
-
   function isShortScrollableContent(mainEl: HTMLElement): boolean {
     const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
     return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
@@ -94,13 +89,10 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     if (fillMode && autoLoadShortChainCount.value >= AUTO_LOAD_SHORT_CHAIN_LIMIT) return;
 
     const now = Date.now();
-    const immediateMode = !fillMode && isAtInteractiveBottom(mainEl);
-    if (nextAutoLoadAt === 0) {
-      nextAutoLoadAt = immediateMode
-        ? now
-        : now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+    if (fillMode && nextAutoLoadAt === 0) {
+      nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
     }
-    const delayMs = immediateMode ? 0 : Math.max(0, nextAutoLoadAt - now);
+    const delayMs = Math.max(0, nextAutoLoadAt - now);
     if (delayMs > 0) {
       if (!autoLoadTimer) {
         autoLoadTimer = setTimeout(() => {
@@ -113,7 +105,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
     // Commit auto-load
     clearAutoLoadTimer();
-    nextAutoLoadAt = now + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MIN_MS, AUTO_LOAD_COOLDOWN_MAX_MS);
+    nextAutoLoadAt = 0;
     lastAutoLoadScrollTop.value = mainEl.scrollTop;
     autoLoadArmed.value = false;
     autoLoadShortChainCount.value = fillMode ? autoLoadShortChainCount.value + 1 : 0;
@@ -123,6 +115,8 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
         // On failures, slow down a bit more to avoid triggering anti-crawler rules.
         nextAutoLoadAt =
           Date.now() + getRandomDelayMs(AUTO_LOAD_COOLDOWN_MAX_MS, AUTO_LOAD_COOLDOWN_MAX_MS * 2);
+      } else {
+        nextAutoLoadAt = 0;
       }
     });
   }

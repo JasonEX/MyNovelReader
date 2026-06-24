@@ -61,7 +61,7 @@ describe('useReaderAutoLoad', () => {
   }
 
   it('exports INTERSECTION_ROOT_MARGIN_PX', () => {
-    expect(INTERSECTION_ROOT_MARGIN_PX).toBe(800);
+    expect(INTERSECTION_ROOT_MARGIN_PX).toBe(1600);
   });
 
   it('initializes with autoLoadArmed as false', () => {
@@ -170,7 +170,7 @@ describe('useReaderAutoLoad', () => {
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
   });
 
-  it('scheduleAutoLoadNext triggers load when armed and near bottom', () => {
+  it('scheduleAutoLoadNext triggers load immediately when armed and near bottom', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
     Object.defineProperty(mainEl, 'scrollTop', { value: 1300, writable: true });
@@ -182,14 +182,11 @@ describe('useReaderAutoLoad', () => {
 
     result.scheduleAutoLoadNext();
 
-    // Advance past the cooldown
-    vi.advanceTimersByTime(6000);
-
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
     expect(result.autoLoadArmed.value).toBe(false);
   });
 
-  it('scheduleAutoLoadNext bypasses cooldown at the interactive bottom', () => {
+  it('scheduleAutoLoadNext also loads immediately at the interactive bottom', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
     Object.defineProperty(mainEl, 'scrollTop', { value: 1250, writable: true });
@@ -207,13 +204,12 @@ describe('useReaderAutoLoad', () => {
 
   it('clearAutoLoadTimer clears the pending timer', () => {
     const mainEl = document.createElement('div');
-    Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
-    Object.defineProperty(mainEl, 'scrollTop', { value: 1100, writable: true });
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 700 });
+    Object.defineProperty(mainEl, 'scrollTop', { value: 0, writable: true });
     Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
 
     const opts = createAutoLoadOptions({ mainRef: mainEl });
     const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
 
     result.scheduleAutoLoadNext();
     result.clearAutoLoadTimer();

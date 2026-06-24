@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createDom } from '../testUtils/dom';
 import { fetchAndParseUrl } from '@/core/utils/network';
 
 describe('fetchAndParseUrl (url validation)', () => {
   beforeEach(() => {
+    createDom('https://reader.test/');
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -56,5 +58,32 @@ describe('fetchAndParseUrl (url validation)', () => {
     expect(result.error).toBeNull();
     expect(result.doc).not.toBeNull();
     expect(gm).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers native fetch for current-origin requests even when GM_xmlhttpRequest exists', async () => {
+    createDom('https://example.com/chapter/1');
+    const gm = vi.fn();
+    const fetchMock = vi.fn(async () => {
+      return new Response('<!doctype html><html><body>native ok</body></html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      });
+    });
+
+    // @ts-expect-error - userscript global stub
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+    vi.stubGlobal('fetch', fetchMock);
+    window.fetch = fetchMock as unknown as typeof fetch;
+
+    const { promise } = fetchAndParseUrl(
+      'https://example.com/chapter/2',
+      'https://example.com/chapter/1'
+    );
+    const result = await promise;
+
+    expect(result.error).toBeNull();
+    expect(result.doc?.body.textContent).toContain('native ok');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(gm).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { fetchAndParseUrl } from '@/core/utils/network';
 import { getParser } from '@/core/parser';
 import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
 import { parseWithSectionMerge } from '@/ui/stores/reader/section';
+import type { SiteRule } from '@/core/rules/types';
 import { useReaderStore } from '@/ui/stores/reader';
 
 import { createGmStorageMock, stubGmStorage } from '../../../testUtils/gmStorage';
@@ -248,5 +249,94 @@ describe('ReaderStore - workflows', () => {
     expect(store.cachedContents.has('https://example.com/book/1/1.html')).toBe(true);
 
     store.clearError();
+  });
+
+  it('loadNextChapter falls back to fetch when iframe parsing returns empty', async () => {
+    vi.useFakeTimers();
+
+    const store = useReaderStore();
+    const rule: SiteRule = {
+      id: 'iframe-site',
+      name: 'Iframe Site',
+      version: 1,
+      match: { pattern: '^https://example\\.com/book/' },
+      content: { selector: '#content' },
+      navigation: { next: '#next' },
+      advanced: { useIframe: true },
+    };
+
+    store.setChapter(
+      {
+        title: '第1章',
+        content: '<p>init</p>',
+        rawContent: '<p>init</p>',
+        url: 'https://example.com/book/1/1.html',
+        indexUrl: 'https://example.com/book/1/index.html',
+        nextUrl: 'https://example.com/book/1/2.html',
+        confidence: 1,
+        method: 'rule',
+      },
+      rule
+    );
+
+    const iframeDoc = new DOMParser().parseFromString(
+      '<html><body><main id="empty"></main></body></html>',
+      'text/html'
+    );
+    const fetchDoc = new DOMParser().parseFromString(
+      '<html><body><main id="content"><p>fetch</p></main></body></html>',
+      'text/html'
+    );
+
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation(((
+      tagName: string,
+      options?: ElementCreationOptions
+    ) => {
+      const el = originalCreateElement(tagName, options);
+      if (tagName.toLowerCase() === 'iframe') {
+        Object.defineProperty(el, 'contentDocument', {
+          configurable: true,
+          value: iframeDoc,
+        });
+        window.setTimeout(() => {
+          (el as HTMLIFrameElement).onload?.(new Event('load'));
+        }, 0);
+      }
+      return el;
+    }) as typeof document.createElement);
+
+    mockFetchAndParseUrl.mockReturnValue({
+      promise: Promise.resolve({
+        doc: fetchDoc,
+        status: 200,
+        finalUrl: 'https://example.com/book/1/2.html',
+        error: null,
+      }),
+      abort: vi.fn(),
+    });
+    mockParseWithSectionMerge.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      title: '第2章',
+      content: '<p>fetch</p>',
+      rawContent: '<p>fetch</p>',
+      url: 'https://example.com/book/1/2.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      prevUrl: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+      rule,
+    });
+
+    const loadPromise = store.loadNextChapter('auto');
+    await vi.advanceTimersByTimeAsync(350);
+    const ok = await loadPromise;
+
+    expect(ok).toBe(true);
+    expect(fetchAndParseUrl).toHaveBeenCalledTimes(1);
+    expect(parseWithSectionMerge).toHaveBeenCalledTimes(2);
+    expect(mockParseWithSectionMerge.mock.calls[0]?.[1]).toBe(iframeDoc);
+    expect(mockParseWithSectionMerge.mock.calls[1]?.[1]).toBe(fetchDoc);
+    expect(store.chapters).toHaveLength(2);
+    expect(store.chapters[1]?.chapter.title).toBe('第2章');
   });
 });

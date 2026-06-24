@@ -108,6 +108,24 @@ function parseHttpUrl(url: string): URL | null {
   }
 }
 
+function isCurrentOriginRequest(url: string): boolean {
+  try {
+    if (typeof location === 'undefined' || !location.origin) return false;
+    return new URL(url).origin === location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function hasPageNativeFetch(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.fetch === 'function' &&
+    typeof fetch === 'function' &&
+    window.fetch === fetch
+  );
+}
+
 function normalizeCharset(charset: string | null | undefined): string | null {
   const normalized = (charset || '')
     .trim()
@@ -289,8 +307,12 @@ export function fetchAndParseUrl(
     // `Referer` is a forbidden header for `fetch` in browsers; only apply it for GM XHR.
     const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : undefined;
 
-    // Prefer GM_xmlhttpRequest when available (bypasses CORS and supports legacy encodings).
-    if (gmXhr) {
+    // Prefer native fetch for same-origin requests. It uses the page's live browser session,
+    // which is more reliable on sites with active anti-bot probes.
+    const preferNativeFetch = hasPageNativeFetch() && isCurrentOriginRequest(requestUrl);
+
+    // Prefer GM_xmlhttpRequest for cross-origin requests when available (bypasses CORS and supports legacy encodings).
+    if (gmXhr && !preferNativeFetch) {
       headers['Accept-Language'] = 'zh-CN,zh;q=0.9';
       if (normalizedReferer) {
         headers['Referer'] = normalizedReferer;
