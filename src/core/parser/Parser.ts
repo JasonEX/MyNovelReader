@@ -694,15 +694,22 @@ export class Parser {
     const resolvedUrl = new URL(resolved);
     const timeoutMs = options.timeoutMs ?? 4000;
     const headers = options.headers ?? {};
+    const referrer = options.referrer
+      ? resolveAndValidateHttpUrl(options.referrer, window.location.href) || undefined
+      : undefined;
     const withCredentials = options.withCredentials ?? true;
     const gmXhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : null;
 
     if (gmXhr) {
       return new Promise(resolve => {
+        const gmHeaders = { ...headers };
+        if (referrer && !Object.keys(gmHeaders).some(name => name.toLowerCase() === 'referer')) {
+          gmHeaders.Referer = referrer;
+        }
         gmXhr({
           method: 'GET',
           url: resolvedUrl.href,
-          headers,
+          headers: gmHeaders,
           timeout: timeoutMs,
           withCredentials,
           onload: resp => resolve(resp.responseText || null),
@@ -715,9 +722,16 @@ export class Parser {
     try {
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+      const fetchHeaders = { ...headers };
+      for (const name of Object.keys(fetchHeaders)) {
+        if (name.toLowerCase() === 'referer') {
+          delete fetchHeaders[name];
+        }
+      }
       const resp = await fetch(resolvedUrl.href, {
         credentials: withCredentials ? 'include' : 'omit',
-        headers,
+        headers: fetchHeaders,
+        referrer,
         signal: controller.signal,
       });
       window.clearTimeout(timer);

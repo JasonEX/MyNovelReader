@@ -21,7 +21,7 @@ function appendHiddenLink(
   text: string,
   base: string
 ): void {
-  if (!href || doc.getElementById(id)) return;
+  if (!href || href === '#' || /^javascript:/i.test(href) || doc.getElementById(id)) return;
 
   try {
     const link = doc.createElement('a');
@@ -36,17 +36,13 @@ function appendHiddenLink(
 }
 
 function extractChapterNav(scriptText: string): { prev: string | null; next: string | null } {
-  const loadChapterBlock =
-    scriptText.match(
-      /function\s+loadChapter\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\s*\n\s*\$\(document\)\.ready/
-    )?.[1] || scriptText;
+  const match = scriptText.match(
+    /if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"][\s\S]*?\}\s*else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"]/
+  );
 
   return {
-    prev:
-      loadChapterBlock.match(
-        /if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{\s*chapterUrl\s*=\s*['"]([^'"]+)/
-      )?.[1] || null,
-    next: loadChapterBlock.match(/\}\s*else\s*\{\s*chapterUrl\s*=\s*['"]([^'"]+)/)?.[1] || null,
+    prev: match?.[1] || null,
+    next: match?.[2] || null,
   };
 }
 
@@ -71,6 +67,7 @@ const deqixsCoBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
     const tokenScriptUrl = new URL(tokenScriptSrc, pageUrl).toString();
     const tokenScript = await helpers.fetchText(tokenScriptUrl, {
       timeoutMs: 15_000,
+      referrer: pageUrl,
       withCredentials: true,
     });
     if (!tokenScript) return;
@@ -90,6 +87,7 @@ const deqixsCoBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
     const ajaxUrl = new URL(`/modules/article/ajax2.php?${params.toString()}`, pageUrl).toString();
     const responseText = await helpers.fetchText(ajaxUrl, {
       timeoutMs: 20_000,
+      referrer: pageUrl,
       withCredentials: true,
       headers: {
         Accept: 'application/json, text/javascript, */*; q=0.01',
@@ -159,7 +157,7 @@ export const deqixsRule: SiteRule = {
 export const deqixsCoRule: SiteRule = {
   id: 'deqixs-co',
   name: '得奇小说网(.co)',
-  version: 1,
+  version: 2,
   match: {
     pattern: '^https?://www\\.deqixs\\.co/books/\\d+/\\d+\\.html(?:[?#].*)?$',
   },
@@ -192,10 +190,6 @@ export const deqixsCoRule: SiteRule = {
   },
   hooks: {
     beforeParse: deqixsCoBeforeParse,
-  },
-  advanced: {
-    timeout: 20_000,
-    mutationSelector: '#chapter-content',
   },
   meta: {
     source: 'builtin',

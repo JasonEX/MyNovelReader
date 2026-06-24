@@ -4153,7 +4153,7 @@ smartQueryAll(root, selector) {
       }
     }
   }
-  function getScriptText(doc2) {
+  function getScriptText$1(doc2) {
     return Array.from(doc2.scripts).map((script) => script.textContent || "").join("\n");
   }
   function extractJsValue(source, name) {
@@ -4163,9 +4163,9 @@ smartQueryAll(root, selector) {
     const match = source.match(pattern);
     return (match == null ? void 0 : match[1]) || (match == null ? void 0 : match[2]) || null;
   }
-  function appendHiddenLink(doc2, id, href, text2, base) {
+  function appendHiddenLink$1(doc2, id, href, text2, base) {
     var _a;
-    if (!href || doc2.getElementById(id)) return;
+    if (!href || href === "#" || /^javascript:/i.test(href) || doc2.getElementById(id)) return;
     try {
       const link = doc2.createElement("a");
       link.id = id;
@@ -4176,16 +4176,13 @@ smartQueryAll(root, selector) {
     } catch {
     }
   }
-  function extractChapterNav(scriptText) {
-    var _a, _b, _c;
-    const loadChapterBlock = ((_a = scriptText.match(
-      /function\s+loadChapter\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\s*\n\s*\$\(document\)\.ready/
-    )) == null ? void 0 : _a[1]) || scriptText;
+  function extractChapterNav$1(scriptText) {
+    const match = scriptText.match(
+      /if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"][\s\S]*?\}\s*else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"]/
+    );
     return {
-      prev: ((_b = loadChapterBlock.match(
-        /if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{\s*chapterUrl\s*=\s*['"]([^'"]+)/
-      )) == null ? void 0 : _b[1]) || null,
-      next: ((_c = loadChapterBlock.match(/\}\s*else\s*\{\s*chapterUrl\s*=\s*['"]([^'"]+)/)) == null ? void 0 : _c[1]) || null
+      prev: (match == null ? void 0 : match[1]) || null,
+      next: (match == null ? void 0 : match[2]) || null
     };
   }
   const deqixsCoBeforeParse = async (doc2, url, helpers) => {
@@ -4196,15 +4193,16 @@ smartQueryAll(root, selector) {
       const pathMatch = page.pathname.match(/^\/books\/(\d+)\/(\d+)\.html$/);
       if (!pathMatch) return;
       const [, articleId, chapterId] = pathMatch;
-      const scriptText = getScriptText(doc2);
-      const nav = extractChapterNav(scriptText);
-      appendHiddenLink(doc2, "mnr-deqixs-co-prev", nav.prev, "上一章", pageUrl);
-      appendHiddenLink(doc2, "mnr-deqixs-co-next", nav.next, "下一章", pageUrl);
+      const scriptText = getScriptText$1(doc2);
+      const nav = extractChapterNav$1(scriptText);
+      appendHiddenLink$1(doc2, "mnr-deqixs-co-prev", nav.prev, "上一章", pageUrl);
+      appendHiddenLink$1(doc2, "mnr-deqixs-co-next", nav.next, "下一章", pageUrl);
       const tokenScriptSrc = (_b = doc2.querySelector('script[src*="/scripts/chapter.js.php"]')) == null ? void 0 : _b.getAttribute("src");
       if (!tokenScriptSrc || !helpers) return;
       const tokenScriptUrl = new URL(tokenScriptSrc, pageUrl).toString();
       const tokenScript = await helpers.fetchText(tokenScriptUrl, {
         timeoutMs: 15e3,
+        referrer: pageUrl,
         withCredentials: true
       });
       if (!tokenScript) return;
@@ -4222,6 +4220,7 @@ smartQueryAll(root, selector) {
       const ajaxUrl = new URL(`/modules/article/ajax2.php?${params.toString()}`, pageUrl).toString();
       const responseText = await helpers.fetchText(ajaxUrl, {
         timeoutMs: 2e4,
+        referrer: pageUrl,
         withCredentials: true,
         headers: {
           Accept: "application/json, text/javascript, */*; q=0.01",
@@ -4277,7 +4276,7 @@ smartQueryAll(root, selector) {
   const deqixsCoRule = {
     id: "deqixs-co",
     name: "得奇小说网(.co)",
-    version: 1,
+    version: 2,
     match: {
       pattern: "^https?://www\\.deqixs\\.co/books/\\d+/\\d+\\.html(?:[?#].*)?$"
     },
@@ -4310,10 +4309,6 @@ smartQueryAll(root, selector) {
     hooks: {
       beforeParse: deqixsCoBeforeParse
     },
-    advanced: {
-      timeout: 2e4,
-      mutationSelector: "#chapter-content"
-    },
     meta: {
       source: "builtin",
       exampleUrl: "https://www.deqixs.co/books/325/266271.html"
@@ -4324,10 +4319,88 @@ smartQueryAll(root, selector) {
     deqixsCoRule,
     deqixsRule
   }, Symbol.toStringTag, { value: "Module" }));
+  function getScriptText(doc2) {
+    return Array.from(doc2.scripts).map((script) => script.textContent || "").join("\n");
+  }
+  function appendHiddenLink(doc2, id, href, text2, base) {
+    var _a;
+    if (!href || href === "#" || /^javascript:/i.test(href) || doc2.getElementById(id)) return;
+    try {
+      const link = doc2.createElement("a");
+      link.id = id;
+      link.href = new URL(href, base).toString();
+      link.textContent = text2;
+      link.style.display = "none";
+      (_a = doc2.body) == null ? void 0 : _a.appendChild(link);
+    } catch {
+    }
+  }
+  function extractChapterNav(scriptText) {
+    const match = scriptText.match(
+      /if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"][\s\S]*?\}\s*else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"]/
+    );
+    return {
+      prev: (match == null ? void 0 : match[1]) || null,
+      next: (match == null ? void 0 : match[2]) || null
+    };
+  }
+  function extractChapterIds(pageUrl, scriptText) {
+    var _a, _b;
+    const pathMatch = new URL(pageUrl).pathname.match(/^\/(\d+)\/(\d+)(?:_\d+)?\.html$/);
+    const articleId = (pathMatch == null ? void 0 : pathMatch[1]) || ((_a = scriptText.match(/const\s+articleId\s*=\s*(\d+)/)) == null ? void 0 : _a[1]);
+    const chapterId = (pathMatch == null ? void 0 : pathMatch[2]) || ((_b = scriptText.match(/const\s+chapterId\s*=\s*(\d+)/)) == null ? void 0 : _b[1]);
+    if (!articleId || !chapterId) return null;
+    return { articleId, chapterId };
+  }
+  function fixPageIndexLink(doc2, base) {
+    const index = doc2.querySelector(".page1 .page-index[data-href]");
+    const dataHref = index == null ? void 0 : index.getAttribute("data-href");
+    if (!index || !dataHref) return;
+    try {
+      index.href = new URL(dataHref, base).toString();
+    } catch {
+    }
+  }
+  const dingdianzwwBeforeParse = async (doc2, url, helpers) => {
+    var _a, _b, _c, _d;
+    try {
+      const pageUrl = url || ((_a = doc2.location) == null ? void 0 : _a.href) || location.href;
+      const scriptText = getScriptText(doc2);
+      const nav = extractChapterNav(scriptText);
+      appendHiddenLink(doc2, "mnr-dingdianzww-prev", nav.prev, "上一章", pageUrl);
+      appendHiddenLink(doc2, "mnr-dingdianzww-next", nav.next, "下一章", pageUrl);
+      fixPageIndexLink(doc2, pageUrl);
+      const indexHref = ((_b = doc2.querySelector(".page1 .page-index")) == null ? void 0 : _b.href) || ((_c = doc2.querySelector('.bread a[href$="/"]:not([href="/"])')) == null ? void 0 : _c.href) || null;
+      appendHiddenLink(doc2, "mnr-dingdianzww-index", indexHref, "目录", pageUrl);
+      const contentEl = doc2.querySelector("#chapter-content");
+      if (!contentEl || !(helpers == null ? void 0 : helpers.fetchText)) return;
+      const ids = extractChapterIds(pageUrl, scriptText);
+      if (!ids) return;
+      const ajaxUrl = new URL("/modules/article/ajax_chapter.php", pageUrl);
+      ajaxUrl.searchParams.set("aid", ids.articleId);
+      ajaxUrl.searchParams.set("cid", ids.chapterId);
+      const responseText = await helpers.fetchText(ajaxUrl.toString(), {
+        timeoutMs: 2e4,
+        withCredentials: true,
+        headers: {
+          Accept: "application/json, text/javascript, */*; q=0.01",
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      });
+      if (!responseText) return;
+      const payload = JSON.parse(responseText);
+      const content = (_d = payload.data) == null ? void 0 : _d.content;
+      if (payload.status !== 1 || typeof content !== "string" || !content.trim()) return;
+      contentEl.innerHTML = content;
+      contentEl.setAttribute("data-mnr-dingdianzww-full", "1");
+    } catch (e) {
+      console.warn("[MyNovelReader] Dingdianzww beforeParse error:", e);
+    }
+  };
   const dingdianzwwRule = {
     id: "dingdianzww",
     name: "顶点小说",
-    version: 1,
+    version: 2,
     match: {
       pattern: "^https?://dingdianzww\\.org/\\d+/\\d+\\.html(?:[?#].*)?$"
     },
@@ -4339,17 +4412,26 @@ smartQueryAll(root, selector) {
           pattern: "PC站点如章节文字不全请用手机访问dingdianzww\\.org",
           replacement: "",
           flags: "g"
+        },
+        {
+          pattern: "当&前@章#节\\$内%容\\^不&完\\*整！要~查!看-完_整\\|章;节\\)请\\(退&出%阅#读\\|模\\*式！",
+          replacement: "",
+          flags: "g"
         }
       ]
     },
     navigation: {
-      prev: '.page1 a:contains("上一章")',
-      index: '.page1 a:contains("章节目录"), .page1 a:contains("目录")',
-      next: '.page1 a:contains("下一章")'
+      prev: '#mnr-dingdianzww-prev, .page1 a:contains("上一章")',
+      index: '#mnr-dingdianzww-index, .page1 a:contains("章节目录"), .page1 a:contains("目录")',
+      next: '#mnr-dingdianzww-next, .page1 a:contains("下一章")'
     },
     title: {
       selector: ".txtnav > h1, h1",
-      bookSelector: '.bread a[href^="/"]:not([href="/index.html"])[href$="/"]'
+      replace: "\\(第[^)]*页\\)\\s*$",
+      bookSelector: '.bread a[href^="/"]:not([href="/"]):not([href="/index.html"])[href$="/"]'
+    },
+    hooks: {
+      beforeParse: dingdianzwwBeforeParse
     },
     advanced: {
       useIframe: true,
@@ -7405,14 +7487,19 @@ smartSelect(doc2, selector) {
       const resolvedUrl = new URL(resolved);
       const timeoutMs = options.timeoutMs ?? 4e3;
       const headers = options.headers ?? {};
+      const referrer = options.referrer ? resolveAndValidateHttpUrl(options.referrer, window.location.href) || void 0 : void 0;
       const withCredentials = options.withCredentials ?? true;
       const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
       if (gmXhr) {
         return new Promise((resolve) => {
+          const gmHeaders = { ...headers };
+          if (referrer && !Object.keys(gmHeaders).some((name) => name.toLowerCase() === "referer")) {
+            gmHeaders.Referer = referrer;
+          }
           gmXhr({
             method: "GET",
             url: resolvedUrl.href,
-            headers,
+            headers: gmHeaders,
             timeout: timeoutMs,
             withCredentials,
             onload: (resp) => resolve(resp.responseText || null),
@@ -7424,9 +7511,16 @@ smartSelect(doc2, selector) {
       try {
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+        const fetchHeaders = { ...headers };
+        for (const name of Object.keys(fetchHeaders)) {
+          if (name.toLowerCase() === "referer") {
+            delete fetchHeaders[name];
+          }
+        }
         const resp = await fetch(resolvedUrl.href, {
           credentials: withCredentials ? "include" : "omit",
-          headers,
+          headers: fetchHeaders,
+          referrer,
           signal: controller.signal
         });
         window.clearTimeout(timer);

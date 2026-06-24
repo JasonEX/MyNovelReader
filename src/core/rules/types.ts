@@ -125,6 +125,7 @@ export interface AdvancedConfig {
 export interface HookFetchOptions {
   timeoutMs?: number;
   headers?: Record<string, string>;
+  referrer?: string;
   withCredentials?: boolean;
 }
 

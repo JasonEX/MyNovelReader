@@ -207,7 +207,7 @@ describe('Deqixs rule', () => {
     const rule = findBuiltInRule(coChapterUrl);
 
     expect(rule?.id).toBe('deqixs-co');
-    expect(rule?.version).toBe(1);
+    expect(rule?.version).toBe(2);
     expect(rule?.hooks?.beforeParse).toBeTypeOf('function');
   });
 
@@ -293,9 +293,9 @@ describe('Deqixs rule', () => {
       var nonce = 'nonce-xyz';
     `;
     const fullContent = `第1481章 特种金属缺货了（4k）<br /><br />${'完整正文。'.repeat(300)}`;
-    const requestedUrls: string[] = [];
+    const requests: GM_xmlhttpRequestOptions[] = [];
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      requestedUrls.push(opts.url);
+      requests.push(opts);
       const responseText = opts.url.includes('/scripts/chapter.js.php')
         ? tokenScript
         : JSON.stringify({
@@ -326,11 +326,18 @@ describe('Deqixs rule', () => {
     expect(chapter?.rawContent).toContain('第1481章 特种金属缺货了（4k）');
     expect(chapter?.content).toContain('完整正文');
     expect(chapter?.content.length).toBeGreaterThan(1000);
-    expect(requestedUrls).toHaveLength(2);
-    expect(requestedUrls[0]).toContain('/scripts/chapter.js.php');
-    expect(requestedUrls[1]).toContain('/modules/article/ajax2.php?');
-    expect(requestedUrls[1]).toContain('token=token-abc');
-    expect(requestedUrls[1]).toContain('timestamp=1782205800000');
-    expect(requestedUrls[1]).toContain('nonce=nonce-xyz');
+    expect(requests).toHaveLength(2);
+    expect(requests[0].url).toContain('/scripts/chapter.js.php');
+    expect(requests[0].headers).toEqual(expect.objectContaining({ Referer: coChapterUrl }));
+    expect(requests[1].url).toContain('/modules/article/ajax2.php?');
+    expect(requests[1].url).toContain('token=token-abc');
+    expect(requests[1].url).toContain('timestamp=1782205800000');
+    expect(requests[1].url).toContain('nonce=nonce-xyz');
+    expect(requests[1].headers).toEqual(
+      expect.objectContaining({
+        Referer: coChapterUrl,
+        'X-Requested-With': 'XMLHttpRequest',
+      })
+    );
   });
 });

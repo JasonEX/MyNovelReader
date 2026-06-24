@@ -62,6 +62,52 @@ const page1Html = chapterHtml({
   nextHref: '/27543/13380762.html',
 });
 
+const mobileDynamicHtml = `
+  <!doctype html>
+  <html>
+    <head>
+      <title>废土边境检查官小说免费阅读 第291章 新的改制，突破重械！_顶点小说</title>
+      <script>
+        function loadChapter(direction) {
+          let chapterUrl = '';
+          if (direction === 'prev') {
+            chapterUrl = 'https://dingdianzww.org/27543/13341608.html';
+          } else {
+            chapterUrl = 'https://dingdianzww.org/27543/13380762.html';
+          }
+        }
+        $(document).ready(function() {
+          const articleId = 27543;
+          const chapterId = 13341609;
+          initChapterContent(articleId, chapterId, 1);
+        });
+      </script>
+    </head>
+    <body>
+      <h3 class="mytitle hide720">
+        <div class="bread">
+          <a href="/">首页</a> &gt;
+          <a href="/27543/">废土边境检查官</a> &gt;
+          <a href="https://dingdianzww.org/27543/13341609.html"> 第291章 新的改制，突破重械！</a>
+        </div>
+      </h3>
+      <div class="txtnav">
+        <h1> 第291章 新的改制，突破重械！(第/页)</h1>
+        <div class="txtinfo hide720"><span>作者:斤斤斤</span></div>
+        <div id="chapter-content">
+          电话挂断。<br />
+          当&前@章#节$内%容^不&完*整！要~查!看-完_整|章;节)请(退&出%阅#读|模*式！
+        </div>
+      </div>
+      <div class="page1">
+        <a href="javascript:void(0)" class="page-link page-prev" data-action="prev">上一页</a>
+        <a href="javascript:void(0)" class="page-link page-index" data-href="/27543/">目录</a>
+        <a href="javascript:void(0)" class="page-link page-next" data-action="next">下一页</a>
+      </div>
+    </body>
+  </html>
+`;
+
 const tocHtml = `
   <!doctype html>
   <html>
@@ -108,7 +154,8 @@ describe('Dingdianzww rule', () => {
     const rule = findBuiltInRule(url);
 
     expect(rule?.id).toBe('dingdianzww');
-    expect(rule?.version).toBe(1);
+    expect(rule?.version).toBe(2);
+    expect(rule?.hooks?.beforeParse).toBeTypeOf('function');
     expect(rule?.advanced?.noSection).toBe(true);
     expect(findBuiltInRule('https://www.ddxsmf.com/read/27543/9719752.html')).toBeUndefined();
   });
@@ -128,6 +175,47 @@ describe('Dingdianzww rule', () => {
     expect(content).toContain('第二段正文');
     expect(content).not.toContain('PC站点');
     expect(content).not.toContain('dingdianzww.org');
+  });
+
+  it('hydrates the mobile dynamic chapter and restores real navigation links', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        readyState: 4,
+        responseHeaders: '',
+        responseText: JSON.stringify({
+          status: 1,
+          data: {
+            content:
+              '电话挂断。<br /><br />完整正文第二段，众人重新分析局势并确认下一步计划。<br /><br />完整正文第三段，缓存内容应当来自接口返回的完整章节，而不是页面里的占位提示。',
+          },
+        }),
+        status: 200,
+        statusText: 'OK',
+        finalUrl: opts.url,
+      });
+      return { abort: vi.fn() };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const chapter = await new Parser().parse(makeDoc(mobileDynamicHtml, url), url);
+
+    expect(gm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://dingdianzww.org/modules/article/ajax_chapter.php?aid=27543&cid=13341609',
+        headers: expect.objectContaining({ 'X-Requested-With': 'XMLHttpRequest' }),
+        withCredentials: true,
+      })
+    );
+    expect(chapter?.rule?.id).toBe('dingdianzww');
+    expect(chapter?.title).toBe('第291章 新的改制，突破重械！');
+    expect(chapter?.bookTitle).toBe('废土边境检查官');
+    expect(chapter?.prevUrl).toBe('https://dingdianzww.org/27543/13341608.html');
+    expect(chapter?.indexUrl).toBe('https://dingdianzww.org/27543/');
+    expect(chapter?.nextUrl).toBe('https://dingdianzww.org/27543/13380762.html');
+    expect(chapter?.content).toContain('完整正文第二段');
+    expect(chapter?.content).toContain('完整正文第三段');
+    expect(chapter?.content).not.toContain('内容不完整');
+    expect(chapter?.content).not.toContain('退&出');
   });
 
   it('does not merge ?page=1 as a paged chapter', async () => {

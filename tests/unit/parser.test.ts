@@ -7,6 +7,7 @@ import type { SiteRule } from '@/core/rules/types';
 type HookFetchOptions = {
   timeoutMs?: number;
   headers?: Record<string, string>;
+  referrer?: string;
   withCredentials?: boolean;
 };
 
@@ -586,6 +587,38 @@ describe('Parser', () => {
     expect(gm).toHaveBeenCalledTimes(1);
   });
 
+  it('fetchText passes referrer as Referer for GM_xmlhttpRequest', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        readyState: 4,
+        responseHeaders: '',
+        responseText: 'ok',
+        status: 200,
+        statusText: 'OK',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const fetchText = (
+      parser as unknown as {
+        fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
+      }
+    ).fetchText.bind(parser);
+    await expect(
+      fetchText('https://example.com/a', {
+        referrer: 'https://example.com/chapter/1',
+      })
+    ).resolves.toBe('ok');
+
+    expect(gm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({ Referer: 'https://example.com/chapter/1' }),
+      })
+    );
+  });
+
   it('fetchText resolves null when GM_xmlhttpRequest onload returns empty responseText', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
       opts.onload?.({
@@ -656,6 +689,34 @@ describe('Parser', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'https://example.com/a',
       expect.objectContaining({ credentials: 'omit' })
+    );
+  });
+
+  it('fetchText passes referrer option to fetch and strips Referer header', async () => {
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const fetchMock = vi.fn(async () => ({ ok: true, text: async () => 'ok' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const fetchText = (
+      parser as unknown as {
+        fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
+      }
+    ).fetchText.bind(parser);
+
+    await expect(
+      fetchText('https://example.com/a', {
+        headers: { Accept: 'text/plain', Referer: 'https://bad.example/ref' },
+        referrer: 'https://example.com/chapter/1',
+      })
+    ).resolves.toBe('ok');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://example.com/a',
+      expect.objectContaining({
+        headers: { Accept: 'text/plain' },
+        referrer: 'https://example.com/chapter/1',
+      })
     );
   });
 
