@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.0
+// @version      9.0.1
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -4677,37 +4677,101 @@ smartQueryAll(root, selector) {
   function hasQidianChapterId(value) {
     return value !== void 0 && value !== null && String(value) !== "-1" && String(value) !== "";
   }
-  const qidianBeforeParse = (doc2, url) => {
-    var _a, _b, _c;
+  function readQidianPageContext(doc2) {
+    const script = doc2.querySelector("#vite-plugin-ssr_pageContext");
+    if (!script) return null;
     try {
-      const reviews = doc2.querySelectorAll("h1 .review");
+      return JSON.parse(script.textContent || "{}");
+    } catch {
+      return null;
+    }
+  }
+  function extractBookIdFromQidianUrl(url) {
+    if (!url) return null;
+    try {
+      const parsed = new URL(url, typeof location !== "undefined" ? location.href : void 0);
+      const match = parsed.pathname.match(/\/(?:book|chapter)\/(\d+)(?:\/|$)/);
+      return (match == null ? void 0 : match[1]) || null;
+    } catch {
+      return null;
+    }
+  }
+  function extractChapterIdFromQidianUrl(url) {
+    if (!url) return null;
+    try {
+      const parsed = new URL(url, typeof location !== "undefined" ? location.href : void 0);
+      const match = parsed.pathname.match(/\/chapter\/\d+\/(\d+)(?:\/|$)/);
+      return (match == null ? void 0 : match[1]) || null;
+    } catch {
+      return null;
+    }
+  }
+  function resolveQidianBookId(data, url) {
+    var _a, _b, _c, _d, _e, _f;
+    const bookId = ((_d = (_c = (_b = (_a = data == null ? void 0 : data.pageContext) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.pageData) == null ? void 0 : _c.bookInfo) == null ? void 0 : _d.bookId) ?? ((_f = (_e = data == null ? void 0 : data.pageContext) == null ? void 0 : _e.routeParams) == null ? void 0 : _f.bookId) ?? extractBookIdFromQidianUrl(url);
+    return bookId === void 0 || bookId === null || String(bookId) === "" ? null : String(bookId);
+  }
+  function resolveQidianFirstChapterId(data) {
+    var _a, _b, _c;
+    const pageData = (_b = (_a = data == null ? void 0 : data.pageContext) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.pageData;
+    return (pageData == null ? void 0 : pageData.firstChapterId) ?? ((_c = pageData == null ? void 0 : pageData.chapterContentInfo) == null ? void 0 : _c.firstChapterId);
+  }
+  function resolveQidianNextPreviewChapterId(data) {
+    var _a, _b, _c;
+    const pageData = (_b = (_a = data == null ? void 0 : data.pageContext) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.pageData;
+    return (pageData == null ? void 0 : pageData.nextChapterId) ?? ((_c = pageData == null ? void 0 : pageData.chapterContentInfo) == null ? void 0 : _c.nextChapterId);
+  }
+  function resolveQidianMobileBookPreviewChapterUrl(doc2, url) {
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return null;
+    }
+    if (parsedUrl.hostname !== "m.qidian.com") return null;
+    if (!/^\/book\/\d+\/?$/.test(parsedUrl.pathname)) return null;
+    const data = readQidianPageContext(doc2);
+    const bookId = resolveQidianBookId(data, url);
+    const firstChapterId = resolveQidianFirstChapterId(data);
+    if (!bookId || !hasQidianChapterId(firstChapterId)) return null;
+    return new URL(`/chapter/${bookId}/${String(firstChapterId)}/`, parsedUrl.origin).toString();
+  }
+  const qidianBeforeParse = (doc2, url) => {
+    var _a, _b;
+    try {
+      const reviews = doc2.querySelectorAll("h1 .review, h2 .review");
       reviews.forEach((el) => el.remove());
     } catch (e) {
       console.debug("[MNR] Failed to remove review elements:", e);
     }
     try {
-      const script = doc2.querySelector("#vite-plugin-ssr_pageContext");
-      if (!script) return;
-      const data = JSON.parse(script.textContent || "{}");
-      const pageData = (_b = (_a = data.pageContext) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.pageData;
+      const data = readQidianPageContext(doc2);
+      const pageData = (_b = (_a = data == null ? void 0 : data.pageContext) == null ? void 0 : _a.pageProps) == null ? void 0 : _b.pageData;
       if (!pageData) return;
-      const bookId = (_c = pageData.bookInfo) == null ? void 0 : _c.bookId;
+      const bookId = resolveQidianBookId(data, url);
+      const currentChapterId = extractChapterIdFromQidianUrl(url);
+      const firstChapterId = resolveQidianFirstChapterId(data);
       const chapterInfo = pageData.chapterInfo;
+      const prevChapterId = chapterInfo == null ? void 0 : chapterInfo.prev;
+      let nextChapterId = chapterInfo == null ? void 0 : chapterInfo.next;
+      if (!hasQidianChapterId(nextChapterId) && currentChapterId && hasQidianChapterId(firstChapterId) && String(firstChapterId) === currentChapterId) {
+        nextChapterId = resolveQidianNextPreviewChapterId(data);
+      }
       const host = url ? new URL(url).hostname : location.hostname;
       const navContainer = doc2.createElement("div");
       navContainer.id = "mnr-qidian-nav";
       navContainer.style.display = "none";
-      if (bookId && hasQidianChapterId(chapterInfo == null ? void 0 : chapterInfo.prev)) {
+      if (bookId && hasQidianChapterId(prevChapterId)) {
         const prev = doc2.createElement("a");
         prev.id = "mnr-qidian-prev";
-        prev.href = `//${host}/chapter/${bookId}/${chapterInfo.prev}/`;
+        prev.href = `//${host}/chapter/${bookId}/${prevChapterId}/`;
         prev.textContent = "上一章";
         navContainer.appendChild(prev);
       }
-      if (bookId && hasQidianChapterId(chapterInfo == null ? void 0 : chapterInfo.next)) {
+      if (bookId && hasQidianChapterId(nextChapterId)) {
         const next = doc2.createElement("a");
         next.id = "mnr-qidian-next";
-        next.href = `//${host}/chapter/${bookId}/${chapterInfo.next}/`;
+        next.href = `//${host}/chapter/${bookId}/${nextChapterId}/`;
         next.textContent = "下一章";
         navContainer.appendChild(next);
       }
@@ -4734,7 +4798,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
     next: '#mnr-qidian-next, .nav-btn-group a:contains("下一章"), a.nav-btn:contains("下一章")'
   };
   const qidianTitle = {
-    selector: "h1.title, h1.text-1\\.3em, #r-nav-chapter-title"
+    selector: "h1.title, h2.title, h1.text-1\\.3em, h2.text-1\\.3em, #r-nav-chapter-title"
   };
   const qidianHooks = {
     beforeParse: qidianBeforeParse
@@ -4793,7 +4857,8 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
   const __vite_glob_0_4 = Object.freeze( Object.defineProperty({
     __proto__: null,
     qidianMobileRule,
-    qidianRule
+    qidianRule,
+    resolveQidianMobileBookPreviewChapterUrl
   }, Symbol.toStringTag, { value: "Module" }));
   const shu69BeforeParse = (doc2, url) => {
     var _a;
@@ -8392,6 +8457,11 @@ async merge(doc2, url, options = {}) {
       let startUrl = url;
       let startDoc = doc2;
       const knownDocs = new Map([[normalizeAbsoluteUrl(url, url), doc2]]);
+      const qidianBookPreviewUrl = resolveQidianMobileBookPreviewChapterUrl(doc2, url);
+      if (qidianBookPreviewUrl) {
+        const previewChapter = await this.parser.parse(doc2, qidianBookPreviewUrl);
+        if (previewChapter) return previewChapter;
+      }
       if (baseUrl && baseUrl !== url) {
         const baseDoc = await this.fetchUrl(baseUrl, url, options.fetcher, options.signal);
         if (baseDoc) {
@@ -8890,8 +8960,8 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.0";
-  const BUILD_DATE = "2026-06-24";
+  const VERSION = "9.0.1";
+  const BUILD_DATE = "2026-06-25";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors

@@ -11,6 +11,7 @@ import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
 import { getSectionBaseUrl, isSectionLikeUrl, joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
 import type { ParsedChapter, Parser } from '@/core/parser';
 import { fetchAndParseUrl } from '@/core/utils/network';
+import { resolveQidianMobileBookPreviewChapterUrl } from '@/core/rules/sites/qidian';
 
 /** Section detection result */
 export interface SectionInfo {
@@ -65,6 +66,12 @@ export class SectionMerger {
     let startUrl = url;
     let startDoc = doc;
     const knownDocs = new Map<string, Document>([[normalizeAbsoluteUrl(url, url), doc]]);
+
+    const qidianBookPreviewUrl = resolveQidianMobileBookPreviewChapterUrl(doc, url);
+    if (qidianBookPreviewUrl) {
+      const previewChapter = await this.parser.parse(doc, qidianBookPreviewUrl);
+      if (previewChapter) return previewChapter;
+    }
 
     // If user opens a later section page, normalize to the first page
     if (baseUrl && baseUrl !== url) {

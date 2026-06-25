@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import { builtInRules, findBuiltInRule, getBuiltInRulesCount } from '@/core/rules/builtInRules';
+import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
 import { Parser } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
 
@@ -154,5 +155,64 @@ describe('builtInRules helpers', () => {
     expect(chapter?.indexUrl).toBe('https://m.qidian.com/book/1049115805/');
     expect(chapter?.prevUrl).toBe('https://m.qidian.com/chapter/1049115805/903692507/');
     expect(chapter?.nextUrl).toBe('https://m.qidian.com/chapter/1049115805/903937574/');
+  });
+
+  it('canonicalizes Qidian mobile book preview to the embedded first chapter', async () => {
+    Object.assign(globalThis, {
+      GM_deleteValue: () => {},
+      GM_getValue: () => null,
+      GM_listValues: () => [],
+      GM_setValue: () => {},
+    });
+
+    const bookUrl = 'https://m.qidian.com/book/1049115805/';
+    const pageContext = {
+      pageContext: {
+        pageProps: {
+          pageData: {
+            chapterContentInfo: {
+              firstChapterId: 903299473,
+              firstChapterT: '第1章 宗门杂役',
+              nextChapterId: 903299284,
+            },
+          },
+        },
+        routeParams: {
+          bookId: '1049115805',
+        },
+      },
+    };
+    const doc = new JSDOM(
+      `<!doctype html>
+      <html>
+        <head><title>苟在仙宗打铁，悄悄修成道祖 小说在线阅读-起点中文网手机端</title></head>
+        <body>
+          <script id="vite-plugin-ssr_pageContext" type="application/json">${JSON.stringify(
+            pageContext
+          )}</script>
+          <h1 class="detail__header-detail__title">苟在仙宗打铁，悄悄修成道祖</h1>
+          <div class="_bookDetailTabs_1rj30_193"><span>章节试读</span></div>
+          <div id="reader">
+            <h2 class="title text-1.3em">
+              第1章 宗门杂役<span class="review"><span class="review-count">10</span></span>
+            </h2>
+            <main id="c-903299473">
+              <p>玄天宗，外门杂役堂。</p>
+              <p>所有人收拾好行李，一炷香之内到广场集合。</p>
+            </main>
+          </div>
+        </body>
+      </html>`,
+      { url: bookUrl }
+    ).window.document;
+
+    const chapter = await createSectionMerger(new Parser()).merge(doc, bookUrl);
+
+    expect(chapter?.rule?.id).toBe('qidian-mobile');
+    expect(chapter?.url).toBe('https://m.qidian.com/chapter/1049115805/903299473/');
+    expect(chapter?.title).toBe('第1章 宗门杂役');
+    expect(chapter?.indexUrl).toBe('https://m.qidian.com/book/1049115805/');
+    expect(chapter?.nextUrl).toBe('https://m.qidian.com/chapter/1049115805/903299284/');
+    expect(chapter?.content).toContain('所有人收拾好行李');
   });
 });
