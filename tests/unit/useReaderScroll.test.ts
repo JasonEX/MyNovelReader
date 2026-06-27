@@ -224,6 +224,7 @@ describe('useReaderScroll', () => {
     expect(opts.readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
     expect(opts.updateWindow).toHaveBeenCalledWith(0);
     expect(opts.readerStore.updateScroll).toHaveBeenCalled();
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalled();
   });
 
   it('estimateIndexFromOffset returns last index when past all chapters', () => {

@@ -164,6 +164,7 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
         const overallPercent =
           scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
         readerStore.updateScroll(overallPercent);
+        scheduleAutoLoadNext();
       }
       return;
     }

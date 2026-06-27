@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.1
+// @version      9.0.2
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -8960,8 +8960,8 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.1";
-  const BUILD_DATE = "2026-06-25";
+  const VERSION = "9.0.2";
+  const BUILD_DATE = "2026-06-27";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -23044,6 +23044,7 @@ setHeight,
           updateWindow(estimatedIdx);
           const overallPercent2 = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
           readerStore.updateScroll(overallPercent2);
+          scheduleAutoLoadNext();
         }
         return;
       }
