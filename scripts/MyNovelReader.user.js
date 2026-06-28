@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.2
+// @version      9.0.3
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -8960,8 +8960,8 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.2";
-  const BUILD_DATE = "2026-06-27";
+  const VERSION = "9.0.3";
+  const BUILD_DATE = "2026-06-28";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -19739,6 +19739,14 @@ convert(s) {
       }))
     );
   }
+  const CACHE_V2_INDEX_PREFIX = "mnr_cache_v2_index_";
+  const CACHE_V2_CHAPTER_PREFIX = "mnr_cache_v2_chapter_";
+  const DAY_MS = 24 * 60 * 60 * 1e3;
+  const PERSISTED_CACHE_MAX_AGE_MS = 30 * DAY_MS;
+  const PERSISTED_CACHE_GC_INTERVAL_MS = DAY_MS;
+  const PERSISTED_CACHE_TOUCH_INTERVAL_MS = DAY_MS;
+  const PERSISTED_CACHE_GC_LAST_RUN_KEY = "mnr_cache_v2_gc_last_run";
+  const PERSISTED_CACHE_INDEX_CHECKPOINT_CHAPTERS = 50;
   function generateBookId(indexUrl) {
     try {
       const url = new URL(indexUrl);
@@ -19767,14 +19775,22 @@ convert(s) {
     }
     return null;
   }
-  function getCacheV1Key(bookId) {
-    return `mnr_cache_${bookId}`;
-  }
   function getCacheV2IndexKey(bookId) {
-    return `mnr_cache_v2_index_${bookId}`;
+    return `${CACHE_V2_INDEX_PREFIX}${bookId}`;
   }
   function getCacheV2ChapterKey(bookId, url) {
-    return `mnr_cache_v2_chapter_${bookId}_${encodeBase64UrlUtf8(url)}`;
+    return `${CACHE_V2_CHAPTER_PREFIX}${bookId}_${encodeBase64UrlUtf8(url)}`;
+  }
+  function normalizeTimestamp(value) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  }
+  function getIndexAccessTime(index) {
+    return normalizeTimestamp(index.lastAccessed) ?? normalizeTimestamp(index.lastUpdated);
   }
   function getCurrentBookCacheKey(indexUrl) {
     if (!indexUrl) return null;
@@ -19791,19 +19807,13 @@ convert(s) {
     }
   }
   function getPersistedCachedChapter(cacheBook, url) {
-    var _a, _b, _c;
+    var _a;
     if (typeof GM_getValue === "undefined") return null;
     try {
       const storedV2 = GM_getValue(getCacheV2ChapterKey(cacheBook.bookId, url), null);
       const cachedV2 = parseStoredJson(storedV2);
       if ((_a = cachedV2 == null ? void 0 : cachedV2.chapter) == null ? void 0 : _a.url) {
         return cachedV2;
-      }
-      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
-      const dataV1 = parseStoredJson(storedV1);
-      const cachedV1 = (_b = dataV1 == null ? void 0 : dataV1.chapters) == null ? void 0 : _b[url];
-      if ((_c = cachedV1 == null ? void 0 : cachedV1.chapter) == null ? void 0 : _c.url) {
-        return cachedV1;
       }
     } catch (e) {
       console.error("[MNR] Failed to load persisted chapter:", e);
@@ -19820,19 +19830,26 @@ convert(s) {
       }
     }
     if (persistedSet.size === 0) return persistedSet;
+    persistCacheIndex(cacheBook, persistedSet);
+    return persistedSet;
+  }
+  function persistCacheIndex(cacheBook, persistedUrls, now = Date.now()) {
+    if (typeof GM_setValue === "undefined" || persistedUrls.size === 0) return false;
     const indexData = {
       version: 2,
       bookId: cacheBook.bookId,
       indexUrl: cacheBook.indexUrl,
-      urls: Array.from(persistedSet),
-      lastUpdated: Date.now()
+      urls: Array.from(persistedUrls),
+      lastUpdated: now,
+      lastAccessed: now
     };
     try {
       GM_setValue(getCacheV2IndexKey(cacheBook.bookId), JSON.stringify(indexData));
+      return true;
     } catch (e) {
       console.error("[MNR] Failed to persist cache index:", e);
+      return false;
     }
-    return persistedSet;
   }
   function restoreCache(cacheBook) {
     if (typeof GM_getValue === "undefined") return null;
@@ -19842,15 +19859,58 @@ convert(s) {
       if ((dataV2 == null ? void 0 : dataV2.version) === 2 && Array.isArray(dataV2.urls)) {
         return new Set(dataV2.urls);
       }
-      const storedV1 = GM_getValue(getCacheV1Key(cacheBook.bookId), null);
-      const dataV1 = parseStoredJson(storedV1);
-      if ((dataV1 == null ? void 0 : dataV1.chapters) && typeof dataV1.chapters === "object") {
-        return new Set(Object.keys(dataV1.chapters));
-      }
     } catch (e) {
       console.error("[MNR] Failed to restore cache:", e);
     }
     return null;
+  }
+  function touchPersistedCache(cacheBook, now = Date.now(), touchIntervalMs = PERSISTED_CACHE_TOUCH_INTERVAL_MS) {
+    if (typeof GM_getValue === "undefined" || typeof GM_setValue === "undefined") return false;
+    try {
+      const indexKey = getCacheV2IndexKey(cacheBook.bookId);
+      const stored = GM_getValue(indexKey, null);
+      const data = parseStoredJson(stored);
+      if ((data == null ? void 0 : data.version) !== 2 || !Array.isArray(data.urls)) return false;
+      const lastAccessed = getIndexAccessTime(data);
+      if (lastAccessed !== null && now - lastAccessed < touchIntervalMs) {
+        return false;
+      }
+      GM_setValue(indexKey, JSON.stringify({ ...data, lastAccessed: now }));
+      return true;
+    } catch (e) {
+      console.error("[MNR] Failed to touch cache index:", e);
+      return false;
+    }
+  }
+  function cleanupExpiredCaches(options = {}) {
+    if (typeof GM_getValue === "undefined" || typeof GM_setValue === "undefined" || typeof GM_deleteValue === "undefined" || typeof GM_listValues !== "function") {
+      return;
+    }
+    const now = options.now ?? Date.now();
+    const gcIntervalMs = options.gcIntervalMs ?? PERSISTED_CACHE_GC_INTERVAL_MS;
+    const maxAgeMs = options.maxAgeMs ?? PERSISTED_CACHE_MAX_AGE_MS;
+    try {
+      if (!options.force) {
+        const lastRun = normalizeTimestamp(GM_getValue(PERSISTED_CACHE_GC_LAST_RUN_KEY, 0));
+        if (lastRun !== null && now - lastRun < gcIntervalMs) return;
+      }
+      for (const key of GM_listValues()) {
+        if (!key.startsWith(CACHE_V2_INDEX_PREFIX)) continue;
+        const bookId = key.slice(CACHE_V2_INDEX_PREFIX.length);
+        if (!bookId || bookId === options.currentBookId) continue;
+        const data = parseStoredJson(GM_getValue(key, null));
+        if ((data == null ? void 0 : data.version) !== 2 || !Array.isArray(data.urls)) continue;
+        const lastAccessed = getIndexAccessTime(data);
+        if (lastAccessed === null || now - lastAccessed <= maxAgeMs) continue;
+        clearPersistedCache(
+          { bookId, indexUrl: typeof data.indexUrl === "string" ? data.indexUrl : "" },
+          new Set(data.urls)
+        );
+      }
+      GM_setValue(PERSISTED_CACHE_GC_LAST_RUN_KEY, now);
+    } catch (e) {
+      console.error("[MNR] Failed to cleanup expired caches:", e);
+    }
   }
   function clearPersistedCache(cacheBook, persistedUrls) {
     if (typeof GM_deleteValue === "undefined") return;
@@ -19863,7 +19923,7 @@ convert(s) {
       }
     }
     try {
-      const chapterKeyPrefix = `mnr_cache_v2_chapter_${cacheBook.bookId}_`;
+      const chapterKeyPrefix = `${CACHE_V2_CHAPTER_PREFIX}${cacheBook.bookId}_`;
       if (urls.size > 0) {
         for (const url of urls) {
           GM_deleteValue(getCacheV2ChapterKey(cacheBook.bookId, url));
@@ -19876,7 +19936,6 @@ convert(s) {
         }
       }
       GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
-      GM_deleteValue(getCacheV1Key(cacheBook.bookId));
     } catch (e) {
       console.error("[MNR] Failed to clear cache:", e);
     }
@@ -20871,6 +20930,8 @@ convert(s) {
       ctx.cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
       let nextUrl = taskList.shift();
       let referer = ((_d = ctx.chapters.value[ctx.chapters.value.length - 1]) == null ? void 0 : _d.chapter.url) || ((_e = ctx.chapter.value) == null ? void 0 : _e.url);
+      let persistedSinceIndexWrite = 0;
+      let hasWrittenIndexCheckpoint = false;
       while (ctx.cacheProgress.value.running && nextUrl) {
         const targetUrl = normalizeUrlForFetch(nextUrl);
         if (seenUrls.has(targetUrl) || ctx.loadedUrls.value.has(targetUrl) || ctx.cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
@@ -20921,6 +20982,13 @@ convert(s) {
           const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
           if (persisted) {
             persistedSet.add(parsed.url);
+            persistedSinceIndexWrite += 1;
+            if (!hasWrittenIndexCheckpoint || persistedSinceIndexWrite >= PERSISTED_CACHE_INDEX_CHECKPOINT_CHAPTERS) {
+              if (persistCacheIndex(cacheBook, persistedSet)) {
+                persistedSinceIndexWrite = 0;
+                hasWrittenIndexCheckpoint = true;
+              }
+            }
           }
         }
         ctx.cacheProgress.value = {
@@ -21862,9 +21930,12 @@ convert(s) {
       const cacheBook = getCurrentBookCacheKey((_a = chapter.value) == null ? void 0 : _a.indexUrl);
       if (!cacheBook) return;
       const restored = restoreCache(cacheBook);
-      if (restored && !runtime.isSessionStale(runId)) {
+      if (runtime.isSessionStale(runId)) return;
+      if (restored) {
         persistedUrls.value = restored;
+        touchPersistedCache(cacheBook);
       }
+      cleanupExpiredCaches({ currentBookId: cacheBook.bookId });
     }
     async function clearPersistedCache$1() {
       var _a;

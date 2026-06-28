@@ -25,11 +25,13 @@ import {
   applyTocConversion as applyTocConversionImpl,
 } from './reader/conversion';
 import {
+  cleanupExpiredCaches,
   clearPersistedCache as clearPersistedCacheImpl,
   getCurrentBookCacheKey,
   getPersistedCachedChapter,
   persistCache as persistCacheImpl,
   restoreCache as restoreCacheImpl,
+  touchPersistedCache,
 } from './reader/persistence';
 import { createTocActions, loadTocEntriesPaged } from './reader/toc';
 import { normalizeUrlForBlock, normalizeUrlForFetch } from './reader/utils';
@@ -234,9 +236,12 @@ export const useReaderStore = defineStore('reader', () => {
     const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
     if (!cacheBook) return;
     const restored = restoreCacheImpl(cacheBook);
-    if (restored && !runtime.isSessionStale(runId)) {
+    if (runtime.isSessionStale(runId)) return;
+    if (restored) {
       persistedUrls.value = restored;
+      touchPersistedCache(cacheBook);
     }
+    cleanupExpiredCaches({ currentBookId: cacheBook.bookId });
   }
 
   async function clearPersistedCache(): Promise<void> {

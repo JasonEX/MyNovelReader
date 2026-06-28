@@ -83,10 +83,9 @@ describe('ReaderStore - persistence', () => {
     expect(keys).toContain('mnr_cache_v2_index_example.com_book_1_index.html');
   });
 
-  it('restoreCache prefers v2 index and falls back to v1 list', async () => {
+  it('restoreCache reads the v2 index', async () => {
     const bookId = 'example.com_book_1_index.html';
     const v2Key = `mnr_cache_v2_index_${bookId}`;
-    const v1Key = `mnr_cache_${bookId}`;
 
     const gm = createGmStorageMock({
       [v2Key]: JSON.stringify({
@@ -112,34 +111,6 @@ describe('ReaderStore - persistence', () => {
 
     await store.restoreCache();
     expect(Array.from(store.persistedUrls)).toEqual(['https://example.com/book/1/10.html']);
-
-    // v2 missing -> fallback v1
-    store.persistedUrls.clear();
-    gm.store.delete(v2Key);
-    gm.store.set(
-      v1Key,
-      JSON.stringify({
-        bookId,
-        indexUrl: 'https://example.com/book/1/index.html',
-        chapters: {
-          'https://example.com/book/1/20.html': {
-            chapter: {
-              title: '第20章',
-              content: '<p>x</p>',
-              rawContent: '<p>x</p>',
-              url: 'https://example.com/book/1/20.html',
-              confidence: 1,
-              method: 'rule',
-            },
-            cachedAt: 1,
-          },
-        },
-        lastUpdated: 1,
-      })
-    );
-
-    await store.restoreCache();
-    expect(Array.from(store.persistedUrls)).toEqual(['https://example.com/book/1/20.html']);
   });
 
   it('clearPersistedCache deletes persisted keys and clears persistedUrls (keeps session cache)', async () => {

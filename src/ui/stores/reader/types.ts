@@ -80,14 +80,6 @@ export interface CachedChapter {
   cachedAt: number;
 }
 
-/** Persisted cache structure for GM storage */
-export interface PersistedBookCache {
-  bookId: string;
-  indexUrl: string;
-  chapters: Record<string, CachedChapter>;
-  lastUpdated: number;
-}
-
 /** Navigation failure record */
 export interface NavFailureRecord {
   count: number;

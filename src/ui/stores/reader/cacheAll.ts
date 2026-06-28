@@ -10,7 +10,12 @@ import { getParser } from '@/core/parser';
 import type { ParsedChapter } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
 
-import { getCurrentBookCacheKey, persistCachedChapter } from './persistence';
+import {
+  getCurrentBookCacheKey,
+  persistCachedChapter,
+  persistCacheIndex,
+  PERSISTED_CACHE_INDEX_CHECKPOINT_CHAPTERS,
+} from './persistence';
 import { loadTocEntriesPaged } from './toc';
 import { MAX_SESSION_CACHE } from './types';
 import { normalizeUrlForFetch } from './utils';
@@ -106,6 +111,8 @@ export function createCacheAll(ctx: CacheAllContext) {
     let nextUrl: string | undefined | null = taskList.shift();
     let referer =
       ctx.chapters.value[ctx.chapters.value.length - 1]?.chapter.url || ctx.chapter.value?.url;
+    let persistedSinceIndexWrite = 0;
+    let hasWrittenIndexCheckpoint = false;
 
     while (ctx.cacheProgress.value.running && nextUrl) {
       const targetUrl = normalizeUrlForFetch(nextUrl);
@@ -172,6 +179,16 @@ export function createCacheAll(ctx: CacheAllContext) {
         const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
         if (persisted) {
           persistedSet.add(parsed.url);
+          persistedSinceIndexWrite += 1;
+          if (
+            !hasWrittenIndexCheckpoint ||
+            persistedSinceIndexWrite >= PERSISTED_CACHE_INDEX_CHECKPOINT_CHAPTERS
+          ) {
+            if (persistCacheIndex(cacheBook, persistedSet)) {
+              persistedSinceIndexWrite = 0;
+              hasWrittenIndexCheckpoint = true;
+            }
+          }
         }
       }
 

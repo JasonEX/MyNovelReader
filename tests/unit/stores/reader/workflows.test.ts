@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getCacheV2IndexKey, parseStoredJson } from '@/ui/stores/reader/persistence';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import { getParser } from '@/core/parser';
 import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
@@ -140,6 +141,86 @@ describe('ReaderStore - workflows', () => {
     expect(store.cacheProgress.done).toBe(1);
     expect(store.cachedContents.has('https://example.com/book/1/2.html')).toBe(true);
     expect(store.persistedUrls.has('https://example.com/book/1/2.html')).toBe(true);
+  });
+
+  it('startCacheAll checkpoints the v2 index after the first persisted chapter', async () => {
+    const gm = createGmStorageMock();
+    stubGmStorage(gm);
+
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const doc = new DOMParser().parseFromString('<html><body>ok</body></html>', 'text/html');
+    let resolveSecondFetch: (() => void) | null = null;
+    const secondFetch = new Promise<{
+      doc: Document;
+      status: number;
+      finalUrl: string;
+      error: null;
+    }>(resolve => {
+      resolveSecondFetch = () =>
+        resolve({
+          doc,
+          status: 200,
+          finalUrl: 'https://example.com/book/1/3.html',
+          error: null,
+        });
+    });
+
+    mockFetchAndParseUrl.mockImplementation((url: string) => ({
+      promise:
+        url === 'https://example.com/book/1/3.html'
+          ? secondFetch
+          : Promise.resolve({
+              doc,
+              status: 200,
+              finalUrl: url,
+              error: null,
+            }),
+      abort: vi.fn(),
+    }));
+
+    mockParseWithSectionMerge.mockImplementation(async (_parser, _doc, url: string) => ({
+      title: url.endsWith('/2.html') ? '第2章' : '第3章',
+      content: '<p>c</p>',
+      rawContent: '<p>c</p>',
+      url,
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+      nextUrl: null,
+    }));
+
+    const run = store.startCacheAll([
+      'https://example.com/book/1/2.html',
+      'https://example.com/book/1/3.html',
+    ]);
+
+    const indexKey = getCacheV2IndexKey('example.com_book_1_index.html');
+    await vi.waitFor(() => expect(gm.store.has(indexKey)).toBe(true));
+
+    const checkpoint = parseStoredJson<{ urls: string[] }>(gm.store.get(indexKey));
+    expect(checkpoint?.urls).toEqual(['https://example.com/book/1/2.html']);
+
+    resolveSecondFetch?.();
+    await run;
+
+    const finalIndex = parseStoredJson<{ urls: string[] }>(gm.store.get(indexKey));
+    expect(finalIndex?.urls).toEqual(
+      expect.arrayContaining([
+        'https://example.com/book/1/1.html',
+        'https://example.com/book/1/2.html',
+        'https://example.com/book/1/3.html',
+      ])
+    );
   });
 
   it('cancelCacheAll aborts in-flight request and stops caching', async () => {
