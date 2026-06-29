@@ -67,6 +67,14 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
   }
 
+  function armAutoLoadIfUserScrolled(mainEl: HTMLElement): void {
+    if (isNavigating.value || autoLoadArmed.value) return;
+    if (mainEl.scrollTop - lastAutoLoadScrollTop.value < AUTO_LOAD_ARM_SCROLL_DELTA_PX) return;
+
+    autoLoadArmed.value = true;
+    autoLoadShortChainCount.value = 0;
+  }
+
   function clearAutoLoadTimer(): void {
     if (!autoLoadTimer) return;
     clearTimeout(autoLoadTimer);
@@ -80,6 +88,8 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     if (!hasNext.value) return;
     if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
     if (!isNearBottom(mainEl)) return;
+
+    armAutoLoadIfUserScrolled(mainEl);
 
     const fillMode = isShortScrollableContent(mainEl);
     const canAutoLoad = autoLoadArmed.value || fillMode;
@@ -133,6 +143,14 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       if (!isShortScrollableContent(mainEl)) {
         autoLoadShortChainCount.value = 0;
       }
+      scheduleAutoLoadNext();
+    }
+  );
+
+  watch(
+    () => [isLoadingNext.value, isLoadingPrev.value, isLoading.value, isNavigating.value],
+    ([loadingNext, loadingPrev, loading, navigating]) => {
+      if (loadingNext || loadingPrev || loading || navigating) return;
       scheduleAutoLoadNext();
     }
   );

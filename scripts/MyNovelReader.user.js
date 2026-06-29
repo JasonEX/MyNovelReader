@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.4
+// @version      9.0.5
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -8965,7 +8965,7 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.4";
+  const VERSION = "9.0.5";
   const BUILD_DATE = "2026-06-29";
   /**
   * @vue/shared v3.5.25
@@ -23061,6 +23061,18 @@ setHeight,
       scheduleAutoLoadNext
     } = options;
     let lastScrollTop = 0;
+    let pendingAutoLoadCheckFrame = null;
+    function queuePostLayoutAutoLoadCheck() {
+      if (pendingAutoLoadCheckFrame !== null) return;
+      if (typeof globalThis.requestAnimationFrame !== "function") {
+        scheduleAutoLoadNext();
+        return;
+      }
+      pendingAutoLoadCheckFrame = globalThis.requestAnimationFrame(() => {
+        pendingAutoLoadCheckFrame = null;
+        scheduleAutoLoadNext();
+      });
+    }
     function estimateIndexFromOffset(offset) {
       if (chapters.value.length === 0) return -1;
       let acc = 0;
@@ -23121,6 +23133,7 @@ setHeight,
           const overallPercent2 = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
           readerStore.updateScroll(overallPercent2);
           scheduleAutoLoadNext();
+          queuePostLayoutAutoLoadCheck();
         }
         return;
       }
@@ -23129,6 +23142,7 @@ setHeight,
       const overallPercent = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
       readerStore.updateScroll(overallPercent);
       scheduleAutoLoadNext();
+      queuePostLayoutAutoLoadCheck();
     }
     const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);
     return { handleScroll, lastScrollTop };
@@ -23169,6 +23183,12 @@ setHeight,
       const scrollableDistance = mainEl.scrollHeight - mainEl.clientHeight;
       return scrollableDistance < AUTO_LOAD_ARM_SCROLL_DELTA_PX;
     }
+    function armAutoLoadIfUserScrolled(mainEl) {
+      if (isNavigating.value || autoLoadArmed.value) return;
+      if (mainEl.scrollTop - lastAutoLoadScrollTop.value < AUTO_LOAD_ARM_SCROLL_DELTA_PX) return;
+      autoLoadArmed.value = true;
+      autoLoadShortChainCount.value = 0;
+    }
     function clearAutoLoadTimer() {
       if (!autoLoadTimer) return;
       clearTimeout(autoLoadTimer);
@@ -23181,6 +23201,7 @@ setHeight,
       if (!hasNext.value) return;
       if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
       if (!isNearBottom(mainEl)) return;
+      armAutoLoadIfUserScrolled(mainEl);
       const fillMode = isShortScrollableContent(mainEl);
       const canAutoLoad = autoLoadArmed.value || fillMode;
       if (!canAutoLoad) return;
@@ -23222,6 +23243,13 @@ setHeight,
         if (!isShortScrollableContent(mainEl)) {
           autoLoadShortChainCount.value = 0;
         }
+        scheduleAutoLoadNext();
+      }
+    );
+    watch(
+      () => [isLoadingNext.value, isLoadingPrev.value, isLoading.value, isNavigating.value],
+      ([loadingNext, loadingPrev, loading, navigating]) => {
+        if (loadingNext || loadingPrev || loading || navigating) return;
         scheduleAutoLoadNext();
       }
     );

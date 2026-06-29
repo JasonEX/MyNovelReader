@@ -78,6 +78,21 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
   } = options;
 
   let lastScrollTop = 0;
+  let pendingAutoLoadCheckFrame: number | null = null;
+
+  function queuePostLayoutAutoLoadCheck(): void {
+    if (pendingAutoLoadCheckFrame !== null) return;
+
+    if (typeof globalThis.requestAnimationFrame !== 'function') {
+      scheduleAutoLoadNext();
+      return;
+    }
+
+    pendingAutoLoadCheckFrame = globalThis.requestAnimationFrame(() => {
+      pendingAutoLoadCheckFrame = null;
+      scheduleAutoLoadNext();
+    });
+  }
 
   function estimateIndexFromOffset(offset: number): number {
     if (chapters.value.length === 0) return -1;
@@ -165,6 +180,7 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
           scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
         readerStore.updateScroll(overallPercent);
         scheduleAutoLoadNext();
+        queuePostLayoutAutoLoadCheck();
       }
       return;
     }
@@ -182,6 +198,7 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
 
     // Note: Chapter loading is triggered by sentinel + this scroll gate.
     scheduleAutoLoadNext();
+    queuePostLayoutAutoLoadCheck();
   }
 
   const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);

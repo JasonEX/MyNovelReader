@@ -106,6 +106,46 @@ describe('useReaderScroll', () => {
     expect(opts.scheduleAutoLoadNext).toHaveBeenCalled();
   });
 
+  it('queues one post-layout auto-load check after scroll handling', () => {
+    const rafCallbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        rafCallbacks.push(callback);
+        return rafCallbacks.length;
+      })
+    );
+
+    const mainEl = document.createElement('div');
+    Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
+    Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+
+    const el1 = document.createElement('div');
+    Object.defineProperty(el1, 'offsetTop', { value: 0 });
+    Object.defineProperty(el1, 'offsetHeight', { value: 500 });
+
+    const chapterRefs = new Map();
+    chapterRefs.set('https://example.com/ch1', el1);
+
+    const entry = makeEntry('https://example.com/ch1');
+    const visibleEntry = { ...entry, index: 0 };
+
+    const opts = createScrollOptions({
+      mainRef: mainEl,
+      chapters: [entry],
+      visibleChapters: [visibleEntry],
+      chapterRefs,
+    });
+    const { handleScroll } = useReaderScroll(opts);
+
+    handleScroll();
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledTimes(1);
+
+    rafCallbacks[0](0);
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledTimes(2);
+  });
+
   it('arms auto-load after scroll delta exceeds threshold', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollTop', { value: 200, writable: true });

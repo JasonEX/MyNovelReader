@@ -148,8 +148,26 @@ describe('useReaderAutoLoad', () => {
     const opts = createAutoLoadOptions({ mainRef: mainEl });
     const result = useReaderAutoLoad(opts);
     result.autoLoadArmed.value = false;
+    result.lastAutoLoadScrollTop.value = 400;
     result.scheduleAutoLoadNext();
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+  });
+
+  it('scheduleAutoLoadNext arms itself near bottom after enough user scroll', () => {
+    const mainEl = document.createElement('div');
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+    Object.defineProperty(mainEl, 'scrollTop', { value: 1300, writable: true });
+    Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    const result = useReaderAutoLoad(opts);
+    result.autoLoadArmed.value = false;
+    result.lastAutoLoadScrollTop.value = 1000;
+
+    result.scheduleAutoLoadNext();
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+    expect(result.autoLoadArmed.value).toBe(false);
   });
 
   it('scheduleAutoLoadNext triggers load in fill mode (short content)', () => {
