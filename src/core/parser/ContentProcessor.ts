@@ -569,9 +569,18 @@ export class ContentProcessor {
         continue;
       }
 
-      // Stop if we hit actual content (longer text that's not a title)
-      if (text.length > 50 && !this.looksLikeDuplicateTitle(text)) {
-        break;
+      // Title/book/author de-duplication only applies to leading lines.
+      // Once actual content starts, later mentions of the chapter title are valid正文.
+      break;
+    }
+
+    // Remove standalone garbage marker blocks anywhere in the extracted content.
+    // Keep this stricter than title de-duplication so ordinary short正文 is preserved.
+    for (const child of Array.from(tempDiv.children)) {
+      if (child.children.length > 0) continue;
+      const text = (child.textContent || '').trim();
+      if (/^>+$/.test(text)) {
+        child.remove();
       }
     }
 

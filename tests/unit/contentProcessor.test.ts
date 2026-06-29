@@ -772,6 +772,26 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('元婴修仙傳');
     });
 
+    it('keeps later正文 paragraphs that mention the chapter title core', () => {
+      processor.setOptions({ chapterTitle: '第49章 通天箓' });
+      const element = doc.createElement('div');
+      element.innerHTML = [
+        '<p>公元2020年。</p>',
+        '<p>他停顿了一下，一字一顿地说出那个名字：</p>',
+        '<p>“其名为——通天箓！”</p>',
+        '<p>段星炼和周六晴咀嚼着这个有些陌生的名字：</p>',
+        '<p>“通天箓？”</p>',
+        '<p>“这些知识对于你们来说，是必须的。”</p>',
+        '<p>“如果你们不学习拓扑的知识就强行修炼通天箓。</p>',
+      ].join('');
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('“其名为——通天箓！”');
+      expect(result).toContain('“通天箓？”');
+      expect(result).toContain('强行修炼通天箓');
+    });
+
     it('removes generic chapter title patterns even without chapterTitle', () => {
       const element = doc.createElement('div');
       element.innerHTML = '<p>第12章</p><p>正文内容</p>';

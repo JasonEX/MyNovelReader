@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.3
+// @version      9.0.4
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -3920,8 +3920,13 @@ cleanDuplicateInfo(html2, doc2) {
           removedCount++;
           continue;
         }
-        if (text2.length > 50 && !this.looksLikeDuplicateTitle(text2)) {
-          break;
+        break;
+      }
+      for (const child of Array.from(tempDiv.children)) {
+        if (child.children.length > 0) continue;
+        const text2 = (child.textContent || "").trim();
+        if (/^>+$/.test(text2)) {
+          child.remove();
         }
       }
       const tailNodes = Array.from(tempDiv.childNodes);
@@ -8960,8 +8965,8 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.3";
-  const BUILD_DATE = "2026-06-28";
+  const VERSION = "9.0.4";
+  const BUILD_DATE = "2026-06-29";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
