@@ -1,388 +1,93 @@
 /**
  * Reader Store - Chapter Navigation
- * Handles loading chapters (next/prev), inserting from cache, and navigation guards.
+ * Coordinates chapter loading, cache rebuilds, and reload actions.
  */
 
-import type { CachedChapter, ChapterEntry, LoadSource } from './types';
-import { type ConversionMode, convertHTML } from '@/core/converter';
-import { getParser, type ParsedChapter } from '@/core/parser';
-import { fetchAndParseUrl } from '@/core/utils/network';
-import { isCloudflareChallenge } from '@/core/protection';
-import type { Ref } from 'vue';
-
+import type { CachedChapter, LoadSource } from './types';
 import { clearNavFailure, recordNavFailure } from './navFailure';
-import { detectTocPage, isInvalidChapterUrl, isVipChapterPage } from './detection';
-import { MAX_CACHED_CHAPTERS, MAX_NAV_FAILURES, MAX_SESSION_CACHE, VIP_BLOCK_TOAST } from './types';
-import { normalizeUrl, normalizeUrlForBlock, normalizeUrlForFetch } from './utils';
+import {
+  clearPendingAbort,
+  loadDocumentInIframe,
+  loadFetchDocument,
+  parseCandidateDocument,
+} from './chapterFetch';
+import { getParser, type ParsedChapter } from '@/core/parser';
+import {
+  insertCachedChapter,
+  insertParsedChapter,
+  rebuildChaptersFromCache,
+} from './chapterListMutations';
+import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from './types';
+import { normalizeUrl, normalizeUrlForFetch } from './utils';
+import { prepareChapterLoad, validateTargetChapterUrl } from './chapterLoadGuards';
+import { convertHTML } from '@/core/converter';
+import { detectTocPage } from './detection';
+import { fetchAndParseUrl } from '@/core/utils/network';
+import type { NavigationContext } from './navigationContext';
 import { parseWithSectionMerge } from './section';
 import { trimCachedContents } from './trim';
-
-// ============ Context Interface ============
-
-export interface NavigationContext {
-  // State refs
-  chapters: Ref<ChapterEntry[]>;
-  currentChapterIndex: Ref<number>;
-  isLoading: Ref<boolean>;
-  isLoadingNext: Ref<boolean>;
-  isLoadingPrev: Ref<boolean>;
-  pendingNextAbort: Ref<(() => void) | null>;
-  pendingPrevAbort: Ref<(() => void) | null>;
-  reloadAbort: Ref<(() => void) | null>;
-  loadedUrls: Ref<Set<string>>;
-  vipBlockedUrls: Ref<Set<string>>;
-  blockedNavUrls: Ref<Set<string>>;
-  cachedContents: Ref<Map<string, CachedChapter>>;
-  persistedUrls: Ref<Set<string>>;
-  originalContents: Ref<Map<string, string>>;
-  originalTitles: Ref<Map<string, { title: string; bookTitle?: string }>>;
-  currentConversionMode: Ref<ConversionMode>;
-  navFailures: Map<string, { count: number; nextRetryAt: number }>;
-  history: Ref<string[]>;
-
-  // Stale guards
-  runtime: {
-    bumpView: () => number;
-    isViewStale: (runId: number) => boolean;
-    viewId: () => number;
-  };
-
-  // Callbacks
-  showToast: (msg: string, type: 'info' | 'error', duration?: number) => void;
-  setError: (msg: string) => void;
-  applyConversionToChapterEntry: (entryId: string, mode: ConversionMode) => Promise<void>;
-  getPersistedCachedChapter: (url: string) => Promise<CachedChapter | null>;
-}
 
 // ============ Factory ============
 
 export function createNavigation(ctx: NavigationContext) {
-  function loadDocumentInIframe(
-    url: string,
-    timeoutMs: number = 15000
-  ): { promise: Promise<{ doc: Document; cleanup: () => void } | null>; abort: () => void } {
-    let iframe: HTMLIFrameElement | null = null;
-    let timeoutId: number | null = null;
-    let settled = false;
-    let resolveResult: ((result: { doc: Document; cleanup: () => void } | null) => void) | null =
-      null;
-
-    const clearTimer = () => {
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-    };
-
-    const cleanup = () => {
-      clearTimer();
-      if (iframe) {
-        iframe.remove();
-        iframe = null;
-      }
-    };
-
-    const finish = (result: { doc: Document; cleanup: () => void } | null) => {
-      if (settled) return;
-      settled = true;
-      if (result) {
-        clearTimer();
-      } else {
-        cleanup();
-      }
-      resolveResult?.(result);
-    };
-
-    const promise = new Promise<{ doc: Document; cleanup: () => void } | null>(resolve => {
-      resolveResult = resolve;
-      iframe = document.createElement('iframe');
-      iframe.setAttribute('aria-hidden', 'true');
-      iframe.tabIndex = -1;
-      iframe.style.cssText = [
-        'position:absolute',
-        'display:block!important',
-        'left:-10000px',
-        'top:0',
-        'width:1200px',
-        'height:8000px',
-        'opacity:0',
-        'pointer-events:none',
-        'border:0',
-      ].join(';');
-
-      iframe.onload = () => {
-        window.setTimeout(() => {
-          try {
-            const doc = iframe?.contentDocument;
-            if (!doc) {
-              finish(null);
-              return;
-            }
-            finish({ doc, cleanup });
-          } catch {
-            finish(null);
-          }
-        }, 300);
-      };
-      iframe.onerror = () => finish(null);
-
-      timeoutId = window.setTimeout(() => finish(null), timeoutMs);
-      const parent = document.body || document.documentElement;
-      if (!parent) {
-        finish(null);
-        return;
-      }
-      parent.appendChild(iframe);
-      iframe.src = url;
-    });
-
-    return {
-      promise,
-      abort: () => finish(null),
-    };
-  }
-
-  /** Helper: Insert a chapter from cache to chapters list */
-  async function insertCachedChapter(
-    cached: CachedChapter,
-    position: 'append' | 'prepend'
-  ): Promise<boolean> {
-    const suffix = position === 'append' ? 'cached' : 'cached-prev';
-    const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
-    const entry = {
-      chapter: { ...cached.chapter },
-      rule: cached.rule,
-      id,
-    };
-
-    if (position === 'append') {
-      ctx.chapters.value.push(entry);
-    } else {
-      ctx.chapters.value.unshift(entry);
-      ctx.currentChapterIndex.value++;
-    }
-    ctx.loadedUrls.value.add(entry.chapter.url);
-
-    // Store original content for text conversion
-    ctx.originalContents.value.set(id, cached.chapter.content);
-    ctx.originalTitles.value.set(id, {
-      title: cached.chapter.title,
-      bookTitle: cached.chapter.bookTitle,
-    });
-
-    if (ctx.currentConversionMode.value !== 'none') {
-      await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-    }
-
-    // Trim cached chapters to limit memory
-    if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
-      if (position === 'append' && ctx.currentChapterIndex.value > 2) {
-        // Trim from beginning when appending
-        const removed = ctx.chapters.value.shift();
-        if (removed) {
-          ctx.loadedUrls.value.delete(removed.chapter.url);
-          ctx.originalContents.value.delete(removed.id);
-          ctx.originalTitles.value.delete(removed.id);
-          ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-        }
-      } else if (position === 'prepend') {
-        // Trim from end when prepending
-        const removed = ctx.chapters.value.pop();
-        if (removed) {
-          ctx.loadedUrls.value.delete(removed.chapter.url);
-          ctx.originalContents.value.delete(removed.id);
-          ctx.originalTitles.value.delete(removed.id);
-        }
-      }
-    }
-
-    return true;
-  }
-
   /** Unified chapter loading function */
   async function loadChapter(direction: 'next' | 'prev', source: LoadSource): Promise<boolean> {
     const runId = ctx.runtime.viewId();
-    const isNext = direction === 'next';
-    const refChapter = isNext
-      ? ctx.chapters.value[ctx.chapters.value.length - 1]
-      : ctx.chapters.value[0];
-    const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
-    const pendingAbortRef = isNext ? ctx.pendingNextAbort : ctx.pendingPrevAbort;
-    const endMessage = isNext ? '已经是最后一章了' : '已经是第一章了';
-    const errorMessage = isNext ? '加载下一章失败' : '加载上一章失败';
-
-    if (isLoadingRef.value) {
-      return false;
-    }
-
-    const rawTargetUrl = isNext ? refChapter?.chapter.nextUrl : refChapter?.chapter.prevUrl;
-    if (!rawTargetUrl) {
-      if (source === 'manual') {
-        ctx.showToast(endMessage, 'info');
-      }
-      return false;
-    }
-
-    const targetUrl = normalizeUrlForFetch(rawTargetUrl);
-    if (targetUrl !== rawTargetUrl) {
-      if (isNext) {
-        refChapter.chapter.nextUrl = targetUrl;
-      } else {
-        refChapter.chapter.prevUrl = targetUrl;
-      }
-    }
-
-    // Don't load if targetUrl is the index/TOC page
-    if (
-      refChapter.chapter.indexUrl &&
-      normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)
-    ) {
-      ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
-      if (source === 'manual') {
-        ctx.showToast(endMessage, 'info');
-      }
-      return false;
-    }
-
-    // Don't load VIP chapters (cached for this session)
-    if (ctx.vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
-      ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
-      return false;
-    }
-
-    const navKey = normalizeUrlForBlock(targetUrl);
-    if (ctx.blockedNavUrls.value.has(navKey)) {
-      if (source === 'manual') {
-        ctx.showToast(endMessage, 'info');
-      }
-      return false;
-    }
-
-    const failure = ctx.navFailures.get(navKey);
-    if (failure && Date.now() < failure.nextRetryAt) {
-      if (source === 'manual') {
-        ctx.showToast('加载失败过于频繁，请稍后重试', 'info', 2000);
-      }
-      return false;
-    }
-
-    if (ctx.loadedUrls.value.has(targetUrl)) {
-      return false;
-    }
+    const load = prepareChapterLoad(ctx, direction, source);
+    if (!load) return false;
 
     // Prefer cached content if available (avoid refetching on race/abort failures).
-    const cached = ctx.cachedContents.value.get(targetUrl);
+    const cached = ctx.cachedContents.value.get(load.targetUrl);
     if (cached) {
-      return insertCachedChapter(cached, isNext ? 'append' : 'prepend');
+      return insertCachedChapter(ctx, cached, load.isNext ? 'append' : 'prepend');
     }
-    if (ctx.persistedUrls.value.has(targetUrl)) {
-      const persisted = await ctx.getPersistedCachedChapter(targetUrl);
+    if (ctx.persistedUrls.value.has(load.targetUrl)) {
+      const persisted = await ctx.getPersistedCachedChapter(load.targetUrl);
       if (ctx.runtime.isViewStale(runId)) return false;
       if (persisted) {
-        const sessionCached: CachedChapter = { ...persisted, cachedAt: Date.now() };
-        ctx.cachedContents.value.set(targetUrl, sessionCached);
+        const sessionCached = { ...persisted, cachedAt: Date.now() };
+        ctx.cachedContents.value.set(load.targetUrl, sessionCached);
         trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-        return insertCachedChapter(sessionCached, isNext ? 'append' : 'prepend');
+        return insertCachedChapter(ctx, sessionCached, load.isNext ? 'append' : 'prepend');
       }
     }
 
-    isLoadingRef.value = true;
+    load.isLoadingRef.value = true;
 
     // Cancel in-flight request
-    if (pendingAbortRef.value) {
-      pendingAbortRef.value();
-      pendingAbortRef.value = null;
+    if (load.pendingAbortRef.value) {
+      load.pendingAbortRef.value();
+      load.pendingAbortRef.value = null;
     }
 
-    // Pre-fetch validation: check if URL looks like a valid chapter page
-    if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
-      isLoadingRef.value = false;
-      ctx.blockedNavUrls.value.add(navKey);
-      if (source === 'manual') {
-        ctx.showToast(endMessage, 'info');
-      }
+    if (!validateTargetChapterUrl(ctx, load, source)) {
       return false;
     }
 
     try {
-      const referer = refChapter.chapter.url;
+      const referer = load.refChapter.chapter.url;
       const parser = getParser();
       let cleanupIframe: (() => void) | null = null;
 
-      const clearPendingAbort = (abort: () => void) => {
-        if (pendingAbortRef.value === abort) {
-          pendingAbortRef.value = null;
-        }
-      };
-
       const recordLoadFailure = () => {
-        const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+        const count = recordNavFailure(ctx.navFailures, load.navKey, {
+          maxFailures: MAX_NAV_FAILURES,
+        });
         if (source === 'manual' || count === 1) {
-          ctx.showToast(errorMessage, 'error', 2500);
+          ctx.showToast(load.errorMessage, 'error', 2500);
         }
-      };
-
-      const loadFetchDocument = async (): Promise<Document | 'abort' | null> => {
-        const fetchLoader = fetchAndParseUrl(targetUrl, referer);
-        const abort = fetchLoader.abort;
-        if (ctx.runtime.isViewStale(runId)) {
-          abort();
-          return 'abort';
-        }
-        pendingAbortRef.value = abort;
-
-        const fetchResult = await fetchLoader.promise;
-        if (ctx.runtime.isViewStale(runId)) {
-          abort();
-          return 'abort';
-        }
-        clearPendingAbort(abort);
-
-        if (fetchResult.error === 'abort') {
-          return 'abort';
-        }
-        return fetchResult.doc;
-      };
-
-      const parseCandidateDocument = async (
-        doc: Document
-      ): Promise<ParsedChapter | 'abort' | 'blocked' | null> => {
-        // Cloudflare challenge page: the actual chapter was not returned.
-        // Treat as a transient failure so the backoff/retry mechanism kicks in.
-        if (isCloudflareChallenge(doc)) {
-          const count = recordNavFailure(ctx.navFailures, navKey, {
-            maxFailures: MAX_NAV_FAILURES,
-          });
-          if (source === 'manual' || count === 1) {
-            ctx.showToast('Cloudflare 验证页面，请在新标签页中完成验证后重试', 'info', 4000);
-          }
-          return 'blocked';
-        }
-
-        // VIP page detection: do not parse / load, just toast and block it for this session
-        if (isVipChapterPage(doc)) {
-          ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
-          ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
-          return 'blocked';
-        }
-
-        const parsed = await parseWithSectionMerge(parser, doc, targetUrl, referer);
-        if (ctx.runtime.isViewStale(runId)) {
-          return 'abort';
-        }
-        return parsed;
       };
 
       let parsed: ParsedChapter | null = null;
 
-      if (refChapter.rule?.advanced?.useIframe) {
-        const iframeLoader = loadDocumentInIframe(targetUrl);
+      if (load.refChapter.rule?.advanced?.useIframe) {
+        const iframeLoader = loadDocumentInIframe(load.targetUrl);
         const abort = iframeLoader.abort;
         if (ctx.runtime.isViewStale(runId)) {
           abort();
           return false;
         }
-        pendingAbortRef.value = abort;
+        load.pendingAbortRef.value = abort;
 
         const iframeResult = await iframeLoader.promise;
         if (ctx.runtime.isViewStale(runId)) {
@@ -390,13 +95,21 @@ export function createNavigation(ctx: NavigationContext) {
           abort();
           return false;
         }
-        clearPendingAbort(abort);
+        clearPendingAbort(load, abort);
         cleanupIframe = iframeResult?.cleanup || null;
 
         if (iframeResult?.doc) {
           let iframeParsed: ParsedChapter | 'abort' | 'blocked' | null = null;
           try {
-            iframeParsed = await parseCandidateDocument(iframeResult.doc);
+            iframeParsed = await parseCandidateDocument(
+              ctx,
+              load,
+              parser,
+              iframeResult.doc,
+              runId,
+              referer,
+              source
+            );
           } finally {
             cleanupIframe?.();
             cleanupIframe = null;
@@ -411,7 +124,7 @@ export function createNavigation(ctx: NavigationContext) {
       cleanupIframe?.();
 
       if (!parsed) {
-        const fetchDoc = await loadFetchDocument();
+        const fetchDoc = await loadFetchDocument(ctx, load, runId, referer);
         if (fetchDoc === 'abort') {
           return false;
         }
@@ -420,7 +133,15 @@ export function createNavigation(ctx: NavigationContext) {
           return false;
         }
 
-        const fetchParsed = await parseCandidateDocument(fetchDoc);
+        const fetchParsed = await parseCandidateDocument(
+          ctx,
+          load,
+          parser,
+          fetchDoc,
+          runId,
+          referer,
+          source
+        );
         if (fetchParsed === 'abort' || fetchParsed === 'blocked') {
           return false;
         }
@@ -440,105 +161,40 @@ export function createNavigation(ctx: NavigationContext) {
       if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
 
       // Check if this is a TOC page
-      const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
+      const isTocPage = detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url);
       if (isTocPage) {
-        ctx.blockedNavUrls.value.add(navKey);
+        ctx.blockedNavUrls.value.add(load.navKey);
         if (source === 'manual') {
-          ctx.showToast(endMessage, 'info');
+          ctx.showToast(load.endMessage, 'info');
         }
         return false;
       }
 
       // Additional validation for prev: check if page has prev but no next
-      if (!isNext) {
+      if (!load.isNext) {
         if (
           parsed.nextUrl &&
-          normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)
+          normalizeUrl(parsed.nextUrl) === normalizeUrl(load.refChapter.chapter.url)
         ) {
           // This is fine, it's actually the previous chapter
         } else if (parsed.prevUrl && !parsed.nextUrl) {
           // Page has prev but no next - likely a TOC or non-chapter page
-          ctx.blockedNavUrls.value.add(navKey);
+          ctx.blockedNavUrls.value.add(load.navKey);
           return false;
         }
       }
 
-      // Add to chapters list
-      const suffix = isNext ? '' : 'prev-';
-      const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
-      const entry = {
-        chapter: parsed,
-        rule: parsed.rule,
-        id,
-      };
-
-      if (isNext) {
-        ctx.chapters.value.push(entry);
-      } else {
-        ctx.chapters.value.unshift(entry);
-        ctx.currentChapterIndex.value++;
-      }
-      clearNavFailure(ctx.navFailures, navKey);
-      ctx.loadedUrls.value.add(parsed.url);
-
-      // Store original content for text conversion
-      ctx.originalContents.value.set(id, parsed.content);
-      ctx.originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
-
-      // Also store in cachedContents for quick jump
-      ctx.cachedContents.value.set(parsed.url, {
-        chapter: parsed,
-        rule: parsed.rule,
-        cachedAt: Date.now(),
-      });
-
-      // Trim in-memory session cache (LRU) to keep memory bounded.
-      trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-
-      // Apply current conversion mode if active
-      if (ctx.currentConversionMode.value !== 'none') {
-        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-      }
-
-      // Add to history
-      if (!ctx.history.value.includes(parsed.url)) {
-        if (isNext) {
-          ctx.history.value.push(parsed.url);
-        } else {
-          ctx.history.value.unshift(parsed.url);
-        }
-      }
-
-      // Trim cached chapters to limit memory
-      if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
-        if (isNext && ctx.currentChapterIndex.value > 2) {
-          const removed = ctx.chapters.value.shift();
-          if (removed) {
-            ctx.loadedUrls.value.delete(removed.chapter.url);
-            ctx.originalContents.value.delete(removed.id);
-            ctx.originalTitles.value.delete(removed.id);
-            ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-          }
-        } else if (!isNext) {
-          const removed = ctx.chapters.value.pop();
-          if (removed) {
-            ctx.loadedUrls.value.delete(removed.chapter.url);
-            ctx.originalContents.value.delete(removed.id);
-            ctx.originalTitles.value.delete(removed.id);
-          }
-        }
-      }
-
-      return true;
+      clearNavFailure(ctx.navFailures, load.navKey);
+      return insertParsedChapter(ctx, load, parsed);
     } catch (e) {
       if (!ctx.runtime.isViewStale(runId)) {
         console.error(`[MNR] Failed to load ${direction} chapter:`, e);
-        ctx.setError(errorMessage);
+        ctx.setError(load.errorMessage);
       }
       return false;
     } finally {
       if (!ctx.runtime.isViewStale(runId)) {
-        isLoadingRef.value = false;
+        load.isLoadingRef.value = false;
       }
     }
   }
@@ -583,31 +239,7 @@ export function createNavigation(ctx: NavigationContext) {
     if (!cached) return false;
     if (ctx.runtime.isViewStale(runId)) return false;
 
-    ctx.chapters.value = [];
-    ctx.currentChapterIndex.value = 0;
-    ctx.loadedUrls.value.clear();
-    ctx.originalContents.value.clear();
-    ctx.originalTitles.value.clear();
-
-    const id = `chapter-${Date.now()}-jump-0`;
-    ctx.chapters.value.push({
-      chapter: { ...cached.chapter },
-      rule: cached.rule,
-      id,
-    });
-    ctx.loadedUrls.value.add(url);
-
-    ctx.originalContents.value.set(id, cached.chapter.content);
-    ctx.originalTitles.value.set(id, {
-      title: cached.chapter.title,
-      bookTitle: cached.chapter.bookTitle,
-    });
-
-    if (ctx.currentConversionMode.value !== 'none') {
-      await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-    }
-
-    return true;
+    return rebuildChaptersFromCache(ctx, cached, url);
   }
 
   /**
@@ -676,8 +308,15 @@ export function createNavigation(ctx: NavigationContext) {
     }
   }
 
+  function insertCachedChapterForContext(
+    cached: CachedChapter,
+    position: 'append' | 'prepend'
+  ): Promise<boolean> {
+    return insertCachedChapter(ctx, cached, position);
+  }
+
   return {
-    insertCachedChapter,
+    insertCachedChapter: insertCachedChapterForContext,
     loadChapter,
     loadNextChapter,
     loadPrevChapter,

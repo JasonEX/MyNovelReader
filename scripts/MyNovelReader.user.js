@@ -8966,7 +8966,7 @@ async manualEnable(doc2 = document) {
     return managerInstance;
   }
   const VERSION = "9.0.5";
-  const BUILD_DATE = "2026-06-29";
+  const BUILD_DATE = "2026-06-30";
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -21221,281 +21221,375 @@ convert(s) {
     }
     return false;
   }
-  function createNavigation(ctx) {
-    function loadDocumentInIframe(url, timeoutMs = 15e3) {
-      let iframe = null;
-      let timeoutId = null;
-      let settled = false;
-      let resolveResult = null;
-      const clearTimer = () => {
-        if (timeoutId !== null) {
-          window.clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-      };
-      const cleanup = () => {
+  function loadDocumentInIframe(url, timeoutMs = 15e3) {
+    let iframe = null;
+    let timeoutId = null;
+    let settled = false;
+    let resolveResult = null;
+    const clearTimer = () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+    const cleanup = () => {
+      clearTimer();
+      if (iframe) {
+        iframe.remove();
+        iframe = null;
+      }
+    };
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      if (result) {
         clearTimer();
-        if (iframe) {
-          iframe.remove();
-          iframe = null;
-        }
-      };
-      const finish = (result) => {
-        if (settled) return;
-        settled = true;
-        if (result) {
-          clearTimer();
-        } else {
-          cleanup();
-        }
-        resolveResult == null ? void 0 : resolveResult(result);
-      };
-      const promise = new Promise((resolve) => {
-        resolveResult = resolve;
-        iframe = document.createElement("iframe");
-        iframe.setAttribute("aria-hidden", "true");
-        iframe.tabIndex = -1;
-        iframe.style.cssText = [
-          "position:absolute",
-          "display:block!important",
-          "left:-10000px",
-          "top:0",
-          "width:1200px",
-          "height:8000px",
-          "opacity:0",
-          "pointer-events:none",
-          "border:0"
-        ].join(";");
-        iframe.onload = () => {
-          window.setTimeout(() => {
-            try {
-              const doc2 = iframe == null ? void 0 : iframe.contentDocument;
-              if (!doc2) {
-                finish(null);
-                return;
-              }
-              finish({ doc: doc2, cleanup });
-            } catch {
-              finish(null);
-            }
-          }, 300);
-        };
-        iframe.onerror = () => finish(null);
-        timeoutId = window.setTimeout(() => finish(null), timeoutMs);
-        const parent = document.body || document.documentElement;
-        if (!parent) {
-          finish(null);
-          return;
-        }
-        parent.appendChild(iframe);
-        iframe.src = url;
-      });
-      return {
-        promise,
-        abort: () => finish(null)
-      };
-    }
-    async function insertCachedChapter(cached, position) {
-      const suffix = position === "append" ? "cached" : "cached-prev";
-      const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
-      const entry = {
-        chapter: { ...cached.chapter },
-        rule: cached.rule,
-        id
-      };
-      if (position === "append") {
-        ctx.chapters.value.push(entry);
       } else {
-        ctx.chapters.value.unshift(entry);
-        ctx.currentChapterIndex.value++;
+        cleanup();
       }
-      ctx.loadedUrls.value.add(entry.chapter.url);
-      ctx.originalContents.value.set(id, cached.chapter.content);
-      ctx.originalTitles.value.set(id, {
-        title: cached.chapter.title,
-        bookTitle: cached.chapter.bookTitle
+      resolveResult == null ? void 0 : resolveResult(result);
+    };
+    const promise = new Promise((resolve) => {
+      resolveResult = resolve;
+      iframe = document.createElement("iframe");
+      iframe.setAttribute("aria-hidden", "true");
+      iframe.tabIndex = -1;
+      iframe.style.cssText = [
+        "position:absolute",
+        "display:block!important",
+        "left:-10000px",
+        "top:0",
+        "width:1200px",
+        "height:8000px",
+        "opacity:0",
+        "pointer-events:none",
+        "border:0"
+      ].join(";");
+      iframe.onload = () => {
+        window.setTimeout(() => {
+          try {
+            const doc2 = iframe == null ? void 0 : iframe.contentDocument;
+            if (!doc2) {
+              finish(null);
+              return;
+            }
+            finish({ doc: doc2, cleanup });
+          } catch {
+            finish(null);
+          }
+        }, 300);
+      };
+      iframe.onerror = () => finish(null);
+      timeoutId = window.setTimeout(() => finish(null), timeoutMs);
+      const parent = document.body || document.documentElement;
+      if (!parent) {
+        finish(null);
+        return;
+      }
+      parent.appendChild(iframe);
+      iframe.src = url;
+    });
+    return {
+      promise,
+      abort: () => finish(null)
+    };
+  }
+  async function loadFetchDocument(ctx, load, runId, referer) {
+    const fetchLoader = fetchAndParseUrl(load.targetUrl, referer);
+    const abort = fetchLoader.abort;
+    if (ctx.runtime.isViewStale(runId)) {
+      abort();
+      return "abort";
+    }
+    load.pendingAbortRef.value = abort;
+    const fetchResult = await fetchLoader.promise;
+    if (ctx.runtime.isViewStale(runId)) {
+      abort();
+      return "abort";
+    }
+    clearPendingAbort(load, abort);
+    if (fetchResult.error === "abort") {
+      return "abort";
+    }
+    return fetchResult.doc;
+  }
+  async function parseCandidateDocument(ctx, load, parser, doc2, runId, referer, source) {
+    if (isCloudflareChallenge(doc2)) {
+      const count = recordNavFailure(ctx.navFailures, load.navKey, {
+        maxFailures: MAX_NAV_FAILURES
       });
-      if (ctx.currentConversionMode.value !== "none") {
-        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+      if (source === "manual" || count === 1) {
+        ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
       }
-      if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
-        if (position === "append" && ctx.currentChapterIndex.value > 2) {
-          const removed = ctx.chapters.value.shift();
-          if (removed) {
-            ctx.loadedUrls.value.delete(removed.chapter.url);
-            ctx.originalContents.value.delete(removed.id);
-            ctx.originalTitles.value.delete(removed.id);
-            ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-          }
-        } else if (position === "prepend") {
-          const removed = ctx.chapters.value.pop();
-          if (removed) {
-            ctx.loadedUrls.value.delete(removed.chapter.url);
-            ctx.originalContents.value.delete(removed.id);
-            ctx.originalTitles.value.delete(removed.id);
-          }
-        }
+      return "blocked";
+    }
+    if (isVipChapterPage(doc2)) {
+      ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(load.targetUrl));
+      ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+      return "blocked";
+    }
+    const parsed = await parseWithSectionMerge(parser, doc2, load.targetUrl);
+    if (ctx.runtime.isViewStale(runId)) {
+      return "abort";
+    }
+    return parsed;
+  }
+  function clearPendingAbort(load, abort) {
+    if (load.pendingAbortRef.value === abort) {
+      load.pendingAbortRef.value = null;
+    }
+  }
+  async function insertCachedChapter(ctx, cached, position) {
+    const suffix = position === "append" ? "cached" : "cached-prev";
+    const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
+    const entry = {
+      chapter: { ...cached.chapter },
+      rule: cached.rule,
+      id
+    };
+    if (position === "append") {
+      ctx.chapters.value.push(entry);
+    } else {
+      ctx.chapters.value.unshift(entry);
+      ctx.currentChapterIndex.value++;
+    }
+    ctx.loadedUrls.value.add(entry.chapter.url);
+    ctx.originalContents.value.set(id, cached.chapter.content);
+    ctx.originalTitles.value.set(id, {
+      title: cached.chapter.title,
+      bookTitle: cached.chapter.bookTitle
+    });
+    if (ctx.currentConversionMode.value !== "none") {
+      await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+    }
+    trimDisplayChapters(ctx, position === "append");
+    return true;
+  }
+  async function insertParsedChapter(ctx, load, parsed) {
+    const suffix = load.isNext ? "" : "prev-";
+    const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
+    const entry = {
+      chapter: parsed,
+      rule: parsed.rule,
+      id
+    };
+    if (load.isNext) {
+      ctx.chapters.value.push(entry);
+    } else {
+      ctx.chapters.value.unshift(entry);
+      ctx.currentChapterIndex.value++;
+    }
+    ctx.loadedUrls.value.add(parsed.url);
+    ctx.originalContents.value.set(id, parsed.content);
+    ctx.originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
+    ctx.cachedContents.value.set(parsed.url, {
+      chapter: parsed,
+      rule: parsed.rule,
+      cachedAt: Date.now()
+    });
+    trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+    if (ctx.currentConversionMode.value !== "none") {
+      await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+    }
+    if (!ctx.history.value.includes(parsed.url)) {
+      if (load.isNext) {
+        ctx.history.value.push(parsed.url);
+      } else {
+        ctx.history.value.unshift(parsed.url);
       }
+    }
+    trimDisplayChapters(ctx, load.isNext);
+    return true;
+  }
+  async function rebuildChaptersFromCache(ctx, cached, url) {
+    ctx.chapters.value = [];
+    ctx.currentChapterIndex.value = 0;
+    ctx.loadedUrls.value.clear();
+    ctx.originalContents.value.clear();
+    ctx.originalTitles.value.clear();
+    const id = `chapter-${Date.now()}-jump-0`;
+    ctx.chapters.value.push({
+      chapter: { ...cached.chapter },
+      rule: cached.rule,
+      id
+    });
+    ctx.loadedUrls.value.add(url);
+    ctx.originalContents.value.set(id, cached.chapter.content);
+    ctx.originalTitles.value.set(id, {
+      title: cached.chapter.title,
+      bookTitle: cached.chapter.bookTitle
+    });
+    if (ctx.currentConversionMode.value !== "none") {
+      await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+    }
+    return true;
+  }
+  function trimDisplayChapters(ctx, isAppend) {
+    if (ctx.chapters.value.length <= MAX_CACHED_CHAPTERS) return;
+    if (isAppend && ctx.currentChapterIndex.value > 2) {
+      const removed = ctx.chapters.value.shift();
+      if (removed) {
+        ctx.loadedUrls.value.delete(removed.chapter.url);
+        ctx.originalContents.value.delete(removed.id);
+        ctx.originalTitles.value.delete(removed.id);
+        ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
+      }
+      return;
+    }
+    if (!isAppend) {
+      const removed = ctx.chapters.value.pop();
+      if (removed) {
+        ctx.loadedUrls.value.delete(removed.chapter.url);
+        ctx.originalContents.value.delete(removed.id);
+        ctx.originalTitles.value.delete(removed.id);
+      }
+    }
+  }
+  function prepareChapterLoad(ctx, direction, source) {
+    const isNext = direction === "next";
+    const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
+    const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
+    const pendingAbortRef = isNext ? ctx.pendingNextAbort : ctx.pendingPrevAbort;
+    const endMessage = isNext ? "已经是最后一章了" : "已经是第一章了";
+    const errorMessage = isNext ? "加载下一章失败" : "加载上一章失败";
+    if (isLoadingRef.value) {
+      return null;
+    }
+    const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
+    if (!rawTargetUrl || !refChapter) {
+      if (source === "manual") {
+        ctx.showToast(endMessage, "info");
+      }
+      return null;
+    }
+    const targetUrl = normalizeUrlForFetch(rawTargetUrl);
+    if (targetUrl !== rawTargetUrl) {
+      if (isNext) {
+        refChapter.chapter.nextUrl = targetUrl;
+      } else {
+        refChapter.chapter.prevUrl = targetUrl;
+      }
+    }
+    if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
+      ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+      if (source === "manual") {
+        ctx.showToast(endMessage, "info");
+      }
+      return null;
+    }
+    if (ctx.vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
+      ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
+      return null;
+    }
+    const navKey = normalizeUrlForBlock(targetUrl);
+    if (ctx.blockedNavUrls.value.has(navKey)) {
+      if (source === "manual") {
+        ctx.showToast(endMessage, "info");
+      }
+      return null;
+    }
+    const failure = ctx.navFailures.get(navKey);
+    if (failure && Date.now() < failure.nextRetryAt) {
+      if (source === "manual") {
+        ctx.showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
+      }
+      return null;
+    }
+    if (ctx.loadedUrls.value.has(targetUrl)) {
+      return null;
+    }
+    return {
+      direction,
+      endMessage,
+      errorMessage,
+      isLoadingRef,
+      isNext,
+      navKey,
+      pendingAbortRef,
+      refChapter,
+      targetUrl
+    };
+  }
+  function validateTargetChapterUrl(ctx, load, source) {
+    if (!isInvalidChapterUrl(load.targetUrl, load.refChapter.chapter.url)) {
       return true;
     }
+    load.isLoadingRef.value = false;
+    ctx.blockedNavUrls.value.add(load.navKey);
+    if (source === "manual") {
+      ctx.showToast(load.endMessage, "info");
+    }
+    return false;
+  }
+  function createNavigation(ctx) {
     async function loadChapter(direction, source) {
       var _a, _b;
       const runId = ctx.runtime.viewId();
-      const isNext = direction === "next";
-      const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
-      const isLoadingRef = isNext ? ctx.isLoadingNext : ctx.isLoadingPrev;
-      const pendingAbortRef = isNext ? ctx.pendingNextAbort : ctx.pendingPrevAbort;
-      const endMessage = isNext ? "已经是最后一章了" : "已经是第一章了";
-      const errorMessage = isNext ? "加载下一章失败" : "加载上一章失败";
-      if (isLoadingRef.value) {
-        return false;
-      }
-      const rawTargetUrl = isNext ? refChapter == null ? void 0 : refChapter.chapter.nextUrl : refChapter == null ? void 0 : refChapter.chapter.prevUrl;
-      if (!rawTargetUrl) {
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      const targetUrl = normalizeUrlForFetch(rawTargetUrl);
-      if (targetUrl !== rawTargetUrl) {
-        if (isNext) {
-          refChapter.chapter.nextUrl = targetUrl;
-        } else {
-          refChapter.chapter.prevUrl = targetUrl;
-        }
-      }
-      if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
-        ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      if (ctx.vipBlockedUrls.value.has(normalizeUrlForBlock(targetUrl))) {
-        ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
-        return false;
-      }
-      const navKey = normalizeUrlForBlock(targetUrl);
-      if (ctx.blockedNavUrls.value.has(navKey)) {
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
-        return false;
-      }
-      const failure = ctx.navFailures.get(navKey);
-      if (failure && Date.now() < failure.nextRetryAt) {
-        if (source === "manual") {
-          ctx.showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
-        }
-        return false;
-      }
-      if (ctx.loadedUrls.value.has(targetUrl)) {
-        return false;
-      }
-      const cached = ctx.cachedContents.value.get(targetUrl);
+      const load = prepareChapterLoad(ctx, direction, source);
+      if (!load) return false;
+      const cached = ctx.cachedContents.value.get(load.targetUrl);
       if (cached) {
-        return insertCachedChapter(cached, isNext ? "append" : "prepend");
+        return insertCachedChapter(ctx, cached, load.isNext ? "append" : "prepend");
       }
-      if (ctx.persistedUrls.value.has(targetUrl)) {
-        const persisted = await ctx.getPersistedCachedChapter(targetUrl);
+      if (ctx.persistedUrls.value.has(load.targetUrl)) {
+        const persisted = await ctx.getPersistedCachedChapter(load.targetUrl);
         if (ctx.runtime.isViewStale(runId)) return false;
         if (persisted) {
           const sessionCached = { ...persisted, cachedAt: Date.now() };
-          ctx.cachedContents.value.set(targetUrl, sessionCached);
+          ctx.cachedContents.value.set(load.targetUrl, sessionCached);
           trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-          return insertCachedChapter(sessionCached, isNext ? "append" : "prepend");
+          return insertCachedChapter(ctx, sessionCached, load.isNext ? "append" : "prepend");
         }
       }
-      isLoadingRef.value = true;
-      if (pendingAbortRef.value) {
-        pendingAbortRef.value();
-        pendingAbortRef.value = null;
+      load.isLoadingRef.value = true;
+      if (load.pendingAbortRef.value) {
+        load.pendingAbortRef.value();
+        load.pendingAbortRef.value = null;
       }
-      if (isInvalidChapterUrl(targetUrl, refChapter.chapter.url)) {
-        isLoadingRef.value = false;
-        ctx.blockedNavUrls.value.add(navKey);
-        if (source === "manual") {
-          ctx.showToast(endMessage, "info");
-        }
+      if (!validateTargetChapterUrl(ctx, load, source)) {
         return false;
       }
       try {
-        const referer = refChapter.chapter.url;
+        const referer = load.refChapter.chapter.url;
         const parser = getParser();
         let cleanupIframe = null;
-        const clearPendingAbort = (abort) => {
-          if (pendingAbortRef.value === abort) {
-            pendingAbortRef.value = null;
-          }
-        };
         const recordLoadFailure = () => {
-          const count = recordNavFailure(ctx.navFailures, navKey, { maxFailures: MAX_NAV_FAILURES });
+          const count = recordNavFailure(ctx.navFailures, load.navKey, {
+            maxFailures: MAX_NAV_FAILURES
+          });
           if (source === "manual" || count === 1) {
-            ctx.showToast(errorMessage, "error", 2500);
+            ctx.showToast(load.errorMessage, "error", 2500);
           }
-        };
-        const loadFetchDocument = async () => {
-          const fetchLoader = fetchAndParseUrl(targetUrl, referer);
-          const abort = fetchLoader.abort;
-          if (ctx.runtime.isViewStale(runId)) {
-            abort();
-            return "abort";
-          }
-          pendingAbortRef.value = abort;
-          const fetchResult = await fetchLoader.promise;
-          if (ctx.runtime.isViewStale(runId)) {
-            abort();
-            return "abort";
-          }
-          clearPendingAbort(abort);
-          if (fetchResult.error === "abort") {
-            return "abort";
-          }
-          return fetchResult.doc;
-        };
-        const parseCandidateDocument = async (doc2) => {
-          if (isCloudflareChallenge(doc2)) {
-            const count = recordNavFailure(ctx.navFailures, navKey, {
-              maxFailures: MAX_NAV_FAILURES
-            });
-            if (source === "manual" || count === 1) {
-              ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
-            }
-            return "blocked";
-          }
-          if (isVipChapterPage(doc2)) {
-            ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(targetUrl));
-            ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
-            return "blocked";
-          }
-          const parsed2 = await parseWithSectionMerge(parser, doc2, targetUrl, referer);
-          if (ctx.runtime.isViewStale(runId)) {
-            return "abort";
-          }
-          return parsed2;
         };
         let parsed = null;
-        if ((_b = (_a = refChapter.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.useIframe) {
-          const iframeLoader = loadDocumentInIframe(targetUrl);
+        if ((_b = (_a = load.refChapter.rule) == null ? void 0 : _a.advanced) == null ? void 0 : _b.useIframe) {
+          const iframeLoader = loadDocumentInIframe(load.targetUrl);
           const abort = iframeLoader.abort;
           if (ctx.runtime.isViewStale(runId)) {
             abort();
             return false;
           }
-          pendingAbortRef.value = abort;
+          load.pendingAbortRef.value = abort;
           const iframeResult = await iframeLoader.promise;
           if (ctx.runtime.isViewStale(runId)) {
             iframeResult == null ? void 0 : iframeResult.cleanup();
             abort();
             return false;
           }
-          clearPendingAbort(abort);
+          clearPendingAbort(load, abort);
           cleanupIframe = (iframeResult == null ? void 0 : iframeResult.cleanup) || null;
           if (iframeResult == null ? void 0 : iframeResult.doc) {
             let iframeParsed = null;
             try {
-              iframeParsed = await parseCandidateDocument(iframeResult.doc);
+              iframeParsed = await parseCandidateDocument(
+                ctx,
+                load,
+                parser,
+                iframeResult.doc,
+                runId,
+                referer,
+                source
+              );
             } finally {
               cleanupIframe == null ? void 0 : cleanupIframe();
               cleanupIframe = null;
@@ -21508,7 +21602,7 @@ convert(s) {
         }
         cleanupIframe == null ? void 0 : cleanupIframe();
         if (!parsed) {
-          const fetchDoc = await loadFetchDocument();
+          const fetchDoc = await loadFetchDocument(ctx, load, runId, referer);
           if (fetchDoc === "abort") {
             return false;
           }
@@ -21516,7 +21610,15 @@ convert(s) {
             recordLoadFailure();
             return false;
           }
-          const fetchParsed = await parseCandidateDocument(fetchDoc);
+          const fetchParsed = await parseCandidateDocument(
+            ctx,
+            load,
+            parser,
+            fetchDoc,
+            runId,
+            referer,
+            source
+          );
           if (fetchParsed === "abort" || fetchParsed === "blocked") {
             return false;
           }
@@ -21532,82 +21634,32 @@ convert(s) {
         if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
         if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
         if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
-        const isTocPage = detectTocPage(parsed.content, targetUrl, refChapter.chapter.url);
+        const isTocPage = detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url);
         if (isTocPage) {
-          ctx.blockedNavUrls.value.add(navKey);
+          ctx.blockedNavUrls.value.add(load.navKey);
           if (source === "manual") {
-            ctx.showToast(endMessage, "info");
+            ctx.showToast(load.endMessage, "info");
           }
           return false;
         }
-        if (!isNext) {
-          if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(refChapter.chapter.url)) {
+        if (!load.isNext) {
+          if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(load.refChapter.chapter.url)) {
           } else if (parsed.prevUrl && !parsed.nextUrl) {
-            ctx.blockedNavUrls.value.add(navKey);
+            ctx.blockedNavUrls.value.add(load.navKey);
             return false;
           }
         }
-        const suffix = isNext ? "" : "prev-";
-        const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
-        const entry = {
-          chapter: parsed,
-          rule: parsed.rule,
-          id
-        };
-        if (isNext) {
-          ctx.chapters.value.push(entry);
-        } else {
-          ctx.chapters.value.unshift(entry);
-          ctx.currentChapterIndex.value++;
-        }
-        clearNavFailure(ctx.navFailures, navKey);
-        ctx.loadedUrls.value.add(parsed.url);
-        ctx.originalContents.value.set(id, parsed.content);
-        ctx.originalTitles.value.set(id, { title: parsed.title, bookTitle: parsed.bookTitle });
-        ctx.cachedContents.value.set(parsed.url, {
-          chapter: parsed,
-          rule: parsed.rule,
-          cachedAt: Date.now()
-        });
-        trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-        if (ctx.currentConversionMode.value !== "none") {
-          await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-        }
-        if (!ctx.history.value.includes(parsed.url)) {
-          if (isNext) {
-            ctx.history.value.push(parsed.url);
-          } else {
-            ctx.history.value.unshift(parsed.url);
-          }
-        }
-        if (ctx.chapters.value.length > MAX_CACHED_CHAPTERS) {
-          if (isNext && ctx.currentChapterIndex.value > 2) {
-            const removed = ctx.chapters.value.shift();
-            if (removed) {
-              ctx.loadedUrls.value.delete(removed.chapter.url);
-              ctx.originalContents.value.delete(removed.id);
-              ctx.originalTitles.value.delete(removed.id);
-              ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-            }
-          } else if (!isNext) {
-            const removed = ctx.chapters.value.pop();
-            if (removed) {
-              ctx.loadedUrls.value.delete(removed.chapter.url);
-              ctx.originalContents.value.delete(removed.id);
-              ctx.originalTitles.value.delete(removed.id);
-            }
-          }
-        }
-        return true;
+        clearNavFailure(ctx.navFailures, load.navKey);
+        return insertParsedChapter(ctx, load, parsed);
       } catch (e) {
         if (!ctx.runtime.isViewStale(runId)) {
           console.error(`[MNR] Failed to load ${direction} chapter:`, e);
-          ctx.setError(errorMessage);
+          ctx.setError(load.errorMessage);
         }
         return false;
       } finally {
         if (!ctx.runtime.isViewStale(runId)) {
-          isLoadingRef.value = false;
+          load.isLoadingRef.value = false;
         }
       }
     }
@@ -21642,27 +21694,7 @@ convert(s) {
       }
       if (!cached) return false;
       if (ctx.runtime.isViewStale(runId)) return false;
-      ctx.chapters.value = [];
-      ctx.currentChapterIndex.value = 0;
-      ctx.loadedUrls.value.clear();
-      ctx.originalContents.value.clear();
-      ctx.originalTitles.value.clear();
-      const id = `chapter-${Date.now()}-jump-0`;
-      ctx.chapters.value.push({
-        chapter: { ...cached.chapter },
-        rule: cached.rule,
-        id
-      });
-      ctx.loadedUrls.value.add(url);
-      ctx.originalContents.value.set(id, cached.chapter.content);
-      ctx.originalTitles.value.set(id, {
-        title: cached.chapter.title,
-        bookTitle: cached.chapter.bookTitle
-      });
-      if (ctx.currentConversionMode.value !== "none") {
-        await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-      }
-      return true;
+      return rebuildChaptersFromCache(ctx, cached, url);
     }
     async function reloadCurrentChapter() {
       var _a, _b;
@@ -21718,8 +21750,11 @@ convert(s) {
         ctx.showToast("解析失败", "error");
       }
     }
+    function insertCachedChapterForContext(cached, position) {
+      return insertCachedChapter(ctx, cached, position);
+    }
     return {
-      insertCachedChapter,
+      insertCachedChapter: insertCachedChapterForContext,
       loadChapter,
       loadNextChapter,
       loadPrevChapter,
