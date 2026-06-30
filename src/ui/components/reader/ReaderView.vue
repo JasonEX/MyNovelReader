@@ -266,6 +266,7 @@ const { autoLoadArmed, scheduleAutoLoadNext, lastAutoLoadScrollTop, autoLoadShor
     isLoadingPrev,
     isLoading,
     isNavigating,
+    chapterRefs,
   });
 
 // Scroll composable
