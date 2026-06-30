@@ -20448,7 +20448,6 @@ convert(s) {
   }
   const specialTocLoaders = Object.keys(modules).sort().flatMap((path) => Object.values(modules[path]).filter(isSpecialTocLoader));
   const specialTocTitleCleaners = Object.keys(modules).sort().flatMap((path) => Object.values(modules[path]).filter(isSpecialTocTitleCleaner));
-  const MAX_TOC_PAGES = 120;
   const CHAPTER_TITLE_PATTERNS = [
     /^.{0,10}第.{1,10}[章节回话篇集卷]/,
     /^\d{1,4}[.、\s]/,
@@ -20711,6 +20710,7 @@ convert(s) {
     candidates.sort((a, b) => b.score - a.score);
     return candidates[0].url;
   }
+  const MAX_TOC_PAGES = 120;
   async function loadTocEntriesPaged(indexUrl, currentUrl, rule, setAbort) {
     const loaderContext = {
       indexUrl,
