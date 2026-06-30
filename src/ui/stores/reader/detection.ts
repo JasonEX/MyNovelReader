@@ -83,6 +83,17 @@ export function isInvalidChapterUrl(url: string, currentChapterUrl?: string): bo
  * Conservative heuristics to avoid false positives (e.g. "求订阅" in正文).
  */
 export function isVipChapterPage(doc: Document): boolean {
+  try {
+    const url =
+      (doc as Document & { _mnrUrl?: string })._mnrUrl || doc.location?.href || doc.baseURI || '';
+    if (/^https?:\/\/(?:www|wap)\.ciweimao\.com\/chapter\/\d+/i.test(url)) {
+      const hasChapterShell = !!doc.querySelector('#J_BookCnt, #J_BookRead');
+      if (hasChapterShell) return false;
+    }
+  } catch {
+    // Fall through to generic VIP detection.
+  }
+
   const rawText = doc.body?.textContent || '';
   if (!rawText) return false;
 

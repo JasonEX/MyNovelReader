@@ -93,7 +93,7 @@ export function enableCopy(): () => void {
 export function unlockKeyboard(): () => void {
   const handler = (e: Event) => {
     const ke = e as KeyboardEvent;
-    if (isMnrEvent(ke)) {
+    if (isMnrEvent(ke) && !isMnrReaderShortcutEvent(ke)) {
       return;
     }
     ke.stopImmediatePropagation();
@@ -186,4 +186,48 @@ function isMnrEvent(e: Event): boolean {
     }
   }
   return false;
+}
+
+function isMnrReaderShortcutEvent(e: KeyboardEvent): boolean {
+  if (e.ctrlKey || e.altKey || e.metaKey) return false;
+
+  const key = e.key.toLowerCase();
+  const shortcutKeys = new Set([
+    'escape',
+    'tab',
+    'enter',
+    's',
+    ',',
+    'e',
+    'q',
+    'arrowleft',
+    'arrowright',
+    'arrowup',
+    'arrowdown',
+    ' ',
+    'spacebar',
+    'n',
+    'p',
+  ]);
+  if (!shortcutKeys.has(key)) return false;
+
+  const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+  if (path.some(isEditableKeyboardTarget)) return false;
+
+  return path.some(node => {
+    if (!(node instanceof Element)) return false;
+    if (node.id === 'mnr-reader-root') return true;
+    return Array.from(node.classList).some(cls => cls === 'mnr-reader' || cls.startsWith('mnr-'));
+  });
+}
+
+function isEditableKeyboardTarget(node: EventTarget): boolean {
+  if (!(node instanceof Element)) return false;
+  const tagName = node.tagName;
+  return (
+    tagName === 'INPUT' ||
+    tagName === 'TEXTAREA' ||
+    tagName === 'SELECT' ||
+    (node as HTMLElement).isContentEditable === true
+  );
 }

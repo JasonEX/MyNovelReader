@@ -2,6 +2,7 @@ import { MAX_NAV_FAILURES, VIP_BLOCK_TOAST } from './types';
 import type { ParsedChapter, Parser } from '@/core/parser';
 
 import { fetchAndParseUrl } from '@/core/utils/network';
+import { fetchCiweimaoApiDocument } from '@/core/rules/sites/ciweimao';
 import { isCloudflareChallenge } from '@/core/protection';
 import { isVipChapterPage } from './detection';
 import type { LoadSource } from './types';
@@ -105,6 +106,9 @@ export async function loadFetchDocument(
   runId: number,
   referer: string
 ): Promise<FetchDocumentResult> {
+  const ciweimaoDoc = await loadCiweimaoApiDocument(load);
+  if (ciweimaoDoc) return ciweimaoDoc;
+
   const fetchLoader = fetchAndParseUrl(load.targetUrl, referer);
   const abort = fetchLoader.abort;
   if (ctx.runtime.isViewStale(runId)) {
@@ -124,6 +128,17 @@ export async function loadFetchDocument(
     return 'abort';
   }
   return fetchResult.doc;
+}
+
+async function loadCiweimaoApiDocument(load: PreparedChapterLoad): Promise<Document | null> {
+  const ruleId = load.refChapter.rule?.id || load.refChapter.chapter.rule?.id || '';
+  if (ruleId !== 'ciweimao' && ruleId !== 'ciweimao-wap') return null;
+
+  return fetchCiweimaoApiDocument(load.targetUrl, {
+    bookTitle: load.refChapter.chapter.bookTitle,
+    indexUrl: load.refChapter.chapter.indexUrl,
+    url: load.refChapter.chapter.url,
+  });
 }
 
 export async function parseCandidateDocument(

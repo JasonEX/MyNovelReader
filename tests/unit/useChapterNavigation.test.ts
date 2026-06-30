@@ -257,10 +257,10 @@ describe('useChapterNavigation', () => {
       expect(mainEl.scrollTo).toHaveBeenCalled();
       expect(opts.readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
 
-      // The 200ms setTimeout hasn't fired yet
+      // The smooth navigation lock timeout hasn't fired yet
       expect(opts.isNavigating.value).toBe(true);
 
-      vi.advanceTimersByTime(200);
+      vi.advanceTimersByTime(650);
       expect(opts.isNavigating.value).toBe(false);
 
       vi.useRealTimers();

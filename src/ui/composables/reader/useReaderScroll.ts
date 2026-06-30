@@ -115,11 +115,17 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
 
     const currentScrollY = mainEl.scrollTop;
     const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
+    const overallPercent =
+      scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
+
+    if (isNavigating.value) {
+      readerStore.updateScroll(overallPercent);
+      return;
+    }
 
     // Arm auto-load only after user has actually scrolled down a bit.
     const ARM_SCROLL_DELTA_PX = 180;
     if (
-      !isNavigating.value &&
       !autoLoadArmed.value &&
       currentScrollY - lastAutoLoadScrollTop.value >= ARM_SCROLL_DELTA_PX
     ) {
@@ -176,8 +182,6 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
       if (estimatedIdx !== -1) {
         readerStore.setCurrentChapter(estimatedIdx);
         updateWindow(estimatedIdx);
-        const overallPercent =
-          scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
         readerStore.updateScroll(overallPercent);
         scheduleAutoLoadNext();
         queuePostLayoutAutoLoadCheck();
@@ -192,8 +196,6 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     updateWindow(currentChapterIdx);
 
     // Update overall scroll progress for UI
-    const overallPercent =
-      scrollHeight > 0 ? Math.round((currentScrollY / scrollHeight) * 100) : 100;
     readerStore.updateScroll(overallPercent);
 
     // Note: Chapter loading is triggered by sentinel + this scroll gate.

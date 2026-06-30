@@ -61,6 +61,43 @@ describe('useKeyboardShortcuts', () => {
     mountEl.remove();
   });
 
+  it('stops later same-target listeners when stopPropagation is requested', async () => {
+    const onNext = vi.fn();
+    const onWindow = vi.fn();
+
+    const Comp = defineComponent({
+      setup() {
+        useKeyboardShortcuts([
+          { key: 'arrowright', handler: onNext, preventDefault: true, stopPropagation: true },
+        ]);
+        return () => null;
+      },
+    });
+
+    const mountEl = document.createElement('div');
+    document.body.appendChild(mountEl);
+    const app = createApp(Comp);
+    app.mount(mountEl);
+    await nextTick();
+
+    window.addEventListener('keydown', onWindow, { capture: true });
+
+    document.body.dispatchEvent(
+      new dom.window.KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onWindow).toHaveBeenCalledTimes(0);
+
+    window.removeEventListener('keydown', onWindow, { capture: true });
+    app.unmount();
+    mountEl.remove();
+  });
+
   it('ignores shortcuts in input elements by default (allowInInputs overrides)', async () => {
     const onNext = vi.fn();
 

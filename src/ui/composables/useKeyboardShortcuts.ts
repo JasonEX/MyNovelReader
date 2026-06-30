@@ -103,7 +103,10 @@ export function useKeyboardShortcuts(
 
       // Execute handler
       if (shortcut.preventDefault) e.preventDefault();
-      if (shortcut.stopPropagation) e.stopPropagation();
+      if (shortcut.stopPropagation) {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
       shortcut.handler(e);
 
       // Only one shortcut per key event

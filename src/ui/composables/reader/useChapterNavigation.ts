@@ -25,6 +25,7 @@ export interface UseChapterNavigationOptions {
 }
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
+const SMOOTH_NAVIGATION_LOCK_MS = 650;
 
 export function useChapterNavigation(options: UseChapterNavigationOptions) {
   const {
@@ -153,12 +154,9 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
     // Reset navigating flag
     if (behavior === 'smooth') {
-      // Reduced lock time to allow faster sequential navigation.
-      // 200ms is enough to prevent accidental double-clicks but feels responsive.
-      // The browser's smooth scroll will continue, but we accept new input.
       setTimeout(() => {
         isNavigating.value = false;
-      }, 200);
+      }, SMOOTH_NAVIGATION_LOCK_MS);
     } else {
       // Immediate reset for auto scroll
       globalThis.requestAnimationFrame(() => {

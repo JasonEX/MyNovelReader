@@ -144,7 +144,18 @@ export function useVirtualChapters(
   // === Watchers ===
   watch(
     chapters,
-    newChapters => {
+    (newChapters, oldChapters = []) => {
+      const previousLength = oldChapters.length;
+      const grew = newChapters.length > previousLength;
+      const appendedAtTail =
+        grew &&
+        previousLength > 0 &&
+        oldChapters.every((entry, index) => {
+          const nextEntry = newChapters[index];
+          return nextEntry?.id === entry.id && nextEntry.chapter.url === entry.chapter.url;
+        });
+      const wasAtTail = previousLength > 0 && virtualWindow.value.end >= previousLength;
+
       // Remove heights for chapters that were trimmed from the list
       const currentUrls = new Set(newChapters.map(entry => entry.chapter.url));
       for (const url of heights.value.keys()) {
@@ -163,6 +174,14 @@ export function useVirtualChapters(
         virtualWindow.value = {
           start: 0,
           end: Math.min(newChapters.length, windowSize),
+        };
+        return;
+      }
+
+      if (appendedAtTail && wasAtTail) {
+        virtualWindow.value = {
+          start: Math.max(0, newChapters.length - windowSize),
+          end: newChapters.length,
         };
         return;
       }

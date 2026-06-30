@@ -183,6 +183,37 @@ describe('useReaderScroll', () => {
     expect(opts.autoLoadArmed.value).toBe(false);
   });
 
+  it('does not recalculate the current chapter during programmatic navigation', () => {
+    const mainEl = document.createElement('div');
+    Object.defineProperty(mainEl, 'scrollTop', { value: 900, writable: true });
+    Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 3000 });
+
+    const el2 = document.createElement('div');
+    Object.defineProperty(el2, 'offsetTop', { value: 800 });
+    Object.defineProperty(el2, 'offsetHeight', { value: 800 });
+
+    const entries = [makeEntry('https://example.com/ch1'), makeEntry('https://example.com/ch2')];
+    const chapterRefs = new Map();
+    chapterRefs.set('https://example.com/ch2', el2);
+
+    const opts = createScrollOptions({
+      mainRef: mainEl,
+      chapters: entries,
+      visibleChapters: [{ ...entries[1], index: 1 }],
+      chapterRefs,
+      isNavigating: true,
+    });
+
+    const { handleScroll } = useReaderScroll(opts);
+    handleScroll();
+
+    expect(opts.readerStore.updateScroll).toHaveBeenCalledWith(38);
+    expect(opts.readerStore.setCurrentChapter).not.toHaveBeenCalled();
+    expect(opts.updateWindow).not.toHaveBeenCalled();
+    expect(opts.scheduleAutoLoadNext).not.toHaveBeenCalled();
+  });
+
   it('auto-hides controls on scroll down past 100px', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollTop', { value: 200, writable: true });

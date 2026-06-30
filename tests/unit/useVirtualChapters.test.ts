@@ -188,6 +188,23 @@ describe('useVirtualChapters', () => {
     expect(virtualWindow.value.start).toBeLessThanOrEqual(virtualWindow.value.end);
   });
 
+  it('expands the tail window when a chapter is appended', () => {
+    const chapters = ref<ChapterEntry[]>(['c1'].map(createChapter));
+    const { virtualWindow, visibleChapters } = useVirtualChapters(chapters, {
+      windowSize: 3,
+      overscan: 0,
+      defaultHeight: 100,
+    });
+
+    expect(virtualWindow.value).toEqual({ start: 0, end: 1 });
+    expect(visibleChapters.value.map(c => c.chapter.url)).toEqual(['c1']);
+
+    chapters.value = [...chapters.value, createChapter('c2')];
+
+    expect(virtualWindow.value).toEqual({ start: 0, end: 2 });
+    expect(visibleChapters.value.map(c => c.chapter.url)).toEqual(['c1', 'c2']);
+  });
+
   it('getOffsetBefore is O(1) via prefixOffsets and handles boundary indices', () => {
     const chapters = ref<ChapterEntry[]>(['c1', 'c2', 'c3'].map(createChapter));
     const { getOffsetBefore, setHeight, averageHeight } = useVirtualChapters(chapters, {

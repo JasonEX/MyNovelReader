@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import { builtInRules, findBuiltInRule, getBuiltInRulesCount } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
+import { fetchCiweimaoApiDocument } from '@/core/rules/sites/ciweimao';
 import { Parser } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
 
@@ -271,5 +272,153 @@ describe('builtInRules helpers', () => {
     expect(chapter?.indexUrl).toBe('https://m.qidian.com/book/1049115805/');
     expect(chapter?.nextUrl).toBe('https://m.qidian.com/chapter/1049115805/903299284/');
     expect(chapter?.content).toContain('所有人收拾好行李');
+  });
+
+  it('parses Ciweimao chapters with typed hook navigation and watermark cleanup', async () => {
+    Object.assign(globalThis, {
+      GM_deleteValue: () => {},
+      GM_getValue: () => null,
+      GM_listValues: () => [],
+      GM_setValue: () => {},
+    });
+
+    const url = 'https://www.ciweimao.com/chapter/113909523';
+    const paragraph = Array.from(
+      { length: 4 },
+      () => '山中队员确认了眼前的异常现象，记录仪仍然保持运转，所有人都在等待下一步命令。'
+    ).join('');
+    const doc = new JSDOM(
+      `<!doctype html>
+      <html>
+        <head><title>3.山中队员，你是否清醒-刺猬猫</title></head>
+        <body>
+          <div class="breadcrumb"><a href="/book/1001">无奥世界，但是我加载了骑士卡组</a></div>
+          <div class="read-hd"><h1 class="chapter">3.山中队员，你是否清醒</h1></div>
+          <div class="book-read-page">
+            <a href="/chapter-list/1001">目录</a>
+            <a id="J_BtnPagePrev" href="javascript:;" data-href="/chapter/113909522">上一章</a>
+            <a id="J_BtnPageNext" href="javascript:;" data-next="/chapter/113909524">下一章</a>
+          </div>
+          <div id="J_BookCnt" data-id="113909523"></div>
+          <div id="J_BookRead">
+            <p class="chapter">${paragraph}正文Ab12Cd继续保持连贯。</p>
+            <p class="chapter">${paragraph}<span>Qw9Er</span></p>
+            <p class="chapter">${paragraph}</p>
+          </div>
+        </body>
+      </html>`,
+      { url }
+    ).window.document;
+
+    const desktopRule = findBuiltInRule(url);
+    const wapRule = findBuiltInRule('https://wap.ciweimao.com/chapter/113489050');
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+    let chapter: Awaited<ReturnType<Parser['parse']>>;
+    try {
+      chapter = await new Parser().parse(doc, url);
+    } finally {
+      debug.mockRestore();
+    }
+
+    expect(desktopRule?.id).toBe('ciweimao');
+    expect(desktopRule?.hooks?.beforeParse).toBeTypeOf('function');
+    expect(desktopRule?.advanced?.useIframe).not.toBe(true);
+    expect(wapRule?.id).toBe('ciweimao-wap');
+    expect(wapRule?.hooks?.beforeParse).toBeTypeOf('function');
+    expect(wapRule?.advanced?.useIframe).not.toBe(true);
+    expect(chapter?.rule?.id).toBe('ciweimao');
+    expect(chapter?.title).toBe('3.山中队员，你是否清醒');
+    expect(chapter?.bookTitle).toBe('无奥世界，但是我加载了骑士卡组');
+    expect(chapter?.prevUrl).toBe('https://www.ciweimao.com/chapter/113909522');
+    expect(chapter?.nextUrl).toBe('https://www.ciweimao.com/chapter/113909524');
+    expect(chapter?.indexUrl).toBe('https://www.ciweimao.com/chapter-list/1001');
+    expect(chapter?.content).toContain('正文继续保持连贯');
+    expect(chapter?.content).not.toContain('Ab12Cd');
+    expect(chapter?.content).not.toContain('Qw9Er');
+  });
+
+  it('builds Ciweimao chapter documents from API and TOC when the shell page is blocked', async () => {
+    const win = window as typeof window & { CryptoJS?: unknown };
+    const apiParagraph =
+      '南夕子认真确认了计划，北斗也点了点头，两人决定继续行动，所有队员都保持警戒。'.repeat(3);
+    const decryptedHtml = `<p class="chapter">${apiParagraph}</p><p class="chapter">${apiParagraph}</p><p class="chapter">${apiParagraph}</p>`;
+    let decryptCount = 0;
+    const crypto = {
+      AES: {
+        decrypt: vi.fn(() => ({
+          toString: vi.fn((encoder?: unknown) => {
+            decryptCount += 1;
+            if (decryptCount === 1) {
+              return win.btoa(win.btoa('1234567890123456second-pass'));
+            }
+            return encoder ? decryptedHtml : win.btoa(decryptedHtml);
+          }),
+        })),
+      },
+      enc: {
+        Base64: { parse: vi.fn(value => value) },
+        Utf8: {},
+      },
+      format: {
+        OpenSSL: { parse: vi.fn(value => value) },
+      },
+    };
+    win.CryptoJS = crypto;
+    vi.stubGlobal('unsafeWindow', win);
+
+    const tocHtml = `<!doctype html><title>无奥世界，但是群友全是奥特曼最新章节</title>
+      <a href="https://www.ciweimao.com/chapter/113926737">9.决战！异次元超人！</a>
+      <a href="https://www.ciweimao.com/chapter/113927226">10.南夕子：我抄，盒！</a>
+      <a href="https://www.ciweimao.com/chapter/113930500">11.月之毁灭者</a>`;
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/chapter-list/100452963')) {
+        return { ok: true, text: async () => tocHtml };
+      }
+      if (url.includes('/chapter/ajax_get_session_code')) {
+        return { ok: true, json: async () => ({ code: 100000, chapter_access_key: 'abc' }) };
+      }
+      if (url.includes('/chapter/get_book_chapter_detail_info')) {
+        return {
+          ok: true,
+          json: async () => ({
+            code: 100000,
+            chapter_content: win.btoa('1234567890123456first-pass'),
+            encryt_keys: ['key-a', 'key-b', 'key-c'],
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    win.fetch = fetchMock as unknown as typeof fetch;
+
+    const apiDoc = await fetchCiweimaoApiDocument('https://www.ciweimao.com/chapter/113927226', {
+      bookTitle: '无奥世界，但是群友全是奥特曼',
+      indexUrl: 'https://www.ciweimao.com/chapter-list/100452963',
+      url: 'https://www.ciweimao.com/chapter/113926737',
+    });
+
+    expect(apiDoc?.querySelector('#J_BtnPagePrev')?.getAttribute('href')).toBe(
+      'https://www.ciweimao.com/chapter/113926737'
+    );
+    expect(apiDoc?.querySelector('#J_BtnPageNext')?.getAttribute('href')).toBe(
+      'https://www.ciweimao.com/chapter/113930500'
+    );
+
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    let chapter: Awaited<ReturnType<Parser['parse']>> = null;
+    try {
+      chapter = apiDoc
+        ? await new Parser().parse(apiDoc, 'https://www.ciweimao.com/chapter/113927226')
+        : null;
+    } finally {
+      debug.mockRestore();
+    }
+    expect(chapter?.title).toBe('10.南夕子：我抄，盒！');
+    expect(chapter?.bookTitle).toBe('无奥世界，但是群友全是奥特曼');
+    expect(chapter?.prevUrl).toBe('https://www.ciweimao.com/chapter/113926737');
+    expect(chapter?.nextUrl).toBe('https://www.ciweimao.com/chapter/113930500');
+    expect(chapter?.content).toContain('南夕子认真确认了计划');
   });
 });

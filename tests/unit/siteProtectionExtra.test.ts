@@ -859,6 +859,56 @@ describe('SiteProtection (extra coverage)', () => {
     expect(capture).toHaveBeenCalledTimes(2);
   });
 
+  it('unlockKeyboard shields MNR reader shortcuts but keeps editable MNR fields usable', () => {
+    dom = createDom();
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    globalThis.Element = dom.window.Element as unknown as typeof Element;
+    globalThis.ShadowRoot = dom.window.ShadowRoot as unknown as typeof ShadowRoot;
+
+    protection = new SiteProtection({
+      unlockKeyboard: true,
+      clearTimers: false,
+      blockRedirects: false,
+      enableRightClick: false,
+      enableSelection: false,
+      enableCopy: false,
+      blockPopups: false,
+      removeEventHijacking: false,
+      blockVisibilityDetection: false,
+    });
+    protection.activate();
+
+    const capture = vi.fn();
+    dom.window.document.addEventListener('keydown', capture, true);
+
+    const reader = dom.window.document.createElement('div');
+    reader.className = 'mnr-reader';
+    dom.window.document.body.appendChild(reader);
+
+    const blockedShortcut = new dom.window.KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(blockedShortcut, 'composedPath', { value: () => [reader] });
+    dom.window.document.dispatchEvent(blockedShortcut);
+    expect(capture).not.toHaveBeenCalled();
+
+    const input = dom.window.document.createElement('input');
+    input.className = 'mnr-rule-input';
+    reader.appendChild(input);
+
+    const editableShortcut = new dom.window.KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(editableShortcut, 'composedPath', { value: () => [input, reader] });
+    dom.window.document.dispatchEvent(editableShortcut);
+    expect(capture).toHaveBeenCalledTimes(1);
+  });
+
   it('blockPopups returns null on invalid URLs even when event is trusted', () => {
     dom = createDom();
     globalThis.document = dom.window.document;
