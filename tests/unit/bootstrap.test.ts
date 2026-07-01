@@ -322,6 +322,8 @@ describe('bootstrap', () => {
     globalThis.document = domChapter.window.document;
     // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = domChapter.window.sessionStorage;
+    document.title = 'Original Chapter Title';
+    window.history.replaceState({ site: 'original' }, '', window.location.href);
 
     const decision = { shouldEnable: true, method: 'detection' };
     const chapter = {
@@ -348,6 +350,9 @@ describe('bootstrap', () => {
     await bootstrap.initialize();
     expect(bootstrap.isActive()).toBe(true);
 
+    document.title = '第1章 - 示例书';
+    window.history.replaceState({ mnr: true, mnrChapter: 0 }, '', window.location.href);
+
     bootstrap.closeReader();
 
     expect(mockSetSitePreference).toHaveBeenCalledWith(
@@ -358,6 +363,8 @@ describe('bootstrap', () => {
     expect(document.getElementById('mnr-reader-root')).toBeNull();
     expect(document.getElementById('mnr-hide-original')).toBeNull();
     expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
+    expect(document.title).toBe('Original Chapter Title');
+    expect(window.history.state).toEqual({ site: 'original' });
     expect(bootstrap.isActive()).toBe(false);
   });
 

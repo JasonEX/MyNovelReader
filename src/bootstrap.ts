@@ -18,6 +18,11 @@ import {
   type SiteRule,
 } from '@/core';
 import { BUILD_DATE, VERSION } from '@/version';
+import {
+  captureHostPageSnapshot,
+  type HostPageSnapshot,
+  restoreHostPageSnapshot,
+} from '@/ui/stores/reader/hostPage';
 import { createApp, defineComponent, h, ref } from 'vue';
 import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
 import { type ProtectionSettings, useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
@@ -33,7 +38,7 @@ interface AppState {
   autoEnableDone: boolean;
   isActive: boolean;
   currentDecision: AutoEnableDecision | null;
-  originalUrl: string | null; // URL when reader was opened
+  originalHostPage: HostPageSnapshot | null; // Host page state when reader was opened
   entryPageKind: PageKind | null; // page kind when reader was opened
 }
 
@@ -43,7 +48,7 @@ const appState: AppState = {
   autoEnableDone: false,
   isActive: false,
   currentDecision: null,
-  originalUrl: null,
+  originalHostPage: null,
   entryPageKind: null,
 };
 
@@ -263,8 +268,8 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
     return;
   }
 
-  // Save original URL before reader modifies it
-  appState.originalUrl = window.location.href;
+  // Save host page state before the reader modifies title/URL.
+  appState.originalHostPage = captureHostPageSnapshot();
   const pageKind = getPageKind(window.location.href, document);
   appState.entryPageKind = pageKind === 'chapter' || rule || chapter.rule ? 'chapter' : pageKind;
 
@@ -348,8 +353,9 @@ export function closeReader(): void {
     }
   }
 
-  // Get the original page URL (saved when reader was opened)
-  const originalUrl = appState.originalUrl;
+  // Get the original page state (saved when reader was opened)
+  const originalHostPage = appState.originalHostPage;
+  const originalUrl = originalHostPage?.url || null;
 
   // Unmount app
   if (app) {
@@ -376,7 +382,7 @@ export function closeReader(): void {
   }
 
   appState.isActive = false;
-  appState.originalUrl = null; // Clear saved URL
+  appState.originalHostPage = null; // Clear saved host page state
   appState.entryPageKind = null;
 
   // If current chapter URL is different from the original page URL,
@@ -387,6 +393,8 @@ export function closeReader(): void {
     window.location.href = targetUrl;
     return; // Don't show floating button, page will reload
   }
+
+  restoreHostPageSnapshot(originalHostPage);
 
   // Show floating button to re-enter (chapter pages only)
   if (entryPageKind === 'chapter') {

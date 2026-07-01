@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.9
+// @version      9.0.10
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -9198,8 +9198,52 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.9";
+  const VERSION = "9.0.10";
   const BUILD_DATE = "2026-07-01";
+  function captureHostPageSnapshot() {
+    if (typeof window === "undefined" || typeof document === "undefined") return null;
+    return {
+      url: window.location.href,
+      title: document.title,
+      state: window.history.state
+    };
+  }
+  function syncHostPageToChapter(chapter, index) {
+    var _a;
+    if (!chapter) return;
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    const chapterTitle = chapter.title.trim();
+    const bookTitle = ((_a = chapter.bookTitle) == null ? void 0 : _a.trim()) || "";
+    const title = chapterTitle && bookTitle && chapterTitle !== bookTitle ? `${chapterTitle} - ${bookTitle}` : chapterTitle || bookTitle;
+    if (title) {
+      document.title = title;
+    }
+    if (!chapter.url) return;
+    const currentState = window.history.state;
+    const stateBase = currentState && typeof currentState === "object" && !Array.isArray(currentState) ? currentState : {};
+    try {
+      window.history.replaceState(
+        {
+          ...stateBase,
+          mnr: true,
+          mnrChapter: index,
+          chapterUrl: chapter.url
+        },
+        "",
+        chapter.url
+      );
+    } catch {
+    }
+  }
+  function restoreHostPageSnapshot(snapshot) {
+    if (!snapshot) return;
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    document.title = snapshot.title;
+    try {
+      window.history.replaceState(snapshot.state ?? null, "", snapshot.url);
+    } catch {
+    }
+  }
   /**
   * @vue/shared v3.5.25
   * (c) 2018-present Yuxi (Evan) You and Vue contributors
@@ -22152,6 +22196,9 @@ convert(s) {
       var _a;
       return ((_a = chapter.value) == null ? void 0 : _a.url) || "";
     });
+    function syncCurrentHostPage() {
+      syncHostPageToChapter(chapter.value, currentChapterIndex.value);
+    }
     function setError(msg) {
       error.value = msg;
       toastType.value = "error";
@@ -22200,6 +22247,7 @@ convert(s) {
         await applyConversionToChapterEntry$1(entry.id, mode);
       }
       await applyTocConversion$1(mode);
+      syncCurrentHostPage();
     }
     async function getPersistedCachedChapterForCurrentBook(url) {
       var _a;
@@ -22371,8 +22419,11 @@ convert(s) {
         }
       }
       if (currentConversionMode.value !== "none") {
-        void applyConversionToChapterEntry$1(id, currentConversionMode.value);
+        void applyConversionToChapterEntry$1(id, currentConversionMode.value).then(() => {
+          syncCurrentHostPage();
+        });
       }
+      syncCurrentHostPage();
       void restoreCache$1();
     }
     function setLoading(loading) {
@@ -22385,13 +22436,16 @@ convert(s) {
       if (index < 0 || index >= chapters.value.length) return;
       if (currentChapterIndex.value === index) return;
       currentChapterIndex.value = index;
-      const chapterEntry = chapters.value[index];
-      if (chapterEntry == null ? void 0 : chapterEntry.chapter.url) {
-        try {
-          window.history.replaceState({ mnrChapter: index }, "", chapterEntry.chapter.url);
-        } catch {
-        }
-      }
+      syncCurrentHostPage();
+    }
+    async function rebuildChaptersAround(targetUrl) {
+      const ok = await nav.rebuildChaptersAround(targetUrl);
+      if (ok) syncCurrentHostPage();
+      return ok;
+    }
+    async function reloadCurrentChapter() {
+      await nav.reloadCurrentChapter();
+      syncCurrentHostPage();
     }
     function getProgress() {
       var _a, _b;
@@ -22458,8 +22512,8 @@ convert(s) {
       startCacheAll,
       cancelCacheAll,
       loadToc: tocActions.loadToc,
-      rebuildChaptersAround: nav.rebuildChaptersAround,
-      reloadCurrentChapter: nav.reloadCurrentChapter,
+      rebuildChaptersAround,
+      reloadCurrentChapter,
       persistCache: persistCache$1,
       restoreCache: restoreCache$1,
       clearPersistedCache: clearPersistedCache$1,
@@ -23760,7 +23814,6 @@ setHeight,
       }
       const success = await readerStore.rebuildChaptersAround(url);
       if (success) {
-        window.history.replaceState({ mnrChapter: 0 }, "", url);
         (_a = mainRef.value) == null ? void 0 : _a.scrollTo({ top: 0, behavior: "auto" });
       } else {
         window.location.href = url;
@@ -26208,7 +26261,7 @@ ${value}`;
     autoEnableDone: false,
     isActive: false,
     currentDecision: null,
-    originalUrl: null,
+    originalHostPage: null,
     entryPageKind: null
   };
   let app = null;
@@ -26352,7 +26405,7 @@ ${value}`;
       console.error("[MNR] Pinia not initialized");
       return;
     }
-    appState.originalUrl = window.location.href;
+    appState.originalHostPage = captureHostPageSnapshot();
     const pageKind = getPageKind(window.location.href, document);
     appState.entryPageKind = pageKind === "chapter" || rule || chapter.rule ? "chapter" : pageKind;
     const readerStore = useReaderStore(pinia);
@@ -26403,7 +26456,8 @@ ${value}`;
         targetUrl = chapter.chapter.url;
       }
     }
-    const originalUrl = appState.originalUrl;
+    const originalHostPage = appState.originalHostPage;
+    const originalUrl = (originalHostPage == null ? void 0 : originalHostPage.url) || null;
     if (app) {
       app.unmount();
       app = null;
@@ -26421,13 +26475,14 @@ ${value}`;
       readerStore.deactivate();
     }
     appState.isActive = false;
-    appState.originalUrl = null;
+    appState.originalHostPage = null;
     appState.entryPageKind = null;
     if (targetUrl && originalUrl && targetUrl !== originalUrl) {
       sessionStorage.setItem("mnr_skip_auto_enable", Date.now().toString());
       window.location.href = targetUrl;
       return;
     }
+    restoreHostPageSnapshot(originalHostPage);
     if (entryPageKind === "chapter") {
       showFloatingButton();
     }

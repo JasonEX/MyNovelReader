@@ -97,9 +97,6 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     // Not in current chapters - rebuild from cache
     const success = await readerStore.rebuildChaptersAround(url);
     if (success) {
-      // Update browser URL without reload
-      window.history.replaceState({ mnrChapter: 0 }, '', url);
-
       // Scroll to top
       mainRef.value?.scrollTo({ top: 0, behavior: 'auto' });
     } else {

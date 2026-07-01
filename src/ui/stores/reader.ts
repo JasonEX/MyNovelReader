@@ -38,6 +38,7 @@ import { normalizeUrlForBlock, normalizeUrlForFetch } from './reader/utils';
 import { createCacheAll } from './reader/cacheAll';
 import { createNavigation } from './reader/navigation';
 import { createReaderRuntime } from './reader/runtime';
+import { syncHostPageToChapter } from './reader/hostPage';
 
 // Re-export types for backward compatibility
 export type {
@@ -155,6 +156,10 @@ export const useReaderStore = defineStore('reader', () => {
 
   const currentChapterUrl = computed(() => chapter.value?.url || '');
 
+  function syncCurrentHostPage(): void {
+    syncHostPageToChapter(chapter.value, currentChapterIndex.value);
+  }
+
   function setError(msg: string) {
     error.value = msg;
     toastType.value = 'error';
@@ -211,6 +216,7 @@ export const useReaderStore = defineStore('reader', () => {
       await applyConversionToChapterEntry(entry.id, mode);
     }
     await applyTocConversion(mode);
+    syncCurrentHostPage();
   }
 
   async function getPersistedCachedChapterForCurrentBook(
@@ -406,8 +412,12 @@ export const useReaderStore = defineStore('reader', () => {
     }
 
     if (currentConversionMode.value !== 'none') {
-      void applyConversionToChapterEntry(id, currentConversionMode.value);
+      void applyConversionToChapterEntry(id, currentConversionMode.value).then(() => {
+        syncCurrentHostPage();
+      });
     }
+
+    syncCurrentHostPage();
 
     // Restore persisted cache for this book (async, don't block)
     void restoreCache();
@@ -421,20 +431,24 @@ export const useReaderStore = defineStore('reader', () => {
     scrollPercent.value = Math.max(0, Math.min(100, percent));
   }
 
-  /** Update current chapter index and browser URL */
+  /** Update current chapter index and host page state */
   function setCurrentChapter(index: number) {
     if (index < 0 || index >= chapters.value.length) return;
     if (currentChapterIndex.value === index) return;
 
     currentChapterIndex.value = index;
-    const chapterEntry = chapters.value[index];
-    if (chapterEntry?.chapter.url) {
-      try {
-        window.history.replaceState({ mnrChapter: index }, '', chapterEntry.chapter.url);
-      } catch {
-        // Ignore errors (cross-origin restrictions etc.)
-      }
-    }
+    syncCurrentHostPage();
+  }
+
+  async function rebuildChaptersAround(targetUrl: string): Promise<boolean> {
+    const ok = await nav.rebuildChaptersAround(targetUrl);
+    if (ok) syncCurrentHostPage();
+    return ok;
+  }
+
+  async function reloadCurrentChapter(): Promise<void> {
+    await nav.reloadCurrentChapter();
+    syncCurrentHostPage();
   }
 
   function getProgress(): ReadingProgress | null {
@@ -503,8 +517,8 @@ export const useReaderStore = defineStore('reader', () => {
     startCacheAll,
     cancelCacheAll,
     loadToc: tocActions.loadToc,
-    rebuildChaptersAround: nav.rebuildChaptersAround,
-    reloadCurrentChapter: nav.reloadCurrentChapter,
+    rebuildChaptersAround,
+    reloadCurrentChapter,
     persistCache,
     restoreCache,
     clearPersistedCache,

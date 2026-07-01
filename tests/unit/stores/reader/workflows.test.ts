@@ -286,6 +286,8 @@ describe('ReaderStore - workflows', () => {
     expect(store.currentChapterIndex).toBe(0);
     expect(store.chapters.length).toBe(1);
     expect(store.chapters[0]?.chapter.url).toBe('https://example.com/book/1/2.html');
+    expect(document.title).toBe('第2章');
+    expect(window.location.href).toBe('https://example.com/book/1/2.html');
   });
 
   it('reloadCurrentChapter refetches and updates chapter content and cache', async () => {
@@ -328,6 +330,7 @@ describe('ReaderStore - workflows', () => {
     expect(parseWithSectionMerge).toHaveBeenCalledTimes(1);
     expect(store.chapters[0]?.chapter.content).toBe('<p>new</p>');
     expect(store.cachedContents.has('https://example.com/book/1/1.html')).toBe(true);
+    expect(document.title).toBe('第1章(新)');
 
     store.clearError();
   });

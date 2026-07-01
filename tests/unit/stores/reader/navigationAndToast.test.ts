@@ -17,6 +17,28 @@ describe('ReaderStore - navigation & toast', () => {
     vi.restoreAllMocks();
   });
 
+  it('setChapter syncs host page title, URL, and history state', () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      bookTitle: '示例书',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    expect(document.title).toBe('第1章 - 示例书');
+    expect(window.location.href).toBe('https://example.com/book/1/1.html');
+    expect(window.history.state).toMatchObject({
+      mnr: true,
+      mnrChapter: 0,
+      chapterUrl: 'https://example.com/book/1/1.html',
+    });
+  });
+
   it('loadNextChapter(manual) shows end toast when no nextUrl', async () => {
     const store = useReaderStore();
     store.setChapter({
@@ -81,7 +103,46 @@ describe('ReaderStore - navigation & toast', () => {
 
     expect(() => store.setCurrentChapter(1)).not.toThrow();
     expect(store.currentChapterIndex).toBe(1);
+    expect(document.title).toBe('第2章');
 
     replaceState.mockRestore();
+  });
+
+  it('setCurrentChapter syncs host page to the visible chapter', () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      bookTitle: '示例书',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    store.chapters.push({
+      id: 'c2',
+      chapter: {
+        title: '第2章',
+        bookTitle: '示例书',
+        content: '<p>c2</p>',
+        rawContent: '<p>c2</p>',
+        url: 'https://example.com/book/1/2.html',
+        indexUrl: 'https://example.com/book/1/index.html',
+        confidence: 1,
+        method: 'rule',
+      },
+    });
+
+    store.setCurrentChapter(1);
+
+    expect(document.title).toBe('第2章 - 示例书');
+    expect(window.location.href).toBe('https://example.com/book/1/2.html');
+    expect(window.history.state).toMatchObject({
+      mnr: true,
+      mnrChapter: 1,
+      chapterUrl: 'https://example.com/book/1/2.html',
+    });
   });
 });

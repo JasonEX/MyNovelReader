@@ -160,7 +160,8 @@ describe('useChapterNavigation', () => {
 
       await jumpToCachedChapter('https://example.com/ch5');
       expect(readerStore.rebuildChaptersAround).toHaveBeenCalledWith('https://example.com/ch5');
-      expect(replaceStateSpy).toHaveBeenCalled();
+      expect(replaceStateSpy).not.toHaveBeenCalled();
+      expect(mainEl.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' });
     });
 
     it('attempts navigation fallback when rebuild fails', async () => {
