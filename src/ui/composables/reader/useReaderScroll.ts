@@ -7,10 +7,12 @@
 
 import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
 import { type ComputedRef, type Ref } from 'vue';
+import type { ScheduleAutoLoadNext } from './useReaderAutoLoad';
 import type { VirtualChapterEntry } from '@/ui/composables/useVirtualChapters';
 
 // === Constants ===
 const SCROLL_THROTTLE_MS = 16; // ~60fps
+const SCROLL_SETTLE_CHECK_MS = 180;
 
 // === Utility: Throttle function ===
 function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
@@ -51,10 +53,7 @@ export interface UseReaderScrollOptions {
   autoHideHeader: ComputedRef<boolean>;
   showControls: Ref<boolean>;
   isNavigating: Ref<boolean>;
-  autoLoadArmed: Ref<boolean>;
-  lastAutoLoadScrollTop: { value: number };
-  autoLoadShortChainCount: { value: number };
-  scheduleAutoLoadNext: () => void;
+  scheduleAutoLoadNext: ScheduleAutoLoadNext;
 }
 
 export function useReaderScroll(options: UseReaderScrollOptions) {
@@ -71,27 +70,36 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     autoHideHeader,
     showControls,
     isNavigating,
-    autoLoadArmed,
-    lastAutoLoadScrollTop,
-    autoLoadShortChainCount,
     scheduleAutoLoadNext,
   } = options;
 
   let lastScrollTop = 0;
   let pendingAutoLoadCheckFrame: number | null = null;
+  let pendingScrollSettleTimer: ReturnType<typeof setTimeout> | null = null;
 
   function queuePostLayoutAutoLoadCheck(): void {
     if (pendingAutoLoadCheckFrame !== null) return;
 
     if (typeof globalThis.requestAnimationFrame !== 'function') {
-      scheduleAutoLoadNext();
+      scheduleAutoLoadNext('scroll');
       return;
     }
 
     pendingAutoLoadCheckFrame = globalThis.requestAnimationFrame(() => {
       pendingAutoLoadCheckFrame = null;
-      scheduleAutoLoadNext();
+      scheduleAutoLoadNext('scroll');
     });
+  }
+
+  function queueScrollSettledAutoLoadCheck(): void {
+    if (pendingScrollSettleTimer) {
+      clearTimeout(pendingScrollSettleTimer);
+    }
+
+    pendingScrollSettleTimer = setTimeout(() => {
+      pendingScrollSettleTimer = null;
+      scheduleAutoLoadNext('settled');
+    }, SCROLL_SETTLE_CHECK_MS);
   }
 
   function estimateIndexFromOffset(offset: number): number {
@@ -121,16 +129,6 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     if (isNavigating.value) {
       readerStore.updateScroll(overallPercent);
       return;
-    }
-
-    // Arm auto-load only after user has actually scrolled down a bit.
-    const ARM_SCROLL_DELTA_PX = 180;
-    if (
-      !autoLoadArmed.value &&
-      currentScrollY - lastAutoLoadScrollTop.value >= ARM_SCROLL_DELTA_PX
-    ) {
-      autoLoadArmed.value = true;
-      autoLoadShortChainCount.value = 0;
     }
 
     // Auto-hide controls on scroll down
@@ -183,8 +181,9 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
         readerStore.setCurrentChapter(estimatedIdx);
         updateWindow(estimatedIdx);
         readerStore.updateScroll(overallPercent);
-        scheduleAutoLoadNext();
+        scheduleAutoLoadNext('scroll');
         queuePostLayoutAutoLoadCheck();
+        queueScrollSettledAutoLoadCheck();
       }
       return;
     }
@@ -199,8 +198,9 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     readerStore.updateScroll(overallPercent);
 
     // Note: Chapter loading is triggered by sentinel + this scroll gate.
-    scheduleAutoLoadNext();
+    scheduleAutoLoadNext('scroll');
     queuePostLayoutAutoLoadCheck();
+    queueScrollSettledAutoLoadCheck();
   }
 
   const handleScroll = throttle(handleScrollCore, SCROLL_THROTTLE_MS);

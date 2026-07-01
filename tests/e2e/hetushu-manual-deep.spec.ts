@@ -27,6 +27,9 @@ const chapterOrdinals = [
   '第九章',
   '第十章',
 ];
+const firstTenChapterUrls = new Set(
+  Array.from({ length: CHAPTER_COUNT }, (_, offset) => chapterUrl(offset))
+);
 
 type ChapterSummary = {
   chars: number;
@@ -288,11 +291,22 @@ async function closePanels(page: Page): Promise<void> {
   await page.waitForTimeout(300);
 }
 
+async function focusReaderForKeyboard(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.focus();
+    const main = document
+      .querySelector('#mnr-reader-root')
+      ?.shadowRoot?.querySelector<HTMLElement>('.mnr-reader-main');
+    main?.focus({ preventScroll: true });
+  });
+}
+
 async function pressAndWaitForUrl(
   page: Page,
   key: 'ArrowLeft' | 'ArrowRight',
   expectedUrl: string
 ) {
+  await focusReaderForKeyboard(page);
   await page.keyboard.press(key);
   await waitForReadingPace(page);
   await page.waitForFunction(url => location.href === url, expectedUrl, { timeout: 20_000 });
@@ -307,6 +321,13 @@ async function clickTocEntry(page: Page, titlePart: string): Promise<void> {
     if (!item) throw new Error(`TOC item not found: ${text}`);
     item.click();
   }, titlePart);
+}
+
+function expectNoCachedChapterRefetch(requests: string[], baselineCount: number): void {
+  const reloadedCachedChapters = requests
+    .slice(baselineCount)
+    .filter(url => firstTenChapterUrls.has(url));
+  expect(reloadedCachedChapters).toEqual([]);
 }
 
 const expectedSequencesByUrl: Record<string, string[]> = {
@@ -400,14 +421,15 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
     for (const offset of [8, 7, 6]) {
       await pressAndWaitForUrl(page, 'ArrowLeft', chapterUrl(offset));
       await verifyRenderedChapter(page, offset);
-      expect(chapterRequests.length).toBe(requestsAfterForward);
+      expectNoCachedChapterRefetch(chapterRequests, requestsAfterForward);
     }
 
-    // Move forward again through cached/displayed chapters.
+    // Move forward again through cached/displayed chapters. Auto-preloading the next unread
+    // chapter after the 3-5s grace period is allowed; re-fetching these cached chapters is not.
     for (const offset of [7, 8, 9]) {
       await pressAndWaitForUrl(page, 'ArrowRight', chapterUrl(offset));
       await verifyRenderedChapter(page, offset);
-      expect(chapterRequests.length).toBe(requestsAfterForward);
+      expectNoCachedChapterRefetch(chapterRequests, requestsAfterForward);
     }
 
     const drawerState = await openDrawer(page);

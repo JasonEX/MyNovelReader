@@ -47,7 +47,6 @@ describe('useChapterNavigation', () => {
     const isNavigating = ref(false);
     const isLoadingPrev = computed(() => overrides.isLoadingPrev ?? false);
     const isLoadingNext = computed(() => overrides.isLoadingNext ?? false);
-    const preloadNext = computed(() => overrides.preloadNext ?? true);
     const hasPrev = computed(() => overrides.hasPrev ?? false);
     const hasNext = computed(() => overrides.hasNext ?? false);
     const topSpacer = computed(() => overrides.topSpacer ?? 0);
@@ -75,7 +74,6 @@ describe('useChapterNavigation', () => {
       isNavigating,
       isLoadingPrev,
       isLoadingNext,
-      preloadNext,
       hasPrev,
       hasNext,
       topSpacer,
@@ -219,6 +217,22 @@ describe('useChapterNavigation', () => {
       expect(opts.isNavigating.value).toBe(false);
     });
 
+    it('resets isNavigating when target chapter has no url', async () => {
+      const mainEl = document.createElement('div');
+      mainEl.scrollTo = vi.fn();
+
+      const opts = createNavigationOptions({
+        chapters: [{ chapter: { url: '', content: '', title: '' }, rule: undefined, id: 'blank' }],
+        mainRef: mainEl,
+      });
+      const { jumpToChapter } = useChapterNavigation(opts);
+
+      await jumpToChapter(0);
+
+      expect(opts.isNavigating.value).toBe(false);
+      expect(mainEl.scrollTo).not.toHaveBeenCalled();
+    });
+
     it('scrolls to chapter with smooth behavior and sets timeout', async () => {
       vi.useFakeTimers();
       vi.stubGlobal(
@@ -335,7 +349,7 @@ describe('useChapterNavigation', () => {
       expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
     });
 
-    it('appends next chapter on downward scroll at bottom', () => {
+    it('manually appends next chapter on downward scroll at bottom', () => {
       const mainEl = document.createElement('div');
       Object.defineProperty(mainEl, 'scrollTop', { value: 1400, writable: true });
       Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
@@ -354,10 +368,10 @@ describe('useChapterNavigation', () => {
       handleWheel(wheelEvent);
 
       expect(wheelEvent.preventDefault).toHaveBeenCalled();
-      expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+      expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('manual');
     });
 
-    it('blocks bottom boundary wheel without appending when preload is disabled', () => {
+    it('still treats bottom boundary wheel as manual reading when preload is disabled', () => {
       const mainEl = document.createElement('div');
       Object.defineProperty(mainEl, 'scrollTop', { value: 1400, writable: true });
       Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
@@ -377,7 +391,7 @@ describe('useChapterNavigation', () => {
       handleWheel(wheelEvent);
 
       expect(wheelEvent.preventDefault).toHaveBeenCalled();
-      expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+      expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('manual');
     });
 
     it('does nothing when mainRef is null', () => {
@@ -689,6 +703,43 @@ describe('useChapterNavigation', () => {
       const opts = createNavigationOptions({ mainRef: null });
       const { scrollReader } = useChapterNavigation(opts);
       scrollReader('down'); // Should not throw
+    });
+  });
+
+  describe('loadPrevWithScrollAdjust', () => {
+    it('preserves the current view after prepending a previous chapter', async () => {
+      const mainEl = document.createElement('div');
+      Object.defineProperty(mainEl, 'scrollTop', { value: 120, writable: true });
+
+      const newChapterEl = document.createElement('article');
+      newChapterEl.className = 'mnr-reader-content';
+      Object.defineProperty(newChapterEl, 'offsetHeight', { value: 900 });
+      mainEl.appendChild(newChapterEl);
+
+      const previous = makeChapterEntry('https://example.com/ch0');
+      const current = makeChapterEntry('https://example.com/ch1');
+      const readerStore = {
+        chapters: [previous, current],
+        currentChapterIndex: 1,
+        setCurrentChapter: vi.fn(),
+        loadPrevChapter: vi.fn().mockResolvedValue(true),
+        showToast: vi.fn(),
+        getVipBlockedToast: vi.fn().mockReturnValue(null),
+      };
+      const opts = createNavigationOptions({
+        chapters: [previous, current],
+        mainRef: mainEl,
+        topSpacer: 40,
+        readerStore,
+      });
+      const { loadPrevWithScrollAdjust } = useChapterNavigation(opts);
+
+      await loadPrevWithScrollAdjust();
+
+      expect(readerStore.loadPrevChapter).toHaveBeenCalledWith('manual');
+      expect(opts.updateWindow).toHaveBeenCalledWith(1);
+      expect(opts.setChapterHeight).toHaveBeenCalledWith('https://example.com/ch0', 900);
+      expect(mainEl.scrollTop).toBe(1020);
     });
   });
 });

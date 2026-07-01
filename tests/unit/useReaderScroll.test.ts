@@ -59,9 +59,6 @@ describe('useReaderScroll', () => {
       autoHideHeader: computed(() => overrides.autoHideHeader ?? false),
       showControls: ref(overrides.showControls ?? true),
       isNavigating: ref(overrides.isNavigating ?? false),
-      autoLoadArmed: ref(overrides.autoLoadArmed ?? false),
-      lastAutoLoadScrollTop: { value: 0 },
-      autoLoadShortChainCount: { value: 0 },
       scheduleAutoLoadNext: vi.fn(),
     };
   }
@@ -103,7 +100,7 @@ describe('useReaderScroll', () => {
     expect(opts.readerStore.updateScroll).toHaveBeenCalled();
     expect(opts.setChapterHeight).toHaveBeenCalledWith('https://example.com/ch1', 500);
     expect(opts.updateWindow).toHaveBeenCalledWith(0);
-    expect(opts.scheduleAutoLoadNext).toHaveBeenCalled();
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledWith('scroll');
   });
 
   it('queues one post-layout auto-load check after scroll handling', () => {
@@ -141,31 +138,90 @@ describe('useReaderScroll', () => {
 
     handleScroll();
     expect(opts.scheduleAutoLoadNext).toHaveBeenCalledTimes(1);
+    expect(opts.scheduleAutoLoadNext).toHaveBeenLastCalledWith('scroll');
 
     rafCallbacks[0](0);
     expect(opts.scheduleAutoLoadNext).toHaveBeenCalledTimes(2);
+    expect(opts.scheduleAutoLoadNext).toHaveBeenLastCalledWith('scroll');
   });
 
-  it('arms auto-load after scroll delta exceeds threshold', () => {
+  it('queues a settled auto-load check after scroll handling', () => {
+    vi.useFakeTimers();
+
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollTop', { value: 200, writable: true });
     Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
     Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
 
+    const el1 = document.createElement('div');
+    Object.defineProperty(el1, 'offsetTop', { value: 0 });
+    Object.defineProperty(el1, 'offsetHeight', { value: 800 });
+
+    const chapterRefs = new Map();
+    chapterRefs.set('https://example.com/ch1', el1);
+
+    const entry = makeEntry('https://example.com/ch1');
+
     const opts = createScrollOptions({
       mainRef: mainEl,
-      autoLoadArmed: false,
+      chapters: [entry],
+      visibleChapters: [{ ...entry, index: 0 }],
+      chapterRefs,
     });
-    opts.lastAutoLoadScrollTop.value = 0;
 
     const { handleScroll } = useReaderScroll(opts);
     handleScroll();
 
-    expect(opts.autoLoadArmed.value).toBe(true);
-    expect(opts.autoLoadShortChainCount.value).toBe(0);
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledWith('scroll');
+    vi.advanceTimersByTime(179);
+    expect(opts.scheduleAutoLoadNext).not.toHaveBeenCalledWith('settled');
+
+    vi.advanceTimersByTime(1);
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledWith('settled');
+
+    vi.useRealTimers();
   });
 
-  it('does not arm auto-load when isNavigating', () => {
+  it('resets the settled auto-load check while scrolling continues', () => {
+    vi.useFakeTimers();
+
+    const mainEl = document.createElement('div');
+    Object.defineProperty(mainEl, 'scrollTop', { value: 200, writable: true, configurable: true });
+    Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+
+    const el1 = document.createElement('div');
+    Object.defineProperty(el1, 'offsetTop', { value: 0 });
+    Object.defineProperty(el1, 'offsetHeight', { value: 800 });
+
+    const chapterRefs = new Map();
+    chapterRefs.set('https://example.com/ch1', el1);
+
+    const entry = makeEntry('https://example.com/ch1');
+    const opts = createScrollOptions({
+      mainRef: mainEl,
+      chapters: [entry],
+      visibleChapters: [{ ...entry, index: 0 }],
+      chapterRefs,
+    });
+
+    const { handleScroll } = useReaderScroll(opts);
+    handleScroll();
+    vi.advanceTimersByTime(100);
+
+    Object.defineProperty(mainEl, 'scrollTop', { value: 260, writable: true, configurable: true });
+    handleScroll();
+    vi.advanceTimersByTime(20);
+    vi.advanceTimersByTime(159);
+    expect(opts.scheduleAutoLoadNext).not.toHaveBeenCalledWith('settled');
+
+    vi.advanceTimersByTime(1);
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledWith('settled');
+
+    vi.useRealTimers();
+  });
+
+  it('does not schedule auto-load checks during programmatic navigation', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollTop', { value: 200, writable: true });
     Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
@@ -175,12 +231,11 @@ describe('useReaderScroll', () => {
       mainRef: mainEl,
       isNavigating: true,
     });
-    opts.lastAutoLoadScrollTop.value = 0;
 
     const { handleScroll } = useReaderScroll(opts);
     handleScroll();
 
-    expect(opts.autoLoadArmed.value).toBe(false);
+    expect(opts.scheduleAutoLoadNext).not.toHaveBeenCalled();
   });
 
   it('does not recalculate the current chapter during programmatic navigation', () => {
@@ -295,7 +350,32 @@ describe('useReaderScroll', () => {
     expect(opts.readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
     expect(opts.updateWindow).toHaveBeenCalledWith(0);
     expect(opts.readerStore.updateScroll).toHaveBeenCalled();
-    expect(opts.scheduleAutoLoadNext).toHaveBeenCalled();
+    expect(opts.scheduleAutoLoadNext).toHaveBeenCalledWith('scroll');
+  });
+
+  it('estimateIndexFromOffset can resolve the first matching chapter', () => {
+    const mainEl = document.createElement('div');
+    Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
+    Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
+    Object.defineProperty(mainEl, 'scrollHeight', { value: 2000 });
+
+    const entries = [makeEntry('https://example.com/ch1'), makeEntry('https://example.com/ch2')];
+
+    const heights = new Map<string, number>();
+    heights.set('https://example.com/ch1', 800);
+    heights.set('https://example.com/ch2', 800);
+
+    const opts = createScrollOptions({
+      mainRef: mainEl,
+      chapters: entries,
+      visibleChapters: [],
+      chapterHeights: heights,
+    });
+
+    const { handleScroll } = useReaderScroll(opts);
+    handleScroll();
+
+    expect(opts.readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
   });
 
   it('estimateIndexFromOffset returns last index when past all chapters', () => {

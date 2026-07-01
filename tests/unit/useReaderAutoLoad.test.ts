@@ -1,19 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { computed, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
 import { JSDOM } from 'jsdom';
 
 import {
-  type AdaptivePreloadStats,
-  getAdaptivePreloadStorageKey,
-} from '@/ui/composables/reader/preloadStats';
-import {
   INTERSECTION_ROOT_MARGIN_PX,
   useReaderAutoLoad,
 } from '@/ui/composables/reader/useReaderAutoLoad';
-
-// We need an active Pinia for watch() to work in composables
-// but useReaderAutoLoad doesn't use Pinia directly - it receives store instances as params.
 
 describe('useReaderAutoLoad', () => {
   let dom: JSDOM;
@@ -30,6 +23,8 @@ describe('useReaderAutoLoad', () => {
 
     setActivePinia(createPinia());
     vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-01T00:00:00Z'));
+    vi.spyOn(Math, 'random').mockReturnValue(0);
   });
 
   afterEach(() => {
@@ -38,41 +33,13 @@ describe('useReaderAutoLoad', () => {
     vi.useRealTimers();
   });
 
-  function createAutoLoadOptions(overrides: Record<string, any> = {}) {
-    const mainRef = ref(overrides.mainRef || null);
-    const readerStore = {
-      chapters: overrides.chapters || [],
-      currentChapterIndex: overrides.currentChapterIndex ?? 0,
-      loadNextChapter: vi.fn().mockResolvedValue(true),
-      ...overrides.readerStore,
-    };
-    const configStore = {
-      behavior: {
-        preloadNext: overrides.preloadNext ?? true,
-      },
-      ...overrides.configStore,
-    };
-
-    return {
-      mainRef,
-      readerStore: readerStore as any,
-      configStore: configStore as any,
-      hasNext: computed(() => overrides.hasNext ?? true),
-      isLoadingNext: computed(() => overrides.isLoadingNext ?? false),
-      isLoadingPrev: computed(() => overrides.isLoadingPrev ?? false),
-      isLoading: computed(() => overrides.isLoading ?? false),
-      isNavigating: ref(overrides.isNavigating ?? false),
-      chapterRefs: overrides.chapterRefs,
-    };
-  }
-
-  function makeChapter(url: string, content = '内容'.repeat(1000), nextUrl = '') {
+  function makeChapter(url: string, nextUrl = 'https://example.com/chapter/next') {
     return {
       chapter: {
         url,
         title: 'Chapter',
         bookTitle: 'Book',
-        content,
+        content: '内容'.repeat(1000),
         indexUrl: 'https://example.com/book/1',
         nextUrl,
         prevUrl: '',
@@ -97,363 +64,284 @@ describe('useReaderAutoLoad', () => {
     Object.defineProperty(el, 'clientHeight', { value: metrics.clientHeight, configurable: true });
   }
 
-  function defineChapterMetrics(
-    el: HTMLElement,
-    metrics: { offsetTop: number; offsetHeight: number }
-  ) {
-    Object.defineProperty(el, 'offsetTop', { value: metrics.offsetTop, configurable: true });
-    Object.defineProperty(el, 'offsetHeight', { value: metrics.offsetHeight, configurable: true });
+  function createAutoLoadOptions(overrides: Record<string, any> = {}) {
+    const mainRef = ref<HTMLElement | null>(overrides.mainRef || null);
+    const readerStore = reactive({
+      chapters: overrides.chapters || [makeChapter('https://example.com/chapter/1')],
+      currentChapterIndex: overrides.currentChapterIndex ?? 0,
+      loadNextChapter: vi.fn().mockResolvedValue(true),
+      ...overrides.readerStore,
+    });
+    const configStore = reactive({
+      behavior: {
+        preloadNext: overrides.preloadNext ?? true,
+      },
+      ...overrides.configStore,
+    });
+
+    return {
+      mainRef,
+      readerStore: readerStore as any,
+      configStore: configStore as any,
+      hasNext: computed(() => overrides.hasNext ?? true),
+      isLoadingNext: computed(() => overrides.isLoadingNext ?? false),
+      isLoadingPrev: computed(() => overrides.isLoadingPrev ?? false),
+      isLoading: computed(() => overrides.isLoading ?? false),
+      isNavigating: ref(overrides.isNavigating ?? false),
+    };
   }
 
-  function stubStoredStats(stats: AdaptivePreloadStats) {
-    const storageKey = getAdaptivePreloadStorageKey(stats.key);
-    vi.stubGlobal(
-      'GM_getValue',
-      vi.fn((key: string, defaultValue: unknown) =>
-        key === storageKey ? JSON.stringify(stats) : defaultValue
-      )
-    );
-    vi.stubGlobal('GM_setValue', vi.fn());
+  async function flushPromises() {
+    await Promise.resolve();
+    await nextTick();
   }
 
   it('exports INTERSECTION_ROOT_MARGIN_PX', () => {
     expect(INTERSECTION_ROOT_MARGIN_PX).toBe(1600);
   });
 
-  it('initializes with autoLoadArmed as false', () => {
-    const opts = createAutoLoadOptions();
-    const { autoLoadArmed } = useReaderAutoLoad(opts);
-    expect(autoLoadArmed.value).toBe(false);
-  });
-
-  it('scheduleAutoLoadNext does nothing when mainRef is null', () => {
+  it('does nothing when mainRef is null', () => {
     const opts = createAutoLoadOptions({ mainRef: null });
     const result = useReaderAutoLoad(opts);
-    // Should not throw
-    result.scheduleAutoLoadNext();
+
+    result.scheduleAutoLoadNext('state');
+    vi.advanceTimersByTime(5000);
+
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 
-  it('scheduleAutoLoadNext does nothing when preloadNext is disabled', () => {
+  it('does not auto preload before the 3s hard gate', () => {
     const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1500, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({
-      mainRef: mainEl,
-      preloadNext: false,
-    });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('scheduleAutoLoadNext does nothing when hasNext is false', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1500, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({
-      mainRef: mainEl,
-      hasNext: false,
-    });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('scheduleAutoLoadNext does nothing when already loading', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1500, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({
-      mainRef: mainEl,
-      isLoadingNext: true,
-    });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('scheduleAutoLoadNext does nothing when not near bottom', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 100, clientHeight: 600 });
-
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
     const opts = createAutoLoadOptions({ mainRef: mainEl });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
+
+    useReaderAutoLoad(opts);
+
+    vi.advanceTimersByTime(2999);
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
 
-  it('scheduleAutoLoadNext does nothing when not armed and not in fill mode', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 1400, scrollTop: 500, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = false;
-    result.lastAutoLoadScrollTop.value = 400;
-    result.scheduleAutoLoadNext();
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('scheduleAutoLoadNext arms itself near bottom after enough user scroll', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1300, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = false;
-    result.lastAutoLoadScrollTop.value = 1000;
-
-    result.scheduleAutoLoadNext();
-
-    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
-    expect(result.autoLoadArmed.value).toBe(false);
-  });
-
-  it('scheduleAutoLoadNext triggers load in fill mode (short content)', () => {
-    const mainEl = document.createElement('div');
-    // scrollHeight - clientHeight < 180 → fill mode
-    defineScrollMetrics(mainEl, { scrollHeight: 700, scrollTop: 0, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    const result = useReaderAutoLoad(opts);
-    // autoLoadArmed is false, but fill mode kicks in
-    result.scheduleAutoLoadNext();
-
-    // First call sets nextAutoLoadAt; advance timers to trigger the load
-    vi.advanceTimersByTime(6000);
-
+    vi.advanceTimersByTime(1);
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
   });
 
-  it('scheduleAutoLoadNext triggers load immediately when armed and near bottom', () => {
+  it('keeps the 1600px fallback behind the same hard gate', () => {
     const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1300, clientHeight: 600 });
-
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
     const opts = createAutoLoadOptions({ mainRef: mainEl });
     const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
 
-    result.scheduleAutoLoadNext();
+    result.scheduleAutoLoadNext('scroll');
+    vi.advanceTimersByTime(2999);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
 
+    vi.advanceTimersByTime(1);
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
-    expect(result.autoLoadArmed.value).toBe(false);
   });
 
-  it('scheduleAutoLoadNext also loads immediately at the interactive bottom', () => {
+  it('does not let near-bottom scroll preload when it is still outside the 1600px fallback', () => {
     const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1250, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-
-    result.scheduleAutoLoadNext();
-
-    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
-    expect(result.autoLoadArmed.value).toBe(false);
-  });
-
-  it('clearAutoLoadTimer clears the pending timer', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 700, scrollTop: 0, clientHeight: 600 });
-
+    defineScrollMetrics(mainEl, { scrollHeight: 6000, scrollTop: 1000, clientHeight: 600 });
     const opts = createAutoLoadOptions({ mainRef: mainEl });
     const result = useReaderAutoLoad(opts);
 
-    result.scheduleAutoLoadNext();
     result.clearAutoLoadTimer();
+    vi.advanceTimersByTime(3000);
 
-    vi.advanceTimersByTime(10000);
-    // loadNextChapter should NOT have been called because timer was cleared
+    result.scheduleAutoLoadNext('scroll');
+
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 
-  it('stops auto-loading in fill mode after SHORT_CHAIN_LIMIT', () => {
+  it('uses the 1600px fallback after the hard gate has passed', () => {
     const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 700, scrollTop: 0, clientHeight: 600 });
-
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
     const opts = createAutoLoadOptions({ mainRef: mainEl });
     const result = useReaderAutoLoad(opts);
-    result.autoLoadShortChainCount.value = 10; // At the limit
 
-    result.scheduleAutoLoadNext();
-    vi.advanceTimersByTime(10000);
-
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('slows down on failed auto-load', async () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 700, scrollTop: 0, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    opts.readerStore.loadNextChapter = vi.fn().mockResolvedValue(false);
-
-    const result = useReaderAutoLoad(opts);
-    result.scheduleAutoLoadNext();
-    vi.advanceTimersByTime(6000);
-
-    // Wait for the promise to resolve
-    await vi.runAllTimersAsync();
-    expect(opts.readerStore.loadNextChapter).toHaveBeenCalled();
-  });
-
-  it('isLoadingPrev blocks scheduling', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1300, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({
-      mainRef: mainEl,
-      isLoadingPrev: true,
-    });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
-    vi.advanceTimersByTime(10000);
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('isLoading blocks scheduling', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1300, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({
-      mainRef: mainEl,
-      isLoading: true,
-    });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
-    vi.advanceTimersByTime(10000);
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('isNavigating blocks scheduling', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1300, clientHeight: 600 });
-
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    opts.isNavigating.value = true;
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-    result.scheduleAutoLoadNext();
-    vi.advanceTimersByTime(10000);
-    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
-  });
-
-  it('uses adaptive timing to preload before the fixed pixel margin on slow sites', () => {
-    const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 10000, scrollTop: 7600, clientHeight: 600 });
-
-    const chapterEl = document.createElement('article');
-    defineChapterMetrics(chapterEl, { offsetTop: 0, offsetHeight: 10000 });
-
-    const chapter = makeChapter(
-      'https://example.com/chapter/1',
-      '字'.repeat(5000),
-      'https://example.com/chapter/2'
-    );
-    const stats: AdaptivePreloadStats = {
-      version: 1,
-      key: 'test@example.com',
-      loadSrttMs: 12000,
-      loadRttVarMs: 5000,
-      loadSamples: 4,
-      charsPerMs: 2000 / 60000,
-      readSamples: 3,
-      failureCount: 0,
-      updatedAt: Date.now(),
-    };
-    stubStoredStats(stats);
-
-    const chapterRefs = new Map([[chapter.chapter.url, chapterEl]]);
-    const opts = createAutoLoadOptions({
-      mainRef: mainEl,
-      chapters: [chapter],
-      chapterRefs,
-      hasNext: true,
-    });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
-
-    expect(mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight)).toBeGreaterThan(
-      INTERSECTION_ROOT_MARGIN_PX
-    );
-
-    result.scheduleAutoLoadNext();
+    result.clearAutoLoadTimer();
+    vi.advanceTimersByTime(3000);
+    result.scheduleAutoLoadNext('settled');
 
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
   });
 
-  it('does not fetch another chapter while one unread chapter is already buffered', () => {
+  it('does not preload when an unread next chapter is already buffered', () => {
     const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 3000, clientHeight: 600 });
-
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
     const opts = createAutoLoadOptions({
       mainRef: mainEl,
       chapters: [
-        makeChapter('https://example.com/chapter/1', '字'.repeat(2000)),
-        makeChapter(
-          'https://example.com/chapter/2',
-          '字'.repeat(2000),
-          'https://example.com/chapter/3'
-        ),
+        makeChapter('https://example.com/chapter/1'),
+        makeChapter('https://example.com/chapter/2'),
       ],
       currentChapterIndex: 0,
       hasNext: true,
     });
-    const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
 
-    result.scheduleAutoLoadNext();
+    useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(5000);
 
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 
-  it('records successful auto-load latency into adaptive stats', async () => {
-    vi.setSystemTime(new Date('2026-06-30T00:00:00Z'));
+  it('does not preload while disabled, loading, navigating, or at the end', () => {
     const mainEl = document.createElement('div');
-    defineScrollMetrics(mainEl, { scrollHeight: 2000, scrollTop: 1300, clientHeight: 600 });
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
 
-    const gmSetValue = vi.fn();
-    vi.stubGlobal(
-      'GM_getValue',
-      vi.fn((_: string, defaultValue: unknown) => defaultValue)
-    );
-    vi.stubGlobal('GM_setValue', gmSetValue);
+    for (const overrides of [
+      { preloadNext: false },
+      { isLoadingNext: true },
+      { isLoadingPrev: true },
+      { isLoading: true },
+      { isNavigating: true },
+      { hasNext: false },
+    ]) {
+      const opts = createAutoLoadOptions({ mainRef: mainEl, ...overrides });
+      useReaderAutoLoad(opts);
+      vi.advanceTimersByTime(5000);
+      expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+      vi.clearAllTimers();
+    }
+  });
 
+  it('responds to the preload setting being turned off and back on', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+
+    useReaderAutoLoad(opts);
+    opts.configStore.behavior.preloadNext = false;
+    await nextTick();
+    vi.advanceTimersByTime(5000);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    opts.configStore.behavior.preloadNext = true;
+    await nextTick();
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+  });
+
+  it('schedules after loading state clears without loading during the busy state', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+
+    const loadingNext = ref(false);
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    opts.isLoadingNext = computed(() => loadingNext.value);
+
+    const result = useReaderAutoLoad(opts);
+    result.clearAutoLoadTimer();
+
+    loadingNext.value = true;
+    await nextTick();
+    vi.advanceTimersByTime(5000);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    loadingNext.value = false;
+    await nextTick();
+    vi.advanceTimersByTime(3000);
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+  });
+
+  it('waits until the page becomes visible before scheduling preload', () => {
+    Object.defineProperty(document, 'visibilityState', {
+      value: 'hidden',
+      configurable: true,
+    });
+
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+
+    useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(5000);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    Object.defineProperty(document, 'visibilityState', {
+      value: 'visible',
+      configurable: true,
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+  });
+
+  it('starts a new hard gate when the visible current chapter changes', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
     const opts = createAutoLoadOptions({
       mainRef: mainEl,
       chapters: [
-        makeChapter(
-          'https://example.com/chapter/1',
-          '字'.repeat(2000),
-          'https://example.com/chapter/2'
-        ),
+        makeChapter('https://example.com/chapter/1'),
+        makeChapter('https://example.com/chapter/2'),
       ],
-      readerStore: {
-        loadNextChapter: vi.fn(
-          () => new Promise<boolean>(resolve => setTimeout(() => resolve(true), 2000))
-        ),
-      },
-      hasNext: true,
+      currentChapterIndex: 0,
     });
+    useReaderAutoLoad(opts);
+
+    vi.advanceTimersByTime(1000);
+    opts.readerStore.currentChapterIndex = 1;
+    await nextTick();
+
+    vi.advanceTimersByTime(2999);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+  });
+
+  it('applies a short cooldown after failed auto preload and retries only after a later trigger', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    opts.readerStore.loadNextChapter = vi
+      .fn()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
     const result = useReaderAutoLoad(opts);
-    result.autoLoadArmed.value = true;
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(1);
 
-    result.scheduleAutoLoadNext();
-    await vi.advanceTimersByTimeAsync(2000);
+    result.scheduleAutoLoadNext('state');
+    result.scheduleAutoLoadNext('settled');
+    vi.advanceTimersByTime(5999);
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(1);
 
-    expect(gmSetValue).toHaveBeenCalled();
-    const lastCall = gmSetValue.mock.calls.at(-1);
-    const saved = JSON.parse(String(lastCall?.[1])) as AdaptivePreloadStats;
-    expect(saved.key).toBe('test@example.com');
-    expect(saved.loadSamples).toBe(1);
-    expect(saved.loadSrttMs).toBe(2000);
+    vi.advanceTimersByTime(1);
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(2);
+  });
+
+  it('also cools down when auto preload rejects', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    opts.readerStore.loadNextChapter = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(true);
+
+    const result = useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(1);
+
+    result.scheduleAutoLoadNext('sentinel');
+    vi.advanceTimersByTime(6000);
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(2);
+  });
+
+  it('clearAutoLoadTimer clears the pending hard-gate timer', () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    const result = useReaderAutoLoad(opts);
+
+    result.clearAutoLoadTimer();
+    vi.advanceTimersByTime(5000);
+
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 });

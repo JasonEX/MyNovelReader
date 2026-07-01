@@ -16,7 +16,6 @@ export interface UseChapterNavigationOptions {
   isNavigating: Ref<boolean>;
   isLoadingPrev: ComputedRef<boolean>;
   isLoadingNext: ComputedRef<boolean>;
-  preloadNext: ComputedRef<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
   topSpacer: ComputedRef<number>;
@@ -36,7 +35,6 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isNavigating,
     isLoadingPrev,
     isLoadingNext,
-    preloadNext,
     hasPrev,
     hasNext,
     topSpacer,
@@ -63,11 +61,10 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   }
 
   function loadNextAtBoundary(): void {
-    if (!preloadNext.value) return;
     if (!hasNext.value) return;
     if (isLoadingNext.value || isLoadingPrev.value || isNavigating.value) return;
 
-    void readerStore.loadNextChapter('auto');
+    void readerStore.loadNextChapter('manual');
   }
 
   /**

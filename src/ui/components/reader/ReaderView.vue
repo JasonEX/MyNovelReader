@@ -240,7 +240,6 @@ const isLoadingPrev = computed(() => readerStore.isLoadingPrev);
 const isLoadingNext = computed(() => readerStore.isLoadingNext);
 const hasNext = computed(() => readerStore.hasNext);
 const hasPrev = computed(() => readerStore.hasPrev);
-const preloadNext = computed(() => configStore.behavior.preloadNext);
 const error = computed(() => readerStore.error);
 const toastType = computed(() => readerStore.toastType);
 const scrollPercent = computed(() => readerStore.scrollPercent);
@@ -256,18 +255,16 @@ const contentLang = computed(() => {
 // === Composables ===
 
 // Auto-load composable (must be initialized before scroll composable)
-const { autoLoadArmed, scheduleAutoLoadNext, lastAutoLoadScrollTop, autoLoadShortChainCount } =
-  useReaderAutoLoad({
-    mainRef,
-    readerStore,
-    configStore,
-    hasNext,
-    isLoadingNext,
-    isLoadingPrev,
-    isLoading,
-    isNavigating,
-    chapterRefs,
-  });
+const { scheduleAutoLoadNext } = useReaderAutoLoad({
+  mainRef,
+  readerStore,
+  configStore,
+  hasNext,
+  isLoadingNext,
+  isLoadingPrev,
+  isLoading,
+  isNavigating,
+});
 
 // Scroll composable
 const { handleScroll } = useReaderScroll({
@@ -283,9 +280,6 @@ const { handleScroll } = useReaderScroll({
   autoHideHeader,
   showControls,
   isNavigating,
-  autoLoadArmed,
-  lastAutoLoadScrollTop,
-  autoLoadShortChainCount,
   scheduleAutoLoadNext,
 });
 
@@ -304,7 +298,6 @@ const {
   isNavigating,
   isLoadingPrev,
   isLoadingNext,
-  preloadNext,
   hasPrev,
   hasNext,
   topSpacer,
@@ -333,6 +326,7 @@ type SingleTouchEventLike = Event & {
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
 let lastTouchPoint: TouchPointLike | null = null;
+let isManualBoundaryLoadingNext = false;
 
 function shieldEvent(event: Event) {
   event.stopPropagation();
@@ -354,11 +348,22 @@ function isAtBottom(mainEl: HTMLElement): boolean {
 }
 
 function triggerNextAppendFromBoundary(): void {
-  if (!preloadNext.value) return;
   if (!hasNext.value) return;
-  if (isLoadingNext.value || isLoadingPrev.value || isLoading.value || isNavigating.value) return;
+  if (
+    isLoadingNext.value ||
+    isLoadingPrev.value ||
+    isLoading.value ||
+    isNavigating.value ||
+    isManualBoundaryLoadingNext
+  ) {
+    return;
+  }
 
-  void readerStore.loadNextChapter('auto');
+  isManualBoundaryLoadingNext = true;
+  void readerStore.loadNextChapter('manual').finally(() => {
+    isManualBoundaryLoadingNext = false;
+    scheduleAutoLoadNext('state');
+  });
 }
 
 function preventIfCancelable(event: Event): void {
@@ -408,11 +413,13 @@ function handleReaderTouchMove(event: Event): void {
 function handleReaderTouchEnd(event: Event): void {
   lastTouchPoint = null;
   handleTouchEnd(event);
+  scheduleAutoLoadNext('settled');
 }
 
 function handleReaderTouchCancel(): void {
   lastTouchPoint = null;
   handleTouchCancel();
+  scheduleAutoLoadNext('settled');
 }
 
 function navigate(direction: 'index') {
@@ -555,7 +562,7 @@ onMounted(async () => {
 
   bottomObserver = new globalThis.IntersectionObserver(entries => {
     if (!entries[0]?.isIntersecting) return;
-    scheduleAutoLoadNext();
+    scheduleAutoLoadNext('sentinel');
   }, observerOptions);
 
   topObserver = new globalThis.IntersectionObserver(() => {
@@ -572,7 +579,7 @@ onMounted(async () => {
   await nextTick();
   mainRef.value?.focus();
 
-  scheduleAutoLoadNext();
+  scheduleAutoLoadNext('state');
 });
 
 onUnmounted(() => {
