@@ -35,7 +35,8 @@ export const DEFAULT_PROTECTION_OPTIONS: Required<ProtectionOptions> = {
 };
 
 export const isCloudflareChallenge = (doc: Document = document): boolean => {
-  const pathname = doc.location?.pathname || window.location.pathname;
+  const pathname =
+    doc.location?.pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
   if (pathname.startsWith('/cdn-cgi/')) return true;
 
   const selectors = [
@@ -48,7 +49,22 @@ export const isCloudflareChallenge = (doc: Document = document): boolean => {
     'iframe[src*="captcha.cloudflare.com"]',
   ];
 
-  return doc.querySelector(selectors.join(',')) !== null;
+  if (doc.querySelector(selectors.join(',')) !== null) return true;
+
+  const title = (doc.title || '').trim().toLowerCase();
+  if (title === 'just a moment...' || title === 'attention required! | cloudflare') {
+    return true;
+  }
+
+  const scriptText = Array.from(doc.querySelectorAll('script'))
+    .map(script => `${script.getAttribute('src') || ''}\n${script.textContent || ''}`)
+    .join('\n');
+  if (/_cf_chl_opt|cf_chl_|challenge-platform|challenges\.cloudflare\.com/i.test(scriptText)) {
+    return true;
+  }
+
+  const bodyText = (doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
+  return /enable javascript and cookies to continue/i.test(bodyText);
 };
 
 export function withDefaultProtectionOptions(options: ProtectionOptions = {}): ProtectionOptions {

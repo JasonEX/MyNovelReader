@@ -76,6 +76,26 @@ describe('SiteProtection', () => {
 
       expect(isCloudflareChallenge(localDom.window.document)).toBe(true);
     });
+
+    it('detects inline Cloudflare managed challenge pages', () => {
+      const localDom = new JSDOM(
+        `<!DOCTYPE html>
+        <html>
+          <head>
+            <title>Just a moment...</title>
+            <script>
+              window._cf_chl_opt = { cType: 'managed', cZone: 'www.69shuba.com' };
+            </script>
+          </head>
+          <body>
+            <noscript>Enable JavaScript and cookies to continue</noscript>
+          </body>
+        </html>`,
+        { url: 'https://www.69shuba.com/txt/54141/34953497' }
+      );
+
+      expect(isCloudflareChallenge(localDom.window.document)).toBe(true);
+    });
   });
 
   describe('activate / deactivate', () => {

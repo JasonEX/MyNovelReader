@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.8
+// @version      9.0.9
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -5374,12 +5374,14 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       };
       const ensureAnchor = (id, href, label) => {
         if (!href || doc2.querySelector(`#${id}`)) return;
+        const parent = doc2.body || doc2.documentElement;
+        if (!parent) return;
         const anchor = doc2.createElement("a");
         anchor.id = id;
         anchor.href = normalizeUrl2(href);
         anchor.textContent = label;
         anchor.style.display = "none";
-        doc2.body.appendChild(anchor);
+        parent.appendChild(anchor);
       };
       const bookTitle = extractString("articlename");
       const chapterTitle = extractString("chaptername");
@@ -5391,11 +5393,13 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       ensureAnchor("mnr-69shu-prev", prevUrl, "上一章");
       ensureAnchor("mnr-69shu-next", nextUrl, "下一章");
       if (chapterTitle && !doc2.querySelector("#mnr-69shu-title")) {
+        const parent = doc2.body || doc2.documentElement;
+        if (!parent) return;
         const title = doc2.createElement("h1");
         title.id = "mnr-69shu-title";
         title.textContent = chapterTitle;
         title.style.display = "none";
-        doc2.body.appendChild(title);
+        parent.appendChild(title);
       }
     } catch (e) {
       console.warn("[MyNovelReader] 69shu beforeParse error:", e);
@@ -5437,6 +5441,7 @@ prev: '#mnr-qidian-prev, .nav-btn-group a:contains("上一章"), a.nav-btn:conta
       beforeParse: shu69BeforeParse
     },
     advanced: {
+      noSection: true,
       useIframe: true
     },
     meta: { source: "builtin", exampleUrl: "https://www.69shuba.com/txt/58672/38147713" }
@@ -7986,8 +7991,8 @@ smartSelect(doc2, selector) {
     cleanupScripts: false
   };
   const isCloudflareChallenge = (doc2 = document) => {
-    var _a;
-    const pathname = ((_a = doc2.location) == null ? void 0 : _a.pathname) || window.location.pathname;
+    var _a, _b;
+    const pathname = ((_a = doc2.location) == null ? void 0 : _a.pathname) || (typeof window !== "undefined" ? window.location.pathname : "");
     if (pathname.startsWith("/cdn-cgi/")) return true;
     const selectors = [
       '[id*="cf-chl"]',
@@ -7998,7 +8003,18 @@ smartSelect(doc2, selector) {
       'iframe[src*="challenges.cloudflare.com"]',
       'iframe[src*="captcha.cloudflare.com"]'
     ];
-    return doc2.querySelector(selectors.join(",")) !== null;
+    if (doc2.querySelector(selectors.join(",")) !== null) return true;
+    const title = (doc2.title || "").trim().toLowerCase();
+    if (title === "just a moment..." || title === "attention required! | cloudflare") {
+      return true;
+    }
+    const scriptText = Array.from(doc2.querySelectorAll("script")).map((script) => `${script.getAttribute("src") || ""}
+${script.textContent || ""}`).join("\n");
+    if (/_cf_chl_opt|cf_chl_|challenge-platform|challenges\.cloudflare\.com/i.test(scriptText)) {
+      return true;
+    }
+    const bodyText = (((_b = doc2.body) == null ? void 0 : _b.textContent) || "").replace(/\s+/g, " ").trim();
+    return /enable javascript and cookies to continue/i.test(bodyText);
   };
   function withDefaultProtectionOptions(options = {}) {
     return { ...DEFAULT_PROTECTION_OPTIONS, ...options };
@@ -9182,7 +9198,7 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.8";
+  const VERSION = "9.0.9";
   const BUILD_DATE = "2026-07-01";
   /**
   * @vue/shared v3.5.25

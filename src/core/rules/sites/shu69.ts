@@ -25,12 +25,14 @@ const shu69BeforeParse: BeforeParseHook = (doc, url) => {
     };
     const ensureAnchor = (id: string, href: string, label: string): void => {
       if (!href || doc.querySelector(`#${id}`)) return;
+      const parent = doc.body || doc.documentElement;
+      if (!parent) return;
       const anchor = doc.createElement('a');
       anchor.id = id;
       anchor.href = normalizeUrl(href);
       anchor.textContent = label;
       anchor.style.display = 'none';
-      doc.body.appendChild(anchor);
+      parent.appendChild(anchor);
     };
 
     const bookTitle = extractString('articlename');
@@ -45,11 +47,13 @@ const shu69BeforeParse: BeforeParseHook = (doc, url) => {
     ensureAnchor('mnr-69shu-next', nextUrl, '下一章');
 
     if (chapterTitle && !doc.querySelector('#mnr-69shu-title')) {
+      const parent = doc.body || doc.documentElement;
+      if (!parent) return;
       const title = doc.createElement('h1');
       title.id = 'mnr-69shu-title';
       title.textContent = chapterTitle;
       title.style.display = 'none';
-      doc.body.appendChild(title);
+      parent.appendChild(title);
     }
   } catch (e) {
     console.warn('[MyNovelReader] 69shu beforeParse error:', e);
@@ -99,6 +103,7 @@ export const shu69Rule: SiteRule = {
     beforeParse: shu69BeforeParse,
   },
   advanced: {
+    noSection: true,
     useIframe: true,
   },
   meta: { source: 'builtin', exampleUrl: 'https://www.69shuba.com/txt/58672/38147713' },
