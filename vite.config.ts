@@ -32,16 +32,12 @@ export default defineConfig({
     sourcemap: false,
     minify: false,
     cssMinify: true,
-    rollupOptions: {
-      output: {
-        inlineDynamicImports: true,
-      },
-    },
     cssCodeSplit: false,
   },
   plugins: [
     vue(),
     cssInjectedByJsPlugin({
+      topExecutionPriority: false,
       // Store CSS for later injection into Shadow DOM
       // Also inject to document.head for components that need light DOM (like ElementPicker)
       injectCodeFunction: function (cssCode) {

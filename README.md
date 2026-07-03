@@ -20,12 +20,12 @@
 
 ### 环境要求
 
-- Node.js >= 18
-- npm（建议 9+）
+- Node.js >= 20.19
+- npm（建议 10+）
 
 ### 技术栈
 
-- **构建工具**: Vite 6 + vite-plugin-monkey
+- **构建工具**: Vite 8 + vite-plugin-monkey
 - **前端框架**: Vue 3 (Composition API) + Pinia
 - **语言**: TypeScript
 - **测试框架**: Vitest (jsdom)

@@ -13,7 +13,6 @@
     "allowJs": true, // allow a partial TypeScript and JavaScript codebase
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"]
     },

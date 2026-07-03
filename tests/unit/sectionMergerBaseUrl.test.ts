@@ -10,6 +10,7 @@ import { SectionMerger } from '../../src/core/auto-enable/SectionMerger';
 
 describe('SectionMerger (base url + maxPages)', () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 

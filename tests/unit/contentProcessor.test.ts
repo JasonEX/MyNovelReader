@@ -20,6 +20,7 @@ describe('ContentProcessor', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -900,7 +901,13 @@ describe('ContentProcessor', () => {
       const rules = [{ pattern: '\\d+', replacement: 'NUM', flags: 'g' }];
       processor.setOptions({ replaceRules: rules });
 
-      const newRegExpSpy = vi.spyOn(globalThis, 'RegExp' as never);
+      const ActualRegExp = globalThis.RegExp;
+      function RegExpPassthrough(pattern: string | RegExp, flags?: string): RegExp {
+        return new ActualRegExp(pattern, flags);
+      }
+      const newRegExpSpy = vi
+        .spyOn(globalThis, 'RegExp' as never)
+        .mockImplementation(RegExpPassthrough as never);
       const callsBefore = newRegExpSpy.mock.calls.length;
 
       const el1 = doc.createElement('div');

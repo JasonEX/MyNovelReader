@@ -28,12 +28,7 @@ export interface AutoEnableDecision {
   shouldEnable: boolean;
   /** How the decision was made */
   method:
-    | 'user-rule'
-    | 'builtin-rule'
-    | 'detection'
-    | 'manual'
-    | 'user-disabled'
-    | 'site-preference';
+    'user-rule' | 'builtin-rule' | 'detection' | 'manual' | 'user-disabled' | 'site-preference';
   /** Confidence level (0-1) */
   confidence: number;
   /** The rule to use (if any) */
@@ -179,12 +174,13 @@ export class AutoEnableManager {
       });
     }
 
-    let hostname: string | null = null;
-    try {
-      hostname = new URL(url).hostname;
-    } catch {
-      hostname = null;
-    }
+    const hostname = (() => {
+      try {
+        return new URL(url).hostname;
+      } catch {
+        return null;
+      }
+    })();
 
     // Check site preference (only applies to chapter pages)
     if (hostname) {

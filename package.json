@@ -1,6 +1,6 @@
 {
   "name": "my-novel-reader",
-  "version": "9.0.11",
+  "version": "9.0.12",
   "type": "module",
   "description": "小说阅读脚本 - 统一阅读样式，智能内容检测，自动翻页",
   "scripts": {
@@ -42,32 +42,32 @@
   },
   "homepage": "https://github.com/ywzhaiqi/userscript#readme",
   "dependencies": {
-    "chinese-conv": "^3.2.2",
+    "chinese-conv": "^4.0.0",
     "dompurify": "^3.1.6",
-    "opencc-js": "^1.3.1"
+    "opencc-js": "^1.4.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@playwright/test": "^1.61.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "@vitejs/plugin-vue": "^5.2.0",
-    "@vitest/coverage-v8": "^3.2.0",
-    "eslint": "^9.0.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-vue": "^9.0.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-vue": "^10.9.2",
     "husky": "^9.1.7",
-    "jsdom": "^27.2.0",
-    "lint-staged": "^16.2.7",
-    "pinia": "^2.3.1",
-    "prettier": "^3.0.0",
-    "typescript": "^5.0.0",
-    "vite": "^6.2.0",
-    "vite-plugin-css-injected-by-js": "^3.5.2",
-    "vite-plugin-monkey": "^7.1.8",
-    "vitest": "^3.2.0",
-    "vue": "^3.4.0",
-    "vue-eslint-parser": "^9.0.0"
+    "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.8",
+    "pinia": "^3.0.4",
+    "prettier": "^3.9.4",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3",
+    "vite-plugin-css-injected-by-js": "^5.0.1",
+    "vite-plugin-monkey": "^8.0.6",
+    "vitest": "^4.1.9",
+    "vue": "^3.5.39",
+    "vue-eslint-parser": "^10.4.1"
   }
 }

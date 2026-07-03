@@ -12,14 +12,7 @@ export interface FetchAndParseResult {
   status: number | null;
   finalUrl: string | null;
   error:
-    | 'abort'
-    | 'http'
-    | 'network'
-    | 'parse'
-    | 'timeout'
-    | 'missing-gm-xhr'
-    | 'invalid-url'
-    | null;
+    'abort' | 'http' | 'network' | 'parse' | 'timeout' | 'missing-gm-xhr' | 'invalid-url' | null;
 }
 
 /** Return type of GM_xmlhttpRequest call */
@@ -199,7 +192,7 @@ async function readFetchResponseText(response: Response): Promise<string> {
 export function resolveAndValidateHttpUrl(url: string, base?: string): string | null {
   const normalized = normalizeUrlForFetch(url);
 
-  let resolved: string | null = null;
+  let resolved: string;
   try {
     resolved = base ? new URL(normalized, base).toString() : new URL(normalized).toString();
   } catch {

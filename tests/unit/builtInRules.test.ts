@@ -406,15 +406,16 @@ describe('builtInRules helpers', () => {
       'https://www.ciweimao.com/chapter/113930500'
     );
 
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    let chapter: Awaited<ReturnType<Parser['parse']>> = null;
-    try {
-      chapter = apiDoc
-        ? await new Parser().parse(apiDoc, 'https://www.ciweimao.com/chapter/113927226')
-        : null;
-    } finally {
-      debug.mockRestore();
-    }
+    const chapter = await (async () => {
+      const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      try {
+        return apiDoc
+          ? await new Parser().parse(apiDoc, 'https://www.ciweimao.com/chapter/113927226')
+          : null;
+      } finally {
+        debug.mockRestore();
+      }
+    })();
     expect(chapter?.title).toBe('10.南夕子：我抄，盒！');
     expect(chapter?.bookTitle).toBe('无奥世界，但是群友全是奥特曼');
     expect(chapter?.prevUrl).toBe('https://www.ciweimao.com/chapter/113926737');

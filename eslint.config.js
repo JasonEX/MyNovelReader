@@ -133,7 +133,7 @@ export default [
       },
     },
     rules: {
-      ...vuePlugin.configs['vue3-recommended'].rules,
+      ...vuePlugin.configs.recommended.rules,
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'off',
       'no-unused-vars': 'off',
