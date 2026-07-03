@@ -27,11 +27,10 @@ export function syncHostPageToChapter(chapter: ParsedChapter | null, index: numb
       ? `${chapterTitle} - ${bookTitle}`
       : chapterTitle || bookTitle;
 
-  if (title) {
-    document.title = title;
+  if (!chapter.url) {
+    if (title) document.title = title;
+    return;
   }
-
-  if (!chapter.url) return;
 
   const currentState = window.history.state;
   const stateBase =
@@ -53,17 +52,21 @@ export function syncHostPageToChapter(chapter: ParsedChapter | null, index: numb
   } catch {
     // Some pages can block history mutation; the reader state remains authoritative.
   }
+
+  if (title) {
+    document.title = title;
+  }
 }
 
 export function restoreHostPageSnapshot(snapshot: HostPageSnapshot | null): void {
   if (!snapshot) return;
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  document.title = snapshot.title;
-
   try {
     window.history.replaceState(snapshot.state ?? null, '', snapshot.url);
   } catch {
     // Best-effort restore only; closing the reader must not fail.
   }
+
+  document.title = snapshot.title;
 }

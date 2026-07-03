@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Novel Reader
 // @namespace    https://github.com/ywzhaiqi
-// @version      9.0.10
+// @version      9.0.11
 // @author       ywzhaiqi
 // @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @license      GPL version 3
@@ -9198,8 +9198,8 @@ async manualEnable(doc2 = document) {
     }
     return managerInstance;
   }
-  const VERSION = "9.0.10";
-  const BUILD_DATE = "2026-07-01";
+  const VERSION = "9.0.11";
+  const BUILD_DATE = "2026-07-03";
   function captureHostPageSnapshot() {
     if (typeof window === "undefined" || typeof document === "undefined") return null;
     return {
@@ -9215,10 +9215,10 @@ async manualEnable(doc2 = document) {
     const chapterTitle = chapter.title.trim();
     const bookTitle = ((_a = chapter.bookTitle) == null ? void 0 : _a.trim()) || "";
     const title = chapterTitle && bookTitle && chapterTitle !== bookTitle ? `${chapterTitle} - ${bookTitle}` : chapterTitle || bookTitle;
-    if (title) {
-      document.title = title;
+    if (!chapter.url) {
+      if (title) document.title = title;
+      return;
     }
-    if (!chapter.url) return;
     const currentState = window.history.state;
     const stateBase = currentState && typeof currentState === "object" && !Array.isArray(currentState) ? currentState : {};
     try {
@@ -9234,15 +9234,18 @@ async manualEnable(doc2 = document) {
       );
     } catch {
     }
+    if (title) {
+      document.title = title;
+    }
   }
   function restoreHostPageSnapshot(snapshot) {
     if (!snapshot) return;
     if (typeof window === "undefined" || typeof document === "undefined") return;
-    document.title = snapshot.title;
     try {
       window.history.replaceState(snapshot.state ?? null, "", snapshot.url);
     } catch {
     }
+    document.title = snapshot.title;
   }
   /**
   * @vue/shared v3.5.25
