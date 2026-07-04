@@ -423,4 +423,98 @@ describe('ReaderStore - workflows', () => {
     expect(store.chapters).toHaveLength(2);
     expect(store.chapters[1]?.chapter.title).toBe('第2章');
   });
+
+  it('does not persist a terminal block when auto preload receives a TOC-like page', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      nextUrl: 'https://example.com/book/1/2.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const doc = new DOMParser().parseFromString('<html><body>toc</body></html>', 'text/html');
+    const tocContent = Array.from(
+      { length: 12 },
+      (_, i) => `<a href="/chapter/${i + 1}">第${i + 1}章</a>`
+    ).join('');
+
+    mockFetchAndParseUrl.mockReturnValue({
+      promise: Promise.resolve({
+        doc,
+        status: 200,
+        finalUrl: 'https://example.com/book/1/2.html',
+        error: null,
+      }),
+      abort: vi.fn(),
+    });
+    mockParseWithSectionMerge.mockResolvedValue({
+      title: '目录',
+      content: tocContent,
+      rawContent: tocContent,
+      url: 'https://example.com/book/1/2.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const ok = await store.loadNextChapter('auto');
+    const snapshot = store.getDebugSnapshot();
+
+    expect(ok).toBe(false);
+    expect(store.hasNext).toBe(true);
+    expect(snapshot.navigation.blockedNavUrls.count).toBe(0);
+  });
+
+  it('persists a terminal block when manual next receives a TOC-like page', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      nextUrl: 'https://example.com/book/1/2.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const doc = new DOMParser().parseFromString('<html><body>toc</body></html>', 'text/html');
+    const tocContent = Array.from(
+      { length: 12 },
+      (_, i) => `<a href="/chapter/${i + 1}">第${i + 1}章</a>`
+    ).join('');
+
+    mockFetchAndParseUrl.mockReturnValue({
+      promise: Promise.resolve({
+        doc,
+        status: 200,
+        finalUrl: 'https://example.com/book/1/2.html',
+        error: null,
+      }),
+      abort: vi.fn(),
+    });
+    mockParseWithSectionMerge.mockResolvedValue({
+      title: '目录',
+      content: tocContent,
+      rawContent: tocContent,
+      url: 'https://example.com/book/1/2.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const ok = await store.loadNextChapter('manual');
+    const snapshot = store.getDebugSnapshot();
+
+    expect(ok).toBe(false);
+    expect(store.hasNext).toBe(false);
+    expect(snapshot.navigation.blockedNavUrls.count).toBe(1);
+    expect(store.error).toBe('已经是最后一章了');
+    store.clearError();
+  });
 });

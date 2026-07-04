@@ -18877,6 +18877,12 @@
 			}
 		}
 	}
+	function shouldPersistNavigationBlock(source, _reason) {
+		return source === "manual";
+	}
+	function shouldUseNavigationFailureCooldown(source) {
+		return source === "auto";
+	}
 	function prepareChapterLoad(ctx, direction, source) {
 		const isNext = direction === "next";
 		const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
@@ -18894,7 +18900,7 @@
 		if (targetUrl !== rawTargetUrl) if (isNext) refChapter.chapter.nextUrl = targetUrl;
 		else refChapter.chapter.prevUrl = targetUrl;
 		if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
-			ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+			if (shouldPersistNavigationBlock(source, "index-target")) ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
 			if (source === "manual") ctx.showToast(endMessage, "info");
 			return null;
 		}
@@ -18908,10 +18914,7 @@
 			return null;
 		}
 		const failure = ctx.navFailures.get(navKey);
-		if (failure && Date.now() < failure.nextRetryAt) {
-			if (source === "manual") ctx.showToast("加载失败过于频繁，请稍后重试", "info", 2e3);
-			return null;
-		}
+		if (shouldUseNavigationFailureCooldown(source) && failure && Date.now() < failure.nextRetryAt) return null;
 		if (ctx.loadedUrls.value.has(targetUrl)) return null;
 		return {
 			direction,
@@ -18928,7 +18931,7 @@
 	function validateTargetChapterUrl(ctx, load, source) {
 		if (!isInvalidChapterUrl(load.targetUrl, load.refChapter.chapter.url)) return true;
 		load.isLoadingRef.value = false;
-		ctx.blockedNavUrls.value.add(load.navKey);
+		if (shouldPersistNavigationBlock(source, "invalid-target")) ctx.blockedNavUrls.value.add(load.navKey);
 		if (source === "manual") ctx.showToast(load.endMessage, "info");
 		return false;
 	}
@@ -19016,13 +19019,13 @@
 				if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
 				if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
 				if (detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url)) {
-					ctx.blockedNavUrls.value.add(load.navKey);
+					if (shouldPersistNavigationBlock(source, "toc-page")) ctx.blockedNavUrls.value.add(load.navKey);
 					if (source === "manual") ctx.showToast(load.endMessage, "info");
 					return false;
 				}
 				if (!load.isNext) {
 					if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(load.refChapter.chapter.url)) {} else if (parsed.prevUrl && !parsed.nextUrl) {
-						ctx.blockedNavUrls.value.add(load.navKey);
+						if (shouldPersistNavigationBlock(source, "prev-page")) ctx.blockedNavUrls.value.add(load.navKey);
 						return false;
 					}
 				}

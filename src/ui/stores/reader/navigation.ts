@@ -25,6 +25,7 @@ import { detectTocPage } from './detection';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import type { NavigationContext } from './navigationContext';
 import { parseWithSectionMerge } from './section';
+import { shouldPersistNavigationBlock } from './navigationPolicy';
 import { trimCachedContents } from './trim';
 
 // ============ Factory ============
@@ -163,7 +164,9 @@ export function createNavigation(ctx: NavigationContext) {
       // Check if this is a TOC page
       const isTocPage = detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url);
       if (isTocPage) {
-        ctx.blockedNavUrls.value.add(load.navKey);
+        if (shouldPersistNavigationBlock(source, 'toc-page')) {
+          ctx.blockedNavUrls.value.add(load.navKey);
+        }
         if (source === 'manual') {
           ctx.showToast(load.endMessage, 'info');
         }
@@ -179,7 +182,9 @@ export function createNavigation(ctx: NavigationContext) {
           // This is fine, it's actually the previous chapter
         } else if (parsed.prevUrl && !parsed.nextUrl) {
           // Page has prev but no next - likely a TOC or non-chapter page
-          ctx.blockedNavUrls.value.add(load.navKey);
+          if (shouldPersistNavigationBlock(source, 'prev-page')) {
+            ctx.blockedNavUrls.value.add(load.navKey);
+          }
           return false;
         }
       }

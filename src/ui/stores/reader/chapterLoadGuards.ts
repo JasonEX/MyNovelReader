@@ -1,5 +1,9 @@
 import type { ChapterEntry, LoadSource } from './types';
 import { normalizeUrl, normalizeUrlForBlock, normalizeUrlForFetch } from './utils';
+import {
+  shouldPersistNavigationBlock,
+  shouldUseNavigationFailureCooldown,
+} from './navigationPolicy';
 
 import { isInvalidChapterUrl } from './detection';
 import type { NavigationContext } from './navigationContext';
@@ -57,7 +61,9 @@ export function prepareChapterLoad(
     refChapter.chapter.indexUrl &&
     normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)
   ) {
-    ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+    if (shouldPersistNavigationBlock(source, 'index-target')) {
+      ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+    }
     if (source === 'manual') {
       ctx.showToast(endMessage, 'info');
     }
@@ -78,10 +84,7 @@ export function prepareChapterLoad(
   }
 
   const failure = ctx.navFailures.get(navKey);
-  if (failure && Date.now() < failure.nextRetryAt) {
-    if (source === 'manual') {
-      ctx.showToast('加载失败过于频繁，请稍后重试', 'info', 2000);
-    }
+  if (shouldUseNavigationFailureCooldown(source) && failure && Date.now() < failure.nextRetryAt) {
     return null;
   }
 
@@ -112,7 +115,9 @@ export function validateTargetChapterUrl(
   }
 
   load.isLoadingRef.value = false;
-  ctx.blockedNavUrls.value.add(load.navKey);
+  if (shouldPersistNavigationBlock(source, 'invalid-target')) {
+    ctx.blockedNavUrls.value.add(load.navKey);
+  }
   if (source === 'manual') {
     ctx.showToast(load.endMessage, 'info');
   }

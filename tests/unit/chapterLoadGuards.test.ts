@@ -86,10 +86,14 @@ describe('chapterLoadGuards', () => {
     expect(autoMissingCtx.showToast).not.toHaveBeenCalled();
   });
 
-  it('blocks index, VIP, known blocked, recent failure, and already loaded targets', () => {
+  it('blocks index, VIP, known blocked, auto recent failure, and already loaded targets', () => {
     const indexCtx = createContext({ chapter: { nextUrl: 'https://example.com/book/' } });
     expect(prepareChapterLoad(indexCtx, 'next', 'manual')).toBeNull();
     expect(indexCtx.blockedNavUrls.value.has('https://example.com/book')).toBe(true);
+
+    const autoIndexCtx = createContext({ chapter: { nextUrl: 'https://example.com/book/' } });
+    expect(prepareChapterLoad(autoIndexCtx, 'next', 'auto')).toBeNull();
+    expect(autoIndexCtx.blockedNavUrls.value.has('https://example.com/book')).toBe(false);
 
     const vipCtx = createContext({
       vipBlockedUrls: new Set(['https://example.com/book/2.html']),
@@ -108,8 +112,19 @@ describe('chapterLoadGuards', () => {
         ['https://example.com/book/2.html', { count: 1, nextRetryAt: Date.now() + 1000 }],
       ]),
     });
-    expect(prepareChapterLoad(failedCtx, 'next', 'manual')).toBeNull();
-    expect(failedCtx.showToast).toHaveBeenCalledWith('加载失败过于频繁，请稍后重试', 'info', 2000);
+    expect(prepareChapterLoad(failedCtx, 'next', 'auto')).toBeNull();
+    expect(failedCtx.showToast).not.toHaveBeenCalledWith(
+      '加载失败过于频繁，请稍后重试',
+      'info',
+      2000
+    );
+
+    const manualRetryCtx = createContext({
+      navFailures: new Map([
+        ['https://example.com/book/2.html', { count: 1, nextRetryAt: Date.now() + 1000 }],
+      ]),
+    });
+    expect(prepareChapterLoad(manualRetryCtx, 'next', 'manual')).not.toBeNull();
 
     const loadedCtx = createContext({
       loadedUrls: new Set(['https://example.com/book/2.html']),
@@ -132,5 +147,15 @@ describe('chapterLoadGuards', () => {
     expect(invalidLoad!.isLoadingRef.value).toBe(false);
     expect(invalidCtx.blockedNavUrls.value.has('https://example.com')).toBe(true);
     expect(invalidCtx.showToast).toHaveBeenCalledWith('已经是最后一章了', 'info');
+
+    const autoInvalidCtx = createContext({ chapter: { nextUrl: 'https://example.com/' } });
+    const autoInvalidLoad = prepareChapterLoad(autoInvalidCtx, 'next', 'auto');
+    expect(autoInvalidLoad).not.toBeNull();
+    autoInvalidLoad!.isLoadingRef.value = true;
+
+    expect(validateTargetChapterUrl(autoInvalidCtx, autoInvalidLoad!, 'auto')).toBe(false);
+    expect(autoInvalidLoad!.isLoadingRef.value).toBe(false);
+    expect(autoInvalidCtx.blockedNavUrls.value.has('https://example.com')).toBe(false);
+    expect(autoInvalidCtx.showToast).not.toHaveBeenCalled();
   });
 });
