@@ -18,7 +18,7 @@ describe('builtInRules helpers', () => {
   });
 
   it('findBuiltInRule respects excludes and skips invalid regex rules', () => {
-    const url = 'https://uukanshu.cc/book/26185/17096360.html';
+    const url = 'https://m.ilwxs.com/shu/36354/171272950.html';
 
     const invalidRule = {
       id: 'invalid-regex',
@@ -32,7 +32,7 @@ describe('builtInRules helpers', () => {
       id: 'excluded-first',
       name: 'excluded-first',
       version: 1,
-      match: { pattern: 'uukanshu\\.cc', type: 'regex', exclude: ['17096360'] },
+      match: { pattern: 'm\\.ilwxs\\.com', type: 'regex', exclude: ['171272950'] },
       content: { selector: '#content' },
       meta: { source: 'builtin' },
     } satisfies SiteRule;
@@ -42,7 +42,7 @@ describe('builtInRules helpers', () => {
 
     try {
       const found = findBuiltInRule(url);
-      expect(found?.id).toBe('uukanshu-cc');
+      expect(found?.id).toBe('ilwxs');
     } finally {
       builtInRules.shift();
       builtInRules.shift();

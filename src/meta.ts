@@ -75,16 +75,10 @@ export const META_BASE = {
     '*://m.qidian.com/chapter/*/*',
     '*://read.qidian.com/chapter/*',
     '*://vipreader.qidian.com/chapter/*/*',
-    '*://book.zongheng.com/chapter/*/*.html',
-    '*://read.zongheng.com/chapter/*/*.html',
-    '*://www.17k.com/chapter/*/*.html',
     '*://book.sfacg.com/Novel/*/*/*/',
-    '*://weread.qq.com/web/reader/*',
     '*://www.ciweimao.com/chapter/*',
     '*://wap.ciweimao.com/chapter/*',
     '*://www.tadu.com/book/*/*/',
-    '*://tieba.baidu.com/p/*',
-    '*://masiro.me/admin/novelReading*',
 
     // Explicitly supported sites with numeric/custom routes. Keep these explicit so the
     // userscript menu and manual entry are available even when generic path patterns miss.
