@@ -8591,7 +8591,277 @@
 		return managerInstance;
 	}
 	var VERSION = "9.0.12";
-	var BUILD_DATE = "2026-07-03";
+	var BUILD_DATE = "2026-07-04";
+	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
+	function redactUrl(url) {
+		if (!url) return null;
+		try {
+			const parsed = new URL(url, typeof window !== "undefined" ? window.location.href : void 0);
+			parsed.username = parsed.username ? "__redacted__" : "";
+			parsed.password = parsed.password ? "__redacted__" : "";
+			for (const key of Array.from(parsed.searchParams.keys())) if (SENSITIVE_QUERY_KEY.test(key)) parsed.searchParams.set(key, "__redacted__");
+			return parsed.toString();
+		} catch {
+			return truncateDebugString(url);
+		}
+	}
+	function truncateDebugString(value, limit = 500) {
+		if (value.length <= limit) return value;
+		return `${value.slice(0, limit)}...<truncated:${value.length - limit}>`;
+	}
+	function sanitizeDebugString(value, limit = 500) {
+		return truncateDebugString(value.replace(/https?:\/\/[^\s"'<>）)]+/gi, (match) => redactUrl(match) || match), limit);
+	}
+	function hashText(value) {
+		const text = value || "";
+		let hash = 2166136261;
+		for (let i = 0; i < text.length; i += 1) {
+			hash ^= text.charCodeAt(i);
+			hash = Math.imul(hash, 16777619);
+		}
+		return `fnv1a:${(hash >>> 0).toString(16).padStart(8, "0")}`;
+	}
+	function htmlTextLength(html) {
+		if (!html) return 0;
+		return html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, "").replace(/&nbsp;|&#160;/gi, " ").trim().length;
+	}
+	function tailStrings(values, limit = 8) {
+		return Array.from(values).slice(-limit).map((value) => redactUrl(value) || "");
+	}
+	function toDebugValue(value, depth = 3) {
+		return toDebugValueInternal(value, depth, new WeakSet());
+	}
+	function toDebugValueInternal(value, depth, seen) {
+		if (value === null || value === void 0) return null;
+		if (typeof value === "string") return looksLikeUrl(value) ? redactUrl(value) : sanitizeDebugString(value);
+		if (typeof value === "number") return Number.isFinite(value) ? value : String(value);
+		if (typeof value === "boolean") return value;
+		if (typeof value === "bigint") return value.toString();
+		if (typeof value === "function" || typeof value === "symbol") return null;
+		if (value instanceof Error) return {
+			name: value.name,
+			message: sanitizeDebugString(value.message),
+			stack: value.stack ? sanitizeDebugString(value.stack, 1200) : null
+		};
+		if (value instanceof URL) return redactUrl(value.toString());
+		if (typeof value !== "object") return truncateDebugString(String(value));
+		if (seen.has(value)) return "[Circular]";
+		if (depth <= 0) return `[${Object.prototype.toString.call(value).slice(8, -1)}]`;
+		seen.add(value);
+		if (Array.isArray(value)) {
+			const result = value.slice(0, 30).map((item) => toDebugValueInternal(item, depth - 1, seen));
+			if (value.length > 30) result.push(`...<truncated:${value.length - 30}>`);
+			seen.delete(value);
+			return result;
+		}
+		if (value instanceof Map) {
+			const result = {};
+			let count = 0;
+			for (const [key, item] of value) {
+				if (count >= 30) break;
+				result[String(key)] = toDebugValueInternal(item, depth - 1, seen);
+				count += 1;
+			}
+			seen.delete(value);
+			return result;
+		}
+		if (value instanceof Set) {
+			const result = Array.from(value).slice(0, 30).map((item) => toDebugValueInternal(item, depth - 1, seen));
+			seen.delete(value);
+			return result;
+		}
+		const result = {};
+		let count = 0;
+		for (const [key, item] of Object.entries(value)) {
+			if (count >= 40) {
+				result.__truncated__ = "true";
+				break;
+			}
+			result[key] = toDebugValueInternal(item, depth - 1, seen);
+			count += 1;
+		}
+		seen.delete(value);
+		return result;
+	}
+	function looksLikeUrl(value) {
+		return /^https?:\/\//i.test(value) || /^\/[^\s]*\?/.test(value);
+	}
+	var MAX_DEBUG_EVENTS = 50;
+	var events = [];
+	function recordDebugEvent(type, detail, level = "info") {
+		events.push({
+			at: new Date().toISOString(),
+			t: Date.now(),
+			level,
+			type,
+			detail: detail === void 0 ? void 0 : toDebugValue(detail)
+		});
+		if (events.length > MAX_DEBUG_EVENTS) events.splice(0, events.length - MAX_DEBUG_EVENTS);
+	}
+	function getDebugEvents() {
+		return events.map((event) => ({ ...event }));
+	}
+	function installGlobalDebugErrorListeners() {
+		if (typeof window === "undefined") return;
+		const marker = "__mnrDebugErrorListenersInstalled__";
+		const target = window;
+		if (target[marker]) return;
+		target[marker] = true;
+		window.addEventListener("error", (event) => {
+			recordDebugEvent("window.error", {
+				message: event.message,
+				filename: event.filename,
+				lineno: event.lineno,
+				colno: event.colno,
+				error: event.error instanceof Error ? event.error.message : null
+			}, "error");
+		});
+		window.addEventListener("unhandledrejection", (event) => {
+			recordDebugEvent("window.unhandledrejection", { reason: event.reason instanceof Error ? event.reason.message : event.reason }, "error");
+		});
+	}
+	function buildDiagnosticInfo(options = {}) {
+		return {
+			schema: "mnr-debug-v1",
+			generatedAt: new Date().toISOString(),
+			app: {
+				version: VERSION,
+				buildDate: BUILD_DATE,
+				bootstrap: options.bootstrap,
+				gm: getGmSnapshot()
+			},
+			browser: getBrowserSnapshot(),
+			page: getPageSnapshot(),
+			config: options.configStore ? getConfigSnapshot(options.configStore) : null,
+			reader: options.readerStore?.getDebugSnapshot ? toDebugValue(options.readerStore.getDebugSnapshot()) : null,
+			recentEvents: toDebugValue(getDebugEvents())
+		};
+	}
+	async function copyDiagnosticInfo(options = {}) {
+		recordDebugEvent("debug.copy.request", { readerActive: Boolean(options.readerStore?.isActive) });
+		const info = buildDiagnosticInfo(options);
+		const text = JSON.stringify(info, null, 2);
+		try {
+			await writeClipboard(text);
+			recordDebugEvent("debug.copy.success", {
+				bytes: text.length,
+				readerActive: Boolean(options.readerStore?.isActive)
+			});
+			options.notify?.("诊断信息已复制", "info");
+			return {
+				ok: true,
+				text,
+				info
+			};
+		} catch (error) {
+			recordDebugEvent("debug.copy.failure", { error }, "error");
+			options.notify?.("诊断信息复制失败", "error");
+			return {
+				ok: false,
+				text,
+				info,
+				error
+			};
+		}
+	}
+	async function writeClipboard(text) {
+		let gmError;
+		if (typeof GM_setClipboard !== "undefined") try {
+			GM_setClipboard(text);
+			return;
+		} catch (error) {
+			gmError = error;
+		}
+		if (navigator.clipboard?.writeText) {
+			await navigator.clipboard.writeText(text);
+			return;
+		}
+		if (gmError) throw gmError;
+		throw new Error("No clipboard API available");
+	}
+	function getGmSnapshot() {
+		if (typeof GM_info === "undefined") return null;
+		return toDebugValue({
+			scriptName: GM_info.script?.name,
+			scriptVersion: GM_info.script?.version,
+			managerVersion: GM_info.version
+		});
+	}
+	function getBrowserSnapshot() {
+		if (typeof window === "undefined" || typeof navigator === "undefined") return null;
+		return toDebugValue({
+			userAgent: navigator.userAgent,
+			platform: navigator.platform,
+			language: navigator.language,
+			languages: Array.from(navigator.languages || []),
+			viewport: {
+				innerWidth: window.innerWidth,
+				innerHeight: window.innerHeight,
+				devicePixelRatio: window.devicePixelRatio
+			},
+			screen: typeof screen !== "undefined" ? {
+				width: screen.width,
+				height: screen.height,
+				availWidth: screen.availWidth,
+				availHeight: screen.availHeight
+			} : null,
+			visibilityState: document.visibilityState,
+			timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+		});
+	}
+	function getPageSnapshot() {
+		if (typeof window === "undefined" || typeof document === "undefined") return null;
+		const bodyText = document.body?.textContent || "";
+		const bodyHtml = document.body?.innerHTML || "";
+		return toDebugValue({
+			href: redactUrl(window.location.href),
+			origin: window.location.origin,
+			pathname: window.location.pathname,
+			title: truncateDebugString(document.title || ""),
+			readyState: document.readyState,
+			visibilityState: document.visibilityState,
+			bodyTextChars: bodyText.length,
+			bodyHtmlChars: bodyHtml.length,
+			bodyTextHash: hashText(bodyText),
+			bodyTextApproxChars: htmlTextLength(bodyHtml),
+			pageFlags: getPageFlags(),
+			mnrRoots: {
+				readerRoot: Boolean(document.getElementById("mnr-reader-root")),
+				promptRoot: Boolean(document.getElementById("mnr-prompt-root")),
+				floatingButton: Boolean(document.getElementById("mnr-floating-btn")),
+				hideOriginalStyle: Boolean(document.getElementById("mnr-hide-original"))
+			},
+			historyState: toDebugValue(window.history.state)
+		});
+	}
+	function getPageFlags() {
+		const title = (document.title || "").toLowerCase();
+		const text = (document.body?.textContent || "").toLowerCase();
+		const html = document.documentElement?.innerHTML?.toLowerCase() || "";
+		return toDebugValue({
+			cloudflareLike: title.includes("just a moment") || text.includes("cloudflare") || html.includes("cf-challenge") || Boolean(document.querySelector(".cf-turnstile, input[name=\"cf-turnstile-response\"]")),
+			loginLike: /登录|登錄|login|sign in|注册|註冊/.test(text.slice(0, 5e3)),
+			noBody: !document.body
+		});
+	}
+	function getConfigSnapshot(configStore) {
+		return toDebugValue({
+			themeId: configStore.themeId,
+			reading: {
+				fontSize: configStore.reading.fontSize,
+				lineHeight: configStore.reading.lineHeight,
+				letterSpacing: configStore.reading.letterSpacing,
+				paragraphIndent: configStore.reading.paragraphIndent,
+				maxWidth: configStore.reading.maxWidth,
+				padding: configStore.reading.padding,
+				textConversion: configStore.reading.textConversion,
+				fontFamily: configStore.reading.fontFamily
+			},
+			behavior: configStore.behavior,
+			protection: configStore.protection,
+			customCssChars: configStore.customCSS.length
+		});
+	}
 	function captureHostPageSnapshot() {
 		if (typeof window === "undefined" || typeof document === "undefined") return null;
 		return {
@@ -18977,6 +19247,7 @@
 			syncHostPageToChapter(chapter.value, currentChapterIndex.value);
 		}
 		function setError(msg) {
+			recordDebugEvent("reader.error", { message: msg }, "error");
 			error.value = msg;
 			toastType.value = "error";
 			isLoading.value = false;
@@ -18987,6 +19258,11 @@
 			}, 3e3);
 		}
 		function showToast(msg, type = "info", duration = 2e3) {
+			recordDebugEvent("reader.toast", {
+				message: msg,
+				type,
+				duration
+			}, type);
 			error.value = msg;
 			toastType.value = type;
 			if (toastTimer.value) window.clearTimeout(toastTimer.value);
@@ -19135,16 +19411,23 @@
 			tocOriginal.value = [];
 		}
 		function activate() {
+			recordDebugEvent("reader.activate");
 			isActive.value = true;
 			error.value = null;
 		}
 		function deactivate() {
+			recordDebugEvent("reader.deactivate");
 			runtime.bumpSession();
 			isActive.value = false;
 			cancelAllInFlight();
 			clearAllData();
 		}
 		function setChapter(newChapter, newRule) {
+			recordDebugEvent("reader.setChapter", {
+				url: newChapter.url,
+				title: newChapter.title,
+				ruleId: newRule?.id || newChapter.rule?.id
+			});
 			runtime.bumpSession();
 			cancelAllInFlight();
 			toc.value = [];
@@ -19200,12 +19483,54 @@
 		function setCurrentChapter(index) {
 			if (index < 0 || index >= chapters.value.length) return;
 			if (currentChapterIndex.value === index) return;
+			recordDebugEvent("reader.setCurrentChapter", {
+				from: currentChapterIndex.value,
+				to: index,
+				url: chapters.value[index]?.chapter.url
+			});
 			currentChapterIndex.value = index;
 			syncCurrentHostPage();
 		}
+		async function loadNextChapter(source = "auto") {
+			recordDebugEvent("reader.loadNext.start", {
+				source,
+				currentIndex: currentChapterIndex.value,
+				currentUrl: chapter.value?.url,
+				targetUrl: chapters.value[chapters.value.length - 1]?.chapter.nextUrl
+			});
+			const ok = await nav.loadNextChapter(source);
+			recordDebugEvent("reader.loadNext.end", {
+				source,
+				ok,
+				chapterCount: chapters.value.length,
+				currentIndex: currentChapterIndex.value
+			});
+			return ok;
+		}
+		async function loadPrevChapter(source = "manual") {
+			recordDebugEvent("reader.loadPrev.start", {
+				source,
+				currentIndex: currentChapterIndex.value,
+				currentUrl: chapter.value?.url,
+				targetUrl: chapters.value[0]?.chapter.prevUrl
+			});
+			const ok = await nav.loadPrevChapter(source);
+			recordDebugEvent("reader.loadPrev.end", {
+				source,
+				ok,
+				chapterCount: chapters.value.length,
+				currentIndex: currentChapterIndex.value
+			});
+			return ok;
+		}
 		async function rebuildChaptersAround(targetUrl) {
+			recordDebugEvent("reader.rebuildAround.start", { targetUrl });
 			const ok = await nav.rebuildChaptersAround(targetUrl);
 			if (ok) syncCurrentHostPage();
+			recordDebugEvent("reader.rebuildAround.end", {
+				targetUrl,
+				ok
+			});
 			return ok;
 		}
 		async function reloadCurrentChapter() {
@@ -19220,6 +19545,123 @@
 				chapterPercent: scrollPercent.value,
 				scrollPercent: scrollPercent.value,
 				lastRead: Date.now()
+			};
+		}
+		function getDebugSnapshot() {
+			const currentEntry = chapters.value[currentChapterIndex.value] || null;
+			const firstEntry = chapters.value[0] || null;
+			const lastEntry = chapters.value[chapters.value.length - 1] || null;
+			const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
+			return {
+				active: isActive.value,
+				loading: {
+					main: isLoading.value,
+					prev: isLoadingPrev.value,
+					next: isLoadingNext.value,
+					toc: tocLoading.value,
+					pendingNext: Boolean(pendingNextAbort.value),
+					pendingPrev: Boolean(pendingPrevAbort.value),
+					pendingCache: Boolean(cacheAbort.value),
+					pendingReload: Boolean(reloadAbort.value),
+					pendingToc: Boolean(tocAbort.value)
+				},
+				toast: {
+					message: error.value,
+					type: toastType.value
+				},
+				view: {
+					currentChapterIndex: currentChapterIndex.value,
+					chapterCount: chapters.value.length,
+					scrollPercent: scrollPercent.value,
+					hasNext: hasNext.value,
+					hasPrev: hasPrev.value,
+					hasIndex: hasIndex.value,
+					confidence: confidence.value,
+					method: method.value,
+					conversionMode: currentConversionMode.value,
+					runtimeSessionId: runtime.sessionId(),
+					runtimeViewId: runtime.viewId()
+				},
+				current: summarizeChapterForDebug(currentEntry),
+				first: summarizeChapterForDebug(firstEntry),
+				last: summarizeChapterForDebug(lastEntry),
+				navigation: {
+					history: {
+						count: history.value.length,
+						tail: tailStrings(history.value)
+					},
+					loadedUrls: summarizeUrlSet(loadedUrls.value),
+					vipBlockedUrls: summarizeUrlSet(vipBlockedUrls.value),
+					blockedNavUrls: summarizeUrlSet(blockedNavUrls.value),
+					navFailures: {
+						count: navFailures.size,
+						tail: Array.from(navFailures.entries()).slice(-8).map(([url, failure]) => ({
+							url: redactUrl(url),
+							count: failure.count,
+							retryInMs: Math.max(0, failure.nextRetryAt - Date.now())
+						}))
+					}
+				},
+				cache: {
+					currentBook: cacheBook ? {
+						bookId: cacheBook.bookId,
+						indexUrl: redactUrl(cacheBook.indexUrl)
+					} : null,
+					progress: { ...cacheProgress.value },
+					queue: {
+						count: cacheQueue.value.length,
+						tail: tailStrings(cacheQueue.value)
+					},
+					memory: {
+						count: cachedContents.value.size,
+						tail: Array.from(cachedContents.value.entries()).slice(-8).map(([url, cached]) => ({
+							url: redactUrl(url),
+							title: cached.chapter.title,
+							contentChars: cached.chapter.content.length,
+							textChars: htmlTextLength(cached.chapter.content),
+							cachedAt: cached.cachedAt
+						}))
+					},
+					persistedUrls: summarizeUrlSet(persistedUrls.value)
+				},
+				toc: {
+					loading: tocLoading.value,
+					count: toc.value.length,
+					originalCount: tocOriginal.value.length,
+					currentMatched: tocWithStatus.value.some((entry) => entry.isCurrent),
+					cachedCount: tocWithStatus.value.filter((entry) => entry.isCached).length,
+					persistedCount: tocWithStatus.value.filter((entry) => entry.isPersisted).length
+				},
+				originals: {
+					contentCount: originalContents.value.size,
+					titleCount: originalTitles.value.size
+				}
+			};
+		}
+		function summarizeChapterForDebug(entry) {
+			if (!entry) return null;
+			const chapterData = entry.chapter;
+			return {
+				id: entry.id,
+				url: redactUrl(chapterData.url),
+				title: chapterData.title,
+				bookTitle: chapterData.bookTitle || null,
+				prevUrl: redactUrl(chapterData.prevUrl),
+				nextUrl: redactUrl(chapterData.nextUrl),
+				indexUrl: redactUrl(chapterData.indexUrl),
+				confidence: chapterData.confidence,
+				method: chapterData.method,
+				ruleId: entry.rule?.id || chapterData.rule?.id || null,
+				contentChars: chapterData.content.length,
+				textChars: htmlTextLength(chapterData.content),
+				rawContentChars: chapterData.rawContent.length,
+				contentHash: hashText(chapterData.content)
+			};
+		}
+		function summarizeUrlSet(values) {
+			return {
+				count: values.size,
+				tail: tailStrings(values)
 			};
 		}
 		function $reset() {
@@ -19263,8 +19705,8 @@
 			deactivate,
 			setChapter,
 			setCurrentChapter,
-			loadNextChapter: nav.loadNextChapter,
-			loadPrevChapter: nav.loadPrevChapter,
+			loadNextChapter,
+			loadPrevChapter,
 			setLoading,
 			setError,
 			showToast,
@@ -19272,6 +19714,7 @@
 			clearError,
 			updateScroll,
 			getProgress,
+			getDebugSnapshot,
 			applyTextConversion,
 			startCacheAll,
 			cancelCacheAll,
@@ -20234,6 +20677,11 @@ ul, ol {
 				graceUntil = now() + getRandomDelayMs(PRELOAD_DELAY_MIN_MS, PRELOAD_DELAY_MAX_MS);
 				failureCooldownUntil = 0;
 				clearAutoLoadTimer();
+				recordDebugEvent("autoload.session", {
+					currentIndex: getCurrentIndex(),
+					currentUrl: readerStore.chapters[getCurrentIndex()]?.chapter.url,
+					graceMs: Math.max(0, graceUntil - now())
+				});
 			}
 			return true;
 		}
@@ -20267,6 +20715,11 @@ ul, ol {
 		}
 		function finishLoad(ok) {
 			autoLoadInFlight = false;
+			recordDebugEvent("autoload.finish", {
+				ok,
+				chapterCount: readerStore.chapters.length,
+				currentIndex: readerStore.currentChapterIndex
+			});
 			if (ok) {
 				failureCooldownUntil = 0;
 				return;
@@ -20277,6 +20730,11 @@ ul, ol {
 			if (!mainRef.value || !canAutoLoadBase()) return;
 			clearAutoLoadTimer();
 			autoLoadInFlight = true;
+			recordDebugEvent("autoload.start", {
+				currentIndex: readerStore.currentChapterIndex,
+				currentUrl: readerStore.chapter?.url,
+				nextUrl: readerStore.chapters[readerStore.chapters.length - 1]?.chapter.nextUrl
+			});
 			readerStore.loadNextChapter("auto").then(finishLoad, () => finishLoad(false));
 		}
 		function shouldRetryAfterCooldown(reason) {
@@ -21065,6 +21523,14 @@ ul, ol {
 			async function handleClearCache() {
 				if (window.confirm("确定要清除本书的缓存吗？")) await readerStore.clearPersistedCache();
 			}
+			async function handleCopyDiagnosticInfo() {
+				await copyDiagnosticInfo({
+					readerStore,
+					configStore,
+					bootstrap: getAppDebugSnapshot(),
+					notify: (message, type = "info") => readerStore.showToast(message, type)
+				});
+			}
 			async function handleResetRule() {
 				if (window.confirm("确定要重置站点规则吗？将恢复为默认/自动检测。")) {
 					if (props.domain) {
@@ -21236,6 +21702,10 @@ ul, ol {
 								class: "mnr-action-btn mnr-action-btn--danger",
 								onClick: handleClearCache
 							}, [_cache[42] || (_cache[42] = createTextVNode(" 清除 ", -1)), createBaseVNode("span", _hoisted_35, "(" + toDisplayString(persistedCount.value) + ")", 1)])) : createCommentVNode("", true)]),
+							createBaseVNode("button", {
+								class: "mnr-action-btn",
+								onClick: handleCopyDiagnosticInfo
+							}, "复制诊断信息"),
 							createBaseVNode("button", {
 								class: "mnr-action-btn",
 								onClick: _cache[17] || (_cache[17] = ($event) => {
@@ -22659,6 +23129,11 @@ ul, ol {
 			console.error("[MNR] Pinia not initialized");
 			return;
 		}
+		recordDebugEvent("bootstrap.launchReader", {
+			url: chapter.url,
+			title: chapter.title,
+			ruleId: rule?.id || chapter.rule?.id
+		});
 		appState.originalHostPage = captureHostPageSnapshot();
 		const pageKind = getPageKind(window.location.href, document);
 		appState.entryPageKind = pageKind === "chapter" || rule || chapter.rule ? "chapter" : pageKind;
@@ -22689,6 +23164,7 @@ ul, ol {
 	}
 	function closeReader() {
 		if (!appState.isActive) return;
+		recordDebugEvent("bootstrap.closeReader");
 		const entryPageKind = appState.entryPageKind;
 		if (entryPageKind === "chapter") try {
 			const hostname = new URL(window.location.href).hostname;
@@ -22772,6 +23248,7 @@ ul, ol {
 	}
 	async function manualEnable() {
 		const currentUrl = window.location.href;
+		recordDebugEvent("bootstrap.manualEnable", { url: currentUrl });
 		hideFloatingButton();
 		await ensureInitialized();
 		if (!pinia) return;
@@ -22782,6 +23259,28 @@ ul, ol {
 		manager.setLaunchCallback(launchReader);
 		await manager.manualEnable(document);
 		if (!appState.isActive && await shouldShowManualEntryForPage(currentUrl, document)) showFloatingButton();
+	}
+	function getAppDebugSnapshot() {
+		const decision = appState.currentDecision;
+		return {
+			isInitialized: appState.isInitialized,
+			autoEnableDone: appState.autoEnableDone,
+			isActive: appState.isActive,
+			entryPageKind: appState.entryPageKind,
+			currentDecision: decision ? toDebugValue({
+				shouldEnable: decision.shouldEnable,
+				method: decision.method,
+				confidence: decision.confidence,
+				reasons: decision.reasons,
+				showFloatingButton: decision.showFloatingButton,
+				ruleId: decision.rule?.id
+			}) : null,
+			originalHostPage: appState.originalHostPage ? toDebugValue({
+				url: redactUrl(appState.originalHostPage.url),
+				title: appState.originalHostPage.title,
+				state: appState.originalHostPage.state
+			}) : null
+		};
 	}
 	function isTopFrame() {
 		try {
@@ -22796,10 +23295,29 @@ ul, ol {
 		GM_registerMenuCommand("进入阅读模式", () => {
 			manualEnable().catch((e) => console.error("[MNR] Manual enable error:", e));
 		});
+		GM_registerMenuCommand("复制诊断信息", () => {
+			copyDiagnosticsFromMenu().catch((e) => console.error("[MNR] Copy diagnostics error:", e));
+		});
+	}
+	async function copyDiagnosticsFromMenu() {
+		await ensureInitialized();
+		const readerStore = pinia ? useReaderStore(pinia) : null;
+		const configStore = pinia ? useConfigStore(pinia) : null;
+		const notify = readerStore?.isActive === true ? (message, type = "info") => readerStore.showToast(message, type) : void 0;
+		const result = await copyDiagnosticInfo({
+			readerStore,
+			configStore,
+			bootstrap: getAppDebugSnapshot(),
+			notify
+		});
+		if (notify) return;
+		if (result.ok) console.info("[MNR] 诊断信息已复制");
+		else console.error("[MNR] 诊断信息复制失败:", result.error);
 	}
 	async function bootstrap() {
 		registerMenuCommands();
 		if (!isTopFrame()) return;
+		installGlobalDebugErrorListeners();
 		if (appState.isActive) return;
 		const url = window.location.href;
 		if (!await shouldBootstrapForPage(url, getPageKind(url, document))) return;

@@ -3,9 +3,11 @@
  */
 
 import { computed, ref } from 'vue';
+import { hashText, htmlTextLength, redactUrl, tailStrings } from '@/core/debug/diagnostics';
 import { type ConversionMode } from '@/core/converter';
 import { defineStore } from 'pinia';
 import type { ParsedChapter } from '@/core/parser';
+import { recordDebugEvent } from '@/core/debug/events';
 import type { SiteRule } from '@/core/rules/types';
 
 // Import types from modular files
@@ -161,6 +163,7 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function setError(msg: string) {
+    recordDebugEvent('reader.error', { message: msg }, 'error');
     error.value = msg;
     toastType.value = 'error';
     isLoading.value = false;
@@ -174,6 +177,7 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function showToast(msg: string, type: 'info' | 'error' = 'info', duration = 2000) {
+    recordDebugEvent('reader.toast', { message: msg, type, duration }, type);
     error.value = msg;
     toastType.value = type;
     if (toastTimer.value) {
@@ -354,11 +358,13 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function activate() {
+    recordDebugEvent('reader.activate');
     isActive.value = true;
     error.value = null;
   }
 
   function deactivate() {
+    recordDebugEvent('reader.deactivate');
     runtime.bumpSession();
     isActive.value = false;
     cancelAllInFlight();
@@ -366,6 +372,11 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   function setChapter(newChapter: ParsedChapter, newRule?: SiteRule) {
+    recordDebugEvent('reader.setChapter', {
+      url: newChapter.url,
+      title: newChapter.title,
+      ruleId: newRule?.id || newChapter.rule?.id,
+    });
     runtime.bumpSession();
     cancelAllInFlight();
     toc.value = [];
@@ -436,13 +447,54 @@ export const useReaderStore = defineStore('reader', () => {
     if (index < 0 || index >= chapters.value.length) return;
     if (currentChapterIndex.value === index) return;
 
+    recordDebugEvent('reader.setCurrentChapter', {
+      from: currentChapterIndex.value,
+      to: index,
+      url: chapters.value[index]?.chapter.url,
+    });
     currentChapterIndex.value = index;
     syncCurrentHostPage();
   }
 
+  async function loadNextChapter(source: 'auto' | 'manual' = 'auto'): Promise<boolean> {
+    recordDebugEvent('reader.loadNext.start', {
+      source,
+      currentIndex: currentChapterIndex.value,
+      currentUrl: chapter.value?.url,
+      targetUrl: chapters.value[chapters.value.length - 1]?.chapter.nextUrl,
+    });
+    const ok = await nav.loadNextChapter(source);
+    recordDebugEvent('reader.loadNext.end', {
+      source,
+      ok,
+      chapterCount: chapters.value.length,
+      currentIndex: currentChapterIndex.value,
+    });
+    return ok;
+  }
+
+  async function loadPrevChapter(source: 'auto' | 'manual' = 'manual'): Promise<boolean> {
+    recordDebugEvent('reader.loadPrev.start', {
+      source,
+      currentIndex: currentChapterIndex.value,
+      currentUrl: chapter.value?.url,
+      targetUrl: chapters.value[0]?.chapter.prevUrl,
+    });
+    const ok = await nav.loadPrevChapter(source);
+    recordDebugEvent('reader.loadPrev.end', {
+      source,
+      ok,
+      chapterCount: chapters.value.length,
+      currentIndex: currentChapterIndex.value,
+    });
+    return ok;
+  }
+
   async function rebuildChaptersAround(targetUrl: string): Promise<boolean> {
+    recordDebugEvent('reader.rebuildAround.start', { targetUrl });
     const ok = await nav.rebuildChaptersAround(targetUrl);
     if (ok) syncCurrentHostPage();
+    recordDebugEvent('reader.rebuildAround.end', { targetUrl, ok });
     return ok;
   }
 
@@ -459,6 +511,133 @@ export const useReaderStore = defineStore('reader', () => {
       chapterPercent: scrollPercent.value,
       scrollPercent: scrollPercent.value,
       lastRead: Date.now(),
+    };
+  }
+
+  function getDebugSnapshot() {
+    const currentEntry = chapters.value[currentChapterIndex.value] || null;
+    const firstEntry = chapters.value[0] || null;
+    const lastEntry = chapters.value[chapters.value.length - 1] || null;
+    const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
+
+    return {
+      active: isActive.value,
+      loading: {
+        main: isLoading.value,
+        prev: isLoadingPrev.value,
+        next: isLoadingNext.value,
+        toc: tocLoading.value,
+        pendingNext: Boolean(pendingNextAbort.value),
+        pendingPrev: Boolean(pendingPrevAbort.value),
+        pendingCache: Boolean(cacheAbort.value),
+        pendingReload: Boolean(reloadAbort.value),
+        pendingToc: Boolean(tocAbort.value),
+      },
+      toast: {
+        message: error.value,
+        type: toastType.value,
+      },
+      view: {
+        currentChapterIndex: currentChapterIndex.value,
+        chapterCount: chapters.value.length,
+        scrollPercent: scrollPercent.value,
+        hasNext: hasNext.value,
+        hasPrev: hasPrev.value,
+        hasIndex: hasIndex.value,
+        confidence: confidence.value,
+        method: method.value,
+        conversionMode: currentConversionMode.value,
+        runtimeSessionId: runtime.sessionId(),
+        runtimeViewId: runtime.viewId(),
+      },
+      current: summarizeChapterForDebug(currentEntry),
+      first: summarizeChapterForDebug(firstEntry),
+      last: summarizeChapterForDebug(lastEntry),
+      navigation: {
+        history: {
+          count: history.value.length,
+          tail: tailStrings(history.value),
+        },
+        loadedUrls: summarizeUrlSet(loadedUrls.value),
+        vipBlockedUrls: summarizeUrlSet(vipBlockedUrls.value),
+        blockedNavUrls: summarizeUrlSet(blockedNavUrls.value),
+        navFailures: {
+          count: navFailures.size,
+          tail: Array.from(navFailures.entries())
+            .slice(-8)
+            .map(([url, failure]) => ({
+              url: redactUrl(url),
+              count: failure.count,
+              retryInMs: Math.max(0, failure.nextRetryAt - Date.now()),
+            })),
+        },
+      },
+      cache: {
+        currentBook: cacheBook
+          ? {
+              bookId: cacheBook.bookId,
+              indexUrl: redactUrl(cacheBook.indexUrl),
+            }
+          : null,
+        progress: { ...cacheProgress.value },
+        queue: {
+          count: cacheQueue.value.length,
+          tail: tailStrings(cacheQueue.value),
+        },
+        memory: {
+          count: cachedContents.value.size,
+          tail: Array.from(cachedContents.value.entries())
+            .slice(-8)
+            .map(([url, cached]) => ({
+              url: redactUrl(url),
+              title: cached.chapter.title,
+              contentChars: cached.chapter.content.length,
+              textChars: htmlTextLength(cached.chapter.content),
+              cachedAt: cached.cachedAt,
+            })),
+        },
+        persistedUrls: summarizeUrlSet(persistedUrls.value),
+      },
+      toc: {
+        loading: tocLoading.value,
+        count: toc.value.length,
+        originalCount: tocOriginal.value.length,
+        currentMatched: tocWithStatus.value.some(entry => entry.isCurrent),
+        cachedCount: tocWithStatus.value.filter(entry => entry.isCached).length,
+        persistedCount: tocWithStatus.value.filter(entry => entry.isPersisted).length,
+      },
+      originals: {
+        contentCount: originalContents.value.size,
+        titleCount: originalTitles.value.size,
+      },
+    };
+  }
+
+  function summarizeChapterForDebug(entry: ChapterEntry | null) {
+    if (!entry) return null;
+    const chapterData = entry.chapter;
+    return {
+      id: entry.id,
+      url: redactUrl(chapterData.url),
+      title: chapterData.title,
+      bookTitle: chapterData.bookTitle || null,
+      prevUrl: redactUrl(chapterData.prevUrl),
+      nextUrl: redactUrl(chapterData.nextUrl),
+      indexUrl: redactUrl(chapterData.indexUrl),
+      confidence: chapterData.confidence,
+      method: chapterData.method,
+      ruleId: entry.rule?.id || chapterData.rule?.id || null,
+      contentChars: chapterData.content.length,
+      textChars: htmlTextLength(chapterData.content),
+      rawContentChars: chapterData.rawContent.length,
+      contentHash: hashText(chapterData.content),
+    };
+  }
+
+  function summarizeUrlSet(values: Set<string>) {
+    return {
+      count: values.size,
+      tail: tailStrings(values),
     };
   }
 
@@ -504,8 +683,8 @@ export const useReaderStore = defineStore('reader', () => {
     deactivate,
     setChapter,
     setCurrentChapter,
-    loadNextChapter: nav.loadNextChapter,
-    loadPrevChapter: nav.loadPrevChapter,
+    loadNextChapter,
+    loadPrevChapter,
     setLoading,
     setError,
     showToast,
@@ -513,6 +692,7 @@ export const useReaderStore = defineStore('reader', () => {
     clearError,
     updateScroll,
     getProgress,
+    getDebugSnapshot,
     applyTextConversion,
     startCacheAll,
     cancelCacheAll,

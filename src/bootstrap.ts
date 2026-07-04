@@ -17,6 +17,7 @@ import {
   type ProtectionOptions,
   type SiteRule,
 } from '@/core';
+import { type BootstrapDebugSnapshot, copyDiagnosticInfo } from '@/ui/debug/diagnostics';
 import { BUILD_DATE, VERSION } from '@/version';
 import {
   captureHostPageSnapshot,
@@ -25,7 +26,9 @@ import {
 } from '@/ui/stores/reader/hostPage';
 import { createApp, defineComponent, h, ref } from 'vue';
 import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
+import { installGlobalDebugErrorListeners, recordDebugEvent } from '@/core/debug/events';
 import { type ProtectionSettings, useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
+import { redactUrl, toDebugValue } from '@/core/debug/diagnostics';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
@@ -269,6 +272,11 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
   }
 
   // Save host page state before the reader modifies title/URL.
+  recordDebugEvent('bootstrap.launchReader', {
+    url: chapter.url,
+    title: chapter.title,
+    ruleId: rule?.id || chapter.rule?.id,
+  });
   appState.originalHostPage = captureHostPageSnapshot();
   const pageKind = getPageKind(window.location.href, document);
   appState.entryPageKind = pageKind === 'chapter' || rule || chapter.rule ? 'chapter' : pageKind;
@@ -326,6 +334,7 @@ function hideOriginalContent(): void {
 export function closeReader(): void {
   if (!appState.isActive) return;
 
+  recordDebugEvent('bootstrap.closeReader');
   const entryPageKind = appState.entryPageKind;
 
   // Save site preference - user exited reader, don't auto-enable next time.
@@ -459,6 +468,7 @@ function hideFloatingButton(): void {
  */
 export async function manualEnable(): Promise<void> {
   const currentUrl = window.location.href;
+  recordDebugEvent('bootstrap.manualEnable', { url: currentUrl });
   hideFloatingButton();
 
   await ensureInitialized();
@@ -492,6 +502,34 @@ export function getVersion(): { version: string; buildDate: string } {
   return { version: VERSION, buildDate: BUILD_DATE };
 }
 
+export function getAppDebugSnapshot(): BootstrapDebugSnapshot {
+  const decision = appState.currentDecision;
+
+  return {
+    isInitialized: appState.isInitialized,
+    autoEnableDone: appState.autoEnableDone,
+    isActive: appState.isActive,
+    entryPageKind: appState.entryPageKind,
+    currentDecision: decision
+      ? toDebugValue({
+          shouldEnable: decision.shouldEnable,
+          method: decision.method,
+          confidence: decision.confidence,
+          reasons: decision.reasons,
+          showFloatingButton: decision.showFloatingButton,
+          ruleId: decision.rule?.id,
+        })
+      : null,
+    originalHostPage: appState.originalHostPage
+      ? toDebugValue({
+          url: redactUrl(appState.originalHostPage.url),
+          title: appState.originalHostPage.title,
+          state: appState.originalHostPage.state,
+        })
+      : null,
+  };
+}
+
 // Auto-initialize when DOM is ready
 function isTopFrame(): boolean {
   try {
@@ -508,12 +546,42 @@ function registerMenuCommands(): void {
   GM_registerMenuCommand('进入阅读模式', () => {
     manualEnable().catch(e => console.error('[MNR] Manual enable error:', e));
   });
+
+  GM_registerMenuCommand('复制诊断信息', () => {
+    copyDiagnosticsFromMenu().catch(e => console.error('[MNR] Copy diagnostics error:', e));
+  });
+}
+
+async function copyDiagnosticsFromMenu(): Promise<void> {
+  await ensureInitialized();
+
+  const readerStore = pinia ? useReaderStore(pinia) : null;
+  const configStore = pinia ? useConfigStore(pinia) : null;
+  const notify =
+    readerStore?.isActive === true
+      ? (message: string, type: 'info' | 'error' = 'info') => readerStore.showToast(message, type)
+      : undefined;
+
+  const result = await copyDiagnosticInfo({
+    readerStore,
+    configStore,
+    bootstrap: getAppDebugSnapshot(),
+    notify,
+  });
+
+  if (notify) return;
+  if (result.ok) {
+    console.info('[MNR] 诊断信息已复制');
+  } else {
+    console.error('[MNR] 诊断信息复制失败:', result.error);
+  }
 }
 
 async function bootstrap(): Promise<void> {
   registerMenuCommands();
 
   if (!isTopFrame()) return;
+  installGlobalDebugErrorListeners();
   if (appState.isActive) return;
 
   const url = window.location.href;

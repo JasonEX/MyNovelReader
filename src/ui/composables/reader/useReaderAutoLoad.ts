@@ -7,6 +7,7 @@
  */
 
 import { type ComputedRef, onUnmounted, type Ref, watch } from 'vue';
+import { recordDebugEvent } from '@/core/debug/events';
 import type { useConfigStore } from '@/ui/stores/config';
 import type { useReaderStore } from '@/ui/stores/reader';
 
@@ -82,6 +83,11 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       graceUntil = now() + getRandomDelayMs(PRELOAD_DELAY_MIN_MS, PRELOAD_DELAY_MAX_MS);
       failureCooldownUntil = 0;
       clearAutoLoadTimer();
+      recordDebugEvent('autoload.session', {
+        currentIndex: getCurrentIndex(),
+        currentUrl: readerStore.chapters[getCurrentIndex()]?.chapter.url,
+        graceMs: Math.max(0, graceUntil - now()),
+      });
     }
     return true;
   }
@@ -139,6 +145,11 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
   function finishLoad(ok: boolean): void {
     autoLoadInFlight = false;
+    recordDebugEvent('autoload.finish', {
+      ok,
+      chapterCount: readerStore.chapters.length,
+      currentIndex: readerStore.currentChapterIndex,
+    });
     if (ok) {
       failureCooldownUntil = 0;
       return;
@@ -153,6 +164,11 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
     clearAutoLoadTimer();
     autoLoadInFlight = true;
+    recordDebugEvent('autoload.start', {
+      currentIndex: readerStore.currentChapterIndex,
+      currentUrl: readerStore.chapter?.url,
+      nextUrl: readerStore.chapters[readerStore.chapters.length - 1]?.chapter.nextUrl,
+    });
     void readerStore.loadNextChapter('auto').then(finishLoad, () => finishLoad(false));
   }
 

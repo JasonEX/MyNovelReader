@@ -226,6 +226,7 @@
                   <span class="mnr-cache-count">({{ persistedCount }})</span>
                 </button>
               </div>
+              <button class="mnr-action-btn" @click="handleCopyDiagnosticInfo">复制诊断信息</button>
               <button
                 class="mnr-action-btn"
                 @click="
@@ -248,7 +249,8 @@ import { ref, computed, watch } from 'vue';
 import { useConfigStore, THEMES } from '@/ui/stores/config';
 import { useReaderStore } from '@/ui/stores/reader';
 import { useRuleStore } from '@/ui/stores/rule';
-import { closeReader } from '@/bootstrap';
+import { closeReader, getAppDebugSnapshot } from '@/bootstrap';
+import { copyDiagnosticInfo } from '@/ui/debug/diagnostics';
 import { getSiteProtection } from '@/core/protection';
 
 const props = defineProps<{
@@ -345,6 +347,15 @@ async function handleClearCache() {
   if (window.confirm('确定要清除本书的缓存吗？')) {
     await readerStore.clearPersistedCache();
   }
+}
+
+async function handleCopyDiagnosticInfo() {
+  await copyDiagnosticInfo({
+    readerStore,
+    configStore,
+    bootstrap: getAppDebugSnapshot(),
+    notify: (message, type = 'info') => readerStore.showToast(message, type),
+  });
 }
 
 async function handleResetRule() {
