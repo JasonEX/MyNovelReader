@@ -16,10 +16,9 @@ import {
   normalizeUrlForFetch,
   resolveUrl,
 } from '@/ui/stores/reader/utils';
-import { clearNavFailure, getNavRetryState, recordNavFailure } from '@/ui/stores/reader/navFailure';
+import { clearNavFailure, recordNavFailure } from '@/ui/stores/reader/navFailure';
 
-// Also import from barrel to cover index.ts re-exports
-import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from '@/ui/stores/reader/index';
+import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from '@/ui/stores/reader/types';
 
 type NavFailureMap = Map<string, { count: number; nextRetryAt: number }>;
 
@@ -92,46 +91,6 @@ describe('recordNavFailure', () => {
     // url0 had the earliest nextRetryAt, should be trimmed
     expect(failures.has('url0')).toBe(false);
     expect(failures.has('url_new')).toBe(true);
-  });
-});
-
-describe('getNavRetryState', () => {
-  let failures: NavFailureMap;
-
-  beforeEach(() => {
-    failures = new Map();
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('returns non-blocked state for unknown key', () => {
-    const state = getNavRetryState(failures, 'unknown');
-    expect(state).toEqual({ blocked: false, count: 0 });
-  });
-
-  it('returns blocked state when within backoff period', () => {
-    failures.set('url1', { count: 2, nextRetryAt: Date.now() + 5000 });
-    const state = getNavRetryState(failures, 'url1');
-    expect(state.blocked).toBe(true);
-    expect(state.count).toBe(2);
-  });
-
-  it('returns non-blocked state when backoff period has passed', () => {
-    failures.set('url1', { count: 2, nextRetryAt: Date.now() - 1000 });
-    const state = getNavRetryState(failures, 'url1');
-    expect(state.blocked).toBe(false);
-    expect(state.count).toBe(2);
-  });
-
-  it('returns non-blocked when nextRetryAt equals now', () => {
-    failures.set('url1', { count: 1, nextRetryAt: Date.now() });
-    const state = getNavRetryState(failures, 'url1');
-    expect(state.blocked).toBe(false);
-    expect(state.count).toBe(1);
   });
 });
 

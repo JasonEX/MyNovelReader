@@ -164,7 +164,7 @@ export function createNavigation(ctx: NavigationContext) {
       // Check if this is a TOC page
       const isTocPage = detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url);
       if (isTocPage) {
-        if (shouldPersistNavigationBlock(source, 'toc-page')) {
+        if (shouldPersistNavigationBlock(source)) {
           ctx.blockedNavUrls.value.add(load.navKey);
         }
         if (source === 'manual') {
@@ -182,7 +182,7 @@ export function createNavigation(ctx: NavigationContext) {
           // This is fine, it's actually the previous chapter
         } else if (parsed.prevUrl && !parsed.nextUrl) {
           // Page has prev but no next - likely a TOC or non-chapter page
-          if (shouldPersistNavigationBlock(source, 'prev-page')) {
+          if (shouldPersistNavigationBlock(source)) {
             ctx.blockedNavUrls.value.add(load.navKey);
           }
           return false;

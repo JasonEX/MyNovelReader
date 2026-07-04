@@ -26,22 +26,6 @@ export function recordNavFailure(
 }
 
 /**
- * Check whether a navigation key is still in backoff.
- * Returns `{ blocked: true, ... }` when retry is not yet allowed.
- */
-export function getNavRetryState(
-  failures: NavFailureMap,
-  key: string
-): { blocked: boolean; count: number } {
-  const failure = failures.get(key);
-  if (!failure) return { blocked: false, count: 0 };
-  return {
-    blocked: Date.now() < failure.nextRetryAt,
-    count: failure.count,
-  };
-}
-
-/**
  * Clear the failure record for a navigation key (e.g. after a successful load).
  */
 export function clearNavFailure(failures: NavFailureMap, key: string): void {

@@ -18877,7 +18877,7 @@
 			}
 		}
 	}
-	function shouldPersistNavigationBlock(source, _reason) {
+	function shouldPersistNavigationBlock(source) {
 		return source === "manual";
 	}
 	function shouldUseNavigationFailureCooldown(source) {
@@ -18900,7 +18900,7 @@
 		if (targetUrl !== rawTargetUrl) if (isNext) refChapter.chapter.nextUrl = targetUrl;
 		else refChapter.chapter.prevUrl = targetUrl;
 		if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
-			if (shouldPersistNavigationBlock(source, "index-target")) ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
+			if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
 			if (source === "manual") ctx.showToast(endMessage, "info");
 			return null;
 		}
@@ -18931,7 +18931,7 @@
 	function validateTargetChapterUrl(ctx, load, source) {
 		if (!isInvalidChapterUrl(load.targetUrl, load.refChapter.chapter.url)) return true;
 		load.isLoadingRef.value = false;
-		if (shouldPersistNavigationBlock(source, "invalid-target")) ctx.blockedNavUrls.value.add(load.navKey);
+		if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(load.navKey);
 		if (source === "manual") ctx.showToast(load.endMessage, "info");
 		return false;
 	}
@@ -19019,13 +19019,13 @@
 				if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
 				if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
 				if (detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url)) {
-					if (shouldPersistNavigationBlock(source, "toc-page")) ctx.blockedNavUrls.value.add(load.navKey);
+					if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(load.navKey);
 					if (source === "manual") ctx.showToast(load.endMessage, "info");
 					return false;
 				}
 				if (!load.isNext) {
 					if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(load.refChapter.chapter.url)) {} else if (parsed.prevUrl && !parsed.nextUrl) {
-						if (shouldPersistNavigationBlock(source, "prev-page")) ctx.blockedNavUrls.value.add(load.navKey);
+						if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(load.navKey);
 						return false;
 					}
 				}
@@ -20643,6 +20643,40 @@ ul, ol {
 		};
 	}
 	var INTERSECTION_ROOT_MARGIN_PX = 1600;
+	function isViewportNearBottom(scrollHeight, scrollTop, clientHeight, marginPx = INTERSECTION_ROOT_MARGIN_PX) {
+		return scrollHeight - (scrollTop + clientHeight) <= marginPx;
+	}
+	function decideAutoLoadNext(reason, input) {
+		if (!canAutoLoadBase(input)) return {
+			type: "idle",
+			clearTimer: !input.enabled || input.unreadLoadedChapterCount > 0
+		};
+		if (input.now < input.graceUntil) return {
+			type: "schedule",
+			dueAt: input.graceUntil
+		};
+		if (input.now < input.failureCooldownUntil) return shouldRetryAfterCooldown(reason) ? {
+			type: "schedule",
+			dueAt: input.failureCooldownUntil
+		} : {
+			type: "idle",
+			clearTimer: false
+		};
+		if (requiresNearBottom(reason) && !input.isNearBottom) return {
+			type: "idle",
+			clearTimer: false
+		};
+		return { type: "start" };
+	}
+	function canAutoLoadBase(input) {
+		return input.enabled && input.hasChapter && input.hasNext && !input.isLoadingNext && !input.isLoadingPrev && !input.isLoading && !input.isNavigating && !input.autoLoadInFlight && !input.pageHidden && input.unreadLoadedChapterCount === 0;
+	}
+	function shouldRetryAfterCooldown(reason) {
+		return reason !== "state";
+	}
+	function requiresNearBottom(reason) {
+		return reason === "scroll" || reason === "settled" || reason === "sentinel";
+	}
 	var PRELOAD_DELAY_MIN_MS = 3e3;
 	var PRELOAD_DELAY_MAX_MS = 5e3;
 	var FAILURE_COOLDOWN_MIN_MS = 6e3;
@@ -20695,7 +20729,7 @@ ul, ol {
 			return typeof document !== "undefined" && document.visibilityState === "hidden";
 		}
 		function isNearBottom(mainEl) {
-			return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= INTERSECTION_ROOT_MARGIN_PX;
+			return isViewportNearBottom(mainEl.scrollHeight, mainEl.scrollTop, mainEl.clientHeight);
 		}
 		function clearAutoLoadTimer() {
 			if (!autoLoadTimer) return;
@@ -20713,9 +20747,6 @@ ul, ol {
 				scheduleAutoLoadNext("timer");
 			}, Math.max(0, dueAt - now()));
 		}
-		function canAutoLoadBase() {
-			return configStore.behavior.preloadNext && readerStore.chapters.length > 0 && hasNext.value && !isLoadingNext.value && !isLoadingPrev.value && !isLoading.value && !isNavigating.value && !autoLoadInFlight && !isPageHidden() && getUnreadLoadedChapterCount() === 0;
-		}
 		function finishLoad(ok) {
 			autoLoadInFlight = false;
 			recordDebugEvent("autoload.finish", {
@@ -20730,7 +20761,7 @@ ul, ol {
 			failureCooldownUntil = now() + getRandomDelayMs(FAILURE_COOLDOWN_MIN_MS, FAILURE_COOLDOWN_MAX_MS);
 		}
 		function startAutoLoad() {
-			if (!mainRef.value || !canAutoLoadBase()) return;
+			if (!mainRef.value) return;
 			clearAutoLoadTimer();
 			autoLoadInFlight = true;
 			recordDebugEvent("autoload.start", {
@@ -20740,29 +20771,29 @@ ul, ol {
 			});
 			readerStore.loadNextChapter("auto").then(finishLoad, () => finishLoad(false));
 		}
-		function shouldRetryAfterCooldown(reason) {
-			return reason !== "state";
-		}
 		function scheduleAutoLoadNext(reason = "state") {
 			const mainEl = mainRef.value;
 			if (!mainEl || !ensureSession()) return;
-			if (!canAutoLoadBase()) {
-				if (!configStore.behavior.preloadNext || getUnreadLoadedChapterCount() > 0) clearAutoLoadTimer();
-				return;
-			}
 			const currentTime = now();
-			if (currentTime < graceUntil) {
-				scheduleTimerAt(graceUntil);
-				return;
-			}
-			if (currentTime < failureCooldownUntil) {
-				if (shouldRetryAfterCooldown(reason)) scheduleTimerAt(failureCooldownUntil);
-				return;
-			}
-			if (reason === "scroll" || reason === "settled" || reason === "sentinel") {
-				if (!isNearBottom(mainEl)) return;
-			}
-			startAutoLoad();
+			const decision = decideAutoLoadNext(reason, {
+				autoLoadInFlight,
+				enabled: configStore.behavior.preloadNext,
+				failureCooldownUntil,
+				graceUntil,
+				hasChapter: readerStore.chapters.length > 0,
+				hasNext: hasNext.value,
+				isLoading: isLoading.value,
+				isLoadingNext: isLoadingNext.value,
+				isLoadingPrev: isLoadingPrev.value,
+				isNavigating: isNavigating.value,
+				isNearBottom: isNearBottom(mainEl),
+				now: currentTime,
+				pageHidden: isPageHidden(),
+				unreadLoadedChapterCount: getUnreadLoadedChapterCount()
+			});
+			if (decision.type === "schedule") scheduleTimerAt(decision.dueAt);
+			else if (decision.type === "start") startAutoLoad();
+			else if (decision.clearTimer) clearAutoLoadTimer();
 		}
 		watch(() => readerStore.chapters.length, () => {
 			scheduleAutoLoadNext("state");

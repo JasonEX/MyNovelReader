@@ -42,7 +42,7 @@ import { createNavigation } from './reader/navigation';
 import { createReaderRuntime } from './reader/runtime';
 import { syncHostPageToChapter } from './reader/hostPage';
 
-// Re-export types for backward compatibility
+// Re-export reader types used by UI modules.
 export type {
   CachedChapter,
   CacheProgressState,

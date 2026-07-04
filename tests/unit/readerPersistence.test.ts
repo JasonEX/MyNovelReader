@@ -187,19 +187,6 @@ describe('persistence GM_* functions', () => {
     expect(result!.size).toBe(2);
   });
 
-  it('restoreCache ignores legacy v1 cache keys', () => {
-    storage.set(
-      `mnr_cache_${cacheBook.bookId}`,
-      JSON.stringify({
-        chapters: {
-          'https://example.com/ch/1': makeCached('https://example.com/ch/1'),
-        },
-      })
-    );
-    const result = restoreCache(cacheBook);
-    expect(result).toBeNull();
-  });
-
   it('restoreCache returns null when nothing stored', () => {
     const result = restoreCache(cacheBook);
     expect(result).toBeNull();

@@ -61,7 +61,7 @@ export function prepareChapterLoad(
     refChapter.chapter.indexUrl &&
     normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)
   ) {
-    if (shouldPersistNavigationBlock(source, 'index-target')) {
+    if (shouldPersistNavigationBlock(source)) {
       ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
     }
     if (source === 'manual') {
@@ -115,7 +115,7 @@ export function validateTargetChapterUrl(
   }
 
   load.isLoadingRef.value = false;
-  if (shouldPersistNavigationBlock(source, 'invalid-target')) {
+  if (shouldPersistNavigationBlock(source)) {
     ctx.blockedNavUrls.value.add(load.navKey);
   }
   if (source === 'manual') {

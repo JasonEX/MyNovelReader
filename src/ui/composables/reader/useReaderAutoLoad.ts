@@ -6,19 +6,25 @@
  * Explicit user navigation is handled outside this composable as manual loading.
  */
 
+import {
+  type AutoLoadReason,
+  decideAutoLoadNext,
+  INTERSECTION_ROOT_MARGIN_PX,
+  isViewportNearBottom,
+} from './autoLoadPolicy';
 import { type ComputedRef, onUnmounted, type Ref, watch } from 'vue';
 import { recordDebugEvent } from '@/core/debug/events';
 import type { useConfigStore } from '@/ui/stores/config';
 import type { useReaderStore } from '@/ui/stores/reader';
 
-export const INTERSECTION_ROOT_MARGIN_PX = 1600;
+export { INTERSECTION_ROOT_MARGIN_PX };
 
 const PRELOAD_DELAY_MIN_MS = 3000;
 const PRELOAD_DELAY_MAX_MS = 5000;
 const FAILURE_COOLDOWN_MIN_MS = 6000;
 const FAILURE_COOLDOWN_MAX_MS = 10000;
 
-export type AutoLoadReason = 'state' | 'scroll' | 'settled' | 'sentinel' | 'visibility' | 'timer';
+export type { AutoLoadReason };
 
 export type ScheduleAutoLoadNext = (reason?: AutoLoadReason) => void;
 
@@ -101,9 +107,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   }
 
   function isNearBottom(mainEl: HTMLElement): boolean {
-    return (
-      mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= INTERSECTION_ROOT_MARGIN_PX
-    );
+    return isViewportNearBottom(mainEl.scrollHeight, mainEl.scrollTop, mainEl.clientHeight);
   }
 
   function clearAutoLoadTimer(): void {
@@ -128,21 +132,6 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     );
   }
 
-  function canAutoLoadBase(): boolean {
-    return (
-      configStore.behavior.preloadNext &&
-      readerStore.chapters.length > 0 &&
-      hasNext.value &&
-      !isLoadingNext.value &&
-      !isLoadingPrev.value &&
-      !isLoading.value &&
-      !isNavigating.value &&
-      !autoLoadInFlight &&
-      !isPageHidden() &&
-      getUnreadLoadedChapterCount() === 0
-    );
-  }
-
   function finishLoad(ok: boolean): void {
     autoLoadInFlight = false;
     recordDebugEvent('autoload.finish', {
@@ -160,7 +149,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   }
 
   function startAutoLoad(): void {
-    if (!mainRef.value || !canAutoLoadBase()) return;
+    if (!mainRef.value) return;
 
     clearAutoLoadTimer();
     autoLoadInFlight = true;
@@ -172,39 +161,35 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     void readerStore.loadNextChapter('auto').then(finishLoad, () => finishLoad(false));
   }
 
-  function shouldRetryAfterCooldown(reason: AutoLoadReason): boolean {
-    return reason !== 'state';
-  }
-
   function scheduleAutoLoadNext(reason: AutoLoadReason = 'state'): void {
     const mainEl = mainRef.value;
     if (!mainEl || !ensureSession()) return;
 
-    if (!canAutoLoadBase()) {
-      if (!configStore.behavior.preloadNext || getUnreadLoadedChapterCount() > 0) {
-        clearAutoLoadTimer();
-      }
-      return;
-    }
-
     const currentTime = now();
-    if (currentTime < graceUntil) {
-      scheduleTimerAt(graceUntil);
-      return;
-    }
+    const decision = decideAutoLoadNext(reason, {
+      autoLoadInFlight,
+      enabled: configStore.behavior.preloadNext,
+      failureCooldownUntil,
+      graceUntil,
+      hasChapter: readerStore.chapters.length > 0,
+      hasNext: hasNext.value,
+      isLoading: isLoading.value,
+      isLoadingNext: isLoadingNext.value,
+      isLoadingPrev: isLoadingPrev.value,
+      isNavigating: isNavigating.value,
+      isNearBottom: isNearBottom(mainEl),
+      now: currentTime,
+      pageHidden: isPageHidden(),
+      unreadLoadedChapterCount: getUnreadLoadedChapterCount(),
+    });
 
-    if (currentTime < failureCooldownUntil) {
-      if (shouldRetryAfterCooldown(reason)) {
-        scheduleTimerAt(failureCooldownUntil);
-      }
-      return;
+    if (decision.type === 'schedule') {
+      scheduleTimerAt(decision.dueAt);
+    } else if (decision.type === 'start') {
+      startAutoLoad();
+    } else if (decision.clearTimer) {
+      clearAutoLoadTimer();
     }
-
-    if (reason === 'scroll' || reason === 'settled' || reason === 'sentinel') {
-      if (!isNearBottom(mainEl)) return;
-    }
-
-    startAutoLoad();
   }
 
   watch(
