@@ -9,6 +9,7 @@
  */
 
 import { DetectionEngine, type DetectionEngineResult } from '@/core/detection';
+import { getPageKind, getPageKindFromUrl } from '@/core/auto-enable/PageKind';
 import {
   getSiteProtection,
   isCloudflareChallenge,
@@ -17,7 +18,6 @@ import {
 import { type ParsedChapter, Parser } from '@/core/parser';
 import { createRuleSaver } from '@/core/auto-enable/RuleSaver';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { getPageKind } from '@/core/auto-enable/PageKind';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import type { SiteRule } from '@/core/rules/types';
@@ -164,8 +164,8 @@ export class AutoEnableManager {
       });
     }
 
-    const pageKind = getPageKind(url, doc);
-    if (pageKind === 'toc') {
+    const urlPageKind = getPageKindFromUrl(url);
+    if (urlPageKind === 'toc') {
       return decide({
         shouldEnable: false,
         method: 'manual',
@@ -181,12 +181,11 @@ export class AutoEnableManager {
         return null;
       }
     })();
+    const sitePreference = hostname ? getRuleStorage().getSitePreference(hostname) : null;
 
-    // Check site preference (only applies to chapter pages)
-    if (hostname) {
-      const storage = getRuleStorage();
-      const pref = storage.getSitePreference(hostname);
-      if (pref?.enabled === false) {
+    // Check site preference immediately when URL alone proves this is a chapter.
+    if (urlPageKind === 'chapter') {
+      if (sitePreference?.enabled === false) {
         // User previously exited reader on this site, don't auto-enable
         // But still show floating button so they can manually enable
         return decide({
@@ -197,7 +196,7 @@ export class AutoEnableManager {
           showFloatingButton: true,
         });
       }
-      if (pref?.enabled === true) {
+      if (sitePreference?.enabled === true) {
         return decide({
           shouldEnable: true,
           method: 'site-preference',
@@ -215,6 +214,16 @@ export class AutoEnableManager {
       const ruleMatch = await ruleManager.matchRule(url);
 
       if (ruleMatch) {
+        if (sitePreference?.enabled === false) {
+          return decide({
+            shouldEnable: false,
+            method: 'user-disabled',
+            confidence: 0,
+            reasons: ['用户已关闭该站点自动启用'],
+            showFloatingButton: true,
+          });
+        }
+
         const decision: AutoEnableDecision = {
           shouldEnable: true,
           method: ruleMatch.rule.meta?.source === 'user' ? 'user-rule' : 'builtin-rule',
@@ -226,6 +235,34 @@ export class AutoEnableManager {
         };
         return decide(decision);
       }
+    }
+
+    const pageKind = urlPageKind === 'other' ? getPageKind(url, doc) : urlPageKind;
+    if (pageKind === 'toc') {
+      return decide({
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['目录页，跳过自动启用'],
+      });
+    }
+
+    if (sitePreference?.enabled === false) {
+      return decide({
+        shouldEnable: false,
+        method: 'user-disabled',
+        confidence: 0,
+        reasons: ['用户已关闭该站点自动启用'],
+        showFloatingButton: true,
+      });
+    }
+    if (sitePreference?.enabled === true) {
+      return decide({
+        shouldEnable: true,
+        method: 'site-preference',
+        confidence: 1,
+        reasons: ['用户已为该站点开启自动启用'],
+      });
     }
 
     if (pageKind !== 'chapter') {

@@ -6,6 +6,46 @@ import { AD_PATTERNS, REMOVE_SELECTORS } from '@/core/constants';
 import { sanitizeHtml, sanitizeUrl } from '@/core/utils';
 import { ReplaceRule } from '@/core/rules/types';
 
+const REMOVE_SELECTOR_QUERY = REMOVE_SELECTORS.join(',');
+const READER_UI_LABELS = new Set([
+  '投票推荐',
+  '投票推薦',
+  '加入书签',
+  '加入書籤',
+  '添加书签',
+  '添加書籤',
+  '小说报错',
+  '小說報錯',
+  '章节报错',
+  '章節報錯',
+  '关灯',
+  '關燈',
+  '字体-',
+  '字体+',
+  '字體-',
+  '字體+',
+  '上一章',
+  '下一章',
+  '上一页',
+  '下一页',
+  '上一頁',
+  '下一頁',
+  '目录',
+  '目錄',
+  '章节目录',
+  '章節目錄',
+  '章节列表',
+  '章節列表',
+  '返回书目',
+  '返回書目',
+  '返回目录',
+  '返回目錄',
+  '加入收藏',
+  '加入收藏夹',
+]);
+
+const READER_UI_BLOCK_SELECTOR = 'div, p, span, li, section, nav, header, footer';
+
 export interface ProcessingOptions {
   /** Remove common ad patterns */
   removeAds?: boolean;
@@ -123,47 +163,10 @@ export class ContentProcessor {
   private removeReaderUiNoise(container: Element): void {
     const normalize = (text: string): string => text.replace(/\s+/g, '').trim();
 
-    const uiLabelSet = new Set([
-      '投票推荐',
-      '投票推薦',
-      '加入书签',
-      '加入書籤',
-      '添加书签',
-      '添加書籤',
-      '小说报错',
-      '小說報錯',
-      '章节报错',
-      '章節報錯',
-      '关灯',
-      '關燈',
-      '字体-',
-      '字体+',
-      '字體-',
-      '字體+',
-      '上一章',
-      '下一章',
-      '上一页',
-      '下一页',
-      '上一頁',
-      '下一頁',
-      '目录',
-      '目錄',
-      '章节目录',
-      '章節目錄',
-      '章节列表',
-      '章節列表',
-      '返回书目',
-      '返回書目',
-      '返回目录',
-      '返回目錄',
-      '加入收藏',
-      '加入收藏夹',
-    ]);
-
     const isUiLabel = (text: string): boolean => {
       const t = normalize(text);
       if (!t) return false;
-      if (uiLabelSet.has(t)) return true;
+      if (READER_UI_LABELS.has(t)) return true;
       if (/^字体[+-]$/.test(t) || /^字體[+-]$/.test(t)) return true;
       if (/^(?:上一|下一)(?:章|页|頁)$/.test(t)) return true;
       if (/^(?:章?节|章節)?(?:目录|目錄|列表)$/.test(t)) return true;
@@ -184,9 +187,7 @@ export class ContentProcessor {
     }
 
     // 2) Remove small blocks that look like toolbars / navigation / keyboard tips
-    const blocks = Array.from(
-      container.querySelectorAll('div, p, span, li, section, nav, header, footer')
-    ) as Element[];
+    const blocks = Array.from(container.querySelectorAll(READER_UI_BLOCK_SELECTOR)) as Element[];
 
     for (const el of blocks) {
       const text = normalize(el.textContent || '');
@@ -257,12 +258,19 @@ export class ContentProcessor {
    * Remove unwanted elements from content
    */
   private removeUnwantedElements(element: Element): void {
-    for (const selector of REMOVE_SELECTORS) {
-      try {
-        const elements = this.smartQueryAll(element, selector);
-        elements.forEach(el => el.remove());
-      } catch {
-        // Invalid selector, skip
+    try {
+      const elements = this.smartQueryAll(element, REMOVE_SELECTOR_QUERY);
+      elements.forEach(el => el.remove());
+      return;
+    } catch {
+      // Fall back to per-selector removal if a future selector is not accepted as a group.
+      for (const selector of REMOVE_SELECTORS) {
+        try {
+          const elements = this.smartQueryAll(element, selector);
+          elements.forEach(el => el.remove());
+        } catch {
+          // Invalid selector, skip
+        }
       }
     }
   }
@@ -391,6 +399,8 @@ export class ContentProcessor {
     doc: Document,
     options: { center: boolean } = { center: true }
   ): string {
+    if (!/<img[\s>/]/i.test(html)) return html;
+
     // Create a temporary container
     const temp = doc.createElement('div');
     temp.innerHTML = html;

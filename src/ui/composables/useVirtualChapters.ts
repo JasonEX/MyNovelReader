@@ -130,10 +130,17 @@ export function useVirtualChapters(
 
   function updateWindow(currentIndex: number): void {
     const halfWindow = Math.floor(windowSize / 2);
-    virtualWindow.value = {
+    const nextWindow = {
       start: Math.max(0, currentIndex - halfWindow),
       end: Math.min(chapters.value.length, currentIndex + halfWindow + 1),
     };
+    if (
+      virtualWindow.value.start === nextWindow.start &&
+      virtualWindow.value.end === nextWindow.end
+    ) {
+      return;
+    }
+    virtualWindow.value = nextWindow;
   }
 
   function reset(): void {

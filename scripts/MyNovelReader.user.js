@@ -3638,7 +3638,7 @@
 		}
 		quickCheck(doc = document) {
 			const currentUrl = doc.location?.href || window.location.href;
-			return [
+			const indicators = [
 				() => {
 					const title = doc.title;
 					return /第.{1,10}章|chapter|小说|阅读/i.test(title);
@@ -3661,18 +3661,84 @@
 					const text = doc.body?.textContent || "";
 					return /\/chapters?\//i.test(currentUrl) && text.length > 1200;
 				}
-			].filter((check) => {
-				try {
-					return check();
-				} catch {
-					return false;
+			];
+			let matches = 0;
+			for (const check of indicators) try {
+				if (check()) {
+					matches++;
+					if (matches >= 2) return true;
 				}
-			}).length >= 2;
+			} catch {}
+			return false;
 		}
 		generateSelector(element) {
 			return this.contentDetector.generateSelector(element);
 		}
 	};
+	var TOC_TITLE_PATTERN = /(?:章节目录|章節目錄|章节列表|章節列表|目录|目錄|书目|書目|toc|catalog|contents?)/i;
+	var TOC_URL_PATTERN = /(?:^|\/)(?:catalog|toc|contents?|mulu|dir(?:ectory)?|chapterlist|chapters)(?:\/|$)/i;
+	var TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
+	var CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/[^?#]*\d/i;
+	var CHAPTER_LINK_TEXT_PATTERN = /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
+	var NAV_LINK_TEXT_PATTERN = /(?:下一[章页]|上一[章页]|下一章|上一章|next|prev)/i;
+	function parseHttpUrl$1(url) {
+		try {
+			const u = new URL(url);
+			if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+			return u;
+		} catch {
+			return null;
+		}
+	}
+	function getKindFromUrl(url) {
+		const parsed = parseHttpUrl$1(url);
+		if (!parsed) return "other";
+		const pathname = parsed.pathname.toLowerCase();
+		const search = parsed.search.toLowerCase();
+		if (TOC_URL_PATTERN.test(pathname) || TOC_QUERY_PATTERN.test(search)) return "toc";
+		if (CHAPTER_URL_STRONG_PATTERN.test(pathname)) return "chapter";
+		return "other";
+	}
+	function getKindFromTitle(title) {
+		if (!title) return "other";
+		if (TOC_TITLE_PATTERN.test(title)) return "toc";
+		return "other";
+	}
+	function getKindFromDom(doc) {
+		const body = doc.body;
+		if (!body) return "other";
+		const titleKind = getKindFromTitle(doc.title);
+		if (titleKind !== "other") return titleKind;
+		const anchors = Array.from(body.querySelectorAll("a[href]"));
+		let linkTextLength = 0;
+		let chapterLikeLinkCount = 0;
+		let navLinkCount = 0;
+		for (const anchor of anchors) {
+			const text = (anchor.textContent || "").trim();
+			if (!text) continue;
+			linkTextLength += text.length;
+			if (CHAPTER_LINK_TEXT_PATTERN.test(text)) chapterLikeLinkCount++;
+			if (NAV_LINK_TEXT_PATTERN.test(text)) navLinkCount++;
+		}
+		const totalTextLength = (body.textContent || "").length;
+		const linkDensity = linkTextLength / Math.max(1, totalTextLength);
+		const paragraphCount = body.querySelectorAll("p").length;
+		if (chapterLikeLinkCount >= 25 && linkDensity >= .12) return "toc";
+		if (anchors.length >= 120 && chapterLikeLinkCount >= 15 && linkDensity >= .08) return "toc";
+		if (navLinkCount > 0 && totalTextLength >= 2e3 && chapterLikeLinkCount <= 12 && linkDensity < .25) return "chapter";
+		if (totalTextLength >= 8e3 && chapterLikeLinkCount <= 12 && linkDensity < .25) return "chapter";
+		if (paragraphCount >= 8 && totalTextLength >= 4e3 && chapterLikeLinkCount <= 12 && linkDensity < .25) return "chapter";
+		return "other";
+	}
+	function getPageKind(url, doc) {
+		const kindFromUrl = getKindFromUrl(url);
+		if (kindFromUrl !== "other") return kindFromUrl;
+		if (!doc) return "other";
+		return getKindFromDom(doc);
+	}
+	function getPageKindFromUrl(url) {
+		return getKindFromUrl(url);
+	}
 	function enableRightClick() {
 		const handler = (e) => {
 			e.stopPropagation();
@@ -4355,6 +4421,44 @@
 		if (!protectionInstance) protectionInstance = new SiteProtection();
 		return protectionInstance;
 	}
+	var REMOVE_SELECTOR_QUERY = REMOVE_SELECTORS.join(",");
+	var READER_UI_LABELS = new Set([
+		"投票推荐",
+		"投票推薦",
+		"加入书签",
+		"加入書籤",
+		"添加书签",
+		"添加書籤",
+		"小说报错",
+		"小說報錯",
+		"章节报错",
+		"章節報錯",
+		"关灯",
+		"關燈",
+		"字体-",
+		"字体+",
+		"字體-",
+		"字體+",
+		"上一章",
+		"下一章",
+		"上一页",
+		"下一页",
+		"上一頁",
+		"下一頁",
+		"目录",
+		"目錄",
+		"章节目录",
+		"章節目錄",
+		"章节列表",
+		"章節列表",
+		"返回书目",
+		"返回書目",
+		"返回目录",
+		"返回目錄",
+		"加入收藏",
+		"加入收藏夹"
+	]);
+	var READER_UI_BLOCK_SELECTOR = "div, p, span, li, section, nav, header, footer";
 	var ContentProcessor = class {
 		constructor(options = {}) {
 			this.regexCache = new Map();
@@ -4395,46 +4499,10 @@
 		}
 		removeReaderUiNoise(container) {
 			const normalize = (text) => text.replace(/\s+/g, "").trim();
-			const uiLabelSet = new Set([
-				"投票推荐",
-				"投票推薦",
-				"加入书签",
-				"加入書籤",
-				"添加书签",
-				"添加書籤",
-				"小说报错",
-				"小說報錯",
-				"章节报错",
-				"章節報錯",
-				"关灯",
-				"關燈",
-				"字体-",
-				"字体+",
-				"字體-",
-				"字體+",
-				"上一章",
-				"下一章",
-				"上一页",
-				"下一页",
-				"上一頁",
-				"下一頁",
-				"目录",
-				"目錄",
-				"章节目录",
-				"章節目錄",
-				"章节列表",
-				"章節列表",
-				"返回书目",
-				"返回書目",
-				"返回目录",
-				"返回目錄",
-				"加入收藏",
-				"加入收藏夹"
-			]);
 			const isUiLabel = (text) => {
 				const t = normalize(text);
 				if (!t) return false;
-				if (uiLabelSet.has(t)) return true;
+				if (READER_UI_LABELS.has(t)) return true;
 				if (/^字体[+-]$/.test(t) || /^字體[+-]$/.test(t)) return true;
 				if (/^(?:上一|下一)(?:章|页|頁)$/.test(t)) return true;
 				if (/^(?:章?节|章節)?(?:目录|目錄|列表)$/.test(t)) return true;
@@ -4447,7 +4515,7 @@
 				if (t.length > 12) continue;
 				if (isUiLabel(t)) el.remove();
 			}
-			const blocks = Array.from(container.querySelectorAll("div, p, span, li, section, nav, header, footer"));
+			const blocks = Array.from(container.querySelectorAll(READER_UI_BLOCK_SELECTOR));
 			for (const el of blocks) {
 				const text = normalize(el.textContent || "");
 				if (!text) continue;
@@ -4485,9 +4553,14 @@
 			return text;
 		}
 		removeUnwantedElements(element) {
-			for (const selector of REMOVE_SELECTORS) try {
-				this.smartQueryAll(element, selector).forEach((el) => el.remove());
-			} catch {}
+			try {
+				this.smartQueryAll(element, REMOVE_SELECTOR_QUERY).forEach((el) => el.remove());
+				return;
+			} catch {
+				for (const selector of REMOVE_SELECTORS) try {
+					this.smartQueryAll(element, selector).forEach((el) => el.remove());
+				} catch {}
+			}
 		}
 		removeBySelector(element, selectors) {
 			const selectorList = selectors.split(",").map((s) => s.trim());
@@ -4544,6 +4617,7 @@
 			return html.replace(/<p>\s*<\/p>/gi, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").replace(/<p>\s+/gi, "<p>").replace(/\s+<\/p>/gi, "</p>");
 		}
 		fixImages(html, doc, options = { center: true }) {
+			if (!/<img[\s>/]/i.test(html)) return html;
 			const temp = doc.createElement("div");
 			temp.innerHTML = html;
 			temp.querySelectorAll("img").forEach((img) => {
@@ -6622,7 +6696,7 @@
 		if (host.startsWith("fc") || host.startsWith("fd")) return true;
 		return false;
 	}
-	function parseHttpUrl$1(url) {
+	function parseHttpUrl(url) {
 		try {
 			const u = new URL(url);
 			if (u.protocol !== "http:" && u.protocol !== "https:") return null;
@@ -6696,7 +6770,7 @@
 			const u = new URL(resolved);
 			if (u.protocol !== "http:" && u.protocol !== "https:") return null;
 			if (isPrivateNetworkHost(u.hostname)) {
-				const baseUrl = parseHttpUrl$1(base || "") || parseHttpUrl$1(getDefaultBaseUrl() || "");
+				const baseUrl = parseHttpUrl(base || "") || parseHttpUrl(getDefaultBaseUrl() || "");
 				if (!baseUrl || normalizeHostname(baseUrl.hostname) !== normalizeHostname(u.hostname)) return null;
 			}
 			u.hash = "";
@@ -7637,67 +7711,6 @@
 	function createSectionMerger(parser) {
 		return new SectionMerger(parser);
 	}
-	var TOC_TITLE_PATTERN = /(?:章节目录|章節目錄|章节列表|章節列表|目录|目錄|书目|書目|toc|catalog|contents?)/i;
-	var TOC_URL_PATTERN = /(?:^|\/)(?:catalog|toc|contents?|mulu|dir(?:ectory)?|chapterlist|chapters)(?:\/|$)/i;
-	var TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
-	var CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/[^?#]*\d/i;
-	var CHAPTER_LINK_TEXT_PATTERN = /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
-	var NAV_LINK_TEXT_PATTERN = /(?:下一[章页]|上一[章页]|下一章|上一章|next|prev)/i;
-	function parseHttpUrl(url) {
-		try {
-			const u = new URL(url);
-			if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-			return u;
-		} catch {
-			return null;
-		}
-	}
-	function getKindFromUrl(url) {
-		const parsed = parseHttpUrl(url);
-		if (!parsed) return "other";
-		const pathname = parsed.pathname.toLowerCase();
-		const search = parsed.search.toLowerCase();
-		if (TOC_URL_PATTERN.test(pathname) || TOC_QUERY_PATTERN.test(search)) return "toc";
-		if (CHAPTER_URL_STRONG_PATTERN.test(pathname)) return "chapter";
-		return "other";
-	}
-	function getKindFromTitle(title) {
-		if (!title) return "other";
-		if (TOC_TITLE_PATTERN.test(title)) return "toc";
-		return "other";
-	}
-	function getKindFromDom(doc) {
-		const body = doc.body;
-		if (!body) return "other";
-		const titleKind = getKindFromTitle(doc.title);
-		if (titleKind !== "other") return titleKind;
-		const anchors = Array.from(body.querySelectorAll("a[href]"));
-		let linkTextLength = 0;
-		let chapterLikeLinkCount = 0;
-		let navLinkCount = 0;
-		for (const anchor of anchors) {
-			const text = (anchor.textContent || "").trim();
-			if (!text) continue;
-			linkTextLength += text.length;
-			if (CHAPTER_LINK_TEXT_PATTERN.test(text)) chapterLikeLinkCount++;
-			if (NAV_LINK_TEXT_PATTERN.test(text)) navLinkCount++;
-		}
-		const totalTextLength = (body.textContent || "").length;
-		const linkDensity = linkTextLength / Math.max(1, totalTextLength);
-		const paragraphCount = body.querySelectorAll("p").length;
-		if (chapterLikeLinkCount >= 25 && linkDensity >= .12) return "toc";
-		if (anchors.length >= 120 && chapterLikeLinkCount >= 15 && linkDensity >= .08) return "toc";
-		if (navLinkCount > 0 && totalTextLength >= 2e3 && chapterLikeLinkCount <= 12 && linkDensity < .25) return "chapter";
-		if (totalTextLength >= 8e3 && chapterLikeLinkCount <= 12 && linkDensity < .25) return "chapter";
-		if (paragraphCount >= 8 && totalTextLength >= 4e3 && chapterLikeLinkCount <= 12 && linkDensity < .25) return "chapter";
-		return "other";
-	}
-	function getPageKind(url, doc) {
-		const kindFromUrl = getKindFromUrl(url);
-		if (kindFromUrl !== "other") return kindFromUrl;
-		if (!doc) return "other";
-		return getKindFromDom(doc);
-	}
 	var DEFAULT_OPTIONS = {
 		confidenceThreshold: .6,
 		autoLaunchThreshold: .9,
@@ -7759,8 +7772,8 @@
 				confidence: 0,
 				reasons: ["URL matches skip pattern"]
 			});
-			const pageKind = getPageKind(url, doc);
-			if (pageKind === "toc") return decide({
+			const urlPageKind = getPageKindFromUrl(url);
+			if (urlPageKind === "toc") return decide({
 				shouldEnable: false,
 				method: "manual",
 				confidence: 0,
@@ -7773,16 +7786,16 @@
 					return null;
 				}
 			})();
-			if (hostname) {
-				const pref = getRuleStorage().getSitePreference(hostname);
-				if (pref?.enabled === false) return decide({
+			const sitePreference = hostname ? getRuleStorage().getSitePreference(hostname) : null;
+			if (urlPageKind === "chapter") {
+				if (sitePreference?.enabled === false) return decide({
 					shouldEnable: false,
 					method: "user-disabled",
 					confidence: 0,
 					reasons: ["用户已关闭该站点自动启用"],
 					showFloatingButton: true
 				});
-				if (pref?.enabled === true) return decide({
+				if (sitePreference?.enabled === true) return decide({
 					shouldEnable: true,
 					method: "site-preference",
 					confidence: 1,
@@ -7793,14 +7806,43 @@
 				const ruleManager = getRuleManager();
 				await ruleManager.initialize();
 				const ruleMatch = await ruleManager.matchRule(url);
-				if (ruleMatch) return decide({
-					shouldEnable: true,
-					method: ruleMatch.rule.meta?.source === "user" ? "user-rule" : "builtin-rule",
-					confidence: 1,
-					rule: ruleMatch.rule,
-					reasons: [`Matched ${ruleMatch.rule.meta?.source || "builtin"} rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`]
-				});
+				if (ruleMatch) {
+					if (sitePreference?.enabled === false) return decide({
+						shouldEnable: false,
+						method: "user-disabled",
+						confidence: 0,
+						reasons: ["用户已关闭该站点自动启用"],
+						showFloatingButton: true
+					});
+					return decide({
+						shouldEnable: true,
+						method: ruleMatch.rule.meta?.source === "user" ? "user-rule" : "builtin-rule",
+						confidence: 1,
+						rule: ruleMatch.rule,
+						reasons: [`Matched ${ruleMatch.rule.meta?.source || "builtin"} rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`]
+					});
+				}
 			}
+			const pageKind = urlPageKind === "other" ? getPageKind(url, doc) : urlPageKind;
+			if (pageKind === "toc") return decide({
+				shouldEnable: false,
+				method: "manual",
+				confidence: 0,
+				reasons: ["目录页，跳过自动启用"]
+			});
+			if (sitePreference?.enabled === false) return decide({
+				shouldEnable: false,
+				method: "user-disabled",
+				confidence: 0,
+				reasons: ["用户已关闭该站点自动启用"],
+				showFloatingButton: true
+			});
+			if (sitePreference?.enabled === true) return decide({
+				shouldEnable: true,
+				method: "site-preference",
+				confidence: 1,
+				reasons: ["用户已为该站点开启自动启用"]
+			});
 			if (pageKind !== "chapter") return decide({
 				shouldEnable: false,
 				method: "manual",
@@ -7912,7 +7954,7 @@
 		return managerInstance;
 	}
 	var VERSION = "9.0.12";
-	var BUILD_DATE = "2026-07-04";
+	var BUILD_DATE = "2026-07-05";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
 		if (!url) return null;
@@ -19594,10 +19636,12 @@ ul, ol {
 		}
 		function updateWindow(currentIndex) {
 			const halfWindow = Math.floor(windowSize / 2);
-			virtualWindow.value = {
+			const nextWindow = {
 				start: Math.max(0, currentIndex - halfWindow),
 				end: Math.min(chapters.value.length, currentIndex + halfWindow + 1)
 			};
+			if (virtualWindow.value.start === nextWindow.start && virtualWindow.value.end === nextWindow.end) return;
+			virtualWindow.value = nextWindow;
 		}
 		function reset() {
 			heights.value.clear();
@@ -22547,7 +22591,7 @@ ul, ol {
 		installGlobalDebugErrorListeners();
 		if (appState.isActive) return;
 		const url = window.location.href;
-		if (!await shouldBootstrapForPage(url, getPageKind(url, document))) return;
+		if (!await shouldBootstrapForPage(url, document)) return;
 		try {
 			const hostname = new URL(url).hostname;
 			if (getRuleStorage().getSitePreference(hostname)?.enabled === false) {
@@ -22559,30 +22603,31 @@ ul, ol {
 		}
 		await initialize();
 	}
-	async function shouldBootstrapForPage(url, pageKind) {
-		if (pageKind === "chapter") return true;
-		if (pageKind === "toc") return false;
+	async function shouldBootstrapForPage(url, doc) {
+		const urlKind = getPageKindFromUrl(url);
+		if (urlKind === "chapter") return true;
+		if (urlKind === "toc") return false;
 		try {
 			const manager = getRuleManager();
 			await manager.initialize();
-			return await manager.matchRule(url) !== null;
+			if (await manager.matchRule(url) !== null) return true;
 		} catch (e) {
 			console.debug("[MNR] Failed to match bootstrap rule:", e);
-			return false;
 		}
+		return getPageKind(url, doc) === "chapter";
 	}
 	async function shouldShowManualEntryForPage(url, doc = document) {
-		const pageKind = getPageKind(url, doc);
-		if (pageKind === "chapter") return true;
-		if (pageKind === "toc") return false;
+		const urlKind = getPageKindFromUrl(url);
+		if (urlKind === "chapter") return true;
+		if (urlKind === "toc") return false;
 		try {
 			const manager = getRuleManager();
 			await manager.initialize();
-			return await manager.matchRule(url) !== null;
+			if (await manager.matchRule(url) !== null) return true;
 		} catch (e) {
 			console.debug("[MNR] Failed to match manual-entry rule:", e);
-			return false;
 		}
+		return getPageKind(url, doc) === "chapter";
 	}
 	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => {
 		bootstrap().catch((e) => console.error("[MNR] Bootstrap error:", e));

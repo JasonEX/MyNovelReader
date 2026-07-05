@@ -17,7 +17,7 @@ import {
   restoreHostPageSnapshot,
 } from '@/ui/stores/reader/hostPage';
 import { createApp, defineComponent, h, ref } from 'vue';
-import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
+import { getPageKind, getPageKindFromUrl, type PageKind } from '@/core/auto-enable/PageKind';
 import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
 import { installGlobalDebugErrorListeners, recordDebugEvent } from '@/core/debug/events';
 import { type ProtectionSettings, useConfigStore } from '@/ui/stores/config';
@@ -583,8 +583,7 @@ async function bootstrap(): Promise<void> {
   if (appState.isActive) return;
 
   const url = window.location.href;
-  const pageKind = getPageKind(url, document);
-  if (!(await shouldBootstrapForPage(url, pageKind))) return;
+  if (!(await shouldBootstrapForPage(url, document))) return;
 
   // If user disabled auto-enable for this site, avoid heavy initialization and show the floating button.
   try {
@@ -601,36 +600,39 @@ async function bootstrap(): Promise<void> {
   await initialize();
 }
 
-async function shouldBootstrapForPage(url: string, pageKind: PageKind): Promise<boolean> {
-  if (pageKind === 'chapter') return true;
-  if (pageKind === 'toc') return false;
+async function shouldBootstrapForPage(url: string, doc: Document): Promise<boolean> {
+  const urlKind = getPageKindFromUrl(url);
+  if (urlKind === 'chapter') return true;
+  if (urlKind === 'toc') return false;
 
   try {
     const manager = getRuleManager();
     await manager.initialize();
-    return (await manager.matchRule(url)) !== null;
+    if ((await manager.matchRule(url)) !== null) return true;
   } catch (e) {
     console.debug('[MNR] Failed to match bootstrap rule:', e);
-    return false;
   }
+
+  return getPageKind(url, doc) === 'chapter';
 }
 
 async function shouldShowManualEntryForPage(
   url: string,
   doc: Document = document
 ): Promise<boolean> {
-  const pageKind = getPageKind(url, doc);
-  if (pageKind === 'chapter') return true;
-  if (pageKind === 'toc') return false;
+  const urlKind = getPageKindFromUrl(url);
+  if (urlKind === 'chapter') return true;
+  if (urlKind === 'toc') return false;
 
   try {
     const manager = getRuleManager();
     await manager.initialize();
-    return (await manager.matchRule(url)) !== null;
+    if ((await manager.matchRule(url)) !== null) return true;
   } catch (e) {
     console.debug('[MNR] Failed to match manual-entry rule:', e);
-    return false;
   }
+
+  return getPageKind(url, doc) === 'chapter';
 }
 
 if (document.readyState === 'loading') {

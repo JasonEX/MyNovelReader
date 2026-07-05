@@ -111,3 +111,7 @@ export function getPageKind(url: string, doc?: Document): PageKind {
   if (!doc) return 'other';
   return getKindFromDom(doc);
 }
+
+export function getPageKindFromUrl(url: string): PageKind {
+  return getKindFromUrl(url);
+}

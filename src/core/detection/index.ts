@@ -104,16 +104,21 @@ export class DetectionEngine {
       },
     ];
 
-    // At least 2 indicators should match
-    const matches = indicators.filter(check => {
+    // At least 2 indicators should match. Stop as soon as the page is proven
+    // chapter-like; later checks may scan many links or the whole body text.
+    let matches = 0;
+    for (const check of indicators) {
       try {
-        return check();
+        if (check()) {
+          matches++;
+          if (matches >= 2) return true;
+        }
       } catch {
-        return false;
+        // ignore failed heuristics
       }
-    });
+    }
 
-    return matches.length >= 2;
+    return false;
   }
 
   /**
