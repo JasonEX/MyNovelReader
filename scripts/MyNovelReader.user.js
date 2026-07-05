@@ -2631,6 +2631,28 @@
 	};
 	var MIN_TEXT_LENGTH = 500;
 	var MIN_CHINESE_RATIO = .3;
+	function compileKnownContentSelector(selector) {
+		if (/^#[A-Za-z0-9_-]+$/.test(selector)) return {
+			selector,
+			type: "id",
+			name: selector.slice(1)
+		};
+		if (/^\.[A-Za-z0-9_-]+$/.test(selector)) return {
+			selector,
+			type: "class",
+			name: selector.slice(1)
+		};
+		if (/^[A-Za-z][A-Za-z0-9-]*$/.test(selector)) return {
+			selector,
+			type: "tag",
+			name: selector
+		};
+		return {
+			selector,
+			type: "complex"
+		};
+	}
+	var KNOWN_CONTENT_SELECTOR_ENTRIES = KNOWN_CONTENT_SELECTORS.map(compileKnownContentSelector);
 	var ContentDetector = class {
 		detect(doc) {
 			const selectorResult = this.tryKnownSelectors(doc);
@@ -2649,20 +2671,30 @@
 			};
 		}
 		tryKnownSelectors(doc) {
-			for (const selector of KNOWN_CONTENT_SELECTORS) try {
-				const el = doc.querySelector(selector);
+			for (const entry of KNOWN_CONTENT_SELECTOR_ENTRIES) {
+				const el = this.resolveKnownSelector(doc, entry);
 				if (!el) continue;
 				const isValidContent = this.isValidContent(el);
 				const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
 				if (isValidContent || isPKeyLoadMoreContent) return {
 					element: el,
-					selector,
+					selector: entry.selector,
 					confidence: isValidContent ? .9 : .78,
 					method: "selector",
 					preview: this.getPreview(el)
 				};
-			} catch {}
+			}
 			return null;
+		}
+		resolveKnownSelector(doc, entry) {
+			try {
+				if (entry.type === "id") return doc.getElementById(entry.name);
+				if (entry.type === "class") return doc.getElementsByClassName(entry.name).item(0);
+				if (entry.type === "tag") return doc.getElementsByTagName(entry.name).item(0);
+				return doc.querySelector(entry.selector);
+			} catch {
+				return null;
+			}
 		}
 		isPKeyLoadMoreContent(element, doc) {
 			const rawText = (element.textContent || "").replace(/\s+/g, "").trim();
@@ -3290,6 +3322,49 @@
 		"article h1",
 		"h1"
 	];
+	function compileKnownTitleSelector(selector) {
+		let match = selector.match(/^([a-z][a-z0-9-]*)\.([A-Za-z0-9_-]+)$/i);
+		if (match) return {
+			selector,
+			type: "tag-class",
+			tagName: match[1].toLowerCase(),
+			className: match[2]
+		};
+		match = selector.match(/^\.(\S+)\s+([a-z][a-z0-9-]*)$/i);
+		if (match && /^[A-Za-z0-9_-]+$/.test(match[1])) return {
+			selector,
+			type: "class-descendant",
+			className: match[1],
+			tagName: match[2].toLowerCase()
+		};
+		match = selector.match(/^([a-z][a-z0-9-]*)\s+([a-z][a-z0-9-]*)$/i);
+		if (match) return {
+			selector,
+			type: "tag-descendant",
+			parentTagName: match[1].toLowerCase(),
+			tagName: match[2].toLowerCase()
+		};
+		if (/^#[A-Za-z0-9_-]+$/.test(selector)) return {
+			selector,
+			type: "id",
+			name: selector.slice(1)
+		};
+		if (/^\.[A-Za-z0-9_-]+$/.test(selector)) return {
+			selector,
+			type: "class",
+			name: selector.slice(1)
+		};
+		if (/^[A-Za-z][A-Za-z0-9-]*$/.test(selector)) return {
+			selector,
+			type: "tag",
+			name: selector.toLowerCase()
+		};
+		return {
+			selector,
+			type: "complex"
+		};
+	}
+	var KNOWN_TITLE_SELECTOR_ENTRIES = KNOWN_TITLE_SELECTORS.map(compileKnownTitleSelector);
 	var BOOK_TITLE_CLASS_NAMES = [
 		"bookname",
 		"book-title",
@@ -3340,6 +3415,17 @@
 		"[class*=\"bread\"]",
 		"nav[aria-label*=\"breadcrumb\"]"
 	];
+	var BREADCRUMB_CLASS_NAMES = [
+		"breadcrumb",
+		"breadcrumbs",
+		"crumb",
+		"crumbs",
+		"bread",
+		"breadnav",
+		"bread-nav",
+		"bread_crumb",
+		"bread-crumb"
+	];
 	var EXPLICIT_BOOK_META_NAMES = [
 		"og:novel:book_name",
 		"og:book:title",
@@ -3380,34 +3466,58 @@
 	];
 	var TitleDetector = class {
 		detect(doc) {
-			const results = [
-				this.detectFromSelector(doc),
-				this.detectFromDocumentTitle(doc),
-				this.detectFromHeadings(doc)
-			].filter(Boolean);
-			if (results.length === 0) return this.createEmptyResult();
-			results.sort((a, b) => b.confidence - a.confidence);
-			const best = results[0];
+			let best = this.detectFromSelector(doc);
+			if (!best) {
+				const results = [this.detectFromDocumentTitle(doc), this.detectFromHeadings(doc)].filter(Boolean);
+				if (results.length === 0) return this.createEmptyResult();
+				results.sort((a, b) => b.confidence - a.confidence);
+				best = results[0];
+			}
 			const bookTitle = this.detectBookTitle(doc);
 			if (bookTitle) best.bookTitle = bookTitle;
 			return best;
 		}
 		detectFromSelector(doc) {
-			for (const selector of KNOWN_TITLE_SELECTORS) try {
-				const el = doc.querySelector(selector);
-				if (el) {
-					const text = this.cleanTitle(el.textContent || "");
-					if (this.isValidTitle(text)) return {
-						chapterTitle: text,
-						selector,
-						confidence: .9,
-						method: "selector"
-					};
-				}
-			} catch {
-				continue;
+			for (const entry of KNOWN_TITLE_SELECTOR_ENTRIES) {
+				const el = this.resolveKnownSelector(doc, entry);
+				if (!el) continue;
+				const text = this.cleanTitle(el.textContent || "");
+				if (this.isValidTitle(text)) return {
+					chapterTitle: text,
+					selector: entry.selector,
+					confidence: .9,
+					method: "selector"
+				};
 			}
 			return null;
+		}
+		resolveKnownSelector(doc, entry) {
+			try {
+				if (entry.type === "id") return doc.getElementById(entry.name);
+				if (entry.type === "class") return doc.getElementsByClassName(entry.name).item(0);
+				if (entry.type === "tag") return doc.getElementsByTagName(entry.name).item(0);
+				if (entry.type === "tag-class") {
+					for (const el of Array.from(doc.getElementsByClassName(entry.className))) if (el.tagName.toLowerCase() === entry.tagName) return el;
+					return null;
+				}
+				if (entry.type === "class-descendant") {
+					for (const container of Array.from(doc.getElementsByClassName(entry.className))) {
+						const el = container.getElementsByTagName(entry.tagName).item(0);
+						if (el) return el;
+					}
+					return null;
+				}
+				if (entry.type === "tag-descendant") {
+					for (const container of Array.from(doc.getElementsByTagName(entry.parentTagName))) {
+						const el = container.getElementsByTagName(entry.tagName).item(0);
+						if (el) return el;
+					}
+					return null;
+				}
+				return doc.querySelector(entry.selector);
+			} catch {
+				return null;
+			}
 		}
 		detectFromDocumentTitle(doc) {
 			const docTitle = doc.title;
@@ -3433,7 +3543,7 @@
 			return null;
 		}
 		detectFromHeadings(doc) {
-			const h1s = doc.querySelectorAll("h1");
+			const h1s = doc.getElementsByTagName("h1");
 			for (const h1 of Array.from(h1s)) {
 				const text = this.cleanTitle(h1.textContent || "");
 				if (this.isValidTitle(text) && TITLE_PATTERN.test(text)) return {
@@ -3443,7 +3553,7 @@
 					method: "heading"
 				};
 			}
-			const h2s = doc.querySelectorAll("h2");
+			const h2s = doc.getElementsByTagName("h2");
 			for (const h2 of Array.from(h2s)) {
 				const text = this.cleanTitle(h2.textContent || "");
 				if (this.isValidTitle(text) && TITLE_PATTERN.test(text)) return {
@@ -3518,8 +3628,7 @@
 			}
 		}
 		collectBookTitleFromBreadcrumbs(doc, candidates) {
-			const containers = doc.querySelectorAll(BREADCRUMB_SELECTORS.join(", "));
-			for (const container of Array.from(containers)) {
+			for (const container of this.collectBreadcrumbContainers(doc)) {
 				const links = Array.from(container.querySelectorAll("a"));
 				if (links.length === 0) continue;
 				const filtered = links.map(this.getAnchorLabel).filter(Boolean).filter((t) => !TITLE_PATTERN.test(t) && !BREADCRUMB_IGNORE_PATTERN.test(t));
@@ -3527,6 +3636,19 @@
 				const best = filtered.reduce((a, b) => b.length > a.length ? b : a);
 				this.addBookTitleCandidate(candidates, best, 3);
 			}
+		}
+		collectBreadcrumbContainers(doc) {
+			const containers = [];
+			const seen = new Set();
+			const add = (element) => {
+				if (!element || seen.has(element)) return;
+				seen.add(element);
+				containers.push(element);
+			};
+			for (const className of BREADCRUMB_CLASS_NAMES) for (const element of Array.from(doc.getElementsByClassName(className))) add(element);
+			for (const nav of Array.from(doc.getElementsByTagName("nav"))) if ((nav.getAttribute("aria-label") || "").toLowerCase().includes("breadcrumb")) add(nav);
+			if (containers.length === 0 && doc.links.length <= DIRECTORY_LINK_SCAN_LIMIT) for (const element of Array.from(doc.querySelectorAll(BREADCRUMB_SELECTORS.join(", ")))) add(element);
+			return containers;
 		}
 		collectBookTitleFromMeta(doc, candidates) {
 			const metaContents = this.collectMetaContents(doc);

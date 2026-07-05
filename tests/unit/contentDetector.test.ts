@@ -187,7 +187,7 @@ describe('ContentDetector', () => {
       expect(result.method).toBe('fallback');
     });
 
-    it('skips invalid selectors in KNOWN_CONTENT_SELECTORS', () => {
+    it('uses direct DOM lookup for simple known selectors', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>
         <html>
@@ -200,18 +200,14 @@ describe('ContentDetector', () => {
       `);
 
       const doc = dom.window.document;
-      const original = doc.querySelector.bind(doc);
-      const querySpy = vi.spyOn(doc, 'querySelector').mockImplementation(selector => {
-        if (selector === '#pagecontent') {
-          throw new Error('boom');
-        }
-        return original(selector);
-      });
+      const querySpy = vi.spyOn(doc, 'querySelector');
+      const getElementByIdSpy = vi.spyOn(doc, 'getElementById');
 
       const result = detector.detect(doc);
 
       expect(result.selector).toBe('#content');
-      expect(querySpy).toHaveBeenCalled();
+      expect(getElementByIdSpy).toHaveBeenCalled();
+      expect(querySpy).not.toHaveBeenCalled();
     });
 
     it('treats 加载更多 pattern as invalid when p_key is missing', () => {

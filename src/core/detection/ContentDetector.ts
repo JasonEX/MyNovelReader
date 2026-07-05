@@ -35,6 +35,25 @@ const MIN_TEXT_LENGTH = 500;
 /** Minimum Chinese character ratio for Chinese novels */
 const MIN_CHINESE_RATIO = 0.3;
 
+type KnownContentSelector =
+  | { selector: string; type: 'id' | 'class' | 'tag'; name: string }
+  | { selector: string; type: 'complex' };
+
+function compileKnownContentSelector(selector: string): KnownContentSelector {
+  if (/^#[A-Za-z0-9_-]+$/.test(selector)) {
+    return { selector, type: 'id', name: selector.slice(1) };
+  }
+  if (/^\.[A-Za-z0-9_-]+$/.test(selector)) {
+    return { selector, type: 'class', name: selector.slice(1) };
+  }
+  if (/^[A-Za-z][A-Za-z0-9-]*$/.test(selector)) {
+    return { selector, type: 'tag', name: selector };
+  }
+  return { selector, type: 'complex' };
+}
+
+const KNOWN_CONTENT_SELECTOR_ENTRIES = KNOWN_CONTENT_SELECTORS.map(compileKnownContentSelector);
+
 export class ContentDetector {
   /**
    * Detect the main content area of the document
@@ -70,27 +89,34 @@ export class ContentDetector {
    * Try known content selectors (fast path)
    */
   private tryKnownSelectors(doc: Document): ContentResult | null {
-    for (const selector of KNOWN_CONTENT_SELECTORS) {
-      try {
-        const el = doc.querySelector(selector);
-        if (!el) continue;
+    for (const entry of KNOWN_CONTENT_SELECTOR_ENTRIES) {
+      const el = this.resolveKnownSelector(doc, entry);
+      if (!el) continue;
 
-        const isValidContent = this.isValidContent(el);
-        const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
-        if (isValidContent || isPKeyLoadMoreContent) {
-          return {
-            element: el,
-            selector,
-            confidence: isValidContent ? 0.9 : 0.78,
-            method: 'selector',
-            preview: this.getPreview(el),
-          };
-        }
-      } catch {
-        // Invalid selector, skip
+      const isValidContent = this.isValidContent(el);
+      const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
+      if (isValidContent || isPKeyLoadMoreContent) {
+        return {
+          element: el,
+          selector: entry.selector,
+          confidence: isValidContent ? 0.9 : 0.78,
+          method: 'selector',
+          preview: this.getPreview(el),
+        };
       }
     }
     return null;
+  }
+
+  private resolveKnownSelector(doc: Document, entry: KnownContentSelector): Element | null {
+    try {
+      if (entry.type === 'id') return doc.getElementById(entry.name);
+      if (entry.type === 'class') return doc.getElementsByClassName(entry.name).item(0);
+      if (entry.type === 'tag') return doc.getElementsByTagName(entry.name).item(0);
+      return doc.querySelector(entry.selector);
+    } catch {
+      return null;
+    }
   }
 
   /**

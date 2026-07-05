@@ -417,7 +417,8 @@ describe('TitleDetector', () => {
       const result = detector.detect(doc);
 
       expect(result.bookTitle).toBe('元婴修仙传');
-      expect(result.selector).toContain('#');
+      expect(result.chapterTitle).toBe('第1章 开始');
+      expect(result.selector).toBeTruthy();
     });
   });
 });

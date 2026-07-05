@@ -20,6 +20,59 @@ const KNOWN_TITLE_SELECTORS = [
   'h1',
 ];
 
+type KnownTitleSelector =
+  | { selector: string; type: 'id' | 'class' | 'tag'; name: string }
+  | { selector: string; type: 'tag-class'; tagName: string; className: string }
+  | { selector: string; type: 'class-descendant'; className: string; tagName: string }
+  | { selector: string; type: 'tag-descendant'; parentTagName: string; tagName: string }
+  | { selector: string; type: 'complex' };
+
+function compileKnownTitleSelector(selector: string): KnownTitleSelector {
+  let match = selector.match(/^([a-z][a-z0-9-]*)\.([A-Za-z0-9_-]+)$/i);
+  if (match) {
+    return {
+      selector,
+      type: 'tag-class',
+      tagName: match[1].toLowerCase(),
+      className: match[2],
+    };
+  }
+
+  match = selector.match(/^\.(\S+)\s+([a-z][a-z0-9-]*)$/i);
+  if (match && /^[A-Za-z0-9_-]+$/.test(match[1])) {
+    return {
+      selector,
+      type: 'class-descendant',
+      className: match[1],
+      tagName: match[2].toLowerCase(),
+    };
+  }
+
+  match = selector.match(/^([a-z][a-z0-9-]*)\s+([a-z][a-z0-9-]*)$/i);
+  if (match) {
+    return {
+      selector,
+      type: 'tag-descendant',
+      parentTagName: match[1].toLowerCase(),
+      tagName: match[2].toLowerCase(),
+    };
+  }
+
+  if (/^#[A-Za-z0-9_-]+$/.test(selector)) {
+    return { selector, type: 'id', name: selector.slice(1) };
+  }
+  if (/^\.[A-Za-z0-9_-]+$/.test(selector)) {
+    return { selector, type: 'class', name: selector.slice(1) };
+  }
+  if (/^[A-Za-z][A-Za-z0-9-]*$/.test(selector)) {
+    return { selector, type: 'tag', name: selector.toLowerCase() };
+  }
+
+  return { selector, type: 'complex' };
+}
+
+const KNOWN_TITLE_SELECTOR_ENTRIES = KNOWN_TITLE_SELECTORS.map(compileKnownTitleSelector);
+
 /** Known book-title classes that can be read without a full selector scan. */
 const BOOK_TITLE_CLASS_NAMES = [
   'bookname',
@@ -82,6 +135,18 @@ const BREADCRUMB_SELECTORS = [
   'nav[aria-label*="breadcrumb"]',
 ] as const;
 
+const BREADCRUMB_CLASS_NAMES = [
+  'breadcrumb',
+  'breadcrumbs',
+  'crumb',
+  'crumbs',
+  'bread',
+  'breadnav',
+  'bread-nav',
+  'bread_crumb',
+  'bread-crumb',
+] as const;
+
 const EXPLICIT_BOOK_META_NAMES = ['og:novel:book_name', 'og:book:title', 'book_name'] as const;
 
 const GENERIC_TITLE_META_NAMES = ['og:title', 'twitter:title'] as const;
@@ -129,20 +194,20 @@ export class TitleDetector {
    * Detect chapter and book titles
    */
   detect(doc: Document): TitleResult {
-    // Try multiple strategies
-    const results = [
-      this.detectFromSelector(doc),
-      this.detectFromDocumentTitle(doc),
-      this.detectFromHeadings(doc),
-    ].filter(Boolean) as TitleResult[];
+    let best = this.detectFromSelector(doc);
 
-    // Return the result with highest confidence
-    if (results.length === 0) {
-      return this.createEmptyResult();
+    if (!best) {
+      const results = [this.detectFromDocumentTitle(doc), this.detectFromHeadings(doc)].filter(
+        Boolean
+      ) as TitleResult[];
+
+      if (results.length === 0) {
+        return this.createEmptyResult();
+      }
+
+      results.sort((a, b) => b.confidence - a.confidence);
+      best = results[0];
     }
-
-    results.sort((a, b) => b.confidence - a.confidence);
-    const best = results[0];
 
     // Also try to detect book title
     const bookTitle = this.detectBookTitle(doc);
@@ -157,25 +222,52 @@ export class TitleDetector {
    * Detect title using known selectors
    */
   private detectFromSelector(doc: Document): TitleResult | null {
-    for (const selector of KNOWN_TITLE_SELECTORS) {
-      try {
-        const el = doc.querySelector(selector);
-        if (el) {
-          const text = this.cleanTitle(el.textContent || '');
-          if (this.isValidTitle(text)) {
-            return {
-              chapterTitle: text,
-              selector,
-              confidence: 0.9,
-              method: 'selector',
-            };
-          }
-        }
-      } catch {
-        continue;
+    for (const entry of KNOWN_TITLE_SELECTOR_ENTRIES) {
+      const el = this.resolveKnownSelector(doc, entry);
+      if (!el) continue;
+
+      const text = this.cleanTitle(el.textContent || '');
+      if (this.isValidTitle(text)) {
+        return {
+          chapterTitle: text,
+          selector: entry.selector,
+          confidence: 0.9,
+          method: 'selector',
+        };
       }
     }
     return null;
+  }
+
+  private resolveKnownSelector(doc: Document, entry: KnownTitleSelector): Element | null {
+    try {
+      if (entry.type === 'id') return doc.getElementById(entry.name);
+      if (entry.type === 'class') return doc.getElementsByClassName(entry.name).item(0);
+      if (entry.type === 'tag') return doc.getElementsByTagName(entry.name).item(0);
+      if (entry.type === 'tag-class') {
+        for (const el of Array.from(doc.getElementsByClassName(entry.className))) {
+          if (el.tagName.toLowerCase() === entry.tagName) return el;
+        }
+        return null;
+      }
+      if (entry.type === 'class-descendant') {
+        for (const container of Array.from(doc.getElementsByClassName(entry.className))) {
+          const el = container.getElementsByTagName(entry.tagName).item(0);
+          if (el) return el;
+        }
+        return null;
+      }
+      if (entry.type === 'tag-descendant') {
+        for (const container of Array.from(doc.getElementsByTagName(entry.parentTagName))) {
+          const el = container.getElementsByTagName(entry.tagName).item(0);
+          if (el) return el;
+        }
+        return null;
+      }
+      return doc.querySelector(entry.selector);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -223,7 +315,7 @@ export class TitleDetector {
    */
   private detectFromHeadings(doc: Document): TitleResult | null {
     // Try h1 first
-    const h1s = doc.querySelectorAll('h1');
+    const h1s = doc.getElementsByTagName('h1');
     for (const h1 of Array.from(h1s)) {
       const text = this.cleanTitle(h1.textContent || '');
       if (this.isValidTitle(text) && TITLE_PATTERN.test(text)) {
@@ -237,7 +329,7 @@ export class TitleDetector {
     }
 
     // Try h2 if no valid h1 found
-    const h2s = doc.querySelectorAll('h2');
+    const h2s = doc.getElementsByTagName('h2');
     for (const h2 of Array.from(h2s)) {
       const text = this.cleanTitle(h2.textContent || '');
       if (this.isValidTitle(text) && TITLE_PATTERN.test(text)) {
@@ -371,8 +463,7 @@ export class TitleDetector {
   }
 
   private collectBookTitleFromBreadcrumbs(doc: Document, candidates: BookTitleCandidates): void {
-    const containers = doc.querySelectorAll(BREADCRUMB_SELECTORS.join(', '));
-    for (const container of Array.from(containers)) {
+    for (const container of this.collectBreadcrumbContainers(doc)) {
       const links = Array.from(container.querySelectorAll('a')) as HTMLAnchorElement[];
       if (links.length === 0) continue;
       const texts = links.map(this.getAnchorLabel).filter(Boolean);
@@ -383,6 +474,36 @@ export class TitleDetector {
       const best = filtered.reduce((a, b) => (b.length > a.length ? b : a));
       this.addBookTitleCandidate(candidates, best, 3);
     }
+  }
+
+  private collectBreadcrumbContainers(doc: Document): Element[] {
+    const containers: Element[] = [];
+    const seen = new Set<Element>();
+    const add = (element: Element | null) => {
+      if (!element || seen.has(element)) return;
+      seen.add(element);
+      containers.push(element);
+    };
+
+    for (const className of BREADCRUMB_CLASS_NAMES) {
+      for (const element of Array.from(doc.getElementsByClassName(className))) {
+        add(element);
+      }
+    }
+
+    for (const nav of Array.from(doc.getElementsByTagName('nav'))) {
+      if ((nav.getAttribute('aria-label') || '').toLowerCase().includes('breadcrumb')) {
+        add(nav);
+      }
+    }
+
+    if (containers.length === 0 && doc.links.length <= DIRECTORY_LINK_SCAN_LIMIT) {
+      for (const element of Array.from(doc.querySelectorAll(BREADCRUMB_SELECTORS.join(', ')))) {
+        add(element);
+      }
+    }
+
+    return containers;
   }
 
   private collectBookTitleFromMeta(doc: Document, candidates: BookTitleCandidates): void {
