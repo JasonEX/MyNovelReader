@@ -20,27 +20,17 @@ const KNOWN_TITLE_SELECTORS = [
   'h1',
 ];
 
-/** Known book title selectors */
-const KNOWN_BOOK_TITLE_SELECTORS = [
-  '.bookname',
-  '.book-title',
-  '.book_title',
-  '.book-name',
-  '.book_name',
-  '.bookinfo h1',
-  '.bookinfo h2',
-  '#bookname',
-  '#book-info h1',
-  '#book-info h2',
-  '#info h1',
-  '#info h2',
-  '.novel-title',
-  'h2.title',
-  '.layout-tit a[title]',
-  '.breadcrumb a:last-of-type',
-  '.chapter-nav a:last-of-type',
-  '.booknav a:first-of-type',
-];
+/** Known book-title classes that can be read without a full selector scan. */
+const BOOK_TITLE_CLASS_NAMES = [
+  'bookname',
+  'book-title',
+  'book_title',
+  'book-name',
+  'book_name',
+  'novel-title',
+] as const;
+
+const BOOK_TITLE_HEADING_CONTAINER_IDS = ['book-info', 'info'] as const;
 
 /** Patterns to clean up title text */
 const TITLE_CLEANUP_PATTERNS = [
@@ -54,6 +44,85 @@ const TITLE_CLEANUP_PATTERNS = [
   /_.*$/, // Remove trailing "_sitename"
   /-.*小说.*$/i,
 ];
+
+const STRONG_BOOK_TITLE_SCORE = 3;
+const DIRECTORY_LINK_SCAN_LIMIT = 200;
+
+const GENERIC_BOOK_LABEL_PATTERN =
+  /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節|最新章节|最新章節|正文|内容|內容|简介|簡介|作品信息|书籍信息|書籍信息|小说|小說|阅读|閱讀|catalog|toc|contents?)$/i;
+
+const BREADCRUMB_IGNORE_PATTERN =
+  /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節)$/i;
+
+const SITE_TITLE_WORDS = [
+  '起点中文网',
+  '起点中文網',
+  '顶点小说',
+  '頂點小說',
+  '笔趣阁',
+  '筆趣閣',
+  '小说网',
+  '小說網',
+  '小说阅读网',
+  '小說閱讀網',
+  '小说阅读',
+  '小說閱讀',
+  '阅读网',
+  '閱讀網',
+  '书吧',
+  '書吧',
+  '69书吧',
+  '69書吧',
+] as const;
+
+const BREADCRUMB_SELECTORS = [
+  '[class*="breadcrumb"]',
+  '[class*="crumb"]',
+  '[class*="bread"]',
+  'nav[aria-label*="breadcrumb"]',
+] as const;
+
+const EXPLICIT_BOOK_META_NAMES = ['og:novel:book_name', 'og:book:title', 'book_name'] as const;
+
+const GENERIC_TITLE_META_NAMES = ['og:title', 'twitter:title'] as const;
+
+const SCRIPT_TEXT_SELECTORS = [
+  'script:not([type])',
+  'script[type="text/javascript"]',
+  'script[type="application/javascript"]',
+] as const;
+
+const SCRIPT_BOOK_TITLE_PATTERNS = [
+  /bookName\s*[:=]\s*["']([^"'\n]{2,80})["']/i,
+  /book_name\s*[:=]\s*["']([^"'\n]{2,80})["']/i,
+  /bookTitle\s*[:=]\s*["']([^"'\n]{2,80})["']/i,
+  /book_title\s*[:=]\s*["']([^"'\n]{2,80})["']/i,
+  /novelName\s*[:=]\s*["']([^"'\n]{2,80})["']/i,
+  /novel_title\s*[:=]\s*["']([^"'\n]{2,80})["']/i,
+  new RegExp('lastread\\.set\\([^,]*,[^,]*,\\s*["\\\']([^"\\\'\\r\\n]{2,80})["\\\']', 'i'),
+] as const;
+
+const STRUCTURED_BOOK_TITLE_KEYS = [
+  'bookName',
+  'book_name',
+  'bookTitle',
+  'book_title',
+  'novelName',
+  'novel_name',
+  'novelTitle',
+  'novel_title',
+] as const;
+
+const STRUCTURED_BOOK_CONTAINER_KEYS = [
+  'bookInfo',
+  'book',
+  'novel',
+  'novelInfo',
+  'info',
+  'data',
+] as const;
+
+type BookTitleCandidates = Map<string, number>;
 
 export class TitleDetector {
   /**
@@ -188,292 +257,314 @@ export class TitleDetector {
    * Detect book title
    */
   private detectBookTitle(doc: Document): string | undefined {
-    const genericLabelPattern =
-      /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節|最新章节|最新章節|正文|内容|內容|简介|簡介|作品信息|书籍信息|書籍信息|小说|小說|阅读|閱讀|catalog|toc|contents?)$/i;
-    const breadcrumbIgnorePattern =
-      /^(?:首页|主页|home|index|返回|返回目录|目录|章节目录|章節目錄|章节列表|章節列表|章节|章節)$/i;
-    const isValidBookTitle = (text: string): boolean => {
-      if (!text || text.length < 2 || text.length > 100) return false;
-      if (TITLE_PATTERN.test(text)) return false;
-      if (genericLabelPattern.test(text.trim())) return false;
-      const normalized = text.replace(/\s+/g, '').toLowerCase();
-      if (normalized.includes('天天看小说') || normalized.includes('天天看小說')) return false;
-      const siteWords = [
-        '起点中文网',
-        '起点中文網',
-        '顶点小说',
-        '頂點小說',
-        '笔趣阁',
-        '筆趣閣',
-        '小说网',
-        '小說網',
-        '小说阅读网',
-        '小說閱讀網',
-        '小说阅读',
-        '小說閱讀',
-        '阅读网',
-        '閱讀網',
-        '书吧',
-        '書吧',
-        '69书吧',
-        '69書吧',
-      ];
-      if (siteWords.some(word => normalized.includes(word) && normalized.length <= word.length + 4))
-        return false;
-      if (normalized.startsWith('⚡')) return false;
-      return true;
-    };
-
     const candidates = new Map<string, number>();
-    const addCandidate = (text: string | null | undefined, weight = 1) => {
-      if (!text) return;
-      const cleaned = this.cleanBookTitle(text);
-      if (!cleaned || !isValidBookTitle(cleaned)) return;
-      candidates.set(cleaned, (candidates.get(cleaned) || 0) + weight);
-    };
 
-    const anchorText = (el: HTMLAnchorElement): string => {
-      return (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
+    this.collectBookTitleFromKnownDom(doc, candidates);
+    this.collectBookTitleFromBreadcrumbs(doc, candidates);
+    this.collectBookTitleFromMeta(doc, candidates);
+    this.collectBookTitleFromDocumentTitle(doc, candidates);
 
-    const collectFromBreadcrumbs = (): void => {
-      const breadcrumbSelectors = [
-        '[class*="breadcrumb"]',
-        '[class*="crumb"]',
-        '[class*="bread"]',
-        'nav[aria-label*="breadcrumb"]',
-      ];
-      const containers = doc.querySelectorAll(breadcrumbSelectors.join(', '));
-      for (const container of Array.from(containers)) {
-        const links = Array.from(container.querySelectorAll('a')) as HTMLAnchorElement[];
-        if (links.length === 0) continue;
-        const texts = links.map(anchorText).filter(Boolean);
-        const filtered = texts.filter(
-          t => !TITLE_PATTERN.test(t) && !breadcrumbIgnorePattern.test(t)
-        );
-        if (filtered.length === 0) continue;
-        const best = filtered.reduce((a, b) => (b.length > a.length ? b : a));
-        addCandidate(best, 3);
+    const strongCandidate = this.pickBookTitleCandidate(candidates, STRONG_BOOK_TITLE_SCORE);
+    if (strongCandidate) return strongCandidate;
+
+    this.collectBookTitleFromStructuredData(doc, candidates);
+    this.collectBookTitleFromScriptText(doc, candidates);
+    this.collectBookTitleFromDirectoryLinks(doc, candidates);
+
+    return this.pickBookTitleCandidate(candidates);
+  }
+
+  private addBookTitleCandidate(
+    candidates: BookTitleCandidates,
+    text: string | null | undefined,
+    weight = 1
+  ): void {
+    if (!text) return;
+    const cleaned = this.cleanBookTitle(text);
+    if (!cleaned || !this.isValidBookTitle(cleaned)) return;
+    candidates.set(cleaned, (candidates.get(cleaned) || 0) + weight);
+  }
+
+  private pickBookTitleCandidate(
+    candidates: BookTitleCandidates,
+    minScore = 0
+  ): string | undefined {
+    const sorted = Array.from(candidates.entries())
+      .filter(([, score]) => score >= minScore)
+      .sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return b[0].length - a[0].length;
+      });
+
+    return sorted[0]?.[0];
+  }
+
+  private isValidBookTitle(text: string): boolean {
+    if (!text || text.length < 2 || text.length > 100) return false;
+    if (TITLE_PATTERN.test(text)) return false;
+    if (GENERIC_BOOK_LABEL_PATTERN.test(text.trim())) return false;
+    const normalized = text.replace(/\s+/g, '').toLowerCase();
+    if (normalized.includes('天天看小说') || normalized.includes('天天看小說')) return false;
+    if (
+      SITE_TITLE_WORDS.some(
+        word => normalized.includes(word) && normalized.length <= word.length + 4
+      )
+    ) {
+      return false;
+    }
+    if (normalized.startsWith('⚡')) return false;
+    return true;
+  }
+
+  private collectBookTitleFromKnownDom(doc: Document, candidates: BookTitleCandidates): void {
+    this.addBookTitleCandidate(candidates, doc.getElementById('bookname')?.textContent, 3);
+
+    for (const id of BOOK_TITLE_HEADING_CONTAINER_IDS) {
+      this.collectHeadingText(doc.getElementById(id), candidates, 3);
+    }
+
+    for (const className of BOOK_TITLE_CLASS_NAMES) {
+      for (const el of Array.from(doc.getElementsByClassName(className))) {
+        this.addBookTitleCandidate(candidates, el.textContent, 3);
       }
-    };
+    }
 
-    const collectFromStructuredData = (): void => {
-      const scripts = doc.querySelectorAll(
-        'script[type="application/ld+json"], script[type="application/json"]'
+    for (const container of Array.from(doc.getElementsByClassName('bookinfo'))) {
+      this.collectHeadingText(container, candidates, 3);
+    }
+
+    for (const h2 of Array.from(doc.getElementsByTagName('h2'))) {
+      if (h2.classList.contains('title')) {
+        this.addBookTitleCandidate(candidates, h2.textContent, 3);
+      }
+    }
+
+    for (const container of Array.from(doc.getElementsByClassName('layout-tit'))) {
+      const link = container.querySelector('a[title]');
+      this.addBookTitleCandidate(candidates, link?.textContent, 3);
+    }
+
+    for (const container of Array.from(doc.getElementsByClassName('booknav'))) {
+      const link = container.querySelector('a');
+      this.addBookTitleCandidate(candidates, link?.textContent, 3);
+    }
+
+    for (const container of Array.from(doc.getElementsByClassName('chapter-nav'))) {
+      const links = container.getElementsByTagName('a');
+      const link = links.item(links.length - 1);
+      this.addBookTitleCandidate(candidates, link?.textContent, 3);
+    }
+  }
+
+  private collectHeadingText(
+    container: Element | null,
+    candidates: BookTitleCandidates,
+    weight: number
+  ): void {
+    if (!container) return;
+    for (const tagName of ['h1', 'h2'] as const) {
+      const heading = container.getElementsByTagName(tagName).item(0);
+      if (heading) {
+        this.addBookTitleCandidate(candidates, heading.textContent, weight);
+      }
+    }
+  }
+
+  private collectBookTitleFromBreadcrumbs(doc: Document, candidates: BookTitleCandidates): void {
+    const containers = doc.querySelectorAll(BREADCRUMB_SELECTORS.join(', '));
+    for (const container of Array.from(containers)) {
+      const links = Array.from(container.querySelectorAll('a')) as HTMLAnchorElement[];
+      if (links.length === 0) continue;
+      const texts = links.map(this.getAnchorLabel).filter(Boolean);
+      const filtered = texts.filter(
+        t => !TITLE_PATTERN.test(t) && !BREADCRUMB_IGNORE_PATTERN.test(t)
       );
-      const tryParseJson = (text: string): unknown | undefined => {
-        try {
-          return JSON.parse(text);
-        } catch {
-          return undefined;
-        }
-      };
-      const findBookTitle = (value: unknown, depth = 0): string | undefined => {
-        if (!value || depth > 4) return undefined;
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            const found = findBookTitle(item, depth + 1);
-            if (found) return found;
-          }
-          return undefined;
-        }
-        if (typeof value !== 'object') return undefined;
-        const obj = value as Record<string, unknown>;
-        const directKeys = [
-          'bookName',
-          'book_name',
-          'bookTitle',
-          'book_title',
-          'novelName',
-          'novel_name',
-          'novelTitle',
-          'novel_title',
-        ];
-        for (const key of directKeys) {
-          const candidate = obj[key];
-          if (typeof candidate === 'string') return candidate;
-        }
-        const type = obj['@type'];
-        if (typeof type === 'string' && /book|novel/i.test(type)) {
-          const candidate = obj.name || obj.title;
-          if (typeof candidate === 'string') return candidate;
-        }
-        const containerKeys = ['bookInfo', 'book', 'novel', 'novelInfo', 'info', 'data'];
-        for (const key of containerKeys) {
-          const found = findBookTitle(obj[key], depth + 1);
-          if (found) return found;
-        }
-        for (const key of Object.keys(obj)) {
-          if (directKeys.includes(key) || containerKeys.includes(key)) continue;
-          const found = findBookTitle(obj[key], depth + 1);
-          if (found) return found;
-        }
-        return undefined;
-      };
+      if (filtered.length === 0) continue;
+      const best = filtered.reduce((a, b) => (b.length > a.length ? b : a));
+      this.addBookTitleCandidate(candidates, best, 3);
+    }
+  }
 
-      for (const script of Array.from(scripts)) {
-        const text = script.textContent?.trim();
-        if (!text) continue;
-        const data = tryParseJson(text);
-        if (!data) continue;
-        const found = findBookTitle(data);
-        if (found) {
-          addCandidate(found, 4);
-        }
-      }
-    };
+  private collectBookTitleFromMeta(doc: Document, candidates: BookTitleCandidates): void {
+    const metaContents = this.collectMetaContents(doc);
 
-    const collectFromScriptText = (): void => {
-      const scriptSelectors = [
-        'script:not([type])',
-        'script[type="text/javascript"]',
-        'script[type="application/javascript"]',
-      ];
-      const scripts = doc.querySelectorAll(scriptSelectors.join(', '));
-      const patterns = [
-        /bookName\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
-        /book_name\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
-        /bookTitle\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
-        /book_title\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
-        /novelName\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
-        /novel_title\s*[:=]\s*["']([^"'\\n]{2,80})["']/i,
-        new RegExp('lastread\\.set\\([^,]*,[^,]*,\\s*["\\\']([^"\\\'\\r\\n]{2,80})["\\\']', 'i'),
-      ];
-      for (const script of Array.from(scripts)) {
-        const text = script.textContent;
-        if (!text || text.length > 200_000) continue;
-        for (const pattern of patterns) {
-          const match = text.match(pattern);
-          if (match?.[1]) {
-            addCandidate(match[1], 3);
-          }
-        }
-      }
-    };
-
-    const collectFromSelectors = (selectors: string[], weight = 2): void => {
-      for (const selector of selectors) {
-        try {
-          const el = doc.querySelector(selector);
-          if (el) {
-            const text = (el.textContent || '').trim();
-            addCandidate(text, weight);
-          }
-        } catch {
-          continue;
-        }
-      }
-    };
-
-    // DOM selectors
-    collectFromSelectors(KNOWN_BOOK_TITLE_SELECTORS, 3);
-    collectFromBreadcrumbs();
-    collectFromStructuredData();
-    collectFromScriptText();
-
-    // Meta tags commonly used by novel sites
-    const metaNames = ['og:novel:book_name', 'og:book:title', 'book_name', 'og:novel:book_name'];
-    for (const name of metaNames) {
-      const meta =
-        doc.querySelector(`meta[name="${cssEscape(name)}"]`) ||
-        doc.querySelector(`meta[property="${cssEscape(name)}"]`);
-      addCandidate(meta?.getAttribute('content'), 4);
+    for (const name of EXPLICIT_BOOK_META_NAMES) {
+      this.addBookTitleCandidate(candidates, metaContents.get(name.toLowerCase()), 4);
     }
 
-    // Generic meta titles
-    const metaTitles = ['og:title', 'twitter:title'];
-    for (const name of metaTitles) {
-      const meta =
-        doc.querySelector(`meta[name="${cssEscape(name)}"]`) ||
-        doc.querySelector(`meta[property="${cssEscape(name)}"]`);
-      addCandidate(meta?.getAttribute('content'), 2);
+    for (const name of GENERIC_TITLE_META_NAMES) {
+      this.addBookTitleCandidate(candidates, metaContents.get(name.toLowerCase()), 2);
     }
 
-    const metaKeywords = doc.querySelector('meta[name="keywords"]');
-    if (metaKeywords?.getAttribute('content')) {
-      const keywords = (metaKeywords.getAttribute('content') || '')
+    const keywordsContent = metaContents.get('keywords');
+    if (keywordsContent) {
+      const keywords = keywordsContent
         .split(/[，,|｜]/)
         .map(s => s.trim())
         .filter(Boolean);
       if (keywords.length > 0) {
-        addCandidate(keywords[0], 1);
+        this.addBookTitleCandidate(candidates, keywords[0], 1);
       }
     }
 
-    const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content');
+    const metaDescription = metaContents.get('description');
     if (metaDescription) {
       const bracket = metaDescription.match(/《([^》]+)》/);
       if (bracket) {
-        addCandidate(bracket[1], 2);
+        this.addBookTitleCandidate(candidates, bracket[1], 2);
       }
     }
+  }
 
-    // Try to extract from document title
+  private collectMetaContents(doc: Document): Map<string, string> {
+    const contents = new Map<string, string>();
+    const metas = doc.querySelectorAll('meta[name], meta[property]');
+    for (const meta of Array.from(metas)) {
+      const key = (meta.getAttribute('name') || meta.getAttribute('property') || '')
+        .trim()
+        .toLowerCase();
+      const content = meta.getAttribute('content');
+      if (key && content && !contents.has(key)) {
+        contents.set(key, content);
+      }
+    }
+    return contents;
+  }
+
+  private collectBookTitleFromDocumentTitle(doc: Document, candidates: BookTitleCandidates): void {
     const docTitle = doc.title;
 
-    // Prefer explicit 《书名》 pattern
     const bracketMatch = docTitle.match(/《([^》]+)》/);
     if (bracketMatch) {
-      addCandidate(bracketMatch[1], 1);
+      this.addBookTitleCandidate(candidates, bracketMatch[1], 1);
     }
 
-    // Try to strip chapter information from the first part
     const parts = docTitle
       .split(/[-_|,，]/)
       .map(s => s.trim())
       .filter(Boolean);
     if (parts.length > 0) {
       const firstPart = parts[0];
-      // Titles like "假名 - 第1章" should prefer the true book name if it repeats elsewhere
-      addCandidate(firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, ''), 1);
+      this.addBookTitleCandidate(
+        candidates,
+        firstPart.replace(TITLE_PATTERN, '').replace(/《|》/g, ''),
+        1
+      );
 
-      // Find the first non-chapter part as book title
       for (const part of parts) {
         if (TITLE_PATTERN.test(part)) continue;
-        addCandidate(part.replace(/《|》/g, ''), 1);
+        this.addBookTitleCandidate(candidates, part.replace(/《|》/g, ''), 1);
       }
     }
 
-    // Try to extract using existing logic (second/last part)
-    const fallbackParts = parts.length
-      ? parts
-      : docTitle
-          .split(/[-_|,，]/)
-          .map(s => s.trim())
-          .filter(Boolean);
-    if (fallbackParts.length >= 2) {
-      // Book title is usually the second part or last part
-      const bookPart = fallbackParts[1] || fallbackParts[fallbackParts.length - 1];
-      addCandidate(bookPart, 1);
+    if (parts.length >= 2) {
+      const bookPart = parts[1] || parts[parts.length - 1];
+      this.addBookTitleCandidate(candidates, bookPart, 1);
+    }
+  }
+
+  private collectBookTitleFromStructuredData(doc: Document, candidates: BookTitleCandidates): void {
+    const scripts = doc.querySelectorAll(
+      'script[type="application/ld+json"], script[type="application/json"]'
+    );
+    for (const script of Array.from(scripts)) {
+      const text = script.textContent?.trim();
+      if (!text) continue;
+
+      let data: unknown;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        continue;
+      }
+
+      const found = this.findBookTitleInStructuredData(data);
+      if (found) {
+        this.addBookTitleCandidate(candidates, found, 4);
+      }
+    }
+  }
+
+  private findBookTitleInStructuredData(value: unknown, depth = 0): string | undefined {
+    if (!value || depth > 4) return undefined;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = this.findBookTitleInStructuredData(item, depth + 1);
+        if (found) return found;
+      }
+      return undefined;
+    }
+    if (typeof value !== 'object') return undefined;
+
+    const obj = value as Record<string, unknown>;
+    for (const key of STRUCTURED_BOOK_TITLE_KEYS) {
+      const candidate = obj[key];
+      if (typeof candidate === 'string') return candidate;
     }
 
-    // Directory links often include book title (e.g., 《书名》目录)
-    const directoryLinks = Array.from(doc.querySelectorAll('a')).filter(a =>
-      /目录|章节/.test(a.textContent || '')
-    );
-    for (const link of directoryLinks) {
+    const type = obj['@type'];
+    if (typeof type === 'string' && /book|novel/i.test(type)) {
+      const candidate = obj.name || obj.title;
+      if (typeof candidate === 'string') return candidate;
+    }
+
+    for (const key of STRUCTURED_BOOK_CONTAINER_KEYS) {
+      const found = this.findBookTitleInStructuredData(obj[key], depth + 1);
+      if (found) return found;
+    }
+
+    for (const key of Object.keys(obj)) {
+      if (
+        STRUCTURED_BOOK_TITLE_KEYS.includes(key as (typeof STRUCTURED_BOOK_TITLE_KEYS)[number]) ||
+        STRUCTURED_BOOK_CONTAINER_KEYS.includes(
+          key as (typeof STRUCTURED_BOOK_CONTAINER_KEYS)[number]
+        )
+      ) {
+        continue;
+      }
+      const found = this.findBookTitleInStructuredData(obj[key], depth + 1);
+      if (found) return found;
+    }
+
+    return undefined;
+  }
+
+  private collectBookTitleFromScriptText(doc: Document, candidates: BookTitleCandidates): void {
+    const scripts = doc.querySelectorAll(SCRIPT_TEXT_SELECTORS.join(', '));
+    for (const script of Array.from(scripts)) {
+      const text = script.textContent;
+      if (!text || text.length > 200_000) continue;
+      for (const pattern of SCRIPT_BOOK_TITLE_PATTERNS) {
+        const match = text.match(pattern);
+        if (match?.[1]) {
+          this.addBookTitleCandidate(candidates, match[1], 3);
+        }
+      }
+    }
+  }
+
+  private collectBookTitleFromDirectoryLinks(doc: Document, candidates: BookTitleCandidates): void {
+    if (doc.links.length > DIRECTORY_LINK_SCAN_LIMIT) return;
+    for (const link of Array.from(doc.links)) {
       const text = link.textContent || '';
+      if (!/目录|章节/.test(text)) continue;
+
       const bracket = text.match(/《([^》]+)》/);
       if (bracket) {
-        addCandidate(bracket[1], 2);
+        this.addBookTitleCandidate(candidates, bracket[1], 2);
         continue;
       }
       const cleaned = text.replace(/目录|章节|列表|返回|最新|TXT/gi, '').trim();
       if (cleaned) {
-        addCandidate(cleaned, 1);
+        this.addBookTitleCandidate(candidates, cleaned, 1);
       }
     }
+  }
 
-    if (candidates.size === 0) return undefined;
-
-    const sorted = Array.from(candidates.entries()).sort((a, b) => {
-      if (b[1] !== a[1]) return b[1] - a[1];
-      return b[0].length - a[0].length;
-    });
-
-    return sorted[0]?.[0];
+  private getAnchorLabel(el: HTMLAnchorElement): string {
+    return (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   /**

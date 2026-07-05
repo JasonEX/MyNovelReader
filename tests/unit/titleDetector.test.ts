@@ -335,6 +335,42 @@ describe('TitleDetector', () => {
       expect(result.bookTitle).toBe('更长书名');
     });
 
+    it('uses directory links as a fallback on small pages', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>第1章 测试</title></head>
+          <body>
+            <a href="/book/1/">《小站书名》章节目录</a>
+            <h1>第1章 测试</h1>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.bookTitle).toBe('小站书名');
+    });
+
+    it('does not let large generic directory-link noise override document title', () => {
+      const links = Array.from(
+        { length: 260 },
+        (_, i) => `<a href="/recommend/${i}">目录</a>`
+      ).join('');
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>靠谱书名 - 第1章 测试</title></head>
+          <body>
+            ${links}
+            <h1>第1章 测试</h1>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+      expect(result.bookTitle).toBe('靠谱书名');
+    });
+
     it('detects book title from structured data and script hints', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>
