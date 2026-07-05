@@ -11,7 +11,7 @@ import { BUILD_DATE, VERSION } from './version';
 // Keep @connect permissive so GM_xmlhttpRequest works on any supported host.
 const CONNECTS = ['*'];
 
-export const META_BASE = {
+const META_BASE = {
   id: 'mynovelreader@ywzhaiqi@gmail.com',
   name: 'My Novel Reader',
   'name:zh-CN': '小说阅读脚本',
@@ -126,7 +126,7 @@ export function createMeta(params: { version: string; buildDate?: string }): Use
   return { ...META_BASE, version: params.version, buildDate: params.buildDate };
 }
 
-export const META = createMeta({ version: VERSION, buildDate: BUILD_DATE });
+const META = createMeta({ version: VERSION, buildDate: BUILD_DATE });
 
 /**
  * Generate the full meta block string
@@ -236,5 +236,3 @@ export function toUserscriptConfig(meta: UserscriptMeta = META): Record<string, 
 
   return config;
 }
-
-export const userscriptConfig = toUserscriptConfig(META);

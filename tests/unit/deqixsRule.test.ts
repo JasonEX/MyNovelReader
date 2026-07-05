@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+import { deqixsCoRule, deqixsRule } from '@/core/rules/sites/deqixs';
+import { builtInRules } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { findBuiltInRule } from '@/core/rules/builtInRules';
 import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
 import { Parser } from '@/core/parser';
 
@@ -196,19 +197,17 @@ describe('Deqixs rule', () => {
   });
 
   it('is auto-discovered as a site rule', () => {
-    const rule = findBuiltInRule(page6Url);
-
-    expect(rule?.id).toBe('deqixs');
-    expect(rule?.version).toBe(1);
-    expect(rule?.advanced?.checkSection).toBe(true);
+    expect(builtInRules).toContain(deqixsRule);
+    expect(deqixsRule.version).toBe(1);
+    expect(deqixsRule.advanced?.checkSection).toBe(true);
+    expect(new RegExp(deqixsRule.match.pattern, 'i').test(page6Url)).toBe(true);
   });
 
   it('is auto-discovered as a deqixs.co dynamic site rule', () => {
-    const rule = findBuiltInRule(coChapterUrl);
-
-    expect(rule?.id).toBe('deqixs-co');
-    expect(rule?.version).toBe(2);
-    expect(rule?.hooks?.beforeParse).toBeTypeOf('function');
+    expect(builtInRules).toContain(deqixsCoRule);
+    expect(deqixsCoRule.version).toBe(2);
+    expect(deqixsCoRule.hooks?.beforeParse).toBeTypeOf('function');
+    expect(new RegExp(deqixsCoRule.match.pattern, 'i').test(coChapterUrl)).toBe(true);
   });
 
   it('parses title, book title, navigation and content from a section page', async () => {
@@ -269,12 +268,7 @@ describe('Deqixs rule', () => {
     });
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
-    const entries = await loadTocEntriesPaged(
-      indexUrl,
-      page6Url,
-      findBuiltInRule(page6Url),
-      vi.fn()
-    );
+    const entries = await loadTocEntriesPaged(indexUrl, page6Url, deqixsRule, vi.fn());
 
     expect(gm).toHaveBeenCalledTimes(1);
     expect(entries.map(entry => entry.title)).toEqual([

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+import { builtInRules } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { findBuiltInRule } from '@/core/rules/builtInRules';
 import { Parser } from '@/core/parser';
+import { uureadRule } from '@/core/rules/sites/uuread';
 
 function makeDoc(html: string, url: string): Document {
   return new JSDOM(html, { url }).window.document;
@@ -46,10 +47,13 @@ function pageHtml(options: {
 
 describe('UUread rule', () => {
   it('is auto-discovered as a site rule', () => {
-    const rule = findBuiltInRule('https://www.uuread.tw/chapter/1880014/2545609.html');
-
-    expect(rule?.id).toBe('uuread');
-    expect(rule?.version).toBe(2);
+    expect(builtInRules).toContain(uureadRule);
+    expect(uureadRule.version).toBe(2);
+    expect(
+      new RegExp(uureadRule.match.pattern, 'i').test(
+        'https://www.uuread.tw/chapter/1880014/2545609.html'
+      )
+    ).toBe(true);
   });
 
   it('merges paged chapters, cleans page markers from title, and keeps real next chapter', async () => {

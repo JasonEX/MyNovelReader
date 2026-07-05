@@ -14,7 +14,7 @@ import { fetchAndParseUrl } from '@/core/utils/network';
 import { resolveQidianMobileBookPreviewChapterUrl } from '@/core/rules/sites/qidian';
 
 /** Section detection result */
-export interface SectionInfo {
+interface SectionInfo {
   isSection: boolean;
   nextSectionUrl: string | null;
   nextChapterUrl: string | null;

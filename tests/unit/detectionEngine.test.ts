@@ -84,16 +84,11 @@ describe('DetectionEngine', () => {
     expect(engine.quickCheck(targetDoc)).toBe(true);
   });
 
-  it('delegates generateSelector and supports threshold accessors', () => {
+  it('delegates generateSelector', () => {
     doc.body.innerHTML = '<div id="content"><p>x</p></div>';
     const el = doc.querySelector('#content')!;
 
     const engine = new DetectionEngine();
     expect(engine.generateSelector(el)).toBe('#content');
-
-    const t1 = engine.getThreshold();
-    engine.setThreshold(0.9);
-    const t2 = engine.getThreshold();
-    expect(t2).not.toBe(t1);
   });
 });

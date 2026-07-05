@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const DEFAULT_TARGET_URL = 'https://www.ciweimao.com/chapter/102930784';
+const DEFAULT_TARGET_URL = 'https://www.ciweimao.com/chapter/102930784';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -151,7 +151,7 @@ export async function getFirstPage(context: BrowserContext): Promise<Page> {
   return context.pages()[0] || context.newPage();
 }
 
-export async function acceptPromptOrFloatingButton(page: Page): Promise<void> {
+async function acceptPromptOrFloatingButton(page: Page): Promise<void> {
   await page.waitForTimeout(300);
 
   const clicked = await page.evaluate(() => {
@@ -179,7 +179,7 @@ export async function acceptPromptOrFloatingButton(page: Page): Promise<void> {
   }
 }
 
-export async function collectMnrPageState(page: Page): Promise<MnrPageState> {
+async function collectMnrPageState(page: Page): Promise<MnrPageState> {
   return page.evaluate(() => {
     const cloudflareSelectors = [
       '[id*="cf-chl"]',

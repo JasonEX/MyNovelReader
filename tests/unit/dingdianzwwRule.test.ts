@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+import { builtInRules } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { findBuiltInRule } from '@/core/rules/builtInRules';
+import { dingdianzwwRule } from '@/core/rules/sites/dingdianzww';
 import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
 import { Parser } from '@/core/parser';
 
@@ -150,14 +151,12 @@ describe('Dingdianzww rule', () => {
     vi.unstubAllGlobals();
   });
 
-  it('is auto-discovered and replaces the obsolete ddxsmf rule', () => {
-    const rule = findBuiltInRule(url);
-
-    expect(rule?.id).toBe('dingdianzww');
-    expect(rule?.version).toBe(2);
-    expect(rule?.hooks?.beforeParse).toBeTypeOf('function');
-    expect(rule?.advanced?.noSection).toBe(true);
-    expect(findBuiltInRule('https://www.ddxsmf.com/read/27543/9719752.html')).toBeUndefined();
+  it('is auto-discovered with the current dingdianzww chapter URL', () => {
+    expect(builtInRules).toContain(dingdianzwwRule);
+    expect(dingdianzwwRule.version).toBe(2);
+    expect(dingdianzwwRule.hooks?.beforeParse).toBeTypeOf('function');
+    expect(dingdianzwwRule.advanced?.noSection).toBe(true);
+    expect(new RegExp(dingdianzwwRule.match.pattern, 'i').test(url)).toBe(true);
   });
 
   it('parses chapter title, book title, navigation, and removes site noise', async () => {
@@ -249,7 +248,7 @@ describe('Dingdianzww rule', () => {
     const entries = await loadTocEntriesPaged(
       'https://dingdianzww.org/27543/',
       url,
-      findBuiltInRule(url),
+      dingdianzwwRule,
       vi.fn()
     );
 

@@ -1,56 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { builtInRules, findBuiltInRule, getBuiltInRulesCount } from '@/core/rules/builtInRules';
+import {
+  ciweimaoRule,
+  ciweimaoWapRule,
+  fetchCiweimaoApiDocument,
+} from '@/core/rules/sites/ciweimao';
+import { qidianMobileRule, qidianRule } from '@/core/rules/sites/qidian';
+import { builtInRules } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { fetchCiweimaoApiDocument } from '@/core/rules/sites/ciweimao';
 import { Parser } from '@/core/parser';
-import type { SiteRule } from '@/core/rules/types';
 
-describe('builtInRules helpers', () => {
-  it('returns stable counts', () => {
-    const counts = getBuiltInRulesCount();
-
-    expect(counts.total).toBe(builtInRules.length);
-    expect(counts.total).toBeGreaterThan(0);
-    expect(counts.special).toBeGreaterThanOrEqual(0);
-    expect(counts.simplified).toBeGreaterThanOrEqual(0);
-  });
-
-  it('findBuiltInRule respects excludes and skips invalid regex rules', () => {
-    const url = 'https://m.ilwxs.com/shu/36354/171272950.html';
-
-    const invalidRule = {
-      id: 'invalid-regex',
-      version: 1,
-      match: { pattern: '[', type: 'regex' },
-      content: { selector: '#content' },
-      meta: { source: 'builtin' },
-    } satisfies SiteRule;
-
-    const excludedRule = {
-      id: 'excluded-first',
-      name: 'excluded-first',
-      version: 1,
-      match: { pattern: 'm\\.ilwxs\\.com', type: 'regex', exclude: ['171272950'] },
-      content: { selector: '#content' },
-      meta: { source: 'builtin' },
-    } satisfies SiteRule;
-
-    builtInRules.unshift(excludedRule);
-    builtInRules.unshift(invalidRule);
-
-    try {
-      const found = findBuiltInRule(url);
-      expect(found?.id).toBe('ilwxs');
-    } finally {
-      builtInRules.shift();
-      builtInRules.shift();
-    }
-  });
-
-  it('findBuiltInRule returns undefined when no match exists', () => {
-    expect(findBuiltInRule('https://example.com/not-a-novel')).toBeUndefined();
+describe('builtInRules', () => {
+  it('contains active built-in rules', () => {
+    expect(builtInRules.length).toBeGreaterThan(0);
+    expect(builtInRules).toContain(qidianRule);
+    expect(builtInRules).toContain(qidianMobileRule);
   });
 
   it('builds Qidian TOC URL from the stable book detail page', async () => {
@@ -109,14 +74,10 @@ describe('builtInRules helpers', () => {
     });
 
     const mobileUrl = 'https://m.qidian.com/chapter/1049115805/903889110/';
-    const desktopUrl = 'https://www.qidian.com/chapter/1049115805/903889110/';
-    const mobileRule = findBuiltInRule(mobileUrl);
-    const desktopRule = findBuiltInRule(desktopUrl);
-
-    expect(mobileRule?.id).toBe('qidian-mobile');
-    expect(mobileRule?.advanced?.useIframe).not.toBe(true);
-    expect(desktopRule?.id).toBe('qidian');
-    expect(desktopRule?.advanced?.useIframe).toBe(true);
+    expect(qidianMobileRule.match.pattern).toMatch('m\\.qidian\\.com');
+    expect(qidianMobileRule.advanced?.useIframe).not.toBe(true);
+    expect(qidianRule.match.pattern).toMatch('www\\.qidian\\.com');
+    expect(qidianRule.advanced?.useIframe).toBe(true);
 
     const pageContext = {
       pageContext: {
@@ -310,8 +271,6 @@ describe('builtInRules helpers', () => {
       { url }
     ).window.document;
 
-    const desktopRule = findBuiltInRule(url);
-    const wapRule = findBuiltInRule('https://wap.ciweimao.com/chapter/113489050');
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
     let chapter: Awaited<ReturnType<Parser['parse']>>;
@@ -321,12 +280,10 @@ describe('builtInRules helpers', () => {
       debug.mockRestore();
     }
 
-    expect(desktopRule?.id).toBe('ciweimao');
-    expect(desktopRule?.hooks?.beforeParse).toBeTypeOf('function');
-    expect(desktopRule?.advanced?.useIframe).not.toBe(true);
-    expect(wapRule?.id).toBe('ciweimao-wap');
-    expect(wapRule?.hooks?.beforeParse).toBeTypeOf('function');
-    expect(wapRule?.advanced?.useIframe).not.toBe(true);
+    expect(ciweimaoRule.hooks?.beforeParse).toBeTypeOf('function');
+    expect(ciweimaoRule.advanced?.useIframe).not.toBe(true);
+    expect(ciweimaoWapRule.hooks?.beforeParse).toBeTypeOf('function');
+    expect(ciweimaoWapRule.advanced?.useIframe).not.toBe(true);
     expect(chapter?.rule?.id).toBe('ciweimao');
     expect(chapter?.title).toBe('3.山中队员，你是否清醒');
     expect(chapter?.bookTitle).toBe('无奥世界，但是我加载了骑士卡组');

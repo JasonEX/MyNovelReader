@@ -21,30 +21,8 @@ export const VIP_BLOCK_TOAST = '该章节为VIP/付费内容，无法加载';
 
 // ============ Types ============
 
-/** Section detection info */
-export type SectionInfo = {
-  isSection: boolean;
-  nextSectionUrl: string | null;
-  nextChapterUrl: string | null;
-  confidence: number;
-};
-
 /** Load source type */
 export type LoadSource = 'auto' | 'manual';
-
-/** Reading progress state */
-export interface ReadingProgress {
-  /** Chapter URL */
-  url: string;
-  /** Scroll position (0-100%) */
-  scrollPercent: number;
-  /** Current chapter (visible) URL */
-  chapterUrl: string;
-  /** Progress within current chapter (0-100%) */
-  chapterPercent: number;
-  /** Last read timestamp */
-  lastRead: number;
-}
 
 /** Cache progress state for UI */
 export interface CacheProgressState {

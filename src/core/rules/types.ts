@@ -1,6 +1,5 @@
 /**
- * SiteRule types - Simplified rule schema for v2.0
- * Reduces 47 fields from v1 to essential fields + hooks
+ * SiteRule types used by built-in and user rules.
  */
 
 /** Replace rule for content processing */
@@ -14,7 +13,7 @@ export interface ReplaceRule {
 }
 
 /** URL matching configuration */
-export interface UrlMatcher {
+interface UrlMatcher {
   /** Regex pattern or glob string */
   pattern: string;
   /** Pattern type (default: 'regex') */
@@ -24,7 +23,7 @@ export interface UrlMatcher {
 }
 
 /** Content configuration */
-export interface ContentConfig {
+interface ContentConfig {
   /** CSS selector for content area */
   selector: string;
   /** Selectors to remove from content */
@@ -34,7 +33,7 @@ export interface ContentConfig {
 }
 
 /** Navigation configuration */
-export interface NavigationConfig {
+interface NavigationConfig {
   /** Next chapter selector (false to disable auto-detection) */
   next?: string | false;
   /** Previous chapter selector */
@@ -44,7 +43,7 @@ export interface NavigationConfig {
 }
 
 /** Table of contents (TOC) parsing configuration */
-export interface TocConfig {
+interface TocConfig {
   /**
    * Exclude TOC links that are inside these ancestor containers.
    * Comma-separated CSS selectors. If any selector matches `a.closest(sel)`,
@@ -56,7 +55,7 @@ export interface TocConfig {
 }
 
 /** Title configuration */
-export interface TitleConfig {
+interface TitleConfig {
   /** CSS selector for chapter title */
   selector?: string;
   /** Regex pattern to extract from document.title */
@@ -72,7 +71,7 @@ export interface TitleConfig {
 }
 
 /** Content processing configuration */
-export interface ProcessingConfig {
+interface ProcessingConfig {
   /** Remove common ad patterns */
   removeAds?: boolean;
   /** Normalize whitespace and newlines */
@@ -86,7 +85,7 @@ export interface ProcessingConfig {
 }
 
 /** Advanced features configuration */
-export interface AdvancedConfig {
+interface AdvancedConfig {
   /** Use iframe to load pages */
   useIframe?: boolean;
   /** Iframe sandbox attributes */
@@ -141,7 +140,7 @@ export type BeforeParseHook = (
 ) => Promise<void> | void;
 
 /** JavaScript hooks for advanced customization */
-export interface HooksConfig {
+interface HooksConfig {
   /**
    * JS code or a typed built-in function to run before parsing.
    *
@@ -150,14 +149,13 @@ export interface HooksConfig {
    * Function hooks are intended for built-in rules only; user rules are persisted as JSON and keep
    * using string hooks.
    *
-   * Note: Only `beforeParse` is supported. Other legacy hook fields are intentionally not supported
-   * to keep the rules schema simple and predictable.
+   * Note: Only `beforeParse` is supported to keep the rules schema simple and predictable.
    */
   beforeParse?: string | BeforeParseHook;
 }
 
 /** Rule metadata */
-export interface RuleMeta {
+interface RuleMeta {
   /** Rule author */
   author?: string;
   /** Rule source: builtin or user */
@@ -173,7 +171,7 @@ export interface RuleMeta {
 }
 
 /**
- * SiteRule - Main rule interface (simplified from v1's 47 fields)
+ * SiteRule - Main rule interface.
  */
 export interface SiteRule {
   // === Identification ===

@@ -21,7 +21,7 @@ export interface ProtectionOptions {
   cleanupScripts?: boolean;
 }
 
-export const DEFAULT_PROTECTION_OPTIONS: Required<ProtectionOptions> = {
+const DEFAULT_PROTECTION_OPTIONS: Required<ProtectionOptions> = {
   blockRedirects: true,
   enableRightClick: true,
   enableSelection: true,

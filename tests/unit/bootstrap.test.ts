@@ -34,9 +34,15 @@ const {
   mockSetSitePreference: vi.fn(),
 }));
 
-vi.mock('@/core', () => ({
+vi.mock('@/core/AutoEnableManager', () => ({
   getAutoEnableManager: (opts: unknown) => mockGetAutoEnableManager(opts),
+}));
+
+vi.mock('@/core/rules/RuleManager', () => ({
   getRuleManager: () => mockGetRuleManager(),
+}));
+
+vi.mock('@/core/protection', () => ({
   getSiteProtection: () => ({ activate: mockActivateProtection }),
 }));
 
@@ -47,11 +53,16 @@ vi.mock('@/core/rules/RuleStorage', () => ({
   }),
 }));
 
-vi.mock('@/ui/stores', () => ({
+vi.mock('@/ui/stores/config', () => ({
   useConfigStore: () => configStore,
+}));
+
+vi.mock('@/ui/stores/rule', () => ({
   useRuleStore: () => ruleStore,
+}));
+
+vi.mock('@/ui/stores/reader', () => ({
   useReaderStore: () => readerStore,
-  THEMES: [],
 }));
 
 vi.mock('@/ui/components/reader', async () => {

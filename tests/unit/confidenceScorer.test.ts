@@ -167,14 +167,8 @@ describe('ConfidenceScorer', () => {
   });
 
   describe('threshold', () => {
-    it('should use default threshold of 0.6', () => {
-      expect(scorer.getThreshold()).toBe(0.6);
-    });
-
-    it('should allow custom threshold', () => {
-      scorer.setThreshold(0.8);
-      expect(scorer.getThreshold()).toBe(0.8);
-
+    it('uses the constructor threshold when marking reliability', () => {
+      const strictScorer = new ConfidenceScorer(0.8);
       const results: DetectionResults = {
         content: {
           element: null,
@@ -199,9 +193,8 @@ describe('ConfidenceScorer', () => {
         },
       };
 
-      const report = scorer.score(results);
+      const report = strictScorer.score(results);
 
-      // With threshold 0.8, this should not be reliable
       expect(report.isReliable).toBe(false);
     });
   });

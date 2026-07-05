@@ -145,12 +145,6 @@
 		createSummary(report) {
 			return `检测置信度: ${Math.round(report.overall * 100)}% (${report.isReliable ? "可信" : "不确定"})`;
 		}
-		getThreshold() {
-			return this.threshold;
-		}
-		setThreshold(threshold) {
-			this.threshold = threshold;
-		}
 	};
 	var KNOWN_CONTENT_SELECTORS = [
 		"#pagecontent",
@@ -3678,13 +3672,689 @@
 		generateSelector(element) {
 			return this.contentDetector.generateSelector(element);
 		}
-		getThreshold() {
-			return this.confidenceScorer.getThreshold();
+	};
+	function enableRightClick() {
+		const handler = (e) => {
+			e.stopPropagation();
+			return true;
+		};
+		document.addEventListener("contextmenu", handler, true);
+		const originalOnContextMenu = document.oncontextmenu;
+		document.oncontextmenu = null;
+		if (document.body) document.body.oncontextmenu = null;
+		document.querySelectorAll("[oncontextmenu]").forEach((el) => {
+			el.removeAttribute("oncontextmenu");
+		});
+		return () => {
+			document.removeEventListener("contextmenu", handler, true);
+			document.oncontextmenu = originalOnContextMenu;
+		};
+	}
+	function enableSelection() {
+		const handler = (e) => {
+			e.stopPropagation();
+			return true;
+		};
+		document.addEventListener("selectstart", handler, true);
+		const style = document.createElement("style");
+		style.id = "mnr-enable-selection";
+		style.textContent = `
+      * {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+    `;
+		document.head.appendChild(style);
+		document.querySelectorAll("[onselectstart]").forEach((el) => {
+			el.removeAttribute("onselectstart");
+		});
+		document.querySelectorAll("[unselectable]").forEach((el) => {
+			el.removeAttribute("unselectable");
+		});
+		return () => {
+			document.removeEventListener("selectstart", handler, true);
+			style.remove();
+		};
+	}
+	function enableCopy() {
+		const handler = (e) => {
+			e.stopPropagation();
+			return true;
+		};
+		document.addEventListener("copy", handler, true);
+		document.addEventListener("cut", handler, true);
+		document.querySelectorAll("[oncopy], [oncut]").forEach((el) => {
+			el.removeAttribute("oncopy");
+			el.removeAttribute("oncut");
+		});
+		return () => {
+			document.removeEventListener("copy", handler, true);
+			document.removeEventListener("cut", handler, true);
+		};
+	}
+	function unlockKeyboard() {
+		const handler = (e) => {
+			const ke = e;
+			if (isMnrEvent(ke) && !isMnrReaderShortcutEvent(ke)) return;
+			ke.stopImmediatePropagation();
+			ke.stopPropagation();
+		};
+		const types = [
+			"keydown",
+			"keyup",
+			"keypress"
+		];
+		types.forEach((type) => document.addEventListener(type, handler, true));
+		const originalDocumentHandlers = {
+			keydown: document.onkeydown,
+			keyup: document.onkeyup,
+			keypress: document.onkeypress
+		};
+		const originalWindowHandlers = {
+			keydown: window.onkeydown,
+			keyup: window.onkeyup,
+			keypress: window.onkeypress
+		};
+		const originalBodyHandlers = document.body ? {
+			keydown: document.body.onkeydown,
+			keyup: document.body.onkeyup,
+			keypress: document.body.onkeypress
+		} : null;
+		const originalHtmlHandlers = {
+			keydown: document.documentElement.onkeydown,
+			keyup: document.documentElement.onkeyup,
+			keypress: document.documentElement.onkeypress
+		};
+		document.onkeydown = null;
+		document.onkeyup = null;
+		document.onkeypress = null;
+		window.onkeydown = null;
+		window.onkeyup = null;
+		window.onkeypress = null;
+		document.documentElement.onkeydown = null;
+		document.documentElement.onkeyup = null;
+		document.documentElement.onkeypress = null;
+		if (document.body) {
+			document.body.onkeydown = null;
+			document.body.onkeyup = null;
+			document.body.onkeypress = null;
 		}
-		setThreshold(threshold) {
-			this.confidenceScorer.setThreshold(threshold);
+		document.querySelectorAll("[onkeydown], [onkeyup], [onkeypress]").forEach((el) => {
+			el.removeAttribute("onkeydown");
+			el.removeAttribute("onkeyup");
+			el.removeAttribute("onkeypress");
+		});
+		return () => {
+			types.forEach((type) => document.removeEventListener(type, handler, true));
+			document.onkeydown = originalDocumentHandlers.keydown;
+			document.onkeyup = originalDocumentHandlers.keyup;
+			document.onkeypress = originalDocumentHandlers.keypress;
+			window.onkeydown = originalWindowHandlers.keydown;
+			window.onkeyup = originalWindowHandlers.keyup;
+			window.onkeypress = originalWindowHandlers.keypress;
+			document.documentElement.onkeydown = originalHtmlHandlers.keydown;
+			document.documentElement.onkeyup = originalHtmlHandlers.keyup;
+			document.documentElement.onkeypress = originalHtmlHandlers.keypress;
+			if (document.body && originalBodyHandlers) {
+				document.body.onkeydown = originalBodyHandlers.keydown;
+				document.body.onkeyup = originalBodyHandlers.keyup;
+				document.body.onkeypress = originalBodyHandlers.keypress;
+			}
+		};
+	}
+	function isMnrEvent(e) {
+		const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+		for (const node of path) {
+			if (node instanceof ShadowRoot) {
+				if (node.host?.id?.startsWith("mnr-")) return true;
+			}
+			if (node instanceof Element) {
+				if (node.id?.startsWith("mnr-")) return true;
+				for (const cls of Array.from(node.classList)) if (cls.startsWith("mnr-")) return true;
+			}
+		}
+		return false;
+	}
+	function isMnrReaderShortcutEvent(e) {
+		if (e.ctrlKey || e.altKey || e.metaKey) return false;
+		const key = e.key.toLowerCase();
+		if (!new Set([
+			"escape",
+			"tab",
+			"enter",
+			"s",
+			",",
+			"e",
+			"q",
+			"arrowleft",
+			"arrowright",
+			"arrowup",
+			"arrowdown",
+			" ",
+			"spacebar",
+			"n",
+			"p"
+		]).has(key)) return false;
+		const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+		if (path.some(isEditableKeyboardTarget)) return false;
+		return path.some((node) => {
+			if (!(node instanceof Element)) return false;
+			if (node.id === "mnr-reader-root") return true;
+			return Array.from(node.classList).some((cls) => cls === "mnr-reader" || cls.startsWith("mnr-"));
+		});
+	}
+	function isEditableKeyboardTarget(node) {
+		if (!(node instanceof Element)) return false;
+		const tagName = node.tagName;
+		return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || node.isContentEditable === true;
+	}
+	var DEFAULT_PROTECTION_OPTIONS = {
+		blockRedirects: true,
+		enableRightClick: true,
+		enableSelection: true,
+		enableCopy: true,
+		unlockKeyboard: true,
+		blockPopups: true,
+		removeEventHijacking: true,
+		blockVisibilityDetection: true,
+		clearTimers: true,
+		cleanupScripts: false
+	};
+	var isCloudflareChallenge = (doc = document) => {
+		if ((doc.location?.pathname || (typeof window !== "undefined" ? window.location.pathname : "")).startsWith("/cdn-cgi/")) return true;
+		if (doc.querySelector([
+			"[id*=\"cf-chl\"]",
+			"[class*=\"cf-chl\"]",
+			"form[action*=\"/cdn-cgi/\"]",
+			"script[src*=\"/cdn-cgi/challenge-platform\"]",
+			"link[href*=\"/cdn-cgi/challenge-platform\"]",
+			"iframe[src*=\"challenges.cloudflare.com\"]",
+			"iframe[src*=\"captcha.cloudflare.com\"]"
+		].join(",")) !== null) return true;
+		const title = (doc.title || "").trim().toLowerCase();
+		if (title === "just a moment..." || title === "attention required! | cloudflare") return true;
+		const scriptText = Array.from(doc.querySelectorAll("script")).map((script) => `${script.getAttribute("src") || ""}\n${script.textContent || ""}`).join("\n");
+		if (/_cf_chl_opt|cf_chl_|challenge-platform|challenges\.cloudflare\.com/i.test(scriptText)) return true;
+		const bodyText = (doc.body?.textContent || "").replace(/\s+/g, " ").trim();
+		return /enable javascript and cookies to continue/i.test(bodyText);
+	};
+	function withDefaultProtectionOptions(options = {}) {
+		return {
+			...DEFAULT_PROTECTION_OPTIONS,
+			...options
+		};
+	}
+	function getEffectiveProtectionOptions(options, doc = document) {
+		if (!isCloudflareChallenge(doc)) return options;
+		return {
+			...options,
+			blockRedirects: false,
+			clearTimers: false,
+			removeEventHijacking: false
+		};
+	}
+	function blockPopups() {
+		const originalOpen = window.open;
+		window.open = (url, target, features) => {
+			if (window.event?.isTrusted) {
+				const urlStr = url?.toString() || "";
+				try {
+					if (new URL(urlStr, window.location.href).origin === window.location.origin) return originalOpen.call(window, url, target, features);
+				} catch {}
+			}
+			return null;
+		};
+		return () => {
+			window.open = originalOpen;
+		};
+	}
+	function blockRedirects(options = {}) {
+		document.querySelectorAll("meta[http-equiv=\"refresh\"]").forEach((meta) => meta.remove());
+		const originalAssign = window.location.assign.bind(window.location);
+		const originalReplace = window.location.replace.bind(window.location);
+		const isAllowedNavigation = (url) => {
+			try {
+				const targetUrl = new URL(url, window.location.href);
+				if (["challenges.cloudflare.com", "captcha.cloudflare.com"].some((h) => targetUrl.hostname === h)) return true;
+				if (targetUrl.origin === window.location.origin && targetUrl.pathname.startsWith("/cdn-cgi/")) return true;
+				if (targetUrl.origin === window.location.origin) return ![
+					/(?:^|[/_-])ads?(?:[/_-]|$)/i,
+					/(?:^|[/_-])click[_-]?track/i,
+					/(?:^|[/_-])redirect(?:[/_-]|$)/i,
+					/(?:^|[/_-])jump[_-]?to/i,
+					/(?:^|[/_-])go[_-]?to[_-]?url/i,
+					/(?:^|[/_-])link[_-]?out/i,
+					/(?:^|[/_-])external(?:[/_-]|$)/i
+				].some((p) => p.test(targetUrl.pathname));
+				return false;
+			} catch {
+				return false;
+			}
+		};
+		let locationOverrideSucceeded = false;
+		const locationProto = Object.getPrototypeOf(window.location);
+		const originalHrefDesc = locationProto ? Object.getOwnPropertyDescriptor(locationProto, "href") : null;
+		try {
+			const target = locationProto || window.location;
+			Object.defineProperty(target, "assign", {
+				value: (url) => {
+					if (isAllowedNavigation(url)) originalAssign(url);
+				},
+				writable: true,
+				configurable: true
+			});
+			Object.defineProperty(target, "replace", {
+				value: (url) => {
+					if (isAllowedNavigation(url)) originalReplace(url);
+				},
+				writable: true,
+				configurable: true
+			});
+			if (locationProto) {
+				if (originalHrefDesc?.set && originalHrefDesc.get) Object.defineProperty(locationProto, "href", {
+					get: originalHrefDesc.get,
+					set: function(url) {
+						if (isAllowedNavigation(url)) originalHrefDesc.set?.call(this, url);
+					},
+					configurable: true
+				});
+			}
+			locationOverrideSucceeded = true;
+		} catch {}
+		const originalSetTimeout = window.setTimeout;
+		const originalSetInterval = window.setInterval;
+		const suspiciousPatterns = [
+			/location\s*[.=]/i,
+			/window\.open/i,
+			/href\s*=/i,
+			/navigate/i
+		];
+		const isSuspiciousCallback = (callback) => {
+			if (typeof callback === "string") return suspiciousPatterns.some((p) => p.test(callback));
+			return false;
+		};
+		window.setTimeout = (callback, delay, ...args) => {
+			if (isSuspiciousCallback(callback) && (delay || 0) > 0) return 0;
+			return originalSetTimeout(callback, delay, ...args);
+		};
+		window.setInterval = (callback, delay, ...args) => {
+			if (isSuspiciousCallback(callback)) return 0;
+			return originalSetInterval(callback, delay, ...args);
+		};
+		const isBlockedExternalUrl = (url, kind) => {
+			if (url.protocol !== "http:" && url.protocol !== "https:") return true;
+			if (url.origin === window.location.origin) return false;
+			if (["challenges.cloudflare.com", "captcha.cloudflare.com"].some((h) => url.hostname === h)) return false;
+			if (url.pathname.startsWith("/cdn-cgi/")) return false;
+			return kind === "script" || kind === "iframe";
+		};
+		const isHighEntropyPath = (pathname) => {
+			return /^\/[A-Za-z0-9]{6,12}\/[A-Za-z0-9]{6,24}\.js(?:$|[?#])/.test(pathname);
+		};
+		const isLikelyAdScriptPath = (srcUrl) => {
+			if (srcUrl.origin !== window.location.origin) return true;
+			const path = srcUrl.pathname || "";
+			if (path.startsWith("/static/") || path.startsWith("/js/") || path.startsWith("/assets/")) return false;
+			return isHighEntropyPath(path);
+		};
+		const NodeCtor = window.Node;
+		const ScriptCtor = window.HTMLScriptElement;
+		const IFrameCtor = window.HTMLIFrameElement;
+		const ElementCtor = window.Element;
+		const DocumentFragmentCtor = window.DocumentFragment;
+		const originalAppendChild = NodeCtor.prototype.appendChild;
+		const originalInsertBefore = NodeCtor.prototype.insertBefore;
+		const shouldBlockNode = (node) => {
+			const checkScript = (script) => {
+				const src = script.getAttribute("src") || script.src || "";
+				if (!src) return false;
+				let u;
+				try {
+					u = new URL(src, window.location.href);
+				} catch {
+					return false;
+				}
+				if (isBlockedExternalUrl(u, "script")) return true;
+				if (options.cleanupScripts && isLikelyAdScriptPath(u)) return true;
+				return false;
+			};
+			const checkIFrame = (iframe) => {
+				const src = iframe.getAttribute("src") || iframe.src || "";
+				if (!src) return false;
+				let u;
+				try {
+					u = new URL(src, window.location.href);
+				} catch {
+					return false;
+				}
+				if (isBlockedExternalUrl(u, "iframe")) return true;
+				return false;
+			};
+			if (ScriptCtor && node instanceof ScriptCtor) return checkScript(node);
+			if (IFrameCtor && node instanceof IFrameCtor) return checkIFrame(node);
+			if (DocumentFragmentCtor && node instanceof DocumentFragmentCtor || ElementCtor && node instanceof ElementCtor) {
+				const scripts = node.querySelectorAll("script[src]");
+				for (const s of Array.from(scripts)) if (ScriptCtor && s instanceof ScriptCtor && checkScript(s)) return true;
+				const iframes = node.querySelectorAll("iframe[src]");
+				for (const f of Array.from(iframes)) if (IFrameCtor && f instanceof IFrameCtor && checkIFrame(f)) return true;
+			}
+			return false;
+		};
+		NodeCtor.prototype.appendChild = function(node) {
+			if (shouldBlockNode(node)) return node;
+			return originalAppendChild.call(this, node);
+		};
+		NodeCtor.prototype.insertBefore = function(newNode, referenceNode) {
+			if (shouldBlockNode(newNode)) return newNode;
+			return originalInsertBefore.call(this, newNode, referenceNode);
+		};
+		const originalWrite = document.write?.bind(document);
+		const originalWriteln = document.writeln?.bind(document);
+		let writeBuffer = "";
+		let isBufferingWrite = false;
+		const MAX_BUFFER_LEN = 4096;
+		const bufferLooksLikeScriptTag = (buf) => /<script/i.test(buf);
+		const bufferIsClosed = (buf) => /<\/script>/i.test(buf) || /<\\\/script>/i.test(buf);
+		const maybeExtractScriptSrc = (buf) => {
+			return buf.match(/<script[^>]*\ssrc\s*=\s*['"]([^'"]+)['"][^>]*>/i)?.[1] || null;
+		};
+		const flushWriteBuffer = (writer) => {
+			if (!writeBuffer) return;
+			writer(writeBuffer);
+			writeBuffer = "";
+			isBufferingWrite = false;
+		};
+		const handleWriteLike = (writer, args) => {
+			if (!originalWrite || !originalWriteln) return writer(String(args.join("")));
+			const chunk = args.map((a) => String(a)).join("");
+			const startsScriptLike = /<script/i.test(chunk) || isBufferingWrite && bufferLooksLikeScriptTag(writeBuffer);
+			if (!isBufferingWrite && startsScriptLike) {
+				isBufferingWrite = true;
+				writeBuffer = "";
+			}
+			if (!isBufferingWrite) {
+				writer(chunk);
+				return;
+			}
+			writeBuffer += chunk;
+			if (writeBuffer.length > MAX_BUFFER_LEN) {
+				flushWriteBuffer(writer);
+				return;
+			}
+			if (!bufferIsClosed(writeBuffer)) return;
+			const src = maybeExtractScriptSrc(writeBuffer);
+			if (src) try {
+				const u = new URL(src, window.location.href);
+				if (isBlockedExternalUrl(u, "script") || isLikelyAdScriptPath(u)) {
+					writeBuffer = "";
+					isBufferingWrite = false;
+					return;
+				}
+			} catch {}
+			flushWriteBuffer(writer);
+		};
+		if (options.cleanupScripts && originalWrite && originalWriteln) {
+			document.write = (...args) => handleWriteLike(originalWrite, args);
+			document.writeln = (...args) => handleWriteLike(originalWriteln, args);
+		}
+		return () => {
+			if (locationOverrideSucceeded) try {
+				const target = locationProto || window.location;
+				Object.defineProperty(target, "assign", {
+					value: originalAssign,
+					configurable: true
+				});
+				Object.defineProperty(target, "replace", {
+					value: originalReplace,
+					configurable: true
+				});
+				if (locationProto && originalHrefDesc) Object.defineProperty(locationProto, "href", originalHrefDesc);
+			} catch {}
+			window.setTimeout = originalSetTimeout;
+			window.setInterval = originalSetInterval;
+			NodeCtor.prototype.appendChild = originalAppendChild;
+			NodeCtor.prototype.insertBefore = originalInsertBefore;
+			if (originalWrite) document.write = originalWrite;
+			if (originalWriteln) document.writeln = originalWriteln;
+		};
+	}
+	function clearAllTimers() {
+		const highestId = window.setInterval(() => {}, 0);
+		for (let i = 0; i <= highestId; i++) window.clearInterval(i);
+		const highestTimeoutId = window.setTimeout(() => {}, 0);
+		for (let i = 0; i <= highestTimeoutId; i++) window.clearTimeout(i);
+	}
+	function removeOverlays() {
+		if (!document.body) return;
+		const hideElement = (el) => {
+			el.style.setProperty("display", "none", "important");
+			el.style.setProperty("pointer-events", "none", "important");
+		};
+		document.querySelectorAll([
+			"[class*=\"overlay\"]",
+			"[class*=\"modal\"]",
+			"[class*=\"popup\"]",
+			"[class*=\"mask\"]",
+			"[class*=\"blocker\"]",
+			"[id*=\"overlay\"]",
+			"[id*=\"modal\"]",
+			"[id*=\"popup\"]"
+		].join(", ")).forEach((el) => {
+			const style = window.getComputedStyle(el);
+			const rect = el.getBoundingClientRect();
+			const isFullPage = rect.width >= window.innerWidth * .8 && rect.height >= window.innerHeight * .8;
+			const isFixed = style.position === "fixed" || style.position === "absolute";
+			const zIndex = parseInt(style.zIndex, 10);
+			if (isFullPage && isFixed && Number.isFinite(zIndex) && zIndex > 1e3) hideElement(el);
+		});
+		const isTransparentColor = (color) => {
+			const c = (color || "").trim().toLowerCase();
+			return c === "transparent" || c === "rgba(0, 0, 0, 0)" || c === "rgba(0,0,0,0)";
+		};
+		const isMnrHost = (el) => el.id.startsWith("mnr-");
+		const hasVisibleContent = (el) => {
+			if ((el.textContent || "").trim().length > 0) return true;
+			return el.querySelector("img, svg, canvas, video") !== null;
+		};
+		const looksLikeClickLayer = (el) => {
+			if (isMnrHost(el)) return false;
+			const style = window.getComputedStyle(el);
+			if (style.display === "none" || style.visibility === "hidden") return false;
+			if (style.pointerEvents === "none") return false;
+			if (style.position !== "fixed" && style.position !== "absolute") return false;
+			const zIndex = parseInt(style.zIndex, 10);
+			if (!Number.isFinite(zIndex) || zIndex <= 1e3) return false;
+			const rect = el.getBoundingClientRect();
+			if (!rect || rect.width <= 0 || rect.height <= 0) return false;
+			const minWidth = window.innerWidth * .6;
+			const minHeight = 40;
+			const maxHeight = window.innerHeight * .6;
+			if (rect.width < minWidth || rect.height < minHeight || rect.height > maxHeight) return false;
+			const nearTop = rect.top <= 2;
+			const nearBottom = rect.bottom >= window.innerHeight - 2;
+			if (!nearTop && !nearBottom) return false;
+			if (hasVisibleContent(el)) return false;
+			const rawOpacity = style.opacity || el.style.opacity || "1";
+			const opacity = parseFloat(rawOpacity);
+			const bg = style.backgroundColor || el.style.backgroundColor || "";
+			if (!(Number.isFinite(opacity) && opacity <= .08 || isTransparentColor(bg))) return false;
+			const AnchorCtor = window.HTMLAnchorElement;
+			if (AnchorCtor && el instanceof AnchorCtor) return true;
+			if (el.tagName.toLowerCase() === "a" && el.hasAttribute("href")) return true;
+			if (el.querySelector("a[href]")) return true;
+			if (el.hasAttribute("onclick")) return true;
+			if (typeof el.onclick === "function") return true;
+			return false;
+		};
+		const candidates = Array.from(document.body.querySelectorAll("a, div, span, section, header, footer, nav"));
+		for (const el of candidates) if (looksLikeClickLayer(el)) hideElement(el);
+		document.body.style.overflow = "";
+		document.documentElement.style.overflow = "";
+	}
+	var SiteProtection = class {
+		constructor(options = {}) {
+			this.cleanupFunctions = [];
+			this.isActive = false;
+			this.options = withDefaultProtectionOptions(options);
+		}
+		activate(options) {
+			if (options) this.options = withDefaultProtectionOptions(options);
+			if (this.isActive) {
+				if (!options) return;
+				this.deactivate();
+			}
+			this.isActive = true;
+			const effectiveOptions = getEffectiveProtectionOptions(this.options);
+			if (effectiveOptions.clearTimers) clearAllTimers();
+			if (effectiveOptions.blockRedirects) this.cleanupFunctions.push(blockRedirects({ cleanupScripts: !!effectiveOptions.cleanupScripts }));
+			if (effectiveOptions.enableRightClick) this.cleanupFunctions.push(enableRightClick());
+			if (effectiveOptions.enableSelection) this.cleanupFunctions.push(enableSelection());
+			if (effectiveOptions.enableCopy) this.cleanupFunctions.push(enableCopy());
+			if (effectiveOptions.unlockKeyboard) this.cleanupFunctions.push(unlockKeyboard());
+			if (effectiveOptions.blockPopups) this.cleanupFunctions.push(blockPopups());
+			if (effectiveOptions.cleanupScripts) this.cleanupScripts();
+			if (effectiveOptions.removeEventHijacking) this.removeEventHijacking();
+			if (effectiveOptions.blockVisibilityDetection) this.blockVisibilityDetection();
+		}
+		deactivate() {
+			if (!this.isActive) return;
+			this.cleanupFunctions.forEach((cleanup) => cleanup());
+			this.cleanupFunctions = [];
+			this.isActive = false;
+		}
+		removeOverlays() {
+			removeOverlays();
+		}
+		cleanupScripts() {
+			const suspiciousPatterns = [
+				/(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i,
+				/(^|[\\/._-])ads([\\/._-]|$)/i,
+				/doubleclick/i,
+				/googlesyndication|googletagmanager|gtag/i,
+				/google-analytics/i,
+				/(^|[\\/._-])(analytics|track(er|ing)?|pixel|beacon|telemetry)([\\/._-]|$)/i
+			];
+			const siteHost = window.location.hostname;
+			const isSameSite = (host) => {
+				return host === siteHost || host.endsWith(`.${siteHost}`);
+			};
+			document.querySelectorAll("script[src]").forEach((script) => {
+				const src = script.getAttribute("src") || "";
+				let url;
+				try {
+					url = new URL(src, window.location.href);
+				} catch {
+					return;
+				}
+				const target = `${url.hostname}${url.pathname}`;
+				if (!suspiciousPatterns.some((p) => p.test(target))) return;
+				const isThirdParty = !isSameSite(url.hostname);
+				const isHighConfidence = /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i.test(target);
+				if (isThirdParty || isHighConfidence) script.remove();
+			});
+		}
+		removeEventHijacking() {
+			const clickBlocker = (e) => {
+				const clickableParent = e.target.closest("a, button, [role=\"button\"]");
+				if (clickableParent) {
+					if (clickableParent instanceof HTMLAnchorElement) {
+						const href = clickableParent.getAttribute("href");
+						if (href && !href.startsWith("javascript:") && href !== "#") return true;
+					}
+				}
+				if (e.target === document.body || e.target === document.documentElement) e.stopPropagation();
+			};
+			document.addEventListener("click", clickBlocker, true);
+			if (document.body) document.body.onclick = null;
+			document.documentElement.onclick = null;
+			const mouseBlocker = (e) => {
+				if (e.target === document.body || e.target === document.documentElement) e.stopPropagation();
+			};
+			document.addEventListener("mousedown", mouseBlocker, true);
+			document.addEventListener("mouseup", mouseBlocker, true);
+			this.cleanupFunctions.push(() => {
+				document.removeEventListener("click", clickBlocker, true);
+				document.removeEventListener("mousedown", mouseBlocker, true);
+				document.removeEventListener("mouseup", mouseBlocker, true);
+			});
+		}
+		blockVisibilityDetection() {
+			const docProto = Object.getPrototypeOf(document);
+			const savedHidden = (() => {
+				const ownDesc = Object.getOwnPropertyDescriptor(document, "hidden");
+				if (ownDesc) return {
+					descriptor: ownDesc,
+					owner: "instance"
+				};
+				if (docProto) {
+					const protoDesc = Object.getOwnPropertyDescriptor(docProto, "hidden");
+					if (protoDesc) return {
+						descriptor: protoDesc,
+						owner: "prototype"
+					};
+				}
+				return {
+					descriptor: void 0,
+					owner: "none"
+				};
+			})();
+			const savedVisibilityState = (() => {
+				const ownDesc = Object.getOwnPropertyDescriptor(document, "visibilityState");
+				if (ownDesc) return {
+					descriptor: ownDesc,
+					owner: "instance"
+				};
+				if (docProto) {
+					const protoDesc = Object.getOwnPropertyDescriptor(docProto, "visibilityState");
+					if (protoDesc) return {
+						descriptor: protoDesc,
+						owner: "prototype"
+					};
+				}
+				return {
+					descriptor: void 0,
+					owner: "none"
+				};
+			})();
+			Object.defineProperty(document, "hidden", {
+				configurable: true,
+				get: () => false
+			});
+			Object.defineProperty(document, "visibilityState", {
+				configurable: true,
+				get: () => "visible"
+			});
+			const visibilityBlocker = (e) => {
+				e.stopImmediatePropagation();
+			};
+			document.addEventListener("visibilitychange", visibilityBlocker, true);
+			const blurBlocker = (e) => {
+				if (e.target === window || e.target === document) e.stopImmediatePropagation();
+			};
+			window.addEventListener("blur", blurBlocker, true);
+			window.addEventListener("focus", blurBlocker, true);
+			const restoreDescriptor = (prop, saved) => {
+				try {
+					if (saved.owner === "instance" && saved.descriptor) Object.defineProperty(document, prop, saved.descriptor);
+					else delete document[prop];
+				} catch {}
+			};
+			this.cleanupFunctions.push(() => {
+				document.removeEventListener("visibilitychange", visibilityBlocker, true);
+				window.removeEventListener("blur", blurBlocker, true);
+				window.removeEventListener("focus", blurBlocker, true);
+				restoreDescriptor("hidden", savedHidden);
+				restoreDescriptor("visibilityState", savedVisibilityState);
+			});
 		}
 	};
+	var protectionInstance = null;
+	function getSiteProtection() {
+		if (!protectionInstance) protectionInstance = new SiteProtection();
+		return protectionInstance;
+	}
 	var ContentProcessor = class {
 		constructor(options = {}) {
 			this.regexCache = new Map();
@@ -5702,139 +6372,49 @@
 	function warnDroppedHookFields(ruleId, removedKeys) {
 		console.warn("[RuleStorage] Dropped unsupported hooks fields:", ruleId, removedKeys);
 	}
-	var GMStorageDriver = class {
-		constructor(prefix = STORAGE_KEYS.RULE_PREFIX) {
-			this.prefix = prefix;
+	var RuleStorage = class {
+		getRuleStorageKey(domain) {
+			return STORAGE_KEYS.RULE_PREFIX + domain;
 		}
-		async get(key) {
+		getStoredRule(domain) {
 			try {
-				const data = GM_getValue(this.prefix + key, null);
+				const data = GM_getValue(this.getRuleStorageKey(domain), null);
 				if (typeof data === "string") try {
 					return JSON.parse(data);
 				} catch (e) {
-					console.error(`[RuleStorage] Failed to parse rule ${key}:`, e);
+					console.error(`[RuleStorage] Failed to parse rule ${domain}:`, e);
 					return null;
 				}
 				return null;
 			} catch (e) {
-				console.debug("[RuleStorage] Failed to get rule:", key, e);
+				console.debug("[RuleStorage] Failed to get rule:", domain, e);
 				return null;
 			}
 		}
-		async set(key, rule) {
-			GM_setValue(this.prefix + key, JSON.stringify(rule));
+		setStoredRule(domain, rule) {
+			GM_setValue(this.getRuleStorageKey(domain), JSON.stringify(rule));
 		}
-		async delete(key) {
-			GM_deleteValue(this.prefix + key);
+		deleteStoredRule(domain) {
+			GM_deleteValue(this.getRuleStorageKey(domain));
 		}
-		async getAll() {
+		getStoredDomains() {
+			return GM_listValues().filter((k) => k.startsWith(STORAGE_KEYS.RULE_PREFIX)).map((k) => k.slice(STORAGE_KEYS.RULE_PREFIX.length));
+		}
+		getAllStoredRules() {
 			const result = new Map();
-			const keys = await this.getAllKeys();
-			for (const key of keys) {
-				const rule = await this.get(key);
-				if (rule) result.set(key, rule);
+			for (const domain of this.getStoredDomains()) {
+				const rule = this.getStoredRule(domain);
+				if (rule) result.set(domain, rule);
 			}
 			return result;
 		}
-		async getAllKeys() {
-			return GM_listValues().filter((k) => k.startsWith(this.prefix)).map((k) => k.slice(this.prefix.length));
-		}
-		async clear() {
-			const keys = await this.getAllKeys();
-			for (const key of keys) await this.delete(key);
-		}
-	};
-	var IndexedDBDriver = class {
-		constructor(dbName = "MyNovelReader", storeName = "rules") {
-			this.db = null;
-			this.dbName = dbName;
-			this.storeName = storeName;
-		}
-		async getDB() {
-			if (this.db) return this.db;
-			return new Promise((resolve, reject) => {
-				const request = indexedDB.open(this.dbName, 1);
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => {
-					this.db = request.result;
-					resolve(this.db);
-				};
-				request.onupgradeneeded = (event) => {
-					const db = event.target.result;
-					if (!db.objectStoreNames.contains(this.storeName)) db.createObjectStore(this.storeName, { keyPath: "id" });
-				};
-			});
-		}
-		async get(key) {
-			const db = await this.getDB();
-			return new Promise((resolve, reject) => {
-				const request = db.transaction(this.storeName, "readonly").objectStore(this.storeName).get(key);
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => resolve(request.result || null);
-			});
-		}
-		async set(key, rule) {
-			const db = await this.getDB();
-			return new Promise((resolve, reject) => {
-				const store = db.transaction(this.storeName, "readwrite").objectStore(this.storeName);
-				const ruleWithKey = {
-					...rule,
-					id: key
-				};
-				const request = store.put(ruleWithKey);
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => resolve();
-			});
-		}
-		async delete(key) {
-			const db = await this.getDB();
-			return new Promise((resolve, reject) => {
-				const request = db.transaction(this.storeName, "readwrite").objectStore(this.storeName).delete(key);
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => resolve();
-			});
-		}
-		async getAll() {
-			const db = await this.getDB();
-			return new Promise((resolve, reject) => {
-				const request = db.transaction(this.storeName, "readonly").objectStore(this.storeName).getAll();
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => {
-					const result = new Map();
-					for (const rule of request.result) result.set(rule.id, rule);
-					resolve(result);
-				};
-			});
-		}
-		async getAllKeys() {
-			const db = await this.getDB();
-			return new Promise((resolve, reject) => {
-				const request = db.transaction(this.storeName, "readonly").objectStore(this.storeName).getAllKeys();
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => resolve(request.result);
-			});
-		}
-		async clear() {
-			const db = await this.getDB();
-			return new Promise((resolve, reject) => {
-				const request = db.transaction(this.storeName, "readwrite").objectStore(this.storeName).clear();
-				request.onerror = () => reject(request.error);
-				request.onsuccess = () => resolve();
-			});
-		}
-	};
-	var RuleStorage = class {
-		constructor() {
-			if (typeof indexedDB !== "undefined") this.driver = new IndexedDBDriver();
-			else this.driver = new GMStorageDriver();
-		}
 		async getUserRule(domain) {
-			const rule = await this.driver.get(domain);
+			const rule = this.getStoredRule(domain);
 			if (!rule) return null;
 			const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
 			if (removedKeys.length > 0) {
 				warnDroppedHookFields(domain, removedKeys);
-				await this.driver.set(domain, sanitized);
+				this.setStoredRule(domain, sanitized);
 			}
 			return sanitized;
 		}
@@ -5849,70 +6429,26 @@
 				}
 			});
 			if (removedKeys.length > 0) warnDroppedHookFields(domain, removedKeys);
-			await this.driver.set(domain, sanitized);
+			this.setStoredRule(domain, sanitized);
 		}
 		async deleteUserRule(domain) {
-			await this.driver.delete(domain);
+			this.deleteStoredRule(domain);
 		}
 		async getAllUserRules() {
-			const all = await this.driver.getAll();
+			const all = this.getAllStoredRules();
 			const sanitizedRules = new Map();
 			for (const [domain, rule] of all) {
 				const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
 				sanitizedRules.set(domain, sanitized);
 				if (removedKeys.length > 0) {
 					warnDroppedHookFields(domain, removedKeys);
-					await this.driver.set(domain, sanitized);
+					this.setStoredRule(domain, sanitized);
 				}
 			}
 			return sanitizedRules;
 		}
 		async getAllDomains() {
-			return this.driver.getAllKeys();
-		}
-		async clearAllRules() {
-			await this.driver.clear();
-		}
-		async exportRules() {
-			const rules = await this.getAllUserRules();
-			const rulesArray = Array.from(rules.values());
-			return JSON.stringify(rulesArray, null, 2);
-		}
-		async importRules(json, overwrite = false) {
-			let rules;
-			try {
-				rules = JSON.parse(json);
-			} catch (e) {
-				console.error("[MNR] Failed to parse imported rules JSON:", e);
-				return 0;
-			}
-			if (!Array.isArray(rules)) {
-				console.error("[MNR] Imported rules JSON must be an array.");
-				return 0;
-			}
-			let count = 0;
-			for (const rawRule of rules) {
-				if (!rawRule || typeof rawRule !== "object") continue;
-				const rule = rawRule;
-				if (!rule.id) continue;
-				if (!overwrite) {
-					if (await this.driver.get(rule.id)) continue;
-				}
-				const meta = typeof rule.meta === "object" && rule.meta !== null ? rule.meta : {};
-				const ruleToSave = {
-					...rule,
-					meta: {
-						...meta,
-						source: "user",
-						updated: Date.now()
-					}
-				};
-				const { sanitized, removedKeys } = sanitizeUserRuleHooks(ruleToSave);
-				if (removedKeys.length > 0) warnDroppedHookFields(ruleToSave.id, removedKeys);
-				await this.driver.set(ruleToSave.id, sanitized);
-				count++;
-			}
-			return count;
+			return this.getStoredDomains();
 		}
 		getSitePreference(domain) {
 			try {
@@ -5959,7 +6495,7 @@
 	}
 	var RuleManager = class {
 		constructor() {
-			this.builtInRules = [];
+			this.builtInRules = builtInRules;
 			this.userRulesCache = new Map();
 			this.initialized = false;
 			this.compiledCache = new WeakMap();
@@ -5968,7 +6504,6 @@
 		async initialize() {
 			if (this.initialized) return;
 			this.userRulesCache = await this.storage.getAllUserRules();
-			this.builtInRules = await this.loadBuiltInRules();
 			this.initialized = true;
 		}
 		async matchRule(url) {
@@ -6029,39 +6564,12 @@
 		getAllUserRules() {
 			return this.userRulesCache;
 		}
-		getBuiltInRules() {
-			return this.builtInRules;
-		}
-		getStorage() {
-			return this.storage;
-		}
-		async loadBuiltInRules() {
-			return builtInRules;
-		}
 		extractDomain(url) {
 			try {
 				return new URL(url).hostname;
 			} catch {
 				return url;
 			}
-		}
-		async exportUserRules() {
-			return this.storage.exportRules();
-		}
-		async importUserRules(json, overwrite = false) {
-			const count = await this.storage.importRules(json, overwrite);
-			this.userRulesCache = await this.storage.getAllUserRules();
-			return count;
-		}
-		async clearUserRules() {
-			await this.storage.clearAllRules();
-			this.userRulesCache.clear();
-		}
-		getStats() {
-			return {
-				user: this.userRulesCache.size,
-				builtin: this.builtInRules.length
-			};
 		}
 	};
 	var ruleManagerInstance = null;
@@ -6880,688 +7388,6 @@
 	function getParser() {
 		if (!parserInstance) parserInstance = new Parser();
 		return parserInstance;
-	}
-	function enableRightClick() {
-		const handler = (e) => {
-			e.stopPropagation();
-			return true;
-		};
-		document.addEventListener("contextmenu", handler, true);
-		const originalOnContextMenu = document.oncontextmenu;
-		document.oncontextmenu = null;
-		if (document.body) document.body.oncontextmenu = null;
-		document.querySelectorAll("[oncontextmenu]").forEach((el) => {
-			el.removeAttribute("oncontextmenu");
-		});
-		return () => {
-			document.removeEventListener("contextmenu", handler, true);
-			document.oncontextmenu = originalOnContextMenu;
-		};
-	}
-	function enableSelection() {
-		const handler = (e) => {
-			e.stopPropagation();
-			return true;
-		};
-		document.addEventListener("selectstart", handler, true);
-		const style = document.createElement("style");
-		style.id = "mnr-enable-selection";
-		style.textContent = `
-      * {
-        -webkit-user-select: text !important;
-        -moz-user-select: text !important;
-        -ms-user-select: text !important;
-        user-select: text !important;
-      }
-    `;
-		document.head.appendChild(style);
-		document.querySelectorAll("[onselectstart]").forEach((el) => {
-			el.removeAttribute("onselectstart");
-		});
-		document.querySelectorAll("[unselectable]").forEach((el) => {
-			el.removeAttribute("unselectable");
-		});
-		return () => {
-			document.removeEventListener("selectstart", handler, true);
-			style.remove();
-		};
-	}
-	function enableCopy() {
-		const handler = (e) => {
-			e.stopPropagation();
-			return true;
-		};
-		document.addEventListener("copy", handler, true);
-		document.addEventListener("cut", handler, true);
-		document.querySelectorAll("[oncopy], [oncut]").forEach((el) => {
-			el.removeAttribute("oncopy");
-			el.removeAttribute("oncut");
-		});
-		return () => {
-			document.removeEventListener("copy", handler, true);
-			document.removeEventListener("cut", handler, true);
-		};
-	}
-	function unlockKeyboard() {
-		const handler = (e) => {
-			const ke = e;
-			if (isMnrEvent(ke) && !isMnrReaderShortcutEvent(ke)) return;
-			ke.stopImmediatePropagation();
-			ke.stopPropagation();
-		};
-		const types = [
-			"keydown",
-			"keyup",
-			"keypress"
-		];
-		types.forEach((type) => document.addEventListener(type, handler, true));
-		const originalDocumentHandlers = {
-			keydown: document.onkeydown,
-			keyup: document.onkeyup,
-			keypress: document.onkeypress
-		};
-		const originalWindowHandlers = {
-			keydown: window.onkeydown,
-			keyup: window.onkeyup,
-			keypress: window.onkeypress
-		};
-		const originalBodyHandlers = document.body ? {
-			keydown: document.body.onkeydown,
-			keyup: document.body.onkeyup,
-			keypress: document.body.onkeypress
-		} : null;
-		const originalHtmlHandlers = {
-			keydown: document.documentElement.onkeydown,
-			keyup: document.documentElement.onkeyup,
-			keypress: document.documentElement.onkeypress
-		};
-		document.onkeydown = null;
-		document.onkeyup = null;
-		document.onkeypress = null;
-		window.onkeydown = null;
-		window.onkeyup = null;
-		window.onkeypress = null;
-		document.documentElement.onkeydown = null;
-		document.documentElement.onkeyup = null;
-		document.documentElement.onkeypress = null;
-		if (document.body) {
-			document.body.onkeydown = null;
-			document.body.onkeyup = null;
-			document.body.onkeypress = null;
-		}
-		document.querySelectorAll("[onkeydown], [onkeyup], [onkeypress]").forEach((el) => {
-			el.removeAttribute("onkeydown");
-			el.removeAttribute("onkeyup");
-			el.removeAttribute("onkeypress");
-		});
-		return () => {
-			types.forEach((type) => document.removeEventListener(type, handler, true));
-			document.onkeydown = originalDocumentHandlers.keydown;
-			document.onkeyup = originalDocumentHandlers.keyup;
-			document.onkeypress = originalDocumentHandlers.keypress;
-			window.onkeydown = originalWindowHandlers.keydown;
-			window.onkeyup = originalWindowHandlers.keyup;
-			window.onkeypress = originalWindowHandlers.keypress;
-			document.documentElement.onkeydown = originalHtmlHandlers.keydown;
-			document.documentElement.onkeyup = originalHtmlHandlers.keyup;
-			document.documentElement.onkeypress = originalHtmlHandlers.keypress;
-			if (document.body && originalBodyHandlers) {
-				document.body.onkeydown = originalBodyHandlers.keydown;
-				document.body.onkeyup = originalBodyHandlers.keyup;
-				document.body.onkeypress = originalBodyHandlers.keypress;
-			}
-		};
-	}
-	function isMnrEvent(e) {
-		const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-		for (const node of path) {
-			if (node instanceof ShadowRoot) {
-				if (node.host?.id?.startsWith("mnr-")) return true;
-			}
-			if (node instanceof Element) {
-				if (node.id?.startsWith("mnr-")) return true;
-				for (const cls of Array.from(node.classList)) if (cls.startsWith("mnr-")) return true;
-			}
-		}
-		return false;
-	}
-	function isMnrReaderShortcutEvent(e) {
-		if (e.ctrlKey || e.altKey || e.metaKey) return false;
-		const key = e.key.toLowerCase();
-		if (!new Set([
-			"escape",
-			"tab",
-			"enter",
-			"s",
-			",",
-			"e",
-			"q",
-			"arrowleft",
-			"arrowright",
-			"arrowup",
-			"arrowdown",
-			" ",
-			"spacebar",
-			"n",
-			"p"
-		]).has(key)) return false;
-		const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-		if (path.some(isEditableKeyboardTarget)) return false;
-		return path.some((node) => {
-			if (!(node instanceof Element)) return false;
-			if (node.id === "mnr-reader-root") return true;
-			return Array.from(node.classList).some((cls) => cls === "mnr-reader" || cls.startsWith("mnr-"));
-		});
-	}
-	function isEditableKeyboardTarget(node) {
-		if (!(node instanceof Element)) return false;
-		const tagName = node.tagName;
-		return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || node.isContentEditable === true;
-	}
-	var DEFAULT_PROTECTION_OPTIONS = {
-		blockRedirects: true,
-		enableRightClick: true,
-		enableSelection: true,
-		enableCopy: true,
-		unlockKeyboard: true,
-		blockPopups: true,
-		removeEventHijacking: true,
-		blockVisibilityDetection: true,
-		clearTimers: true,
-		cleanupScripts: false
-	};
-	var isCloudflareChallenge = (doc = document) => {
-		if ((doc.location?.pathname || (typeof window !== "undefined" ? window.location.pathname : "")).startsWith("/cdn-cgi/")) return true;
-		if (doc.querySelector([
-			"[id*=\"cf-chl\"]",
-			"[class*=\"cf-chl\"]",
-			"form[action*=\"/cdn-cgi/\"]",
-			"script[src*=\"/cdn-cgi/challenge-platform\"]",
-			"link[href*=\"/cdn-cgi/challenge-platform\"]",
-			"iframe[src*=\"challenges.cloudflare.com\"]",
-			"iframe[src*=\"captcha.cloudflare.com\"]"
-		].join(",")) !== null) return true;
-		const title = (doc.title || "").trim().toLowerCase();
-		if (title === "just a moment..." || title === "attention required! | cloudflare") return true;
-		const scriptText = Array.from(doc.querySelectorAll("script")).map((script) => `${script.getAttribute("src") || ""}\n${script.textContent || ""}`).join("\n");
-		if (/_cf_chl_opt|cf_chl_|challenge-platform|challenges\.cloudflare\.com/i.test(scriptText)) return true;
-		const bodyText = (doc.body?.textContent || "").replace(/\s+/g, " ").trim();
-		return /enable javascript and cookies to continue/i.test(bodyText);
-	};
-	function withDefaultProtectionOptions(options = {}) {
-		return {
-			...DEFAULT_PROTECTION_OPTIONS,
-			...options
-		};
-	}
-	function getEffectiveProtectionOptions(options, doc = document) {
-		if (!isCloudflareChallenge(doc)) return options;
-		return {
-			...options,
-			blockRedirects: false,
-			clearTimers: false,
-			removeEventHijacking: false
-		};
-	}
-	function blockPopups() {
-		const originalOpen = window.open;
-		window.open = (url, target, features) => {
-			if (window.event?.isTrusted) {
-				const urlStr = url?.toString() || "";
-				try {
-					if (new URL(urlStr, window.location.href).origin === window.location.origin) return originalOpen.call(window, url, target, features);
-				} catch {}
-			}
-			return null;
-		};
-		return () => {
-			window.open = originalOpen;
-		};
-	}
-	function blockRedirects(options = {}) {
-		document.querySelectorAll("meta[http-equiv=\"refresh\"]").forEach((meta) => meta.remove());
-		const originalAssign = window.location.assign.bind(window.location);
-		const originalReplace = window.location.replace.bind(window.location);
-		const isAllowedNavigation = (url) => {
-			try {
-				const targetUrl = new URL(url, window.location.href);
-				if (["challenges.cloudflare.com", "captcha.cloudflare.com"].some((h) => targetUrl.hostname === h)) return true;
-				if (targetUrl.origin === window.location.origin && targetUrl.pathname.startsWith("/cdn-cgi/")) return true;
-				if (targetUrl.origin === window.location.origin) return ![
-					/(?:^|[/_-])ads?(?:[/_-]|$)/i,
-					/(?:^|[/_-])click[_-]?track/i,
-					/(?:^|[/_-])redirect(?:[/_-]|$)/i,
-					/(?:^|[/_-])jump[_-]?to/i,
-					/(?:^|[/_-])go[_-]?to[_-]?url/i,
-					/(?:^|[/_-])link[_-]?out/i,
-					/(?:^|[/_-])external(?:[/_-]|$)/i
-				].some((p) => p.test(targetUrl.pathname));
-				return false;
-			} catch {
-				return false;
-			}
-		};
-		let locationOverrideSucceeded = false;
-		const locationProto = Object.getPrototypeOf(window.location);
-		const originalHrefDesc = locationProto ? Object.getOwnPropertyDescriptor(locationProto, "href") : null;
-		try {
-			const target = locationProto || window.location;
-			Object.defineProperty(target, "assign", {
-				value: (url) => {
-					if (isAllowedNavigation(url)) originalAssign(url);
-				},
-				writable: true,
-				configurable: true
-			});
-			Object.defineProperty(target, "replace", {
-				value: (url) => {
-					if (isAllowedNavigation(url)) originalReplace(url);
-				},
-				writable: true,
-				configurable: true
-			});
-			if (locationProto) {
-				if (originalHrefDesc?.set && originalHrefDesc.get) Object.defineProperty(locationProto, "href", {
-					get: originalHrefDesc.get,
-					set: function(url) {
-						if (isAllowedNavigation(url)) originalHrefDesc.set?.call(this, url);
-					},
-					configurable: true
-				});
-			}
-			locationOverrideSucceeded = true;
-		} catch {}
-		const originalSetTimeout = window.setTimeout;
-		const originalSetInterval = window.setInterval;
-		const suspiciousPatterns = [
-			/location\s*[.=]/i,
-			/window\.open/i,
-			/href\s*=/i,
-			/navigate/i
-		];
-		const isSuspiciousCallback = (callback) => {
-			if (typeof callback === "string") return suspiciousPatterns.some((p) => p.test(callback));
-			return false;
-		};
-		window.setTimeout = (callback, delay, ...args) => {
-			if (isSuspiciousCallback(callback) && (delay || 0) > 0) return 0;
-			return originalSetTimeout(callback, delay, ...args);
-		};
-		window.setInterval = (callback, delay, ...args) => {
-			if (isSuspiciousCallback(callback)) return 0;
-			return originalSetInterval(callback, delay, ...args);
-		};
-		const isBlockedExternalUrl = (url, kind) => {
-			if (url.protocol !== "http:" && url.protocol !== "https:") return true;
-			if (url.origin === window.location.origin) return false;
-			if (["challenges.cloudflare.com", "captcha.cloudflare.com"].some((h) => url.hostname === h)) return false;
-			if (url.pathname.startsWith("/cdn-cgi/")) return false;
-			return kind === "script" || kind === "iframe";
-		};
-		const isHighEntropyPath = (pathname) => {
-			return /^\/[A-Za-z0-9]{6,12}\/[A-Za-z0-9]{6,24}\.js(?:$|[?#])/.test(pathname);
-		};
-		const isLikelyAdScriptPath = (srcUrl) => {
-			if (srcUrl.origin !== window.location.origin) return true;
-			const path = srcUrl.pathname || "";
-			if (path.startsWith("/static/") || path.startsWith("/js/") || path.startsWith("/assets/")) return false;
-			return isHighEntropyPath(path);
-		};
-		const NodeCtor = window.Node;
-		const ScriptCtor = window.HTMLScriptElement;
-		const IFrameCtor = window.HTMLIFrameElement;
-		const ElementCtor = window.Element;
-		const DocumentFragmentCtor = window.DocumentFragment;
-		const originalAppendChild = NodeCtor.prototype.appendChild;
-		const originalInsertBefore = NodeCtor.prototype.insertBefore;
-		const shouldBlockNode = (node) => {
-			const checkScript = (script) => {
-				const src = script.getAttribute("src") || script.src || "";
-				if (!src) return false;
-				let u;
-				try {
-					u = new URL(src, window.location.href);
-				} catch {
-					return false;
-				}
-				if (isBlockedExternalUrl(u, "script")) return true;
-				if (options.cleanupScripts && isLikelyAdScriptPath(u)) return true;
-				return false;
-			};
-			const checkIFrame = (iframe) => {
-				const src = iframe.getAttribute("src") || iframe.src || "";
-				if (!src) return false;
-				let u;
-				try {
-					u = new URL(src, window.location.href);
-				} catch {
-					return false;
-				}
-				if (isBlockedExternalUrl(u, "iframe")) return true;
-				return false;
-			};
-			if (ScriptCtor && node instanceof ScriptCtor) return checkScript(node);
-			if (IFrameCtor && node instanceof IFrameCtor) return checkIFrame(node);
-			if (DocumentFragmentCtor && node instanceof DocumentFragmentCtor || ElementCtor && node instanceof ElementCtor) {
-				const scripts = node.querySelectorAll("script[src]");
-				for (const s of Array.from(scripts)) if (ScriptCtor && s instanceof ScriptCtor && checkScript(s)) return true;
-				const iframes = node.querySelectorAll("iframe[src]");
-				for (const f of Array.from(iframes)) if (IFrameCtor && f instanceof IFrameCtor && checkIFrame(f)) return true;
-			}
-			return false;
-		};
-		NodeCtor.prototype.appendChild = function(node) {
-			if (shouldBlockNode(node)) return node;
-			return originalAppendChild.call(this, node);
-		};
-		NodeCtor.prototype.insertBefore = function(newNode, referenceNode) {
-			if (shouldBlockNode(newNode)) return newNode;
-			return originalInsertBefore.call(this, newNode, referenceNode);
-		};
-		const originalWrite = document.write?.bind(document);
-		const originalWriteln = document.writeln?.bind(document);
-		let writeBuffer = "";
-		let isBufferingWrite = false;
-		const MAX_BUFFER_LEN = 4096;
-		const bufferLooksLikeScriptTag = (buf) => /<script/i.test(buf);
-		const bufferIsClosed = (buf) => /<\/script>/i.test(buf) || /<\\\/script>/i.test(buf);
-		const maybeExtractScriptSrc = (buf) => {
-			return buf.match(/<script[^>]*\ssrc\s*=\s*['"]([^'"]+)['"][^>]*>/i)?.[1] || null;
-		};
-		const flushWriteBuffer = (writer) => {
-			if (!writeBuffer) return;
-			writer(writeBuffer);
-			writeBuffer = "";
-			isBufferingWrite = false;
-		};
-		const handleWriteLike = (writer, args) => {
-			if (!originalWrite || !originalWriteln) return writer(String(args.join("")));
-			const chunk = args.map((a) => String(a)).join("");
-			const startsScriptLike = /<script/i.test(chunk) || isBufferingWrite && bufferLooksLikeScriptTag(writeBuffer);
-			if (!isBufferingWrite && startsScriptLike) {
-				isBufferingWrite = true;
-				writeBuffer = "";
-			}
-			if (!isBufferingWrite) {
-				writer(chunk);
-				return;
-			}
-			writeBuffer += chunk;
-			if (writeBuffer.length > MAX_BUFFER_LEN) {
-				flushWriteBuffer(writer);
-				return;
-			}
-			if (!bufferIsClosed(writeBuffer)) return;
-			const src = maybeExtractScriptSrc(writeBuffer);
-			if (src) try {
-				const u = new URL(src, window.location.href);
-				if (isBlockedExternalUrl(u, "script") || isLikelyAdScriptPath(u)) {
-					writeBuffer = "";
-					isBufferingWrite = false;
-					return;
-				}
-			} catch {}
-			flushWriteBuffer(writer);
-		};
-		if (options.cleanupScripts && originalWrite && originalWriteln) {
-			document.write = (...args) => handleWriteLike(originalWrite, args);
-			document.writeln = (...args) => handleWriteLike(originalWriteln, args);
-		}
-		return () => {
-			if (locationOverrideSucceeded) try {
-				const target = locationProto || window.location;
-				Object.defineProperty(target, "assign", {
-					value: originalAssign,
-					configurable: true
-				});
-				Object.defineProperty(target, "replace", {
-					value: originalReplace,
-					configurable: true
-				});
-				if (locationProto && originalHrefDesc) Object.defineProperty(locationProto, "href", originalHrefDesc);
-			} catch {}
-			window.setTimeout = originalSetTimeout;
-			window.setInterval = originalSetInterval;
-			NodeCtor.prototype.appendChild = originalAppendChild;
-			NodeCtor.prototype.insertBefore = originalInsertBefore;
-			if (originalWrite) document.write = originalWrite;
-			if (originalWriteln) document.writeln = originalWriteln;
-		};
-	}
-	function clearAllTimers() {
-		const highestId = window.setInterval(() => {}, 0);
-		for (let i = 0; i <= highestId; i++) window.clearInterval(i);
-		const highestTimeoutId = window.setTimeout(() => {}, 0);
-		for (let i = 0; i <= highestTimeoutId; i++) window.clearTimeout(i);
-	}
-	function removeOverlays() {
-		if (!document.body) return;
-		const hideElement = (el) => {
-			el.style.setProperty("display", "none", "important");
-			el.style.setProperty("pointer-events", "none", "important");
-		};
-		document.querySelectorAll([
-			"[class*=\"overlay\"]",
-			"[class*=\"modal\"]",
-			"[class*=\"popup\"]",
-			"[class*=\"mask\"]",
-			"[class*=\"blocker\"]",
-			"[id*=\"overlay\"]",
-			"[id*=\"modal\"]",
-			"[id*=\"popup\"]"
-		].join(", ")).forEach((el) => {
-			const style = window.getComputedStyle(el);
-			const rect = el.getBoundingClientRect();
-			const isFullPage = rect.width >= window.innerWidth * .8 && rect.height >= window.innerHeight * .8;
-			const isFixed = style.position === "fixed" || style.position === "absolute";
-			const zIndex = parseInt(style.zIndex, 10);
-			if (isFullPage && isFixed && Number.isFinite(zIndex) && zIndex > 1e3) hideElement(el);
-		});
-		const isTransparentColor = (color) => {
-			const c = (color || "").trim().toLowerCase();
-			return c === "transparent" || c === "rgba(0, 0, 0, 0)" || c === "rgba(0,0,0,0)";
-		};
-		const isMnrHost = (el) => el.id.startsWith("mnr-");
-		const hasVisibleContent = (el) => {
-			if ((el.textContent || "").trim().length > 0) return true;
-			return el.querySelector("img, svg, canvas, video") !== null;
-		};
-		const looksLikeClickLayer = (el) => {
-			if (isMnrHost(el)) return false;
-			const style = window.getComputedStyle(el);
-			if (style.display === "none" || style.visibility === "hidden") return false;
-			if (style.pointerEvents === "none") return false;
-			if (style.position !== "fixed" && style.position !== "absolute") return false;
-			const zIndex = parseInt(style.zIndex, 10);
-			if (!Number.isFinite(zIndex) || zIndex <= 1e3) return false;
-			const rect = el.getBoundingClientRect();
-			if (!rect || rect.width <= 0 || rect.height <= 0) return false;
-			const minWidth = window.innerWidth * .6;
-			const minHeight = 40;
-			const maxHeight = window.innerHeight * .6;
-			if (rect.width < minWidth || rect.height < minHeight || rect.height > maxHeight) return false;
-			const nearTop = rect.top <= 2;
-			const nearBottom = rect.bottom >= window.innerHeight - 2;
-			if (!nearTop && !nearBottom) return false;
-			if (hasVisibleContent(el)) return false;
-			const rawOpacity = style.opacity || el.style.opacity || "1";
-			const opacity = parseFloat(rawOpacity);
-			const bg = style.backgroundColor || el.style.backgroundColor || "";
-			if (!(Number.isFinite(opacity) && opacity <= .08 || isTransparentColor(bg))) return false;
-			const AnchorCtor = window.HTMLAnchorElement;
-			if (AnchorCtor && el instanceof AnchorCtor) return true;
-			if (el.tagName.toLowerCase() === "a" && el.hasAttribute("href")) return true;
-			if (el.querySelector("a[href]")) return true;
-			if (el.hasAttribute("onclick")) return true;
-			if (typeof el.onclick === "function") return true;
-			return false;
-		};
-		const candidates = Array.from(document.body.querySelectorAll("a, div, span, section, header, footer, nav"));
-		for (const el of candidates) if (looksLikeClickLayer(el)) hideElement(el);
-		document.body.style.overflow = "";
-		document.documentElement.style.overflow = "";
-	}
-	var SiteProtection = class {
-		constructor(options = {}) {
-			this.cleanupFunctions = [];
-			this.isActive = false;
-			this.options = withDefaultProtectionOptions(options);
-		}
-		activate(options) {
-			if (options) this.options = withDefaultProtectionOptions(options);
-			if (this.isActive) {
-				if (!options) return;
-				this.deactivate();
-			}
-			this.isActive = true;
-			const effectiveOptions = getEffectiveProtectionOptions(this.options);
-			if (effectiveOptions.clearTimers) clearAllTimers();
-			if (effectiveOptions.blockRedirects) this.cleanupFunctions.push(blockRedirects({ cleanupScripts: !!effectiveOptions.cleanupScripts }));
-			if (effectiveOptions.enableRightClick) this.cleanupFunctions.push(enableRightClick());
-			if (effectiveOptions.enableSelection) this.cleanupFunctions.push(enableSelection());
-			if (effectiveOptions.enableCopy) this.cleanupFunctions.push(enableCopy());
-			if (effectiveOptions.unlockKeyboard) this.cleanupFunctions.push(unlockKeyboard());
-			if (effectiveOptions.blockPopups) this.cleanupFunctions.push(blockPopups());
-			if (effectiveOptions.cleanupScripts) this.cleanupScripts();
-			if (effectiveOptions.removeEventHijacking) this.removeEventHijacking();
-			if (effectiveOptions.blockVisibilityDetection) this.blockVisibilityDetection();
-		}
-		deactivate() {
-			if (!this.isActive) return;
-			this.cleanupFunctions.forEach((cleanup) => cleanup());
-			this.cleanupFunctions = [];
-			this.isActive = false;
-		}
-		removeOverlays() {
-			removeOverlays();
-		}
-		cleanupScripts() {
-			const suspiciousPatterns = [
-				/(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i,
-				/(^|[\\/._-])ads([\\/._-]|$)/i,
-				/doubleclick/i,
-				/googlesyndication|googletagmanager|gtag/i,
-				/google-analytics/i,
-				/(^|[\\/._-])(analytics|track(er|ing)?|pixel|beacon|telemetry)([\\/._-]|$)/i
-			];
-			const siteHost = window.location.hostname;
-			const isSameSite = (host) => {
-				return host === siteHost || host.endsWith(`.${siteHost}`);
-			};
-			document.querySelectorAll("script[src]").forEach((script) => {
-				const src = script.getAttribute("src") || "";
-				let url;
-				try {
-					url = new URL(src, window.location.href);
-				} catch {
-					return;
-				}
-				const target = `${url.hostname}${url.pathname}`;
-				if (!suspiciousPatterns.some((p) => p.test(target))) return;
-				const isThirdParty = !isSameSite(url.hostname);
-				const isHighConfidence = /(^|[\\/._-])(adservice|adserver|adsystem|adsbygoogle|pagead)([\\/._-]|$)/i.test(target);
-				if (isThirdParty || isHighConfidence) script.remove();
-			});
-		}
-		removeEventHijacking() {
-			const clickBlocker = (e) => {
-				const clickableParent = e.target.closest("a, button, [role=\"button\"]");
-				if (clickableParent) {
-					if (clickableParent instanceof HTMLAnchorElement) {
-						const href = clickableParent.getAttribute("href");
-						if (href && !href.startsWith("javascript:") && href !== "#") return true;
-					}
-				}
-				if (e.target === document.body || e.target === document.documentElement) e.stopPropagation();
-			};
-			document.addEventListener("click", clickBlocker, true);
-			if (document.body) document.body.onclick = null;
-			document.documentElement.onclick = null;
-			const mouseBlocker = (e) => {
-				if (e.target === document.body || e.target === document.documentElement) e.stopPropagation();
-			};
-			document.addEventListener("mousedown", mouseBlocker, true);
-			document.addEventListener("mouseup", mouseBlocker, true);
-			this.cleanupFunctions.push(() => {
-				document.removeEventListener("click", clickBlocker, true);
-				document.removeEventListener("mousedown", mouseBlocker, true);
-				document.removeEventListener("mouseup", mouseBlocker, true);
-			});
-		}
-		blockVisibilityDetection() {
-			const docProto = Object.getPrototypeOf(document);
-			const savedHidden = (() => {
-				const ownDesc = Object.getOwnPropertyDescriptor(document, "hidden");
-				if (ownDesc) return {
-					descriptor: ownDesc,
-					owner: "instance"
-				};
-				if (docProto) {
-					const protoDesc = Object.getOwnPropertyDescriptor(docProto, "hidden");
-					if (protoDesc) return {
-						descriptor: protoDesc,
-						owner: "prototype"
-					};
-				}
-				return {
-					descriptor: void 0,
-					owner: "none"
-				};
-			})();
-			const savedVisibilityState = (() => {
-				const ownDesc = Object.getOwnPropertyDescriptor(document, "visibilityState");
-				if (ownDesc) return {
-					descriptor: ownDesc,
-					owner: "instance"
-				};
-				if (docProto) {
-					const protoDesc = Object.getOwnPropertyDescriptor(docProto, "visibilityState");
-					if (protoDesc) return {
-						descriptor: protoDesc,
-						owner: "prototype"
-					};
-				}
-				return {
-					descriptor: void 0,
-					owner: "none"
-				};
-			})();
-			Object.defineProperty(document, "hidden", {
-				configurable: true,
-				get: () => false
-			});
-			Object.defineProperty(document, "visibilityState", {
-				configurable: true,
-				get: () => "visible"
-			});
-			const visibilityBlocker = (e) => {
-				e.stopImmediatePropagation();
-			};
-			document.addEventListener("visibilitychange", visibilityBlocker, true);
-			const blurBlocker = (e) => {
-				if (e.target === window || e.target === document) e.stopImmediatePropagation();
-			};
-			window.addEventListener("blur", blurBlocker, true);
-			window.addEventListener("focus", blurBlocker, true);
-			const restoreDescriptor = (prop, saved) => {
-				try {
-					if (saved.owner === "instance" && saved.descriptor) Object.defineProperty(document, prop, saved.descriptor);
-					else delete document[prop];
-				} catch {}
-			};
-			this.cleanupFunctions.push(() => {
-				document.removeEventListener("visibilitychange", visibilityBlocker, true);
-				window.removeEventListener("blur", blurBlocker, true);
-				window.removeEventListener("focus", blurBlocker, true);
-				restoreDescriptor("hidden", savedHidden);
-				restoreDescriptor("visibilityState", savedVisibilityState);
-			});
-		}
-	};
-	var protectionInstance = null;
-	function getSiteProtection() {
-		if (!protectionInstance) protectionInstance = new SiteProtection();
-		return protectionInstance;
 	}
 	var RuleSaver = class {
 		createRuleFromDetection(hostname, detection) {
@@ -13850,6 +13676,467 @@
 		useStore.$id = id;
 		return useStore;
 	}
+	var THEMES = [
+		{
+			id: "light",
+			name: "默认",
+			background: "#ffffff",
+			text: "#1a1a1a",
+			link: "#0066cc",
+			onLink: "#ffffff",
+			border: "#e5e5e5"
+		},
+		{
+			id: "dark",
+			name: "深色",
+			background: "#1e1e1e",
+			text: "#c8c8c8",
+			link: "#78bdf2",
+			onLink: "#111111",
+			border: "#3a3a3a"
+		},
+		{
+			id: "sepia",
+			name: "护眼",
+			background: "#f8f1e3",
+			text: "#4a4137",
+			link: "#7a4f26",
+			onLink: "#ffffff",
+			border: "#e8dcc8"
+		},
+		{
+			id: "green",
+			name: "绿色",
+			background: "#edf6ed",
+			text: "#243429",
+			link: "#2f6f3d",
+			onLink: "#ffffff",
+			border: "#c9ddc9"
+		},
+		{
+			id: "blue",
+			name: "蓝色",
+			background: "#eaf3fb",
+			text: "#263746",
+			link: "#2563a8",
+			onLink: "#ffffff",
+			border: "#c7d8e8"
+		},
+		{
+			id: "night",
+			name: "夜间",
+			background: "#0d0d0d",
+			text: "#a0a0a0",
+			link: "#5dade2",
+			onLink: "#0b0b0b",
+			border: "#303030"
+		}
+	];
+	var DEFAULT_READING = {
+		fontFamily: "system-ui, -apple-system, \"Microsoft YaHei\", sans-serif",
+		fontSize: 18,
+		lineHeight: 1.8,
+		letterSpacing: .05,
+		paragraphIndent: 2,
+		maxWidth: 800,
+		padding: 20,
+		textConversion: "none"
+	};
+	var DEFAULT_BEHAVIOR = {
+		autoScrollToPosition: true,
+		keyboardNavigation: true,
+		swipeGestures: true,
+		autoHideHeader: true,
+		preloadNext: true,
+		showProgress: true
+	};
+	var DEFAULT_PROTECTION = {
+		mode: "standard",
+		blockRedirects: true,
+		enableRightClick: true,
+		enableSelection: true,
+		blockPopups: true
+	};
+	var STORAGE_KEY = "mnr-config";
+	var useConfigStore = defineStore("config", () => {
+		const themeId = ref("light");
+		const reading = ref({ ...DEFAULT_READING });
+		const behavior = ref({ ...DEFAULT_BEHAVIOR });
+		const protection = ref({ ...DEFAULT_PROTECTION });
+		const customCSS = ref("");
+		const theme = () => {
+			return THEMES.find((t) => t.id === themeId.value) || THEMES[0];
+		};
+		function setTheme(id) {
+			if (THEMES.some((t) => t.id === id)) {
+				themeId.value = id;
+				applyTheme();
+			}
+		}
+		function updateReading(settings) {
+			reading.value = {
+				...reading.value,
+				...settings
+			};
+		}
+		function updateBehavior(settings) {
+			behavior.value = {
+				...behavior.value,
+				...settings
+			};
+		}
+		function updateProtection(settings) {
+			protection.value = {
+				...protection.value,
+				...settings
+			};
+		}
+		function setCustomCSS(css) {
+			customCSS.value = css;
+			applyCustomCSS();
+		}
+		function applyTheme() {
+			const t = theme();
+			const root = document.documentElement;
+			root.style.setProperty("--mnr-bg", t.background);
+			root.style.setProperty("--mnr-text", t.text);
+			root.style.setProperty("--mnr-link", t.link);
+			root.style.setProperty("--mnr-on-link", t.onLink);
+			root.style.setProperty("--mnr-border", t.border);
+		}
+		function applyReading() {
+			const r = reading.value;
+			const root = document.documentElement;
+			root.style.setProperty("--mnr-font-family", r.fontFamily);
+			root.style.setProperty("--mnr-font-size", `${r.fontSize}px`);
+			root.style.setProperty("--mnr-line-height", `${r.lineHeight}`);
+			root.style.setProperty("--mnr-letter-spacing", `${r.letterSpacing}em`);
+			root.style.setProperty("--mnr-paragraph-indent", `${r.paragraphIndent}em`);
+			root.style.setProperty("--mnr-max-width", `${r.maxWidth}px`);
+			root.style.setProperty("--mnr-padding", `${r.padding}px`);
+		}
+		function applyCustomCSS() {
+			let styleEl = document.getElementById("mnr-custom-css");
+			if (!styleEl) {
+				styleEl = document.createElement("style");
+				styleEl.id = "mnr-custom-css";
+				document.head.appendChild(styleEl);
+			}
+			styleEl.textContent = customCSS.value;
+		}
+		function applyAll() {
+			applyTheme();
+			applyReading();
+			applyCustomCSS();
+		}
+		async function load() {
+			try {
+				let data = null;
+				let hasInvalidData = false;
+				if (typeof GM_getValue !== "undefined") data = await GM_getValue(STORAGE_KEY, null);
+				else if (typeof localStorage !== "undefined") data = localStorage.getItem(STORAGE_KEY);
+				if (data) {
+					let parsed;
+					if (typeof data === "string") try {
+						parsed = JSON.parse(data);
+					} catch (e) {
+						console.error("[ConfigStore] Failed to parse config JSON:", e);
+						hasInvalidData = true;
+						parsed = null;
+					}
+					else parsed = data;
+					if (!hasInvalidData && (!parsed || typeof parsed !== "object" || Array.isArray(parsed))) {
+						console.warn("[ConfigStore] Invalid config data, expected object");
+						hasInvalidData = true;
+					}
+					if (!hasInvalidData) {
+						const config = parsed;
+						if (typeof config.themeId === "string") themeId.value = config.themeId;
+						if (config.reading && typeof config.reading === "object") reading.value = {
+							...DEFAULT_READING,
+							...config.reading
+						};
+						if (config.behavior && typeof config.behavior === "object") behavior.value = {
+							...DEFAULT_BEHAVIOR,
+							...config.behavior
+						};
+						if (config.protection && typeof config.protection === "object") protection.value = {
+							...DEFAULT_PROTECTION,
+							...config.protection
+						};
+						if (typeof config.customCSS === "string") customCSS.value = config.customCSS;
+					}
+				}
+				applyAll();
+				if (hasInvalidData) {
+					console.warn("[ConfigStore] Corrupted config detected; resetting to defaults");
+					await save();
+				}
+			} catch (e) {
+				console.error("[ConfigStore] Load error:", e);
+			}
+		}
+		async function save() {
+			try {
+				const data = JSON.stringify({
+					themeId: themeId.value,
+					reading: reading.value,
+					behavior: behavior.value,
+					protection: protection.value,
+					customCSS: customCSS.value
+				});
+				if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY, data);
+				else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, data);
+			} catch (e) {
+				console.error("[ConfigStore] Save error:", e);
+			}
+		}
+		watch([
+			themeId,
+			reading,
+			behavior,
+			protection,
+			customCSS
+		], () => {
+			save();
+		}, { deep: true });
+		function $reset() {
+			themeId.value = "light";
+			reading.value = { ...DEFAULT_READING };
+			behavior.value = { ...DEFAULT_BEHAVIOR };
+			protection.value = { ...DEFAULT_PROTECTION };
+			customCSS.value = "";
+			applyAll();
+			save();
+		}
+		return {
+			themeId,
+			reading,
+			behavior,
+			protection,
+			customCSS,
+			theme,
+			setTheme,
+			updateReading,
+			updateBehavior,
+			updateProtection,
+			setCustomCSS,
+			applyTheme,
+			applyReading,
+			applyAll,
+			load,
+			save,
+			$reset
+		};
+	});
+	function getMnrGlobalState() {
+		if (!window.__MY_NOVEL_READER__) window.__MY_NOVEL_READER__ = {};
+		return window.__MY_NOVEL_READER__;
+	}
+	var BASE_RESET_CSS = `
+/* Reset all inherited styles */
+:host {
+  all: initial;
+  display: block;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure common elements have expected defaults */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Reset form elements to browser defaults */
+input, button, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  width: auto;
+  height: auto;
+  margin: 3px 3px 3px 4px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  appearance: auto;
+  -webkit-appearance: slider-horizontal;
+}
+
+button {
+  appearance: auto;
+  cursor: pointer;
+}
+
+select {
+  appearance: auto;
+  -webkit-appearance: menulist;
+}
+
+textarea {
+  appearance: auto;
+  -webkit-appearance: textarea;
+  resize: vertical;
+}
+
+/* Link defaults */
+a {
+  color: var(--mnr-link, #1976d2);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* List defaults */
+ul, ol {
+  padding-left: 2em;
+}
+
+/* Ensure visibility */
+* {
+  visibility: visible !important;
+}
+`;
+	function createShadowMount(hostId) {
+		const globalState = getMnrGlobalState();
+		const host = document.createElement("div");
+		host.id = hostId;
+		document.body.appendChild(host);
+		const shadowRoot = host.attachShadow({ mode: "open" });
+		globalState.shadowRoot = shadowRoot;
+		const resetStyle = document.createElement("style");
+		resetStyle.textContent = BASE_RESET_CSS;
+		shadowRoot.appendChild(resetStyle);
+		if (globalState.styles) {
+			const styleId = "mnr-app-styles";
+			const existing = shadowRoot.querySelector(`#${styleId}`);
+			const appStyle = existing || document.createElement("style");
+			if (!existing) {
+				appStyle.id = styleId;
+				shadowRoot.appendChild(appStyle);
+			}
+			appStyle.textContent = globalState.styles;
+		}
+		const mountPoint = document.createElement("div");
+		mountPoint.id = `${hostId}-mount`;
+		shadowRoot.appendChild(mountPoint);
+		const cleanup = () => {
+			host.remove();
+			if (globalState.shadowRoot === shadowRoot) globalState.shadowRoot = void 0;
+		};
+		return {
+			host,
+			shadowRoot,
+			mountPoint,
+			cleanup
+		};
+	}
+	var _hoisted_1$10 = {
+		class: "mnr-prompt-card",
+		role: "dialog",
+		"aria-modal": "true"
+	};
+	var _hoisted_2$8 = { class: "mnr-confidence" };
+	var _hoisted_3$7 = { class: "mnr-confidence-bar" };
+	var _hoisted_4$7 = { class: "mnr-confidence-text" };
+	var _hoisted_5$6 = { class: "mnr-results" };
+	var _hoisted_6$5 = { class: "mnr-checkbox-label" };
+	var DetectionPrompt_vue_vue_type_script_setup_true_lang_default = defineComponent({
+		__name: "DetectionPrompt",
+		props: {
+			decision: {},
+			visible: { type: Boolean }
+		},
+		emits: ["respond", "dismiss"],
+		setup(__props, { emit: __emit }) {
+			const props = __props;
+			const emit = __emit;
+			const saveForDomain = ref(true);
+			const confidence = computed(() => props.decision.confidence);
+			const confidenceClass = computed(() => {
+				if (confidence.value >= .8) return "high";
+				if (confidence.value >= .6) return "medium";
+				return "low";
+			});
+			const positiveReasons = computed(() => {
+				return props.decision.reasons.filter((r) => r.includes("找到") || r.includes("检测到") || r.includes("成功"));
+			});
+			const negativeReasons = computed(() => {
+				return props.decision.reasons.filter((r) => r.includes("未能") || r.includes("置信度") || r.includes("警告"));
+			});
+			function handleAccept() {
+				emit("respond", {
+					accepted: true,
+					saveForDomain: saveForDomain.value
+				});
+			}
+			function handleDismiss() {
+				emit("respond", {
+					accepted: false,
+					saveForDomain: false
+				});
+				emit("dismiss");
+			}
+			return (_ctx, _cache) => {
+				return openBlock(), createBlock(Transition, { name: "mnr-fade" }, {
+					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
+						key: 0,
+						class: "mnr-prompt-overlay",
+						onClick: withModifiers(handleDismiss, ["self"])
+					}, [createBaseVNode("div", _hoisted_1$10, [
+						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"), createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")], -1)),
+						createBaseVNode("div", _hoisted_2$8, [createBaseVNode("div", _hoisted_3$7, [createBaseVNode("div", {
+							class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
+							style: normalizeStyle({ width: `${confidence.value * 100}%` })
+						}, null, 6)]), createBaseVNode("span", _hoisted_4$7, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
+						createBaseVNode("ul", _hoisted_5$6, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
+							return openBlock(), createElementBlock("li", {
+								key: reason,
+								class: "mnr-result-item success"
+							}, [_cache[1] || (_cache[1] = createBaseVNode("span", { class: "mnr-result-icon" }, "✓", -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
+						}), 128)), (openBlock(true), createElementBlock(Fragment, null, renderList(negativeReasons.value, (reason) => {
+							return openBlock(), createElementBlock("li", {
+								key: reason,
+								class: "mnr-result-item warning"
+							}, [_cache[2] || (_cache[2] = createBaseVNode("span", { class: "mnr-result-icon" }, "⚠", -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
+						}), 128))]),
+						createBaseVNode("label", _hoisted_6$5, [withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => saveForDomain.value = $event),
+							type: "checkbox",
+							class: "mnr-checkbox"
+						}, null, 512), [[vModelCheckbox, saveForDomain.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
+						createBaseVNode("div", { class: "mnr-prompt-actions" }, [createBaseVNode("button", {
+							class: "mnr-btn mnr-btn-secondary",
+							onClick: handleDismiss
+						}, "暂不"), createBaseVNode("button", {
+							class: "mnr-btn mnr-btn-primary",
+							onClick: handleAccept
+						}, "启用阅读器")])
+					])])) : createCommentVNode("", true)]),
+					_: 1
+				});
+			};
+		}
+	});
+	var _plugin_vue_export_helper_default = (sfc, props) => {
+		const target = sfc.__vccOpts || sfc;
+		for (const [key, val] of props) target[key] = val;
+		return target;
+	};
+	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-c89e5106"]]);
 	var VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
 	var HKVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一針 一針|一針見血 一針見血|三針 三針|丟巧針 丟巧針|丹稜 丹稜|九針 九針|亂針繡 亂針繡|仙台 仙台|倒扣針兒 倒扣針兒|做針線 做針線|八字方針 八字方針|刀割針扎 刀割針扎|分針 分針|別針 別針|刺胳針 刺胳針|刺針 刺針|北港島綫 北港島線|十針 十針|南港島綫 南港島線|南針 南針|反時針 反時針|口吃 口吃|台山 台山|台山市 台山市|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|向風針 向風針|唱針 唱針|啄針兒 啄針兒|嗎啡針 嗎啡針|大政方針 大政方針|大海撈針 大海撈針|大頭針 大頭針|天台 天台|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|太乙神針 太乙神針|奇台 奇台|女人心海底針 女人心海底針|定南針 定南針|定風針 定風針|將軍澳綫 將軍澳線|對針 對針|小針 小針|小針美容 小針美容|屯馬綫 屯馬線|平針縫 平針縫|幾針 幾針|引線穿針 引線穿針|張口 張口|張柏芝 張柏芝|張栢芝 張栢芝|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|懸針 懸針|懸針垂露 懸針垂露|手腕式指北針 手腕式指北針|扎針 扎針|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|指北針 指北針|指南針 指南針|指揮台 指揮台|指針 指針|指針式 指針式|探針 探針|控制台 控制台|插針 插針|搖針 搖針|搗針 搗針|撞針 撞針|擺針 擺針|收針 收針|教育方針 教育方針|敹一針 敹一針|方針 方針|時針 時針|暈針 暈針|曲別針 曲別針|東九龍綫 東九龍線|東海撈針 東海撈針|東涌綫 東涌線|東鐵綫 東鐵線|松針 松針|枝針 枝針|桑針 桑針|棒針 棒針|棒針衫 棒針衫|棘針 棘針|棘針科 棘針科|棘針門 棘針門|機場快綫 機場快線|步線行針 步線行針|毒針 毒針|毛線針 毛線針|毫針 毫針|水底撈針 水底撈針|沙中綫 沙中線|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|浙江天台縣 浙江天台縣|海底撈針 海底撈針|港島綫 港島線|漏針 漏針|炮台山循道衛理中學 炮台山循道衛理中學|無線新聞台 無線新聞台|無針不引線 無針不引線|無針注射器 無針注射器|燔針 燔針|留針 留針|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|短針 短針|石針 石針|硬肥皂 硬肥皂|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|秒針 秒針|秧針 秧針|穆稜 穆稜|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|紋光針 紋光針|細針密縷 細針密縷|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美白針 美白針|耳針 耳針|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|胃口 胃口|胸針 胸針|臺灣台 臺灣台|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|茅針 茅針|荃灣綫 荃灣線|葉針 葉針|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|補血針 補血針|補針 補針|見縫插針 見縫插針|觀塘綫 觀塘線|討針線 討針線|象牙針尖 象牙針尖|賀爾蒙針 賀爾蒙針|跳針 跳針|蹇吃 蹇吃|軟肥皂 軟肥皂|迪士尼綫 迪士尼線|迴紋針 迴紋針|退針 退針|逆時針 逆時針|避雷針 避雷針|郭台成 郭台成|郭台銘 郭台銘|鄧艾吃 鄧艾吃|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉤針 鉤針|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|長針 長針|開口 開口|防疫針 防疫針|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|面皂 面皂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|風向針 風向針|飛針走線 飛針走線|香皂 香皂|骨針 骨針|髮針 髮針|鬼針草 鬼針草|鳳台 鳳台|鹽水針 鹽水針|麻醉針 麻醉針|黃成 黃成|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針|龍應台 龍應台";
 	var HKVariantsRev_default = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|綫 線|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
@@ -16895,7 +17182,8 @@
 	var CACHE_V2_INDEX_PREFIX = "mnr_cache_v2_index_";
 	var CACHE_V2_CHAPTER_PREFIX = "mnr_cache_v2_chapter_";
 	var DAY_MS = 1440 * 60 * 1e3;
-	30 * DAY_MS;
+	var PERSISTED_CACHE_MAX_AGE_MS = 30 * DAY_MS;
+	var PERSISTED_CACHE_GC_INTERVAL_MS = DAY_MS;
 	var PERSISTED_CACHE_TOUCH_INTERVAL_MS = DAY_MS;
 	var PERSISTED_CACHE_GC_LAST_RUN_KEY = "mnr_cache_v2_gc_last_run";
 	function generateBookId(indexUrl) {
@@ -17023,8 +17311,8 @@
 	function cleanupExpiredCaches(options = {}) {
 		if (typeof GM_getValue === "undefined" || typeof GM_setValue === "undefined" || typeof GM_deleteValue === "undefined" || typeof GM_listValues !== "function") return;
 		const now = options.now ?? Date.now();
-		const gcIntervalMs = options.gcIntervalMs ?? 864e5;
-		const maxAgeMs = options.maxAgeMs ?? 2592e6;
+		const gcIntervalMs = options.gcIntervalMs ?? PERSISTED_CACHE_GC_INTERVAL_MS;
+		const maxAgeMs = options.maxAgeMs ?? PERSISTED_CACHE_MAX_AGE_MS;
 		try {
 			if (!options.force) {
 				const lastRun = normalizeTimestamp(GM_getValue(PERSISTED_CACHE_GC_LAST_RUN_KEY, 0));
@@ -17740,6 +18028,7 @@
 		candidates.sort((a, b) => b.score - a.score);
 		return candidates[0].url;
 	}
+	var MAX_TOC_PAGES = 120;
 	async function loadTocEntriesPaged(indexUrl, currentUrl, rule, setAbort) {
 		const loaderContext = {
 			indexUrl,
@@ -17764,7 +18053,7 @@
 		try {
 			let pageUrl = indexUrl;
 			let referer = currentUrl || indexUrl;
-			while (pageUrl && visitedPages.size < 120) {
+			while (pageUrl && visitedPages.size < MAX_TOC_PAGES) {
 				const pageKey = normalizeUrlForCompare(pageUrl);
 				if (visitedPages.has(pageKey)) break;
 				visitedPages.add(pageKey);
@@ -18685,9 +18974,7 @@
 		const runtime = createReaderRuntime();
 		const chapter = computed(() => chapters.value[currentChapterIndex.value]?.chapter || null);
 		const rule = computed(() => chapters.value[currentChapterIndex.value]?.rule || null);
-		const title = computed(() => chapter.value?.title || "");
 		const bookTitle = computed(() => chapter.value?.bookTitle || "");
-		const content = computed(() => chapter.value?.content || "");
 		function isVipBlockedUrl(url) {
 			return vipBlockedUrls.value.has(normalizeUrlForBlock(url));
 		}
@@ -18709,9 +18996,6 @@
 			if (blockedNavUrls.value.has(normalizeUrlForBlock(prevUrl))) return false;
 			return !isVipBlockedUrl(prevUrl);
 		});
-		const hasIndex = computed(() => !!chapter.value?.indexUrl);
-		const confidence = computed(() => chapter.value?.confidence || 0);
-		const method = computed(() => chapter.value?.method || "detection");
 		const normalizedTocUrls = computed(() => toc.value.map((entry) => normalizeUrlForFetch(entry.url)));
 		const tocStatusMap = computed(() => {
 			const currentUrl = chapter.value?.url;
@@ -18740,7 +19024,6 @@
 				};
 			});
 		});
-		const currentChapterUrl = computed(() => chapter.value?.url || "");
 		function syncCurrentHostPage() {
 			syncHostPageToChapter(chapter.value, currentChapterIndex.value);
 		}
@@ -18972,9 +19255,6 @@
 			syncCurrentHostPage();
 			restoreCache$1();
 		}
-		function setLoading(loading) {
-			isLoading.value = loading;
-		}
 		function updateScroll(percent) {
 			scrollPercent.value = Math.max(0, Math.min(100, percent));
 		}
@@ -19035,16 +19315,6 @@
 			await nav.reloadCurrentChapter();
 			syncCurrentHostPage();
 		}
-		function getProgress() {
-			if (!chapter.value?.url) return null;
-			return {
-				url: chapter.value?.url || window.location.href,
-				chapterUrl: chapter.value.url,
-				chapterPercent: scrollPercent.value,
-				scrollPercent: scrollPercent.value,
-				lastRead: Date.now()
-			};
-		}
 		function getDebugSnapshot() {
 			const currentEntry = chapters.value[currentChapterIndex.value] || null;
 			const firstEntry = chapters.value[0] || null;
@@ -19073,9 +19343,9 @@
 					scrollPercent: scrollPercent.value,
 					hasNext: hasNext.value,
 					hasPrev: hasPrev.value,
-					hasIndex: hasIndex.value,
-					confidence: confidence.value,
-					method: method.value,
+					hasIndex: Boolean(chapter.value?.indexUrl),
+					confidence: chapter.value?.confidence || 0,
+					method: chapter.value?.method || "detection",
 					conversionMode: currentConversionMode.value,
 					runtimeSessionId: runtime.sessionId(),
 					runtimeViewId: runtime.viewId()
@@ -19189,29 +19459,21 @@
 			tocLoading,
 			cachedContents,
 			persistedUrls,
-			title,
 			bookTitle,
-			content,
 			hasNext,
 			hasPrev,
-			hasIndex,
-			confidence,
-			method,
 			tocWithStatus,
-			currentChapterUrl,
 			activate,
 			deactivate,
 			setChapter,
 			setCurrentChapter,
 			loadNextChapter,
 			loadPrevChapter,
-			setLoading,
 			setError,
 			showToast,
 			getVipBlockedToast,
 			clearError,
 			updateScroll,
-			getProgress,
 			getDebugSnapshot,
 			applyTextConversion,
 			startCacheAll,
@@ -19225,293 +19487,20 @@
 			$reset
 		};
 	});
-	var THEMES = [
-		{
-			id: "light",
-			name: "默认",
-			background: "#ffffff",
-			text: "#1a1a1a",
-			link: "#0066cc",
-			onLink: "#ffffff",
-			border: "#e5e5e5"
-		},
-		{
-			id: "dark",
-			name: "深色",
-			background: "#1e1e1e",
-			text: "#c8c8c8",
-			link: "#78bdf2",
-			onLink: "#111111",
-			border: "#3a3a3a"
-		},
-		{
-			id: "sepia",
-			name: "护眼",
-			background: "#f8f1e3",
-			text: "#4a4137",
-			link: "#7a4f26",
-			onLink: "#ffffff",
-			border: "#e8dcc8"
-		},
-		{
-			id: "green",
-			name: "绿色",
-			background: "#edf6ed",
-			text: "#243429",
-			link: "#2f6f3d",
-			onLink: "#ffffff",
-			border: "#c9ddc9"
-		},
-		{
-			id: "blue",
-			name: "蓝色",
-			background: "#eaf3fb",
-			text: "#263746",
-			link: "#2563a8",
-			onLink: "#ffffff",
-			border: "#c7d8e8"
-		},
-		{
-			id: "night",
-			name: "夜间",
-			background: "#0d0d0d",
-			text: "#a0a0a0",
-			link: "#5dade2",
-			onLink: "#0b0b0b",
-			border: "#303030"
-		}
-	];
-	var DEFAULT_READING = {
-		fontFamily: "system-ui, -apple-system, \"Microsoft YaHei\", sans-serif",
-		fontSize: 18,
-		lineHeight: 1.8,
-		letterSpacing: .05,
-		paragraphIndent: 2,
-		maxWidth: 800,
-		padding: 20,
-		textConversion: "none"
-	};
-	var DEFAULT_BEHAVIOR = {
-		autoScrollToPosition: true,
-		keyboardNavigation: true,
-		swipeGestures: true,
-		autoHideHeader: true,
-		preloadNext: true,
-		showProgress: true
-	};
-	var DEFAULT_PROTECTION = {
-		mode: "standard",
-		blockRedirects: true,
-		enableRightClick: true,
-		enableSelection: true,
-		blockPopups: true
-	};
-	var STORAGE_KEY = "mnr-config";
-	var useConfigStore = defineStore("config", () => {
-		const themeId = ref("light");
-		const reading = ref({ ...DEFAULT_READING });
-		const behavior = ref({ ...DEFAULT_BEHAVIOR });
-		const protection = ref({ ...DEFAULT_PROTECTION });
-		const customCSS = ref("");
-		const theme = () => {
-			return THEMES.find((t) => t.id === themeId.value) || THEMES[0];
-		};
-		function setTheme(id) {
-			if (THEMES.some((t) => t.id === id)) {
-				themeId.value = id;
-				applyTheme();
-			}
-		}
-		function updateReading(settings) {
-			reading.value = {
-				...reading.value,
-				...settings
-			};
-		}
-		function updateBehavior(settings) {
-			behavior.value = {
-				...behavior.value,
-				...settings
-			};
-		}
-		function updateProtection(settings) {
-			protection.value = {
-				...protection.value,
-				...settings
-			};
-		}
-		function setCustomCSS(css) {
-			customCSS.value = css;
-			applyCustomCSS();
-		}
-		function applyTheme() {
-			const t = theme();
-			const root = document.documentElement;
-			root.style.setProperty("--mnr-bg", t.background);
-			root.style.setProperty("--mnr-text", t.text);
-			root.style.setProperty("--mnr-link", t.link);
-			root.style.setProperty("--mnr-on-link", t.onLink);
-			root.style.setProperty("--mnr-border", t.border);
-		}
-		function applyReading() {
-			const r = reading.value;
-			const root = document.documentElement;
-			root.style.setProperty("--mnr-font-family", r.fontFamily);
-			root.style.setProperty("--mnr-font-size", `${r.fontSize}px`);
-			root.style.setProperty("--mnr-line-height", `${r.lineHeight}`);
-			root.style.setProperty("--mnr-letter-spacing", `${r.letterSpacing}em`);
-			root.style.setProperty("--mnr-paragraph-indent", `${r.paragraphIndent}em`);
-			root.style.setProperty("--mnr-max-width", `${r.maxWidth}px`);
-			root.style.setProperty("--mnr-padding", `${r.padding}px`);
-		}
-		function applyCustomCSS() {
-			let styleEl = document.getElementById("mnr-custom-css");
-			if (!styleEl) {
-				styleEl = document.createElement("style");
-				styleEl.id = "mnr-custom-css";
-				document.head.appendChild(styleEl);
-			}
-			styleEl.textContent = customCSS.value;
-		}
-		function applyAll() {
-			applyTheme();
-			applyReading();
-			applyCustomCSS();
-		}
-		async function load() {
-			try {
-				let data = null;
-				let hasInvalidData = false;
-				if (typeof GM_getValue !== "undefined") data = await GM_getValue(STORAGE_KEY, null);
-				else if (typeof localStorage !== "undefined") data = localStorage.getItem(STORAGE_KEY);
-				if (data) {
-					let parsed;
-					if (typeof data === "string") try {
-						parsed = JSON.parse(data);
-					} catch (e) {
-						console.error("[ConfigStore] Failed to parse config JSON:", e);
-						hasInvalidData = true;
-						parsed = null;
-					}
-					else parsed = data;
-					if (!hasInvalidData && (!parsed || typeof parsed !== "object" || Array.isArray(parsed))) {
-						console.warn("[ConfigStore] Invalid config data, expected object");
-						hasInvalidData = true;
-					}
-					if (!hasInvalidData) {
-						const config = parsed;
-						if (typeof config.themeId === "string") themeId.value = config.themeId;
-						if (config.reading && typeof config.reading === "object") reading.value = {
-							...DEFAULT_READING,
-							...config.reading
-						};
-						if (config.behavior && typeof config.behavior === "object") behavior.value = {
-							...DEFAULT_BEHAVIOR,
-							...config.behavior
-						};
-						if (config.protection && typeof config.protection === "object") protection.value = {
-							...DEFAULT_PROTECTION,
-							...config.protection
-						};
-						if (typeof config.customCSS === "string") customCSS.value = config.customCSS;
-					}
-				}
-				applyAll();
-				if (hasInvalidData) {
-					console.warn("[ConfigStore] Corrupted config detected; resetting to defaults");
-					await save();
-				}
-			} catch (e) {
-				console.error("[ConfigStore] Load error:", e);
-			}
-		}
-		async function save() {
-			try {
-				const data = JSON.stringify({
-					themeId: themeId.value,
-					reading: reading.value,
-					behavior: behavior.value,
-					protection: protection.value,
-					customCSS: customCSS.value
-				});
-				if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY, data);
-				else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, data);
-			} catch (e) {
-				console.error("[ConfigStore] Save error:", e);
-			}
-		}
-		watch([
-			themeId,
-			reading,
-			behavior,
-			protection,
-			customCSS
-		], () => {
-			save();
-		}, { deep: true });
-		function $reset() {
-			themeId.value = "light";
-			reading.value = { ...DEFAULT_READING };
-			behavior.value = { ...DEFAULT_BEHAVIOR };
-			protection.value = { ...DEFAULT_PROTECTION };
-			customCSS.value = "";
-			applyAll();
-			save();
-		}
-		return {
-			themeId,
-			reading,
-			behavior,
-			protection,
-			customCSS,
-			theme,
-			setTheme,
-			updateReading,
-			updateBehavior,
-			updateProtection,
-			setCustomCSS,
-			applyTheme,
-			applyReading,
-			applyAll,
-			load,
-			save,
-			$reset
-		};
-	});
 	var useRuleStore = defineStore("rule", () => {
 		const userRules = ref(new Map());
-		const builtInRules = ref([]);
 		const isLoading = ref(false);
-		const currentRule = ref(null);
-		const isEditing = ref(false);
-		const editingRule = ref(null);
-		const userRuleCount = computed(() => userRules.value.size);
-		const builtInRuleCount = computed(() => builtInRules.value.length);
-		const totalRuleCount = computed(() => userRuleCount.value + builtInRuleCount.value);
-		const userRuleList = computed(() => Array.from(userRules.value.values()));
 		async function initialize() {
 			if (isLoading.value) return;
 			isLoading.value = true;
 			try {
 				const manager = getRuleManager();
 				await manager.initialize();
-				const storage = manager.getStorage();
-				userRules.value = await storage.getAllUserRules();
-				builtInRules.value = await manager.getBuiltInRules();
+				userRules.value = new Map(manager.getAllUserRules());
 			} catch (e) {
 				console.error("[RuleStore] Initialize error:", e);
 			} finally {
 				isLoading.value = false;
-			}
-		}
-		async function matchRule(url) {
-			try {
-				const result = await getRuleManager().matchRule(url);
-				currentRule.value = result?.rule || null;
-				return currentRule.value;
-			} catch (e) {
-				console.error("[RuleStore] Match error:", e);
-				return null;
 			}
 		}
 		async function saveUserRule(domain, rule) {
@@ -19533,307 +19522,16 @@
 				throw e;
 			}
 		}
-		function getUserRule(domain) {
-			return userRules.value.get(domain);
-		}
 		function hasUserRule(domain) {
 			return userRules.value.has(domain);
 		}
-		function startEditing(rule) {
-			isEditing.value = true;
-			editingRule.value = rule ? { ...rule } : createEmptyRule();
-		}
-		function stopEditing() {
-			isEditing.value = false;
-			editingRule.value = null;
-		}
-		function updateEditingRule(updates) {
-			if (editingRule.value) editingRule.value = {
-				...editingRule.value,
-				...updates
-			};
-		}
-		async function saveEditingRule(domain) {
-			if (!editingRule.value) return;
-			await saveUserRule(domain, editingRule.value);
-			stopEditing();
-		}
-		function createEmptyRule() {
-			return {
-				id: `user-${Date.now()}`,
-				name: "",
-				version: 1,
-				match: {
-					pattern: "",
-					type: "regex"
-				},
-				content: { selector: "" },
-				meta: {
-					source: "user",
-					autoLaunch: true
-				}
-			};
-		}
-		function exportRules() {
-			const rules = Array.from(userRules.value.entries()).map(([domain, rule]) => ({
-				domain,
-				rule
-			}));
-			return JSON.stringify(rules, null, 2);
-		}
-		async function importRules(json) {
-			try {
-				const data = JSON.parse(json);
-				if (!Array.isArray(data)) throw new Error("Invalid format: expected array");
-				for (const item of data) if (item.domain && item.rule) await saveUserRule(item.domain, item.rule);
-			} catch (e) {
-				console.error("[RuleStore] Import error:", e);
-				throw e;
-			}
-		}
-		function $reset() {
-			userRules.value = new Map();
-			builtInRules.value = [];
-			isLoading.value = false;
-			currentRule.value = null;
-			isEditing.value = false;
-			editingRule.value = null;
-		}
 		return {
-			userRules,
-			builtInRules,
-			isLoading,
-			currentRule,
-			isEditing,
-			editingRule,
-			userRuleCount,
-			builtInRuleCount,
-			totalRuleCount,
-			userRuleList,
 			initialize,
-			matchRule,
 			saveUserRule,
 			deleteUserRule,
-			getUserRule,
-			hasUserRule,
-			startEditing,
-			stopEditing,
-			updateEditingRule,
-			saveEditingRule,
-			createEmptyRule,
-			exportRules,
-			importRules,
-			$reset
+			hasUserRule
 		};
 	});
-	function getMnrGlobalState() {
-		if (!window.__MY_NOVEL_READER__) window.__MY_NOVEL_READER__ = {};
-		return window.__MY_NOVEL_READER__;
-	}
-	var BASE_RESET_CSS = `
-/* Reset all inherited styles */
-:host {
-  all: initial;
-  display: block;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #333;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Ensure common elements have expected defaults */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-/* Reset form elements to browser defaults */
-input, button, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  margin: 0;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  appearance: auto;
-  -webkit-appearance: checkbox;
-  width: auto;
-  height: auto;
-  margin: 3px 3px 3px 4px;
-  cursor: pointer;
-}
-
-input[type="range"] {
-  appearance: auto;
-  -webkit-appearance: slider-horizontal;
-}
-
-button {
-  appearance: auto;
-  cursor: pointer;
-}
-
-select {
-  appearance: auto;
-  -webkit-appearance: menulist;
-}
-
-textarea {
-  appearance: auto;
-  -webkit-appearance: textarea;
-  resize: vertical;
-}
-
-/* Link defaults */
-a {
-  color: var(--mnr-link, #1976d2);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* List defaults */
-ul, ol {
-  padding-left: 2em;
-}
-
-/* Ensure visibility */
-* {
-  visibility: visible !important;
-}
-`;
-	function createShadowMount(hostId) {
-		const globalState = getMnrGlobalState();
-		const host = document.createElement("div");
-		host.id = hostId;
-		document.body.appendChild(host);
-		const shadowRoot = host.attachShadow({ mode: "open" });
-		globalState.shadowRoot = shadowRoot;
-		const resetStyle = document.createElement("style");
-		resetStyle.textContent = BASE_RESET_CSS;
-		shadowRoot.appendChild(resetStyle);
-		if (globalState.styles) {
-			const styleId = "mnr-app-styles";
-			const existing = shadowRoot.querySelector(`#${styleId}`);
-			const appStyle = existing || document.createElement("style");
-			if (!existing) {
-				appStyle.id = styleId;
-				shadowRoot.appendChild(appStyle);
-			}
-			appStyle.textContent = globalState.styles;
-		}
-		const mountPoint = document.createElement("div");
-		mountPoint.id = `${hostId}-mount`;
-		shadowRoot.appendChild(mountPoint);
-		const cleanup = () => {
-			host.remove();
-			if (globalState.shadowRoot === shadowRoot) globalState.shadowRoot = void 0;
-		};
-		return {
-			host,
-			shadowRoot,
-			mountPoint,
-			cleanup
-		};
-	}
-	var _hoisted_1$10 = {
-		class: "mnr-prompt-card",
-		role: "dialog",
-		"aria-modal": "true"
-	};
-	var _hoisted_2$8 = { class: "mnr-confidence" };
-	var _hoisted_3$7 = { class: "mnr-confidence-bar" };
-	var _hoisted_4$7 = { class: "mnr-confidence-text" };
-	var _hoisted_5$6 = { class: "mnr-results" };
-	var _hoisted_6$5 = { class: "mnr-checkbox-label" };
-	var DetectionPrompt_vue_vue_type_script_setup_true_lang_default = defineComponent({
-		__name: "DetectionPrompt",
-		props: {
-			decision: {},
-			visible: { type: Boolean }
-		},
-		emits: ["respond", "dismiss"],
-		setup(__props, { emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const saveForDomain = ref(true);
-			const confidence = computed(() => props.decision.confidence);
-			const confidenceClass = computed(() => {
-				if (confidence.value >= .8) return "high";
-				if (confidence.value >= .6) return "medium";
-				return "low";
-			});
-			const positiveReasons = computed(() => {
-				return props.decision.reasons.filter((r) => r.includes("找到") || r.includes("检测到") || r.includes("成功"));
-			});
-			const negativeReasons = computed(() => {
-				return props.decision.reasons.filter((r) => r.includes("未能") || r.includes("置信度") || r.includes("警告"));
-			});
-			function handleAccept() {
-				emit("respond", {
-					accepted: true,
-					saveForDomain: saveForDomain.value
-				});
-			}
-			function handleDismiss() {
-				emit("respond", {
-					accepted: false,
-					saveForDomain: false
-				});
-				emit("dismiss");
-			}
-			return (_ctx, _cache) => {
-				return openBlock(), createBlock(Transition, { name: "mnr-fade" }, {
-					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
-						key: 0,
-						class: "mnr-prompt-overlay",
-						onClick: withModifiers(handleDismiss, ["self"])
-					}, [createBaseVNode("div", _hoisted_1$10, [
-						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"), createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")], -1)),
-						createBaseVNode("div", _hoisted_2$8, [createBaseVNode("div", _hoisted_3$7, [createBaseVNode("div", {
-							class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
-							style: normalizeStyle({ width: `${confidence.value * 100}%` })
-						}, null, 6)]), createBaseVNode("span", _hoisted_4$7, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
-						createBaseVNode("ul", _hoisted_5$6, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
-							return openBlock(), createElementBlock("li", {
-								key: reason,
-								class: "mnr-result-item success"
-							}, [_cache[1] || (_cache[1] = createBaseVNode("span", { class: "mnr-result-icon" }, "✓", -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
-						}), 128)), (openBlock(true), createElementBlock(Fragment, null, renderList(negativeReasons.value, (reason) => {
-							return openBlock(), createElementBlock("li", {
-								key: reason,
-								class: "mnr-result-item warning"
-							}, [_cache[2] || (_cache[2] = createBaseVNode("span", { class: "mnr-result-icon" }, "⚠", -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
-						}), 128))]),
-						createBaseVNode("label", _hoisted_6$5, [withDirectives(createBaseVNode("input", {
-							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => saveForDomain.value = $event),
-							type: "checkbox",
-							class: "mnr-checkbox"
-						}, null, 512), [[vModelCheckbox, saveForDomain.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
-						createBaseVNode("div", { class: "mnr-prompt-actions" }, [createBaseVNode("button", {
-							class: "mnr-btn mnr-btn-secondary",
-							onClick: handleDismiss
-						}, "暂不"), createBaseVNode("button", {
-							class: "mnr-btn mnr-btn-primary",
-							onClick: handleAccept
-						}, "启用阅读器")])
-					])])) : createCommentVNode("", true)]),
-					_: 1
-				});
-			};
-		}
-	});
-	var _plugin_vue_export_helper_default = (sfc, props) => {
-		const target = sfc.__vccOpts || sfc;
-		for (const [key, val] of props) target[key] = val;
-		return target;
-	};
-	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-c89e5106"]]);
 	function useVirtualChapters(chapters, options = {}) {
 		const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
 		const heights = ref(new Map());

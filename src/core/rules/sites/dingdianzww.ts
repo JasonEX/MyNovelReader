@@ -114,7 +114,6 @@ const dingdianzwwBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
 // - 章节页：/{bookId}/{chapterId}.html
 // - 移动模板通过 ajax_chapter.php 返回完整正文，hook 会写回 #chapter-content。
 // - 站点可能带 ?page=1，但不能按分页章节合并。
-// - 旧 ddxsmf.com/read/... 已跳转到本域名路径。
 export const dingdianzwwRule: SiteRule = {
   id: 'dingdianzww',
   name: '顶点小说',

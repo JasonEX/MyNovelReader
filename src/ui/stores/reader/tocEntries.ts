@@ -42,7 +42,7 @@ const NON_CHAPTER_TITLE_PATTERNS = [
 /**
  * Check if a title matches chapter patterns (whitelist)
  */
-export function isLikelyChapterTitle(title: string): boolean {
+function isLikelyChapterTitle(title: string): boolean {
   const t = title.trim();
   return CHAPTER_TITLE_PATTERNS.some(p => p.test(t));
 }
@@ -50,7 +50,7 @@ export function isLikelyChapterTitle(title: string): boolean {
 /**
  * Check if a title looks like a non-chapter entry (blacklist)
  */
-export function isNonChapterTitle(title: string): boolean {
+function isNonChapterTitle(title: string): boolean {
   const t = title.trim();
   if (t.length < 2) return true;
   return NON_CHAPTER_TITLE_PATTERNS.some(p => p.test(t));
@@ -59,14 +59,14 @@ export function isNonChapterTitle(title: string): boolean {
 /**
  * Check if a title is a placeholder
  */
-export function isPlaceholderTocTitle(title: string): boolean {
+function isPlaceholderTocTitle(title: string): boolean {
   return /^章节\s*\d+$/i.test(title.trim());
 }
 
 /**
  * Compare titles to determine which is better
  */
-export function isBetterTocTitle(oldTitle: string, newTitle: string): boolean {
+function isBetterTocTitle(oldTitle: string, newTitle: string): boolean {
   const oldWhitelist = isLikelyChapterTitle(oldTitle);
   const newWhitelist = isLikelyChapterTitle(newTitle);
 
@@ -82,7 +82,7 @@ export function isBetterTocTitle(oldTitle: string, newTitle: string): boolean {
 /**
  * Extract chapter title from link element
  */
-export function extractTocLinkTitle(a: Element): string {
+function extractTocLinkTitle(a: Element): string {
   // Method 1: Try common title selectors
   const titleSelectors = [
     '[class*="chapterItemTitle"]',

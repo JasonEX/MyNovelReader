@@ -62,7 +62,7 @@ const shu69BeforeParse: BeforeParseHook = (doc, url) => {
 
 // 69书吧
 // - 章节页：/txt/{bookId}/{chapterId}
-// - 兼容旧域名模板：/c/...、/r/...
+// - 同站点还会出现 /c/...、/r/... 路径模板
 export const shu69Rule: SiteRule = {
   id: '69shu',
   name: '69书吧',

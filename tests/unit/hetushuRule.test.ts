@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { findBuiltInRule } from '@/core/rules/builtInRules';
+import { builtInRules } from '@/core/rules/builtInRules';
+import { hetushuRule } from '@/core/rules/sites/hetushu';
 import { Parser } from '@/core/parser';
 
 function makeDoc(): Document {
@@ -38,10 +39,13 @@ function makeDoc(): Document {
 
 describe('Hetushu rule', () => {
   it('is auto-discovered as a site rule', () => {
-    const rule = findBuiltInRule('https://www.hetushu.com/book/9145/6567989.html');
-
-    expect(rule?.id).toBe('hetushu');
-    expect(rule?.version).toBe(2);
+    expect(builtInRules).toContain(hetushuRule);
+    expect(hetushuRule.version).toBe(2);
+    expect(
+      new RegExp(hetushuRule.match.pattern, 'i').test(
+        'https://www.hetushu.com/book/9145/6567989.html'
+      )
+    ).toBe(true);
   });
 
   it('keeps visible paragraphs and removes watermark tags', async () => {

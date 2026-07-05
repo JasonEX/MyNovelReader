@@ -38,21 +38,6 @@ describe('RuleManager', () => {
       deleteUserRule: vi.fn(async (domain: string) => {
         store.delete(domain);
       }),
-      exportRules: vi.fn(async () => JSON.stringify(Array.from(store.values()), null, 2)),
-      importRules: vi.fn(async (json: string, overwrite: boolean) => {
-        const rules = JSON.parse(json) as SiteRule[];
-        let count = 0;
-        for (const rule of rules) {
-          if (!rule.id) continue;
-          if (!overwrite && store.has(rule.id)) continue;
-          store.set(rule.id, rule);
-          count++;
-        }
-        return count;
-      }),
-      clearAllRules: vi.fn(async () => {
-        store.clear();
-      }),
     };
 
     // Patch private storage to keep tests deterministic.
@@ -163,10 +148,7 @@ describe('RuleManager', () => {
 
     await manager.initialize();
     expect(storage.getAllUserRules).toHaveBeenCalledTimes(1);
-
-    const stats = manager.getStats();
-    expect(stats.user).toBe(1);
-    expect(stats.builtin).toBeGreaterThan(0);
+    expect(manager.getAllUserRules().size).toBe(1);
   });
 
   it('matchRule triggers initialize on first use', async () => {
@@ -183,30 +165,6 @@ describe('RuleManager', () => {
     const result = await manager.matchRule('https://example.com/chapter/1');
     expect(storage.getAllUserRules).toHaveBeenCalledTimes(1);
     expect(result?.rule.id).toBe('lazy');
-  });
-
-  it('exports, imports and clears user rules', async () => {
-    const { manager } = createManagerWithStorage();
-    (manager as unknown as { initialized: boolean }).initialized = true;
-
-    await manager.saveUserRule(
-      'example.com',
-      makeRule({
-        id: 'example.com',
-        match: { pattern: 'example\\.com', type: 'regex' },
-        meta: { source: 'user' },
-      })
-    );
-
-    const exported = await manager.exportUserRules();
-    const importedCount = await manager.importUserRules(exported, false);
-    expect(importedCount).toBe(0);
-
-    const importedOverwrite = await manager.importUserRules(exported, true);
-    expect(importedOverwrite).toBe(1);
-
-    await manager.clearUserRules();
-    expect(manager.getAllUserRules().size).toBe(0);
   });
 
   it('deletes user rules and exposes getters', async () => {
@@ -227,17 +185,6 @@ describe('RuleManager', () => {
     await manager.deleteUserRule('example.com');
     expect(storage.deleteUserRule).toHaveBeenCalledWith('example.com');
     expect(manager.getUserRule('example.com')).toBeUndefined();
-  });
-
-  it('returns built-in rules and storage instance', () => {
-    const { manager, storage } = createManagerWithStorage();
-    (manager as unknown as { initialized: boolean }).initialized = true;
-
-    const builtins = [makeRule({ id: 'builtin-1', meta: { source: 'builtin' } })];
-    (manager as unknown as { builtInRules: SiteRule[] }).builtInRules = builtins;
-
-    expect(manager.getBuiltInRules()).toEqual(builtins);
-    expect(manager.getStorage()).toBe(storage);
   });
 
   it('returns null for malformed URLs without throwing', async () => {

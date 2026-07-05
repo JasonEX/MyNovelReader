@@ -122,20 +122,6 @@ export class DetectionEngine {
   generateSelector(element: Element): string {
     return this.contentDetector.generateSelector(element);
   }
-
-  /**
-   * Get confidence threshold
-   */
-  getThreshold(): number {
-    return this.confidenceScorer.getThreshold();
-  }
-
-  /**
-   * Set confidence threshold
-   */
-  setThreshold(threshold: number): void {
-    this.confidenceScorer.setThreshold(threshold);
-  }
 }
 
 // Export all types and detectors

@@ -6,7 +6,7 @@ import {
   filterTocEntries,
   findNextTocPageUrl,
   sortTocEntries,
-} from '@/ui/stores/reader/toc';
+} from '@/ui/stores/reader/tocEntries';
 import type { SiteRule } from '@/core/rules/types';
 
 function parseHtml(html: string): Document {

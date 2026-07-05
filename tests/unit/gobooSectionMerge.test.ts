@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { collectTocCandidates } from '@/ui/stores/reader/toc';
+import { collectTocCandidates } from '@/ui/stores/reader/tocEntries';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
 import { Parser } from '@/core/parser';
 

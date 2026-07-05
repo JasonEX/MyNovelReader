@@ -8,7 +8,8 @@ import {
   truncateDebugString,
 } from '@/core/debug/diagnostics';
 import { getDebugEvents, recordDebugEvent } from '@/core/debug/events';
-import type { useConfigStore, useReaderStore } from '@/ui/stores';
+import type { useConfigStore } from '@/ui/stores/config';
+import type { useReaderStore } from '@/ui/stores/reader';
 
 export interface BootstrapDebugSnapshot {
   isInitialized: boolean;

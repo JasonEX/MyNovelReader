@@ -139,18 +139,4 @@ export class ConfidenceScorer {
     const status = report.isReliable ? '可信' : '不确定';
     return `检测置信度: ${percentage}% (${status})`;
   }
-
-  /**
-   * Get threshold value
-   */
-  getThreshold(): number {
-    return this.threshold;
-  }
-
-  /**
-   * Set threshold value
-   */
-  setThreshold(threshold: number): void {
-    this.threshold = threshold;
-  }
 }

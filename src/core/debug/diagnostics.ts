@@ -27,7 +27,7 @@ export function truncateDebugString(value: string, limit = 500): string {
   return `${value.slice(0, limit)}...<truncated:${value.length - limit}>`;
 }
 
-export function sanitizeDebugString(value: string, limit = 500): string {
+function sanitizeDebugString(value: string, limit = 500): string {
   const redacted = value.replace(/https?:\/\/[^\s"'<>）)]+/gi, match => redactUrl(match) || match);
   return truncateDebugString(redacted, limit);
 }

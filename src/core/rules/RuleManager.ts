@@ -26,7 +26,7 @@ function toRegExp(pattern: string, type: 'regex' | 'glob' = 'regex'): RegExp {
 
 export class RuleManager {
   private storage: RuleStorage;
-  private builtInRules: SiteRule[] = [];
+  private builtInRules: SiteRule[] = curatedBuiltInRules;
   private userRulesCache: Map<string, SiteRule> = new Map();
   private initialized: boolean = false;
   private compiledCache = new WeakMap<SiteRule, { main: RegExp; excludes: RegExp[] }>();
@@ -44,9 +44,6 @@ export class RuleManager {
 
     // Load user rules from storage
     this.userRulesCache = await this.storage.getAllUserRules();
-
-    // Load built-in rules
-    this.builtInRules = await this.loadBuiltInRules();
 
     this.initialized = true;
   }
@@ -170,29 +167,6 @@ export class RuleManager {
   }
 
   /**
-   * Get all built-in rules
-   */
-  getBuiltInRules(): SiteRule[] {
-    return this.builtInRules;
-  }
-
-  /**
-   * Get the storage instance
-   */
-  getStorage(): RuleStorage {
-    return this.storage;
-  }
-
-  /**
-   * Load built-in rules
-   * Uses curated rules from builtInRules.ts (already in v2 format)
-   */
-  private async loadBuiltInRules(): Promise<SiteRule[]> {
-    // Use curated built-in rules
-    return curatedBuiltInRules;
-  }
-
-  /**
    * Extract domain from URL
    */
   private extractDomain(url: string): string {
@@ -201,41 +175,6 @@ export class RuleManager {
     } catch {
       return url;
     }
-  }
-
-  /**
-   * Export all user rules
-   */
-  async exportUserRules(): Promise<string> {
-    return this.storage.exportRules();
-  }
-
-  /**
-   * Import user rules
-   */
-  async importUserRules(json: string, overwrite: boolean = false): Promise<number> {
-    const count = await this.storage.importRules(json, overwrite);
-    // Refresh cache
-    this.userRulesCache = await this.storage.getAllUserRules();
-    return count;
-  }
-
-  /**
-   * Clear all user rules
-   */
-  async clearUserRules(): Promise<void> {
-    await this.storage.clearAllRules();
-    this.userRulesCache.clear();
-  }
-
-  /**
-   * Get statistics
-   */
-  getStats(): { user: number; builtin: number } {
-    return {
-      user: this.userRulesCache.size,
-      builtin: this.builtInRules.length,
-    };
   }
 }
 

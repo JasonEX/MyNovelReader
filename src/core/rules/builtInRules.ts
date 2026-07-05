@@ -1,9 +1,8 @@
 /**
  * Built-in rules that still need explicit selectors or special processing.
  *
- * New and actively maintained site rules live in ./sites. The legacy builtin
- * list is intentionally small: keep a rule here only when current browser
- * validation shows it still reaches readable chapter content.
+ * Actively maintained site modules live in ./sites. Keep the remaining inline
+ * rules small and only for sites that still need selector-only handling.
  */
 
 import type { SiteRule } from './types';
@@ -290,45 +289,3 @@ const simplifiedRules: SiteRule[] = [
  * All built-in rules combined
  */
 export const builtInRules: SiteRule[] = [...siteRules, ...specialRules, ...simplifiedRules];
-
-/**
- * Get built-in rules count
- */
-export function getBuiltInRulesCount(): {
-  total: number;
-  site: number;
-  special: number;
-  simplified: number;
-} {
-  return {
-    total: builtInRules.length,
-    site: siteRules.length,
-    special: specialRules.length,
-    simplified: simplifiedRules.length,
-  };
-}
-
-/**
- * Find a built-in rule by URL
- */
-export function findBuiltInRule(url: string): SiteRule | undefined {
-  for (const rule of builtInRules) {
-    try {
-      const regex = new RegExp(rule.match.pattern, 'i');
-      if (regex.test(url)) {
-        // Check excludes
-        if (rule.match.exclude) {
-          const excluded = rule.match.exclude.some(pattern => {
-            const excludeRegex = new RegExp(pattern, 'i');
-            return excludeRegex.test(url);
-          });
-          if (excluded) continue;
-        }
-        return rule;
-      }
-    } catch {
-      // Invalid regex, skip
-    }
-  }
-  return undefined;
-}

@@ -15,7 +15,6 @@ import type {
   CachedChapter,
   CacheProgressState,
   ChapterEntry,
-  ReadingProgress,
   TocEntry,
   TocEntryWithStatus,
 } from './reader/types';
@@ -43,14 +42,7 @@ import { createReaderRuntime } from './reader/runtime';
 import { syncHostPageToChapter } from './reader/hostPage';
 
 // Re-export reader types used by UI modules.
-export type {
-  CachedChapter,
-  CacheProgressState,
-  ChapterEntry,
-  ReadingProgress,
-  TocEntry,
-  TocEntryWithStatus,
-};
+export type { CachedChapter, CacheProgressState, ChapterEntry, TocEntry, TocEntryWithStatus };
 
 export const useReaderStore = defineStore('reader', () => {
   // State
@@ -89,9 +81,7 @@ export const useReaderStore = defineStore('reader', () => {
   // Getters
   const chapter = computed(() => chapters.value[currentChapterIndex.value]?.chapter || null);
   const rule = computed(() => chapters.value[currentChapterIndex.value]?.rule || null);
-  const title = computed(() => chapter.value?.title || '');
   const bookTitle = computed(() => chapter.value?.bookTitle || '');
-  const content = computed(() => chapter.value?.content || '');
 
   function isVipBlockedUrl(url: string): boolean {
     return vipBlockedUrls.value.has(normalizeUrlForBlock(url));
@@ -119,10 +109,6 @@ export const useReaderStore = defineStore('reader', () => {
     if (blockedNavUrls.value.has(normalizeUrlForBlock(prevUrl))) return false;
     return !isVipBlockedUrl(prevUrl);
   });
-  const hasIndex = computed(() => !!chapter.value?.indexUrl);
-  const confidence = computed(() => chapter.value?.confidence || 0);
-  const method = computed(() => chapter.value?.method || 'detection');
-
   // TOC with cache status (incremental: normalize URLs once, pre-compute status map)
   const normalizedTocUrls = computed(() => toc.value.map(entry => normalizeUrlForFetch(entry.url)));
 
@@ -155,8 +141,6 @@ export const useReaderStore = defineStore('reader', () => {
       return { ...entry, url, ...status };
     });
   });
-
-  const currentChapterUrl = computed(() => chapter.value?.url || '');
 
   function syncCurrentHostPage(): void {
     syncHostPageToChapter(chapter.value, currentChapterIndex.value);
@@ -434,10 +418,6 @@ export const useReaderStore = defineStore('reader', () => {
     void restoreCache();
   }
 
-  function setLoading(loading: boolean) {
-    isLoading.value = loading;
-  }
-
   function updateScroll(percent: number) {
     scrollPercent.value = Math.max(0, Math.min(100, percent));
   }
@@ -503,17 +483,6 @@ export const useReaderStore = defineStore('reader', () => {
     syncCurrentHostPage();
   }
 
-  function getProgress(): ReadingProgress | null {
-    if (!chapter.value?.url) return null;
-    return {
-      url: chapter.value?.url || window.location.href,
-      chapterUrl: chapter.value.url,
-      chapterPercent: scrollPercent.value,
-      scrollPercent: scrollPercent.value,
-      lastRead: Date.now(),
-    };
-  }
-
   function getDebugSnapshot() {
     const currentEntry = chapters.value[currentChapterIndex.value] || null;
     const firstEntry = chapters.value[0] || null;
@@ -543,9 +512,9 @@ export const useReaderStore = defineStore('reader', () => {
         scrollPercent: scrollPercent.value,
         hasNext: hasNext.value,
         hasPrev: hasPrev.value,
-        hasIndex: hasIndex.value,
-        confidence: confidence.value,
-        method: method.value,
+        hasIndex: Boolean(chapter.value?.indexUrl),
+        confidence: chapter.value?.confidence || 0,
+        method: chapter.value?.method || 'detection',
         conversionMode: currentConversionMode.value,
         runtimeSessionId: runtime.sessionId(),
         runtimeViewId: runtime.viewId(),
@@ -669,29 +638,21 @@ export const useReaderStore = defineStore('reader', () => {
     tocLoading,
     cachedContents,
     persistedUrls,
-    title,
     bookTitle,
-    content,
     hasNext,
     hasPrev,
-    hasIndex,
-    confidence,
-    method,
     tocWithStatus,
-    currentChapterUrl,
     activate,
     deactivate,
     setChapter,
     setCurrentChapter,
     loadNextChapter,
     loadPrevChapter,
-    setLoading,
     setError,
     showToast,
     getVipBlockedToast,
     clearError,
     updateScroll,
-    getProgress,
     getDebugSnapshot,
     applyTextConversion,
     startCacheAll,

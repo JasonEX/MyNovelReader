@@ -19,23 +19,10 @@ import { getParser } from '@/core/parser';
 import type { ParsedChapter } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
 
-export {
-  collectTocCandidates,
-  dedupeTocEntries,
-  extractTocLinkTitle,
-  filterTocEntries,
-  findNextTocPageUrl,
-  isBetterTocTitle,
-  isLikelyChapterTitle,
-  isNonChapterTitle,
-  isPlaceholderTocTitle,
-  sortTocEntries,
-} from './tocEntries';
-
 // ============ Constants ============
 
 /** Maximum number of TOC pages to fetch */
-export const MAX_TOC_PAGES = 120;
+const MAX_TOC_PAGES = 120;
 
 /**
  * Load TOC entries from paged TOC

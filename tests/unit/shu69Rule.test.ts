@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+import { builtInRules } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { findBuiltInRule } from '@/core/rules/builtInRules';
 import { Parser } from '@/core/parser';
+import { shu69Rule } from '@/core/rules/sites/shu69';
 
 const url = 'https://www.69shuba.com/txt/58672/38147713';
 
@@ -67,10 +68,9 @@ function makeDoc(): Document {
 
 describe('69shu rule', () => {
   it('is auto-discovered as a site rule', () => {
-    const rule = findBuiltInRule(url);
-
-    expect(rule?.id).toBe('69shu');
-    expect(rule?.version).toBe(2);
+    expect(builtInRules).toContain(shu69Rule);
+    expect(shu69Rule.version).toBe(2);
+    expect(new RegExp(shu69Rule.match.pattern, 'i').test(url)).toBe(true);
   });
 
   it('parses titles, navigation, and removes site noise', async () => {
@@ -129,9 +129,7 @@ describe('69shu rule', () => {
   });
 
   it('disables section merging for numeric chapter URLs', () => {
-    const rule = findBuiltInRule(url);
-
-    expect(rule?.advanced?.noSection).toBe(true);
+    expect(shu69Rule.advanced?.noSection).toBe(true);
   });
 
   it('does not fetch the next numeric chapter as a section page', async () => {

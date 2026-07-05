@@ -216,7 +216,3 @@ export async function convertHTML(html: string, mode: ConversionMode): Promise<s
     return html;
   }
 }
-
-export default {
-  convertHTML,
-};

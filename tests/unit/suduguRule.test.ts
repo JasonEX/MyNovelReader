@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+import { builtInRules } from '@/core/rules/builtInRules';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
-import { findBuiltInRule } from '@/core/rules/builtInRules';
 import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
 import { Parser } from '@/core/parser';
+import { suduguRule } from '@/core/rules/sites/sudugu';
 
 const page1Url = 'https://www.sudugu.org/109/1226047.html';
 const page2Url = 'https://www.sudugu.org/109/1226047-2.html';
@@ -122,11 +123,10 @@ describe('Sudugu rule', () => {
   });
 
   it('is auto-discovered as a site rule', () => {
-    const rule = findBuiltInRule(page1Url);
-
-    expect(rule?.id).toBe('sudugu');
-    expect(rule?.version).toBe(1);
-    expect(rule?.advanced?.checkSection).toBe(true);
+    expect(builtInRules).toContain(suduguRule);
+    expect(suduguRule.version).toBe(1);
+    expect(suduguRule.advanced?.checkSection).toBe(true);
+    expect(new RegExp(suduguRule.match.pattern, 'i').test(page1Url)).toBe(true);
   });
 
   it('parses title, book title, navigation and content from a chapter page', async () => {
@@ -179,12 +179,7 @@ describe('Sudugu rule', () => {
     });
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
-    const entries = await loadTocEntriesPaged(
-      indexUrl,
-      page1Url,
-      findBuiltInRule(page1Url),
-      vi.fn()
-    );
+    const entries = await loadTocEntriesPaged(indexUrl, page1Url, suduguRule, vi.fn());
 
     expect(gm).toHaveBeenCalledTimes(1);
     expect(entries.map(entry => entry.title)).toEqual([

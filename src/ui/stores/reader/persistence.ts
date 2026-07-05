@@ -12,7 +12,7 @@ export type CacheBookKey = {
   indexUrl: string;
 };
 
-export type PersistedBookCacheV2Index = {
+type PersistedBookCacheV2Index = {
   version: 2;
   bookId: string;
   indexUrl: string;
@@ -33,9 +33,9 @@ const CACHE_V2_INDEX_PREFIX = 'mnr_cache_v2_index_';
 const CACHE_V2_CHAPTER_PREFIX = 'mnr_cache_v2_chapter_';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const PERSISTED_CACHE_MAX_AGE_MS = 30 * DAY_MS;
-export const PERSISTED_CACHE_GC_INTERVAL_MS = DAY_MS;
-export const PERSISTED_CACHE_TOUCH_INTERVAL_MS = DAY_MS;
+const PERSISTED_CACHE_MAX_AGE_MS = 30 * DAY_MS;
+const PERSISTED_CACHE_GC_INTERVAL_MS = DAY_MS;
+const PERSISTED_CACHE_TOUCH_INTERVAL_MS = DAY_MS;
 export const PERSISTED_CACHE_GC_LAST_RUN_KEY = 'mnr_cache_v2_gc_last_run';
 export const PERSISTED_CACHE_INDEX_CHECKPOINT_CHAPTERS = 50;
 

@@ -8,15 +8,7 @@
  * 4. Mount UI when needed
  */
 
-import {
-  type AutoEnableDecision,
-  getAutoEnableManager,
-  getRuleManager,
-  getSiteProtection,
-  type ParsedChapter,
-  type ProtectionOptions,
-  type SiteRule,
-} from '@/core';
+import { type AutoEnableDecision, getAutoEnableManager } from '@/core/AutoEnableManager';
 import { type BootstrapDebugSnapshot, copyDiagnosticInfo } from '@/ui/debug/diagnostics';
 import { BUILD_DATE, VERSION } from '@/version';
 import {
@@ -26,14 +18,20 @@ import {
 } from '@/ui/stores/reader/hostPage';
 import { createApp, defineComponent, h, ref } from 'vue';
 import { getPageKind, type PageKind } from '@/core/auto-enable/PageKind';
+import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
 import { installGlobalDebugErrorListeners, recordDebugEvent } from '@/core/debug/events';
-import { type ProtectionSettings, useConfigStore, useReaderStore, useRuleStore } from '@/ui/stores';
+import { type ProtectionSettings, useConfigStore } from '@/ui/stores/config';
 import { redactUrl, toDebugValue } from '@/core/debug/diagnostics';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
+import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
+import type { ParsedChapter } from '@/core/parser';
 import { ReaderView } from '@/ui/components/reader';
+import type { SiteRule } from '@/core/rules/types';
+import { useReaderStore } from '@/ui/stores/reader';
+import { useRuleStore } from '@/ui/stores/rule';
 
 /** Application state */
 interface AppState {

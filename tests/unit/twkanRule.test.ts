@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { findBuiltInRule } from '@/core/rules/builtInRules';
+import { builtInRules } from '@/core/rules/builtInRules';
 import { Parser } from '@/core/parser';
+import { twkanRule } from '@/core/rules/sites/twkan';
 
 function makeDoc(): Document {
   const url = 'https://twkan.com/txt/93181/53052605';
@@ -57,10 +58,11 @@ function makeDoc(): Document {
 
 describe('Twkan rule', () => {
   it('is auto-discovered as a site rule', () => {
-    const rule = findBuiltInRule('https://twkan.com/txt/93181/53052605');
-
-    expect(rule?.id).toBe('twkan');
-    expect(rule?.version).toBe(1);
+    expect(builtInRules).toContain(twkanRule);
+    expect(twkanRule.version).toBe(1);
+    expect(
+      new RegExp(twkanRule.match.pattern, 'i').test('https://twkan.com/txt/93181/53052605')
+    ).toBe(true);
   });
 
   it('extracts chapter content, book title and navigation', async () => {

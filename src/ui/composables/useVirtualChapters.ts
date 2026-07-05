@@ -8,7 +8,7 @@
 import { computed, type ComputedRef, type Ref, ref, watch } from 'vue';
 import type { ChapterEntry } from '@/ui/stores/reader';
 
-export interface VirtualWindow {
+interface VirtualWindow {
   start: number;
   end: number;
 }

@@ -53,7 +53,7 @@ export interface BehaviorSettings {
 }
 
 /** Protection settings */
-export type ProtectionMode = 'standard' | 'aggressive';
+type ProtectionMode = 'standard' | 'aggressive';
 
 export interface ProtectionSettings {
   /** Protection mode */
