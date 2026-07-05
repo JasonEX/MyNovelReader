@@ -647,18 +647,7 @@ export class Parser {
     if (!beforeParse) return;
 
     try {
-      if (typeof beforeParse === 'function') {
-        await beforeParse(doc, url, this.getHookHelpers());
-        return;
-      }
-
-      const fn = new Function(
-        'doc',
-        'url',
-        'helpers',
-        `return (async () => { ${beforeParse} })();`
-      ) as (doc: Document, url?: string, helpers?: HookHelpers) => Promise<void>;
-      await fn(doc, url, this.getHookHelpers());
+      await beforeParse(doc, url, this.getHookHelpers());
     } catch (e) {
       console.warn('[Parser] beforeParse hook error:', e);
     }

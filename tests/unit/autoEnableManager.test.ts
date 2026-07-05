@@ -22,10 +22,6 @@ type MockedSectionMerger = {
   merge: ReturnType<typeof vi.fn>;
 };
 
-type MockedRuleSaver = {
-  saveFromDetection: ReturnType<typeof vi.fn>;
-};
-
 const mockedRuleStorage: MockedRuleStorage = {
   getSitePreference: vi.fn(),
   setSitePreference: vi.fn(),
@@ -43,10 +39,6 @@ const mockedProtection: MockedSiteProtection = {
 
 const mockedSectionMerger: MockedSectionMerger = {
   merge: vi.fn(),
-};
-
-const mockedRuleSaver: MockedRuleSaver = {
-  saveFromDetection: vi.fn(),
 };
 
 class MockDetectionEngine {
@@ -72,10 +64,6 @@ vi.mock('@/core/protection', () => ({
 
 vi.mock('@/core/auto-enable/SectionMerger', () => ({
   createSectionMerger: () => mockedSectionMerger,
-}));
-
-vi.mock('@/core/auto-enable/RuleSaver', () => ({
-  createRuleSaver: () => mockedRuleSaver,
 }));
 
 vi.mock('@/core/detection', () => ({
@@ -112,8 +100,6 @@ describe('AutoEnableManager', () => {
       confidence: 1,
       method: 'rule',
     });
-
-    mockedRuleSaver.saveFromDetection.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -209,10 +195,14 @@ describe('AutoEnableManager', () => {
     });
   });
 
-  it('returns user-rule decision when rule match is from user', async () => {
+  it('treats every explicit rule match as a built-in rule decision', async () => {
     mockedRuleManager.matchRule.mockResolvedValue({
-      rule: { id: 'user', match: { pattern: 'example', type: 'regex' }, meta: { source: 'user' } },
-      source: 'user',
+      rule: {
+        id: 'builtin',
+        match: { pattern: 'example', type: 'regex' },
+        meta: { source: 'builtin' },
+      },
+      source: 'builtin',
       matchedPattern: 'example',
     });
 
@@ -224,7 +214,7 @@ describe('AutoEnableManager', () => {
 
     expect(decision).toMatchObject({
       shouldEnable: true,
-      method: 'user-rule',
+      method: 'builtin-rule',
       confidence: 1,
     });
   });
@@ -322,8 +312,12 @@ describe('AutoEnableManager', () => {
 
   it('execute auto-launches on rule match and activates protection', async () => {
     mockedRuleManager.matchRule.mockResolvedValue({
-      rule: { id: 'user', match: { pattern: 'example', type: 'regex' }, meta: { source: 'user' } },
-      source: 'user',
+      rule: {
+        id: 'builtin',
+        match: { pattern: 'example', type: 'regex' },
+        meta: { source: 'builtin' },
+      },
+      source: 'builtin',
       matchedPattern: 'example',
     });
 
@@ -342,7 +336,7 @@ describe('AutoEnableManager', () => {
     expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 
-  it('execute prompts, saves rule, then launches for medium-confidence detection', async () => {
+  it('execute prompts, remembers site preference, then launches for medium-confidence detection', async () => {
     const { AutoEnableManager } = await import('@/core/AutoEnableManager');
     const manager = new AutoEnableManager({
       confidenceThreshold: 0.6,
@@ -357,7 +351,7 @@ describe('AutoEnableManager', () => {
     };
     m.detectionEngine.detect.mockReturnValue(detectionResult);
 
-    const promptCallback = vi.fn(async () => ({ accepted: true, saveForDomain: true }));
+    const promptCallback = vi.fn(async () => ({ accepted: true, rememberForSite: true }));
     const launchCallback = vi.fn();
     manager.setPromptCallback(promptCallback);
     manager.setLaunchCallback(launchCallback);
@@ -366,8 +360,11 @@ describe('AutoEnableManager', () => {
     await manager.execute(doc);
 
     expect(promptCallback).toHaveBeenCalledTimes(1);
-    expect(mockedRuleSaver.saveFromDetection).toHaveBeenCalledWith(doc, detectionResult);
     expect(mockedSectionMerger.merge).toHaveBeenCalledTimes(1);
+    expect(mockedRuleStorage.setSitePreference).toHaveBeenCalledWith('example.com', {
+      enabled: true,
+      timestamp: expect.any(Number),
+    });
     expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 

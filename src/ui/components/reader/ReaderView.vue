@@ -95,30 +95,10 @@
     <!-- Settings panel -->
     <SettingsPanel
       :visible="settingsVisible"
-      :domain="currentDomain"
       @close="settingsVisible = false"
-      @editRule="openRuleEditor"
-      @resetRule="handleRuleReset"
       @textConversionChange="handleTextConversionChange"
       @cacheAll="handleCacheAll"
     />
-
-    <!-- Rule editor panel -->
-    <div
-      v-if="ruleEditorVisible"
-      class="mnr-rule-editor-overlay"
-      :class="{ 'mnr-overlay-hidden': isPickerActive }"
-    >
-      <div class="mnr-rule-editor-container">
-        <RuleEditorPanel
-          :rule="currentRule"
-          :domain="currentDomain"
-          @save="handleRuleSave"
-          @cancel="ruleEditorVisible = false"
-          @pickerStateChange="isPickerActive = $event"
-        />
-      </div>
-    </div>
 
     <!-- Loading overlay -->
     <MnrLoadingOverlay v-if="isLoading">
@@ -131,10 +111,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useReaderStore, type TocEntryWithStatus } from '@/ui/stores/reader';
 import { useConfigStore } from '@/ui/stores/config';
-import { useRuleStore } from '@/ui/stores/rule';
 import { useVirtualChapters } from '@/ui/composables/useVirtualChapters';
 import { useKeyboardShortcuts } from '@/ui/composables/useKeyboardShortcuts';
 import { useReaderScroll } from '@/ui/composables/reader/useReaderScroll';
@@ -150,13 +129,11 @@ import ProgressIndicator from './ProgressIndicator.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import ChapterDrawer from './ChapterDrawer.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
-import RuleEditorPanel from '@/ui/components/editor/RuleEditorPanel.vue';
 import { MnrSpinner, MnrToast, MnrLoadingOverlay } from '@/ui/components/common';
 
 // Stores
 const readerStore = useReaderStore();
 const configStore = useConfigStore();
-const ruleStore = useRuleStore();
 
 // State
 const mainRef = ref<HTMLElement | null>(null);
@@ -167,54 +144,12 @@ const showControls = ref(true);
 const chapterRefs = new Map<string, HTMLElement>();
 
 // UI controls composable
-const {
-  settingsVisible,
-  ruleEditorVisible,
-  isPickerActive,
-  drawerOpen,
-  currentRule,
-  currentDomain,
-  toggleDrawer,
-  openSettings,
-  openRuleEditor,
-  handleRuleSave,
-  handleRuleReset,
-  handleEscape,
-  toggleSettings,
-  toggleRuleEditor,
-} = useReaderUIControls({ readerStore, ruleStore, showControls });
+const { settingsVisible, drawerOpen, toggleDrawer, openSettings, handleEscape, toggleSettings } =
+  useReaderUIControls({ readerStore, showControls });
 
 // IntersectionObserver instances
 let topObserver: globalThis.IntersectionObserver | null = null;
 let bottomObserver: globalThis.IntersectionObserver | null = null;
-
-// Watch picker state to show/hide original page
-watch(isPickerActive, active => {
-  const hideStyle = document.getElementById('mnr-hide-original');
-  const readerRoot = document.getElementById('mnr-reader-root');
-
-  if (active) {
-    if (hideStyle) {
-      hideStyle.setAttribute('data-disabled', 'true');
-      hideStyle.textContent = '';
-    }
-    if (readerRoot) {
-      readerRoot.style.display = 'none';
-    }
-  } else {
-    if (hideStyle && hideStyle.hasAttribute('data-disabled')) {
-      hideStyle.removeAttribute('data-disabled');
-      hideStyle.textContent = `
-        body > *:not(#mnr-reader-root):not(#mnr-prompt-root):not(script):not(style) {
-          display: none !important;
-        }
-      `;
-    }
-    if (readerRoot) {
-      readerRoot.style.display = '';
-    }
-  }
-});
 
 // Computed
 const chapters = computed(() => readerStore.chapters);
@@ -306,7 +241,7 @@ const {
 });
 
 // Touch gestures composable
-const swipeEnabled = computed(() => configStore.behavior.swipeGestures && !isPickerActive.value);
+const swipeEnabled = computed(() => configStore.behavior.swipeGestures);
 const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
   enabled: swipeEnabled,
   onSwipeLeft: () => void navigateChapter('next'),
@@ -492,9 +427,7 @@ function exitReader() {
 
 // === Keyboard shortcuts ===
 
-const keyboardEnabled = computed(
-  () => configStore.behavior.keyboardNavigation && !isPickerActive.value
-);
+const keyboardEnabled = computed(() => configStore.behavior.keyboardNavigation);
 
 useKeyboardShortcuts(
   [
@@ -508,7 +441,6 @@ useKeyboardShortcuts(
       preventDefault: true,
     },
     { key: ['s', ','], handler: toggleSettings, preventDefault: true },
-    { key: 'e', handler: toggleRuleEditor, preventDefault: true },
     { key: 'q', handler: exitReader, preventDefault: true, stopPropagation: true },
     {
       key: ['arrowleft', 'p'],
@@ -731,39 +663,5 @@ onUnmounted(() => {
   .mnr-reader-content {
     padding: 40px;
   }
-}
-
-/* Rule editor overlay */
-.mnr-rule-editor-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  transition:
-    opacity 0.2s ease,
-    visibility 0.2s ease;
-}
-
-.mnr-rule-editor-overlay.mnr-overlay-hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.mnr-rule-editor-container {
-  background: var(--mnr-bg, #fff);
-  border-radius: 8px;
-  max-width: 800px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 </style>

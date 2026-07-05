@@ -31,7 +31,6 @@ import type { ParsedChapter } from '@/core/parser';
 import { ReaderView } from '@/ui/components/reader';
 import type { SiteRule } from '@/core/rules/types';
 import { useReaderStore } from '@/ui/stores/reader';
-import { useRuleStore } from '@/ui/stores/rule';
 
 /** Application state */
 interface AppState {
@@ -143,9 +142,8 @@ async function ensureInitialized(): Promise<void> {
 
     // Initialize stores
     const configStore = useConfigStore(pinia);
-    const ruleStore = useRuleStore(pinia);
 
-    await Promise.all([configStore.load(), ruleStore.initialize()]);
+    await configStore.load();
 
     appState.isInitialized = true;
   } catch (e) {
@@ -216,7 +214,7 @@ async function runAutoEnable(): Promise<void> {
  */
 async function showPrompt(decision: AutoEnableDecision): Promise<{
   accepted: boolean;
-  saveForDomain: boolean;
+  rememberForSite: boolean;
 }> {
   return new Promise(resolve => {
     // Create Shadow DOM mount point for CSS isolation
@@ -228,7 +226,7 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
     // Create prompt component wrapper
     const PromptWrapper = defineComponent({
       setup() {
-        const handleRespond = (response: { accepted: boolean; saveForDomain: boolean }) => {
+        const handleRespond = (response: { accepted: boolean; rememberForSite: boolean }) => {
           showPrompt.value = false;
           setTimeout(() => {
             cleanup();
@@ -240,7 +238,7 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
           showPrompt.value = false;
           setTimeout(() => {
             cleanup();
-            resolve({ accepted: false, saveForDomain: false });
+            resolve({ accepted: false, rememberForSite: false });
           }, 300);
         };
 

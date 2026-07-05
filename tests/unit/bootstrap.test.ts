@@ -11,7 +11,6 @@ let configStore: {
     mode: 'normal' | 'aggressive';
   };
 };
-let ruleStore: { initialize: () => Promise<void> };
 let readerStore: {
   activate: () => void;
   deactivate: () => void;
@@ -57,10 +56,6 @@ vi.mock('@/ui/stores/config', () => ({
   useConfigStore: () => configStore,
 }));
 
-vi.mock('@/ui/stores/rule', () => ({
-  useRuleStore: () => ruleStore,
-}));
-
 vi.mock('@/ui/stores/reader', () => ({
   useReaderStore: () => readerStore,
 }));
@@ -87,9 +82,9 @@ vi.mock('@/ui/components/detection', async () => {
         Promise.resolve().then(() => {
           (
             props as unknown as {
-              onRespond?: (r: { accepted: boolean; saveForDomain: boolean }) => void;
+              onRespond?: (r: { accepted: boolean; rememberForSite: boolean }) => void;
             }
-          ).onRespond?.({ accepted: true, saveForDomain: false });
+          ).onRespond?.({ accepted: true, rememberForSite: false });
         });
         return () => null;
       },
@@ -122,7 +117,6 @@ describe('bootstrap', () => {
         mode: 'normal',
       },
     };
-    ruleStore = { initialize: vi.fn(async () => {}) };
     readerStore = {
       activate: vi.fn(),
       deactivate: vi.fn(),
@@ -196,7 +190,6 @@ describe('bootstrap', () => {
     expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
     expect(manager.check).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);
-    expect(ruleStore.initialize).toHaveBeenCalledTimes(1);
   });
 
   it('auto-bootstraps ambiguous section pages when an explicit rule matches', async () => {
@@ -245,7 +238,6 @@ describe('bootstrap', () => {
 
     expect(ruleManager.matchRule).toHaveBeenCalledWith('https://example.com/24/18442_6.html');
     expect(configStore.load).toHaveBeenCalledTimes(1);
-    expect(ruleStore.initialize).toHaveBeenCalledTimes(1);
     expect(manager.check).toHaveBeenCalledTimes(1);
     expect(manager.execute).toHaveBeenCalledTimes(1);
   });

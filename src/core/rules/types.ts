@@ -1,5 +1,5 @@
 /**
- * SiteRule types used by built-in and user rules.
+ * SiteRule types used by curated built-in rules.
  */
 
 /** Replace rule for content processing */
@@ -139,27 +139,18 @@ export type BeforeParseHook = (
   helpers?: HookHelpers
 ) => Promise<void> | void;
 
-/** JavaScript hooks for advanced customization */
+/** JavaScript hooks for built-in site adapters */
 interface HooksConfig {
-  /**
-   * JS code or a typed built-in function to run before parsing.
-   *
-   * String hooks are executed as async code with signature:
-   *   (doc: Document, url?: string, helpers?: { fetchJson, fetchText }) => Promise<void>
-   * Function hooks are intended for built-in rules only; user rules are persisted as JSON and keep
-   * using string hooks.
-   *
-   * Note: Only `beforeParse` is supported to keep the rules schema simple and predictable.
-   */
-  beforeParse?: string | BeforeParseHook;
+  /** Typed hook to run before parsing. */
+  beforeParse?: BeforeParseHook;
 }
 
 /** Rule metadata */
 interface RuleMeta {
   /** Rule author */
   author?: string;
-  /** Rule source: builtin or user */
-  source: 'builtin' | 'user';
+  /** Rule source */
+  source: 'builtin';
   /** Creation timestamp */
   created?: number;
   /** Last update timestamp */
@@ -201,7 +192,7 @@ export interface SiteRule {
   processing?: ProcessingConfig;
   /** Advanced features configuration */
   advanced?: AdvancedConfig;
-  /** JavaScript hooks for customization */
+  /** Built-in adapter hooks */
   hooks?: HooksConfig;
   /** Custom CSS styles */
   style?: string;
@@ -214,14 +205,12 @@ export interface SiteRule {
 /** Rule matching result */
 export interface RuleMatchResult {
   rule: SiteRule;
-  source: 'user' | 'builtin';
+  source: 'builtin';
   matchedPattern: string;
 }
 
 /** Storage key constants */
 export const STORAGE_KEYS = {
-  USER_RULES: 'mnr_user_rules',
-  RULE_PREFIX: 'mnr_rule_',
   SITE_PREFERENCES: 'mnr_site_prefs',
 } as const;
 

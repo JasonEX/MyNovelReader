@@ -39,7 +39,6 @@ export default defineConfig({
     cssInjectedByJsPlugin({
       topExecutionPriority: false,
       // Store CSS for later injection into Shadow DOM
-      // Also inject to document.head for components that need light DOM (like ElementPicker)
       injectCodeFunction: function (cssCode) {
         try {
           if (typeof window !== 'undefined') {
@@ -55,7 +54,7 @@ export default defineConfig({
             // Store CSS for Shadow DOM injection
             globalState.styles = (globalState.styles || '') + cssCode;
 
-            // Also inject to document.head for light DOM components (ElementPicker, etc.)
+            // Also inject to document.head for the floating prompt/manual entry outside the shadow root.
             // Use a unique ID to prevent duplicate injection
             var styleId = 'mnr-global-styles';
             var injectGlobalStyle = function () {

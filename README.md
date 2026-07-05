@@ -112,7 +112,7 @@ npm run e2e:smoke:cdp
 │   │   │   └── ConfidenceScorer.ts   # 置信度评分
 │   │   ├── parser/          # 内容解析
 │   │   ├── converter/       # 繁简转换
-│   │   ├── rules/           # 站点规则管理
+│   │   ├── rules/           # 内置站点规则管理
 │   │   ├── protection/      # 站点保护
 │   │   └── utils/           # 工具函数
 │   ├── ui/                  # UI

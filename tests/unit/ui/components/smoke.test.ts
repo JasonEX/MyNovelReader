@@ -60,7 +60,7 @@ describe('UI component smoke', () => {
     acceptBtn?.click();
     await nextTick();
 
-    expect(onRespond).toHaveBeenCalledWith({ accepted: true, saveForDomain: true });
+    expect(onRespond).toHaveBeenCalledWith({ accepted: true, rememberForSite: true });
 
     app.unmount();
     mountEl.remove();
@@ -77,7 +77,6 @@ describe('UI component smoke', () => {
       render: () =>
         h(SettingsPanel, {
           visible: true,
-          domain: 'example.com',
           onClose,
         }),
     });

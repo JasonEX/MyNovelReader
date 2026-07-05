@@ -2,10 +2,9 @@
  * AutoEnableManager - Manages automatic detection and enabling of novel reader
  *
  * Flow:
- * 1. Check if domain has saved user rule → auto-launch
- * 2. Check if built-in rule matches → auto-launch
- * 3. Run auto-detection → show prompt if confidence >= threshold
- * 4. User confirms → optionally save rule → launch reader
+ * 1. Check if built-in rule matches → auto-launch
+ * 2. Run auto-detection → show prompt if confidence >= threshold
+ * 3. User confirms → optionally remember site preference → launch reader
  */
 
 import { DetectionEngine, type DetectionEngineResult } from '@/core/detection';
@@ -16,7 +15,6 @@ import {
   type ProtectionOptions,
 } from '@/core/protection';
 import { type ParsedChapter, Parser } from '@/core/parser';
-import { createRuleSaver } from '@/core/auto-enable/RuleSaver';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
@@ -27,8 +25,7 @@ export interface AutoEnableDecision {
   /** Whether to show the reader */
   shouldEnable: boolean;
   /** How the decision was made */
-  method:
-    'user-rule' | 'builtin-rule' | 'detection' | 'manual' | 'user-disabled' | 'site-preference';
+  method: 'builtin-rule' | 'detection' | 'manual' | 'user-disabled' | 'site-preference';
   /** Confidence level (0-1) */
   confidence: number;
   /** The rule to use (if any) */
@@ -45,8 +42,8 @@ export interface AutoEnableDecision {
 export interface UserPromptResponse {
   /** User accepted */
   accepted: boolean;
-  /** Save rule for future auto-enable */
-  saveForDomain: boolean;
+  /** Remember this site should auto-enable in future */
+  rememberForSite: boolean;
 }
 
 /** Callback for showing prompt to user */
@@ -90,7 +87,6 @@ export class AutoEnableManager {
   private detectionEngine: DetectionEngine;
   private parser: Parser;
   private sectionMerger: ReturnType<typeof createSectionMerger>;
-  private ruleSaver: ReturnType<typeof createRuleSaver>;
   private promptCallback?: PromptCallback;
   private launchCallback?: LaunchCallback;
   private hasRun = false;
@@ -110,7 +106,6 @@ export class AutoEnableManager {
       forceDetection: options.forceDetection,
     });
     this.sectionMerger = createSectionMerger(this.parser);
-    this.ruleSaver = createRuleSaver();
   }
 
   updateOptions(options: AutoEnableOptions = {}): void {
@@ -206,7 +201,7 @@ export class AutoEnableManager {
       }
     }
 
-    // Check for saved user / built-in rules first.
+    // Check built-in rules first.
     // Explicit rules should still apply even if quickCheck is a false negative.
     if (!this.options.forceDetection) {
       const ruleManager = getRuleManager();
@@ -226,12 +221,10 @@ export class AutoEnableManager {
 
         const decision: AutoEnableDecision = {
           shouldEnable: true,
-          method: ruleMatch.rule.meta?.source === 'user' ? 'user-rule' : 'builtin-rule',
+          method: 'builtin-rule',
           confidence: 1.0,
           rule: ruleMatch.rule,
-          reasons: [
-            `Matched ${ruleMatch.rule.meta?.source || 'builtin'} rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`,
-          ],
+          reasons: [`Matched builtin rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`],
         };
         return decide(decision);
       }
@@ -326,7 +319,6 @@ export class AutoEnableManager {
 
     // Auto-launch for high confidence or rule match
     const shouldAutoLaunch =
-      decision.method === 'user-rule' ||
       decision.method === 'builtin-rule' ||
       decision.confidence >= (this.options.autoLaunchThreshold || 0.9);
 
@@ -340,13 +332,8 @@ export class AutoEnableManager {
       const response = await this.promptCallback(decision);
 
       if (response.accepted) {
-        // Save rule if requested
-        if (response.saveForDomain) {
-          await this.saveRuleForCurrentSite(doc, decision);
-        }
-
         const launched = await this.launch(doc, decision);
-        if (launched) {
+        if (launched && response.rememberForSite) {
           this.rememberSiteEnabled(doc);
         }
       }
@@ -383,15 +370,6 @@ export class AutoEnableManager {
     } catch (e) {
       console.error('[AutoEnableManager] Failed to save site preference:', e);
     }
-  }
-
-  /**
-   * Save detection result as user rule for current site
-   */
-  private async saveRuleForCurrentSite(doc: Document, decision: AutoEnableDecision): Promise<void> {
-    if (!decision.detection) return;
-
-    await this.ruleSaver.saveFromDetection(doc, decision.detection);
   }
 
   /**

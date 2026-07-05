@@ -6410,155 +6410,6 @@
 		...specialRules,
 		...simplifiedRules
 	];
-	var STORAGE_KEYS = {
-		USER_RULES: "mnr_user_rules",
-		RULE_PREFIX: "mnr_rule_",
-		SITE_PREFERENCES: "mnr_site_prefs"
-	};
-	function sanitizeUserRuleHooks(rule) {
-		const removedKeys = [];
-		const rawHooks = rule.hooks;
-		if (rawHooks === void 0) return {
-			sanitized: rule,
-			removedKeys
-		};
-		const sanitized = { ...rule };
-		if (!rawHooks || typeof rawHooks !== "object" || Array.isArray(rawHooks)) {
-			removedKeys.push("hooks");
-			delete sanitized.hooks;
-			return {
-				sanitized,
-				removedKeys
-			};
-		}
-		const hooksObj = rawHooks;
-		for (const key of Object.keys(hooksObj)) if (key !== "beforeParse") removedKeys.push(key);
-		const beforeParse = hooksObj.beforeParse;
-		const keepBeforeParse = typeof beforeParse === "string" && beforeParse.trim().length > 0;
-		if (!keepBeforeParse && "beforeParse" in hooksObj) removedKeys.push("beforeParse");
-		if (keepBeforeParse) sanitized.hooks = { beforeParse };
-		else delete sanitized.hooks;
-		return {
-			sanitized,
-			removedKeys
-		};
-	}
-	function warnDroppedHookFields(ruleId, removedKeys) {
-		console.warn("[RuleStorage] Dropped unsupported hooks fields:", ruleId, removedKeys);
-	}
-	var RuleStorage = class {
-		getRuleStorageKey(domain) {
-			return STORAGE_KEYS.RULE_PREFIX + domain;
-		}
-		getStoredRule(domain) {
-			try {
-				const data = GM_getValue(this.getRuleStorageKey(domain), null);
-				if (typeof data === "string") try {
-					return JSON.parse(data);
-				} catch (e) {
-					console.error(`[RuleStorage] Failed to parse rule ${domain}:`, e);
-					return null;
-				}
-				return null;
-			} catch (e) {
-				console.debug("[RuleStorage] Failed to get rule:", domain, e);
-				return null;
-			}
-		}
-		setStoredRule(domain, rule) {
-			GM_setValue(this.getRuleStorageKey(domain), JSON.stringify(rule));
-		}
-		deleteStoredRule(domain) {
-			GM_deleteValue(this.getRuleStorageKey(domain));
-		}
-		getStoredDomains() {
-			return GM_listValues().filter((k) => k.startsWith(STORAGE_KEYS.RULE_PREFIX)).map((k) => k.slice(STORAGE_KEYS.RULE_PREFIX.length));
-		}
-		getAllStoredRules() {
-			const result = new Map();
-			for (const domain of this.getStoredDomains()) {
-				const rule = this.getStoredRule(domain);
-				if (rule) result.set(domain, rule);
-			}
-			return result;
-		}
-		async getUserRule(domain) {
-			const rule = this.getStoredRule(domain);
-			if (!rule) return null;
-			const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
-			if (removedKeys.length > 0) {
-				warnDroppedHookFields(domain, removedKeys);
-				this.setStoredRule(domain, sanitized);
-			}
-			return sanitized;
-		}
-		async saveUserRule(domain, rule) {
-			const { sanitized, removedKeys } = sanitizeUserRuleHooks({
-				...rule,
-				id: domain,
-				meta: {
-					...rule.meta,
-					source: "user",
-					updated: Date.now()
-				}
-			});
-			if (removedKeys.length > 0) warnDroppedHookFields(domain, removedKeys);
-			this.setStoredRule(domain, sanitized);
-		}
-		async deleteUserRule(domain) {
-			this.deleteStoredRule(domain);
-		}
-		async getAllUserRules() {
-			const all = this.getAllStoredRules();
-			const sanitizedRules = new Map();
-			for (const [domain, rule] of all) {
-				const { sanitized, removedKeys } = sanitizeUserRuleHooks(rule);
-				sanitizedRules.set(domain, sanitized);
-				if (removedKeys.length > 0) {
-					warnDroppedHookFields(domain, removedKeys);
-					this.setStoredRule(domain, sanitized);
-				}
-			}
-			return sanitizedRules;
-		}
-		async getAllDomains() {
-			return this.getStoredDomains();
-		}
-		getSitePreference(domain) {
-			try {
-				const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
-				return (typeof stored === "object" && stored !== null ? stored : {})[domain] || null;
-			} catch (e) {
-				console.debug("[RuleStorage] Failed to get site preference:", domain, e);
-				return null;
-			}
-		}
-		setSitePreference(domain, pref) {
-			try {
-				const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
-				const prefs = typeof stored === "object" && stored !== null ? stored : {};
-				prefs[domain] = pref;
-				GM_setValue(STORAGE_KEYS.SITE_PREFERENCES, prefs);
-			} catch (e) {
-				console.error("[MNR] Failed to save site preference:", e);
-			}
-		}
-		deleteSitePreference(domain) {
-			try {
-				const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
-				const prefs = typeof stored === "object" && stored !== null ? stored : {};
-				delete prefs[domain];
-				GM_setValue(STORAGE_KEYS.SITE_PREFERENCES, prefs);
-			} catch (e) {
-				console.error("[MNR] Failed to delete site preference:", e);
-			}
-		}
-	};
-	var storageInstance = null;
-	function getRuleStorage() {
-		if (!storageInstance) storageInstance = new RuleStorage();
-		return storageInstance;
-	}
 	function globToRegex(glob) {
 		const escaped = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
 		return new RegExp(`^${escaped}$`, "i");
@@ -6570,30 +6421,15 @@
 	var RuleManager = class {
 		constructor() {
 			this.builtInRules = builtInRules;
-			this.userRulesCache = new Map();
 			this.initialized = false;
 			this.compiledCache = new WeakMap();
-			this.storage = new RuleStorage();
 		}
 		async initialize() {
 			if (this.initialized) return;
-			this.userRulesCache = await this.storage.getAllUserRules();
 			this.initialized = true;
 		}
 		async matchRule(url) {
 			if (!this.initialized) await this.initialize();
-			const domain = this.extractDomain(url);
-			const userRule = this.userRulesCache.get(domain);
-			if (userRule && this.matchesUrl(userRule, url)) return {
-				rule: userRule,
-				source: "user",
-				matchedPattern: userRule.match.pattern
-			};
-			for (const [, rule] of this.userRulesCache) if (this.matchesUrl(rule, url)) return {
-				rule,
-				source: "user",
-				matchedPattern: rule.match.pattern
-			};
 			for (const rule of this.builtInRules) if (this.matchesUrl(rule, url)) return {
 				rule,
 				source: "builtin",
@@ -6620,29 +6456,6 @@
 			} catch (e) {
 				console.debug("[RuleManager] Rule match error for pattern:", rule.match.pattern, e);
 				return false;
-			}
-		}
-		async saveUserRule(domain, rule) {
-			await this.storage.saveUserRule(domain, rule);
-			const saved = await this.storage.getUserRule(domain);
-			if (saved) this.userRulesCache.set(domain, saved);
-			else this.userRulesCache.set(domain, rule);
-		}
-		async deleteUserRule(domain) {
-			await this.storage.deleteUserRule(domain);
-			this.userRulesCache.delete(domain);
-		}
-		getUserRule(domain) {
-			return this.userRulesCache.get(domain);
-		}
-		getAllUserRules() {
-			return this.userRulesCache;
-		}
-		extractDomain(url) {
-			try {
-				return new URL(url).hostname;
-			} catch {
-				return url;
 			}
 		}
 	};
@@ -7389,11 +7202,7 @@
 			const beforeParse = rule.hooks?.beforeParse;
 			if (!beforeParse) return;
 			try {
-				if (typeof beforeParse === "function") {
-					await beforeParse(doc, url, this.getHookHelpers());
-					return;
-				}
-				await new Function("doc", "url", "helpers", `return (async () => { ${beforeParse} })();`)(doc, url, this.getHookHelpers());
+				await beforeParse(doc, url, this.getHookHelpers());
 			} catch (e) {
 				console.warn("[Parser] beforeParse hook error:", e);
 			}
@@ -7462,87 +7271,6 @@
 	function getParser() {
 		if (!parserInstance) parserInstance = new Parser();
 		return parserInstance;
-	}
-	var RuleSaver = class {
-		createRuleFromDetection(hostname, detection) {
-			const content = detection.results.content;
-			const navigation = detection.results.navigation;
-			const title = detection.results.title;
-			const section = detection.results.section;
-			const hostPattern = hostname.replace(/\./g, "\\\\.");
-			const rule = {
-				id: `user-${hostname}-${Date.now()}`,
-				name: `Auto-generated rule for ${hostname}`,
-				version: 1,
-				match: {
-					pattern: `^https?://${hostPattern}/`,
-					type: "regex"
-				},
-				content: { selector: content.selector || "#content" },
-				meta: {
-					source: "user",
-					autoLaunch: true,
-					created: Date.now()
-				}
-			};
-			if (section?.isSection && (section.confidence || 0) >= .8) rule.advanced = { checkSection: true };
-			if (navigation.next || navigation.prev || navigation.index) {
-				rule.navigation = {};
-				if (navigation.next) rule.navigation.next = navigation.next.selector || navigation.next.url;
-				if (navigation.prev) rule.navigation.prev = navigation.prev.selector || navigation.prev.url;
-				if (navigation.index) rule.navigation.index = navigation.index.selector || navigation.index.url;
-			}
-			if (title.selector) rule.title = { selector: title.selector };
-			return rule;
-		}
-		async saveFromDetection(doc, detection) {
-			if (!detection) return;
-			const url = doc.location?.href || window.location.href;
-			const hostname = new URL(url).hostname;
-			const rule = this.createRuleFromDetection(hostname, detection);
-			await getRuleManager().saveUserRule(hostname, rule);
-		}
-		validateRule(rule) {
-			if (!rule.id || !rule.name || !rule.match) return false;
-			if (!rule.match.pattern) return false;
-			if (!rule.content?.selector) return false;
-			return true;
-		}
-		enhanceRule(existingRule, detection) {
-			const enhanced = {
-				...existingRule,
-				content: { ...existingRule.content }
-			};
-			const content = detection.results.content;
-			const navigation = detection.results.navigation;
-			const title = detection.results.title;
-			const section = detection.results.section;
-			if (content.selector && content.selector !== "#content") enhanced.content = {
-				...enhanced.content,
-				selector: content.selector
-			};
-			if (navigation.next || navigation.prev || navigation.index) {
-				enhanced.navigation = enhanced.navigation || {};
-				if (navigation.next && !enhanced.navigation.next) enhanced.navigation.next = navigation.next.selector || navigation.next.url;
-				if (navigation.prev && !enhanced.navigation.prev) enhanced.navigation.prev = navigation.prev.selector || navigation.prev.url;
-				if (navigation.index && !enhanced.navigation.index) enhanced.navigation.index = navigation.index.selector || navigation.index.url;
-			}
-			if (title.selector && !enhanced.title) enhanced.title = { selector: title.selector };
-			if (section?.isSection && (section.confidence || 0) >= .8) {
-				enhanced.advanced = enhanced.advanced || {};
-				enhanced.advanced.checkSection = true;
-			}
-			const source = enhanced.meta?.source ?? "user";
-			enhanced.meta = {
-				...enhanced.meta,
-				source,
-				updated: Date.now()
-			};
-			return enhanced;
-		}
-	};
-	function createRuleSaver() {
-		return new RuleSaver();
 	}
 	var SectionMerger = class {
 		constructor(parser) {
@@ -7711,6 +7439,43 @@
 	function createSectionMerger(parser) {
 		return new SectionMerger(parser);
 	}
+	var STORAGE_KEYS = { SITE_PREFERENCES: "mnr_site_prefs" };
+	var RuleStorage = class {
+		getSitePreference(domain) {
+			try {
+				const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+				return (typeof stored === "object" && stored !== null ? stored : {})[domain] || null;
+			} catch (e) {
+				console.debug("[RuleStorage] Failed to get site preference:", domain, e);
+				return null;
+			}
+		}
+		setSitePreference(domain, pref) {
+			try {
+				const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+				const prefs = typeof stored === "object" && stored !== null ? stored : {};
+				prefs[domain] = pref;
+				GM_setValue(STORAGE_KEYS.SITE_PREFERENCES, prefs);
+			} catch (e) {
+				console.error("[MNR] Failed to save site preference:", e);
+			}
+		}
+		deleteSitePreference(domain) {
+			try {
+				const stored = GM_getValue(STORAGE_KEYS.SITE_PREFERENCES, {});
+				const prefs = typeof stored === "object" && stored !== null ? stored : {};
+				delete prefs[domain];
+				GM_setValue(STORAGE_KEYS.SITE_PREFERENCES, prefs);
+			} catch (e) {
+				console.error("[MNR] Failed to delete site preference:", e);
+			}
+		}
+	};
+	var storageInstance = null;
+	function getRuleStorage() {
+		if (!storageInstance) storageInstance = new RuleStorage();
+		return storageInstance;
+	}
 	var DEFAULT_OPTIONS = {
 		confidenceThreshold: .6,
 		autoLaunchThreshold: .9,
@@ -7739,7 +7504,6 @@
 			this.detectionEngine = new DetectionEngine();
 			this.parser = new Parser({ forceDetection: options.forceDetection });
 			this.sectionMerger = createSectionMerger(this.parser);
-			this.ruleSaver = createRuleSaver();
 		}
 		updateOptions(options = {}) {
 			this.options = {
@@ -7816,10 +7580,10 @@
 					});
 					return decide({
 						shouldEnable: true,
-						method: ruleMatch.rule.meta?.source === "user" ? "user-rule" : "builtin-rule",
+						method: "builtin-rule",
 						confidence: 1,
 						rule: ruleMatch.rule,
-						reasons: [`Matched ${ruleMatch.rule.meta?.source || "builtin"} rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`]
+						reasons: [`Matched builtin rule: ${ruleMatch.rule.name || ruleMatch.rule.id}`]
 					});
 				}
 			}
@@ -7875,15 +7639,14 @@
 				protection.activate(this.options.protectionOptions);
 				protection.removeOverlays();
 			}
-			if (decision.method === "user-rule" || decision.method === "builtin-rule" || decision.confidence >= (this.options.autoLaunchThreshold || .9)) {
+			if (decision.method === "builtin-rule" || decision.confidence >= (this.options.autoLaunchThreshold || .9)) {
 				await this.launch(doc, decision);
 				return;
 			}
 			if (this.promptCallback) {
 				const response = await this.promptCallback(decision);
 				if (response.accepted) {
-					if (response.saveForDomain) await this.saveRuleForCurrentSite(doc, decision);
-					if (await this.launch(doc, decision)) this.rememberSiteEnabled(doc);
+					if (await this.launch(doc, decision) && response.rememberForSite) this.rememberSiteEnabled(doc);
 				}
 			}
 		}
@@ -7913,10 +7676,6 @@
 			} catch (e) {
 				console.error("[AutoEnableManager] Failed to save site preference:", e);
 			}
-		}
-		async saveRuleForCurrentSite(doc, decision) {
-			if (!decision.detection) return;
-			await this.ruleSaver.saveFromDetection(doc, decision.detection);
 		}
 		shouldSkip(url) {
 			return (this.options.skipPatterns || []).some((pattern) => pattern.test(url));
@@ -9986,209 +9745,8 @@
 			return cur;
 		};
 	}
-	var pendingMounts = new WeakMap();
 	var TeleportEndKey = Symbol("_vte");
 	var isTeleport = (type) => type.__isTeleport;
-	var isTeleportDisabled = (props) => props && (props.disabled || props.disabled === "");
-	var isTeleportDeferred = (props) => props && (props.defer || props.defer === "");
-	var isTargetSVG = (target) => typeof SVGElement !== "undefined" && target instanceof SVGElement;
-	var isTargetMathML = (target) => typeof MathMLElement === "function" && target instanceof MathMLElement;
-	var resolveTarget = (props, select) => {
-		const targetSelector = props && props.to;
-		if (isString(targetSelector)) if (!select) return null;
-		else return select(targetSelector);
-		else return targetSelector;
-	};
-	var TeleportImpl = {
-		name: "Teleport",
-		__isTeleport: true,
-		process(n1, n2, container, anchor, parentComponent, parentSuspense, namespace, slotScopeIds, optimized, internals) {
-			const { mc: mountChildren, pc: patchChildren, pbc: patchBlockChildren, o: { insert, querySelector, createText, createComment, parentNode } } = internals;
-			const disabled = isTeleportDisabled(n2.props);
-			let { dynamicChildren } = n2;
-			const mount = (vnode, container2, anchor2) => {
-				if (vnode.shapeFlag & 16) mountChildren(vnode.children, container2, anchor2, parentComponent, parentSuspense, namespace, slotScopeIds, optimized);
-			};
-			const mountToTarget = (vnode = n2) => {
-				const disabled2 = isTeleportDisabled(vnode.props);
-				const target = vnode.target = resolveTarget(vnode.props, querySelector);
-				const targetAnchor = prepareAnchor(target, vnode, createText, insert);
-				if (target) {
-					if (namespace !== "svg" && isTargetSVG(target)) namespace = "svg";
-					else if (namespace !== "mathml" && isTargetMathML(target)) namespace = "mathml";
-					if (parentComponent && parentComponent.isCE) (parentComponent.ce._teleportTargets || (parentComponent.ce._teleportTargets = new Set())).add(target);
-					if (!disabled2) {
-						mount(vnode, target, targetAnchor);
-						updateCssVars(vnode, false);
-					}
-				}
-			};
-			const queuePendingMount = (vnode) => {
-				const mountJob = () => {
-					if (pendingMounts.get(vnode) !== mountJob) return;
-					pendingMounts.delete(vnode);
-					if (isTeleportDisabled(vnode.props)) {
-						const mountContainer = parentNode(vnode.el) || container;
-						mount(vnode, mountContainer, vnode.anchor);
-						updateCssVars(vnode, true);
-					}
-					mountToTarget(vnode);
-				};
-				pendingMounts.set(vnode, mountJob);
-				queuePostRenderEffect(mountJob, parentSuspense);
-			};
-			if (n1 == null) {
-				const placeholder = n2.el = createText("");
-				const mainAnchor = n2.anchor = createText("");
-				insert(placeholder, container, anchor);
-				insert(mainAnchor, container, anchor);
-				if (isTeleportDeferred(n2.props) || parentSuspense && parentSuspense.pendingBranch) {
-					queuePendingMount(n2);
-					return;
-				}
-				if (disabled) {
-					mount(n2, container, mainAnchor);
-					updateCssVars(n2, true);
-				}
-				mountToTarget();
-			} else {
-				n2.el = n1.el;
-				const mainAnchor = n2.anchor = n1.anchor;
-				const pendingMount = pendingMounts.get(n1);
-				if (pendingMount) {
-					pendingMount.flags |= 8;
-					pendingMounts.delete(n1);
-					queuePendingMount(n2);
-					return;
-				}
-				n2.targetStart = n1.targetStart;
-				const target = n2.target = n1.target;
-				const targetAnchor = n2.targetAnchor = n1.targetAnchor;
-				const wasDisabled = isTeleportDisabled(n1.props);
-				const currentContainer = wasDisabled ? container : target;
-				const currentAnchor = wasDisabled ? mainAnchor : targetAnchor;
-				if (namespace === "svg" || isTargetSVG(target)) namespace = "svg";
-				else if (namespace === "mathml" || isTargetMathML(target)) namespace = "mathml";
-				if (dynamicChildren) {
-					patchBlockChildren(n1.dynamicChildren, dynamicChildren, currentContainer, parentComponent, parentSuspense, namespace, slotScopeIds);
-					traverseStaticChildren(n1, n2, true);
-				} else if (!optimized) patchChildren(n1, n2, currentContainer, currentAnchor, parentComponent, parentSuspense, namespace, slotScopeIds, false);
-				if (disabled) {
-					if (!wasDisabled) moveTeleport(n2, container, mainAnchor, internals, 1);
-					else if (n2.props && n1.props && n2.props.to !== n1.props.to) n2.props.to = n1.props.to;
-				} else if ((n2.props && n2.props.to) !== (n1.props && n1.props.to)) {
-					const nextTarget = resolveTarget(n2.props, querySelector);
-					if (nextTarget) {
-						n2.target = nextTarget;
-						moveTeleport(n2, nextTarget, null, internals, 0);
-					}
-				} else if (wasDisabled) moveTeleport(n2, target, targetAnchor, internals, 1);
-				updateCssVars(n2, disabled);
-			}
-		},
-		remove(vnode, parentComponent, parentSuspense, { um: unmount, o: { remove: hostRemove } }, doRemove) {
-			const { shapeFlag, children, anchor, targetStart, targetAnchor, target, props } = vnode;
-			const disabled = isTeleportDisabled(props);
-			const shouldRemove = doRemove || !disabled;
-			const pendingMount = pendingMounts.get(vnode);
-			if (pendingMount) {
-				pendingMount.flags |= 8;
-				pendingMounts.delete(vnode);
-			}
-			if (target) {
-				hostRemove(targetStart);
-				hostRemove(targetAnchor);
-			}
-			doRemove && hostRemove(anchor);
-			if (!pendingMount && (disabled || target) && shapeFlag & 16) for (let i = 0; i < children.length; i++) {
-				const child = children[i];
-				unmount(child, parentComponent, parentSuspense, shouldRemove, !!child.dynamicChildren);
-			}
-		},
-		move: moveTeleport,
-		hydrate: hydrateTeleport
-	};
-	function moveTeleport(vnode, container, parentAnchor, { o: { insert }, m: move }, moveType = 2) {
-		if (moveType === 0) insert(vnode.targetAnchor, container, parentAnchor);
-		const { el, anchor, shapeFlag, children, props } = vnode;
-		const isReorder = moveType === 2;
-		if (isReorder) insert(el, container, parentAnchor);
-		if (!pendingMounts.has(vnode) && (!isReorder || isTeleportDisabled(props))) {
-			if (shapeFlag & 16) for (let i = 0; i < children.length; i++) move(children[i], container, parentAnchor, 2);
-		}
-		if (isReorder) insert(anchor, container, parentAnchor);
-	}
-	function hydrateTeleport(node, vnode, parentComponent, parentSuspense, slotScopeIds, optimized, { o: { nextSibling, parentNode, querySelector, insert, createText } }, hydrateChildren) {
-		function hydrateAnchor(target2, targetNode) {
-			let targetAnchor = targetNode;
-			while (targetAnchor) {
-				if (targetAnchor && targetAnchor.nodeType === 8) {
-					if (targetAnchor.data === "teleport start anchor") vnode.targetStart = targetAnchor;
-					else if (targetAnchor.data === "teleport anchor") {
-						vnode.targetAnchor = targetAnchor;
-						target2._lpa = vnode.targetAnchor && nextSibling(vnode.targetAnchor);
-						break;
-					}
-				}
-				targetAnchor = nextSibling(targetAnchor);
-			}
-		}
-		function hydrateDisabledTeleport(node2, vnode2) {
-			vnode2.anchor = hydrateChildren(nextSibling(node2), vnode2, parentNode(node2), parentComponent, parentSuspense, slotScopeIds, optimized);
-		}
-		const target = vnode.target = resolveTarget(vnode.props, querySelector);
-		const disabled = isTeleportDisabled(vnode.props);
-		if (target) {
-			const targetNode = target._lpa || target.firstChild;
-			if (vnode.shapeFlag & 16) if (disabled) {
-				hydrateDisabledTeleport(node, vnode);
-				hydrateAnchor(target, targetNode);
-				if (!vnode.targetAnchor) prepareAnchor(target, vnode, createText, insert, parentNode(node) === target ? node : null);
-			} else {
-				vnode.anchor = nextSibling(node);
-				hydrateAnchor(target, targetNode);
-				if (!vnode.targetAnchor) prepareAnchor(target, vnode, createText, insert);
-				hydrateChildren(targetNode && nextSibling(targetNode), vnode, target, parentComponent, parentSuspense, slotScopeIds, optimized);
-			}
-			updateCssVars(vnode, disabled);
-		} else if (disabled) {
-			if (vnode.shapeFlag & 16) {
-				hydrateDisabledTeleport(node, vnode);
-				vnode.targetStart = node;
-				vnode.targetAnchor = nextSibling(node);
-			}
-		}
-		return vnode.anchor && nextSibling(vnode.anchor);
-	}
-	var Teleport = TeleportImpl;
-	function updateCssVars(vnode, isDisabled) {
-		const ctx = vnode.ctx;
-		if (ctx && ctx.ut) {
-			let node, anchor;
-			if (isDisabled) {
-				node = vnode.el;
-				anchor = vnode.anchor;
-			} else {
-				node = vnode.targetStart;
-				anchor = vnode.targetAnchor;
-			}
-			while (node && node !== anchor) {
-				if (node.nodeType === 1) node.setAttribute("data-v-owner", ctx.uid);
-				node = node.nextSibling;
-			}
-			ctx.ut();
-		}
-	}
-	function prepareAnchor(target, vnode, createText, insert, anchor = null) {
-		const targetStart = vnode.targetStart = createText("");
-		const targetAnchor = vnode.targetAnchor = createText("");
-		targetStart[TeleportEndKey] = targetAnchor;
-		if (target) {
-			insert(targetStart, target, anchor);
-			insert(targetAnchor, target, anchor);
-		}
-		return targetAnchor;
-	}
 	var leaveCbKey = Symbol("_leaveCb");
 	var enterCbKey = Symbol("_enterCb");
 	function useTransitionState() {
@@ -12895,35 +12453,6 @@
 	}
 	var vShowOriginalDisplay = Symbol("_vod");
 	var vShowHidden = Symbol("_vsh");
-	var vShow = {
-		name: "show",
-		beforeMount(el, { value }, { transition }) {
-			el[vShowOriginalDisplay] = el.style.display === "none" ? "" : el.style.display;
-			if (transition && value) transition.beforeEnter(el);
-			else setDisplay(el, value);
-		},
-		mounted(el, { value }, { transition }) {
-			if (transition && value) transition.enter(el);
-		},
-		updated(el, { value, oldValue }, { transition }) {
-			if (!value === !oldValue) return;
-			if (transition) if (value) {
-				transition.beforeEnter(el);
-				setDisplay(el, true);
-				transition.enter(el);
-			} else transition.leave(el, () => {
-				setDisplay(el, false);
-			});
-			else setDisplay(el, value);
-		},
-		beforeUnmount(el, { value }) {
-			setDisplay(el, value);
-		}
-	};
-	function setDisplay(el, value) {
-		el.style.display = value ? el[vShowOriginalDisplay] : "none";
-		el[vShowHidden] = !value;
-	}
 	var CSS_VAR_TEXT = Symbol("");
 	var displayRE = /(?:^|;)\s*display\s*:/;
 	function patchStyle(el, prev, next) {
@@ -13133,56 +12662,7 @@
 		const fn = vnode.props["onUpdate:modelValue"] || false;
 		return isArray(fn) ? (value) => invokeArrayFns(fn, value) : fn;
 	};
-	function onCompositionStart(e) {
-		e.target.composing = true;
-	}
-	function onCompositionEnd(e) {
-		const target = e.target;
-		if (target.composing) {
-			target.composing = false;
-			target.dispatchEvent(new Event("input"));
-		}
-	}
 	var assignKey = Symbol("_assign");
-	function castValue(value, trim, number) {
-		if (trim) value = value.trim();
-		if (number) value = looseToNumber(value);
-		return value;
-	}
-	var vModelText = {
-		created(el, { modifiers: { lazy, trim, number } }, vnode) {
-			el[assignKey] = getModelAssigner(vnode);
-			const castToNumber = number || vnode.props && vnode.props.type === "number";
-			addEventListener(el, lazy ? "change" : "input", (e) => {
-				if (e.target.composing) return;
-				el[assignKey](castValue(el.value, trim, castToNumber));
-			});
-			if (trim || castToNumber) addEventListener(el, "change", () => {
-				el.value = castValue(el.value, trim, castToNumber);
-			});
-			if (!lazy) {
-				addEventListener(el, "compositionstart", onCompositionStart);
-				addEventListener(el, "compositionend", onCompositionEnd);
-				addEventListener(el, "change", onCompositionEnd);
-			}
-		},
-		mounted(el, { value }) {
-			el.value = value == null ? "" : value;
-		},
-		beforeUpdate(el, { value, oldValue, modifiers: { lazy, trim, number } }, vnode) {
-			el[assignKey] = getModelAssigner(vnode);
-			if (el.composing) return;
-			const elValue = (number || el.type === "number") && !/^0\d/.test(el.value) ? looseToNumber(el.value) : el.value;
-			const newValue = value == null ? "" : value;
-			if (elValue === newValue) return;
-			const rootNode = el.getRootNode();
-			if ((rootNode instanceof Document || rootNode instanceof ShadowRoot) && rootNode.activeElement === el && el.type !== "range") {
-				if (lazy && value === oldValue) return;
-				if (trim && el.value.trim() === newValue) return;
-			}
-			el.value = newValue;
-		}
-	};
 	var vModelCheckbox = {
 		deep: true,
 		created(el, _, vnode) {
@@ -14086,16 +13566,16 @@ ul, ol {
 			cleanup
 		};
 	}
-	var _hoisted_1$10 = {
+	var _hoisted_1$7 = {
 		class: "mnr-prompt-card",
 		role: "dialog",
 		"aria-modal": "true"
 	};
-	var _hoisted_2$8 = { class: "mnr-confidence" };
-	var _hoisted_3$7 = { class: "mnr-confidence-bar" };
-	var _hoisted_4$7 = { class: "mnr-confidence-text" };
-	var _hoisted_5$6 = { class: "mnr-results" };
-	var _hoisted_6$5 = { class: "mnr-checkbox-label" };
+	var _hoisted_2$5 = { class: "mnr-confidence" };
+	var _hoisted_3$4 = { class: "mnr-confidence-bar" };
+	var _hoisted_4$4 = { class: "mnr-confidence-text" };
+	var _hoisted_5$4 = { class: "mnr-results" };
+	var _hoisted_6$3 = { class: "mnr-checkbox-label" };
 	var DetectionPrompt_vue_vue_type_script_setup_true_lang_default = defineComponent({
 		__name: "DetectionPrompt",
 		props: {
@@ -14106,7 +13586,7 @@ ul, ol {
 		setup(__props, { emit: __emit }) {
 			const props = __props;
 			const emit = __emit;
-			const saveForDomain = ref(true);
+			const rememberForSite = ref(true);
 			const confidence = computed(() => props.decision.confidence);
 			const confidenceClass = computed(() => {
 				if (confidence.value >= .8) return "high";
@@ -14122,13 +13602,13 @@ ul, ol {
 			function handleAccept() {
 				emit("respond", {
 					accepted: true,
-					saveForDomain: saveForDomain.value
+					rememberForSite: rememberForSite.value
 				});
 			}
 			function handleDismiss() {
 				emit("respond", {
 					accepted: false,
-					saveForDomain: false
+					rememberForSite: false
 				});
 				emit("dismiss");
 			}
@@ -14138,13 +13618,13 @@ ul, ol {
 						key: 0,
 						class: "mnr-prompt-overlay",
 						onClick: withModifiers(handleDismiss, ["self"])
-					}, [createBaseVNode("div", _hoisted_1$10, [
+					}, [createBaseVNode("div", _hoisted_1$7, [
 						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"), createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")], -1)),
-						createBaseVNode("div", _hoisted_2$8, [createBaseVNode("div", _hoisted_3$7, [createBaseVNode("div", {
+						createBaseVNode("div", _hoisted_2$5, [createBaseVNode("div", _hoisted_3$4, [createBaseVNode("div", {
 							class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
 							style: normalizeStyle({ width: `${confidence.value * 100}%` })
-						}, null, 6)]), createBaseVNode("span", _hoisted_4$7, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
-						createBaseVNode("ul", _hoisted_5$6, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
+						}, null, 6)]), createBaseVNode("span", _hoisted_4$4, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
+						createBaseVNode("ul", _hoisted_5$4, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
 							return openBlock(), createElementBlock("li", {
 								key: reason,
 								class: "mnr-result-item success"
@@ -14155,11 +13635,11 @@ ul, ol {
 								class: "mnr-result-item warning"
 							}, [_cache[2] || (_cache[2] = createBaseVNode("span", { class: "mnr-result-icon" }, "⚠", -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
 						}), 128))]),
-						createBaseVNode("label", _hoisted_6$5, [withDirectives(createBaseVNode("input", {
-							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => saveForDomain.value = $event),
+						createBaseVNode("label", _hoisted_6$3, [withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => rememberForSite.value = $event),
 							type: "checkbox",
 							class: "mnr-checkbox"
-						}, null, 512), [[vModelCheckbox, saveForDomain.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
+						}, null, 512), [[vModelCheckbox, rememberForSite.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
 						createBaseVNode("div", { class: "mnr-prompt-actions" }, [createBaseVNode("button", {
 							class: "mnr-btn mnr-btn-secondary",
 							onClick: handleDismiss
@@ -14178,7 +13658,7 @@ ul, ol {
 		for (const [key, val] of props) target[key] = val;
 		return target;
 	};
-	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-c89e5106"]]);
+	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-9a2b7cf4"]]);
 	var VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
 	var HKVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一針 一針|一針見血 一針見血|三針 三針|丟巧針 丟巧針|丹稜 丹稜|九針 九針|亂針繡 亂針繡|仙台 仙台|倒扣針兒 倒扣針兒|做針線 做針線|八字方針 八字方針|刀割針扎 刀割針扎|分針 分針|別針 別針|刺胳針 刺胳針|刺針 刺針|北港島綫 北港島線|十針 十針|南港島綫 南港島線|南針 南針|反時針 反時針|口吃 口吃|台山 台山|台山市 台山市|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|向風針 向風針|唱針 唱針|啄針兒 啄針兒|嗎啡針 嗎啡針|大政方針 大政方針|大海撈針 大海撈針|大頭針 大頭針|天台 天台|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|太乙神針 太乙神針|奇台 奇台|女人心海底針 女人心海底針|定南針 定南針|定風針 定風針|將軍澳綫 將軍澳線|對針 對針|小針 小針|小針美容 小針美容|屯馬綫 屯馬線|平針縫 平針縫|幾針 幾針|引線穿針 引線穿針|張口 張口|張柏芝 張柏芝|張栢芝 張栢芝|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|懸針 懸針|懸針垂露 懸針垂露|手腕式指北針 手腕式指北針|扎針 扎針|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|指北針 指北針|指南針 指南針|指揮台 指揮台|指針 指針|指針式 指針式|探針 探針|控制台 控制台|插針 插針|搖針 搖針|搗針 搗針|撞針 撞針|擺針 擺針|收針 收針|教育方針 教育方針|敹一針 敹一針|方針 方針|時針 時針|暈針 暈針|曲別針 曲別針|東九龍綫 東九龍線|東海撈針 東海撈針|東涌綫 東涌線|東鐵綫 東鐵線|松針 松針|枝針 枝針|桑針 桑針|棒針 棒針|棒針衫 棒針衫|棘針 棘針|棘針科 棘針科|棘針門 棘針門|機場快綫 機場快線|步線行針 步線行針|毒針 毒針|毛線針 毛線針|毫針 毫針|水底撈針 水底撈針|沙中綫 沙中線|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|浙江天台縣 浙江天台縣|海底撈針 海底撈針|港島綫 港島線|漏針 漏針|炮台山循道衛理中學 炮台山循道衛理中學|無線新聞台 無線新聞台|無針不引線 無針不引線|無針注射器 無針注射器|燔針 燔針|留針 留針|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|短針 短針|石針 石針|硬肥皂 硬肥皂|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|秒針 秒針|秧針 秧針|穆稜 穆稜|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|紋光針 紋光針|細針密縷 細針密縷|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美白針 美白針|耳針 耳針|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|胃口 胃口|胸針 胸針|臺灣台 臺灣台|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|茅針 茅針|荃灣綫 荃灣線|葉針 葉針|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|補血針 補血針|補針 補針|見縫插針 見縫插針|觀塘綫 觀塘線|討針線 討針線|象牙針尖 象牙針尖|賀爾蒙針 賀爾蒙針|跳針 跳針|蹇吃 蹇吃|軟肥皂 軟肥皂|迪士尼綫 迪士尼線|迴紋針 迴紋針|退針 退針|逆時針 逆時針|避雷針 避雷針|郭台成 郭台成|郭台銘 郭台銘|鄧艾吃 鄧艾吃|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉤針 鉤針|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|長針 長針|開口 開口|防疫針 防疫針|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|面皂 面皂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|風向針 風向針|飛針走線 飛針走線|香皂 香皂|骨針 骨針|髮針 髮針|鬼針草 鬼針草|鳳台 鳳台|鹽水針 鹽水針|麻醉針 麻醉針|黃成 黃成|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針|龍應台 龍應台";
 	var HKVariantsRev_default = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|綫 線|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
@@ -19529,51 +19009,6 @@ ul, ol {
 			$reset
 		};
 	});
-	var useRuleStore = defineStore("rule", () => {
-		const userRules = ref(new Map());
-		const isLoading = ref(false);
-		async function initialize() {
-			if (isLoading.value) return;
-			isLoading.value = true;
-			try {
-				const manager = getRuleManager();
-				await manager.initialize();
-				userRules.value = new Map(manager.getAllUserRules());
-			} catch (e) {
-				console.error("[RuleStore] Initialize error:", e);
-			} finally {
-				isLoading.value = false;
-			}
-		}
-		async function saveUserRule(domain, rule) {
-			try {
-				const manager = getRuleManager();
-				await manager.saveUserRule(domain, rule);
-				userRules.value.set(domain, manager.getUserRule(domain) ?? rule);
-			} catch (e) {
-				console.error("[RuleStore] Save error:", e);
-				throw e;
-			}
-		}
-		async function deleteUserRule(domain) {
-			try {
-				await getRuleManager().deleteUserRule(domain);
-				userRules.value.delete(domain);
-			} catch (e) {
-				console.error("[RuleStore] Delete error:", e);
-				throw e;
-			}
-		}
-		function hasUserRule(domain) {
-			return userRules.value.has(domain);
-		}
-		return {
-			initialize,
-			saveUserRule,
-			deleteUserRule,
-			hasUserRule
-		};
-	});
 	function useVirtualChapters(chapters, options = {}) {
 		const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
 		const heights = ref(new Map());
@@ -20321,19 +19756,9 @@ ul, ol {
 		};
 	}
 	function useReaderUIControls(options) {
-		const { readerStore, ruleStore, showControls } = options;
+		const { readerStore, showControls } = options;
 		const settingsVisible = ref(false);
-		const ruleEditorVisible = ref(false);
-		const isPickerActive = ref(false);
 		const drawerOpen = ref(false);
-		const currentRule = computed(() => readerStore.rule);
-		const currentDomain = computed(() => {
-			try {
-				return new URL(window.location.href).hostname;
-			} catch {
-				return "";
-			}
-		});
 		function toggleDrawer() {
 			drawerOpen.value = !drawerOpen.value;
 			if (drawerOpen.value) readerStore.loadToc();
@@ -20342,54 +19767,23 @@ ul, ol {
 			settingsVisible.value = true;
 			showControls.value = false;
 		}
-		function openRuleEditor() {
-			settingsVisible.value = false;
-			ruleEditorVisible.value = true;
-			showControls.value = false;
-		}
-		async function handleRuleSave(rule) {
-			if (currentDomain.value) try {
-				await ruleStore.saveUserRule(currentDomain.value, rule);
-				await readerStore.reloadCurrentChapter();
-			} catch (e) {
-				console.error("[MNR] Save rule error:", e);
-				readerStore.showToast("保存失败", "error");
-			}
-			ruleEditorVisible.value = false;
-		}
-		async function handleRuleReset() {
-			settingsVisible.value = false;
-			await readerStore.reloadCurrentChapter();
-		}
 		function handleEscape() {
 			if (drawerOpen.value) drawerOpen.value = false;
-			else if (ruleEditorVisible.value) ruleEditorVisible.value = false;
 			else if (settingsVisible.value) settingsVisible.value = false;
 		}
 		function toggleSettings() {
-			if (!ruleEditorVisible.value) settingsVisible.value = !settingsVisible.value;
-		}
-		function toggleRuleEditor() {
-			if (!settingsVisible.value) ruleEditorVisible.value = !ruleEditorVisible.value;
+			settingsVisible.value = !settingsVisible.value;
 		}
 		return {
 			settingsVisible,
-			ruleEditorVisible,
-			isPickerActive,
 			drawerOpen,
-			currentRule,
-			currentDomain,
 			toggleDrawer,
 			openSettings,
-			openRuleEditor,
-			handleRuleSave,
-			handleRuleReset,
 			handleEscape,
-			toggleSettings,
-			toggleRuleEditor
+			toggleSettings
 		};
 	}
-	var _hoisted_1$9 = {
+	var _hoisted_1$6 = {
 		key: 0,
 		class: "mnr-progress-text"
 	};
@@ -20440,18 +19834,18 @@ ul, ol {
 				return openBlock(), createElementBlock("div", { class: normalizeClass(["mnr-progress", { hidden: !visible.value }]) }, [createBaseVNode("div", {
 					class: "mnr-progress-bar",
 					style: normalizeStyle({ width: `${percent.value}%` })
-				}, null, 4), __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$9, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)], 2);
+				}, null, 4), __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$6, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)], 2);
 			};
 		}
 	}), [["__scopeId", "data-v-16ecd1aa"]]);
-	var _hoisted_1$8 = {
+	var _hoisted_1$5 = {
 		key: 0,
 		class: "mnr-floating-toolbar"
 	};
-	var _hoisted_2$7 = { class: "mnr-fab-group" };
-	var _hoisted_3$6 = ["disabled"];
-	var _hoisted_4$6 = { class: "mnr-icon" };
-	var _hoisted_5$5 = {
+	var _hoisted_2$4 = { class: "mnr-fab-group" };
+	var _hoisted_3$3 = ["disabled"];
+	var _hoisted_4$3 = { class: "mnr-icon" };
+	var _hoisted_5$3 = {
 		key: 0,
 		class: "mnr-fab-badge"
 	};
@@ -20475,18 +19869,18 @@ ul, ol {
 		setup(__props) {
 			return (_ctx, _cache) => {
 				return openBlock(), createBlock(Transition, { name: "mnr-fade-slide" }, {
-					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$8, [createBaseVNode("button", {
+					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$5, [createBaseVNode("button", {
 						class: "mnr-fab",
 						title: "目录 (Tab)",
 						"aria-label": "打开目录",
 						onClick: _cache[0] || (_cache[0] = withModifiers(($event) => _ctx.$emit("toggleDrawer"), ["stop"]))
-					}, [..._cache[3] || (_cache[3] = [createBaseVNode("span", { class: "mnr-icon" }, "☰", -1)])]), createBaseVNode("div", _hoisted_2$7, [createBaseVNode("button", {
+					}, [..._cache[3] || (_cache[3] = [createBaseVNode("span", { class: "mnr-icon" }, "☰", -1)])]), createBaseVNode("div", _hoisted_2$4, [createBaseVNode("button", {
 						class: "mnr-fab",
 						title: "缓存本书",
 						"aria-label": "缓存管理",
 						disabled: __props.cacheDisabled,
 						onClick: _cache[1] || (_cache[1] = withModifiers(($event) => _ctx.$emit("toggleCache"), ["stop"]))
-					}, [createBaseVNode("span", _hoisted_4$6, toDisplayString(__props.cacheRunning ? "⏹" : "☁"), 1), __props.cacheTotal > 0 ? (openBlock(), createElementBlock("span", _hoisted_5$5, toDisplayString(__props.cacheDone) + "/" + toDisplayString(__props.cacheTotal), 1)) : createCommentVNode("", true)], 8, _hoisted_3$6), createBaseVNode("button", {
+					}, [createBaseVNode("span", _hoisted_4$3, toDisplayString(__props.cacheRunning ? "⏹" : "☁"), 1), __props.cacheTotal > 0 ? (openBlock(), createElementBlock("span", _hoisted_5$3, toDisplayString(__props.cacheDone) + "/" + toDisplayString(__props.cacheTotal), 1)) : createCommentVNode("", true)], 8, _hoisted_3$3), createBaseVNode("button", {
 						class: "mnr-fab",
 						title: "设置 (S)",
 						"aria-label": "打开设置",
@@ -20506,7 +19900,7 @@ ul, ol {
 			};
 		}
 	}), [["__scopeId", "data-v-c925c262"]]);
-	var _hoisted_1$7 = ["role"];
+	var _hoisted_1$4 = ["role"];
 	var MnrToast_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "MnrToast",
 		props: {
@@ -20523,19 +19917,19 @@ ul, ol {
 						class: normalizeClass(["mnr-toast", { "mnr-toast--error": __props.type === "error" }]),
 						role: __props.type === "error" ? "alert" : "status",
 						onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("dismiss"))
-					}, toDisplayString(__props.message), 11, _hoisted_1$7)) : createCommentVNode("", true)]),
+					}, toDisplayString(__props.message), 11, _hoisted_1$4)) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
 		}
 	}), [["__scopeId", "data-v-83d04cea"]]);
-	var _hoisted_1$6 = {
+	var _hoisted_1$3 = {
 		key: 0,
 		class: "mnr-loading-overlay",
 		role: "alert",
 		"aria-busy": "true"
 	};
-	var _hoisted_2$6 = {
+	var _hoisted_2$3 = {
 		key: 1,
 		class: "mnr-loading-overlay--inline",
 		role: "alert",
@@ -20549,46 +19943,46 @@ ul, ol {
 		} },
 		setup(__props) {
 			return (_ctx, _cache) => {
-				return !__props.inline ? (openBlock(), createElementBlock("div", _hoisted_1$6, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)])) : (openBlock(), createElementBlock("div", _hoisted_2$6, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)]));
+				return !__props.inline ? (openBlock(), createElementBlock("div", _hoisted_1$3, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)])) : (openBlock(), createElementBlock("div", _hoisted_2$3, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)]));
 			};
 		}
 	}), [["__scopeId", "data-v-01971069"]]);
-	var _hoisted_1$5 = { class: "mnr-drawer-header" };
-	var _hoisted_2$5 = { class: "mnr-drawer-title" };
-	var _hoisted_3$5 = {
+	var _hoisted_1$2 = { class: "mnr-drawer-header" };
+	var _hoisted_2$2 = { class: "mnr-drawer-title" };
+	var _hoisted_3$2 = {
 		key: 0,
 		class: "mnr-drawer-loading"
 	};
-	var _hoisted_4$5 = {
+	var _hoisted_4$2 = {
 		key: 1,
 		class: "mnr-drawer-empty"
 	};
-	var _hoisted_5$4 = {
+	var _hoisted_5$2 = {
 		key: 0,
 		class: "mnr-cache-progress-bar"
 	};
-	var _hoisted_6$4 = { class: "mnr-cache-progress-text" };
-	var _hoisted_7$4 = { class: "mnr-cache-progress-track" };
-	var _hoisted_8$4 = {
+	var _hoisted_6$2 = { class: "mnr-cache-progress-text" };
+	var _hoisted_7$2 = { class: "mnr-cache-progress-track" };
+	var _hoisted_8$2 = {
 		key: 1,
 		class: "mnr-cache-stats"
 	};
-	var _hoisted_9$4 = {
+	var _hoisted_9$1 = {
 		key: 0,
 		class: "mnr-stat-persisted"
 	};
-	var _hoisted_10$3 = {
+	var _hoisted_10$1 = {
 		key: 1,
 		class: "mnr-stat-session"
 	};
-	var _hoisted_11$3 = { class: "mnr-chapter-list" };
-	var _hoisted_12$3 = ["onClick"];
-	var _hoisted_13$3 = {
+	var _hoisted_11$1 = { class: "mnr-chapter-list" };
+	var _hoisted_12$1 = ["onClick"];
+	var _hoisted_13$1 = {
 		key: 0,
 		class: "mnr-persisted-icon",
 		title: "已持久化"
 	};
-	var _hoisted_14$3 = {
+	var _hoisted_14$1 = {
 		key: 1,
 		class: "mnr-cached-icon",
 		title: "临时缓存"
@@ -20645,19 +20039,19 @@ ul, ol {
 						onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
 					})) : createCommentVNode("", true)]),
 					_: 1
-				}), createBaseVNode("aside", { class: normalizeClass(["mnr-drawer", { open: __props.isOpen }]) }, [createBaseVNode("div", _hoisted_1$5, [createBaseVNode("h3", _hoisted_2$5, toDisplayString(__props.bookTitle || "目录"), 1), createBaseVNode("button", {
+				}), createBaseVNode("aside", { class: normalizeClass(["mnr-drawer", { open: __props.isOpen }]) }, [createBaseVNode("div", _hoisted_1$2, [createBaseVNode("h3", _hoisted_2$2, toDisplayString(__props.bookTitle || "目录"), 1), createBaseVNode("button", {
 					class: "mnr-drawer-close",
 					title: "关闭",
 					onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("close"))
-				}, "✕")]), __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$5, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[2] || (_cache[2] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_4$5, [..._cache[3] || (_cache[3] = [createBaseVNode("p", null, "暂无目录", -1)])])) : (openBlock(), createElementBlock("div", {
+				}, "✕")]), __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$2, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[2] || (_cache[2] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_4$2, [..._cache[3] || (_cache[3] = [createBaseVNode("p", null, "暂无目录", -1)])])) : (openBlock(), createElementBlock("div", {
 					key: 2,
 					ref_key: "contentRef",
 					ref: contentRef,
 					class: "mnr-drawer-content"
-				}, [__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_5$4, [createBaseVNode("div", _hoisted_6$4, " 缓存中: " + toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1), createBaseVNode("div", _hoisted_7$4, [createBaseVNode("div", {
+				}, [__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_5$2, [createBaseVNode("div", _hoisted_6$2, " 缓存中: " + toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1), createBaseVNode("div", _hoisted_7$2, [createBaseVNode("div", {
 					class: "mnr-cache-progress-fill",
 					style: normalizeStyle({ width: `${__props.cacheProgress.total > 0 ? __props.cacheProgress.done / __props.cacheProgress.total * 100 : 0}%` })
-				}, null, 4)])])) : persistedCount.value > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_8$4, [persistedCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_9$4, [_cache[4] || (_cache[4] = createBaseVNode("span", { class: "mnr-persisted-icon" }, "✓", -1)), createTextVNode(" 已保存 " + toDisplayString(persistedCount.value) + " 章 ", 1)])) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_10$3, [_cache[5] || (_cache[5] = createBaseVNode("span", { class: "mnr-cached-icon" }, "○", -1)), createTextVNode(" 临时 " + toDisplayString(sessionCount.value) + " 章 ", 1)])) : createCommentVNode("", true)])) : createCommentVNode("", true), createBaseVNode("ul", _hoisted_11$3, [(openBlock(true), createElementBlock(Fragment, null, renderList(__props.chapters, (ch) => {
+				}, null, 4)])])) : persistedCount.value > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_8$2, [persistedCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_9$1, [_cache[4] || (_cache[4] = createBaseVNode("span", { class: "mnr-persisted-icon" }, "✓", -1)), createTextVNode(" 已保存 " + toDisplayString(persistedCount.value) + " 章 ", 1)])) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_10$1, [_cache[5] || (_cache[5] = createBaseVNode("span", { class: "mnr-cached-icon" }, "○", -1)), createTextVNode(" 临时 " + toDisplayString(sessionCount.value) + " 章 ", 1)])) : createCommentVNode("", true)])) : createCommentVNode("", true), createBaseVNode("ul", _hoisted_11$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(__props.chapters, (ch) => {
 					return openBlock(), createElementBlock("li", {
 						key: ch.url,
 						ref_for: true,
@@ -20670,62 +20064,56 @@ ul, ol {
 							persisted: ch.isPersisted && !ch.isCurrent
 						}),
 						onClick: ($event) => handleSelect(ch)
-					}, [ch.isPersisted ? (openBlock(), createElementBlock("span", _hoisted_13$3, "✓")) : ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_14$3, "○")) : createCommentVNode("", true), createTextVNode(" " + toDisplayString(ch.title), 1)], 10, _hoisted_12$3);
+					}, [ch.isPersisted ? (openBlock(), createElementBlock("span", _hoisted_13$1, "✓")) : ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_14$1, "○")) : createCommentVNode("", true), createTextVNode(" " + toDisplayString(ch.title), 1)], 10, _hoisted_12$1);
 				}), 128))])], 512))], 2)], 64);
 			};
 		}
 	}), [["__scopeId", "data-v-fe73b01a"]]);
-	var _hoisted_1$4 = { class: "mnr-settings-panel" };
-	var _hoisted_2$4 = { class: "mnr-settings-header" };
-	var _hoisted_3$4 = { class: "mnr-settings-content" };
-	var _hoisted_4$4 = { class: "mnr-settings-section" };
-	var _hoisted_5$3 = { class: "mnr-theme-grid" };
-	var _hoisted_6$3 = ["onClick"];
-	var _hoisted_7$3 = { class: "mnr-settings-section" };
-	var _hoisted_8$3 = { class: "mnr-slider-row" };
-	var _hoisted_9$3 = ["value"];
-	var _hoisted_10$2 = { class: "mnr-slider-value" };
-	var _hoisted_11$2 = { class: "mnr-settings-section" };
-	var _hoisted_12$2 = { class: "mnr-slider-row" };
-	var _hoisted_13$2 = ["value"];
-	var _hoisted_14$2 = { class: "mnr-slider-value" };
-	var _hoisted_15$2 = { class: "mnr-settings-section" };
-	var _hoisted_16$1 = { class: "mnr-slider-row" };
-	var _hoisted_17$1 = ["value"];
-	var _hoisted_18$1 = { class: "mnr-slider-value" };
-	var _hoisted_19$1 = { class: "mnr-settings-section" };
-	var _hoisted_20$1 = { class: "mnr-settings-section" };
-	var _hoisted_21$1 = { class: "mnr-segmented-control" };
-	var _hoisted_22$1 = {
+	var _hoisted_1$1 = { class: "mnr-settings-panel" };
+	var _hoisted_2$1 = { class: "mnr-settings-header" };
+	var _hoisted_3$1 = { class: "mnr-settings-content" };
+	var _hoisted_4$1 = { class: "mnr-settings-section" };
+	var _hoisted_5$1 = { class: "mnr-theme-grid" };
+	var _hoisted_6$1 = ["onClick"];
+	var _hoisted_7$1 = { class: "mnr-settings-section" };
+	var _hoisted_8$1 = { class: "mnr-slider-row" };
+	var _hoisted_9 = ["value"];
+	var _hoisted_10 = { class: "mnr-slider-value" };
+	var _hoisted_11 = { class: "mnr-settings-section" };
+	var _hoisted_12 = { class: "mnr-slider-row" };
+	var _hoisted_13 = ["value"];
+	var _hoisted_14 = { class: "mnr-slider-value" };
+	var _hoisted_15 = { class: "mnr-settings-section" };
+	var _hoisted_16 = { class: "mnr-slider-row" };
+	var _hoisted_17 = ["value"];
+	var _hoisted_18 = { class: "mnr-slider-value" };
+	var _hoisted_19 = { class: "mnr-settings-section" };
+	var _hoisted_20 = { class: "mnr-settings-section" };
+	var _hoisted_21 = { class: "mnr-segmented-control" };
+	var _hoisted_22 = {
 		key: 0,
 		class: "mnr-hint"
 	};
-	var _hoisted_23$1 = { class: "mnr-settings-section" };
-	var _hoisted_24$1 = { class: "mnr-switch-row" };
-	var _hoisted_25$1 = { class: "mnr-switch-row" };
-	var _hoisted_26$1 = { class: "mnr-switch-row" };
+	var _hoisted_23 = { class: "mnr-settings-section" };
+	var _hoisted_24 = { class: "mnr-switch-row" };
+	var _hoisted_25 = { class: "mnr-switch-row" };
+	var _hoisted_26 = { class: "mnr-switch-row" };
 	var _hoisted_27 = { class: "mnr-switch-row" };
 	var _hoisted_28 = { class: "mnr-settings-section" };
 	var _hoisted_29 = { class: "mnr-segmented-control" };
 	var _hoisted_30 = { class: "mnr-settings-section" };
 	var _hoisted_31 = { class: "mnr-action-buttons" };
-	var _hoisted_32 = { class: "mnr-rule-row" };
-	var _hoisted_33 = { class: "mnr-cache-row" };
-	var _hoisted_34 = {
+	var _hoisted_32 = { class: "mnr-cache-row" };
+	var _hoisted_33 = {
 		key: 0,
 		class: "mnr-cache-progress"
 	};
-	var _hoisted_35 = { class: "mnr-cache-count" };
+	var _hoisted_34 = { class: "mnr-cache-count" };
 	var SettingsPanel_default = defineComponent({
 		__name: "SettingsPanel",
-		props: {
-			visible: { type: Boolean },
-			domain: {}
-		},
+		props: { visible: { type: Boolean } },
 		emits: [
 			"close",
-			"editRule",
-			"resetRule",
 			"cacheAll",
 			"textConversionChange"
 		],
@@ -20734,11 +20122,6 @@ ul, ol {
 			const emit = __emit;
 			const configStore = useConfigStore();
 			const readerStore = useReaderStore();
-			const ruleStore = useRuleStore();
-			const hasUserRule = computed(() => {
-				if (!props.domain) return false;
-				return ruleStore.hasUserRule(props.domain);
-			});
 			const themes = THEMES;
 			const currentTheme = computed(() => configStore.themeId);
 			const fontSize = ref(configStore.reading.fontSize);
@@ -20802,14 +20185,6 @@ ul, ol {
 					notify: (message, type = "info") => readerStore.showToast(message, type)
 				});
 			}
-			async function handleResetRule() {
-				if (window.confirm("确定要重置站点规则吗？将恢复为默认/自动检测。")) {
-					if (props.domain) {
-						await ruleStore.deleteUserRule(props.domain);
-						emit("resetRule");
-					}
-				}
-			}
 			watch(() => props.visible, (visible) => {
 				if (visible) {
 					fontSize.value = configStore.reading.fontSize;
@@ -20829,16 +20204,16 @@ ul, ol {
 					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
 						key: 0,
 						class: "mnr-settings-overlay",
-						onClick: _cache[18] || (_cache[18] = withModifiers(($event) => _ctx.$emit("close"), ["self"]))
-					}, [createBaseVNode("div", _hoisted_1$4, [createBaseVNode("div", _hoisted_2$4, [
-						_cache[19] || (_cache[19] = createBaseVNode("h3", null, "阅读设置", -1)),
-						_cache[20] || (_cache[20] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "S", -1)),
+						onClick: _cache[17] || (_cache[17] = withModifiers(($event) => _ctx.$emit("close"), ["self"]))
+					}, [createBaseVNode("div", _hoisted_1$1, [createBaseVNode("div", _hoisted_2$1, [
+						_cache[18] || (_cache[18] = createBaseVNode("h3", null, "阅读设置", -1)),
+						_cache[19] || (_cache[19] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "S", -1)),
 						createBaseVNode("button", {
 							class: "mnr-close-btn",
 							onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
 						}, "✕")
-					]), createBaseVNode("div", _hoisted_3$4, [
-						createBaseVNode("section", _hoisted_4$4, [_cache[21] || (_cache[21] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$3, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
+					]), createBaseVNode("div", _hoisted_3$1, [
+						createBaseVNode("section", _hoisted_4$1, [_cache[20] || (_cache[20] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
 							return openBlock(), createElementBlock("button", {
 								key: theme.id,
 								class: normalizeClass(["mnr-theme-btn", { active: currentTheme.value === theme.id }]),
@@ -20848,10 +20223,10 @@ ul, ol {
 									borderColor: currentTheme.value === theme.id ? "var(--mnr-link, #1976d2)" : theme.border
 								}),
 								onClick: ($event) => setTheme(theme.id)
-							}, toDisplayString(theme.name), 15, _hoisted_6$3);
+							}, toDisplayString(theme.name), 15, _hoisted_6$1);
 						}), 128))])]),
-						createBaseVNode("section", _hoisted_7$3, [_cache[24] || (_cache[24] = createBaseVNode("h4", null, "字体大小", -1)), createBaseVNode("div", _hoisted_8$3, [
-							_cache[22] || (_cache[22] = createBaseVNode("span", { class: "mnr-slider-label" }, "A", -1)),
+						createBaseVNode("section", _hoisted_7$1, [_cache[23] || (_cache[23] = createBaseVNode("h4", null, "字体大小", -1)), createBaseVNode("div", _hoisted_8$1, [
+							_cache[21] || (_cache[21] = createBaseVNode("span", { class: "mnr-slider-label" }, "A", -1)),
 							createBaseVNode("input", {
 								type: "range",
 								min: "14",
@@ -20859,15 +20234,15 @@ ul, ol {
 								value: fontSize.value,
 								class: "mnr-slider",
 								onInput: updateFontSize
-							}, null, 40, _hoisted_9$3),
-							_cache[23] || (_cache[23] = createBaseVNode("span", {
+							}, null, 40, _hoisted_9),
+							_cache[22] || (_cache[22] = createBaseVNode("span", {
 								class: "mnr-slider-label",
 								style: { "font-size": "1.2em" }
 							}, "A", -1)),
-							createBaseVNode("span", _hoisted_10$2, toDisplayString(fontSize.value) + "px", 1)
+							createBaseVNode("span", _hoisted_10, toDisplayString(fontSize.value) + "px", 1)
 						])]),
-						createBaseVNode("section", _hoisted_11$2, [_cache[27] || (_cache[27] = createBaseVNode("h4", null, "行间距", -1)), createBaseVNode("div", _hoisted_12$2, [
-							_cache[25] || (_cache[25] = createBaseVNode("span", { class: "mnr-slider-label" }, "≡", -1)),
+						createBaseVNode("section", _hoisted_11, [_cache[26] || (_cache[26] = createBaseVNode("h4", null, "行间距", -1)), createBaseVNode("div", _hoisted_12, [
+							_cache[24] || (_cache[24] = createBaseVNode("span", { class: "mnr-slider-label" }, "≡", -1)),
 							createBaseVNode("input", {
 								type: "range",
 								min: "1.4",
@@ -20876,12 +20251,12 @@ ul, ol {
 								value: lineHeight.value,
 								class: "mnr-slider",
 								onInput: updateLineHeight
-							}, null, 40, _hoisted_13$2),
-							_cache[26] || (_cache[26] = createBaseVNode("span", { class: "mnr-slider-label" }, "☰", -1)),
-							createBaseVNode("span", _hoisted_14$2, toDisplayString(lineHeight.value), 1)
+							}, null, 40, _hoisted_13),
+							_cache[25] || (_cache[25] = createBaseVNode("span", { class: "mnr-slider-label" }, "☰", -1)),
+							createBaseVNode("span", _hoisted_14, toDisplayString(lineHeight.value), 1)
 						])]),
-						createBaseVNode("section", _hoisted_15$2, [_cache[30] || (_cache[30] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_16$1, [
-							_cache[28] || (_cache[28] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏⊐", -1)),
+						createBaseVNode("section", _hoisted_15, [_cache[29] || (_cache[29] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_16, [
+							_cache[27] || (_cache[27] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏⊐", -1)),
 							createBaseVNode("input", {
 								type: "range",
 								min: "500",
@@ -20890,23 +20265,23 @@ ul, ol {
 								value: maxWidth.value,
 								class: "mnr-slider",
 								onInput: updateMaxWidth
-							}, null, 40, _hoisted_17$1),
-							_cache[29] || (_cache[29] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏ ⊐", -1)),
-							createBaseVNode("span", _hoisted_18$1, toDisplayString(maxWidth.value) + "px", 1)
+							}, null, 40, _hoisted_17),
+							_cache[28] || (_cache[28] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏ ⊐", -1)),
+							createBaseVNode("span", _hoisted_18, toDisplayString(maxWidth.value) + "px", 1)
 						])]),
-						createBaseVNode("section", _hoisted_19$1, [_cache[32] || (_cache[32] = createBaseVNode("h4", null, "字体", -1)), withDirectives(createBaseVNode("select", {
+						createBaseVNode("section", _hoisted_19, [_cache[31] || (_cache[31] = createBaseVNode("h4", null, "字体", -1)), withDirectives(createBaseVNode("select", {
 							"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => fontFamily.value = $event),
 							class: "mnr-select",
 							onChange: updateFontFamily
-						}, [..._cache[31] || (_cache[31] = [
+						}, [..._cache[30] || (_cache[30] = [
 							createBaseVNode("option", { value: "system-ui, -apple-system, 'Microsoft YaHei', sans-serif" }, " 系统默认 ", -1),
 							createBaseVNode("option", { value: "'Noto Serif SC', 'Source Han Serif SC', serif" }, "思源宋体", -1),
 							createBaseVNode("option", { value: "'PingFang SC', 'Hiragino Sans GB', sans-serif" }, "苹方", -1),
 							createBaseVNode("option", { value: "'Kaiti SC', 'STKaiti', serif" }, "楷体", -1)
 						])], 544), [[vModelSelect, fontFamily.value]])]),
-						createBaseVNode("section", _hoisted_20$1, [
-							_cache[33] || (_cache[33] = createBaseVNode("h4", null, "简繁转换", -1)),
-							createBaseVNode("div", _hoisted_21$1, [
+						createBaseVNode("section", _hoisted_20, [
+							_cache[32] || (_cache[32] = createBaseVNode("h4", null, "简繁转换", -1)),
+							createBaseVNode("div", _hoisted_21, [
 								createBaseVNode("button", {
 									class: normalizeClass(["mnr-segment", { active: textConversion.value === "none" }]),
 									onClick: _cache[2] || (_cache[2] = ($event) => updateTextConversion("none"))
@@ -20920,33 +20295,33 @@ ul, ol {
 									onClick: _cache[4] || (_cache[4] = ($event) => updateTextConversion("tc"))
 								}, " 繁體 ", 2)
 							]),
-							textConversion.value !== "none" ? (openBlock(), createElementBlock("p", _hoisted_22$1, toDisplayString(textConversion.value === "sc" ? "将繁体转换为简体中文" : "將簡體轉換為繁體中文"), 1)) : createCommentVNode("", true)
+							textConversion.value !== "none" ? (openBlock(), createElementBlock("p", _hoisted_22, toDisplayString(textConversion.value === "sc" ? "将繁体转换为简体中文" : "將簡體轉換為繁體中文"), 1)) : createCommentVNode("", true)
 						]),
-						createBaseVNode("section", _hoisted_23$1, [
-							_cache[38] || (_cache[38] = createBaseVNode("h4", null, "阅读行为", -1)),
-							createBaseVNode("label", _hoisted_24$1, [_cache[34] || (_cache[34] = createBaseVNode("span", null, "键盘导航", -1)), withDirectives(createBaseVNode("input", {
+						createBaseVNode("section", _hoisted_23, [
+							_cache[37] || (_cache[37] = createBaseVNode("h4", null, "阅读行为", -1)),
+							createBaseVNode("label", _hoisted_24, [_cache[33] || (_cache[33] = createBaseVNode("span", null, "键盘导航", -1)), withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => keyboardNav.value = $event),
 								type: "checkbox",
 								onChange: _cache[6] || (_cache[6] = ($event) => updateBehavior("keyboardNavigation", keyboardNav.value))
 							}, null, 544), [[vModelCheckbox, keyboardNav.value]])]),
-							createBaseVNode("label", _hoisted_25$1, [_cache[35] || (_cache[35] = createBaseVNode("span", null, "手势翻页", -1)), withDirectives(createBaseVNode("input", {
+							createBaseVNode("label", _hoisted_25, [_cache[34] || (_cache[34] = createBaseVNode("span", null, "手势翻页", -1)), withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => swipeGestures.value = $event),
 								type: "checkbox",
 								onChange: _cache[8] || (_cache[8] = ($event) => updateBehavior("swipeGestures", swipeGestures.value))
 							}, null, 544), [[vModelCheckbox, swipeGestures.value]])]),
-							createBaseVNode("label", _hoisted_26$1, [_cache[36] || (_cache[36] = createBaseVNode("span", null, "自动隐藏顶栏", -1)), withDirectives(createBaseVNode("input", {
+							createBaseVNode("label", _hoisted_26, [_cache[35] || (_cache[35] = createBaseVNode("span", null, "自动隐藏顶栏", -1)), withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => autoHideHeader.value = $event),
 								type: "checkbox",
 								onChange: _cache[10] || (_cache[10] = ($event) => updateBehavior("autoHideHeader", autoHideHeader.value))
 							}, null, 544), [[vModelCheckbox, autoHideHeader.value]])]),
-							createBaseVNode("label", _hoisted_27, [_cache[37] || (_cache[37] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
+							createBaseVNode("label", _hoisted_27, [_cache[36] || (_cache[36] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => showProgress.value = $event),
 								type: "checkbox",
 								onChange: _cache[12] || (_cache[12] = ($event) => updateBehavior("showProgress", showProgress.value))
 							}, null, 544), [[vModelCheckbox, showProgress.value]])])
 						]),
 						createBaseVNode("section", _hoisted_28, [
-							_cache[39] || (_cache[39] = createBaseVNode("h4", null, "页面防护", -1)),
+							_cache[38] || (_cache[38] = createBaseVNode("h4", null, "页面防护", -1)),
 							createBaseVNode("div", _hoisted_29, [createBaseVNode("button", {
 								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "standard" }]),
 								onClick: _cache[13] || (_cache[13] = ($event) => updateProtectionMode("standard"))
@@ -20954,32 +20329,24 @@ ul, ol {
 								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "aggressive" }]),
 								onClick: _cache[14] || (_cache[14] = ($event) => updateProtectionMode("aggressive"))
 							}, " 激进 ", 2)]),
-							_cache[40] || (_cache[40] = createBaseVNode("p", { class: "mnr-hint" }, "激进模式会尝试清理可疑脚本，可能影响站点功能。", -1))
+							_cache[39] || (_cache[39] = createBaseVNode("p", { class: "mnr-hint" }, "激进模式会尝试清理可疑脚本，可能影响站点功能。", -1))
 						]),
-						createBaseVNode("section", _hoisted_30, [_cache[43] || (_cache[43] = createBaseVNode("h4", null, "操作", -1)), createBaseVNode("div", _hoisted_31, [
+						createBaseVNode("section", _hoisted_30, [_cache[42] || (_cache[42] = createBaseVNode("h4", null, "操作", -1)), createBaseVNode("div", _hoisted_31, [
 							createBaseVNode("div", _hoisted_32, [createBaseVNode("button", {
 								class: "mnr-action-btn",
-								onClick: _cache[15] || (_cache[15] = ($event) => _ctx.$emit("editRule"))
-							}, "编辑站点规则"), hasUserRule.value ? (openBlock(), createElementBlock("button", {
-								key: 0,
-								class: "mnr-action-btn mnr-action-btn--danger",
-								onClick: handleResetRule
-							}, " 重置 ")) : createCommentVNode("", true)]),
-							createBaseVNode("div", _hoisted_33, [createBaseVNode("button", {
-								class: "mnr-action-btn",
-								onClick: _cache[16] || (_cache[16] = ($event) => _ctx.$emit("cacheAll"))
-							}, [_cache[41] || (_cache[41] = createTextVNode(" 缓存本书 ", -1)), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_34, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]), persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
+								onClick: _cache[15] || (_cache[15] = ($event) => _ctx.$emit("cacheAll"))
+							}, [_cache[40] || (_cache[40] = createTextVNode(" 缓存本书 ", -1)), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_33, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]), persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
 								key: 0,
 								class: "mnr-action-btn mnr-action-btn--danger",
 								onClick: handleClearCache
-							}, [_cache[42] || (_cache[42] = createTextVNode(" 清除 ", -1)), createBaseVNode("span", _hoisted_35, "(" + toDisplayString(persistedCount.value) + ")", 1)])) : createCommentVNode("", true)]),
+							}, [_cache[41] || (_cache[41] = createTextVNode(" 清除 ", -1)), createBaseVNode("span", _hoisted_34, "(" + toDisplayString(persistedCount.value) + ")", 1)])) : createCommentVNode("", true)]),
 							createBaseVNode("button", {
 								class: "mnr-action-btn",
 								onClick: handleCopyDiagnosticInfo
 							}, "复制诊断信息"),
 							createBaseVNode("button", {
 								class: "mnr-action-btn",
-								onClick: _cache[17] || (_cache[17] = ($event) => {
+								onClick: _cache[16] || (_cache[16] = ($event) => {
 									_ctx.$emit("close");
 									unref(closeReader)();
 								})
@@ -20991,798 +20358,6 @@ ul, ol {
 			};
 		}
 	});
-	var _hoisted_1$3 = { class: "mnr-picker-tag" };
-	var _hoisted_2$3 = { class: "mnr-picker-selector" };
-	var _hoisted_3$3 = { class: "mnr-picker-controls" };
-	var _hoisted_4$3 = { class: "mnr-picker-label" };
-	var ElementPicker_default = _plugin_vue_export_helper_default(defineComponent({
-		__name: "ElementPicker",
-		props: {
-			mode: { default: "content" },
-			active: {
-				type: Boolean,
-				default: false
-			}
-		},
-		emits: [
-			"select",
-			"cancel",
-			"update:active"
-		],
-		setup(__props, { expose: __expose, emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const isActive = ref(false);
-			const hoveredElement = ref(null);
-			const highlightRect = ref(null);
-			const overlayRef = ref(null);
-			const mouseX = ref(0);
-			const mouseY = ref(0);
-			const rafId = ref(null);
-			const modeLabels = {
-				content: "选择内容区域",
-				next: "选择\"下一章\"链接",
-				prev: "选择\"上一章\"链接",
-				index: "选择\"目录\"链接",
-				title: "选择标题元素",
-				remove: "选择要移除的元素"
-			};
-			const modeLabel = computed(() => modeLabels[props.mode]);
-			const highlightStyle = computed(() => {
-				if (!highlightRect.value) return {};
-				const rect = highlightRect.value;
-				return {
-					top: `${rect.top}px`,
-					left: `${rect.left}px`,
-					width: `${rect.width}px`,
-					height: `${rect.height}px`
-				};
-			});
-			const tooltipStyle = computed(() => {
-				if (!highlightRect.value) return {};
-				const rect = highlightRect.value;
-				let top = rect.top - 60;
-				let left = rect.left;
-				if (top < 10) top = rect.bottom + 10;
-				if (left < 10) left = 10;
-				if (left > window.innerWidth - 200) left = window.innerWidth - 200;
-				return {
-					top: `${top}px`,
-					left: `${left}px`
-				};
-			});
-			const elementTag = computed(() => {
-				if (!hoveredElement.value) return "";
-				const el = hoveredElement.value;
-				let tag = el.tagName.toLowerCase();
-				if (el.id) tag += `#${el.id}`;
-				if (el.className && typeof el.className === "string") {
-					const classes = el.className.trim().split(/\s+/).slice(0, 2);
-					tag += classes.map((c) => `.${c}`).join("");
-				}
-				return tag;
-			});
-			const generatedSelector = computed(() => {
-				if (!hoveredElement.value) return "";
-				return generateCssSelector(hoveredElement.value, {
-					maxDepth: 5,
-					allowClassCombination: true
-				});
-			});
-			function handleMouseMove(e) {
-				if (!isActive.value) return;
-				mouseX.value = e.clientX;
-				mouseY.value = e.clientY;
-			}
-			function tick() {
-				if (!isActive.value) return;
-				const overlay = overlayRef.value;
-				if (overlay) overlay.style.pointerEvents = "none";
-				const target = document.elementFromPoint(mouseX.value, mouseY.value);
-				if (overlay) overlay.style.pointerEvents = "";
-				if (target && !target.closest("[id^=\"mnr-\"]") && !target.closest(".mnr-picker-overlay")) {
-					hoveredElement.value = target;
-					highlightRect.value = target.getBoundingClientRect();
-				}
-				rafId.value = globalThis.requestAnimationFrame(tick);
-			}
-			function handleClick(e) {
-				if (!isActive.value) return;
-				const overlay = overlayRef.value;
-				if (overlay) overlay.style.pointerEvents = "none";
-				const target = document.elementFromPoint(e.clientX, e.clientY);
-				if (overlay) overlay.style.pointerEvents = "";
-				if (!target || target.closest("[id^=\"mnr-\"]") || target.closest(".mnr-picker-overlay")) return;
-				e.preventDefault();
-				e.stopPropagation();
-				const selector = generateCssSelector(target, {
-					maxDepth: 5,
-					allowClassCombination: true
-				});
-				emit("select", {
-					element: target,
-					selector
-				});
-				deactivate();
-			}
-			function handleKeyDown(e) {
-				if (e.key === "Escape") cancel();
-			}
-			function handleScroll() {
-				if (hoveredElement.value) highlightRect.value = hoveredElement.value.getBoundingClientRect();
-			}
-			function cancel() {
-				emit("cancel");
-				deactivate();
-			}
-			function activate() {
-				isActive.value = true;
-				document.addEventListener("mousemove", handleMouseMove, true);
-				document.addEventListener("click", handleClick, true);
-				window.addEventListener("keydown", handleKeyDown, true);
-				window.addEventListener("scroll", handleScroll, true);
-				document.body.style.cursor = "crosshair";
-				rafId.value = globalThis.requestAnimationFrame(tick);
-			}
-			function deactivate() {
-				isActive.value = false;
-				hoveredElement.value = null;
-				highlightRect.value = null;
-				document.removeEventListener("mousemove", handleMouseMove, true);
-				document.removeEventListener("click", handleClick, true);
-				window.removeEventListener("keydown", handleKeyDown, true);
-				window.removeEventListener("scroll", handleScroll, true);
-				document.body.style.cursor = "";
-				if (rafId.value !== null) {
-					globalThis.cancelAnimationFrame(rafId.value);
-					rafId.value = null;
-				}
-				emit("update:active", false);
-			}
-			watch(() => props.active, (newVal) => {
-				if (newVal && !isActive.value) activate();
-				else if (!newVal && isActive.value) deactivate();
-			}, { immediate: true });
-			onUnmounted(() => {
-				if (isActive.value) deactivate();
-			});
-			__expose({
-				activate,
-				deactivate,
-				isActive
-			});
-			return (_ctx, _cache) => {
-				return openBlock(), createBlock(Teleport, { to: "body" }, [isActive.value ? (openBlock(), createElementBlock("div", {
-					key: 0,
-					ref_key: "overlayRef",
-					ref: overlayRef,
-					class: "mnr-picker-overlay"
-				}, [
-					highlightRect.value ? (openBlock(), createElementBlock("div", {
-						key: 0,
-						class: "mnr-picker-highlight",
-						style: normalizeStyle(highlightStyle.value)
-					}, null, 4)) : createCommentVNode("", true),
-					hoveredElement.value ? (openBlock(), createElementBlock("div", {
-						key: 1,
-						class: "mnr-picker-tooltip",
-						style: normalizeStyle(tooltipStyle.value)
-					}, [createBaseVNode("div", _hoisted_1$3, toDisplayString(elementTag.value), 1), createBaseVNode("div", _hoisted_2$3, toDisplayString(generatedSelector.value), 1)], 4)) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_3$3, [
-						createBaseVNode("span", _hoisted_4$3, toDisplayString(modeLabel.value), 1),
-						_cache[0] || (_cache[0] = createBaseVNode("span", { class: "mnr-picker-hint" }, "点击选择元素，ESC 取消", -1)),
-						createBaseVNode("button", {
-							class: "mnr-picker-cancel",
-							onClick: cancel
-						}, "取消")
-					])
-				], 512)) : createCommentVNode("", true)]);
-			};
-		}
-	}), [["__scopeId", "data-v-69ce3430"]]);
-	var _hoisted_1$2 = { class: "mnr-selector-preview" };
-	var _hoisted_2$2 = { class: "mnr-preview-header" };
-	var _hoisted_3$2 = { class: "mnr-preview-label" };
-	var _hoisted_4$2 = { class: "mnr-preview-actions" };
-	var _hoisted_5$2 = ["disabled"];
-	var _hoisted_6$2 = { class: "mnr-preview-input-row" };
-	var _hoisted_7$2 = {
-		key: 1,
-		class: "mnr-preview-selector"
-	};
-	var _hoisted_8$2 = { key: 0 };
-	var _hoisted_9$2 = { key: 1 };
-	var _hoisted_10$1 = { key: 2 };
-	var _hoisted_11$1 = {
-		key: 1,
-		class: "mnr-preview-content"
-	};
-	var _hoisted_12$1 = { class: "mnr-preview-content-header" };
-	var _hoisted_13$1 = ["innerHTML"];
-	var _hoisted_14$1 = {
-		key: 0,
-		class: "mnr-highlight-overlay"
-	};
-	var _hoisted_15$1 = { class: "mnr-highlight-label" };
-	var SelectorPreview_default = _plugin_vue_export_helper_default(defineComponent({
-		__name: "SelectorPreview",
-		props: {
-			label: {},
-			selector: { default: "" },
-			editable: {
-				type: Boolean,
-				default: true
-			},
-			showPreview: {
-				type: Boolean,
-				default: true
-			},
-			previewType: { default: "text" }
-		},
-		emits: ["update:selector", "pick"],
-		setup(__props, { emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const localSelector = ref(props.selector);
-			const matchCount = ref(null);
-			const previewContent = ref("");
-			const expanded = ref(false);
-			const isHighlighting = ref(false);
-			const highlightRects = ref([]);
-			const matchClass = computed(() => {
-				if (matchCount.value === null) return "";
-				if (matchCount.value === 0) return "error";
-				if (matchCount.value === 1) return "success";
-				return "warning";
-			});
-			const sanitizedPreview = computed(() => {
-				if (props.previewType === "text") return escapeHtml(previewContent.value);
-				return previewContent.value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").slice(0, 2e3);
-			});
-			function escapeHtml(text) {
-				return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
-			}
-			function getHighlightStyle(rect) {
-				return {
-					position: "absolute",
-					top: `${rect.top + window.scrollY}px`,
-					left: `${rect.left + window.scrollX}px`,
-					width: `${rect.width}px`,
-					height: `${rect.height}px`
-				};
-			}
-			function testSelector() {
-				if (!localSelector.value) {
-					matchCount.value = null;
-					previewContent.value = "";
-					return;
-				}
-				try {
-					const elements = document.querySelectorAll(localSelector.value);
-					matchCount.value = elements.length;
-					if (elements.length > 0) {
-						const el = elements[0];
-						if (props.previewType === "text") previewContent.value = el.textContent?.slice(0, 500) || "";
-						else previewContent.value = el.innerHTML.slice(0, 2e3);
-					} else previewContent.value = "";
-				} catch {
-					matchCount.value = 0;
-					previewContent.value = "";
-				}
-			}
-			function updateHighlightRects() {
-				if (!localSelector.value) {
-					highlightRects.value = [];
-					return;
-				}
-				try {
-					const elements = document.querySelectorAll(localSelector.value);
-					highlightRects.value = Array.from(elements).map((el) => el.getBoundingClientRect());
-					matchCount.value = elements.length;
-					if (elements.length > 0) {
-						const el = elements[0];
-						if (props.previewType === "text") previewContent.value = el.textContent?.slice(0, 500) || "";
-						else previewContent.value = el.innerHTML.slice(0, 2e3);
-						el.scrollIntoView({
-							behavior: "smooth",
-							block: "center"
-						});
-					} else previewContent.value = "";
-				} catch {
-					highlightRects.value = [];
-					matchCount.value = 0;
-					previewContent.value = "";
-				}
-			}
-			function toggleHighlight() {
-				if (isHighlighting.value) stopHighlight();
-				else startHighlight();
-			}
-			function startHighlight() {
-				isHighlighting.value = true;
-				updateHighlightRects();
-				window.addEventListener("scroll", updateHighlightRects);
-				window.addEventListener("resize", updateHighlightRects);
-			}
-			function stopHighlight() {
-				isHighlighting.value = false;
-				highlightRects.value = [];
-				window.removeEventListener("scroll", updateHighlightRects);
-				window.removeEventListener("resize", updateHighlightRects);
-			}
-			function handleInput() {
-				emit("update:selector", localSelector.value);
-				if (isHighlighting.value) stopHighlight();
-			}
-			function handleBlur() {
-				testSelector();
-			}
-			watch(() => props.selector, (newVal) => {
-				localSelector.value = newVal;
-				if (newVal) testSelector();
-				if (isHighlighting.value) updateHighlightRects();
-			});
-			onUnmounted(() => {
-				if (isHighlighting.value) stopHighlight();
-			});
-			return (_ctx, _cache) => {
-				return openBlock(), createElementBlock("div", _hoisted_1$2, [
-					createBaseVNode("div", _hoisted_2$2, [createBaseVNode("label", _hoisted_3$2, toDisplayString(__props.label), 1), createBaseVNode("div", _hoisted_4$2, [__props.editable ? (openBlock(), createElementBlock("button", {
-						key: 0,
-						class: "mnr-preview-btn",
-						title: "可视化选择",
-						onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("pick"))
-					}, " 🎯 ")) : createCommentVNode("", true), createBaseVNode("button", {
-						class: normalizeClass(["mnr-preview-btn", { "mnr-btn-active": isHighlighting.value }]),
-						disabled: !localSelector.value,
-						title: "高亮选中元素",
-						onClick: toggleHighlight
-					}, toDisplayString(isHighlighting.value ? "✕" : "👁"), 11, _hoisted_5$2)])]),
-					createBaseVNode("div", _hoisted_6$2, [__props.editable ? withDirectives((openBlock(), createElementBlock("input", {
-						key: 0,
-						"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => localSelector.value = $event),
-						type: "text",
-						class: "mnr-preview-input",
-						placeholder: "CSS 选择器",
-						onInput: handleInput,
-						onBlur: handleBlur
-					}, null, 544)), [[vModelText, localSelector.value]]) : (openBlock(), createElementBlock("span", _hoisted_7$2, toDisplayString(__props.selector || "未设置"), 1))]),
-					matchCount.value !== null ? (openBlock(), createElementBlock("div", {
-						key: 0,
-						class: normalizeClass(["mnr-preview-match", matchClass.value])
-					}, [matchCount.value === 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, "❌ 未找到匹配元素")) : matchCount.value === 1 ? (openBlock(), createElementBlock("span", _hoisted_9$2, "✓ 找到 1 个元素")) : (openBlock(), createElementBlock("span", _hoisted_10$1, "⚠ 找到 " + toDisplayString(matchCount.value) + " 个元素", 1))], 2)) : createCommentVNode("", true),
-					__props.showPreview && previewContent.value ? (openBlock(), createElementBlock("div", _hoisted_11$1, [createBaseVNode("div", _hoisted_12$1, [_cache[3] || (_cache[3] = createBaseVNode("span", null, "预览", -1)), createBaseVNode("button", {
-						class: "mnr-preview-expand",
-						onClick: _cache[2] || (_cache[2] = ($event) => expanded.value = !expanded.value)
-					}, toDisplayString(expanded.value ? "收起" : "展开"), 1)]), createBaseVNode("div", {
-						class: normalizeClass(["mnr-preview-text", { expanded: expanded.value }]),
-						innerHTML: sanitizedPreview.value
-					}, null, 10, _hoisted_13$1)])) : createCommentVNode("", true),
-					(openBlock(), createBlock(Teleport, { to: "body" }, [isHighlighting.value && highlightRects.value.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_14$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(highlightRects.value, (rect, index) => {
-						return openBlock(), createElementBlock("div", {
-							key: index,
-							class: "mnr-highlight-box",
-							style: normalizeStyle(getHighlightStyle(rect))
-						}, [createBaseVNode("span", _hoisted_15$1, toDisplayString(index + 1), 1)], 4);
-					}), 128))])) : createCommentVNode("", true)]))
-				]);
-			};
-		}
-	}), [["__scopeId", "data-v-26d93800"]]);
-	var _hoisted_1$1 = { class: "mnr-editor-header" };
-	var _hoisted_2$1 = { class: "mnr-editor-title" };
-	var _hoisted_3$1 = { class: "mnr-editor-tabs" };
-	var _hoisted_4$1 = ["onClick"];
-	var _hoisted_5$1 = { class: "mnr-editor-content" };
-	var _hoisted_6$1 = { class: "mnr-form-section" };
-	var _hoisted_7$1 = { class: "mnr-form-group" };
-	var _hoisted_8$1 = { class: "mnr-form-group" };
-	var _hoisted_9$1 = { class: "mnr-form-section" };
-	var _hoisted_10 = { class: "mnr-form-group" };
-	var _hoisted_11 = { class: "mnr-form-section" };
-	var _hoisted_12 = { class: "mnr-form-section" };
-	var _hoisted_13 = { class: "mnr-editor-content" };
-	var _hoisted_14 = { class: "mnr-code-toolbar" };
-	var _hoisted_15 = {
-		key: 0,
-		class: "mnr-code-error"
-	};
-	var _hoisted_16 = { class: "mnr-editor-content" };
-	var _hoisted_17 = { class: "mnr-form-section" };
-	var _hoisted_18 = { class: "mnr-checkbox-row" };
-	var _hoisted_19 = { class: "mnr-checkbox-row" };
-	var _hoisted_20 = { class: "mnr-checkbox-row" };
-	var _hoisted_21 = { class: "mnr-form-section" };
-	var _hoisted_22 = { class: "mnr-form-group" };
-	var _hoisted_23 = { class: "mnr-form-section" };
-	var _hoisted_24 = { class: "mnr-form-group" };
-	var _hoisted_25 = { class: "mnr-editor-footer" };
-	var _hoisted_26 = ["disabled"];
-	var RuleEditorPanel_default = _plugin_vue_export_helper_default(defineComponent({
-		__name: "RuleEditorPanel",
-		props: {
-			rule: {},
-			domain: {}
-		},
-		emits: [
-			"save",
-			"cancel",
-			"pickerStateChange"
-		],
-		setup(__props, { emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const tabs = [
-				{
-					id: "visual",
-					label: "可视化"
-				},
-				{
-					id: "code",
-					label: "代码"
-				},
-				{
-					id: "advanced",
-					label: "高级"
-				}
-			];
-			const activeTab = ref("visual");
-			const createEmptyRule = () => ({
-				id: `user-${Date.now()}`,
-				name: "",
-				version: 1,
-				match: {
-					pattern: props.domain ? `^https?://${props.domain.replace(/\./g, "\\.")}/` : "",
-					type: "regex"
-				},
-				content: { selector: "" },
-				meta: {
-					source: "user",
-					autoLaunch: true
-				}
-			});
-			const localRule = reactive(props.rule ? { ...props.rule } : createEmptyRule());
-			const navPrev = computed({
-				get: () => typeof localRule.navigation?.prev === "string" ? localRule.navigation.prev : "",
-				set: (val) => {
-					if (!localRule.navigation) localRule.navigation = {};
-					localRule.navigation.prev = val || void 0;
-				}
-			});
-			const navNext = computed({
-				get: () => typeof localRule.navigation?.next === "string" ? localRule.navigation.next : "",
-				set: (val) => {
-					if (!localRule.navigation) localRule.navigation = {};
-					localRule.navigation.next = val || void 0;
-				}
-			});
-			const navIndex = computed({
-				get: () => typeof localRule.navigation?.index === "string" ? localRule.navigation.index : "",
-				set: (val) => {
-					if (!localRule.navigation) localRule.navigation = {};
-					localRule.navigation.index = val || void 0;
-				}
-			});
-			const titleSelector = computed({
-				get: () => localRule.title?.selector || "",
-				set: (val) => {
-					if (!localRule.title) localRule.title = {};
-					localRule.title.selector = val || void 0;
-				}
-			});
-			const processingOptions = reactive({
-				removeAds: localRule.processing?.removeAds ?? true,
-				fixImages: localRule.processing?.fixImages ?? true,
-				useRawContent: localRule.processing?.useRawContent ?? false
-			});
-			const hookBeforeParse = ref(localRule.hooks?.beforeParse || "");
-			const customCSS = ref(localRule.style?.customCSS || "");
-			const codeFormat = ref("json");
-			const codeContent = ref("");
-			const codeError = ref("");
-			const pickerActive = ref(false);
-			const pickerMode = ref("content");
-			const isNew = computed(() => !props.rule);
-			const isValid = computed(() => {
-				return localRule.match.pattern && localRule.content.selector;
-			});
-			function startPicking(mode) {
-				pickerMode.value = mode;
-				pickerActive.value = true;
-				emit("pickerStateChange", true);
-			}
-			function handlePickerSelect(result) {
-				switch (pickerMode.value) {
-					case "content":
-						localRule.content.selector = result.selector;
-						break;
-					case "prev":
-						navPrev.value = result.selector;
-						break;
-					case "next":
-						navNext.value = result.selector;
-						break;
-					case "index":
-						navIndex.value = result.selector;
-						break;
-					case "title":
-						titleSelector.value = result.selector;
-						break;
-				}
-				pickerActive.value = false;
-				emit("pickerStateChange", false);
-			}
-			function handlePickerCancel() {
-				pickerActive.value = false;
-				emit("pickerStateChange", false);
-			}
-			function updateCodeFromRule() {
-				try {
-					if (codeFormat.value === "json") codeContent.value = JSON.stringify(localRule, null, 2);
-					else codeContent.value = jsonToYaml(localRule);
-					codeError.value = "";
-				} catch (e) {
-					codeError.value = `转换错误: ${e}`;
-				}
-			}
-			function parseCode() {
-				try {
-					let parsed;
-					if (codeFormat.value === "json") parsed = JSON.parse(codeContent.value);
-					else parsed = yamlToJson(codeContent.value);
-					Object.assign(localRule, parsed);
-					codeError.value = "";
-				} catch (e) {
-					codeError.value = `解析错误: ${e}`;
-				}
-			}
-			function formatCode() {
-				parseCode();
-				if (!codeError.value) updateCodeFromRule();
-			}
-			function validateCode() {
-				parseCode();
-				if (!codeError.value) {
-					codeError.value = "✓ 格式正确";
-					setTimeout(() => {
-						codeError.value = "";
-					}, 2e3);
-				}
-			}
-			function jsonToYaml(obj, indent = 0) {
-				const spaces = "  ".repeat(indent);
-				if (obj === null || obj === void 0) return "null";
-				if (typeof obj === "string") return `"${obj}"`;
-				if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
-				if (Array.isArray(obj)) {
-					if (obj.length === 0) return "[]";
-					return obj.map((item) => `${spaces}- ${jsonToYaml(item, indent + 1)}`).join("\n");
-				}
-				if (typeof obj === "object") {
-					const entries = Object.entries(obj).filter(([, v]) => v !== void 0);
-					if (entries.length === 0) return "{}";
-					return entries.map(([k, v]) => {
-						const value = jsonToYaml(v, indent + 1);
-						if (typeof v === "object" && v !== null && !Array.isArray(v) && Object.keys(v).length > 0) return `${spaces}${k}:\n${value}`;
-						return `${spaces}${k}: ${value}`;
-					}).join("\n");
-				}
-				return String(obj);
-			}
-			function yamlToJson(yaml) {
-				const lines = yaml.split("\n");
-				const result = {};
-				const stack = [{
-					obj: result,
-					indent: -2
-				}];
-				for (const line of lines) {
-					if (!line.trim() || line.trim().startsWith("#")) continue;
-					const match = line.match(/^(\s*)(\w+):\s*(.*)$/);
-					if (!match) continue;
-					const indent = match[1].length;
-					const key = match[2];
-					let value = match[3].trim();
-					if (value === "" || value === "{}") value = {};
-					else if (value === "[]") value = [];
-					else if (value === "true") value = true;
-					else if (value === "false") value = false;
-					else if (value === "null") value = null;
-					else if (/^-?\d+(\.\d+)?$/.test(value)) value = Number(value);
-					else if (value.startsWith("\"") && value.endsWith("\"")) value = value.slice(1, -1);
-					while (stack.length > 1 && stack[stack.length - 1].indent >= indent) stack.pop();
-					const parent = stack[stack.length - 1].obj;
-					parent[key] = value;
-					if (typeof value === "object" && value !== null) stack.push({
-						obj: value,
-						indent
-					});
-				}
-				return result;
-			}
-			function save() {
-				if (!localRule.processing) localRule.processing = {};
-				localRule.processing.removeAds = processingOptions.removeAds;
-				localRule.processing.fixImages = processingOptions.fixImages;
-				localRule.processing.useRawContent = processingOptions.useRawContent;
-				const beforeParse = hookBeforeParse.value.trim();
-				if (beforeParse) {
-					if (!localRule.hooks) localRule.hooks = {};
-					localRule.hooks.beforeParse = beforeParse;
-				} else if (localRule.hooks?.beforeParse) {
-					delete localRule.hooks.beforeParse;
-					if (Object.keys(localRule.hooks).length === 0) delete localRule.hooks;
-				}
-				if (customCSS.value) {
-					if (!localRule.style) localRule.style = {};
-					localRule.style.customCSS = customCSS.value;
-				}
-				if (!localRule.meta) localRule.meta = {};
-				localRule.meta.source = "user";
-				localRule.meta.updated = Date.now();
-				localRule.version = (localRule.version || 0) + 1;
-				const plainRule = JSON.parse(JSON.stringify(toRaw(localRule)));
-				emit("save", plainRule);
-			}
-			watch(activeTab, (tab) => {
-				if (tab === "code") updateCodeFromRule();
-			});
-			watch(codeFormat, () => {
-				updateCodeFromRule();
-			});
-			return (_ctx, _cache) => {
-				return openBlock(), createElementBlock("div", { class: normalizeClass(["mnr-rule-editor", { "mnr-editor-hidden": pickerActive.value }]) }, [
-					createBaseVNode("div", _hoisted_1$1, [
-						createBaseVNode("h3", _hoisted_2$1, toDisplayString(isNew.value ? "创建规则" : "编辑规则"), 1),
-						_cache[22] || (_cache[22] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "E", -1)),
-						createBaseVNode("div", _hoisted_3$1, [(openBlock(), createElementBlock(Fragment, null, renderList(tabs, (tab) => {
-							return createBaseVNode("button", {
-								key: tab.id,
-								class: normalizeClass(["mnr-tab-btn", { active: activeTab.value === tab.id }]),
-								onClick: ($event) => activeTab.value = tab.id
-							}, toDisplayString(tab.label), 11, _hoisted_4$1);
-						}), 64))])
-					]),
-					withDirectives(createBaseVNode("div", _hoisted_5$1, [
-						createBaseVNode("div", _hoisted_6$1, [
-							_cache[26] || (_cache[26] = createBaseVNode("h4", { class: "mnr-section-title" }, "基本信息", -1)),
-							createBaseVNode("div", _hoisted_7$1, [_cache[23] || (_cache[23] = createBaseVNode("label", null, "规则名称", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => localRule.name = $event),
-								type: "text",
-								placeholder: "例如: 起点中文网"
-							}, null, 512), [[vModelText, localRule.name]])]),
-							createBaseVNode("div", _hoisted_8$1, [
-								_cache[24] || (_cache[24] = createBaseVNode("label", null, "URL 匹配模式", -1)),
-								withDirectives(createBaseVNode("input", {
-									"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => localRule.match.pattern = $event),
-									type: "text",
-									placeholder: "正则表达式，例如: ^https://www\\\\.example\\\\.com/"
-								}, null, 512), [[vModelText, localRule.match.pattern]]),
-								_cache[25] || (_cache[25] = createBaseVNode("span", { class: "mnr-hint" }, "正则表达式，匹配当前页面 URL", -1))
-							])
-						]),
-						createBaseVNode("div", _hoisted_9$1, [
-							_cache[29] || (_cache[29] = createBaseVNode("h4", { class: "mnr-section-title" }, "内容选择器", -1)),
-							createVNode(SelectorPreview_default, {
-								selector: localRule.content.selector,
-								"onUpdate:selector": _cache[2] || (_cache[2] = ($event) => localRule.content.selector = $event),
-								label: "正文内容",
-								"show-preview": true,
-								"preview-type": "html",
-								onPick: _cache[3] || (_cache[3] = ($event) => startPicking("content"))
-							}, null, 8, ["selector"]),
-							createBaseVNode("div", _hoisted_10, [
-								_cache[27] || (_cache[27] = createBaseVNode("label", null, "移除元素", -1)),
-								withDirectives(createBaseVNode("input", {
-									"onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => localRule.content.remove = $event),
-									type: "text",
-									placeholder: "例如: .ad, .comment, script"
-								}, null, 512), [[vModelText, localRule.content.remove]]),
-								_cache[28] || (_cache[28] = createBaseVNode("span", { class: "mnr-hint" }, "要从内容中移除的元素选择器，逗号分隔", -1))
-							])
-						]),
-						createBaseVNode("div", _hoisted_11, [
-							_cache[30] || (_cache[30] = createBaseVNode("h4", { class: "mnr-section-title" }, "导航链接", -1)),
-							createVNode(SelectorPreview_default, {
-								selector: navPrev.value,
-								"onUpdate:selector": _cache[5] || (_cache[5] = ($event) => navPrev.value = $event),
-								label: "上一章",
-								"show-preview": false,
-								onPick: _cache[6] || (_cache[6] = ($event) => startPicking("prev"))
-							}, null, 8, ["selector"]),
-							createVNode(SelectorPreview_default, {
-								selector: navNext.value,
-								"onUpdate:selector": _cache[7] || (_cache[7] = ($event) => navNext.value = $event),
-								label: "下一章",
-								"show-preview": false,
-								onPick: _cache[8] || (_cache[8] = ($event) => startPicking("next"))
-							}, null, 8, ["selector"]),
-							createVNode(SelectorPreview_default, {
-								selector: navIndex.value,
-								"onUpdate:selector": _cache[9] || (_cache[9] = ($event) => navIndex.value = $event),
-								label: "目录",
-								"show-preview": false,
-								onPick: _cache[10] || (_cache[10] = ($event) => startPicking("index"))
-							}, null, 8, ["selector"])
-						]),
-						createBaseVNode("div", _hoisted_12, [_cache[31] || (_cache[31] = createBaseVNode("h4", { class: "mnr-section-title" }, "标题", -1)), createVNode(SelectorPreview_default, {
-							selector: titleSelector.value,
-							"onUpdate:selector": _cache[11] || (_cache[11] = ($event) => titleSelector.value = $event),
-							label: "章节标题",
-							"show-preview": true,
-							"preview-type": "text",
-							onPick: _cache[12] || (_cache[12] = ($event) => startPicking("title"))
-						}, null, 8, ["selector"])])
-					], 512), [[vShow, activeTab.value === "visual"]]),
-					withDirectives(createBaseVNode("div", _hoisted_13, [
-						createBaseVNode("div", _hoisted_14, [
-							withDirectives(createBaseVNode("select", {
-								"onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => codeFormat.value = $event),
-								class: "mnr-format-select"
-							}, [..._cache[32] || (_cache[32] = [createBaseVNode("option", { value: "json" }, "JSON", -1), createBaseVNode("option", { value: "yaml" }, "YAML", -1)])], 512), [[vModelSelect, codeFormat.value]]),
-							createBaseVNode("button", {
-								class: "mnr-toolbar-btn",
-								onClick: formatCode
-							}, "格式化"),
-							createBaseVNode("button", {
-								class: "mnr-toolbar-btn",
-								onClick: validateCode
-							}, "验证")
-						]),
-						withDirectives(createBaseVNode("textarea", {
-							"onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => codeContent.value = $event),
-							class: "mnr-code-editor",
-							spellcheck: "false",
-							onBlur: parseCode
-						}, null, 544), [[vModelText, codeContent.value]]),
-						codeError.value ? (openBlock(), createElementBlock("div", _hoisted_15, toDisplayString(codeError.value), 1)) : createCommentVNode("", true)
-					], 512), [[vShow, activeTab.value === "code"]]),
-					withDirectives(createBaseVNode("div", _hoisted_16, [
-						createBaseVNode("div", _hoisted_17, [
-							_cache[36] || (_cache[36] = createBaseVNode("h4", { class: "mnr-section-title" }, "处理选项", -1)),
-							createBaseVNode("label", _hoisted_18, [withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => processingOptions.removeAds = $event),
-								type: "checkbox"
-							}, null, 512), [[vModelCheckbox, processingOptions.removeAds]]), _cache[33] || (_cache[33] = createBaseVNode("span", null, "移除广告", -1))]),
-							createBaseVNode("label", _hoisted_19, [withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => processingOptions.fixImages = $event),
-								type: "checkbox"
-							}, null, 512), [[vModelCheckbox, processingOptions.fixImages]]), _cache[34] || (_cache[34] = createBaseVNode("span", null, "修复图片", -1))]),
-							createBaseVNode("label", _hoisted_20, [withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => processingOptions.useRawContent = $event),
-								type: "checkbox"
-							}, null, 512), [[vModelCheckbox, processingOptions.useRawContent]]), _cache[35] || (_cache[35] = createBaseVNode("span", null, "使用原始内容（不处理）", -1))])
-						]),
-						createBaseVNode("div", _hoisted_21, [_cache[38] || (_cache[38] = createBaseVNode("h4", { class: "mnr-section-title" }, "自定义钩子", -1)), createBaseVNode("div", _hoisted_22, [_cache[37] || (_cache[37] = createBaseVNode("label", null, "解析前执行 (beforeParse)", -1)), withDirectives(createBaseVNode("textarea", {
-							"onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => hookBeforeParse.value = $event),
-							class: "mnr-hook-editor",
-							placeholder: "// JavaScript 代码，参数: doc, url, helpers"
-						}, null, 512), [[vModelText, hookBeforeParse.value]])])]),
-						createBaseVNode("div", _hoisted_23, [_cache[39] || (_cache[39] = createBaseVNode("h4", { class: "mnr-section-title" }, "自定义 CSS", -1)), createBaseVNode("div", _hoisted_24, [withDirectives(createBaseVNode("textarea", {
-							"onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => customCSS.value = $event),
-							class: "mnr-css-editor",
-							placeholder: "/* 自定义样式 */"
-						}, null, 512), [[vModelText, customCSS.value]])])])
-					], 512), [[vShow, activeTab.value === "advanced"]]),
-					createBaseVNode("div", _hoisted_25, [createBaseVNode("button", {
-						class: "mnr-btn mnr-btn-secondary",
-						onClick: _cache[20] || (_cache[20] = ($event) => _ctx.$emit("cancel"))
-					}, "取消"), createBaseVNode("button", {
-						class: "mnr-btn mnr-btn-primary",
-						disabled: !isValid.value,
-						onClick: save
-					}, "保存规则", 8, _hoisted_26)]),
-					createVNode(ElementPicker_default, {
-						active: pickerActive.value,
-						"onUpdate:active": _cache[21] || (_cache[21] = ($event) => pickerActive.value = $event),
-						mode: pickerMode.value,
-						onSelect: handlePickerSelect,
-						onCancel: handlePickerCancel
-					}, null, 8, ["active", "mode"])
-				], 2);
-			};
-		}
-	}), [["__scopeId", "data-v-0ee14539"]]);
 	var _hoisted_1 = {
 		key: 0,
 		class: "mnr-loading-prev"
@@ -21800,48 +20375,24 @@ ul, ol {
 	};
 	var _hoisted_7 = { class: "mnr-chapter-nav" };
 	var _hoisted_8 = ["href"];
-	var _hoisted_9 = { class: "mnr-rule-editor-container" };
 	var SCROLL_BOUNDARY_EPSILON_PX = 4;
 	var ReaderView_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "ReaderView",
 		setup(__props) {
 			const readerStore = useReaderStore();
 			const configStore = useConfigStore();
-			const ruleStore = useRuleStore();
 			const mainRef = ref(null);
 			const topSentinel = ref(null);
 			const bottomSentinel = ref(null);
 			const isNavigating = ref(false);
 			const showControls = ref(true);
 			const chapterRefs = new Map();
-			const { settingsVisible, ruleEditorVisible, isPickerActive, drawerOpen, currentRule, currentDomain, toggleDrawer, openSettings, openRuleEditor, handleRuleSave, handleRuleReset, handleEscape, toggleSettings, toggleRuleEditor } = useReaderUIControls({
+			const { settingsVisible, drawerOpen, toggleDrawer, openSettings, handleEscape, toggleSettings } = useReaderUIControls({
 				readerStore,
-				ruleStore,
 				showControls
 			});
 			let topObserver = null;
 			let bottomObserver = null;
-			watch(isPickerActive, (active) => {
-				const hideStyle = document.getElementById("mnr-hide-original");
-				const readerRoot = document.getElementById("mnr-reader-root");
-				if (active) {
-					if (hideStyle) {
-						hideStyle.setAttribute("data-disabled", "true");
-						hideStyle.textContent = "";
-					}
-					if (readerRoot) readerRoot.style.display = "none";
-				} else {
-					if (hideStyle && hideStyle.hasAttribute("data-disabled")) {
-						hideStyle.removeAttribute("data-disabled");
-						hideStyle.textContent = `
-        body > *:not(#mnr-reader-root):not(#mnr-prompt-root):not(script):not(style) {
-          display: none !important;
-        }
-      `;
-					}
-					if (readerRoot) readerRoot.style.display = "";
-				}
-			});
 			const chapters = computed(() => readerStore.chapters);
 			const { visibleChapters, topSpacer, bottomSpacer, heights: chapterHeights, averageHeight, setHeight: setChapterHeight, updateWindow } = useVirtualChapters(chapters, {
 				windowSize: 5,
@@ -21904,7 +20455,7 @@ ul, ol {
 				updateWindow
 			});
 			const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
-				enabled: computed(() => configStore.behavior.swipeGestures && !isPickerActive.value),
+				enabled: computed(() => configStore.behavior.swipeGestures),
 				onSwipeLeft: () => void navigateChapter("next"),
 				onSwipeRight: () => void navigateChapter("prev")
 			});
@@ -22024,7 +20575,7 @@ ul, ol {
 			function exitReader() {
 				closeReader();
 			}
-			const keyboardEnabled = computed(() => configStore.behavior.keyboardNavigation && !isPickerActive.value);
+			const keyboardEnabled = computed(() => configStore.behavior.keyboardNavigation);
 			useKeyboardShortcuts([
 				{
 					key: "escape",
@@ -22046,11 +20597,6 @@ ul, ol {
 				{
 					key: ["s", ","],
 					handler: toggleSettings,
-					preventDefault: true
-				},
-				{
-					key: "e",
-					handler: toggleRuleEditor,
 					preventDefault: true
 				},
 				{
@@ -22193,7 +20739,7 @@ ul, ol {
 							ref: topSentinel,
 							class: "mnr-sentinel"
 						}, null, 512),
-						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[5] || (_cache[5] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
+						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[3] || (_cache[3] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
 						createBaseVNode("div", { style: normalizeStyle({ height: `${unref(topSpacer)}px` }) }, null, 4),
 						(openBlock(true), createElementBlock(Fragment, null, renderList(unref(visibleChapters), (entry) => {
 							return openBlock(), createElementBlock("article", {
@@ -22212,8 +20758,8 @@ ul, ol {
 							ref: bottomSentinel,
 							class: "mnr-sentinel"
 						}, null, 512),
-						isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_5, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[6] || (_cache[6] = createBaseVNode("span", null, "加载下一章...", -1))])) : createCommentVNode("", true),
-						chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [_cache[7] || (_cache[7] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)), createBaseVNode("div", _hoisted_7, [indexUrl.value ? (openBlock(), createElementBlock("a", {
+						isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_5, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[4] || (_cache[4] = createBaseVNode("span", null, "加载下一章...", -1))])) : createCommentVNode("", true),
+						chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [_cache[5] || (_cache[5] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)), createBaseVNode("div", _hoisted_7, [indexUrl.value ? (openBlock(), createElementBlock("a", {
 							key: 0,
 							href: indexUrl.value,
 							class: "mnr-chapter-link index",
@@ -22222,34 +20768,12 @@ ul, ol {
 					], 512),
 					createVNode(SettingsPanel_default, {
 						visible: unref(settingsVisible),
-						domain: unref(currentDomain),
 						onClose: _cache[2] || (_cache[2] = ($event) => settingsVisible.value = false),
-						onEditRule: unref(openRuleEditor),
-						onResetRule: unref(handleRuleReset),
 						onTextConversionChange: handleTextConversionChange,
 						onCacheAll: handleCacheAll
-					}, null, 8, [
-						"visible",
-						"domain",
-						"onEditRule",
-						"onResetRule"
-					]),
-					unref(ruleEditorVisible) ? (openBlock(), createElementBlock("div", {
-						key: 1,
-						class: normalizeClass(["mnr-rule-editor-overlay", { "mnr-overlay-hidden": unref(isPickerActive) }])
-					}, [createBaseVNode("div", _hoisted_9, [createVNode(RuleEditorPanel_default, {
-						rule: unref(currentRule),
-						domain: unref(currentDomain),
-						onSave: unref(handleRuleSave),
-						onCancel: _cache[3] || (_cache[3] = ($event) => ruleEditorVisible.value = false),
-						onPickerStateChange: _cache[4] || (_cache[4] = ($event) => isPickerActive.value = $event)
-					}, null, 8, [
-						"rule",
-						"domain",
-						"onSave"
-					])])], 2)) : createCommentVNode("", true),
-					isLoading.value ? (openBlock(), createBlock(unref(MnrLoadingOverlay_default), { key: 2 }, {
-						default: withCtx(() => [..._cache[8] || (_cache[8] = [createBaseVNode("span", null, "加载中...", -1)])]),
+					}, null, 8, ["visible"]),
+					isLoading.value ? (openBlock(), createBlock(unref(MnrLoadingOverlay_default), { key: 1 }, {
+						default: withCtx(() => [..._cache[6] || (_cache[6] = [createBaseVNode("span", null, "加载中...", -1)])]),
 						_: 1
 					})) : createCommentVNode("", true),
 					createVNode(unref(MnrToast_default), {
@@ -22265,7 +20789,7 @@ ul, ol {
 				], 32);
 			};
 		}
-	}), [["__scopeId", "data-v-e6103b6b"]]);
+	}), [["__scopeId", "data-v-42bb1f20"]]);
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -22330,9 +20854,7 @@ ul, ol {
 		console.log(`[MNR] MyNovelReader v${VERSION} (${BUILD_DATE})`);
 		try {
 			pinia = createPinia();
-			const configStore = useConfigStore(pinia);
-			const ruleStore = useRuleStore(pinia);
-			await Promise.all([configStore.load(), ruleStore.initialize()]);
+			await useConfigStore(pinia).load();
 			appState.isInitialized = true;
 		} catch (e) {
 			console.error("[MNR] Initialization error:", e);
@@ -22382,7 +20904,7 @@ ul, ol {
 						cleanup();
 						resolve({
 							accepted: false,
-							saveForDomain: false
+							rememberForSite: false
 						});
 					}, 300);
 				};
@@ -22669,6 +21191,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-prompt-overlay[data-v-c89e5106]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-c89e5106]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-c89e5106;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-c89e5106{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-c89e5106]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-c89e5106]{font-size:28px}.mnr-prompt-title[data-v-c89e5106]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-c89e5106]{margin-bottom:16px}.mnr-confidence-bar[data-v-c89e5106]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-c89e5106]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-c89e5106]{background:#4caf50}.mnr-confidence-fill.medium[data-v-c89e5106]{background:#ff9800}.mnr-confidence-fill.low[data-v-c89e5106]{background:#f44336}.mnr-confidence-text[data-v-c89e5106]{color:#666;font-size:13px}.mnr-results[data-v-c89e5106]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-c89e5106]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-c89e5106]{color:#2e7d32}.mnr-result-item.warning[data-v-c89e5106]{color:#ed6c02}.mnr-result-icon[data-v-c89e5106]{font-weight:700}.mnr-checkbox-label[data-v-c89e5106]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-c89e5106]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-c89e5106]{gap:12px;display:flex}.mnr-btn[data-v-c89e5106]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-c89e5106]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-c89e5106]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-c89e5106]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-c89e5106]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-c89e5106],.mnr-fade-leave-active[data-v-c89e5106]{transition:opacity .3s}.mnr-fade-enter-from[data-v-c89e5106],.mnr-fade-leave-to[data-v-c89e5106]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-c89e5106]{background:#2a2a2a}.mnr-prompt-title[data-v-c89e5106]{color:#e0e0e0}.mnr-confidence-bar[data-v-c89e5106]{background:#444}.mnr-confidence-text[data-v-c89e5106]{color:#aaa}.mnr-checkbox-label[data-v-c89e5106]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-c89e5106]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-c89e5106]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-c89e5106]{margin:8px;padding:16px}.mnr-prompt-title[data-v-c89e5106]{font-size:16px}.mnr-btn[data-v-c89e5106]{padding:12px 16px}}.mnr-progress[data-v-16ecd1aa]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-16ecd1aa]{opacity:0}.mnr-progress-bar[data-v-16ecd1aa]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-16ecd1aa]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}.mnr-floating-toolbar[data-v-dffc57fa]{pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed;top:12px;left:12px;right:12px}.mnr-fab[data-v-dffc57fa]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-dffc57fa]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-dffc57fa]:active{transform:scale(.95)}.mnr-fab[data-v-dffc57fa]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-fab-group[data-v-dffc57fa]{gap:12px;display:flex}.mnr-fab-badge[data-v-dffc57fa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;line-height:1;position:absolute;top:-4px;right:-4px;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-dffc57fa]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-dffc57fa],.mnr-fade-slide-leave-active[data-v-dffc57fa]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-dffc57fa],.mnr-fade-slide-leave-to[data-v-dffc57fa]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-83d04cea]{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;bottom:32px;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-83d04cea]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-83d04cea],.mnr-toast-leave-active[data-v-83d04cea]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-83d04cea],.mnr-toast-leave-to[data-v-83d04cea]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-fe73b01a]{background:var(--mnr-bg,#fff);width:85%;max-width:320px;color:var(--mnr-text,#333);z-index:1001;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:0;bottom:0;left:0;transform:translate(-100%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;padding:16px;display:flex}.mnr-drawer-title[data-v-fe73b01a]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border:none;border-radius:50%;justify-content:center;align-items:center;font-size:18px;display:flex}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border,#e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{-webkit-overflow-scrolling:touch;flex:1;overflow-y:auto}.mnr-drawer-loading[data-v-fe73b01a]{color:var(--mnr-text,#666);flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:40px 20px;display:flex}.mnr-drawer-empty[data-v-fe73b01a]{text-align:center;color:var(--mnr-text,#666);opacity:.7;padding:40px 20px}.mnr-cache-progress-bar[data-v-fe73b01a]{background:var(--mnr-bg,#fff);border-bottom:1px solid var(--mnr-border,#e5e5e5);z-index:1;padding:12px 16px;position:sticky;top:0}.mnr-cache-progress-text[data-v-fe73b01a]{color:var(--mnr-link,#1976d2);margin-bottom:6px;font-size:12px}.mnr-cache-progress-track[data-v-fe73b01a]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{background:var(--mnr-link,#1976d2);border-radius:2px;height:100%;transition:width .3s}.mnr-cache-stats[data-v-fe73b01a]{border-bottom:1px solid var(--mnr-border,#e5e5e5);gap:12px;padding:8px 16px;font-size:12px;display:flex}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{margin:0;padding:8px 0;list-style:none}.mnr-chapter-list li[data-v-fe73b01a]{cursor:pointer;border-left:3px solid #0000;align-items:flex-start;gap:4px;padding:12px 16px;scroll-margin-block:24px;font-size:14px;line-height:1.4;transition:all .15s;display:flex}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{border-left-color:var(--mnr-link,#1976d2);color:var(--mnr-link,#1976d2);background:#1976d21a;font-weight:500}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;flex-shrink:0;margin-top:2px;font-size:12px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;flex-shrink:0;margin-top:2px;font-size:12px}@media (width>=1024px){.mnr-drawer[data-v-fe73b01a]{width:320px;max-width:320px}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{background:var(--mnr-bg,#fff);flex-direction:column;width:100%;max-width:360px;height:100%;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;padding:16px;display:flex}.mnr-settings-header h3{color:var(--mnr-text,#333);margin:0;font-size:18px}.mnr-shortcut-hint{background:var(--mnr-border,#e0e0e0);color:var(--mnr-text,#666);border-radius:4px;margin-left:auto;margin-right:12px;padding:2px 8px;font-family:monospace;font-size:12px}.mnr-close-btn{cursor:pointer;color:var(--mnr-text,#666);background:0 0;border:none;padding:4px 8px;font-size:20px}.mnr-settings-content{flex:1;padding:16px;overflow:auto}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{color:var(--mnr-text,#555);margin:0 0 12px;font-size:14px;font-weight:600}.mnr-theme-grid{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;padding:12px 8px;font-size:13px;transition:all .2s}.mnr-theme-btn.active{border-color:var(--mnr-link,#1976d2)}.mnr-slider-row{align-items:center;gap:12px;display:flex}.mnr-slider-label{text-align:center;white-space:nowrap;width:34px;color:var(--mnr-text,#666);flex:0 0 34px;line-height:1}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:auto;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:none;border-radius:50%;width:20px;height:20px}.mnr-slider-value{text-align:right;white-space:nowrap;width:64px;color:var(--mnr-text,#666);flex:0 0 64px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:6px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;border:none;flex:1;padding:10px 16px;font-size:14px;transition:all .2s}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border,#ddd)}.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-hint{color:var(--mnr-text,#888);opacity:.8;margin-top:8px;font-size:12px}.mnr-switch-row{cursor:pointer;color:var(--mnr-text,#333);justify-content:space-between;align-items:center;padding:10px 0;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-action-buttons{flex-direction:column;gap:8px;display:flex}.mnr-rule-row{gap:8px;display:flex}.mnr-rule-row .mnr-action-btn{flex:1}.mnr-cache-row{gap:8px;display:flex}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:6px;padding:12px;font-size:14px}.mnr-action-btn:hover{background:var(--mnr-border,#f5f5f5)}.mnr-action-btn--danger{color:#fff;background:#dc3545;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{opacity:.8;margin-left:4px}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-picker-overlay[data-v-69ce3430]{z-index:999999;pointer-events:none;position:fixed;inset:0}.mnr-picker-highlight[data-v-69ce3430]{pointer-events:none;box-sizing:border-box;z-index:999999;background:#1976d21a;border:2px solid #1976d2;transition:all 50ms;position:fixed}.mnr-picker-tooltip[data-v-69ce3430]{color:#fff;pointer-events:none;z-index:1000000;background:#333;border-radius:6px;max-width:400px;padding:8px 12px;font-family:monospace;font-size:12px;position:fixed;box-shadow:0 2px 8px #0000004d}.mnr-picker-tag[data-v-69ce3430]{color:#90caf9;margin-bottom:4px}.mnr-picker-selector[data-v-69ce3430]{color:#a5d6a7;word-break:break-all}.mnr-picker-controls[data-v-69ce3430]{color:#fff;pointer-events:auto;background:#1976d2;border-radius:8px;align-items:center;gap:16px;padding:12px 20px;font-size:14px;display:flex;position:fixed;bottom:20px;left:50%;transform:translate(-50%);box-shadow:0 4px 12px #0000004d}.mnr-picker-label[data-v-69ce3430]{font-weight:600}.mnr-picker-hint[data-v-69ce3430]{opacity:.8;font-size:12px}.mnr-picker-cancel[data-v-69ce3430]{color:#fff;cursor:pointer;background:#fff3;border:none;border-radius:4px;padding:6px 12px;font-size:13px}.mnr-picker-cancel[data-v-69ce3430]:hover{background:#ffffff4d}@media (width<=480px){.mnr-picker-controls[data-v-69ce3430]{flex-wrap:wrap;justify-content:center;left:10px;right:10px;transform:none}}.mnr-selector-preview[data-v-26d93800]{background:var(--mnr-border,#f8f9fa);border-radius:8px;margin-bottom:12px;padding:12px}.mnr-preview-header[data-v-26d93800]{justify-content:space-between;align-items:center;margin-bottom:8px;display:flex}.mnr-preview-label[data-v-26d93800]{color:var(--mnr-text,#555);font-size:13px;font-weight:600}.mnr-preview-actions[data-v-26d93800]{gap:4px;display:flex}.mnr-preview-btn[data-v-26d93800]{border:1px solid var(--mnr-border,#ddd);cursor:pointer;color:var(--mnr-text,#666);background:0 0;border-radius:4px;padding:4px 8px;font-size:12px}.mnr-preview-btn[data-v-26d93800]:hover:not(:disabled){opacity:.8}.mnr-preview-btn[data-v-26d93800]:disabled{opacity:.5;cursor:not-allowed}.mnr-preview-btn.mnr-btn-active[data-v-26d93800]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);border-color:var(--mnr-link,#1976d2)}.mnr-preview-input-row[data-v-26d93800]{margin-bottom:8px}.mnr-preview-input[data-v-26d93800]{border:1px solid var(--mnr-border,#ddd);box-sizing:border-box;background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:13px}.mnr-preview-input[data-v-26d93800]:focus{border-color:var(--mnr-link,#1976d2);outline:none}.mnr-preview-selector[data-v-26d93800]{color:var(--mnr-text,#666);font-family:monospace;font-size:13px}.mnr-preview-match[data-v-26d93800]{border-radius:4px;margin-bottom:8px;padding:6px 10px;font-size:12px}.mnr-preview-match.success[data-v-26d93800]{color:#2e7d32;background:#e8f5e9}.mnr-preview-match.warning[data-v-26d93800]{color:#e65100;background:#fff3e0}.mnr-preview-match.error[data-v-26d93800]{color:#c62828;background:#ffebee}.mnr-preview-content[data-v-26d93800]{border-top:1px solid var(--mnr-border,#e0e0e0);padding-top:8px}.mnr-preview-content-header[data-v-26d93800]{color:var(--mnr-text,#666);justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;display:flex}.mnr-preview-expand[data-v-26d93800]{color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border:none;font-size:12px}.mnr-preview-text[data-v-26d93800]{color:var(--mnr-text,#444);background:var(--mnr-bg,#fff);border:1px solid var(--mnr-border,#e0e0e0);border-radius:4px;max-height:80px;padding:8px;font-size:12px;line-height:1.5;overflow:hidden}.mnr-preview-text.expanded[data-v-26d93800]{max-height:300px;overflow:auto}.mnr-highlight-overlay{pointer-events:none;z-index:999998;width:100%;height:100%;position:absolute;top:0;left:0}.mnr-highlight-box{box-sizing:border-box;background:#4caf5026;border:3px solid #4caf50;transition:all .15s}.mnr-highlight-label{color:#fff;background:#4caf50;border-radius:4px 4px 0 0;padding:2px 8px;font-family:sans-serif;font-size:12px;font-weight:600;position:absolute;top:-24px;left:0}.mnr-rule-editor[data-v-0ee14539]{background:var(--mnr-bg,#fff);height:100%;color:var(--mnr-text,#333);flex-direction:column;transition:opacity .2s,transform .2s;display:flex}.mnr-rule-editor.mnr-editor-hidden[data-v-0ee14539]{opacity:0;pointer-events:none;transform:translate(-100%)}.mnr-editor-header[data-v-0ee14539]{border-bottom:1px solid var(--mnr-border,#e0e0e0);padding:16px;position:relative}.mnr-editor-title[data-v-0ee14539]{color:var(--mnr-text,#333);margin:0 0 12px;font-size:18px;font-weight:600}.mnr-shortcut-hint[data-v-0ee14539]{background:var(--mnr-border,#e0e0e0);color:var(--mnr-text,#666);border-radius:4px;padding:2px 8px;font-family:monospace;font-size:12px;position:absolute;top:16px;right:16px}.mnr-editor-tabs[data-v-0ee14539]{gap:4px;display:flex}.mnr-tab-btn[data-v-0ee14539]{background:var(--mnr-border,#f5f5f5);cursor:pointer;color:var(--mnr-text,#666);border:none;border-radius:6px;padding:8px 16px;font-size:14px}.mnr-tab-btn.active[data-v-0ee14539]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-editor-content[data-v-0ee14539]{flex:1;padding:16px;overflow:auto}.mnr-form-section[data-v-0ee14539]{margin-bottom:24px}.mnr-section-title[data-v-0ee14539]{color:var(--mnr-text,#333);border-bottom:1px solid var(--mnr-border,#e0e0e0);margin:0 0 12px;padding-bottom:8px;font-size:14px;font-weight:600}.mnr-form-group[data-v-0ee14539]{margin-bottom:16px}.mnr-form-group label[data-v-0ee14539]{color:var(--mnr-text,#555);margin-bottom:6px;font-size:13px;font-weight:500;display:block}.mnr-form-group input[data-v-0ee14539],.mnr-form-group textarea[data-v-0ee14539]{border:1px solid var(--mnr-border,#ddd);box-sizing:border-box;background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:6px;padding:10px 12px;font-size:14px}.mnr-form-group input[data-v-0ee14539]:focus,.mnr-form-group textarea[data-v-0ee14539]:focus{border-color:var(--mnr-link,#1976d2);outline:none}.mnr-hint[data-v-0ee14539]{color:var(--mnr-text,#888);opacity:.7;margin-top:4px;font-size:12px;display:block}.mnr-checkbox-row[data-v-0ee14539]{cursor:pointer;align-items:center;gap:8px;padding:8px 0;display:flex}.mnr-checkbox-row input[data-v-0ee14539]{width:18px;height:18px}.mnr-code-toolbar[data-v-0ee14539]{gap:8px;margin-bottom:8px;display:flex}.mnr-format-select[data-v-0ee14539]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:4px;padding:6px 12px;font-size:13px}.mnr-toolbar-btn[data-v-0ee14539]{background:var(--mnr-border,#f5f5f5);border:1px solid var(--mnr-border,#ddd);cursor:pointer;color:var(--mnr-text,#333);border-radius:4px;padding:6px 12px;font-size:13px}.mnr-toolbar-btn[data-v-0ee14539]:hover{opacity:.8}.mnr-code-editor[data-v-0ee14539]{border:1px solid var(--mnr-border,#ddd);resize:vertical;box-sizing:border-box;background:var(--mnr-bg,#fff);width:100%;min-height:400px;color:var(--mnr-text,#333);border-radius:6px;padding:12px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-code-error[data-v-0ee14539]{color:#c62828;background:#ffebee;border-radius:4px;margin-top:8px;padding:8px 12px;font-size:13px}.mnr-hook-editor[data-v-0ee14539],.mnr-css-editor[data-v-0ee14539]{min-height:100px;font-family:Fira Code,Monaco,monospace;font-size:13px;line-height:1.5}.mnr-editor-footer[data-v-0ee14539]{border-top:1px solid var(--mnr-border,#e0e0e0);justify-content:flex-end;gap:12px;padding:16px;display:flex}.mnr-btn[data-v-0ee14539]{cursor:pointer;border:none;border-radius:6px;padding:10px 20px;font-size:14px;font-weight:500}.mnr-btn-secondary[data-v-0ee14539]{background:var(--mnr-border,#f5f5f5);color:var(--mnr-text,#666)}.mnr-btn-primary[data-v-0ee14539]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-0ee14539]:disabled{opacity:.5;cursor:not-allowed}.mnr-reader[data-v-e6103b6b]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-e6103b6b]{overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;padding-top:68px;padding-bottom:40px;overflow:auto}.mnr-reader-content[data-v-e6103b6b]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,.05em);margin:0 auto}.mnr-reader-content[data-v-e6103b6b] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-e6103b6b] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-e6103b6b] a{color:var(--mnr-link,#1976d2)}.mnr-chapter-title[data-v-e6103b6b]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-e6103b6b]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-e6103b6b]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e6103b6b]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-e6103b6b]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-e6103b6b]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-e6103b6b]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-e6103b6b],.mnr-loading-next[data-v-e6103b6b]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-e6103b6b]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-e6103b6b]{padding:40px}}.mnr-rule-editor-overlay[data-v-e6103b6b]{z-index:10001;background:#00000080;justify-content:center;align-items:center;padding:20px;transition:opacity .2s,visibility .2s;display:flex;position:fixed;inset:0}.mnr-rule-editor-overlay.mnr-overlay-hidden[data-v-e6103b6b]{opacity:0;visibility:hidden;pointer-events:none}.mnr-rule-editor-container[data-v-e6103b6b]{background:var(--mnr-bg,#fff);border-radius:8px;width:100%;max-width:800px;max-height:90vh;overflow:auto;box-shadow:0 4px 20px #0000004d}\n/*$vite$:1*/", {});
+		})(".mnr-prompt-overlay[data-v-9a2b7cf4]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-9a2b7cf4]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-9a2b7cf4;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-9a2b7cf4{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-9a2b7cf4]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-9a2b7cf4]{font-size:28px}.mnr-prompt-title[data-v-9a2b7cf4]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-9a2b7cf4]{margin-bottom:16px}.mnr-confidence-bar[data-v-9a2b7cf4]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-9a2b7cf4]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-9a2b7cf4]{background:#4caf50}.mnr-confidence-fill.medium[data-v-9a2b7cf4]{background:#ff9800}.mnr-confidence-fill.low[data-v-9a2b7cf4]{background:#f44336}.mnr-confidence-text[data-v-9a2b7cf4]{color:#666;font-size:13px}.mnr-results[data-v-9a2b7cf4]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-9a2b7cf4]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-9a2b7cf4]{color:#2e7d32}.mnr-result-item.warning[data-v-9a2b7cf4]{color:#ed6c02}.mnr-result-icon[data-v-9a2b7cf4]{font-weight:700}.mnr-checkbox-label[data-v-9a2b7cf4]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-9a2b7cf4]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-9a2b7cf4]{gap:12px;display:flex}.mnr-btn[data-v-9a2b7cf4]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-9a2b7cf4]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-9a2b7cf4]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-9a2b7cf4]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-9a2b7cf4]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-9a2b7cf4],.mnr-fade-leave-active[data-v-9a2b7cf4]{transition:opacity .3s}.mnr-fade-enter-from[data-v-9a2b7cf4],.mnr-fade-leave-to[data-v-9a2b7cf4]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-9a2b7cf4]{background:#2a2a2a}.mnr-prompt-title[data-v-9a2b7cf4]{color:#e0e0e0}.mnr-confidence-bar[data-v-9a2b7cf4]{background:#444}.mnr-confidence-text[data-v-9a2b7cf4]{color:#aaa}.mnr-checkbox-label[data-v-9a2b7cf4]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-9a2b7cf4]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-9a2b7cf4]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-9a2b7cf4]{margin:8px;padding:16px}.mnr-prompt-title[data-v-9a2b7cf4]{font-size:16px}.mnr-btn[data-v-9a2b7cf4]{padding:12px 16px}}.mnr-progress[data-v-16ecd1aa]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-16ecd1aa]{opacity:0}.mnr-progress-bar[data-v-16ecd1aa]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-16ecd1aa]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}.mnr-floating-toolbar[data-v-dffc57fa]{pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed;top:12px;left:12px;right:12px}.mnr-fab[data-v-dffc57fa]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-dffc57fa]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-dffc57fa]:active{transform:scale(.95)}.mnr-fab[data-v-dffc57fa]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-fab-group[data-v-dffc57fa]{gap:12px;display:flex}.mnr-fab-badge[data-v-dffc57fa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;line-height:1;position:absolute;top:-4px;right:-4px;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-dffc57fa]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-dffc57fa],.mnr-fade-slide-leave-active[data-v-dffc57fa]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-dffc57fa],.mnr-fade-slide-leave-to[data-v-dffc57fa]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-83d04cea]{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;bottom:32px;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-83d04cea]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-83d04cea],.mnr-toast-leave-active[data-v-83d04cea]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-83d04cea],.mnr-toast-leave-to[data-v-83d04cea]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-fe73b01a]{background:var(--mnr-bg,#fff);width:85%;max-width:320px;color:var(--mnr-text,#333);z-index:1001;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:0;bottom:0;left:0;transform:translate(-100%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;padding:16px;display:flex}.mnr-drawer-title[data-v-fe73b01a]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border:none;border-radius:50%;justify-content:center;align-items:center;font-size:18px;display:flex}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border,#e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{-webkit-overflow-scrolling:touch;flex:1;overflow-y:auto}.mnr-drawer-loading[data-v-fe73b01a]{color:var(--mnr-text,#666);flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:40px 20px;display:flex}.mnr-drawer-empty[data-v-fe73b01a]{text-align:center;color:var(--mnr-text,#666);opacity:.7;padding:40px 20px}.mnr-cache-progress-bar[data-v-fe73b01a]{background:var(--mnr-bg,#fff);border-bottom:1px solid var(--mnr-border,#e5e5e5);z-index:1;padding:12px 16px;position:sticky;top:0}.mnr-cache-progress-text[data-v-fe73b01a]{color:var(--mnr-link,#1976d2);margin-bottom:6px;font-size:12px}.mnr-cache-progress-track[data-v-fe73b01a]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{background:var(--mnr-link,#1976d2);border-radius:2px;height:100%;transition:width .3s}.mnr-cache-stats[data-v-fe73b01a]{border-bottom:1px solid var(--mnr-border,#e5e5e5);gap:12px;padding:8px 16px;font-size:12px;display:flex}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{margin:0;padding:8px 0;list-style:none}.mnr-chapter-list li[data-v-fe73b01a]{cursor:pointer;border-left:3px solid #0000;align-items:flex-start;gap:4px;padding:12px 16px;scroll-margin-block:24px;font-size:14px;line-height:1.4;transition:all .15s;display:flex}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{border-left-color:var(--mnr-link,#1976d2);color:var(--mnr-link,#1976d2);background:#1976d21a;font-weight:500}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;flex-shrink:0;margin-top:2px;font-size:12px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;flex-shrink:0;margin-top:2px;font-size:12px}@media (width>=1024px){.mnr-drawer[data-v-fe73b01a]{width:320px;max-width:320px}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{background:var(--mnr-bg,#fff);flex-direction:column;width:100%;max-width:360px;height:100%;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;padding:16px;display:flex}.mnr-settings-header h3{color:var(--mnr-text,#333);margin:0;font-size:18px}.mnr-shortcut-hint{background:var(--mnr-border,#e0e0e0);color:var(--mnr-text,#666);border-radius:4px;margin-left:auto;margin-right:12px;padding:2px 8px;font-family:monospace;font-size:12px}.mnr-close-btn{cursor:pointer;color:var(--mnr-text,#666);background:0 0;border:none;padding:4px 8px;font-size:20px}.mnr-settings-content{flex:1;padding:16px;overflow:auto}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{color:var(--mnr-text,#555);margin:0 0 12px;font-size:14px;font-weight:600}.mnr-theme-grid{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;padding:12px 8px;font-size:13px;transition:all .2s}.mnr-theme-btn.active{border-color:var(--mnr-link,#1976d2)}.mnr-slider-row{align-items:center;gap:12px;display:flex}.mnr-slider-label{text-align:center;white-space:nowrap;width:34px;color:var(--mnr-text,#666);flex:0 0 34px;line-height:1}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:auto;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:none;border-radius:50%;width:20px;height:20px}.mnr-slider-value{text-align:right;white-space:nowrap;width:64px;color:var(--mnr-text,#666);flex:0 0 64px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:6px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;border:none;flex:1;padding:10px 16px;font-size:14px;transition:all .2s}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border,#ddd)}.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-hint{color:var(--mnr-text,#888);opacity:.8;margin-top:8px;font-size:12px}.mnr-switch-row{cursor:pointer;color:var(--mnr-text,#333);justify-content:space-between;align-items:center;padding:10px 0;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-action-buttons{flex-direction:column;gap:8px;display:flex}.mnr-cache-row{gap:8px;display:flex}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:6px;padding:12px;font-size:14px}.mnr-action-btn:hover{background:var(--mnr-border,#f5f5f5)}.mnr-action-btn--danger{color:#fff;background:#dc3545;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{opacity:.8;margin-left:4px}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-reader[data-v-42bb1f20]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-42bb1f20]{overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;padding-top:68px;padding-bottom:40px;overflow:auto}.mnr-reader-content[data-v-42bb1f20]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,.05em);margin:0 auto}.mnr-reader-content[data-v-42bb1f20] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-42bb1f20] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-42bb1f20] a{color:var(--mnr-link,#1976d2)}.mnr-chapter-title[data-v-42bb1f20]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-42bb1f20]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-42bb1f20]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-42bb1f20]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-42bb1f20]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-42bb1f20]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-42bb1f20]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-42bb1f20],.mnr-loading-next[data-v-42bb1f20]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-42bb1f20]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-42bb1f20]{padding:40px}}\n/*$vite$:1*/", {});
 	})();
 })();

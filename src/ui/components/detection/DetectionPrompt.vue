@@ -36,7 +36,7 @@
 
         <!-- Auto-enable checkbox -->
         <label class="mnr-checkbox-label">
-          <input v-model="saveForDomain" type="checkbox" class="mnr-checkbox" />
+          <input v-model="rememberForSite" type="checkbox" class="mnr-checkbox" />
           <span>为此站点自动启用</span>
         </label>
 
@@ -67,7 +67,7 @@ const emit = defineEmits<{
 }>();
 
 // State
-const saveForDomain = ref(true);
+const rememberForSite = ref(true);
 
 // Computed
 const confidence = computed(() => props.decision.confidence);
@@ -94,14 +94,14 @@ const negativeReasons = computed(() => {
 function handleAccept() {
   emit('respond', {
     accepted: true,
-    saveForDomain: saveForDomain.value,
+    rememberForSite: rememberForSite.value,
   });
 }
 
 function handleDismiss() {
   emit('respond', {
     accepted: false,
-    saveForDomain: false,
+    rememberForSite: false,
   });
   emit('dismiss');
 }

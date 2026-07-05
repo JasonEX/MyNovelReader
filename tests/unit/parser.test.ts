@@ -143,10 +143,12 @@ describe('Parser', () => {
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
       hooks: {
-        beforeParse:
-          "const t = await helpers.fetchText('https://cross.origin.test/data'); doc.body.setAttribute('data-fetched', t || '');",
+        beforeParse: async (doc, _url, helpers) => {
+          const t = await helpers?.fetchText('https://cross.origin.test/data');
+          doc.body.setAttribute('data-fetched', t || '');
+        },
       },
-      meta: { source: 'user' },
+      meta: { source: 'builtin' },
     };
 
     const runBeforeParseHook = (
@@ -175,10 +177,12 @@ describe('Parser', () => {
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
       hooks: {
-        beforeParse:
-          "const t = await helpers.fetchText('http://127.0.0.1/private'); doc.body.setAttribute('data-fetched', String(t));",
+        beforeParse: async (doc, _url, helpers) => {
+          const t = await helpers?.fetchText('http://127.0.0.1/private');
+          doc.body.setAttribute('data-fetched', String(t));
+        },
       },
-      meta: { source: 'user' },
+      meta: { source: 'builtin' },
     };
 
     const runBeforeParseHook = (
@@ -206,9 +210,11 @@ describe('Parser', () => {
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
       hooks: {
-        beforeParse: 'throw new Error("boom")',
+        beforeParse: () => {
+          throw new Error('boom');
+        },
       },
-      meta: { source: 'user' },
+      meta: { source: 'builtin' },
     };
 
     const runBeforeParseHook = (
@@ -238,12 +244,12 @@ describe('Parser', () => {
       version: 1,
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
-      meta: { source: 'user' },
+      meta: { source: 'builtin' },
     };
 
     mockMatchRule.mockResolvedValue({
       rule,
-      source: 'user',
+      source: 'builtin',
       matchedPattern: '.*',
     });
 
@@ -276,10 +282,10 @@ describe('Parser', () => {
         fixImages: false,
         useRawContent: true,
       },
-      meta: { source: 'user' },
+      meta: { source: 'builtin' },
     };
 
-    mockMatchRule.mockResolvedValue({ rule, source: 'user', matchedPattern: '.*' });
+    mockMatchRule.mockResolvedValue({ rule, source: 'builtin', matchedPattern: '.*' });
 
     const out = await parser.parse(dom.window.document, dom.window.location.href);
 
@@ -769,7 +775,11 @@ describe('Parser', () => {
         bookPatternIndex: 1,
         replace: '[',
       },
-      hooks: { beforeParse: "doc.body.setAttribute('data-hook', '1')" },
+      hooks: {
+        beforeParse: doc => {
+          doc.body.setAttribute('data-hook', '1');
+        },
+      },
       meta: { source: 'builtin' },
     };
 
@@ -992,7 +1002,7 @@ describe('Parser', () => {
       version: 1,
       match: { pattern: '.*', type: 'regex' },
       content: { selector: '#content' },
-      meta: { source: 'user' },
+      meta: { source: 'builtin' },
     });
 
     expect(out.chapter).toBe('c');
