@@ -299,11 +299,16 @@
 			}
 			const parent = current.parentElement;
 			if (parent) {
-				const siblings = Array.from(parent.children).filter((sibling) => sibling.tagName === current.tagName);
-				if (siblings.length > 1) {
-					const index = siblings.indexOf(current) + 1;
-					segment += `:nth-of-type(${index})`;
+				const tagName = current.tagName;
+				let index = 1;
+				let hasSameType = false;
+				for (let sibling = current.previousElementSibling; sibling; sibling = sibling.previousElementSibling) {
+					if (sibling.tagName !== tagName) continue;
+					index++;
+					hasSameType = true;
 				}
+				for (let sibling = current.nextElementSibling; !hasSameType && sibling; sibling = sibling.nextElementSibling) if (sibling.tagName === tagName) hasSameType = true;
+				if (hasSameType) segment += `:nth-of-type(${index})`;
 			}
 			path.unshift(segment);
 			current = parent;
@@ -2630,9 +2635,8 @@
 		detect(doc) {
 			const selectorResult = this.tryKnownSelectors(doc);
 			if (selectorResult) return selectorResult;
-			const candidates = this.findCandidates(doc);
-			if (candidates.length === 0) return this.createEmptyResult();
-			const scored = this.scoreCandidates(candidates);
+			const scored = this.scoreCandidates(doc);
+			if (scored.length === 0) return this.createEmptyResult();
 			scored.sort((a, b) => b.score - a.score);
 			const best = scored[0];
 			if (best.score < 10 || best.textLength < MIN_TEXT_LENGTH) return this.createEmptyResult();
@@ -2647,10 +2651,13 @@
 		tryKnownSelectors(doc) {
 			for (const selector of KNOWN_CONTENT_SELECTORS) try {
 				const el = doc.querySelector(selector);
-				if (el && (this.isValidContent(el) || this.isPKeyLoadMoreContent(el, doc))) return {
+				if (!el) continue;
+				const isValidContent = this.isValidContent(el);
+				const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
+				if (isValidContent || isPKeyLoadMoreContent) return {
 					element: el,
 					selector,
-					confidence: this.isValidContent(el) ? .9 : .78,
+					confidence: isValidContent ? .9 : .78,
 					method: "selector",
 					preview: this.getPreview(el)
 				};
@@ -2675,28 +2682,23 @@
 			}
 			return false;
 		}
-		findCandidates(doc) {
+		scoreCandidates(doc) {
 			const containers = doc.querySelectorAll("div, article, section, main, td");
-			return Array.from(containers).filter((el) => {
-				if ((el.textContent || "").length < MIN_TEXT_LENGTH) return false;
-				if (this.isNavigationElement(el)) return false;
-				const style = getComputedStyle(el);
-				if (style.display === "none" || style.visibility === "hidden") return false;
-				return true;
-			});
-		}
-		scoreCandidates(candidates) {
-			return candidates.map((element) => {
+			const candidates = [];
+			for (const element of Array.from(containers)) {
 				let score = 0;
 				const text = element.textContent || "";
-				const html = element.innerHTML;
 				const textLength = text.length;
-				const htmlLength = html.length;
+				if (textLength < MIN_TEXT_LENGTH) continue;
+				const idClass = ((element.id || "") + " " + (element.className || "")).toLowerCase();
+				if (this.isNavigationElement(element, idClass)) continue;
+				const style = getComputedStyle(element);
+				if (style.display === "none" || style.visibility === "hidden") continue;
+				const htmlLength = element.innerHTML.length;
 				const textDensity = textLength / Math.max(htmlLength, 1);
-				const linkDensity = this.calculateLinkDensity(element);
+				const linkDensity = this.calculateLinkDensity(element, textLength);
 				const chineseRatio = this.calculateChineseRatio(text);
 				const paragraphCount = element.querySelectorAll("p, br").length;
-				const idClass = ((element.id || "") + " " + (element.className || "")).toLowerCase();
 				if (POSITIVE_PATTERNS.some((p) => p.test(idClass))) score += WEIGHTS.CONTENT_ID_CLASS;
 				const tagName = element.tagName.toUpperCase();
 				if (tagName === "ARTICLE" || tagName === "MAIN") score += WEIGHTS.ARTICLE_TAG;
@@ -2708,23 +2710,24 @@
 				if (/comment|discuss|reply/i.test(idClass)) score += WEIGHTS.COMMENT_CLASS;
 				if (linkDensity > .3) score += WEIGHTS.HIGH_LINK_DENSITY;
 				score += Math.min(textLength / 1e3, WEIGHTS.TEXT_LENGTH_BONUS);
-				return {
+				candidates.push({
 					element,
 					score,
 					textLength,
 					linkDensity,
 					chineseRatio
-				};
-			});
+				});
+			}
+			return candidates;
 		}
 		isValidContent(element) {
 			const text = element.textContent || "";
 			if (text.length < MIN_TEXT_LENGTH) return false;
 			if (this.calculateChineseRatio(text) < MIN_CHINESE_RATIO) return false;
-			if (this.calculateLinkDensity(element) > .5) return false;
+			if (this.calculateLinkDensity(element, text.length) > .5) return false;
 			return true;
 		}
-		isNavigationElement(element) {
+		isNavigationElement(element, idClass) {
 			const tagName = element.tagName.toUpperCase();
 			if ([
 				"NAV",
@@ -2732,12 +2735,12 @@
 				"FOOTER",
 				"ASIDE"
 			].includes(tagName)) return true;
-			const idClass = ((element.id || "") + " " + (element.className || "")).toLowerCase();
-			return /nav|menu|sidebar|footer|header/.test(idClass);
+			const names = idClass ?? ((element.id || "") + " " + (element.className || "")).toLowerCase();
+			return /nav|menu|sidebar|footer|header/.test(names);
 		}
-		calculateLinkDensity(element) {
+		calculateLinkDensity(element, totalTextLength) {
 			const links = element.querySelectorAll("a");
-			return Array.from(links).reduce((sum, a) => sum + (a.textContent?.length || 0), 0) / (element.textContent?.length || 1);
+			return Array.from(links).reduce((sum, a) => sum + (a.textContent?.length || 0), 0) / (totalTextLength || element.textContent?.length || 1);
 		}
 		calculateChineseRatio(text) {
 			const chineseChars = text.match(/[\u4e00-\u9fff]/g) || [];
@@ -2856,6 +2859,58 @@
 		/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i,
 		/^https?:\/\/[^/]+\/\?/i
 	];
+	function normalizeLinkText(text) {
+		return text.replace(/\s+/g, "").trim();
+	}
+	function resolveLinkTarget(anchor, baseUrl) {
+		const rawHref = anchor.getAttribute("href");
+		if (!rawHref) return null;
+		let parsedUrl;
+		try {
+			parsedUrl = new URL(rawHref, baseUrl);
+		} catch {
+			return null;
+		}
+		if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") return null;
+		return {
+			href: parsedUrl.toString(),
+			url: parsedUrl
+		};
+	}
+	function isValidSignalLink(signal, purpose, currentUrl) {
+		const { href, text, url: parsedUrl } = signal;
+		for (const pattern of INVALID_URL_PATTERNS) if (pattern.test(href)) {
+			if (purpose === "index") {
+				const looksLikeIndex = NAV_PATTERNS.index.some((p) => p.test(text));
+				const looksLikeBookTitle = /^《.+》$/.test(text);
+				if (looksLikeIndex || looksLikeBookTitle) continue;
+			}
+			return false;
+		}
+		if (href.includes("#") && !href.includes("#chapter")) try {
+			const currentPathname = new URL(currentUrl).pathname;
+			if (parsedUrl.pathname === currentPathname) return false;
+		} catch {}
+		try {
+			const pathname = parsedUrl.pathname;
+			if (pathname === "/" || pathname.length < 3) {
+				if (purpose === "index" && pathname.length >= 3) {
+					if (/^《.+》$/.test(text)) return true;
+				}
+				return false;
+			}
+			const pathParts = pathname.split("/").filter(Boolean);
+			if (pathParts.length < 2) {
+				const part = pathParts[0] || "";
+				if (!/\d/.test(part)) {
+					if (!(NAV_PATTERNS[purpose].some((p) => p.test(text)) || CHAPTER_TEXT_PATTERNS.some((p) => p.test(text)) || SECTION_TEXT_PATTERNS.some((p) => p.test(text)))) return false;
+				}
+			}
+			if (purpose === "index" && pathname.endsWith("/")) return true;
+			for (const pattern of [/^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i, /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i]) if (pattern.test(pathname)) return false;
+		} catch {}
+		return true;
+	}
 	var NavigationDetector = class {
 		constructor() {
 			this._lastSignals = [];
@@ -2877,30 +2932,25 @@
 			}
 			return candidates.find(Boolean) || "";
 		}
-		resolveLinkUrl(anchor, baseUrl) {
-			const rawHref = anchor.getAttribute("href");
-			if (!rawHref) return null;
-			let parsedUrl;
-			try {
-				parsedUrl = new URL(rawHref, baseUrl);
-			} catch {
-				return null;
-			}
-			if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") return null;
-			return parsedUrl.toString();
+		resolveLinkTarget(anchor, baseUrl) {
+			return resolveLinkTarget(anchor, baseUrl);
 		}
 		collectLinkSignals(doc, baseUrl) {
 			const anchors = doc.querySelectorAll("a[href]");
 			const signals = [];
 			for (const node of Array.from(anchors)) {
 				const anchor = node;
-				const href = this.resolveLinkUrl(anchor, baseUrl);
-				if (!href) continue;
+				const target = this.resolveLinkTarget(anchor, baseUrl);
+				if (!target) continue;
+				const text = anchor.textContent?.trim() || "";
+				const title = anchor.title || "";
 				signals.push({
 					anchor,
-					href,
-					text: anchor.textContent?.trim() || "",
-					title: anchor.title || "",
+					href: target.href,
+					url: target.url,
+					text,
+					normalizedText: normalizeLinkText(text),
+					title,
 					rel: (anchor.getAttribute("rel") || "").toLowerCase()
 				});
 			}
@@ -2911,57 +2961,68 @@
 			const signals = this.collectLinkSignals(doc, resolvedCurrentUrl);
 			this._lastSignals = signals;
 			this._lastBaseUrl = resolvedCurrentUrl;
+			const candidates = this.scoreNavigationLinks(signals, resolvedCurrentUrl);
 			return {
-				next: this.findNavLink(signals, "next", resolvedCurrentUrl),
-				prev: this.findNavLink(signals, "prev", resolvedCurrentUrl),
-				index: this.findNavLink(signals, "index", resolvedCurrentUrl)
+				next: this.pickNavLink(candidates.next),
+				prev: this.pickNavLink(candidates.prev),
+				index: this.pickNavLink(candidates.index)
 			};
 		}
-		findNavLink(signals, type, currentUrl) {
+		scoreNavigationLinks(signals, currentUrl) {
+			const candidates = {
+				next: [],
+				prev: [],
+				index: []
+			};
+			for (const signal of signals) for (const type of [
+				"next",
+				"prev",
+				"index"
+			]) {
+				const candidate = this.scoreSignalForNav(signal, type, currentUrl);
+				if (candidate) candidates[type].push(candidate);
+			}
+			return candidates;
+		}
+		scoreSignalForNav(signal, type, currentUrl) {
 			const patterns = NAV_PATTERNS[type];
-			if (type !== "index") {
-				const relSignal = signals.find((s) => s.rel === type);
-				if (relSignal && this.isValidLink(relSignal.anchor, type, currentUrl, relSignal.href)) return {
-					element: relSignal.anchor,
-					url: relSignal.href,
-					selector: this.generateSelector(relSignal.anchor),
-					confidence: .95,
-					method: "rel-attribute",
-					text: relSignal.text
-				};
+			if (type !== "index" && signal.rel === type && isValidSignalLink(signal, type, currentUrl)) return {
+				element: signal.anchor,
+				href: signal.href,
+				score: 1e3,
+				confidence: .95,
+				method: "rel-attribute",
+				text: signal.text
+			};
+			let score = 0;
+			for (const pattern of patterns) if (pattern.test(signal.text)) {
+				score += 10;
+				if (signal.text.length <= 5) score += 5;
 			}
-			const candidates = [];
-			for (const signal of signals) {
-				const { anchor, href, text, title } = signal;
-				if (!this.isValidLink(anchor, type, currentUrl, href)) continue;
-				let score = 0;
-				for (const pattern of patterns) if (pattern.test(text)) {
-					score += 10;
-					if (text.length <= 5) score += 5;
-				}
-				if (type === "next" || type === "prev") {
-					const matchesDirection = patterns.some((p) => p.test(text));
-					const isChapter = CHAPTER_TEXT_PATTERNS.some((p) => p.test(text));
-					const isSection = SECTION_TEXT_PATTERNS.some((p) => p.test(text));
-					if (matchesDirection && isChapter) score += 3;
-					if (matchesDirection && isSection && !isChapter) score -= 2;
-				}
-				if (type === "index") {
-					if (/^《.+》$/.test(text)) score += 8;
-					if (href.endsWith("/") || /\/index\.html?$/i.test(href)) score += 3;
-				}
-				for (const pattern of patterns) if (pattern.test(title)) score += 5;
-				if (text.length > 20) score -= 5;
-				if (score > 0) {
-					score += this.getPositionBonus(anchor);
-					candidates.push({
-						element: anchor,
-						score,
-						text,
-						href
-					});
-				}
+			if (type === "next" || type === "prev") {
+				const matchesDirection = patterns.some((p) => p.test(signal.text));
+				const isChapter = CHAPTER_TEXT_PATTERNS.some((p) => p.test(signal.text));
+				const isSection = SECTION_TEXT_PATTERNS.some((p) => p.test(signal.text));
+				if (matchesDirection && isChapter) score += 3;
+				if (matchesDirection && isSection && !isChapter) score -= 2;
 			}
+			if (type === "index") {
+				if (/^《.+》$/.test(signal.text)) score += 8;
+				if (signal.href.endsWith("/") || /\/index\.html?$/i.test(signal.href)) score += 3;
+			}
+			for (const pattern of patterns) if (pattern.test(signal.title)) score += 5;
+			if (signal.text.length > 20) score -= 5;
+			if (score <= 0) return null;
+			if (!isValidSignalLink(signal, type, currentUrl)) return null;
+			return {
+				element: signal.anchor,
+				score: score + this.getPositionBonus(signal.anchor),
+				text: signal.text,
+				href: signal.href,
+				method: "text-matching"
+			};
+		}
+		pickNavLink(candidates) {
 			if (candidates.length === 0) return null;
 			candidates.sort((a, b) => b.score - a.score);
 			const best = candidates[0];
@@ -2969,52 +3030,10 @@
 				element: best.element,
 				url: best.href,
 				selector: this.generateSelector(best.element),
-				confidence: Math.min(best.score / 15, .9),
-				method: "text-matching",
+				confidence: best.confidence ?? Math.min(best.score / 15, .9),
+				method: best.method,
 				text: best.text
 			};
-		}
-		isValidLink(anchor, purpose, currentUrl, href) {
-			const text = anchor.textContent?.trim() || "";
-			if (!href) return false;
-			let parsedUrl;
-			try {
-				parsedUrl = new URL(href);
-			} catch {
-				return false;
-			}
-			if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") return false;
-			for (const pattern of INVALID_URL_PATTERNS) if (pattern.test(href)) {
-				if (purpose === "index") {
-					const looksLikeIndex = NAV_PATTERNS.index.some((p) => p.test(text));
-					const looksLikeBookTitle = /^《.+》$/.test(text);
-					if (looksLikeIndex || looksLikeBookTitle) continue;
-				}
-				return false;
-			}
-			if (href.includes("#") && !href.includes("#chapter")) try {
-				const currentPathname = new URL(currentUrl).pathname;
-				if (parsedUrl.pathname === currentPathname) return false;
-			} catch {}
-			try {
-				const pathname = parsedUrl.pathname;
-				if (pathname === "/" || pathname.length < 3) {
-					if (purpose === "index" && pathname.length >= 3) {
-						if (/^《.+》$/.test(text)) return true;
-					}
-					return false;
-				}
-				const pathParts = pathname.split("/").filter(Boolean);
-				if (pathParts.length < 2) {
-					const part = pathParts[0] || "";
-					if (!/\d/.test(part)) {
-						if (!(NAV_PATTERNS[purpose].some((p) => p.test(text)) || CHAPTER_TEXT_PATTERNS.some((p) => p.test(text)) || SECTION_TEXT_PATTERNS.some((p) => p.test(text)))) return false;
-					}
-				}
-				if (purpose === "index" && pathname.endsWith("/")) return true;
-				for (const pattern of [/^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i, /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i]) if (pattern.test(pathname)) return false;
-			} catch {}
-			return true;
 		}
 		getPositionBonus(anchor) {
 			try {
@@ -3191,23 +3210,22 @@
 			return matches / longer.length;
 		}
 		findNextSectionUrl(signals, currentUrl) {
-			const normalizeText = (text) => text.replace(/\s+/g, "").trim();
-			const isNextSectionText = (text) => {
-				const t = normalizeText(text);
-				if (!t) return false;
-				if (t.includes("下一页") || t.includes("下页") || t.includes("下一頁") || t.includes("下頁")) return true;
-				if (t.toLowerCase().includes("next") && !t.toLowerCase().includes("chapter")) return true;
+			const isNextSectionText = (normalizedText) => {
+				if (!normalizedText) return false;
+				if (normalizedText.includes("下一页") || normalizedText.includes("下页") || normalizedText.includes("下一頁") || normalizedText.includes("下頁")) return true;
+				const lowerText = normalizedText.toLowerCase();
+				if (lowerText.includes("next") && !lowerText.includes("chapter")) return true;
 				return false;
 			};
 			const candidates = [];
 			for (const signal of signals) {
-				const { anchor, href, text, rel } = signal;
+				const { anchor, href, normalizedText, text, rel } = signal;
 				if (!text) continue;
 				const isSection = SECTION_TEXT_PATTERNS.some((p) => p.test(text));
 				const isChapter = CHAPTER_TEXT_PATTERNS.some((p) => p.test(text));
 				if (!isSection || isChapter) continue;
-				if (!isNextSectionText(text)) continue;
-				if (!this.isValidLink(anchor, "next", currentUrl, href)) continue;
+				if (!isNextSectionText(normalizedText)) continue;
+				if (!isValidSignalLink(signal, "next", currentUrl)) continue;
 				const comparison = this.compareUrlsForSection(currentUrl, href);
 				if (!comparison.isSection) continue;
 				let score = 50;
@@ -3227,9 +3245,9 @@
 		findNextSectionUrlByPattern(signals, currentUrl) {
 			const candidates = [];
 			for (const signal of signals) {
-				const { anchor, href, rel, text } = signal;
-				if (/上一|上页|上一頁|上頁|prev(?:ious)?/i.test(text.replace(/\s+/g, ""))) continue;
-				if (!this.isValidLink(anchor, "next", currentUrl, href)) continue;
+				const { href, normalizedText, rel } = signal;
+				if (/上一|上页|上一頁|上頁|prev(?:ious)?/i.test(normalizedText)) continue;
+				if (!isValidSignalLink(signal, "next", currentUrl)) continue;
 				const comparison = this.compareUrlsForSection(currentUrl, href);
 				if (!comparison.isSection) continue;
 				let score = Math.round(comparison.confidence * 100);
@@ -3245,12 +3263,11 @@
 		}
 		findNextChapterUrl(signals, currentUrl) {
 			for (const signal of signals) {
-				const { anchor, href, text } = signal;
-				const normalizedText = text.replace(/\s+/g, "").trim();
+				const { href, normalizedText, text } = signal;
 				if (!(/下一/.test(normalizedText) || /下[章节篇话]/.test(normalizedText) || /后一章/.test(normalizedText) || /next/i.test(normalizedText))) continue;
 				const isChapter = CHAPTER_TEXT_PATTERNS.some((p) => p.test(text));
 				const isSection = SECTION_TEXT_PATTERNS.some((p) => p.test(text));
-				if (isChapter && !isSection && this.isValidLink(anchor, "next", currentUrl, href)) {
+				if (isChapter && !isSection && isValidSignalLink(signal, "next", currentUrl)) {
 					if (!this.compareUrlsForSection(currentUrl, href).isSection) return href;
 				}
 			}

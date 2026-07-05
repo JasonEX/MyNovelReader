@@ -47,12 +47,9 @@ export class ContentDetector {
     }
 
     // Strategy 2: Heuristic scoring (slow path)
-    const candidates = this.findCandidates(doc);
-    if (candidates.length === 0) {
-      return this.createEmptyResult();
-    }
+    const scored = this.scoreCandidates(doc);
+    if (scored.length === 0) return this.createEmptyResult();
 
-    const scored = this.scoreCandidates(candidates);
     scored.sort((a, b) => b.score - a.score);
 
     const best = scored[0];
@@ -76,11 +73,15 @@ export class ContentDetector {
     for (const selector of KNOWN_CONTENT_SELECTORS) {
       try {
         const el = doc.querySelector(selector);
-        if (el && (this.isValidContent(el) || this.isPKeyLoadMoreContent(el, doc))) {
+        if (!el) continue;
+
+        const isValidContent = this.isValidContent(el);
+        const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
+        if (isValidContent || isPKeyLoadMoreContent) {
           return {
             element: el,
             selector,
-            confidence: this.isValidContent(el) ? 0.9 : 0.78,
+            confidence: isValidContent ? 0.9 : 0.78,
             method: 'selector',
             preview: this.getPreview(el),
           };
@@ -124,48 +125,32 @@ export class ContentDetector {
   }
 
   /**
-   * Find all potential content containers
+   * Score all potential content containers in one scan.
    */
-  private findCandidates(doc: Document): Element[] {
+  private scoreCandidates(doc: Document): ContentCandidate[] {
     const containers = doc.querySelectorAll('div, article, section, main, td');
+    const candidates: ContentCandidate[] = [];
 
-    return Array.from(containers).filter(el => {
-      // Skip elements that are too small
-      const text = el.textContent || '';
-      if (text.length < MIN_TEXT_LENGTH) return false;
-
-      // Skip navigation elements
-      if (this.isNavigationElement(el)) return false;
-
-      // Skip hidden elements
-      const style = getComputedStyle(el);
-      if (style.display === 'none' || style.visibility === 'hidden') {
-        return false;
-      }
-
-      return true;
-    });
-  }
-
-  /**
-   * Score all candidate elements
-   */
-  private scoreCandidates(candidates: Element[]): ContentCandidate[] {
-    return candidates.map(element => {
+    for (const element of Array.from(containers)) {
       let score = 0;
       const text = element.textContent || '';
-      const html = element.innerHTML;
-
-      // Calculate metrics
       const textLength = text.length;
+      if (textLength < MIN_TEXT_LENGTH) continue;
+
+      const idClass = ((element.id || '') + ' ' + (element.className || '')).toLowerCase();
+      if (this.isNavigationElement(element, idClass)) continue;
+
+      const style = getComputedStyle(element);
+      if (style.display === 'none' || style.visibility === 'hidden') {
+        continue;
+      }
+
+      const html = element.innerHTML;
       const htmlLength = html.length;
       const textDensity = textLength / Math.max(htmlLength, 1);
-      const linkDensity = this.calculateLinkDensity(element);
+      const linkDensity = this.calculateLinkDensity(element, textLength);
       const chineseRatio = this.calculateChineseRatio(text);
       const paragraphCount = element.querySelectorAll('p, br').length;
-
-      // Get ID and class names for pattern matching
-      const idClass = ((element.id || '') + ' ' + (element.className || '')).toLowerCase();
 
       // Apply positive scoring rules
       if (POSITIVE_PATTERNS.some(p => p.test(idClass))) {
@@ -209,8 +194,10 @@ export class ContentDetector {
       // Boost for longer text (novel chapters are typically long)
       score += Math.min(textLength / 1000, WEIGHTS.TEXT_LENGTH_BONUS);
 
-      return { element, score, textLength, linkDensity, chineseRatio };
-    });
+      candidates.push({ element, score, textLength, linkDensity, chineseRatio });
+    }
+
+    return candidates;
   }
 
   /**
@@ -227,7 +214,7 @@ export class ContentDetector {
     if (chineseRatio < MIN_CHINESE_RATIO) return false;
 
     // Should not have too many links
-    const linkDensity = this.calculateLinkDensity(element);
+    const linkDensity = this.calculateLinkDensity(element, text.length);
     if (linkDensity > 0.5) return false;
 
     return true;
@@ -236,23 +223,23 @@ export class ContentDetector {
   /**
    * Check if element is a navigation/structural element
    */
-  private isNavigationElement(element: Element): boolean {
+  private isNavigationElement(element: Element, idClass?: string): boolean {
     const tagName = element.tagName.toUpperCase();
     if (['NAV', 'HEADER', 'FOOTER', 'ASIDE'].includes(tagName)) {
       return true;
     }
 
-    const idClass = ((element.id || '') + ' ' + (element.className || '')).toLowerCase();
-    return /nav|menu|sidebar|footer|header/.test(idClass);
+    const names = idClass ?? ((element.id || '') + ' ' + (element.className || '')).toLowerCase();
+    return /nav|menu|sidebar|footer|header/.test(names);
   }
 
   /**
    * Calculate the ratio of link text to total text
    */
-  private calculateLinkDensity(element: Element): number {
+  private calculateLinkDensity(element: Element, totalTextLength?: number): number {
     const links = element.querySelectorAll('a');
     const linkText = Array.from(links).reduce((sum, a) => sum + (a.textContent?.length || 0), 0);
-    const totalText = element.textContent?.length || 1;
+    const totalText = totalTextLength || element.textContent?.length || 1;
     return linkText / totalText;
   }
 

@@ -25,12 +25,146 @@ const INVALID_URL_PATTERNS = [
 ];
 
 /** Pre-collected signal for a single <a> element */
+type NavPurpose = 'next' | 'prev' | 'index';
+
+interface LinkTarget {
+  href: string;
+  url: URL;
+}
+
 interface LinkSignal {
   anchor: HTMLAnchorElement;
   href: string; // resolved URL
+  url: URL;
   text: string; // textContent trimmed
+  normalizedText: string;
   title: string; // title attribute
   rel: string; // rel attribute
+}
+
+interface NavCandidate {
+  element: HTMLAnchorElement;
+  score: number;
+  text: string;
+  href: string;
+  method: NavLinkResult['method'];
+  confidence?: number;
+}
+
+type NavCandidateMap = Record<NavPurpose, NavCandidate[]>;
+
+function normalizeLinkText(text: string): string {
+  return text.replace(/\s+/g, '').trim();
+}
+
+function resolveLinkTarget(anchor: HTMLAnchorElement, baseUrl: string): LinkTarget | null {
+  const rawHref = anchor.getAttribute('href');
+  if (!rawHref) return null;
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(rawHref, baseUrl);
+  } catch {
+    return null;
+  }
+
+  // Only allow http(s) navigation targets.
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    return null;
+  }
+
+  return {
+    href: parsedUrl.toString(),
+    url: parsedUrl,
+  };
+}
+
+function isValidSignalLink(signal: LinkSignal, purpose: NavPurpose, currentUrl: string): boolean {
+  const { href, text, url: parsedUrl } = signal;
+
+  // Skip invalid URL patterns
+  // NOTE: index/list URLs are often valid *for目录页*; don't filter them for index purpose.
+  for (const pattern of INVALID_URL_PATTERNS) {
+    if (pattern.test(href)) {
+      if (purpose === 'index') {
+        // If link text looks like directory or book title, allow list/index pages.
+        const looksLikeIndex = NAV_PATTERNS.index.some(p => p.test(text));
+        const looksLikeBookTitle = /^《.+》$/.test(text);
+        if (looksLikeIndex || looksLikeBookTitle) continue;
+      }
+      return false;
+    }
+  }
+
+  // Skip anchor-only links (unless they contain chapter info)
+  if (href.includes('#') && !href.includes('#chapter')) {
+    try {
+      const currentPathname = new URL(currentUrl).pathname;
+      if (parsedUrl.pathname === currentPathname) {
+        return false;
+      }
+    } catch {
+      // If URL parsing fails, fall through and treat as potentially valid.
+    }
+  }
+
+  // Skip URLs that are clearly not chapter pages
+  try {
+    const pathname = parsedUrl.pathname;
+
+    // Skip if pathname is too short (likely homepage or section page)
+    // But allow for index purpose if it looks like a book directory
+    if (pathname === '/' || pathname.length < 3) {
+      // For index links, allow directory paths like /book3/7748/
+      if (purpose === 'index' && pathname.length >= 3) {
+        // Allow if it looks like a book title link
+        const looksLikeBookTitle = /^《.+》$/.test(text);
+        if (looksLikeBookTitle) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // 如果只有一个路径部分，检查是否像章节 URL
+    const pathParts = pathname.split('/').filter(Boolean);
+    if (pathParts.length < 2) {
+      // 单路径部分：必须包含数字才可能是章节
+      // 允许: /412421_1.html, /123.html, /chapter123
+      // 排除: /book, /novel, /index.html (无数字)
+      const part = pathParts[0] || '';
+      if (!/\d/.test(part)) {
+        // Some sites use slug-like chapter URLs without digits (e.g. /next.html).
+        // Allow them only when link text strongly indicates navigation purpose.
+        const looksLikeNav =
+          NAV_PATTERNS[purpose].some(p => p.test(text)) ||
+          CHAPTER_TEXT_PATTERNS.some(p => p.test(text)) ||
+          SECTION_TEXT_PATTERNS.some(p => p.test(text));
+
+        if (!looksLikeNav) {
+          return false;
+        }
+      }
+    }
+
+    // For index purpose, allow directory paths (ending with /)
+    if (purpose === 'index' && pathname.endsWith('/')) {
+      return true;
+    }
+
+    // Skip common non-chapter paths
+    const nonChapterPaths = [
+      /^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i,
+      /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // /book/ or /book/123/ without chapter
+    ];
+    for (const pattern of nonChapterPaths) {
+      if (pattern.test(pathname)) return false;
+    }
+  } catch {
+    // URL parsing failed, continue
+  }
+
+  return true;
 }
 
 export class NavigationDetector {
@@ -57,23 +191,8 @@ export class NavigationDetector {
     return candidates.find(Boolean) || '';
   }
 
-  private resolveLinkUrl(anchor: HTMLAnchorElement, baseUrl: string): string | null {
-    const rawHref = anchor.getAttribute('href');
-    if (!rawHref) return null;
-
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(rawHref, baseUrl);
-    } catch {
-      return null;
-    }
-
-    // Only allow http(s) navigation targets.
-    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-      return null;
-    }
-
-    return parsedUrl.toString();
+  private resolveLinkTarget(anchor: HTMLAnchorElement, baseUrl: string): LinkTarget | null {
+    return resolveLinkTarget(anchor, baseUrl);
   }
 
   /**
@@ -85,14 +204,19 @@ export class NavigationDetector {
 
     for (const node of Array.from(anchors)) {
       const anchor = node as HTMLAnchorElement;
-      const href = this.resolveLinkUrl(anchor, baseUrl);
-      if (!href) continue;
+      const target = this.resolveLinkTarget(anchor, baseUrl);
+      if (!target) continue;
+
+      const text = anchor.textContent?.trim() || '';
+      const title = anchor.title || '';
 
       signals.push({
         anchor,
-        href,
-        text: anchor.textContent?.trim() || '',
-        title: anchor.title || '',
+        href: target.href,
+        url: target.url,
+        text,
+        normalizedText: normalizeLinkText(text),
+        title,
         rel: (anchor.getAttribute('rel') || '').toLowerCase(),
       });
     }
@@ -110,11 +234,12 @@ export class NavigationDetector {
     // Store signals for detectSection to reuse
     this._lastSignals = signals;
     this._lastBaseUrl = resolvedCurrentUrl;
+    const candidates = this.scoreNavigationLinks(signals, resolvedCurrentUrl);
 
     return {
-      next: this.findNavLink(signals, 'next', resolvedCurrentUrl),
-      prev: this.findNavLink(signals, 'prev', resolvedCurrentUrl),
-      index: this.findNavLink(signals, 'index', resolvedCurrentUrl),
+      next: this.pickNavLink(candidates.next),
+      prev: this.pickNavLink(candidates.prev),
+      index: this.pickNavLink(candidates.index),
     };
   }
 
@@ -122,96 +247,98 @@ export class NavigationDetector {
   private _lastSignals: LinkSignal[] = [];
   private _lastBaseUrl = '';
 
-  /**
-   * Find a specific navigation link from pre-collected signals
-   */
-  private findNavLink(
-    signals: LinkSignal[],
-    type: 'next' | 'prev' | 'index',
-    currentUrl: string
-  ): NavLinkResult | null {
-    const patterns = NAV_PATTERNS[type];
-
-    // Strategy 1: rel attribute (highest confidence)
-    if (type !== 'index') {
-      const relSignal = signals.find(s => s.rel === type);
-      if (relSignal && this.isValidLink(relSignal.anchor, type, currentUrl, relSignal.href)) {
-        return {
-          element: relSignal.anchor,
-          url: relSignal.href,
-          selector: this.generateSelector(relSignal.anchor),
-          confidence: 0.95,
-          method: 'rel-attribute',
-          text: relSignal.text,
-        };
-      }
-    }
-
-    // Strategy 2: Text matching
-    const candidates: Array<{
-      element: HTMLAnchorElement;
-      score: number;
-      text: string;
-      href: string;
-    }> = [];
+  private scoreNavigationLinks(signals: LinkSignal[], currentUrl: string): NavCandidateMap {
+    const candidates: NavCandidateMap = {
+      next: [],
+      prev: [],
+      index: [],
+    };
 
     for (const signal of signals) {
-      const { anchor, href, text, title } = signal;
-
-      // Skip invalid hrefs
-      if (!this.isValidLink(anchor, type, currentUrl, href)) continue;
-
-      // Score based on text matching
-      let score = 0;
-      for (const pattern of patterns) {
-        if (pattern.test(text)) {
-          score += 10;
-          // Exact/short match bonus
-          if (text.length <= 5) score += 5;
-        }
-      }
-
-      // Prefer real chapter navigation over section pagination when both exist.
-      // This keeps "下一章/上一章" higher than "下一页/上一页" for next/prev detection.
-      if (type === 'next' || type === 'prev') {
-        const matchesDirection = patterns.some(p => p.test(text));
-        const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
-        const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
-        if (matchesDirection && isChapter) score += 3;
-        if (matchesDirection && isSection && !isChapter) score -= 2;
-      }
-
-      // For index links, also recognize book title links (wrapped in 《》)
-      // Many sites use book title as the index/catalog link
-      if (type === 'index') {
-        // Book title pattern: 《书名》
-        if (/^《.+》$/.test(text)) {
-          score += 8;
-        }
-        // URL points to directory (ends with / or is index.html)
-        if (href.endsWith('/') || /\/index\.html?$/i.test(href)) {
-          score += 3;
-        }
-      }
-
-      // Check title attribute too
-      for (const pattern of patterns) {
-        if (pattern.test(title)) {
-          score += 5;
-        }
-      }
-
-      // Penalty for long text (likely not a nav link)
-      if (text.length > 20) {
-        score -= 5;
-      }
-
-      if (score > 0) {
-        score += this.getPositionBonus(anchor);
-        candidates.push({ element: anchor, score, text, href });
+      for (const type of ['next', 'prev', 'index'] as const) {
+        const candidate = this.scoreSignalForNav(signal, type, currentUrl);
+        if (candidate) candidates[type].push(candidate);
       }
     }
 
+    return candidates;
+  }
+
+  private scoreSignalForNav(
+    signal: LinkSignal,
+    type: NavPurpose,
+    currentUrl: string
+  ): NavCandidate | null {
+    const patterns = NAV_PATTERNS[type];
+
+    if (type !== 'index' && signal.rel === type && isValidSignalLink(signal, type, currentUrl)) {
+      return {
+        element: signal.anchor,
+        href: signal.href,
+        score: 1000,
+        confidence: 0.95,
+        method: 'rel-attribute',
+        text: signal.text,
+      };
+    }
+
+    let score = 0;
+    for (const pattern of patterns) {
+      if (pattern.test(signal.text)) {
+        score += 10;
+        // Exact/short match bonus
+        if (signal.text.length <= 5) score += 5;
+      }
+    }
+
+    // Prefer real chapter navigation over section pagination when both exist.
+    // This keeps "下一章/上一章" higher than "下一页/上一页" for next/prev detection.
+    if (type === 'next' || type === 'prev') {
+      const matchesDirection = patterns.some(p => p.test(signal.text));
+      const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(signal.text));
+      const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(signal.text));
+      if (matchesDirection && isChapter) score += 3;
+      if (matchesDirection && isSection && !isChapter) score -= 2;
+    }
+
+    // For index links, also recognize book title links (wrapped in 《》)
+    // Many sites use book title as the index/catalog link
+    if (type === 'index') {
+      // Book title pattern: 《书名》
+      if (/^《.+》$/.test(signal.text)) {
+        score += 8;
+      }
+      // URL points to directory (ends with / or is index.html)
+      if (signal.href.endsWith('/') || /\/index\.html?$/i.test(signal.href)) {
+        score += 3;
+      }
+    }
+
+    // Check title attribute too
+    for (const pattern of patterns) {
+      if (pattern.test(signal.title)) {
+        score += 5;
+      }
+    }
+
+    // Penalty for long text (likely not a nav link)
+    if (signal.text.length > 20) {
+      score -= 5;
+    }
+
+    if (score <= 0) return null;
+    if (!isValidSignalLink(signal, type, currentUrl)) return null;
+
+    return {
+      element: signal.anchor,
+      score: score + this.getPositionBonus(signal.anchor),
+      text: signal.text,
+      href: signal.href,
+      method: 'text-matching',
+    };
+  }
+
+  private pickNavLink(candidates: NavCandidate[]): NavLinkResult | null {
     if (candidates.length === 0) return null;
 
     // Sort by score and return best
@@ -222,121 +349,10 @@ export class NavigationDetector {
       element: best.element,
       url: best.href,
       selector: this.generateSelector(best.element),
-      confidence: Math.min(best.score / 15, 0.9),
-      method: 'text-matching',
+      confidence: best.confidence ?? Math.min(best.score / 15, 0.9),
+      method: best.method,
       text: best.text,
     };
-  }
-
-  /**
-   * Check if a link is valid for navigation
-   */
-  private isValidLink(
-    anchor: HTMLAnchorElement,
-    purpose: 'next' | 'prev' | 'index',
-    currentUrl: string,
-    href: string
-  ): boolean {
-    const text = anchor.textContent?.trim() || '';
-
-    // Must have href
-    if (!href) return false;
-
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(href);
-    } catch {
-      return false;
-    }
-
-    // Only allow http(s) navigation targets.
-    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-      return false;
-    }
-
-    // Skip invalid URL patterns
-    // NOTE: index/list URLs are often valid *for目录页*; don't filter them for index purpose.
-    for (const pattern of INVALID_URL_PATTERNS) {
-      if (pattern.test(href)) {
-        if (purpose === 'index') {
-          // If link text looks like directory or book title, allow list/index pages.
-          const looksLikeIndex = NAV_PATTERNS.index.some(p => p.test(text));
-          const looksLikeBookTitle = /^《.+》$/.test(text);
-          if (looksLikeIndex || looksLikeBookTitle) continue;
-        }
-        return false;
-      }
-    }
-
-    // Skip anchor-only links (unless they contain chapter info)
-    if (href.includes('#') && !href.includes('#chapter')) {
-      try {
-        const currentPathname = new URL(currentUrl).pathname;
-        if (parsedUrl.pathname === currentPathname) {
-          return false;
-        }
-      } catch {
-        // If URL parsing fails, fall through and treat as potentially valid.
-      }
-    }
-
-    // Skip URLs that are clearly not chapter pages
-    try {
-      const pathname = parsedUrl.pathname;
-
-      // Skip if pathname is too short (likely homepage or section page)
-      // But allow for index purpose if it looks like a book directory
-      if (pathname === '/' || pathname.length < 3) {
-        // For index links, allow directory paths like /book3/7748/
-        if (purpose === 'index' && pathname.length >= 3) {
-          // Allow if it looks like a book title link
-          const looksLikeBookTitle = /^《.+》$/.test(text);
-          if (looksLikeBookTitle) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      // 如果只有一个路径部分，检查是否像章节 URL
-      const pathParts = pathname.split('/').filter(Boolean);
-      if (pathParts.length < 2) {
-        // 单路径部分：必须包含数字才可能是章节
-        // 允许: /412421_1.html, /123.html, /chapter123
-        // 排除: /book, /novel, /index.html (无数字)
-        const part = pathParts[0] || '';
-        if (!/\d/.test(part)) {
-          // Some sites use slug-like chapter URLs without digits (e.g. /next.html).
-          // Allow them only when link text strongly indicates navigation purpose.
-          const looksLikeNav =
-            NAV_PATTERNS[purpose].some(p => p.test(text)) ||
-            CHAPTER_TEXT_PATTERNS.some(p => p.test(text)) ||
-            SECTION_TEXT_PATTERNS.some(p => p.test(text));
-
-          if (!looksLikeNav) {
-            return false;
-          }
-        }
-      }
-
-      // For index purpose, allow directory paths (ending with /)
-      if (purpose === 'index' && pathname.endsWith('/')) {
-        return true;
-      }
-
-      // Skip common non-chapter paths
-      const nonChapterPaths = [
-        /^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i,
-        /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // /book/ or /book/123/ without chapter
-      ];
-      for (const pattern of nonChapterPaths) {
-        if (pattern.test(pathname)) return false;
-      }
-    } catch {
-      // URL parsing failed, continue
-    }
-
-    return true;
   }
 
   private getPositionBonus(anchor: HTMLAnchorElement): number {
@@ -627,21 +643,20 @@ export class NavigationDetector {
   }
 
   private findNextSectionUrl(signals: LinkSignal[], currentUrl: string): string | null {
-    const normalizeText = (text: string): string => text.replace(/\s+/g, '').trim();
-    const isNextSectionText = (text: string): boolean => {
-      const t = normalizeText(text);
-      if (!t) return false;
+    const isNextSectionText = (normalizedText: string): boolean => {
+      if (!normalizedText) return false;
       // Only accept forward paging labels ("下一页/下页"), avoid picking "上一页".
       if (
-        t.includes('下一页') ||
-        t.includes('下页') ||
-        t.includes('下一頁') ||
-        t.includes('下頁')
+        normalizedText.includes('下一页') ||
+        normalizedText.includes('下页') ||
+        normalizedText.includes('下一頁') ||
+        normalizedText.includes('下頁')
       ) {
         return true;
       }
       // Conservative English fallback
-      if (t.toLowerCase().includes('next') && !t.toLowerCase().includes('chapter')) {
+      const lowerText = normalizedText.toLowerCase();
+      if (lowerText.includes('next') && !lowerText.includes('chapter')) {
         return true;
       }
       return false;
@@ -649,14 +664,14 @@ export class NavigationDetector {
 
     const candidates: Array<{ url: string; score: number }> = [];
     for (const signal of signals) {
-      const { anchor, href, text, rel } = signal;
+      const { anchor, href, normalizedText, text, rel } = signal;
       if (!text) continue;
 
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       if (!isSection || isChapter) continue;
-      if (!isNextSectionText(text)) continue;
-      if (!this.isValidLink(anchor, 'next', currentUrl, href)) continue;
+      if (!isNextSectionText(normalizedText)) continue;
+      if (!isValidSignalLink(signal, 'next', currentUrl)) continue;
 
       const comparison = this.compareUrlsForSection(currentUrl, href);
       if (!comparison.isSection) continue;
@@ -679,9 +694,9 @@ export class NavigationDetector {
     const candidates: Array<{ url: string; score: number }> = [];
 
     for (const signal of signals) {
-      const { anchor, href, rel, text } = signal;
-      if (/上一|上页|上一頁|上頁|prev(?:ious)?/i.test(text.replace(/\s+/g, ''))) continue;
-      if (!this.isValidLink(anchor, 'next', currentUrl, href)) continue;
+      const { href, normalizedText, rel } = signal;
+      if (/上一|上页|上一頁|上頁|prev(?:ious)?/i.test(normalizedText)) continue;
+      if (!isValidSignalLink(signal, 'next', currentUrl)) continue;
 
       const comparison = this.compareUrlsForSection(currentUrl, href);
       if (!comparison.isSection) continue;
@@ -702,8 +717,7 @@ export class NavigationDetector {
   private findNextChapterUrl(signals: LinkSignal[], currentUrl: string): string | null {
     // Look for links with "下一章/下一节/后一章/next" text (forward only)
     for (const signal of signals) {
-      const { anchor, href, text } = signal;
-      const normalizedText = text.replace(/\s+/g, '').trim();
+      const { href, normalizedText, text } = signal;
       const isForward =
         /下一/.test(normalizedText) ||
         /下[章节篇话]/.test(normalizedText) ||
@@ -715,7 +729,7 @@ export class NavigationDetector {
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
 
-      if (isChapter && !isSection && this.isValidLink(anchor, 'next', currentUrl, href)) {
+      if (isChapter && !isSection && isValidSignalLink(signal, 'next', currentUrl)) {
         // Verify it's a different chapter, not the same chapter's section
         const comparison = this.compareUrlsForSection(currentUrl, href);
         if (!comparison.isSection) {

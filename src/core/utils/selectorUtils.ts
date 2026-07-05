@@ -46,11 +46,29 @@ function buildPathSelector(element: Element, doc: Document, maxDepth: number): s
 
     const parent: Element | null = current.parentElement;
     if (parent) {
-      const siblings = (Array.from(parent.children) as Element[]).filter(
-        sibling => sibling.tagName === current!.tagName
-      );
-      if (siblings.length > 1) {
-        const index = siblings.indexOf(current) + 1;
+      const tagName = current.tagName;
+      let index = 1;
+      let hasSameType = false;
+
+      for (
+        let sibling = current.previousElementSibling;
+        sibling;
+        sibling = sibling.previousElementSibling
+      ) {
+        if (sibling.tagName !== tagName) continue;
+        index++;
+        hasSameType = true;
+      }
+
+      for (
+        let sibling = current.nextElementSibling;
+        !hasSameType && sibling;
+        sibling = sibling.nextElementSibling
+      ) {
+        if (sibling.tagName === tagName) hasSameType = true;
+      }
+
+      if (hasSameType) {
         segment += `:nth-of-type(${index})`;
       }
     }

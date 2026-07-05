@@ -429,53 +429,21 @@ describe('NavigationDetector', () => {
       expect(resolveBaseUrl(fakeDoc, 'also-not-a-url')).toBe('also-not-a-url');
     });
 
-    it('resolveLinkUrl returns null when URL parsing fails', () => {
-      const resolveLinkUrl = (
-        detector as unknown as {
-          resolveLinkUrl: (a: HTMLAnchorElement, baseUrl: string) => string | null;
-        }
-      ).resolveLinkUrl;
+    it('ignores malformed and non-http links during public navigation detection', () => {
+      const dom = createDom(`
+        <!doctype html>
+        <html>
+          <body>
+            <a href="http://[::">下一章</a>
+            <a href="ftp://example.com/chapter/2.html">下一章</a>
+            <a href="/chapter/2.html">下一章</a>
+          </body>
+        </html>
+      `);
 
-      const dom = new JSDOM('<a href="http://[::">bad</a>', { url: 'https://example.com/' });
-      const a = dom.window.document.querySelector('a') as HTMLAnchorElement;
-      expect(resolveLinkUrl(a, 'https://example.com/')).toBeNull();
-    });
+      const result = detector.detect(dom.window.document);
 
-    it('isValidLink rejects invalid hrefs and non-http protocols', () => {
-      const isValidLink = (
-        detector as unknown as {
-          isValidLink: (
-            a: HTMLAnchorElement,
-            purpose: 'next' | 'prev' | 'index',
-            currentUrl: string,
-            href: string
-          ) => boolean;
-        }
-      ).isValidLink;
-
-      const dom = new JSDOM('<a href="/x">x</a>', { url: 'https://example.com/' });
-      const a = dom.window.document.querySelector('a') as HTMLAnchorElement;
-
-      expect(isValidLink(a, 'next', 'https://example.com/', 'not a url')).toBe(false);
-      expect(isValidLink(a, 'next', 'https://example.com/', 'ftp://example.com/x')).toBe(false);
-    });
-
-    it('isValidLink tolerates invalid currentUrl in anchor-only checks', () => {
-      const isValidLink = (
-        detector as unknown as {
-          isValidLink: (
-            a: HTMLAnchorElement,
-            purpose: 'next' | 'prev' | 'index',
-            currentUrl: string,
-            href: string
-          ) => boolean;
-        }
-      ).isValidLink;
-
-      const dom = new JSDOM('<a href="#x">下一章</a>', { url: 'https://example.com/ch' });
-      const a = dom.window.document.querySelector('a') as HTMLAnchorElement;
-
-      expect(isValidLink(a, 'next', 'not a url', 'https://example.com/ch#x')).toBe(true);
+      expect(result.next?.url).toContain('/chapter/2.html');
     });
 
     it('scores 《书名》 book title links for index detection', () => {
