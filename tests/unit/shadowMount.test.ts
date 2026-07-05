@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { createShadowMount, injectShadowCSS } from '@/ui/shadowMount';
+import {
+  createShadowMount,
+  injectShadowCSS,
+  setShadowCustomCSS,
+  setShadowStyleProperties,
+} from '@/ui/shadowMount';
 
 describe('shadowMount', () => {
   let dom: JSDOM;
@@ -32,11 +37,11 @@ describe('shadowMount', () => {
     expect(mountPoint.id).toBe('mnr-test-root-mount');
     expect(shadowRoot.contains(mountPoint)).toBe(true);
 
-    expect(window.__MY_NOVEL_READER__?.shadowRoot).toBe(shadowRoot);
+    expect(window.__MY_NOVEL_READER__?.shadowRoots?.has(shadowRoot)).toBe(true);
 
     cleanup();
     expect(document.getElementById('mnr-test-root')).toBeNull();
-    expect(window.__MY_NOVEL_READER__?.shadowRoot).toBeUndefined();
+    expect(window.__MY_NOVEL_READER__?.shadowRoots).toBeUndefined();
   });
 
   it('injects previously collected CSS and supports injecting extra CSS', () => {
@@ -50,5 +55,38 @@ describe('shadowMount', () => {
     injectShadowCSS(shadowRoot, 'a{color:blue;}');
     expect(shadowRoot.querySelectorAll('style').length).toBeGreaterThan(1);
     expect(shadowRoot.textContent).toContain('color:blue');
+  });
+
+  it('applies runtime style properties and custom CSS to registered Shadow DOM roots', () => {
+    const first = createShadowMount('mnr-runtime-root-a');
+    const second = createShadowMount('mnr-runtime-root-b');
+
+    setShadowStyleProperties({ '--mnr-bg': '#123456', '--mnr-font-size': '20px' });
+    setShadowCustomCSS('.mnr-test{color:red;}');
+
+    for (const { host, shadowRoot } of [first, second]) {
+      expect(host.style.getPropertyValue('--mnr-bg')).toBe('#123456');
+      expect(host.style.getPropertyValue('--mnr-font-size')).toBe('20px');
+      expect(shadowRoot.querySelector('#mnr-custom-css')?.textContent).toBe(
+        '.mnr-test{color:red;}'
+      );
+    }
+    expect(document.getElementById('mnr-custom-css')).toBeNull();
+
+    setShadowCustomCSS('');
+    expect(first.shadowRoot.querySelector('#mnr-custom-css')).toBeNull();
+    expect(second.shadowRoot.querySelector('#mnr-custom-css')).toBeNull();
+  });
+
+  it('queues runtime styles before a Shadow DOM root exists', () => {
+    setShadowStyleProperties({ '--mnr-text': '#abcdef' });
+    setShadowCustomCSS('.queued{display:block;}');
+
+    const { host, shadowRoot } = createShadowMount('mnr-queued-root');
+
+    expect(host.style.getPropertyValue('--mnr-text')).toBe('#abcdef');
+    expect(shadowRoot.querySelector('#mnr-custom-css')?.textContent).toBe(
+      '.queued{display:block;}'
+    );
   });
 });

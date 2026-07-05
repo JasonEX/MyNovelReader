@@ -1,71 +1,75 @@
 // ==UserScript==
-// @name         My Novel Reader
-// @namespace    https://github.com/ywzhaiqi
-// @version      9.0.12
-// @author       ywzhaiqi
-// @description  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
-// @license      GPL version 3
-// @homepage     https://github.com/ywzhaiqi/userscript#readme
-// @homepageURL  https://greasyfork.org/scripts/292/
-// @source       https://github.com/ywzhaiqi/userscript.git
-// @supportURL   https://github.com/JasonEX/MyNovelReader/issues
-// @match        *://*/*.html
-// @match        *://*/*.htm
-// @match        *://*/*.shtml
-// @match        *://*/*/*.html
-// @match        *://*/*/*.htm
-// @match        *://*/*/*/*.html
-// @match        *://*/*/*/*.htm
-// @match        *://*/*/*/*/*.html
-// @match        *://*/txt/*/*
-// @match        *://*/book/*/*
-// @match        *://*/read/*/*
-// @match        *://*/chapter/*/*
-// @match        *://*/novel/*/*
-// @match        *://*/xs_*/*/*
-// @match        *://*/xs_*/*/*/*
-// @match        *://*/gb_*/*/*
-// @match        *://*/gb_*/*/*/*
-// @match        *://www.qidian.com/chapter/*/*
-// @match        *://m.qidian.com/chapter/*/*
-// @match        *://read.qidian.com/chapter/*
-// @match        *://vipreader.qidian.com/chapter/*/*
-// @match        *://book.sfacg.com/Novel/*/*/*/
-// @match        *://www.ciweimao.com/chapter/*
-// @match        *://wap.ciweimao.com/chapter/*
-// @match        *://www.tadu.com/book/*/*/
-// @match        *://dingdianzww.org/*
-// @match        *://www.dingdianzww.org/*
-// @match        *://deqixs.org/*
-// @match        *://www.deqixs.org/*
-// @match        *://deqixs.co/*
-// @match        *://www.deqixs.co/*
-// @match        *://*/*.php?*
-// @match        *://*/*_*.html
-// @match        *://*/book/*/*.html
-// @match        *://*/chapter/*/*.html
-// @match        *://*/read/*/*.html
-// @exclude      *://*/*/index.html
-// @exclude      *://*/*/list.html
-// @exclude      *://*/*/catalog.html
-// @exclude      *://*/search/*
-// @exclude      *://*/login*
-// @exclude      *://*/register*
-// @exclude      *://www.tadu.com/book/*/toc/
-// @connect      *
-// @grant        GM_addStyle
-// @grant        GM_deleteValue
-// @grant        GM_getResourceURL
-// @grant        GM_getValue
-// @grant        GM_info
-// @grant        GM_listValues
-// @grant        GM_openInTab
-// @grant        GM_registerMenuCommand
-// @grant        GM_setClipboard
-// @grant        GM_setValue
-// @grant        GM_xmlhttpRequest
-// @grant        unsafeWindow
-// @run-at       document-start
+// @name               My Novel Reader
+// @name:zh-CN         小说阅读脚本
+// @name:zh-TW         小說閱讀腳本
+// @namespace          https://github.com/ywzhaiqi
+// @version            9.1.0
+// @author             ywzhaiqi
+// @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
+// @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
+// @description:zh-TW  小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁
+// @license            GPL version 3
+// @homepage           https://github.com/ywzhaiqi/userscript#readme
+// @homepageURL        https://greasyfork.org/scripts/292/
+// @source             https://github.com/ywzhaiqi/userscript.git
+// @supportURL         https://github.com/JasonEX/MyNovelReader/issues
+// @match              *://*/*.html
+// @match              *://*/*.htm
+// @match              *://*/*.shtml
+// @match              *://*/*/*.html
+// @match              *://*/*/*.htm
+// @match              *://*/*/*/*.html
+// @match              *://*/*/*/*.htm
+// @match              *://*/*/*/*/*.html
+// @match              *://*/txt/*/*
+// @match              *://*/book/*/*
+// @match              *://*/read/*/*
+// @match              *://*/chapter/*/*
+// @match              *://*/novel/*/*
+// @match              *://*/xs_*/*/*
+// @match              *://*/xs_*/*/*/*
+// @match              *://*/gb_*/*/*
+// @match              *://*/gb_*/*/*/*
+// @match              *://www.qidian.com/chapter/*/*
+// @match              *://m.qidian.com/chapter/*/*
+// @match              *://read.qidian.com/chapter/*
+// @match              *://vipreader.qidian.com/chapter/*/*
+// @match              *://book.sfacg.com/Novel/*/*/*/
+// @match              *://www.ciweimao.com/chapter/*
+// @match              *://wap.ciweimao.com/chapter/*
+// @match              *://www.tadu.com/book/*/*/
+// @match              *://dingdianzww.org/*
+// @match              *://www.dingdianzww.org/*
+// @match              *://deqixs.org/*
+// @match              *://www.deqixs.org/*
+// @match              *://deqixs.co/*
+// @match              *://www.deqixs.co/*
+// @match              *://*/*.php?*
+// @match              *://*/*_*.html
+// @match              *://*/book/*/*.html
+// @match              *://*/chapter/*/*.html
+// @match              *://*/read/*/*.html
+// @exclude            *://*/*/index.html
+// @exclude            *://*/*/list.html
+// @exclude            *://*/*/catalog.html
+// @exclude            *://*/search/*
+// @exclude            *://*/login*
+// @exclude            *://*/register*
+// @exclude            *://www.tadu.com/book/*/toc/
+// @connect            *
+// @grant              GM_addStyle
+// @grant              GM_deleteValue
+// @grant              GM_getResourceURL
+// @grant              GM_getValue
+// @grant              GM_info
+// @grant              GM_listValues
+// @grant              GM_openInTab
+// @grant              GM_registerMenuCommand
+// @grant              GM_setClipboard
+// @grant              GM_setValue
+// @grant              GM_xmlhttpRequest
+// @grant              unsafeWindow
+// @run-at             document-start
 // ==/UserScript==
 
 (function() {
@@ -6592,7 +6596,6 @@
 			},
 			meta: {
 				source: "builtin",
-				autoLaunch: true,
 				exampleUrl: "https://b.faloo.com/412421_1.html"
 			}
 		},
@@ -7992,7 +7995,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.0.12";
+	var VERSION = "9.1.0";
 	var BUILD_DATE = "2026-07-05";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
@@ -13098,6 +13101,153 @@
 		if (isString(container)) return document.querySelector(container);
 		return container;
 	}
+	function getMnrGlobalState() {
+		if (!window.__MY_NOVEL_READER__) window.__MY_NOVEL_READER__ = {};
+		return window.__MY_NOVEL_READER__;
+	}
+	function getRegisteredShadowRoots(state) {
+		if (!state.shadowRoots) state.shadowRoots = new Set();
+		return state.shadowRoots;
+	}
+	var BASE_RESET_CSS = `
+/* Reset all inherited styles */
+:host {
+  all: initial;
+  display: block;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure common elements have expected defaults */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Reset form elements to browser defaults */
+input, button, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  width: auto;
+  height: auto;
+  margin: 3px 3px 3px 4px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  appearance: auto;
+  -webkit-appearance: slider-horizontal;
+}
+
+button {
+  appearance: auto;
+  cursor: pointer;
+}
+
+select {
+  appearance: auto;
+  -webkit-appearance: menulist;
+}
+
+textarea {
+  appearance: auto;
+  -webkit-appearance: textarea;
+  resize: vertical;
+}
+
+/* Link defaults */
+a {
+  color: var(--mnr-link, #1976d2);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* List defaults */
+ul, ol {
+  padding-left: 2em;
+}
+
+/* Ensure visibility */
+* {
+  visibility: visible !important;
+}
+`;
+	function ensureStyleElement(shadowRoot, id) {
+		const existing = shadowRoot.querySelector(`#${id}`);
+		if (existing?.tagName?.toLowerCase() === "style") return existing;
+		const style = document.createElement("style");
+		style.id = id;
+		shadowRoot.appendChild(style);
+		return style;
+	}
+	function applyRuntimeStyles(shadowRoot, state = getMnrGlobalState()) {
+		const host = shadowRoot.host;
+		if (state.styleProperties && host?.style) for (const [name, value] of Object.entries(state.styleProperties)) host.style.setProperty(name, value);
+		const customStyle = shadowRoot.querySelector("#mnr-custom-css");
+		if (state.customCSS) {
+			const style = customStyle || ensureStyleElement(shadowRoot, "mnr-custom-css");
+			style.textContent = state.customCSS;
+		} else customStyle?.remove();
+	}
+	function applyAppStyles(shadowRoot, state = getMnrGlobalState()) {
+		if (!state.styles) return;
+		const appStyle = ensureStyleElement(shadowRoot, "mnr-app-styles");
+		appStyle.textContent = state.styles;
+	}
+	function setShadowStyleProperties(properties) {
+		const state = getMnrGlobalState();
+		state.styleProperties = {
+			...state.styleProperties || {},
+			...properties
+		};
+		for (const shadowRoot of getRegisteredShadowRoots(state)) applyRuntimeStyles(shadowRoot, state);
+	}
+	function setShadowCustomCSS(css) {
+		const state = getMnrGlobalState();
+		state.customCSS = css;
+		for (const shadowRoot of getRegisteredShadowRoots(state)) applyRuntimeStyles(shadowRoot, state);
+	}
+	function createShadowMount(hostId) {
+		const globalState = getMnrGlobalState();
+		const host = document.createElement("div");
+		host.id = hostId;
+		document.body.appendChild(host);
+		const shadowRoot = host.attachShadow({ mode: "open" });
+		getRegisteredShadowRoots(globalState).add(shadowRoot);
+		const resetStyle = document.createElement("style");
+		resetStyle.textContent = BASE_RESET_CSS;
+		shadowRoot.appendChild(resetStyle);
+		applyAppStyles(shadowRoot, globalState);
+		applyRuntimeStyles(shadowRoot, globalState);
+		const mountPoint = document.createElement("div");
+		mountPoint.id = `${hostId}-mount`;
+		shadowRoot.appendChild(mountPoint);
+		const cleanup = () => {
+			host.remove();
+			globalState.shadowRoots?.delete(shadowRoot);
+			if (globalState.shadowRoots?.size === 0) globalState.shadowRoots = void 0;
+		};
+		return {
+			host,
+			shadowRoot,
+			mountPoint,
+			cleanup
+		};
+	}
 	var IS_CLIENT = typeof window !== "undefined";
 	var activePinia;
 	var setActivePinia = (pinia) => activePinia = pinia;
@@ -13599,32 +13749,28 @@
 		}
 		function applyTheme() {
 			const t = theme();
-			const root = document.documentElement;
-			root.style.setProperty("--mnr-bg", t.background);
-			root.style.setProperty("--mnr-text", t.text);
-			root.style.setProperty("--mnr-link", t.link);
-			root.style.setProperty("--mnr-on-link", t.onLink);
-			root.style.setProperty("--mnr-border", t.border);
+			setShadowStyleProperties({
+				"--mnr-bg": t.background,
+				"--mnr-text": t.text,
+				"--mnr-link": t.link,
+				"--mnr-on-link": t.onLink,
+				"--mnr-border": t.border
+			});
 		}
 		function applyReading() {
 			const r = reading.value;
-			const root = document.documentElement;
-			root.style.setProperty("--mnr-font-family", r.fontFamily);
-			root.style.setProperty("--mnr-font-size", `${r.fontSize}px`);
-			root.style.setProperty("--mnr-line-height", `${r.lineHeight}`);
-			root.style.setProperty("--mnr-letter-spacing", `${r.letterSpacing}em`);
-			root.style.setProperty("--mnr-paragraph-indent", `${r.paragraphIndent}em`);
-			root.style.setProperty("--mnr-max-width", `${r.maxWidth}px`);
-			root.style.setProperty("--mnr-padding", `${r.padding}px`);
+			setShadowStyleProperties({
+				"--mnr-font-family": r.fontFamily,
+				"--mnr-font-size": `${r.fontSize}px`,
+				"--mnr-line-height": `${r.lineHeight}`,
+				"--mnr-letter-spacing": `${r.letterSpacing}em`,
+				"--mnr-paragraph-indent": `${r.paragraphIndent}em`,
+				"--mnr-max-width": `${r.maxWidth}px`,
+				"--mnr-padding": `${r.padding}px`
+			});
 		}
 		function applyCustomCSS() {
-			let styleEl = document.getElementById("mnr-custom-css");
-			if (!styleEl) {
-				styleEl = document.createElement("style");
-				styleEl.id = "mnr-custom-css";
-				document.head.appendChild(styleEl);
-			}
-			styleEl.textContent = customCSS.value;
+			setShadowCustomCSS(customCSS.value);
 		}
 		function applyAll() {
 			applyTheme();
@@ -13731,121 +13877,6 @@
 			$reset
 		};
 	});
-	function getMnrGlobalState() {
-		if (!window.__MY_NOVEL_READER__) window.__MY_NOVEL_READER__ = {};
-		return window.__MY_NOVEL_READER__;
-	}
-	var BASE_RESET_CSS = `
-/* Reset all inherited styles */
-:host {
-  all: initial;
-  display: block;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #333;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Ensure common elements have expected defaults */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-/* Reset form elements to browser defaults */
-input, button, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  margin: 0;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  appearance: auto;
-  -webkit-appearance: checkbox;
-  width: auto;
-  height: auto;
-  margin: 3px 3px 3px 4px;
-  cursor: pointer;
-}
-
-input[type="range"] {
-  appearance: auto;
-  -webkit-appearance: slider-horizontal;
-}
-
-button {
-  appearance: auto;
-  cursor: pointer;
-}
-
-select {
-  appearance: auto;
-  -webkit-appearance: menulist;
-}
-
-textarea {
-  appearance: auto;
-  -webkit-appearance: textarea;
-  resize: vertical;
-}
-
-/* Link defaults */
-a {
-  color: var(--mnr-link, #1976d2);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* List defaults */
-ul, ol {
-  padding-left: 2em;
-}
-
-/* Ensure visibility */
-* {
-  visibility: visible !important;
-}
-`;
-	function createShadowMount(hostId) {
-		const globalState = getMnrGlobalState();
-		const host = document.createElement("div");
-		host.id = hostId;
-		document.body.appendChild(host);
-		const shadowRoot = host.attachShadow({ mode: "open" });
-		globalState.shadowRoot = shadowRoot;
-		const resetStyle = document.createElement("style");
-		resetStyle.textContent = BASE_RESET_CSS;
-		shadowRoot.appendChild(resetStyle);
-		if (globalState.styles) {
-			const styleId = "mnr-app-styles";
-			const existing = shadowRoot.querySelector(`#${styleId}`);
-			const appStyle = existing || document.createElement("style");
-			if (!existing) {
-				appStyle.id = styleId;
-				shadowRoot.appendChild(appStyle);
-			}
-			appStyle.textContent = globalState.styles;
-		}
-		const mountPoint = document.createElement("div");
-		mountPoint.id = `${hostId}-mount`;
-		shadowRoot.appendChild(mountPoint);
-		const cleanup = () => {
-			host.remove();
-			if (globalState.shadowRoot === shadowRoot) globalState.shadowRoot = void 0;
-		};
-		return {
-			host,
-			shadowRoot,
-			mountPoint,
-			cleanup
-		};
-	}
 	var _hoisted_1$7 = {
 		class: "mnr-prompt-card",
 		role: "dialog",
@@ -21442,31 +21473,15 @@ ul, ol {
 					const w = window;
 					const globalState = w.__MY_NOVEL_READER__ || (w.__MY_NOVEL_READER__ = {});
 					globalState.styles = (globalState.styles || "") + cssCode;
-					var styleId = "mnr-global-styles";
-					var injectGlobalStyle = function() {
-						var existingStyle = document.getElementById(styleId);
-						if (!existingStyle) {
-							var parent = document.head || document.documentElement;
-							if (!parent) return false;
-							existingStyle = document.createElement("style");
-							existingStyle.id = styleId;
-							parent.appendChild(existingStyle);
-						}
-						existingStyle.textContent = globalState.styles;
-						return true;
-					};
-					if (!injectGlobalStyle()) document.addEventListener("DOMContentLoaded", function() {
-						injectGlobalStyle();
-					}, { once: true });
-					if (globalState.shadowRoot) {
-						var shadowStyle = globalState.shadowRoot.querySelector("#mnr-app-styles");
+					if (globalState.shadowRoots) globalState.shadowRoots.forEach(function(shadowRoot) {
+						var shadowStyle = shadowRoot.querySelector("#mnr-app-styles");
 						if (!shadowStyle) {
 							shadowStyle = document.createElement("style");
 							shadowStyle.id = "mnr-app-styles";
-							globalState.shadowRoot.appendChild(shadowStyle);
+							shadowRoot.appendChild(shadowStyle);
 						}
 						shadowStyle.textContent = globalState.styles;
-					}
+					});
 				}
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);

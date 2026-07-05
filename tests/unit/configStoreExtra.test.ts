@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { JSDOM } from 'jsdom';
 
+import { createShadowMount } from '@/ui/shadowMount';
 import { useConfigStore } from '@/ui/stores/config';
 
 describe('ConfigStore (extra coverage)', () => {
@@ -163,13 +164,15 @@ describe('ConfigStore (extra coverage)', () => {
     expect(store.protection.blockVisibility).toBe(false);
   });
 
-  it('setCustomCSS applies CSS to DOM', () => {
+  it('setCustomCSS applies CSS inside Shadow DOM', () => {
+    const { shadowRoot } = createShadowMount('mnr-config-extra-root');
     const store = useConfigStore();
     store.setCustomCSS('.test { color: blue; }');
     expect(store.customCSS).toBe('.test { color: blue; }');
-    const styleEl = dom.window.document.getElementById('mnr-custom-css');
+    const styleEl = shadowRoot.querySelector('#mnr-custom-css');
     expect(styleEl).not.toBeNull();
     expect(styleEl!.textContent).toBe('.test { color: blue; }');
+    expect(dom.window.document.getElementById('mnr-custom-css')).toBeNull();
   });
 
   it('load handles exception gracefully', async () => {

@@ -5,25 +5,32 @@
  * Uses simplified @match rules since we now have intelligent auto-detection.
  */
 
-import { BUILD_DATE, VERSION } from './version';
+import { VERSION } from './version';
 
 // This userscript supports many sites via auto-detection.
 // Keep @connect permissive so GM_xmlhttpRequest works on any supported host.
 const CONNECTS = ['*'];
 
+type LocalizedText = Record<string, string>;
+type UserscriptResourceMap = Record<string, string>;
+
 const META_BASE = {
-  id: 'mynovelreader@ywzhaiqi@gmail.com',
-  name: 'My Novel Reader',
-  'name:zh-CN': '小说阅读脚本',
-  'name:zh-TW': '小說閱讀腳本',
+  name: {
+    '': 'My Novel Reader',
+    'zh-CN': '小说阅读脚本',
+    'zh-TW': '小說閱讀腳本',
+  } satisfies LocalizedText,
   namespace: 'https://github.com/ywzhaiqi',
   author: 'ywzhaiqi',
-  contributor: 'JasonEX, Roger Au, shyangs, JixunMoe、akiba9527 及其他网友',
-  description: '小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页',
-  'description:zh-CN': '小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页',
-  'description:zh-TW': '小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁',
+  description: {
+    '': '小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页',
+    'zh-CN': '小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页',
+    'zh-TW': '小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁',
+  } satisfies LocalizedText,
   license: 'GPL version 3',
+  homepage: 'https://github.com/ywzhaiqi/userscript#readme',
   homepageURL: 'https://greasyfork.org/scripts/292/',
+  source: 'https://github.com/ywzhaiqi/userscript.git',
   supportURL: 'https://github.com/JasonEX/MyNovelReader/issues',
 
   // GM API grants
@@ -111,7 +118,7 @@ const META_BASE = {
   ],
 
   // Resources (none needed with new architecture)
-  resources: [],
+  resources: {} as UserscriptResourceMap,
 
   // External dependencies (minimized)
   requires: [],
@@ -119,14 +126,29 @@ const META_BASE = {
 
 export type UserscriptMeta = typeof META_BASE & {
   version: string;
-  buildDate?: string;
 };
 
-export function createMeta(params: { version: string; buildDate?: string }): UserscriptMeta {
-  return { ...META_BASE, version: params.version, buildDate: params.buildDate };
+export function createMeta(params: { version: string }): UserscriptMeta {
+  return { ...META_BASE, version: params.version };
 }
 
-const META = createMeta({ version: VERSION, buildDate: BUILD_DATE });
+const META = createMeta({ version: VERSION });
+
+function pushMetaLine(lines: string[], key: string, value: string): void {
+  if (value) {
+    const paddedKey = key.length >= 14 ? `${key} ` : key.padEnd(14);
+    lines.push(`// @${paddedKey}${value}`);
+  }
+}
+
+function pushLocalizedMeta(lines: string[], key: string, values: LocalizedText): void {
+  pushMetaLine(lines, key, values[''] || '');
+  for (const [locale, value] of Object.entries(values)) {
+    if (locale) {
+      pushMetaLine(lines, `${key}:${locale}`, value);
+    }
+  }
+}
 
 /**
  * Generate the full meta block string
@@ -134,68 +156,59 @@ const META = createMeta({ version: VERSION, buildDate: BUILD_DATE });
 export function generateMetaBlock(meta: UserscriptMeta = META): string {
   const lines: string[] = ['// ==UserScript=='];
 
-  // Basic info
-  lines.push(`// @id             ${meta.id}`);
-  lines.push(`// @name           ${meta.name}`);
-  lines.push(`// @name:zh-CN     ${meta['name:zh-CN']}`);
-  lines.push(`// @name:zh-TW     ${meta['name:zh-TW']}`);
-  lines.push(`// @version        ${meta.version}`);
-  lines.push(`// @namespace      ${meta.namespace}`);
-  lines.push(`// @author         ${meta.author}`);
-  lines.push(`// @contributor    ${meta.contributor}`);
-  lines.push(`// @description    ${meta.description}`);
-  lines.push(`// @description:zh-CN  ${meta['description:zh-CN']}`);
-  lines.push(`// @description:zh-TW  ${meta['description:zh-TW']}`);
-  lines.push(`// @license        ${meta.license}`);
-  lines.push(`// @homepageURL    ${meta.homepageURL}`);
-  lines.push(`// @supportURL     ${meta.supportURL}`);
+  pushLocalizedMeta(lines, 'name', meta.name);
+  pushMetaLine(lines, 'namespace', meta.namespace);
+  pushMetaLine(lines, 'version', meta.version);
+  pushMetaLine(lines, 'author', meta.author);
+  pushLocalizedMeta(lines, 'description', meta.description);
+  pushMetaLine(lines, 'license', meta.license);
+  pushMetaLine(lines, 'homepage', meta.homepage);
+  pushMetaLine(lines, 'homepageURL', meta.homepageURL);
+  pushMetaLine(lines, 'source', meta.source);
+  pushMetaLine(lines, 'supportURL', meta.supportURL);
+  pushMetaLine(lines, 'run-at', 'document-start');
 
   // Grants
   lines.push('');
   for (const grant of meta.grants) {
-    lines.push(`// @grant          ${grant}`);
+    pushMetaLine(lines, 'grant', grant);
   }
 
   // Connects
   lines.push('');
   for (const connect of meta.connects) {
-    lines.push(`// @connect        ${connect}`);
+    pushMetaLine(lines, 'connect', connect);
   }
 
   // Matches
   lines.push('');
   lines.push('// Match patterns (auto-detection handles specifics)');
   for (const match of meta.matches) {
-    lines.push(`// @match          ${match}`);
+    pushMetaLine(lines, 'match', match);
   }
 
   // Excludes
   lines.push('');
   for (const exclude of meta.excludes) {
-    lines.push(`// @exclude        ${exclude}`);
+    pushMetaLine(lines, 'exclude', exclude);
   }
 
   // Requires (if any)
   if (meta.requires.length > 0) {
     lines.push('');
     for (const require of meta.requires) {
-      lines.push(`// @require        ${require}`);
+      pushMetaLine(lines, 'require', require);
     }
   }
 
   // Resources (if any)
-  if (meta.resources.length > 0) {
+  if (Object.keys(meta.resources).length > 0) {
     lines.push('');
-    for (const resource of meta.resources) {
-      lines.push(`// @resource       ${resource}`);
+    for (const [name, url] of Object.entries(meta.resources)) {
+      pushMetaLine(lines, 'resource', `${name} ${url}`);
     }
   }
 
-  // Build info comment
-  if (meta.buildDate) {
-    lines.push('');
-    lines.push(`// @build-date     ${meta.buildDate}`);
-  }
   lines.push('// ==/UserScript==');
 
   return lines.join('\n');
@@ -206,19 +219,15 @@ export function generateMetaBlock(meta: UserscriptMeta = META): string {
  */
 export function toUserscriptConfig(meta: UserscriptMeta = META): Record<string, unknown> {
   const config: Record<string, unknown> = {
-    id: meta.id,
     name: meta.name,
-    'name:zh-CN': meta['name:zh-CN'],
-    'name:zh-TW': meta['name:zh-TW'],
     version: meta.version,
     namespace: meta.namespace,
     author: meta.author,
-    contributor: meta.contributor,
     description: meta.description,
-    'description:zh-CN': meta['description:zh-CN'],
-    'description:zh-TW': meta['description:zh-TW'],
     license: meta.license,
+    homepage: meta.homepage,
     homepageURL: meta.homepageURL,
+    source: meta.source,
     supportURL: meta.supportURL,
     // Run as early as possible to block mobile ad-tech redirects (common on some novel sites).
     'run-at': 'document-start',
@@ -229,10 +238,6 @@ export function toUserscriptConfig(meta: UserscriptMeta = META): Record<string, 
     require: meta.requires,
     resource: meta.resources,
   };
-
-  if (meta.buildDate) {
-    config['build-date'] = meta.buildDate;
-  }
 
   return config;
 }

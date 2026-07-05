@@ -53,13 +53,13 @@ type ReaderDeepState = {
   drawerChapterCount: number;
   drawerTitles: string[];
   drawerOpen: boolean;
-  globalStyles: boolean;
   href: string;
   menuCommands: string[];
   originalHidden: boolean;
   pageTitle: string;
   readerMounted: boolean;
   readerRoot: boolean;
+  hostPageStyles: boolean;
   settingsControls: {
     closeButton: boolean;
     fontSlider: boolean;
@@ -176,7 +176,7 @@ async function collectDeepState(page: Page): Promise<ReaderDeepState> {
       drawerChapterCount: drawerItems.length,
       drawerTitles: drawerItems.map(item => normalize(item.textContent)),
       drawerOpen: !!drawer?.classList.contains('open'),
-      globalStyles: !!document.querySelector('#mnr-global-styles'),
+      hostPageStyles: !!document.querySelector('#mnr-global-styles'),
       href: location.href,
       menuCommands: ((window as any).__mnrMenuCommands || []).map(
         (command: { caption?: string }) => command.caption || ''
@@ -211,7 +211,7 @@ async function ensureBaseReaderState(
   expect(current.readerMounted).toBe(true);
   expect(current.originalHidden).toBe(true);
   expect(current.appStyles).toBe(true);
-  expect(current.globalStyles).toBe(true);
+  expect(current.hostPageStyles).toBe(false);
   return current;
 }
 

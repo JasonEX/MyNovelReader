@@ -15,7 +15,7 @@ const entryPoint = path.resolve(__dirname, 'src/index.ts');
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 const version = pkg.version || '0.0.0';
 const buildDate = new Date().toISOString().split('T')[0];
-const meta = createMeta({ version, buildDate });
+const meta = createMeta({ version });
 const userscript = toUserscriptConfig(meta);
 
 export default defineConfig({
@@ -44,7 +44,7 @@ export default defineConfig({
           if (typeof window !== 'undefined') {
             type MnrGlobalState = {
               styles?: string;
-              shadowRoot?: ShadowRoot;
+              shadowRoots?: Set<ShadowRoot>;
             };
             type MnrWindow = Window & { __MY_NOVEL_READER__?: MnrGlobalState };
 
@@ -54,40 +54,17 @@ export default defineConfig({
             // Store CSS for Shadow DOM injection
             globalState.styles = (globalState.styles || '') + cssCode;
 
-            // Also inject to document.head for the floating prompt/manual entry outside the shadow root.
-            // Use a unique ID to prevent duplicate injection
-            var styleId = 'mnr-global-styles';
-            var injectGlobalStyle = function () {
-              var existingStyle = document.getElementById(styleId);
-              if (!existingStyle) {
-                var parent = document.head || document.documentElement;
-                if (!parent) return false;
-                existingStyle = document.createElement('style');
-                existingStyle.id = styleId;
-                parent.appendChild(existingStyle);
-              }
-              existingStyle.textContent = globalState.styles;
-              return true;
-            };
-            if (!injectGlobalStyle()) {
-              document.addEventListener(
-                'DOMContentLoaded',
-                function () {
-                  injectGlobalStyle();
-                },
-                { once: true }
-              );
-            }
-
-            // If Shadow DOM already exists, also inject there
-            if (globalState.shadowRoot) {
-              var shadowStyle = globalState.shadowRoot.querySelector('#mnr-app-styles');
-              if (!shadowStyle) {
-                shadowStyle = document.createElement('style');
-                shadowStyle.id = 'mnr-app-styles';
-                globalState.shadowRoot.appendChild(shadowStyle);
-              }
-              shadowStyle.textContent = globalState.styles;
+            // Inject only into MyNovelReader Shadow DOM roots.
+            if (globalState.shadowRoots) {
+              globalState.shadowRoots.forEach(function (shadowRoot) {
+                var shadowStyle = shadowRoot.querySelector('#mnr-app-styles');
+                if (!shadowStyle) {
+                  shadowStyle = document.createElement('style');
+                  shadowStyle.id = 'mnr-app-styles';
+                  shadowRoot.appendChild(shadowStyle);
+                }
+                shadowStyle.textContent = globalState.styles;
+              });
             }
           }
         } catch (e) {

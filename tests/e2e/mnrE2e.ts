@@ -31,7 +31,6 @@ export interface MnrPageState {
   contentChars: number;
   contentPreview: string;
   floatingButton: boolean;
-  globalStyles: boolean;
   href: string;
   originalHidden: boolean;
   pageTitle: string;
@@ -39,6 +38,7 @@ export interface MnrPageState {
   promptRoot: boolean;
   readerMounted: boolean;
   readerRoot: boolean;
+  hostPageStyles: boolean;
   shadowTitle: string;
 }
 
@@ -210,7 +210,7 @@ async function collectMnrPageState(page: Page): Promise<MnrPageState> {
       contentChars: contentText.length,
       contentPreview: contentText.slice(0, 160),
       floatingButton: !!floating,
-      globalStyles: !!document.querySelector('#mnr-global-styles'),
+      hostPageStyles: !!document.querySelector('#mnr-global-styles'),
       href: location.href,
       originalHidden: !!document.querySelector('#mnr-hide-original'),
       pageTitle: document.title,
@@ -317,7 +317,7 @@ export function assertMnrSmokeState(state: MnrPageState): void {
   expect(state.paragraphCount).toBeGreaterThan(0);
   expect(state.originalHidden).toBe(true);
   expect(state.appStyles).toBe(true);
-  expect(state.globalStyles).toBe(true);
+  expect(state.hostPageStyles).toBe(false);
 }
 
 export function createConsoleCollector(page: Page): string[] {

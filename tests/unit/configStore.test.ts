@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { JSDOM } from 'jsdom';
 
+import { createShadowMount } from '@/ui/shadowMount';
 import { useConfigStore } from '@/ui/stores/config';
 
 describe('ConfigStore', () => {
@@ -33,11 +34,14 @@ describe('ConfigStore', () => {
     vi.stubGlobal('GM_getValue', gmGetValue);
     vi.stubGlobal('GM_setValue', gmSetValue);
 
+    const { host, shadowRoot } = createShadowMount('mnr-config-root');
     const store = useConfigStore();
     await store.load();
 
-    expect(dom.window.document.documentElement.style.getPropertyValue('--mnr-bg')).toBe('#ffffff');
-    expect(dom.window.document.getElementById('mnr-custom-css')).not.toBeNull();
+    expect(host.style.getPropertyValue('--mnr-bg')).toBe('#ffffff');
+    expect(shadowRoot.querySelector('#mnr-custom-css')).toBeNull();
+    expect(dom.window.document.documentElement.style.getPropertyValue('--mnr-bg')).toBe('');
+    expect(dom.window.document.getElementById('mnr-custom-css')).toBeNull();
     expect(gmSetValue).toHaveBeenCalledWith(
       'mnr-config',
       expect.stringContaining('"themeId":"light"')

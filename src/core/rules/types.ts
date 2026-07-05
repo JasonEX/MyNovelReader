@@ -157,8 +157,6 @@ interface RuleMeta {
   updated?: number;
   /** Example URL for testing */
   exampleUrl?: string;
-  /** Whether to auto-launch on matching sites */
-  autoLaunch?: boolean;
 }
 
 /**

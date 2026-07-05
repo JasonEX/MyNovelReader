@@ -248,7 +248,6 @@ const simplifiedRules: SiteRule[] = [
     },
     meta: {
       source: 'builtin',
-      autoLaunch: true,
       exampleUrl: 'https://b.faloo.com/412421_1.html',
     },
   },

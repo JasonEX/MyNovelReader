@@ -7,7 +7,9 @@
 
 interface MnrGlobalState {
   styles?: string;
-  shadowRoot?: ShadowRoot;
+  shadowRoots?: Set<ShadowRoot>;
+  styleProperties?: Record<string, string>;
+  customCSS?: string;
 }
 
 declare global {
@@ -21,6 +23,13 @@ function getMnrGlobalState(): MnrGlobalState {
     window.__MY_NOVEL_READER__ = {};
   }
   return window.__MY_NOVEL_READER__;
+}
+
+function getRegisteredShadowRoots(state: MnrGlobalState): Set<ShadowRoot> {
+  if (!state.shadowRoots) {
+    state.shadowRoots = new Set();
+  }
+  return state.shadowRoots;
 }
 
 interface ShadowMountResult {
@@ -112,6 +121,56 @@ ul, ol {
 }
 `;
 
+function ensureStyleElement(shadowRoot: ShadowRoot, id: string): HTMLStyleElement {
+  const existing = shadowRoot.querySelector(`#${id}`);
+  if (existing?.tagName?.toLowerCase() === 'style') return existing as HTMLStyleElement;
+
+  const style = document.createElement('style');
+  style.id = id;
+  shadowRoot.appendChild(style);
+  return style;
+}
+
+function applyRuntimeStyles(shadowRoot: ShadowRoot, state = getMnrGlobalState()): void {
+  const host = shadowRoot.host as HTMLElement | null;
+  if (state.styleProperties && host?.style) {
+    for (const [name, value] of Object.entries(state.styleProperties)) {
+      host.style.setProperty(name, value);
+    }
+  }
+
+  const customStyle = shadowRoot.querySelector('#mnr-custom-css') as HTMLStyleElement | null;
+  if (state.customCSS) {
+    const style = customStyle || ensureStyleElement(shadowRoot, 'mnr-custom-css');
+    style.textContent = state.customCSS;
+  } else {
+    customStyle?.remove();
+  }
+}
+
+function applyAppStyles(shadowRoot: ShadowRoot, state = getMnrGlobalState()): void {
+  if (!state.styles) return;
+
+  const appStyle = ensureStyleElement(shadowRoot, 'mnr-app-styles');
+  appStyle.textContent = state.styles;
+}
+
+export function setShadowStyleProperties(properties: Record<string, string>): void {
+  const state = getMnrGlobalState();
+  state.styleProperties = { ...(state.styleProperties || {}), ...properties };
+  for (const shadowRoot of getRegisteredShadowRoots(state)) {
+    applyRuntimeStyles(shadowRoot, state);
+  }
+}
+
+export function setShadowCustomCSS(css: string): void {
+  const state = getMnrGlobalState();
+  state.customCSS = css;
+  for (const shadowRoot of getRegisteredShadowRoots(state)) {
+    applyRuntimeStyles(shadowRoot, state);
+  }
+}
+
 /**
  * Create a Shadow DOM mount point for Vue components
  *
@@ -130,24 +189,16 @@ export function createShadowMount(hostId: string): ShadowMountResult {
   const shadowRoot = host.attachShadow({ mode: 'open' });
 
   // Store shadow root globally for CSS injection
-  globalState.shadowRoot = shadowRoot;
+  getRegisteredShadowRoots(globalState).add(shadowRoot);
 
   // Create style element with reset CSS
   const resetStyle = document.createElement('style');
   resetStyle.textContent = BASE_RESET_CSS;
   shadowRoot.appendChild(resetStyle);
 
-  // Inject any previously collected CSS
-  if (globalState.styles) {
-    const styleId = 'mnr-app-styles';
-    const existing = shadowRoot.querySelector(`#${styleId}`);
-    const appStyle = (existing || document.createElement('style')) as HTMLStyleElement;
-    if (!existing) {
-      appStyle.id = styleId;
-      shadowRoot.appendChild(appStyle);
-    }
-    appStyle.textContent = globalState.styles;
-  }
+  // Inject any previously collected app/config CSS
+  applyAppStyles(shadowRoot, globalState);
+  applyRuntimeStyles(shadowRoot, globalState);
 
   // Create mount point inside Shadow DOM
   const mountPoint = document.createElement('div');
@@ -157,8 +208,9 @@ export function createShadowMount(hostId: string): ShadowMountResult {
   // Cleanup function
   const cleanup = () => {
     host.remove();
-    if (globalState.shadowRoot === shadowRoot) {
-      globalState.shadowRoot = undefined;
+    globalState.shadowRoots?.delete(shadowRoot);
+    if (globalState.shadowRoots?.size === 0) {
+      globalState.shadowRoots = undefined;
     }
   };
 

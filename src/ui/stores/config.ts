@@ -3,6 +3,7 @@
  */
 
 import { ref, watch } from 'vue';
+import { setShadowCustomCSS, setShadowStyleProperties } from '@/ui/shadowMount';
 import { defineStore } from 'pinia';
 
 /** Theme definition */
@@ -198,34 +199,30 @@ export const useConfigStore = defineStore('config', () => {
 
   function applyTheme() {
     const t = theme();
-    const root = document.documentElement;
-    root.style.setProperty('--mnr-bg', t.background);
-    root.style.setProperty('--mnr-text', t.text);
-    root.style.setProperty('--mnr-link', t.link);
-    root.style.setProperty('--mnr-on-link', t.onLink);
-    root.style.setProperty('--mnr-border', t.border);
+    setShadowStyleProperties({
+      '--mnr-bg': t.background,
+      '--mnr-text': t.text,
+      '--mnr-link': t.link,
+      '--mnr-on-link': t.onLink,
+      '--mnr-border': t.border,
+    });
   }
 
   function applyReading() {
     const r = reading.value;
-    const root = document.documentElement;
-    root.style.setProperty('--mnr-font-family', r.fontFamily);
-    root.style.setProperty('--mnr-font-size', `${r.fontSize}px`);
-    root.style.setProperty('--mnr-line-height', `${r.lineHeight}`);
-    root.style.setProperty('--mnr-letter-spacing', `${r.letterSpacing}em`);
-    root.style.setProperty('--mnr-paragraph-indent', `${r.paragraphIndent}em`);
-    root.style.setProperty('--mnr-max-width', `${r.maxWidth}px`);
-    root.style.setProperty('--mnr-padding', `${r.padding}px`);
+    setShadowStyleProperties({
+      '--mnr-font-family': r.fontFamily,
+      '--mnr-font-size': `${r.fontSize}px`,
+      '--mnr-line-height': `${r.lineHeight}`,
+      '--mnr-letter-spacing': `${r.letterSpacing}em`,
+      '--mnr-paragraph-indent': `${r.paragraphIndent}em`,
+      '--mnr-max-width': `${r.maxWidth}px`,
+      '--mnr-padding': `${r.padding}px`,
+    });
   }
 
   function applyCustomCSS() {
-    let styleEl = document.getElementById('mnr-custom-css');
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = 'mnr-custom-css';
-      document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = customCSS.value;
+    setShadowCustomCSS(customCSS.value);
   }
 
   function applyAll() {

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 
 import { THEMES, useConfigStore } from '@/ui/stores/config';
+import { createShadowMount } from '@/ui/shadowMount';
 
 import { createGmStorageMock, stubGmStorage } from '../testUtils/gmStorage';
 import { createDom } from '../testUtils/dom';
@@ -42,16 +43,18 @@ describe('ConfigStore - behavior', () => {
     const gm = createGmStorageMock();
     stubGmStorage(gm);
 
+    const { host } = createShadowMount('mnr-config-theme-root');
     const store = useConfigStore();
     store.setTheme('dark');
 
     expect(store.themeId).toBe('dark');
-    expect(document.documentElement.style.getPropertyValue('--mnr-bg')).toBe(
+    expect(host.style.getPropertyValue('--mnr-bg')).toBe(
       THEMES.find(t => t.id === 'dark')!.background
     );
-    expect(document.documentElement.style.getPropertyValue('--mnr-on-link')).toBe(
+    expect(host.style.getPropertyValue('--mnr-on-link')).toBe(
       THEMES.find(t => t.id === 'dark')!.onLink
     );
+    expect(document.documentElement.style.getPropertyValue('--mnr-bg')).toBe('');
   });
 
   it('keeps built-in theme colors readable for long-form reading and accent controls', () => {
@@ -66,26 +69,30 @@ describe('ConfigStore - behavior', () => {
     const gm = createGmStorageMock();
     stubGmStorage(gm);
 
+    const { host } = createShadowMount('mnr-config-reading-root');
     const store = useConfigStore();
     store.updateReading({ fontSize: 20, lineHeight: 2.1, paragraphIndent: 3 });
     store.applyReading();
 
-    const root = document.documentElement.style;
+    const root = host.style;
     expect(root.getPropertyValue('--mnr-font-size')).toBe('20px');
     expect(root.getPropertyValue('--mnr-line-height')).toBe('2.1');
     expect(root.getPropertyValue('--mnr-paragraph-indent')).toBe('3em');
+    expect(document.documentElement.style.getPropertyValue('--mnr-font-size')).toBe('');
   });
 
-  it('setCustomCSS injects/updates the custom style element', () => {
+  it('setCustomCSS injects/updates the custom style element inside Shadow DOM', () => {
     const gm = createGmStorageMock();
     stubGmStorage(gm);
 
+    const { shadowRoot } = createShadowMount('mnr-config-custom-root');
     const store = useConfigStore();
     store.setCustomCSS('.mnr-test{color:red;}');
 
-    const styleEl = document.getElementById('mnr-custom-css') as HTMLStyleElement | null;
+    const styleEl = shadowRoot.querySelector('#mnr-custom-css') as HTMLStyleElement | null;
     expect(styleEl).not.toBeNull();
     expect(styleEl?.textContent).toContain('mnr-test');
+    expect(document.getElementById('mnr-custom-css')).toBeNull();
   });
 
   it('auto-saves when settings change', async () => {
