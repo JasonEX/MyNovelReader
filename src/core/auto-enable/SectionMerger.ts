@@ -33,6 +33,38 @@ export interface SectionMergeOptions {
   fetcher?: (url: string, referrer: string) => Promise<Document | null>;
 }
 
+interface StartPageState {
+  doc: Document;
+  url: string;
+  knownDocs: Map<string, Document>;
+}
+
+type SectionMergeState =
+  | { kind: 'done'; chapter: ParsedChapter }
+  | {
+      kind: 'merge';
+      nextSectionUrl: string | null;
+      nextChapterUrl: string | null;
+      sectionDelayMs: number;
+    };
+
+interface MergeCursor {
+  startUrl: string;
+  lastUrl: string;
+  mergedContent: string;
+  mergedRaw: string;
+  nextSectionUrl: string | null;
+  nextChapterUrl: string | null;
+  seen: Set<string>;
+  remainingPages: number;
+}
+
+interface LoadedSectionPage {
+  doc: Document;
+  url: string;
+  fromCache: boolean;
+}
+
 /**
  * Section Merger - combines multi-page chapters
  *
@@ -61,11 +93,7 @@ export class SectionMerger {
     const maxPages = Math.max(1, options.maxPages ?? 10);
     const confidenceThreshold = options.confidenceThreshold ?? 0.8;
 
-    // Get base URL if this is a section page (e.g. normalize ..._2.html to ..._1.html)
-    const baseUrl = getSectionBaseUrl(url);
-    let startUrl = url;
-    let startDoc = doc;
-    const knownDocs = new Map<string, Document>([[normalizeAbsoluteUrl(url, url), doc]]);
+    if (options.signal?.aborted) return null;
 
     const qidianBookPreviewUrl = resolveQidianMobileBookPreviewChapterUrl(doc, url);
     if (qidianBookPreviewUrl) {
@@ -73,9 +101,33 @@ export class SectionMerger {
       if (previewChapter) return previewChapter;
     }
 
-    // If user opens a later section page, normalize to the first page
+    const startPage = await this.resolveStartPage(doc, url, options);
+    if (!startPage) return null;
+
+    const first = await this.parser.parse(startPage.doc, startPage.url);
+    if (!first) return null;
+
+    const state = this.decideSectionMerge(startPage, first, confidenceThreshold, !!options.fetcher);
+    if (state.kind === 'done') return state.chapter;
+
+    return this.mergeSections(startPage, first, state, maxPages, options.fetcher, options.signal);
+  }
+
+  private async resolveStartPage(
+    doc: Document,
+    url: string,
+    options: SectionMergeOptions
+  ): Promise<StartPageState | null> {
+    if (options.signal?.aborted) return null;
+
+    let startUrl = url;
+    let startDoc = doc;
+    const knownDocs = new Map<string, Document>([[normalizeAbsoluteUrl(url, url), doc]]);
+    const baseUrl = getSectionBaseUrl(url);
+
     if (baseUrl && baseUrl !== url) {
       const baseDoc = await this.fetchUrl(baseUrl, url, options.fetcher, options.signal);
+      if (options.signal?.aborted) return null;
       if (baseDoc) {
         startUrl = baseUrl;
         startDoc = baseDoc;
@@ -83,134 +135,177 @@ export class SectionMerger {
       }
     }
 
-    // Parse first page
-    const first = await this.parser.parse(startDoc, startUrl);
-    if (!first) return null;
+    return { doc: startDoc, url: startUrl, knownDocs };
+  }
 
-    // Check if section merge is disabled by rule
-    const disableByRule = !!first.rule?.advanced?.noSection;
-    if (disableByRule) return first;
+  private decideSectionMerge(
+    startPage: StartPageState,
+    first: ParsedChapter,
+    confidenceThreshold: number,
+    hasCustomFetcher: boolean
+  ): SectionMergeState {
+    if (first.rule?.advanced?.noSection) return { kind: 'done', chapter: first };
 
-    // Check if section merge is enabled by rule or auto-detection
     const enableByRule = !!first.rule?.advanced?.checkSection;
-    const detection = this.parser.detect(startDoc, startUrl);
-    const section = detection.results.section as SectionInfo | undefined;
-    const hasNextSectionUrl = !!section?.isSection && !!section?.nextSectionUrl;
+    const section = this.parser.detectSection(startPage.doc, startPage.url) as
+      SectionInfo | undefined;
+    const hasNextSectionUrl = !!section?.isSection && !!section.nextSectionUrl;
     const shouldMerge =
-      enableByRule || (!!section?.isSection && (section?.confidence || 0) >= confidenceThreshold);
+      enableByRule || (!!section?.isSection && (section.confidence || 0) >= confidenceThreshold);
 
     if (!shouldMerge) {
-      // Try to resolve to real next chapter if nextUrl is section-like.
-      // If auto-detection already thinks this is a section page and provides nextSectionUrl,
-      // keep the section-like nextUrl to avoid accidentally skipping remaining pages.
-      if (!hasNextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
-        const realNextChapterUrl = this.findNextChapterUrl(startDoc, startUrl);
+      if (!hasNextSectionUrl && first.nextUrl && isSectionLikeUrl(startPage.url, first.nextUrl)) {
+        const realNextChapterUrl = this.findNextChapterUrl(startPage.doc, startPage.url);
         if (realNextChapterUrl) {
-          first.nextUrl = realNextChapterUrl;
+          return { kind: 'done', chapter: { ...first, nextUrl: realNextChapterUrl } };
         }
       }
-      return first;
+      return { kind: 'done', chapter: first };
     }
 
-    // Merge sections
-    const sectionDelayMs = options.fetcher
-      ? 0
-      : Math.max(0, first.rule?.advanced?.sectionDelayMs ?? 0);
-    return this.mergeSections(
-      startUrl,
-      first,
-      section,
-      maxPages,
-      sectionDelayMs,
-      options.fetcher,
-      knownDocs,
-      options.signal
-    );
+    const nextSectionUrl =
+      section?.nextSectionUrl ||
+      (first.nextUrl && isSectionLikeUrl(startPage.url, first.nextUrl) ? first.nextUrl : null);
+
+    return {
+      kind: 'merge',
+      nextSectionUrl,
+      nextChapterUrl: section?.nextChapterUrl || null,
+      sectionDelayMs: hasCustomFetcher ? 0 : Math.max(0, first.rule?.advanced?.sectionDelayMs ?? 0),
+    };
   }
 
   /**
    * Merge multiple section pages into one chapter
    */
   private async mergeSections(
-    startUrl: string,
+    startPage: StartPageState,
     first: ParsedChapter,
-    section: SectionInfo | undefined,
+    state: Extract<SectionMergeState, { kind: 'merge' }>,
     maxPages: number,
-    sectionDelayMs: number,
     fetcher?: SectionMergeOptions['fetcher'],
-    knownDocs?: Map<string, Document>,
     signal?: AbortSignal
   ): Promise<ParsedChapter> {
-    let mergedContent = first.content;
-    let mergedRaw = first.rawContent;
-    let nextSectionUrl = section?.nextSectionUrl || null;
-    let nextChapterUrl: string | null = section?.nextChapterUrl || null;
-    let lastUrl = startUrl;
+    const cursor = this.createMergeCursor(startPage, first, state, maxPages);
 
-    // If auto-detection didn't find nextSectionUrl, fall back to parsed nextUrl
-    if (!nextSectionUrl && first.nextUrl && isSectionLikeUrl(startUrl, first.nextUrl)) {
-      nextSectionUrl = first.nextUrl;
-    }
-
-    // The first page is already parsed into `first`; only merge the remaining pages.
-    const maxAdditionalPages = Math.max(0, maxPages - 1);
-
-    // Merge up to maxPages to avoid infinite loops
-    const seen = new Set<string>([startUrl]);
-    for (let i = 0; i < maxAdditionalPages && nextSectionUrl; i++) {
+    while (cursor.remainingPages > 0 && cursor.nextSectionUrl) {
       if (signal?.aborted) break;
 
-      const absNextSection = normalizeAbsoluteUrl(nextSectionUrl, lastUrl);
-      if (seen.has(absNextSection)) break;
-      seen.add(absNextSection);
-
-      if (sectionDelayMs > 0) {
-        await this.sleep(sectionDelayMs, signal);
+      if (state.sectionDelayMs > 0) {
+        await this.sleep(state.sectionDelayMs, signal);
         if (signal?.aborted) break;
       }
 
-      const cachedDoc = knownDocs?.get(absNextSection) ?? null;
-      let nextDoc = cachedDoc ?? (await this.fetchUrl(absNextSection, lastUrl, fetcher, signal));
-      if (!nextDoc) break;
+      const page = await this.loadNextSectionPage(cursor, startPage.knownDocs, fetcher, signal);
+      if (!page) break;
 
-      let nextParsed = await this.parser.parse(nextDoc, absNextSection);
-      if (!nextParsed && cachedDoc) {
-        const fetchedDoc = await this.fetchUrl(absNextSection, lastUrl, fetcher, signal);
-        if (!fetchedDoc) break;
-        knownDocs?.set(absNextSection, fetchedDoc);
-        nextDoc = fetchedDoc;
-        nextParsed = await this.parser.parse(nextDoc, absNextSection);
-      }
+      const nextParsed = await this.parseLoadedSection(
+        page,
+        cursor.lastUrl,
+        startPage.knownDocs,
+        fetcher,
+        signal
+      );
       if (!nextParsed) break;
 
-      // Merge content
-      mergedContent = joinHtml(mergedContent, nextParsed.content);
-      mergedRaw = joinHtml(mergedRaw, nextParsed.rawContent);
-
-      // Update navigation URLs
-      const nextDet = this.parser.detect(nextDoc, absNextSection);
-      const s = nextDet.results.section as SectionInfo | undefined;
-      if (s?.nextChapterUrl) nextChapterUrl = s.nextChapterUrl;
-
-      // Determine next section URL
-      nextSectionUrl = s?.nextSectionUrl || null;
-      if (!nextSectionUrl && nextParsed.nextUrl) {
-        if (isSectionLikeUrl(absNextSection, nextParsed.nextUrl)) {
-          nextSectionUrl = nextParsed.nextUrl;
-        } else if (!nextChapterUrl) {
-          nextChapterUrl = nextParsed.nextUrl;
-        }
-      }
-
-      lastUrl = absNextSection;
+      const section = this.parser.detectSection(page.doc, page.url) as SectionInfo | undefined;
+      this.advanceMergeCursor(cursor, page.url, nextParsed, section);
+      cursor.remainingPages -= 1;
     }
 
+    return this.buildMergedChapter(first, cursor);
+  }
+
+  private createMergeCursor(
+    startPage: StartPageState,
+    first: ParsedChapter,
+    state: Extract<SectionMergeState, { kind: 'merge' }>,
+    maxPages: number
+  ): MergeCursor {
+    return {
+      startUrl: startPage.url,
+      lastUrl: startPage.url,
+      mergedContent: first.content,
+      mergedRaw: first.rawContent,
+      nextSectionUrl: state.nextSectionUrl,
+      nextChapterUrl: state.nextChapterUrl,
+      seen: new Set([normalizeAbsoluteUrl(startPage.url, startPage.url)]),
+      remainingPages: Math.max(0, maxPages - 1),
+    };
+  }
+
+  private async loadNextSectionPage(
+    cursor: MergeCursor,
+    knownDocs: Map<string, Document>,
+    fetcher?: SectionMergeOptions['fetcher'],
+    signal?: AbortSignal
+  ): Promise<LoadedSectionPage | null> {
+    if (signal?.aborted || !cursor.nextSectionUrl) return null;
+
+    const url = normalizeAbsoluteUrl(cursor.nextSectionUrl, cursor.lastUrl);
+    if (cursor.seen.has(url)) return null;
+    cursor.seen.add(url);
+
+    const cachedDoc = knownDocs.get(url) ?? null;
+    if (cachedDoc) {
+      return { doc: cachedDoc, url, fromCache: true };
+    }
+
+    const doc = await this.fetchUrl(url, cursor.lastUrl, fetcher, signal);
+    if (!doc) return null;
+
+    knownDocs.set(url, doc);
+    return { doc, url, fromCache: false };
+  }
+
+  private async parseLoadedSection(
+    page: LoadedSectionPage,
+    referrer: string,
+    knownDocs: Map<string, Document>,
+    fetcher?: SectionMergeOptions['fetcher'],
+    signal?: AbortSignal
+  ): Promise<ParsedChapter | null> {
+    let parsed = await this.parser.parse(page.doc, page.url);
+    if (parsed || !page.fromCache || signal?.aborted) return parsed;
+
+    const doc = await this.fetchUrl(page.url, referrer, fetcher, signal);
+    if (!doc) return null;
+
+    knownDocs.set(page.url, doc);
+    parsed = await this.parser.parse(doc, page.url);
+    return parsed;
+  }
+
+  private advanceMergeCursor(
+    cursor: MergeCursor,
+    pageUrl: string,
+    parsed: ParsedChapter,
+    section: SectionInfo | undefined
+  ): void {
+    cursor.mergedContent = joinHtml(cursor.mergedContent, parsed.content);
+    cursor.mergedRaw = joinHtml(cursor.mergedRaw, parsed.rawContent);
+
+    if (section?.nextChapterUrl) cursor.nextChapterUrl = section.nextChapterUrl;
+
+    cursor.nextSectionUrl = section?.nextSectionUrl || null;
+    if (!cursor.nextSectionUrl && parsed.nextUrl) {
+      if (isSectionLikeUrl(pageUrl, parsed.nextUrl)) {
+        cursor.nextSectionUrl = parsed.nextUrl;
+      } else if (!cursor.nextChapterUrl) {
+        cursor.nextChapterUrl = parsed.nextUrl;
+      }
+    }
+
+    cursor.lastUrl = pageUrl;
+  }
+
+  private buildMergedChapter(first: ParsedChapter, cursor: MergeCursor): ParsedChapter {
     return {
       ...first,
-      url: startUrl,
-      content: mergedContent,
-      rawContent: mergedRaw,
-      nextUrl: nextChapterUrl || first.nextUrl,
+      url: cursor.startUrl,
+      content: cursor.mergedContent,
+      rawContent: cursor.mergedRaw,
+      nextUrl: cursor.nextChapterUrl || first.nextUrl,
     };
   }
 

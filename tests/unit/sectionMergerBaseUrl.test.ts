@@ -30,8 +30,8 @@ describe('SectionMerger (base url + maxPages)', () => {
         confidence: 1,
         method: 'detection',
       }),
-      detect: vi.fn().mockReturnValue({ results: { section: undefined } }),
-    } satisfies Pick<Parser, 'detect' | 'parse'>;
+      detectSection: vi.fn().mockReturnValue(undefined),
+    } satisfies Pick<Parser, 'detectSection' | 'parse'>;
 
     const merger = new SectionMerger(parser as unknown as Parser);
     const startDoc = new DOMParser().parseFromString('<html><body>p2</body></html>', 'text/html');
@@ -82,36 +82,28 @@ describe('SectionMerger (base url + maxPages)', () => {
         }
         return null;
       }),
-      detect: vi.fn().mockImplementation((_doc: Document, url: string) => {
+      detectSection: vi.fn().mockImplementation((_doc: Document, url: string) => {
         if (url.endsWith('123.html')) {
           return {
-            results: {
-              section: {
-                isSection: true,
-                nextSectionUrl: 'https://example.com/123_2.html',
-                nextChapterUrl: null,
-                confidence: 1,
-              },
-            },
+            isSection: true,
+            nextSectionUrl: 'https://example.com/123_2.html',
+            nextChapterUrl: null,
+            confidence: 1,
           };
         }
 
         if (url.endsWith('123_2.html')) {
           return {
-            results: {
-              section: {
-                isSection: true,
-                nextSectionUrl: 'https://example.com/123_3.html',
-                nextChapterUrl: null,
-                confidence: 1,
-              },
-            },
+            isSection: true,
+            nextSectionUrl: 'https://example.com/123_3.html',
+            nextChapterUrl: null,
+            confidence: 1,
           };
         }
 
-        return { results: { section: undefined } };
+        return undefined;
       }),
-    } satisfies Pick<Parser, 'detect' | 'parse'>;
+    } satisfies Pick<Parser, 'detectSection' | 'parse'>;
 
     const merger = new SectionMerger(parser as unknown as Parser);
     const startDoc = new DOMParser().parseFromString('<html><body>p1</body></html>', 'text/html');

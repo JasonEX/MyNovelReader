@@ -15,8 +15,8 @@ describe('SectionMerger (nextUrl resolution)', () => {
         confidence: 1,
         method: 'detection',
       }),
-      detect: vi.fn().mockReturnValue({ results: { section: undefined } }),
-    } satisfies Pick<Parser, 'detect' | 'parse'>;
+      detectSection: vi.fn().mockReturnValue(undefined),
+    } satisfies Pick<Parser, 'detectSection' | 'parse'>;
 
     const merger = new SectionMerger(parser as unknown as Parser);
     const startDoc = new DOMParser().parseFromString(
@@ -39,8 +39,8 @@ describe('SectionMerger (nextUrl resolution)', () => {
         confidence: 1,
         method: 'detection',
       }),
-      detect: vi.fn().mockReturnValue({ results: { section: undefined } }),
-    } satisfies Pick<Parser, 'detect' | 'parse'>;
+      detectSection: vi.fn().mockReturnValue(undefined),
+    } satisfies Pick<Parser, 'detectSection' | 'parse'>;
 
     const merger = new SectionMerger(parser as unknown as Parser);
     const startDoc = new DOMParser().parseFromString(
@@ -63,17 +63,13 @@ describe('SectionMerger (nextUrl resolution)', () => {
         confidence: 1,
         method: 'detection',
       }),
-      detect: vi.fn().mockReturnValue({
-        results: {
-          section: {
-            isSection: true,
-            nextSectionUrl: 'https://example.com/123.html?page=2',
-            nextChapterUrl: null,
-            confidence: 0.5,
-          },
-        },
+      detectSection: vi.fn().mockReturnValue({
+        isSection: true,
+        nextSectionUrl: 'https://example.com/123.html?page=2',
+        nextChapterUrl: null,
+        confidence: 0.5,
       }),
-    } satisfies Pick<Parser, 'detect' | 'parse'>;
+    } satisfies Pick<Parser, 'detectSection' | 'parse'>;
 
     const merger = new SectionMerger(parser as unknown as Parser);
     const startDoc = new DOMParser().parseFromString(

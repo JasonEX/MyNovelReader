@@ -2,7 +2,12 @@
  * DetectionEngine - Main orchestrator for page detection
  */
 
-import { ConfidenceReport, DetectionResults, SectionDetectionResult } from './types';
+import type {
+  ConfidenceReport,
+  DetectionResults,
+  NavigationResult,
+  SectionDetectionResult,
+} from './types';
 import { ConfidenceScorer } from './ConfidenceScorer';
 import { ContentDetector } from './ContentDetector';
 import { NavigationDetector } from './NavigationDetector';
@@ -35,18 +40,15 @@ export class DetectionEngine {
   ): DetectionEngineResult {
     // Run all detectors
     const content = this.contentDetector.detect(doc);
-    const navigation = this.navigationDetector.detect(doc, currentUrl);
+    const navigation = this.detectNavigation(doc, currentUrl);
     const title = this.titleDetector.detect(doc);
 
-    // Validate navigation against current URL
-    const validatedNav = this.navigationDetector.validateNavigation(currentUrl, navigation);
-
     // Detect multi-page chapter sections
-    const section = this.navigationDetector.detectSection(doc, currentUrl, validatedNav);
+    const section = this.detectSection(doc, currentUrl, navigation);
 
     const results: DetectionResults = {
       content,
-      navigation: validatedNav,
+      navigation,
       title,
       section,
     };
@@ -58,14 +60,26 @@ export class DetectionEngine {
   }
 
   /**
-   * Detect section only (for use when navigation is already known)
+   * Detect navigation links without scanning content/title.
+   */
+  detectNavigation(
+    doc: Document = document,
+    currentUrl: string = window.location.href
+  ): NavigationResult {
+    const navigation = this.navigationDetector.detect(doc, currentUrl);
+    return this.navigationDetector.validateNavigation(currentUrl, navigation);
+  }
+
+  /**
+   * Detect section only. Reuse already detected navigation when available.
    */
   detectSection(
     doc: Document = document,
-    currentUrl: string = window.location.href
+    currentUrl: string = window.location.href,
+    navigation?: NavigationResult
   ): SectionDetectionResult {
-    const navigation = this.navigationDetector.detect(doc, currentUrl);
-    return this.navigationDetector.detectSection(doc, currentUrl, navigation);
+    const resolvedNavigation = navigation ?? this.detectNavigation(doc, currentUrl);
+    return this.navigationDetector.detectSection(doc, currentUrl, resolvedNavigation);
   }
 
   /**

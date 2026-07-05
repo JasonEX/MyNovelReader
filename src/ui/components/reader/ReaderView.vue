@@ -142,6 +142,7 @@ const bottomSentinel = ref<HTMLElement | null>(null);
 const isNavigating = ref(false);
 const showControls = ref(true);
 const chapterRefs = new Map<string, HTMLElement>();
+const chapterResizeObservers = new Map<string, { disconnect: () => void }>();
 
 // UI controls composable
 const { settingsVisible, drawerOpen, toggleDrawer, openSettings, handleEscape, toggleSettings } =
@@ -159,9 +160,8 @@ const {
   visibleChapters,
   topSpacer,
   bottomSpacer,
-  heights: chapterHeights,
-  averageHeight,
   setHeight: setChapterHeight,
+  getOffsetBefore,
   updateWindow,
 } = useVirtualChapters(chapters, {
   windowSize: 5,
@@ -205,11 +205,7 @@ const { scheduleAutoLoadNext } = useReaderAutoLoad({
 const { handleScroll } = useReaderScroll({
   mainRef,
   chapters,
-  visibleChapters,
-  chapterRefs,
-  chapterHeights,
-  averageHeight,
-  setChapterHeight,
+  getOffsetBefore,
   updateWindow,
   readerStore,
   autoHideHeader,
@@ -410,14 +406,51 @@ function toggleCacheAll() {
 }
 
 // Ref setter for virtualized chapters
+function disconnectChapterResizeObserver(url: string): void {
+  chapterResizeObservers.get(url)?.disconnect();
+  chapterResizeObservers.delete(url);
+}
+
+function measureChapterHeight(url: string, el: HTMLElement): void {
+  setChapterHeight(url, el.offsetHeight);
+}
+
+function observeChapterSize(url: string, el: HTMLElement): void {
+  if (typeof globalThis.ResizeObserver !== 'function') return;
+
+  const observer = new globalThis.ResizeObserver(entries => {
+    const entry = entries[0];
+    if (!entry) return;
+
+    const borderBoxSize = Array.isArray(entry.borderBoxSize)
+      ? entry.borderBoxSize[0]
+      : entry.borderBoxSize;
+    const height =
+      borderBoxSize?.blockSize ||
+      (entry.target as HTMLElement).offsetHeight ||
+      entry.contentRect.height;
+    if (height > 0) {
+      setChapterHeight(url, Math.round(height));
+    }
+  });
+  observer.observe(el);
+  chapterResizeObservers.set(url, observer);
+}
+
 function setChapterRef(url: string) {
   return (el: HTMLElement | null) => {
     if (!el) {
       chapterRefs.delete(url);
+      disconnectChapterResizeObserver(url);
       return;
     }
+    if (chapterRefs.get(url) === el) {
+      return;
+    }
+    disconnectChapterResizeObserver(url);
     chapterRefs.set(url, el);
-    setChapterHeight(url, el.offsetHeight);
+    measureChapterHeight(url, el);
+    observeChapterSize(url, el);
   };
 }
 
@@ -528,6 +561,9 @@ onUnmounted(() => {
   bottomObserver?.disconnect();
   topObserver = null;
   bottomObserver = null;
+
+  chapterResizeObservers.forEach(observer => observer.disconnect());
+  chapterResizeObservers.clear();
 });
 </script>
 

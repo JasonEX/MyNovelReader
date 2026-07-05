@@ -3,7 +3,12 @@
  */
 
 import { ContentProcessor, ProcessingOptions } from './ContentProcessor';
-import { DetectionEngine, DetectionEngineResult } from '@/core/detection';
+import {
+  DetectionEngine,
+  type DetectionEngineResult,
+  type NavigationResult,
+  type SectionDetectionResult,
+} from '@/core/detection';
 import { HookFetchOptions, HookHelpers, RuleMatchResult, SiteRule } from '@/core/rules/types';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { resolveAndValidateHttpUrl } from '@/core/utils/network';
@@ -117,7 +122,7 @@ export class Parser {
     const hasRuleIndex = rule.navigation?.index !== undefined;
 
     if (!navigation.next || !navigation.prev || !navigation.index) {
-      const detectedNav = this.detectionEngine.detect(doc, url).results.navigation;
+      const detectedNav = this.detectionEngine.detectNavigation(doc, url);
       if (!hasRuleNext && !navigation.next && detectedNav.next?.url) {
         navigation.next = detectedNav.next.url;
       }
@@ -247,6 +252,26 @@ export class Parser {
    */
   detect(doc: Document = document, url?: string): DetectionEngineResult {
     return this.detectionEngine.detect(doc, url || doc.location?.href || window.location.href);
+  }
+
+  /**
+   * Detect navigation without running content/title detection.
+   */
+  detectNavigation(doc: Document = document, url?: string): NavigationResult {
+    return this.detectionEngine.detectNavigation(
+      doc,
+      url || doc.location?.href || window.location.href
+    );
+  }
+
+  /**
+   * Detect section state without running content/title detection.
+   */
+  detectSection(doc: Document = document, url?: string): SectionDetectionResult {
+    return this.detectionEngine.detectSection(
+      doc,
+      url || doc.location?.href || window.location.href
+    );
   }
 
   /**

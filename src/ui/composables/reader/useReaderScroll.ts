@@ -8,7 +8,6 @@
 import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
 import { type ComputedRef, type Ref } from 'vue';
 import type { ScheduleAutoLoadNext } from './useReaderAutoLoad';
-import type { VirtualChapterEntry } from '@/ui/composables/useVirtualChapters';
 
 // === Constants ===
 const SCROLL_THROTTLE_MS = 16; // ~60fps
@@ -43,11 +42,7 @@ function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number):
 export interface UseReaderScrollOptions {
   mainRef: Ref<HTMLElement | null>;
   chapters: ComputedRef<ChapterEntry[]>;
-  visibleChapters: ComputedRef<VirtualChapterEntry[]>;
-  chapterRefs: Map<string, HTMLElement>;
-  chapterHeights: Ref<Map<string, number>>;
-  averageHeight: Ref<number>;
-  setChapterHeight: (url: string, height: number) => void;
+  getOffsetBefore: (index: number) => number;
   updateWindow: (index: number) => void;
   readerStore: ReturnType<typeof useReaderStore>;
   autoHideHeader: ComputedRef<boolean>;
@@ -60,11 +55,7 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
   const {
     mainRef,
     chapters,
-    visibleChapters,
-    chapterRefs,
-    chapterHeights,
-    averageHeight,
-    setChapterHeight,
+    getOffsetBefore,
     updateWindow,
     readerStore,
     autoHideHeader,
@@ -102,19 +93,26 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     }, SCROLL_SETTLE_CHECK_MS);
   }
 
-  function estimateIndexFromOffset(offset: number): number {
-    if (chapters.value.length === 0) return -1;
+  function findChapterIndexByOffset(offset: number): number {
+    const chapterCount = chapters.value.length;
+    if (chapterCount === 0) return -1;
 
-    let acc = 0;
-    for (let i = 0; i < chapters.value.length; i++) {
-      const url = chapters.value[i].chapter.url;
-      const height = chapterHeights.value.get(url) ?? averageHeight.value;
-      acc += height;
-      if (offset < acc) {
-        return i;
+    const target = Math.max(0, offset);
+    let low = 0;
+    let high = chapterCount - 1;
+    let candidate = 0;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (getOffsetBefore(mid) <= target) {
+        candidate = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
       }
     }
-    return chapters.value.length - 1;
+
+    return Math.min(candidate, chapterCount - 1);
   }
 
   function handleScrollCore() {
@@ -143,48 +141,9 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     }
     lastScrollTop = currentScrollY;
 
-    // Find current visible chapter using visible area calculation
-    let currentChapterEl: HTMLElement | null = null;
-    let currentChapterIdx = -1;
-    let maxVisibleHeight = 0;
-
-    const viewportTop = currentScrollY;
-    const viewportBottom = currentScrollY + mainEl.clientHeight;
-
-    for (const entry of visibleChapters.value) {
-      const el = chapterRefs.get(entry.chapter.url);
-      if (!el) continue;
-
-      const elTop = el.offsetTop;
-      const elHeight = el.offsetHeight;
-      const elBottom = elTop + elHeight;
-
-      // Update height cache
-      setChapterHeight(entry.chapter.url, elHeight);
-
-      // Calculate visible overlap
-      const visibleTop = Math.max(elTop, viewportTop);
-      const visibleBottom = Math.min(elBottom, viewportBottom);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-      if (visibleHeight > maxVisibleHeight) {
-        maxVisibleHeight = visibleHeight;
-        currentChapterIdx = entry.index;
-        currentChapterEl = el;
-      }
-    }
-
-    if (!currentChapterEl || currentChapterIdx === -1) {
-      // Fallback: when spacer fills the viewport, estimate index from scroll offset
-      const estimatedIdx = estimateIndexFromOffset(currentScrollY + mainEl.clientHeight / 2);
-      if (estimatedIdx !== -1) {
-        readerStore.setCurrentChapter(estimatedIdx);
-        updateWindow(estimatedIdx);
-        readerStore.updateScroll(overallPercent);
-        scheduleAutoLoadNext('scroll');
-        queuePostLayoutAutoLoadCheck();
-        queueScrollSettledAutoLoadCheck();
-      }
+    const currentChapterIdx = findChapterIndexByOffset(currentScrollY + mainEl.clientHeight / 2);
+    if (currentChapterIdx === -1) {
+      readerStore.updateScroll(overallPercent);
       return;
     }
 

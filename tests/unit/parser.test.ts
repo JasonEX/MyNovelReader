@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import type { DetectionEngineResult } from '@/core/detection';
+import type {
+  DetectionEngineResult,
+  NavigationResult,
+  SectionDetectionResult,
+} from '@/core/detection';
 import type { SiteRule } from '@/core/rules/types';
 
 type HookFetchOptions = {
@@ -13,6 +17,8 @@ type HookFetchOptions = {
 
 type DetectionEngineLike = {
   detect: (doc: Document, url: string) => DetectionEngineResult;
+  detectNavigation: (doc: Document, url: string) => NavigationResult;
+  detectSection: (doc: Document, url: string) => SectionDetectionResult;
   quickCheck: (doc: Document) => boolean;
 };
 
@@ -822,6 +828,12 @@ describe('Parser', () => {
 
     (parser as unknown as { detectionEngine: DetectionEngineLike }).detectionEngine = {
       detect: vi.fn(() => detected) as unknown as DetectionEngineLike['detect'],
+      detectNavigation: vi.fn(
+        () => detected.results.navigation
+      ) as unknown as DetectionEngineLike['detectNavigation'],
+      detectSection: vi.fn(
+        () => detected.results.section as SectionDetectionResult
+      ) as unknown as DetectionEngineLike['detectSection'],
       quickCheck: vi.fn(() => true) as unknown as DetectionEngineLike['quickCheck'],
     };
 

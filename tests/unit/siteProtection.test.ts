@@ -220,6 +220,44 @@ describe('SiteProtection', () => {
       expect(injected).toBeNull();
     });
 
+    it('does not scan descendants for plain leaf nodes', () => {
+      const p = new SiteProtection({
+        blockRedirects: true,
+        enableRightClick: false,
+        enableSelection: false,
+        enableCopy: false,
+        unlockKeyboard: false,
+        blockPopups: false,
+        removeEventHijacking: false,
+        blockVisibilityDetection: false,
+        clearTimers: false,
+      });
+      p.activate();
+
+      const queryAllSpy = vi.spyOn(dom.window.Element.prototype, 'querySelectorAll');
+      const div = dom.window.document.createElement('div');
+      div.textContent = 'normal content';
+      dom.window.document.body.appendChild(div);
+
+      expect(queryAllSpy).not.toHaveBeenCalled();
+      expect(div.isConnected).toBe(true);
+
+      p.deactivate();
+    });
+
+    it('still blocks nested cross-origin scripts in inserted fragments', () => {
+      protection.activate();
+
+      const wrapper = dom.window.document.createElement('div');
+      wrapper.innerHTML = '<p>text</p><script src="https://evil.example/x.js"></script>';
+      dom.window.document.body.appendChild(wrapper);
+
+      expect(wrapper.isConnected).toBe(false);
+      expect(
+        dom.window.document.querySelector('script[src="https://evil.example/x.js"]')
+      ).toBeNull();
+    });
+
     it('should block suspicious document.writeln script injection in aggressive mode', () => {
       const doc = dom.window.document as unknown as Document & {
         writeln: (...args: unknown[]) => void;

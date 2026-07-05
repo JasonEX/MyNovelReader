@@ -39,6 +39,16 @@ describe('useReaderScroll', () => {
     const chapterHeights = ref(overrides.chapterHeights || new Map<string, number>());
     const averageHeight = ref(overrides.averageHeight ?? 500);
     const mainRef = ref(overrides.mainRef || null);
+    const getOffsetBefore =
+      overrides.getOffsetBefore ||
+      ((index: number) => {
+        const list = chapters.value;
+        let offset = 0;
+        for (let i = 0; i < Math.min(index, list.length); i++) {
+          offset += chapterHeights.value.get(list[i].chapter.url) ?? averageHeight.value;
+        }
+        return offset;
+      });
 
     const readerStore = {
       setCurrentChapter: vi.fn(),
@@ -53,6 +63,7 @@ describe('useReaderScroll', () => {
       chapterRefs,
       chapterHeights,
       averageHeight,
+      getOffsetBefore,
       setChapterHeight: vi.fn(),
       updateWindow: vi.fn(),
       readerStore: readerStore as any,
@@ -70,7 +81,7 @@ describe('useReaderScroll', () => {
     expect(opts.readerStore.setCurrentChapter).not.toHaveBeenCalled();
   });
 
-  it('handleScroll finds the most visible chapter and updates store', () => {
+  it('handleScroll finds the current chapter from cached offsets and updates store', () => {
     const mainEl = document.createElement('div');
     Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
     Object.defineProperty(mainEl, 'clientHeight', { value: 600 });
@@ -98,7 +109,7 @@ describe('useReaderScroll', () => {
 
     expect(opts.readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
     expect(opts.readerStore.updateScroll).toHaveBeenCalled();
-    expect(opts.setChapterHeight).toHaveBeenCalledWith('https://example.com/ch1', 500);
+    expect(opts.setChapterHeight).not.toHaveBeenCalled();
     expect(opts.updateWindow).toHaveBeenCalledWith(0);
     expect(opts.scheduleAutoLoadNext).toHaveBeenCalledWith('scroll');
   });

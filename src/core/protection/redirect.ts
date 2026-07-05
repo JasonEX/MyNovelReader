@@ -201,17 +201,20 @@ export function blockRedirects(options: RedirectProtectionOptions = {}): () => v
     if (ScriptCtor && node instanceof ScriptCtor) return checkScript(node as HTMLScriptElement);
     if (IFrameCtor && node instanceof IFrameCtor) return checkIFrame(node as HTMLIFrameElement);
 
-    if (
+    const canContainEmbeddedNodes =
       (DocumentFragmentCtor && node instanceof DocumentFragmentCtor) ||
-      (ElementCtor && node instanceof ElementCtor)
-    ) {
-      const scripts = node.querySelectorAll('script[src]');
-      for (const s of Array.from(scripts)) {
-        if (ScriptCtor && s instanceof ScriptCtor && checkScript(s)) return true;
-      }
-      const iframes = node.querySelectorAll('iframe[src]');
-      for (const f of Array.from(iframes)) {
-        if (IFrameCtor && f instanceof IFrameCtor && checkIFrame(f)) return true;
+      (ElementCtor && node instanceof ElementCtor);
+    if (!canContainEmbeddedNodes) return false;
+
+    const container = node as Element | DocumentFragment;
+    if (container.childElementCount === 0) return false;
+
+    const embeddedNodes = container.querySelectorAll('script[src], iframe[src]');
+    for (const embeddedNode of Array.from(embeddedNodes)) {
+      if (ScriptCtor && embeddedNode instanceof ScriptCtor) {
+        if (checkScript(embeddedNode)) return true;
+      } else if (IFrameCtor && embeddedNode instanceof IFrameCtor) {
+        if (checkIFrame(embeddedNode)) return true;
       }
     }
 

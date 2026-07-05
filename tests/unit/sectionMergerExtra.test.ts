@@ -65,15 +65,11 @@ describe('SectionMerger (extra coverage)', () => {
 
     const fakeParser = {
       parse: vi.fn(async (doc: Document, url: string) => parsed[url] || null),
-      detect: vi.fn((_doc: Document, _url: string) => ({
-        results: {
-          section: {
-            isSection: true,
-            nextSectionUrl: null,
-            nextChapterUrl: null,
-            confidence: 0.9,
-          },
-        },
+      detectSection: vi.fn((_doc: Document, _url: string) => ({
+        isSection: true,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0.9,
       })),
     };
 
@@ -94,7 +90,7 @@ describe('SectionMerger (extra coverage)', () => {
   it('returns early when signal is aborted before normalization fetch', async () => {
     const fakeParser = {
       parse: vi.fn(async () => null),
-      detect: vi.fn(() => ({ results: {} })),
+      detectSection: vi.fn(() => undefined),
     };
 
     const controller = new AbortController();
@@ -109,6 +105,8 @@ describe('SectionMerger (extra coverage)', () => {
 
     expect(result).toBeNull();
     expect(fetcher).not.toHaveBeenCalled();
+    expect(fakeParser.parse).not.toHaveBeenCalled();
+    expect(fakeParser.detectSection).not.toHaveBeenCalled();
   });
 
   it('aborts an in-flight fetch task when signal becomes aborted synchronously', async () => {
@@ -145,10 +143,11 @@ describe('SectionMerger (extra coverage)', () => {
           meta: { source: 'builtin' },
         },
       })),
-      detect: vi.fn(() => ({
-        results: {
-          section: { isSection: true, nextSectionUrl: null, nextChapterUrl: null, confidence: 0.9 },
-        },
+      detectSection: vi.fn(() => ({
+        isSection: true,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0.9,
       })),
     };
 
@@ -176,10 +175,11 @@ describe('SectionMerger (extra coverage)', () => {
         confidence: 1,
         method: 'rule',
       })),
-      detect: vi.fn(() => ({
-        results: {
-          section: { isSection: false, nextSectionUrl: null, nextChapterUrl: null, confidence: 0 },
-        },
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
       })),
     };
 
@@ -208,7 +208,7 @@ describe('SectionMerger (extra coverage)', () => {
           meta: { source: 'builtin' },
         },
       })),
-      detect: vi.fn(() => ({ results: {} })),
+      detectSection: vi.fn(() => undefined),
     };
 
     const fetcher = vi.fn(async () => makeDoc());
@@ -217,7 +217,7 @@ describe('SectionMerger (extra coverage)', () => {
 
     expect(result?.nextUrl).toBe('https://example.com/1_2.html');
     expect(fetcher).not.toHaveBeenCalled();
-    expect(fakeParser.detect).not.toHaveBeenCalled();
+    expect(fakeParser.detectSection).not.toHaveBeenCalled();
   });
 
   it('keeps section-like nextUrl when detection provides nextSectionUrl but should not merge', async () => {
@@ -236,15 +236,11 @@ describe('SectionMerger (extra coverage)', () => {
         confidence: 1,
         method: 'rule',
       })),
-      detect: vi.fn(() => ({
-        results: {
-          section: {
-            isSection: true,
-            nextSectionUrl: 'https://example.com/1_2.html',
-            nextChapterUrl: null,
-            confidence: 0.1,
-          },
-        },
+      detectSection: vi.fn(() => ({
+        isSection: true,
+        nextSectionUrl: 'https://example.com/1_2.html',
+        nextChapterUrl: null,
+        confidence: 0.1,
       })),
     };
 
@@ -276,7 +272,7 @@ describe('SectionMerger (extra coverage)', () => {
           meta: { source: 'builtin' },
         },
       })),
-      detect: vi.fn(() => ({ results: {} })),
+      detectSection: vi.fn(() => undefined),
     };
 
     const fetcher = vi.fn(async (url: string) => (url.endsWith('/1.html') ? baseDoc : null));
@@ -285,6 +281,93 @@ describe('SectionMerger (extra coverage)', () => {
 
     expect(fakeParser.parse).toHaveBeenCalledWith(baseDoc, 'https://example.com/1.html');
     expect(result?.url).toBe('https://example.com/1.html');
+  });
+
+  it('refetches a cached section page when cached parsing fails after base normalization', async () => {
+    const baseDoc = makeDoc();
+    const openDoc = makeDoc();
+    const refetchedDoc = makeDoc();
+
+    const fakeParser = {
+      parse: vi.fn(async (doc: Document, url: string) => {
+        if (url.endsWith('/1.html')) {
+          return {
+            title: 'c1',
+            content: '<p>a</p>',
+            rawContent: '<p>a</p>',
+            url,
+            nextUrl: 'https://example.com/1_2.html',
+            confidence: 1,
+            method: 'rule',
+            rule: {
+              id: 'r',
+              version: 1,
+              match: { pattern: 'example\\.com', type: 'regex' },
+              content: { selector: '#content' },
+              advanced: { checkSection: true },
+              meta: { source: 'builtin' },
+            },
+          } satisfies ParsedChapter;
+        }
+
+        if (url.endsWith('/1_2.html') && doc === openDoc) {
+          return null;
+        }
+
+        if (url.endsWith('/1_2.html') && doc === refetchedDoc) {
+          return {
+            title: 'c1-2',
+            content: '<p>b</p>',
+            rawContent: '<p>b</p>',
+            url,
+            nextUrl: 'https://example.com/2.html',
+            confidence: 1,
+            method: 'rule',
+          } satisfies ParsedChapter;
+        }
+
+        return null;
+      }),
+      detectSection: vi.fn((_doc: Document, url: string) => {
+        if (url.endsWith('/1.html')) {
+          return {
+            isSection: true,
+            nextSectionUrl: 'https://example.com/1_2.html',
+            nextChapterUrl: null,
+            confidence: 1,
+          };
+        }
+
+        return {
+          isSection: true,
+          nextSectionUrl: null,
+          nextChapterUrl: 'https://example.com/2.html',
+          confidence: 1,
+        };
+      }),
+    };
+
+    const fetcher = vi.fn(async (url: string) => {
+      if (url.endsWith('/1.html')) return baseDoc;
+      if (url.endsWith('/1_2.html')) return refetchedDoc;
+      return null;
+    });
+    const merger = new SectionMerger(fakeParser as unknown as Parser);
+    const result = await merger.merge(openDoc, 'https://example.com/1_2.html', { fetcher });
+
+    expect(fetcher).toHaveBeenNthCalledWith(
+      1,
+      'https://example.com/1.html',
+      'https://example.com/1_2.html'
+    );
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      'https://example.com/1_2.html',
+      'https://example.com/1.html'
+    );
+    expect(result?.content).toContain('<p>a</p>');
+    expect(result?.content).toContain('<p>b</p>');
+    expect(result?.nextUrl).toBe('https://example.com/2.html');
   });
 
   it('finds forward next chapter URL and skips pagination-like "next page" links', async () => {
@@ -305,10 +388,11 @@ describe('SectionMerger (extra coverage)', () => {
         confidence: 1,
         method: 'rule',
       })),
-      detect: vi.fn(() => ({
-        results: {
-          section: { isSection: false, nextSectionUrl: null, nextChapterUrl: null, confidence: 0 },
-        },
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
       })),
     };
 
@@ -335,10 +419,11 @@ describe('SectionMerger (extra coverage)', () => {
         confidence: 1,
         method: 'rule',
       })),
-      detect: vi.fn(() => ({
-        results: {
-          section: { isSection: false, nextSectionUrl: null, nextChapterUrl: null, confidence: 0 },
-        },
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
       })),
     };
 
@@ -366,10 +451,11 @@ describe('SectionMerger (extra coverage)', () => {
         confidence: 1,
         method: 'rule',
       })),
-      detect: vi.fn(() => ({
-        results: {
-          section: { isSection: false, nextSectionUrl: null, nextChapterUrl: null, confidence: 0 },
-        },
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
       })),
     };
 

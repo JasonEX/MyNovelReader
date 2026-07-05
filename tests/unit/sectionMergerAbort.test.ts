@@ -29,17 +29,13 @@ describe('SectionMerger (signal abort)', () => {
         confidence: 1,
         method: 'detection',
       }),
-      detect: vi.fn().mockReturnValue({
-        results: {
-          section: {
-            isSection: true,
-            nextSectionUrl: 'https://example.com/chapter_2.html',
-            nextChapterUrl: null,
-            confidence: 1,
-          },
-        },
+      detectSection: vi.fn().mockReturnValue({
+        isSection: true,
+        nextSectionUrl: 'https://example.com/chapter_2.html',
+        nextChapterUrl: null,
+        confidence: 1,
       }),
-    } satisfies Pick<Parser, 'detect' | 'parse'>;
+    } satisfies Pick<Parser, 'detectSection' | 'parse'>;
 
     const merger = new SectionMerger(parser as unknown as Parser);
     const startDoc = new DOMParser().parseFromString('<html><body>1</body></html>', 'text/html');
