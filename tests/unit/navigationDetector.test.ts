@@ -206,6 +206,38 @@ describe('NavigationDetector', () => {
       expect(result.index).toBeNull();
     });
 
+    it('does not treat opposite-direction chapter text as a navigation candidate', () => {
+      const nextOnly = createDom(`
+        <!doctype html>
+        <html>
+          <body>
+            <a href="/chapter/2.html">下一章</a>
+          </body>
+        </html>
+      `);
+
+      const nextOnlyResult = detector.detect(nextOnly.window.document);
+      expect(nextOnlyResult.next?.text).toBe('下一章');
+      expect(nextOnlyResult.prev).toBeNull();
+
+      detector = new NavigationDetector();
+      const prevOnly = createDom(
+        `
+          <!doctype html>
+          <html>
+            <body>
+              <a href="/chapter/100.html">上一章</a>
+            </body>
+          </html>
+        `,
+        'http://example.com/chapter/101.html'
+      );
+
+      const prevOnlyResult = detector.detect(prevOnly.window.document);
+      expect(prevOnlyResult.prev?.text).toBe('上一章');
+      expect(prevOnlyResult.next).toBeNull();
+    });
+
     it('prefers short chapter navigation over long text and uses id/class selectors when possible', () => {
       const dom = createDom(`
         <!DOCTYPE html>
@@ -357,6 +389,7 @@ describe('NavigationDetector', () => {
       const navigation = detector.detect(dom.window.document, currentUrl);
       const section = detector.detectSection(dom.window.document, currentUrl, navigation);
 
+      expect(navigation.next).toBeNull();
       expect(section.isSection).toBe(true);
       expect(section.method).toBe('url-comparison');
       expect(section.nextSectionUrl).toContain('123_2.html');
@@ -479,6 +512,28 @@ describe('NavigationDetector', () => {
 
       const result = detector.detect(dom.window.document);
       expect(result.next).not.toBeNull();
+    });
+
+    it('does not read layout while collecting non-candidate link signals', () => {
+      const dom = createDom(`
+        <!doctype html>
+        <html>
+          <body>
+            ${Array.from({ length: 30 }, (_, i) => `<a href="/chapter/${i + 2}.html">推荐</a>`).join('')}
+          </body>
+        </html>
+      `);
+
+      const spies = Array.from(dom.window.document.querySelectorAll('a')).map(anchor =>
+        vi.spyOn(anchor, 'getBoundingClientRect')
+      );
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.next).toBeNull();
+      expect(result.prev).toBeNull();
+      expect(result.index).toBeNull();
+      expect(spies.every(spy => spy.mock.calls.length === 0)).toBe(true);
     });
 
     it('ignores slug-like URLs without digits unless link text indicates navigation', () => {

@@ -2896,17 +2896,12 @@
 				const anchor = node;
 				const href = this.resolveLinkUrl(anchor, baseUrl);
 				if (!href) continue;
-				let rect = null;
-				try {
-					rect = { top: anchor.getBoundingClientRect().top };
-				} catch {}
 				signals.push({
 					anchor,
 					href,
 					text: anchor.textContent?.trim() || "",
 					title: anchor.title || "",
-					rel: (anchor.getAttribute("rel") || "").toLowerCase(),
-					rect
+					rel: (anchor.getAttribute("rel") || "").toLowerCase()
 				});
 			}
 			return signals;
@@ -2937,7 +2932,7 @@
 			}
 			const candidates = [];
 			for (const signal of signals) {
-				const { anchor, href, text, title, rect } = signal;
+				const { anchor, href, text, title } = signal;
 				if (!this.isValidLink(anchor, type, currentUrl, href)) continue;
 				let score = 0;
 				for (const pattern of patterns) if (pattern.test(text)) {
@@ -2945,26 +2940,27 @@
 					if (text.length <= 5) score += 5;
 				}
 				if (type === "next" || type === "prev") {
+					const matchesDirection = patterns.some((p) => p.test(text));
 					const isChapter = CHAPTER_TEXT_PATTERNS.some((p) => p.test(text));
 					const isSection = SECTION_TEXT_PATTERNS.some((p) => p.test(text));
-					if (isChapter) score += 3;
-					if (isSection && !isChapter) score -= 2;
+					if (matchesDirection && isChapter) score += 3;
+					if (matchesDirection && isSection && !isChapter) score -= 2;
 				}
 				if (type === "index") {
 					if (/^《.+》$/.test(text)) score += 8;
 					if (href.endsWith("/") || /\/index\.html?$/i.test(href)) score += 3;
 				}
 				for (const pattern of patterns) if (pattern.test(title)) score += 5;
-				if (rect) try {
-					if (rect.top < 300 || rect.top > document.documentElement.scrollHeight - 300) score += 2;
-				} catch {}
 				if (text.length > 20) score -= 5;
-				if (score > 0) candidates.push({
-					element: anchor,
-					score,
-					text,
-					href
-				});
+				if (score > 0) {
+					score += this.getPositionBonus(anchor);
+					candidates.push({
+						element: anchor,
+						score,
+						text,
+						href
+					});
+				}
 			}
 			if (candidates.length === 0) return null;
 			candidates.sort((a, b) => b.score - a.score);
@@ -3019,6 +3015,14 @@
 				for (const pattern of [/^\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)/i, /^\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i]) if (pattern.test(pathname)) return false;
 			} catch {}
 			return true;
+		}
+		getPositionBonus(anchor) {
+			try {
+				const rect = anchor.getBoundingClientRect();
+				const scrollHeight = anchor.ownerDocument.documentElement?.scrollHeight || 0;
+				if (rect.top < 300 || scrollHeight > 0 && rect.top > scrollHeight - 300) return 2;
+			} catch {}
+			return 0;
 		}
 		validateNavigation(currentUrl, navigation) {
 			const currentNum = this.extractChapterNumber(currentUrl);
@@ -3084,6 +3088,15 @@
 					result.isSection = true;
 					result.nextSectionUrl = nextUrl;
 					result.confidence = Math.max(result.confidence, comparison.confidence);
+					result.method = "url-comparison";
+				}
+			}
+			if (!result.isSection && !result.nextSectionUrl) {
+				const nextSectionUrl = this.findNextSectionUrlByPattern(signals, currentUrl);
+				if (nextSectionUrl) {
+					result.isSection = true;
+					result.nextSectionUrl = nextSectionUrl;
+					result.confidence = Math.max(result.confidence, .85);
 					result.method = "url-comparison";
 				}
 			}
@@ -3202,6 +3215,25 @@
 				if (rel.includes("next")) score += 5;
 				if (anchor.closest(".pager, .pagination, .page, nav, footer")) score += 2;
 				score += Math.round(comparison.confidence * 10);
+				candidates.push({
+					url: href,
+					score
+				});
+			}
+			if (candidates.length === 0) return null;
+			candidates.sort((a, b) => b.score - a.score);
+			return candidates[0].url;
+		}
+		findNextSectionUrlByPattern(signals, currentUrl) {
+			const candidates = [];
+			for (const signal of signals) {
+				const { anchor, href, rel, text } = signal;
+				if (/上一|上页|上一頁|上頁|prev(?:ious)?/i.test(text.replace(/\s+/g, ""))) continue;
+				if (!this.isValidLink(anchor, "next", currentUrl, href)) continue;
+				const comparison = this.compareUrlsForSection(currentUrl, href);
+				if (!comparison.isSection) continue;
+				let score = Math.round(comparison.confidence * 100);
+				if (rel.includes("next")) score += 5;
 				candidates.push({
 					url: href,
 					score

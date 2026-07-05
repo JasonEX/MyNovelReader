@@ -31,7 +31,6 @@ interface LinkSignal {
   text: string; // textContent trimmed
   title: string; // title attribute
   rel: string; // rel attribute
-  rect: { top: number } | null; // getBoundingClientRect result
 }
 
 export class NavigationDetector {
@@ -89,21 +88,12 @@ export class NavigationDetector {
       const href = this.resolveLinkUrl(anchor, baseUrl);
       if (!href) continue;
 
-      let rect: { top: number } | null = null;
-      try {
-        const r = anchor.getBoundingClientRect();
-        rect = { top: r.top };
-      } catch {
-        // getBoundingClientRect may fail in some contexts
-      }
-
       signals.push({
         anchor,
         href,
         text: anchor.textContent?.trim() || '',
         title: anchor.title || '',
         rel: (anchor.getAttribute('rel') || '').toLowerCase(),
-        rect,
       });
     }
 
@@ -166,7 +156,7 @@ export class NavigationDetector {
     }> = [];
 
     for (const signal of signals) {
-      const { anchor, href, text, title, rect } = signal;
+      const { anchor, href, text, title } = signal;
 
       // Skip invalid hrefs
       if (!this.isValidLink(anchor, type, currentUrl, href)) continue;
@@ -184,10 +174,11 @@ export class NavigationDetector {
       // Prefer real chapter navigation over section pagination when both exist.
       // This keeps "下一章/上一章" higher than "下一页/上一页" for next/prev detection.
       if (type === 'next' || type === 'prev') {
+        const matchesDirection = patterns.some(p => p.test(text));
         const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(text));
         const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(text));
-        if (isChapter) score += 3;
-        if (isSection && !isChapter) score -= 2;
+        if (matchesDirection && isChapter) score += 3;
+        if (matchesDirection && isSection && !isChapter) score -= 2;
       }
 
       // For index links, also recognize book title links (wrapped in 《》)
@@ -210,23 +201,13 @@ export class NavigationDetector {
         }
       }
 
-      // Position bonus (nav links often at top/bottom of page)
-      if (rect) {
-        try {
-          if (rect.top < 300 || rect.top > document.documentElement.scrollHeight - 300) {
-            score += 2;
-          }
-        } catch {
-          // scrollHeight may not be available
-        }
-      }
-
       // Penalty for long text (likely not a nav link)
       if (text.length > 20) {
         score -= 5;
       }
 
       if (score > 0) {
+        score += this.getPositionBonus(anchor);
         candidates.push({ element: anchor, score, text, href });
       }
     }
@@ -358,6 +339,20 @@ export class NavigationDetector {
     return true;
   }
 
+  private getPositionBonus(anchor: HTMLAnchorElement): number {
+    try {
+      const rect = anchor.getBoundingClientRect();
+      const doc = anchor.ownerDocument;
+      const scrollHeight = doc.documentElement?.scrollHeight || 0;
+      if (rect.top < 300 || (scrollHeight > 0 && rect.top > scrollHeight - 300)) {
+        return 2;
+      }
+    } catch {
+      // Layout reads may fail for detached/cross-realm elements.
+    }
+    return 0;
+  }
+
   /**
    * Validate navigation by comparing URLs
    * Useful to ensure next/prev links follow expected pattern
@@ -482,7 +477,19 @@ export class NavigationDetector {
       }
     }
 
-    // Strategy 4: Check prev link for section indicators
+    // Strategy 4: Generic navigation may miss "Continue" style section links.
+    // Keep URL-pattern section discovery in section detection, not in generic nav scoring.
+    if (!result.isSection && !result.nextSectionUrl) {
+      const nextSectionUrl = this.findNextSectionUrlByPattern(signals, currentUrl);
+      if (nextSectionUrl) {
+        result.isSection = true;
+        result.nextSectionUrl = nextSectionUrl;
+        result.confidence = Math.max(result.confidence, 0.85);
+        result.method = 'url-comparison';
+      }
+    }
+
+    // Strategy 5: Check prev link for section indicators
     if (navigation.prev && !result.isSection) {
       const prevText = navigation.prev.text || '';
       const isPrevSection = SECTION_TEXT_PATTERNS.some(p => p.test(prevText));
@@ -501,7 +508,7 @@ export class NavigationDetector {
       }
     }
 
-    // Strategy 5: Even if navigation.next prefers "下一章", still try to find an explicit "下一页" link.
+    // Strategy 6: Even if navigation.next prefers "下一章", still try to find an explicit "下一页" link.
     // Some templates show both links, and we must not stop merging early.
     if (!result.nextSectionUrl) {
       const nextSectionUrl = this.findNextSectionUrl(signals, currentUrl);
@@ -660,6 +667,27 @@ export class NavigationDetector {
       if (anchor.closest('.pager, .pagination, .page, nav, footer')) score += 2;
       score += Math.round(comparison.confidence * 10);
 
+      candidates.push({ url: href, score });
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].url;
+  }
+
+  private findNextSectionUrlByPattern(signals: LinkSignal[], currentUrl: string): string | null {
+    const candidates: Array<{ url: string; score: number }> = [];
+
+    for (const signal of signals) {
+      const { anchor, href, rel, text } = signal;
+      if (/上一|上页|上一頁|上頁|prev(?:ious)?/i.test(text.replace(/\s+/g, ''))) continue;
+      if (!this.isValidLink(anchor, 'next', currentUrl, href)) continue;
+
+      const comparison = this.compareUrlsForSection(currentUrl, href);
+      if (!comparison.isSection) continue;
+
+      let score = Math.round(comparison.confidence * 100);
+      if (rel.includes('next')) score += 5;
       candidates.push({ url: href, score });
     }
 
