@@ -101,7 +101,7 @@ export default defineConfig({
       exclude: ['src/**/*.d.ts', 'src/ui/components/**', 'src/typings/**'],
       thresholds: {
         lines: 88,
-        statements: 87,
+        statements: 88,
         functions: 88,
         branches: 76,
       },
