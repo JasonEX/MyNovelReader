@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 const entryPoint = path.resolve(__dirname, 'src/index.ts');
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 const version = pkg.version || '0.0.0';
-const buildDate = new Date().toISOString().split('T')[0];
+const buildDate = process.env.MNR_BUILD_DATE || pkg.buildDate || '1970-01-01';
 const meta = createMeta({ version });
 const userscript = toUserscriptConfig(meta);
 

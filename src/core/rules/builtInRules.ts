@@ -187,9 +187,6 @@ const simplifiedRules: SiteRule[] = [
     content: {
       selector: '#content',
     },
-    processing: {
-      useSiteFont: true,
-    },
     advanced: {
       checkSection: true,
     },

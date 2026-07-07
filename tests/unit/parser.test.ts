@@ -300,6 +300,81 @@ describe('Parser', () => {
     expect(out?.prevUrl).toBeUndefined();
   });
 
+  it('does not leak rule processing flags into later detection parses', async () => {
+    dom.window.document.title = '第1章 测试';
+    dom.window.document.body.innerHTML = `
+      <h1 id="title">第1章</h1>
+      <div id="content"><p>正文内容。手机用户请到m.test.com阅读。</p></div>
+    `;
+
+    const rawRule: SiteRule = {
+      id: 'raw-rule',
+      version: 1,
+      match: { pattern: '.*', type: 'regex' },
+      content: { selector: '#content' },
+      title: { selector: '#title' },
+      processing: {
+        removeAds: false,
+        useRawContent: true,
+      },
+      meta: { source: 'builtin' },
+    };
+
+    mockMatchRule.mockResolvedValueOnce({
+      rule: rawRule,
+      source: 'builtin',
+      matchedPattern: '.*',
+    });
+
+    const first = await parser.parse(dom.window.document, dom.window.location.href);
+    expect(first?.content).toContain('手机用户请到');
+
+    dom.window.document.body.innerHTML = `
+      <div id="detected-content">
+        <p>正文内容。手机用户请到m.test.com阅读。继续阅读。</p>
+      </div>
+    `;
+    const detectedElement = dom.window.document.getElementById('detected-content');
+    const detected: DetectionEngineResult = {
+      results: {
+        content: {
+          element: detectedElement,
+          selector: '#detected-content',
+          confidence: 0.9,
+          method: 'selector',
+        },
+        navigation: { next: null, prev: null, index: null },
+        title: { chapterTitle: '第2章', confidence: 0.8, method: 'pattern' },
+      },
+      confidence: {
+        overall: 0.9,
+        content: 0.9,
+        navigation: 0,
+        title: 0.8,
+        isReliable: true,
+        reasons: [],
+      },
+    };
+
+    (parser as unknown as { detectionEngine: DetectionEngineLike }).detectionEngine = {
+      detect: vi.fn(() => detected) as unknown as DetectionEngineLike['detect'],
+      detectNavigation: vi.fn(
+        () => detected.results.navigation
+      ) as unknown as DetectionEngineLike['detectNavigation'],
+      detectSection: vi.fn(
+        () => detected.results.section as SectionDetectionResult
+      ) as unknown as DetectionEngineLike['detectSection'],
+      quickCheck: vi.fn(() => true) as unknown as DetectionEngineLike['quickCheck'],
+    };
+    mockMatchRule.mockResolvedValueOnce(null);
+
+    const second = await parser.parse(dom.window.document, dom.window.location.href);
+
+    expect(second?.method).toBe('detection');
+    expect(second?.content).not.toContain('手机用户请到');
+    expect(second?.content).toContain('正文内容');
+  });
+
   it('returns null when detection cannot find a content element', async () => {
     mockMatchRule.mockResolvedValue(null);
     dom.window.document.body.innerHTML = '<div>short</div>';

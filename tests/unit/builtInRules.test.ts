@@ -18,6 +18,14 @@ describe('builtInRules', () => {
     expect(builtInRules).toContain(qidianMobileRule);
   });
 
+  it('does not keep unsupported processing flags in built-in rules', () => {
+    expect(
+      builtInRules.some(
+        rule => 'useSiteFont' in ((rule.processing ?? {}) as Record<string, unknown>)
+      )
+    ).toBe(false);
+  });
+
   it('builds Qidian TOC URL from the stable book detail page', async () => {
     Object.assign(globalThis, {
       GM_deleteValue: () => {},

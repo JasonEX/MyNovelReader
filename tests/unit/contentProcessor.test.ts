@@ -1078,7 +1078,7 @@ describe('ContentProcessor', () => {
       expect(result).toContain('手机用户请到');
     });
 
-    it('should merge with existing options', () => {
+    it('should apply partial options over constructor defaults', () => {
       const p = new ContentProcessor({ removeAds: true, normalizeWhitespace: true });
       p.setOptions({ removeAds: false });
 
@@ -1091,6 +1091,23 @@ describe('ContentProcessor', () => {
       expect(result).toContain('手机用户请到');
       // normalizeWhitespace should still be true
       expect(result).not.toContain('    ');
+    });
+
+    it('should not carry transient options into the next setOptions call', () => {
+      processor.setOptions({ useRawContent: true, removeAds: false });
+
+      const rawElement = doc.createElement('div');
+      rawElement.innerHTML = '<p>正文内容。手机用户请到m.test.com阅读。</p>';
+      expect(processor.process(rawElement, doc)).toContain('手机用户请到');
+
+      processor.setOptions({ chapterTitle: '第1章 测试' });
+
+      const cleanElement = doc.createElement('div');
+      cleanElement.innerHTML = '<p>正文内容。手机用户请到m.test.com阅读。继续阅读。</p>';
+      const result = processor.process(cleanElement, doc);
+
+      expect(result).not.toContain('手机用户请到');
+      expect(result).toContain('正文内容');
     });
   });
 

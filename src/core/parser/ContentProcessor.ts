@@ -69,18 +69,21 @@ export interface ProcessingOptions {
   authorName?: string;
 }
 
+const DEFAULT_PROCESSING_OPTIONS: ProcessingOptions = {
+  removeAds: true,
+  normalizeWhitespace: true,
+  fixImages: true,
+  stripInlineStyles: true,
+};
+
 export class ContentProcessor {
+  private readonly defaultOptions: ProcessingOptions;
   private options: ProcessingOptions;
   private regexCache = new Map<string, RegExp | null>();
 
   constructor(options: ProcessingOptions = {}) {
-    this.options = {
-      removeAds: true,
-      normalizeWhitespace: true,
-      fixImages: true,
-      stripInlineStyles: true,
-      ...options,
-    };
+    this.defaultOptions = { ...DEFAULT_PROCESSING_OPTIONS, ...options };
+    this.options = { ...this.defaultOptions };
   }
 
   /**
@@ -477,7 +480,7 @@ export class ContentProcessor {
    * Set processing options
    */
   setOptions(options: Partial<ProcessingOptions>): void {
-    this.options = { ...this.options, ...options };
+    this.options = { ...this.defaultOptions, ...options };
     this.regexCache.clear();
   }
 

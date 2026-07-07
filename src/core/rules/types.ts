@@ -78,8 +78,6 @@ interface ProcessingConfig {
   normalizeWhitespace?: boolean;
   /** Process images (center, fix lazy load) */
   fixImages?: boolean;
-  /** Use site's custom font */
-  useSiteFont?: boolean | string;
   /** Skip content processing (use raw content) */
   useRawContent?: boolean;
 }

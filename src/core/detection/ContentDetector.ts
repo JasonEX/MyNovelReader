@@ -92,6 +92,7 @@ export class ContentDetector {
     for (const entry of KNOWN_CONTENT_SELECTOR_ENTRIES) {
       const el = this.resolveKnownSelector(doc, entry);
       if (!el) continue;
+      if (!this.isVisibleContentElement(el, true)) continue;
 
       const isValidContent = this.isValidContent(el);
       const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
@@ -166,10 +167,7 @@ export class ContentDetector {
       const idClass = ((element.id || '') + ' ' + (element.className || '')).toLowerCase();
       if (this.isNavigationElement(element, idClass)) continue;
 
-      const style = getComputedStyle(element);
-      if (style.display === 'none' || style.visibility === 'hidden') {
-        continue;
-      }
+      if (!this.isVisibleContentElement(element)) continue;
 
       const html = element.innerHTML;
       const htmlLength = html.length;
@@ -242,6 +240,34 @@ export class ContentDetector {
     // Should not have too many links
     const linkDensity = this.calculateLinkDensity(element, text.length);
     if (linkDensity > 0.5) return false;
+
+    return true;
+  }
+
+  private isVisibleContentElement(element: Element, checkAncestors = false): boolean {
+    const doc = element.ownerDocument;
+    const win = doc.defaultView;
+    const canReadGlobalStyle = typeof getComputedStyle === 'function';
+    let current: Element | null = element;
+
+    while (current) {
+      if ((current as HTMLElement).hidden) return false;
+
+      try {
+        const style = win
+          ? win.getComputedStyle(current)
+          : canReadGlobalStyle
+            ? getComputedStyle(current)
+            : null;
+        if (style?.display === 'none') return false;
+        if (style?.visibility === 'hidden' || style?.visibility === 'collapse') return false;
+      } catch {
+        // Some parsed documents do not expose style computation. Treat them as visible.
+      }
+
+      if (!checkAncestors || current === doc.body || current === doc.documentElement) break;
+      current = current.parentElement;
+    }
 
     return true;
   }

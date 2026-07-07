@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.1.0
+// @version            9.1.1
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -2678,6 +2678,7 @@
 			for (const entry of KNOWN_CONTENT_SELECTOR_ENTRIES) {
 				const el = this.resolveKnownSelector(doc, entry);
 				if (!el) continue;
+				if (!this.isVisibleContentElement(el, true)) continue;
 				const isValidContent = this.isValidContent(el);
 				const isPKeyLoadMoreContent = !isValidContent && this.isPKeyLoadMoreContent(el, doc);
 				if (isValidContent || isPKeyLoadMoreContent) return {
@@ -2728,8 +2729,7 @@
 				if (textLength < MIN_TEXT_LENGTH) continue;
 				const idClass = ((element.id || "") + " " + (element.className || "")).toLowerCase();
 				if (this.isNavigationElement(element, idClass)) continue;
-				const style = getComputedStyle(element);
-				if (style.display === "none" || style.visibility === "hidden") continue;
+				if (!this.isVisibleContentElement(element)) continue;
 				const htmlLength = element.innerHTML.length;
 				const textDensity = textLength / Math.max(htmlLength, 1);
 				const linkDensity = this.calculateLinkDensity(element, textLength);
@@ -2761,6 +2761,23 @@
 			if (text.length < MIN_TEXT_LENGTH) return false;
 			if (this.calculateChineseRatio(text) < MIN_CHINESE_RATIO) return false;
 			if (this.calculateLinkDensity(element, text.length) > .5) return false;
+			return true;
+		}
+		isVisibleContentElement(element, checkAncestors = false) {
+			const doc = element.ownerDocument;
+			const win = doc.defaultView;
+			const canReadGlobalStyle = typeof getComputedStyle === "function";
+			let current = element;
+			while (current) {
+				if (current.hidden) return false;
+				try {
+					const style = win ? win.getComputedStyle(current) : canReadGlobalStyle ? getComputedStyle(current) : null;
+					if (style?.display === "none") return false;
+					if (style?.visibility === "hidden" || style?.visibility === "collapse") return false;
+				} catch {}
+				if (!checkAncestors || current === doc.body || current === doc.documentElement) break;
+				current = current.parentElement;
+			}
 			return true;
 		}
 		isNavigationElement(element, idClass) {
@@ -4674,16 +4691,20 @@
 		"加入收藏夹"
 	]);
 	var READER_UI_BLOCK_SELECTOR = "div, p, span, li, section, nav, header, footer";
+	var DEFAULT_PROCESSING_OPTIONS = {
+		removeAds: true,
+		normalizeWhitespace: true,
+		fixImages: true,
+		stripInlineStyles: true
+	};
 	var ContentProcessor = class {
 		constructor(options = {}) {
 			this.regexCache = new Map();
-			this.options = {
-				removeAds: true,
-				normalizeWhitespace: true,
-				fixImages: true,
-				stripInlineStyles: true,
+			this.defaultOptions = {
+				...DEFAULT_PROCESSING_OPTIONS,
 				...options
 			};
+			this.options = { ...this.defaultOptions };
 		}
 		process(element, doc) {
 			if (this.options.useRawContent) {
@@ -4873,7 +4894,7 @@
 		}
 		setOptions(options) {
 			this.options = {
-				...this.options,
+				...this.defaultOptions,
 				...options
 			};
 			this.regexCache.clear();
@@ -6549,7 +6570,6 @@
 			version: 1,
 			match: { pattern: "https?://www\\.xs321\\.net/book/\\d+/\\d+/\\d+(_\\d+)?\\.html" },
 			content: { selector: "#content" },
-			processing: { useSiteFont: true },
 			advanced: { checkSection: true },
 			meta: {
 				source: "builtin",
@@ -7995,8 +8015,8 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.1.0";
-	var BUILD_DATE = "2026-07-05";
+	var VERSION = "9.1.1";
+	var BUILD_DATE = "2026-07-07";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
 		if (!url) return null;

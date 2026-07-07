@@ -42,6 +42,27 @@ describe('ContentDetector', () => {
       expect(result.method).toBe('selector');
     });
 
+    it('skips hidden known selectors before falling back to visible content', () => {
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div id="content" style="display: none">
+              ${'这是隐藏正文内容，不能作为阅读正文。'.repeat(120)}
+            </div>
+            <main id="main-story">
+              <p>${'这是可见小说正文内容，主角继续向前。'.repeat(120)}</p>
+            </main>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element?.id).toBe('main-story');
+      expect(result.method).toBe('heuristic');
+    });
+
     it('should detect content by known selector (.noveltext)', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>
