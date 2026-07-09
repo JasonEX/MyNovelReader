@@ -851,6 +851,23 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('旧词');
     });
 
+    it('removes ad text produced by replace rules', () => {
+      processor.setOptions({
+        replaceRules: [
+          { pattern: '广告占位', replacement: '手机用户请到m.test.com阅读', flags: 'g' },
+        ],
+      });
+      const element = doc.createElement('div');
+      element.innerHTML = '<p>正文内容 广告占位 后续正文</p>';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('正文内容');
+      expect(result).toContain('后续正文');
+      expect(result).not.toContain('广告占位');
+      expect(result).not.toContain('手机用户请到');
+    });
+
     it('should apply multiple replace rules', () => {
       processor.setOptions({
         replaceRules: [

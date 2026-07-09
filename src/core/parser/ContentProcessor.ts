@@ -121,16 +121,21 @@ export class ContentProcessor {
       this.stripInlineStyles(clone);
     }
 
+    const replaceRules = this.options.replaceRules?.length ? this.options.replaceRules : null;
+    if (this.options.removeAds && !replaceRules) {
+      this.removeAdPatternsFromTextNodes(clone, doc);
+    }
+
     // Get text content
     let html = clone.innerHTML;
 
     // Apply replace rules
-    if (this.options.replaceRules) {
-      html = this.applyReplaceRules(html, this.options.replaceRules);
+    if (replaceRules) {
+      html = this.applyReplaceRules(html, replaceRules);
     }
 
     // Remove ad patterns
-    if (this.options.removeAds) {
+    if (this.options.removeAds && replaceRules) {
       const temp = doc.createElement('div');
       temp.innerHTML = html;
       this.removeAdPatternsFromTextNodes(temp, doc);

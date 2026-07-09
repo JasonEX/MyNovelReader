@@ -4790,9 +4790,11 @@
 			if (this.options.removeSelectors) this.removeBySelector(clone, this.options.removeSelectors);
 			this.removeReaderUiNoise(clone);
 			if (this.options.stripInlineStyles) this.stripInlineStyles(clone);
+			const replaceRules = this.options.replaceRules?.length ? this.options.replaceRules : null;
+			if (this.options.removeAds && !replaceRules) this.removeAdPatternsFromTextNodes(clone, doc);
 			let html = clone.innerHTML;
-			if (this.options.replaceRules) html = this.applyReplaceRules(html, this.options.replaceRules);
-			if (this.options.removeAds) {
+			if (replaceRules) html = this.applyReplaceRules(html, replaceRules);
+			if (this.options.removeAds && replaceRules) {
 				const temp = doc.createElement("div");
 				temp.innerHTML = html;
 				this.removeAdPatternsFromTextNodes(temp, doc);
