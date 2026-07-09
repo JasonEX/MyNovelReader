@@ -2657,6 +2657,9 @@
 		};
 	}
 	var KNOWN_CONTENT_SELECTOR_ENTRIES = KNOWN_CONTENT_SELECTORS.map(compileKnownContentSelector);
+	function isWhitespaceCode(code) {
+		return code >= 9 && code <= 13 || code === 32 || code === 160 || code === 5760 || code >= 8192 && code <= 8202 || code === 8232 || code === 8233 || code === 8239 || code === 8287 || code === 12288 || code === 65279;
+	}
 	var ContentDetector = class {
 		detect(doc) {
 			const selectorResult = this.tryKnownSelectors(doc);
@@ -2711,8 +2714,7 @@
 			return this.hasInlinePKey(doc);
 		}
 		hasInlinePKey(doc) {
-			const scripts = Array.from(doc.querySelectorAll("script"));
-			for (const script of scripts) {
+			for (const script of doc.querySelectorAll("script")) {
 				const text = script.textContent || "";
 				if (!text || !text.includes("p_key")) continue;
 				if (/p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(text)) return true;
@@ -2722,7 +2724,7 @@
 		scoreCandidates(doc) {
 			const containers = doc.querySelectorAll("div, article, section, main, td");
 			const candidates = [];
-			for (const element of Array.from(containers)) {
+			for (const element of containers) {
 				let score = 0;
 				const text = element.textContent || "";
 				const textLength = text.length;
@@ -2732,8 +2734,8 @@
 				if (!this.isVisibleContentElement(element)) continue;
 				const htmlLength = element.innerHTML.length;
 				const textDensity = textLength / Math.max(htmlLength, 1);
-				const linkDensity = this.calculateLinkDensity(element, textLength);
 				const chineseRatio = this.calculateChineseRatio(text);
+				const linkDensity = this.calculateLinkDensity(element, textLength);
 				const paragraphCount = element.querySelectorAll("p, br").length;
 				if (POSITIVE_PATTERNS.some((p) => p.test(idClass))) score += WEIGHTS.CONTENT_ID_CLASS;
 				const tagName = element.tagName.toUpperCase();
@@ -2793,12 +2795,20 @@
 		}
 		calculateLinkDensity(element, totalTextLength) {
 			const links = element.querySelectorAll("a");
-			return Array.from(links).reduce((sum, a) => sum + (a.textContent?.length || 0), 0) / (totalTextLength || element.textContent?.length || 1);
+			let linkText = 0;
+			for (const link of links) linkText += link.textContent?.length || 0;
+			const totalText = totalTextLength || element.textContent?.length || 1;
+			return linkText / totalText;
 		}
 		calculateChineseRatio(text) {
-			const chineseChars = text.match(/[\u4e00-\u9fff]/g) || [];
-			const nonWhitespace = text.replace(/\s/g, "");
-			return chineseChars.length / Math.max(nonWhitespace.length, 1);
+			let chineseChars = 0;
+			let nonWhitespace = 0;
+			for (let index = 0; index < text.length; index++) {
+				const code = text.charCodeAt(index);
+				if (code >= 19968 && code <= 40959) chineseChars += 1;
+				if (!isWhitespaceCode(code)) nonWhitespace += 1;
+			}
+			return chineseChars / Math.max(nonWhitespace, 1);
 		}
 		generateSelector(element) {
 			return generateCssSelector(element);

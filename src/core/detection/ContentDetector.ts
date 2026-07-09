@@ -54,6 +54,22 @@ function compileKnownContentSelector(selector: string): KnownContentSelector {
 
 const KNOWN_CONTENT_SELECTOR_ENTRIES = KNOWN_CONTENT_SELECTORS.map(compileKnownContentSelector);
 
+function isWhitespaceCode(code: number): boolean {
+  return (
+    (code >= 0x09 && code <= 0x0d) ||
+    code === 0x20 ||
+    code === 0xa0 ||
+    code === 0x1680 ||
+    (code >= 0x2000 && code <= 0x200a) ||
+    code === 0x2028 ||
+    code === 0x2029 ||
+    code === 0x202f ||
+    code === 0x205f ||
+    code === 0x3000 ||
+    code === 0xfeff
+  );
+}
+
 export class ContentDetector {
   /**
    * Detect the main content area of the document
@@ -142,8 +158,7 @@ export class ContentDetector {
   }
 
   private hasInlinePKey(doc: Document): boolean {
-    const scripts = Array.from(doc.querySelectorAll('script'));
-    for (const script of scripts) {
+    for (const script of doc.querySelectorAll('script')) {
       const text = script.textContent || '';
       if (!text || !text.includes('p_key')) continue;
       if (/p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(text)) return true;
@@ -158,7 +173,7 @@ export class ContentDetector {
     const containers = doc.querySelectorAll('div, article, section, main, td');
     const candidates: ContentCandidate[] = [];
 
-    for (const element of Array.from(containers)) {
+    for (const element of containers) {
       let score = 0;
       const text = element.textContent || '';
       const textLength = text.length;
@@ -172,8 +187,8 @@ export class ContentDetector {
       const html = element.innerHTML;
       const htmlLength = html.length;
       const textDensity = textLength / Math.max(htmlLength, 1);
-      const linkDensity = this.calculateLinkDensity(element, textLength);
       const chineseRatio = this.calculateChineseRatio(text);
+      const linkDensity = this.calculateLinkDensity(element, textLength);
       const paragraphCount = element.querySelectorAll('p, br').length;
 
       // Apply positive scoring rules
@@ -290,7 +305,10 @@ export class ContentDetector {
    */
   private calculateLinkDensity(element: Element, totalTextLength?: number): number {
     const links = element.querySelectorAll('a');
-    const linkText = Array.from(links).reduce((sum, a) => sum + (a.textContent?.length || 0), 0);
+    let linkText = 0;
+    for (const link of links) {
+      linkText += link.textContent?.length || 0;
+    }
     const totalText = totalTextLength || element.textContent?.length || 1;
     return linkText / totalText;
   }
@@ -299,9 +317,16 @@ export class ContentDetector {
    * Calculate the ratio of Chinese characters to total characters
    */
   private calculateChineseRatio(text: string): number {
-    const chineseChars = text.match(/[\u4e00-\u9fff]/g) || [];
-    const nonWhitespace = text.replace(/\s/g, '');
-    return chineseChars.length / Math.max(nonWhitespace.length, 1);
+    let chineseChars = 0;
+    let nonWhitespace = 0;
+
+    for (let index = 0; index < text.length; index++) {
+      const code = text.charCodeAt(index);
+      if (code >= 0x4e00 && code <= 0x9fff) chineseChars += 1;
+      if (!isWhitespaceCode(code)) nonWhitespace += 1;
+    }
+
+    return chineseChars / Math.max(nonWhitespace, 1);
   }
 
   /**

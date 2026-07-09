@@ -189,6 +189,15 @@ describe('ContentDetector', () => {
       expect(result.element?.id).toBe('chinese');
     });
 
+    it('calculates Chinese ratio without counting whitespace', () => {
+      const calculateChineseRatio = (
+        detector as unknown as { calculateChineseRatio(text: string): number }
+      ).calculateChineseRatio.bind(detector);
+
+      expect(calculateChineseRatio('你 好\tA\u00a0\u3000')).toBeCloseTo(2 / 3);
+      expect(calculateChineseRatio(' \n\t\u00a0\u3000')).toBe(0);
+    });
+
     it('returns empty result when candidates exist but score is too low', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>
