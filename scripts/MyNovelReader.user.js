@@ -2922,6 +2922,11 @@
 		/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php|aspx)?$/i,
 		/^https?:\/\/[^/]+\/\?/i
 	];
+	var NAV_PURPOSES = [
+		"next",
+		"prev",
+		"index"
+	];
 	function normalizeLinkText(text) {
 		return text.replace(/\s+/g, "").trim();
 	}
@@ -3001,8 +3006,7 @@
 		collectLinkSignals(doc, baseUrl) {
 			const anchors = doc.querySelectorAll("a[href]");
 			const signals = [];
-			for (const node of Array.from(anchors)) {
-				const anchor = node;
+			for (const anchor of anchors) {
 				const target = this.resolveLinkTarget(anchor, baseUrl);
 				if (!target) continue;
 				const text = anchor.textContent?.trim() || "";
@@ -3037,11 +3041,7 @@
 				prev: [],
 				index: []
 			};
-			for (const signal of signals) for (const type of [
-				"next",
-				"prev",
-				"index"
-			]) {
+			for (const signal of signals) for (const type of NAV_PURPOSES) {
 				const candidate = this.scoreSignalForNav(signal, type, currentUrl);
 				if (candidate) candidates[type].push(candidate);
 			}
@@ -3058,22 +3058,25 @@
 				text: signal.text
 			};
 			let score = 0;
+			let matchedTextPattern = false;
 			for (const pattern of patterns) if (pattern.test(signal.text)) {
+				matchedTextPattern = true;
 				score += 10;
 				if (signal.text.length <= 5) score += 5;
 			}
-			if (type === "next" || type === "prev") {
-				const matchesDirection = patterns.some((p) => p.test(signal.text));
+			if ((type === "next" || type === "prev") && matchedTextPattern) {
 				const isChapter = CHAPTER_TEXT_PATTERNS.some((p) => p.test(signal.text));
 				const isSection = SECTION_TEXT_PATTERNS.some((p) => p.test(signal.text));
-				if (matchesDirection && isChapter) score += 3;
-				if (matchesDirection && isSection && !isChapter) score -= 2;
+				if (isChapter) score += 3;
+				if (isSection && !isChapter) score -= 2;
 			}
 			if (type === "index") {
 				if (/^《.+》$/.test(signal.text)) score += 8;
 				if (signal.href.endsWith("/") || /\/index\.html?$/i.test(signal.href)) score += 3;
 			}
-			for (const pattern of patterns) if (pattern.test(signal.title)) score += 5;
+			if (signal.title) {
+				for (const pattern of patterns) if (pattern.test(signal.title)) score += 5;
+			}
 			if (signal.text.length > 20) score -= 5;
 			if (score <= 0) return null;
 			if (!isValidSignalLink(signal, type, currentUrl)) return null;

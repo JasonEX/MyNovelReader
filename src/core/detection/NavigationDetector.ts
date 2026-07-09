@@ -53,6 +53,8 @@ interface NavCandidate {
 
 type NavCandidateMap = Record<NavPurpose, NavCandidate[]>;
 
+const NAV_PURPOSES: readonly NavPurpose[] = ['next', 'prev', 'index'];
+
 function normalizeLinkText(text: string): string {
   return text.replace(/\s+/g, '').trim();
 }
@@ -199,11 +201,10 @@ export class NavigationDetector {
    * Single-pass DOM scan: collect all link signals from the document.
    */
   private collectLinkSignals(doc: Document, baseUrl: string): LinkSignal[] {
-    const anchors = doc.querySelectorAll('a[href]');
+    const anchors = doc.querySelectorAll<HTMLAnchorElement>('a[href]');
     const signals: LinkSignal[] = [];
 
-    for (const node of Array.from(anchors)) {
-      const anchor = node as HTMLAnchorElement;
+    for (const anchor of anchors) {
       const target = this.resolveLinkTarget(anchor, baseUrl);
       if (!target) continue;
 
@@ -255,7 +256,7 @@ export class NavigationDetector {
     };
 
     for (const signal of signals) {
-      for (const type of ['next', 'prev', 'index'] as const) {
+      for (const type of NAV_PURPOSES) {
         const candidate = this.scoreSignalForNav(signal, type, currentUrl);
         if (candidate) candidates[type].push(candidate);
       }
@@ -283,8 +284,10 @@ export class NavigationDetector {
     }
 
     let score = 0;
+    let matchedTextPattern = false;
     for (const pattern of patterns) {
       if (pattern.test(signal.text)) {
+        matchedTextPattern = true;
         score += 10;
         // Exact/short match bonus
         if (signal.text.length <= 5) score += 5;
@@ -293,12 +296,11 @@ export class NavigationDetector {
 
     // Prefer real chapter navigation over section pagination when both exist.
     // This keeps "下一章/上一章" higher than "下一页/上一页" for next/prev detection.
-    if (type === 'next' || type === 'prev') {
-      const matchesDirection = patterns.some(p => p.test(signal.text));
+    if ((type === 'next' || type === 'prev') && matchedTextPattern) {
       const isChapter = CHAPTER_TEXT_PATTERNS.some(p => p.test(signal.text));
       const isSection = SECTION_TEXT_PATTERNS.some(p => p.test(signal.text));
-      if (matchesDirection && isChapter) score += 3;
-      if (matchesDirection && isSection && !isChapter) score -= 2;
+      if (isChapter) score += 3;
+      if (isSection && !isChapter) score -= 2;
     }
 
     // For index links, also recognize book title links (wrapped in 《》)
@@ -315,9 +317,11 @@ export class NavigationDetector {
     }
 
     // Check title attribute too
-    for (const pattern of patterns) {
-      if (pattern.test(signal.title)) {
-        score += 5;
+    if (signal.title) {
+      for (const pattern of patterns) {
+        if (pattern.test(signal.title)) {
+          score += 5;
+        }
       }
     }
 
