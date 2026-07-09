@@ -185,6 +185,58 @@ describe('builtInRules', () => {
     expect(chapter?.content).toContain('强行修炼通天箓');
   });
 
+  it('normalizes Qidian hydrated content-text paragraph indentation', async () => {
+    Object.assign(globalThis, {
+      GM_deleteValue: () => {},
+      GM_getValue: () => null,
+      GM_listValues: () => [],
+      GM_setValue: () => {},
+    });
+
+    const mobileUrl = 'https://m.qidian.com/chapter/1049102364/908854349/';
+    const pageContext = {
+      pageContext: {
+        pageProps: {
+          pageData: {
+            bookInfo: {
+              bookId: 1049102364,
+              bookName: '日月同错，谁让他求法的？',
+            },
+            chapterInfo: {
+              chapterName: '第49章 通天箓',
+              next: 909035492,
+              prev: 908708863,
+            },
+          },
+        },
+      },
+    };
+    const doc = new JSDOM(
+      `<!doctype html>
+      <html>
+        <head><title>第49章 通天箓 _小说在线阅读 - 起点中文网手机版</title></head>
+        <body>
+          <script id="vite-plugin-ssr_pageContext" type="application/json">${JSON.stringify(
+            pageContext
+          )}</script>
+          <main id="c-908854349">
+            <h1 class="title">第49章 通天箓</h1>
+            <p><span class="content-text" data-count="0" data-index="1">\u3000\u3000公元2020年。</span></p>
+            <p><span class="content-text" data-count="1" data-index="2">\u3000\u3000蓬莱岛内。</span></p>
+          </main>
+        </body>
+      </html>`,
+      { url: mobileUrl }
+    ).window.document;
+
+    const chapter = await new Parser().parse(doc, mobileUrl);
+
+    expect(chapter?.rule?.id).toBe('qidian-mobile');
+    expect(chapter?.content).toContain('<span class="content-text">公元2020年。');
+    expect(chapter?.content).toContain('<span class="content-text">蓬莱岛内。');
+    expect(chapter?.content).not.toContain('>　　公元2020年。');
+  });
+
   it('canonicalizes Qidian mobile book preview to the embedded first chapter', async () => {
     Object.assign(globalThis, {
       GM_deleteValue: () => {},

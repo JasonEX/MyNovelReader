@@ -88,6 +88,18 @@ function resolveQidianNextPreviewChapterId(
   return pageData?.nextChapterId ?? pageData?.chapterContentInfo?.nextChapterId;
 }
 
+function normalizeQidianHydratedParagraphIndent(doc: Document): void {
+  const spans = doc.querySelectorAll('main[id^="c-"] p > span.content-text:first-child');
+  for (const span of spans) {
+    const firstChild = span.firstChild;
+    if (!firstChild || firstChild.nodeType !== 3) continue;
+
+    const text = firstChild.nodeValue || '';
+    const normalized = text.replace(/^[\s\u3000]+/u, '');
+    if (normalized !== text) firstChild.nodeValue = normalized;
+  }
+}
+
 export function resolveQidianMobileBookPreviewChapterUrl(
   doc: Document,
   url: string
@@ -111,6 +123,8 @@ export function resolveQidianMobileBookPreviewChapterUrl(
 }
 
 const qidianBeforeParse: BeforeParseHook = (doc, url) => {
+  normalizeQidianHydratedParagraphIndent(doc);
+
   // Remove review count from title.
   try {
     const reviews = doc.querySelectorAll('h1 .review, h2 .review');

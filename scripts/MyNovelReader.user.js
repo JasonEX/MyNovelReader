@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.1.3
+// @version            9.1.4
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -6179,6 +6179,16 @@
 		const pageData = data?.pageContext?.pageProps?.pageData;
 		return pageData?.nextChapterId ?? pageData?.chapterContentInfo?.nextChapterId;
 	}
+	function normalizeQidianHydratedParagraphIndent(doc) {
+		const spans = doc.querySelectorAll("main[id^=\"c-\"] p > span.content-text:first-child");
+		for (const span of spans) {
+			const firstChild = span.firstChild;
+			if (!firstChild || firstChild.nodeType !== 3) continue;
+			const text = firstChild.nodeValue || "";
+			const normalized = text.replace(/^[\s\u3000]+/u, "");
+			if (normalized !== text) firstChild.nodeValue = normalized;
+		}
+	}
 	function resolveQidianMobileBookPreviewChapterUrl(doc, url) {
 		let parsedUrl;
 		try {
@@ -6195,6 +6205,7 @@
 		return new URL(`/chapter/${bookId}/${String(firstChapterId)}/`, parsedUrl.origin).toString();
 	}
 	var qidianBeforeParse = (doc, url) => {
+		normalizeQidianHydratedParagraphIndent(doc);
 		try {
 			doc.querySelectorAll("h1 .review, h2 .review").forEach((el) => el.remove());
 		} catch (e) {
@@ -8112,7 +8123,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.1.3";
+	var VERSION = "9.1.4";
 	var BUILD_DATE = "2026-07-10";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
