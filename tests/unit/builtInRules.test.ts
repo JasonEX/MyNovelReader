@@ -107,7 +107,7 @@ describe('builtInRules', () => {
     };
     const doc = new JSDOM(
       `<!doctype html>
-      <html>
+      <html lang="zh-CN">
         <head><title>第7章 指间陀螺 _小说在线阅读 - 起点中文网手机版</title></head>
         <body>
           <script id="vite-plugin-ssr_pageContext" type="application/json">${JSON.stringify(
@@ -122,6 +122,7 @@ describe('builtInRules', () => {
     const chapter = await new Parser().parse(doc, mobileUrl);
 
     expect(chapter?.rule?.id).toBe('qidian-mobile');
+    expect(chapter?.sourceScript).toBe('hans');
     expect(chapter?.indexUrl).toBe('https://m.qidian.com/book/1049115805/');
     expect(chapter?.prevUrl).toBe('https://m.qidian.com/chapter/1049115805/903692507/');
     expect(chapter?.nextUrl).toBe('https://m.qidian.com/chapter/1049115805/903937574/');

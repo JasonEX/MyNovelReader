@@ -20,7 +20,6 @@ import {
 import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from './types';
 import { normalizeUrl, normalizeUrlForFetch } from './utils';
 import { prepareChapterLoad, validateTargetChapterUrl } from './chapterLoadGuards';
-import { convertHTML } from '@/core/converter';
 import { detectTocPage } from './detection';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import type { NavigationContext } from './navigationContext';
@@ -295,6 +294,10 @@ export function createNavigation(ctx: NavigationContext) {
       current.chapter = parsed;
       current.rule = parsed.rule;
       ctx.originalContents.value.set(current.id, parsed.content);
+      ctx.originalTitles.value.set(current.id, {
+        title: parsed.title,
+        bookTitle: parsed.bookTitle,
+      });
 
       ctx.cachedContents.value.set(parsed.url, {
         chapter: parsed,
@@ -303,8 +306,7 @@ export function createNavigation(ctx: NavigationContext) {
       });
 
       if (ctx.currentConversionMode.value !== 'none') {
-        const converted = await convertHTML(parsed.content, ctx.currentConversionMode.value);
-        current.chapter = { ...current.chapter, content: converted };
+        await ctx.applyConversionToChapterEntry(current.id, ctx.currentConversionMode.value);
       }
 
       ctx.showToast('规则已应用', 'info');

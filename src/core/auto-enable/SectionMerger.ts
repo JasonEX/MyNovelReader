@@ -10,6 +10,7 @@
 import { CHAPTER_TEXT_PATTERNS, SECTION_TEXT_PATTERNS } from '@/core/constants';
 import { getSectionBaseUrl, isSectionLikeUrl, joinHtml, normalizeAbsoluteUrl } from '@/core/utils';
 import type { ParsedChapter, Parser } from '@/core/parser';
+import type { ChineseScript } from '@/core/converter/scriptProfile';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import { resolveQidianMobileBookPreviewChapterUrl } from '@/core/rules/sites/qidian';
 
@@ -57,6 +58,7 @@ interface MergeCursor {
   nextChapterUrl: string | null;
   seen: Set<string>;
   remainingPages: number;
+  sourceScript?: ChineseScript;
 }
 
 interface LoadedSectionPage {
@@ -231,6 +233,7 @@ export class SectionMerger {
       nextChapterUrl: state.nextChapterUrl,
       seen: new Set([normalizeAbsoluteUrl(startPage.url, startPage.url)]),
       remainingPages: Math.max(0, maxPages - 1),
+      sourceScript: first.sourceScript,
     };
   }
 
@@ -284,6 +287,7 @@ export class SectionMerger {
   ): void {
     cursor.mergedContent = joinHtml(cursor.mergedContent, parsed.content);
     cursor.mergedRaw = joinHtml(cursor.mergedRaw, parsed.rawContent);
+    cursor.sourceScript = this.mergeSourceScript(cursor.sourceScript, parsed.sourceScript);
 
     if (section?.nextChapterUrl) cursor.nextChapterUrl = section.nextChapterUrl;
 
@@ -306,7 +310,18 @@ export class SectionMerger {
       content: cursor.mergedContent,
       rawContent: cursor.mergedRaw,
       nextUrl: cursor.nextChapterUrl || first.nextUrl,
+      sourceScript: cursor.sourceScript,
     };
+  }
+
+  private mergeSourceScript(
+    current: ChineseScript | undefined,
+    next: ChineseScript | undefined
+  ): ChineseScript | undefined {
+    if (!next || next === 'unknown') return current;
+    if (!current || current === 'unknown') return next;
+    if (current === next) return current;
+    return 'mixed';
   }
 
   private async sleep(ms: number, signal?: AbortSignal): Promise<void> {

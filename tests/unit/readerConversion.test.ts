@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyConversionToChapterEntry,
@@ -6,18 +6,31 @@ import {
   applyTocConversion,
 } from '@/ui/stores/reader/conversion';
 import type { ChapterEntry, TocEntry } from '@/ui/stores/reader/types';
+import { type ChineseScript, convertHTML, convertText } from '@/core/converter';
 
 // Mock the converter module
 vi.mock('@/core/converter', () => ({
-  convertHTML: vi.fn(async (html: string, mode: string) =>
-    mode === 'sc' ? html.replace(/東/g, '东') : html.replace(/东/g, '東')
+  convertHTML: vi.fn(
+    async (html: string, mode: string, options?: { sourceScript?: ChineseScript }) => {
+      if (options?.sourceScript === 'hans') return html;
+      return mode === 'sc' ? html.replace(/東/g, '东') : html.replace(/东/g, '東');
+    }
   ),
-  convertText: vi.fn(async (text: string, mode: string) =>
-    mode === 'sc' ? text.replace(/東/g, '东') : text.replace(/东/g, '東')
+  convertText: vi.fn(
+    async (text: string, mode: string, options?: { sourceScript?: ChineseScript }) => {
+      if (options?.sourceScript === 'hans') return text;
+      return mode === 'sc' ? text.replace(/東/g, '东') : text.replace(/东/g, '東');
+    }
   ),
 }));
 
-function makeEntry(id: string, content: string, title = 'title', bookTitle?: string): ChapterEntry {
+function makeEntry(
+  id: string,
+  content: string,
+  title = 'title',
+  bookTitle?: string,
+  sourceScript?: ChineseScript
+): ChapterEntry {
   return {
     id,
     chapter: {
@@ -28,9 +41,14 @@ function makeEntry(id: string, content: string, title = 'title', bookTitle?: str
       confidence: 1,
       method: 'detection',
       ...(bookTitle ? { bookTitle } : {}),
+      ...(sourceScript ? { sourceScript } : {}),
     },
   };
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('applyConversionToChapterEntry', () => {
   it('returns early when entry is not found', async () => {
@@ -110,6 +128,23 @@ describe('applyConversionToChapterEntry', () => {
     expect(chapters[0].chapter.title).toBe('东京');
     expect(chapters[0].chapter.bookTitle).toBeUndefined();
   });
+
+  it('passes sourceScript so Simplified title and content are not changed in sc mode', async () => {
+    const chapters = [makeEntry('a', '搁这说我坏话是吧', '坏话标题', '坏话书名', 'hans')];
+    const origContents = new Map([['a', '搁这说我坏话是吧']]);
+    const origTitles = new Map([['a', { title: '坏话标题', bookTitle: '坏话书名' }]]);
+
+    await applyConversionToChapterEntry(chapters, origContents, origTitles, 'a', 'sc');
+
+    expect(chapters[0].chapter.content).toBe('搁这说我坏话是吧');
+    expect(chapters[0].chapter.title).toBe('坏话标题');
+    expect(chapters[0].chapter.bookTitle).toBe('坏话书名');
+    expect(convertHTML).toHaveBeenCalledWith('搁这说我坏话是吧', 'sc', {
+      sourceScript: 'hans',
+    });
+    expect(convertText).toHaveBeenCalledWith('坏话标题', 'sc', { sourceScript: 'hans' });
+    expect(convertText).toHaveBeenCalledWith('坏话书名', 'sc', { sourceScript: 'hans' });
+  });
 });
 
 describe('applyTocConversion', () => {
@@ -133,6 +168,13 @@ describe('applyTocConversion', () => {
     const result = await applyTocConversion(toc, 'sc');
     expect(result[0].title).toBe('东京第一章');
     expect(result[0].url).toBe('http://example.com/1');
+  });
+
+  it('mode=sc keeps Simplified toc titles when sourceScript is hans', async () => {
+    const toc: TocEntry[] = [{ title: '坏话目录', url: 'http://example.com/1' }];
+    const result = await applyTocConversion(toc, 'sc', 'hans');
+    expect(result[0].title).toBe('坏话目录');
+    expect(convertText).toHaveBeenCalledWith('坏话目录', 'sc', { sourceScript: 'hans' });
   });
 });
 

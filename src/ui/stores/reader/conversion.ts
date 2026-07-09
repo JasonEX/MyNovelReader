@@ -4,7 +4,12 @@
  */
 
 import type { ChapterEntry, TocEntry } from './types';
-import { type ConversionMode, convertHTML, convertText } from '@/core/converter';
+import {
+  type ChineseScript,
+  type ConversionMode,
+  convertHTML,
+  convertText,
+} from '@/core/converter';
 import type { ParsedChapter } from '@/core/parser';
 
 /**
@@ -24,6 +29,7 @@ export async function applyConversionToChapterEntry(
   const originalContent = originalContents.get(entryId);
   const originalTitle = originalTitles.get(entryId);
   const updates: Partial<ParsedChapter> = {};
+  const conversionOptions = { sourceScript: entry.chapter.sourceScript };
 
   if (mode === 'none') {
     if (originalContent && entry.chapter.content !== originalContent) {
@@ -35,12 +41,12 @@ export async function applyConversionToChapterEntry(
     }
   } else {
     if (originalContent) {
-      updates.content = await convertHTML(originalContent, mode);
+      updates.content = await convertHTML(originalContent, mode, conversionOptions);
     }
     if (originalTitle) {
-      updates.title = await convertText(originalTitle.title, mode);
+      updates.title = await convertText(originalTitle.title, mode, conversionOptions);
       updates.bookTitle = originalTitle.bookTitle
-        ? await convertText(originalTitle.bookTitle, mode)
+        ? await convertText(originalTitle.bookTitle, mode, conversionOptions)
         : originalTitle.bookTitle;
     }
   }
@@ -56,7 +62,8 @@ export async function applyConversionToChapterEntry(
  */
 export async function applyTocConversion(
   tocOriginal: TocEntry[],
-  mode: ConversionMode
+  mode: ConversionMode,
+  sourceScript?: ChineseScript
 ): Promise<TocEntry[]> {
   if (tocOriginal.length === 0) {
     return [];
@@ -69,7 +76,7 @@ export async function applyTocConversion(
   return Promise.all(
     tocOriginal.map(async entry => ({
       ...entry,
-      title: await convertText(entry.title, mode),
+      title: await convertText(entry.title, mode, { sourceScript }),
     }))
   );
 }
@@ -88,5 +95,5 @@ export async function applyTextConversion(
     await applyConversionToChapterEntry(chapters, originalContents, originalTitles, entry.id, mode);
   }
 
-  return applyTocConversion(tocOriginal, mode);
+  return applyTocConversion(tocOriginal, mode, chapters[0]?.chapter.sourceScript);
 }

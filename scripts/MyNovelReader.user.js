@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.1.1
+// @version            9.1.2
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -4653,6 +4653,68 @@
 		if (!protectionInstance) protectionInstance = new SiteProtection();
 		return protectionInstance;
 	}
+	var TEXT_SAMPLE_LIMIT = 12e3;
+	var HANS_MARKERS = "体台湾万与书说话网个们这为来会国时后对开关无点风云电长门问间从学见让读听觉发现经过还进远连当应义实战区马龙鸟鱼猫坏搁";
+	var HANT_MARKERS = "體臺灣萬與書說話網個們這為來會國時後對開關無點風雲電長門問間從學見讓讀聽覺發現經過還進遠連當應義實戰區馬龍鳥魚貓壞漢聯續乾廣";
+	var JPAN_MARKERS = "亜仏仮価児円剣剤労単囲団図壊実対専巣帯広弾悪応抜拡揺桜様権歓歩歳気沢涙渋浜満滝焼獣発県絵絶継続緑縄総芸薬蛍説読転鉄黒竜";
+	var HANS_PATTERN = new RegExp(`[${HANS_MARKERS}]`, "g");
+	var HANT_PATTERN = new RegExp(`[${HANT_MARKERS}]`, "g");
+	var JPAN_PATTERN = new RegExp(`[${JPAN_MARKERS}]`, "g");
+	var SIMPLIFIED_SOURCE_MARKER_PATTERN = new RegExp(`[${HANT_MARKERS}${JPAN_MARKERS}]`);
+	function scriptFromLocale(locale) {
+		const tag = locale.trim().toLowerCase().replace(/_/g, "-").split(";")[0];
+		if (!tag) return "unknown";
+		if (tag === "ja" || tag.startsWith("ja-")) return "jpan";
+		if (tag.includes("hans") || /^zh-(?:cn|sg|my)(?:-|$)/.test(tag)) return "hans";
+		if (tag.includes("hant") || /^zh-(?:tw|hk|mo)(?:-|$)/.test(tag)) return "hant";
+		return "unknown";
+	}
+	function mergeScript(current, next) {
+		if (next === "unknown") return current;
+		if (current === "unknown") return next;
+		return current === next ? current : "mixed";
+	}
+	function readLocaleHints(doc) {
+		const hints = [doc.documentElement?.getAttribute("lang") || "", doc.documentElement?.getAttribute("xml:lang") || ""];
+		for (const meta of Array.from(doc.querySelectorAll("meta"))) {
+			const content = meta.getAttribute("content")?.trim();
+			if (!content) continue;
+			const key = `${meta.getAttribute("http-equiv") || ""} ${meta.getAttribute("name") || ""} ${meta.getAttribute("property") || ""}`.toLowerCase();
+			if (key.includes("content-language") || key.includes("og:locale")) hints.push(...content.split(","));
+		}
+		for (const script of Array.from(doc.querySelectorAll("script[type=\"application/ld+json\"]"))) {
+			const matches = (script.textContent || "").matchAll(/"inLanguage"\s*:\s*"([^"]+)"/gi);
+			for (const match of matches) hints.push(match[1] || "");
+		}
+		return hints;
+	}
+	function countMatches(text, pattern) {
+		pattern.lastIndex = 0;
+		let count = 0;
+		while (pattern.exec(text)) count += 1;
+		return count;
+	}
+	function detectChineseScriptFromText(text) {
+		const sample = text.slice(0, TEXT_SAMPLE_LIMIT);
+		if (!sample) return "unknown";
+		const scores = [
+			["hans", countMatches(sample, HANS_PATTERN)],
+			["hant", countMatches(sample, HANT_PATTERN)],
+			["jpan", countMatches(sample, JPAN_PATTERN)]
+		];
+		const max = Math.max(...scores.map(([, score]) => score));
+		if (max === 0) return "unknown";
+		return scores.reduce((script, [candidate, score]) => score >= max * .5 ? mergeScript(script, candidate) : script, "unknown");
+	}
+	function hasSimplifiedConversionMarkers(text) {
+		return SIMPLIFIED_SOURCE_MARKER_PATTERN.test(text);
+	}
+	function inferChineseScript(doc, contentText = "") {
+		let script = "unknown";
+		for (const hint of readLocaleHints(doc)) script = mergeScript(script, scriptFromLocale(hint));
+		if (script !== "unknown") return script;
+		return detectChineseScriptFromText(contentText || doc.body?.textContent || "");
+	}
 	var REMOVE_SELECTOR_QUERY = REMOVE_SELECTORS.join(",");
 	var READER_UI_LABELS = new Set([
 		"投票推荐",
@@ -7105,6 +7167,7 @@
 			};
 			this.contentProcessor.setOptions(processingOptions);
 			const rawContent = contentElement.innerHTML;
+			const sourceScript = inferChineseScript(doc, this.buildSourceScriptSample(title.chapter, title.book, contentElement));
 			const content = this.contentProcessor.process(contentElement, doc);
 			return {
 				title: title.chapter,
@@ -7117,7 +7180,8 @@
 				url,
 				confidence: 1,
 				rule,
-				method: "rule"
+				method: "rule",
+				sourceScript
 			};
 		}
 		async parseWithDetection(doc, url, fallbackRule) {
@@ -7154,6 +7218,7 @@
 			};
 			this.contentProcessor.setOptions(processingOptions);
 			const rawContent = contentElement.innerHTML;
+			const sourceScript = inferChineseScript(doc, this.buildSourceScriptSample(chapterTitle, bookTitle, contentElement));
 			const content = this.contentProcessor.process(contentElement, doc);
 			return {
 				title: chapterTitle || "Unknown Chapter",
@@ -7166,7 +7231,8 @@
 				url,
 				confidence: detection.confidence.overall,
 				rule: fallbackRule,
-				method: fallbackRule ? "mixed" : "detection"
+				method: fallbackRule ? "mixed" : "detection",
+				sourceScript
 			};
 		}
 		quickCheck(doc = document) {
@@ -7255,6 +7321,13 @@
 				if (el) return el;
 			}
 			return null;
+		}
+		buildSourceScriptSample(chapterTitle, bookTitle, contentElement) {
+			return [
+				chapterTitle,
+				bookTitle,
+				contentElement.textContent || ""
+			].filter(Boolean).join("\n");
 		}
 		shouldWaitForRuleContent(rule, element) {
 			const advanced = rule.advanced;
@@ -7612,7 +7685,8 @@
 				nextSectionUrl: state.nextSectionUrl,
 				nextChapterUrl: state.nextChapterUrl,
 				seen: new Set([normalizeAbsoluteUrl(startPage.url, startPage.url)]),
-				remainingPages: Math.max(0, maxPages - 1)
+				remainingPages: Math.max(0, maxPages - 1),
+				sourceScript: first.sourceScript
 			};
 		}
 		async loadNextSectionPage(cursor, knownDocs, fetcher, signal) {
@@ -7647,6 +7721,7 @@
 		advanceMergeCursor(cursor, pageUrl, parsed, section) {
 			cursor.mergedContent = joinHtml(cursor.mergedContent, parsed.content);
 			cursor.mergedRaw = joinHtml(cursor.mergedRaw, parsed.rawContent);
+			cursor.sourceScript = this.mergeSourceScript(cursor.sourceScript, parsed.sourceScript);
 			if (section?.nextChapterUrl) cursor.nextChapterUrl = section.nextChapterUrl;
 			cursor.nextSectionUrl = section?.nextSectionUrl || null;
 			if (!cursor.nextSectionUrl && parsed.nextUrl) {
@@ -7661,8 +7736,15 @@
 				url: cursor.startUrl,
 				content: cursor.mergedContent,
 				rawContent: cursor.mergedRaw,
-				nextUrl: cursor.nextChapterUrl || first.nextUrl
+				nextUrl: cursor.nextChapterUrl || first.nextUrl,
+				sourceScript: cursor.sourceScript
 			};
+		}
+		mergeSourceScript(current, next) {
+			if (!next || next === "unknown") return current;
+			if (!current || current === "unknown") return next;
+			if (current === next) return current;
+			return "mixed";
 		}
 		async sleep(ms, signal) {
 			if (ms <= 0 || signal?.aborted) return;
@@ -8015,8 +8097,8 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.1.1";
-	var BUILD_DATE = "2026-07-07";
+	var VERSION = "9.1.2";
+	var BUILD_DATE = "2026-07-10";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
 		if (!url) return null;
@@ -16974,8 +17056,18 @@ ul, ol {
 		}
 		return r;
 	}
-	async function convertText(text, mode) {
+	function shouldSkipConversion(text, mode, options) {
+		const sourceScript = options.sourceScript || "unknown";
+		if (mode === "sc") {
+			if (sourceScript === "hans") return true;
+			if (sourceScript === "hant" || sourceScript === "jpan") return false;
+			return !hasSimplifiedConversionMarkers(text);
+		}
+		return sourceScript === "hant";
+	}
+	async function convertText(text, mode, options = {}) {
 		if (mode === "none" || !text) return text;
+		if (shouldSkipConversion(text, mode, options)) return text;
 		try {
 			return getConverter(mode)(text);
 		} catch (error) {
@@ -16983,17 +17075,23 @@ ul, ol {
 			return text;
 		}
 	}
-	async function convertHTML(html, mode) {
+	async function convertHTML(html, mode, options = {}) {
 		if (mode === "none" || !html) return html;
+		if (shouldSkipConversion(html, mode, options)) return html;
 		try {
 			const converter = getConverter(mode);
+			const sourceScript = options.sourceScript || "unknown";
+			const convertMarkedNodesOnly = mode === "sc" && (sourceScript === "unknown" || sourceScript === "mixed");
 			const template = document.createElement("template");
 			template.innerHTML = html;
 			const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT, null);
 			const textNodes = [];
 			let node;
 			while (node = walker.nextNode()) textNodes.push(node);
-			for (const textNode of textNodes) if (textNode.textContent) textNode.textContent = converter(textNode.textContent);
+			for (const textNode of textNodes) if (textNode.textContent) {
+				if (convertMarkedNodesOnly && !hasSimplifiedConversionMarkers(textNode.textContent)) continue;
+				textNode.textContent = converter(textNode.textContent);
+			}
 			return template.innerHTML;
 		} catch (error) {
 			console.error("[ChineseConverter] HTML conversion error:", error);
@@ -17006,6 +17104,7 @@ ul, ol {
 		const originalContent = originalContents.get(entryId);
 		const originalTitle = originalTitles.get(entryId);
 		const updates = {};
+		const conversionOptions = { sourceScript: entry.chapter.sourceScript };
 		if (mode === "none") {
 			if (originalContent && entry.chapter.content !== originalContent) updates.content = originalContent;
 			if (originalTitle) {
@@ -17013,10 +17112,10 @@ ul, ol {
 				updates.bookTitle = originalTitle.bookTitle;
 			}
 		} else {
-			if (originalContent) updates.content = await convertHTML(originalContent, mode);
+			if (originalContent) updates.content = await convertHTML(originalContent, mode, conversionOptions);
 			if (originalTitle) {
-				updates.title = await convertText(originalTitle.title, mode);
-				updates.bookTitle = originalTitle.bookTitle ? await convertText(originalTitle.bookTitle, mode) : originalTitle.bookTitle;
+				updates.title = await convertText(originalTitle.title, mode, conversionOptions);
+				updates.bookTitle = originalTitle.bookTitle ? await convertText(originalTitle.bookTitle, mode, conversionOptions) : originalTitle.bookTitle;
 			}
 		}
 		if (Object.keys(updates).length > 0) entry.chapter = {
@@ -17024,12 +17123,12 @@ ul, ol {
 			...updates
 		};
 	}
-	async function applyTocConversion(tocOriginal, mode) {
+	async function applyTocConversion(tocOriginal, mode, sourceScript) {
 		if (tocOriginal.length === 0) return [];
 		if (mode === "none") return [...tocOriginal];
 		return Promise.all(tocOriginal.map(async (entry) => ({
 			...entry,
-			title: await convertText(entry.title, mode)
+			title: await convertText(entry.title, mode, { sourceScript })
 		})));
 	}
 	var CACHE_V2_INDEX_PREFIX = "mnr_cache_v2_index_";
@@ -18743,18 +18842,16 @@ ul, ol {
 				current.chapter = parsed;
 				current.rule = parsed.rule;
 				ctx.originalContents.value.set(current.id, parsed.content);
+				ctx.originalTitles.value.set(current.id, {
+					title: parsed.title,
+					bookTitle: parsed.bookTitle
+				});
 				ctx.cachedContents.value.set(parsed.url, {
 					chapter: parsed,
 					rule: parsed.rule,
 					cachedAt: Date.now()
 				});
-				if (ctx.currentConversionMode.value !== "none") {
-					const converted = await convertHTML(parsed.content, ctx.currentConversionMode.value);
-					current.chapter = {
-						...current.chapter,
-						content: converted
-					};
-				}
+				if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(current.id, ctx.currentConversionMode.value);
 				ctx.showToast("规则已应用", "info");
 			} else ctx.showToast("解析失败", "error");
 		}
@@ -18916,7 +19013,7 @@ ul, ol {
 			await applyConversionToChapterEntry(chapters.value, originalContents.value, originalTitles.value, entryId, mode);
 		}
 		async function applyTocConversion$1(mode) {
-			toc.value = await applyTocConversion(tocOriginal.value, mode);
+			toc.value = await applyTocConversion(tocOriginal.value, mode, chapter.value?.sourceScript);
 		}
 		async function applyTextConversion(mode) {
 			currentConversionMode.value = mode;

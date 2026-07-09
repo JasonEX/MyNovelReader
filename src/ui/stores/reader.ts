@@ -195,7 +195,7 @@ export const useReaderStore = defineStore('reader', () => {
   }
 
   async function applyTocConversion(mode: ConversionMode): Promise<void> {
-    toc.value = await applyTocConversionImpl(tocOriginal.value, mode);
+    toc.value = await applyTocConversionImpl(tocOriginal.value, mode, chapter.value?.sourceScript);
   }
 
   async function applyTextConversion(mode: ConversionMode): Promise<void> {

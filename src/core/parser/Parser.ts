@@ -2,6 +2,7 @@
  * Parser - Main content parser using detection engine and rules
  */
 
+import { type ChineseScript, inferChineseScript } from '@/core/converter/scriptProfile';
 import { ContentProcessor, ProcessingOptions } from './ContentProcessor';
 import {
   DetectionEngine,
@@ -44,6 +45,8 @@ export interface ParsedChapter {
   rule?: SiteRule;
   /** Detection method */
   method: 'rule' | 'detection' | 'mixed';
+  /** Source Chinese/Japanese script inferred from page metadata or content */
+  sourceScript?: ChineseScript;
 }
 
 /** Parser options */
@@ -151,6 +154,8 @@ export class Parser {
 
     this.contentProcessor.setOptions(processingOptions);
     const rawContent = contentElement.innerHTML;
+    const sourceText = this.buildSourceScriptSample(title.chapter, title.book, contentElement);
+    const sourceScript = inferChineseScript(doc, sourceText);
     const content = this.contentProcessor.process(contentElement, doc);
 
     return {
@@ -165,6 +170,7 @@ export class Parser {
       confidence: 1.0,
       rule,
       method: 'rule',
+      sourceScript,
     };
   }
 
@@ -223,6 +229,8 @@ export class Parser {
 
     this.contentProcessor.setOptions(processingOptions);
     const rawContent = contentElement.innerHTML;
+    const sourceText = this.buildSourceScriptSample(chapterTitle, bookTitle, contentElement);
+    const sourceScript = inferChineseScript(doc, sourceText);
     const content = this.contentProcessor.process(contentElement, doc);
 
     return {
@@ -237,6 +245,7 @@ export class Parser {
       confidence: detection.confidence.overall,
       rule: fallbackRule,
       method: fallbackRule ? 'mixed' : 'detection',
+      sourceScript,
     };
   }
 
@@ -403,6 +412,14 @@ export class Parser {
     }
 
     return null;
+  }
+
+  private buildSourceScriptSample(
+    chapterTitle: string | undefined,
+    bookTitle: string | undefined,
+    contentElement: Element
+  ): string {
+    return [chapterTitle, bookTitle, contentElement.textContent || ''].filter(Boolean).join('\n');
   }
 
   private shouldWaitForRuleContent(rule: SiteRule, element: Element | null): boolean {

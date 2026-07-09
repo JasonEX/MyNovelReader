@@ -7,6 +7,7 @@ const { tify } = vi.hoisted(() => ({
 vi.mock('chinese-conv', () => ({ tify }));
 
 import { convertHTML, convertText } from '@/core/converter/ChineseConverter';
+import { inferChineseScript } from '@/core/converter/scriptProfile';
 
 describe('ChineseConverter', () => {
   afterEach(() => {
@@ -22,6 +23,43 @@ describe('ChineseConverter', () => {
   it('convertText converts Simplified -> Traditional using tify', async () => {
     await expect(convertText('漢字', 'tc')).resolves.toBe('T:漢字');
     expect(tify).toHaveBeenCalledTimes(1);
+  });
+
+  it('infers Simplified Chinese from page locale metadata', () => {
+    const htmlLangDoc = new DOMParser().parseFromString(
+      '<!doctype html><html lang="zh-CN"><body>搁这说我坏话是吧</body></html>',
+      'text/html'
+    );
+    const metaDoc = new DOMParser().parseFromString(
+      '<!doctype html><html><head><meta http-equiv="Content-Language" content="zh-Hans"></head></html>',
+      'text/html'
+    );
+    const jsonLdDoc = new DOMParser().parseFromString(
+      '<!doctype html><html><head><script type="application/ld+json">{"inLanguage":"zh-CN"}</script></head></html>',
+      'text/html'
+    );
+
+    expect(inferChineseScript(htmlLangDoc)).toBe('hans');
+    expect(inferChineseScript(metaDoc)).toBe('hans');
+    expect(inferChineseScript(jsonLdDoc)).toBe('hans');
+  });
+
+  it('convertText keeps known Simplified source unchanged in sc mode', async () => {
+    await expect(convertText('搁这说我坏话是吧', 'sc', { sourceScript: 'hans' })).resolves.toBe(
+      '搁这说我坏话是吧'
+    );
+  });
+
+  it('convertText still converts known Traditional source in sc mode', async () => {
+    await expect(convertText('壞話 / 破壞', 'sc', { sourceScript: 'hant' })).resolves.toBe(
+      '坏话 / 破坏'
+    );
+  });
+
+  it('convertText still normalizes Japanese shinjitai source in sc mode', async () => {
+    await expect(convertText('壊 / 黒 / 竜', 'sc', { sourceScript: 'jpan' })).resolves.toBe(
+      '坏 / 黑 / 龙'
+    );
   });
 
   it('convertText converts Traditional, variants and Japanese shinjitai to Simplified', async () => {
@@ -62,6 +100,14 @@ describe('ChineseConverter', () => {
     expect(result).toContain('src="/a.png"');
     expect(result).toContain('台湾小说网');
     expect(result).toContain('看着干涸');
+  });
+
+  it('convertHTML short-circuits known Simplified source before parsing tags', async () => {
+    const createElementSpy = vi.spyOn(document, 'createElement');
+    const html = '<p>搁这说我坏话是吧</p>';
+
+    await expect(convertHTML(html, 'sc', { sourceScript: 'hans' })).resolves.toBe(html);
+    expect(createElementSpy).not.toHaveBeenCalled();
   });
 
   it('convertHTML returns input for mode none / empty', async () => {

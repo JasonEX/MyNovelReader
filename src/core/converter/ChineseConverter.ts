@@ -5,10 +5,15 @@
  */
 
 import * as t2cnPreset from 'opencc-js/preset/t2cn';
+import { type ChineseScript, hasSimplifiedConversionMarkers } from '@/core/converter/scriptProfile';
 import { ConverterBuilder, type ConverterFunction } from 'opencc-js/core';
 import { tify } from 'chinese-conv';
 
 export type ConversionMode = 'none' | 'sc' | 'tc';
+
+export interface ConversionOptions {
+  sourceScript?: ChineseScript;
+}
 
 let simplifiedConverter: ConverterFunction | null = null;
 
@@ -162,11 +167,35 @@ function getConverter(mode: Exclude<ConversionMode, 'none'>): ConverterFunction 
   return tify;
 }
 
+function shouldSkipConversion(
+  text: string,
+  mode: Exclude<ConversionMode, 'none'>,
+  options: ConversionOptions
+): boolean {
+  const sourceScript = options.sourceScript || 'unknown';
+
+  if (mode === 'sc') {
+    if (sourceScript === 'hans') return true;
+    if (sourceScript === 'hant' || sourceScript === 'jpan') return false;
+    return !hasSimplifiedConversionMarkers(text);
+  }
+
+  return sourceScript === 'hant';
+}
+
 /**
  * Convert plain text between Simplified/Traditional
  */
-export async function convertText(text: string, mode: ConversionMode): Promise<string> {
+export async function convertText(
+  text: string,
+  mode: ConversionMode,
+  options: ConversionOptions = {}
+): Promise<string> {
   if (mode === 'none' || !text) {
+    return text;
+  }
+
+  if (shouldSkipConversion(text, mode, options)) {
     return text;
   }
 
@@ -183,13 +212,24 @@ export async function convertText(text: string, mode: ConversionMode): Promise<s
  * Convert HTML content while preserving tags
  * This converts only text nodes, keeping HTML structure intact
  */
-export async function convertHTML(html: string, mode: ConversionMode): Promise<string> {
+export async function convertHTML(
+  html: string,
+  mode: ConversionMode,
+  options: ConversionOptions = {}
+): Promise<string> {
   if (mode === 'none' || !html) {
+    return html;
+  }
+
+  if (shouldSkipConversion(html, mode, options)) {
     return html;
   }
 
   try {
     const converter = getConverter(mode);
+    const sourceScript = options.sourceScript || 'unknown';
+    const convertMarkedNodesOnly =
+      mode === 'sc' && (sourceScript === 'unknown' || sourceScript === 'mixed');
 
     // Parse HTML and convert text nodes only
     const template = document.createElement('template');
@@ -206,6 +246,9 @@ export async function convertHTML(html: string, mode: ConversionMode): Promise<s
     // Convert all text nodes
     for (const textNode of textNodes) {
       if (textNode.textContent) {
+        if (convertMarkedNodesOnly && !hasSimplifiedConversionMarkers(textNode.textContent)) {
+          continue;
+        }
         textNode.textContent = converter(textNode.textContent);
       }
     }
