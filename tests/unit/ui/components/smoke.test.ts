@@ -99,6 +99,12 @@ describe('UI component smoke', () => {
     }
 
     expect(document.querySelectorAll('.mnr-theme-btn')).toHaveLength(THEMES.length);
+    expect(
+      Array.from(document.querySelectorAll('.mnr-theme-btn'), button => button.textContent?.trim())
+    ).toEqual(['跟随系统', '明亮', '米黄', '绿色', '蓝色', '深色']);
+    expect(
+      window.getComputedStyle(document.querySelector('.mnr-theme-grid')!).gridTemplateColumns
+    ).toContain('repeat(3');
     expect(document.querySelector('[aria-label="文字间距"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="段落首行缩进"]')).not.toBeNull();
     expect(document.querySelector('[aria-label="正文内容边距"]')).not.toBeNull();

@@ -81,7 +81,7 @@ export const THEMES: Theme[] = [
   },
   {
     id: 'light',
-    name: '默认',
+    name: '明亮',
     background: '#ffffff',
     text: '#1a1a1a',
     link: '#0066cc',
@@ -89,17 +89,8 @@ export const THEMES: Theme[] = [
     border: '#e5e5e5',
   },
   {
-    id: 'dark',
-    name: '深色',
-    background: '#1e1e1e',
-    text: '#c8c8c8',
-    link: '#78bdf2',
-    onLink: '#111111',
-    border: '#3a3a3a',
-  },
-  {
     id: 'sepia',
-    name: '护眼',
+    name: '米黄',
     background: '#f8f1e3',
     text: '#4a4137',
     link: '#7a4f26',
@@ -125,13 +116,13 @@ export const THEMES: Theme[] = [
     border: '#c7d8e8',
   },
   {
-    id: 'night',
-    name: '夜间',
-    background: '#0d0d0d',
-    text: '#a0a0a0',
-    link: '#5dade2',
-    onLink: '#0b0b0b',
-    border: '#303030',
+    id: 'dark',
+    name: '深色',
+    background: '#1e1e1e',
+    text: '#c8c8c8',
+    link: '#78bdf2',
+    onLink: '#111111',
+    border: '#3a3a3a',
   },
 ];
 
