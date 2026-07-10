@@ -455,20 +455,22 @@ function showFloatingButton(): void {
     height: 50px;
     border-radius: 50%;
     border: none;
-    background: #4a90d9;
+    background: #1976d2;
     color: white;
     cursor: pointer;
     z-index: 999999;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   `;
   button.onmouseover = () => {
-    button.style.transform = 'scale(1.1)';
-    button.style.background = '#357abd';
+    button.style.transform = 'translateY(-2px)';
+    button.style.background = '#1565c0';
+    button.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
   };
   button.onmouseout = () => {
-    button.style.transform = 'scale(1)';
-    button.style.background = '#4a90d9';
+    button.style.transform = 'translateY(0)';
+    button.style.background = '#1976d2';
+    button.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
   };
   button.onclick = async () => {
     hideFloatingButton();

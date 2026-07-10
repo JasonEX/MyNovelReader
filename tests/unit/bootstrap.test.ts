@@ -218,6 +218,9 @@ describe('bootstrap', () => {
     expect(floatingButton).not.toBeNull();
     expect(floatingButton?.querySelector('svg')).not.toBeNull();
     expect(floatingButton?.textContent?.trim()).toBe('');
+    expect(floatingButton?.style.background).toBe('rgb(25, 118, 210)');
+    expect(floatingButton?.style.boxShadow).toContain('0 4px 12px');
+    expect(floatingButton?.style.boxShadow.replaceAll(' ', '')).toContain('rgba(0,0,0,0.15)');
     expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
     expect(manager.check).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);

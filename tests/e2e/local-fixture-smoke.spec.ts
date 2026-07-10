@@ -139,6 +139,14 @@ test('runs the built userscript and restores the host page after exit', async ({
   await expect(page.locator('#host-page')).toBeVisible();
   await expect(page.locator('#mnr-hide-original')).toHaveCount(0);
   await expect(page.locator('#mnr-floating-btn')).toBeVisible();
+  await expect(page.locator('#mnr-floating-btn')).toHaveCSS(
+    'background-color',
+    'rgb(25, 118, 210)'
+  );
+  await expect(page.locator('#mnr-floating-btn')).toHaveCSS(
+    'box-shadow',
+    'rgba(0, 0, 0, 0.15) 0px 4px 12px 0px'
+  );
   await expect(page).toHaveTitle('第100章 本地测试 - 测试小说');
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });
