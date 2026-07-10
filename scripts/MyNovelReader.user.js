@@ -13935,12 +13935,17 @@ ul, ol {
 		};
 	}
 	var STORAGE_KEY$1 = "mnr-config";
+	var SAVE_DEBOUNCE_MS = 300;
 	var useConfigStore = defineStore("config", () => {
 		const themeId = ref("system");
 		const reading = ref({ ...DEFAULT_READING });
 		const behavior = ref({ ...DEFAULT_BEHAVIOR });
 		const protection = ref({ ...DEFAULT_PROTECTION });
 		const customCSS = ref("");
+		let saveTimer = null;
+		let savePending = false;
+		let saveQueue = Promise.resolve();
+		let isHydrating = false;
 		const theme = () => {
 			if (themeId.value === "system") {
 				const prefersDark = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -14007,6 +14012,7 @@ ul, ol {
 			applyCustomCSS();
 		}
 		async function load() {
+			isHydrating = true;
 			try {
 				let data = null;
 				let hasInvalidData = false;
@@ -14051,22 +14057,42 @@ ul, ol {
 				}
 			} catch (e) {
 				console.error("[ConfigStore] Load error:", e);
+			} finally {
+				isHydrating = false;
 			}
 		}
-		async function save() {
-			try {
-				const data = JSON.stringify({
-					themeId: themeId.value,
-					reading: reading.value,
-					behavior: behavior.value,
-					protection: protection.value,
-					customCSS: customCSS.value
-				});
+		function serialize() {
+			return JSON.stringify({
+				themeId: themeId.value,
+				reading: reading.value,
+				behavior: behavior.value,
+				protection: protection.value,
+				customCSS: customCSS.value
+			});
+		}
+		function save() {
+			if (saveTimer) {
+				clearTimeout(saveTimer);
+				saveTimer = null;
+			}
+			savePending = false;
+			const data = serialize();
+			saveQueue = saveQueue.then(async () => {
 				if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY$1, data);
 				else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY$1, data);
-			} catch (e) {
-				console.error("[ConfigStore] Save error:", e);
-			}
+			}).catch((e) => console.error("[ConfigStore] Save error:", e));
+			return saveQueue;
+		}
+		function scheduleSave() {
+			savePending = true;
+			if (saveTimer) clearTimeout(saveTimer);
+			saveTimer = setTimeout(() => {
+				saveTimer = null;
+				save();
+			}, SAVE_DEBOUNCE_MS);
+		}
+		function flushSave() {
+			return savePending ? save() : saveQueue;
 		}
 		watch([
 			themeId,
@@ -14075,8 +14101,11 @@ ul, ol {
 			protection,
 			customCSS
 		], () => {
-			save();
-		}, { deep: true });
+			if (!isHydrating) scheduleSave();
+		}, {
+			deep: true,
+			flush: "sync"
+		});
 		if (typeof window !== "undefined" && typeof window.matchMedia === "function") window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
 			if (themeId.value === "system") applyTheme();
 		});
@@ -14106,6 +14135,7 @@ ul, ol {
 			applyAll,
 			load,
 			save,
+			flushSave,
 			$reset
 		};
 	});
@@ -19725,8 +19755,12 @@ ul, ol {
 	}
 	var STORAGE_KEY = "mnr-reading-positions";
 	var MAX_SAVED_POSITIONS = 200;
+	var PERSIST_INTERVAL_MS = 4e3;
 	var positionCache = null;
-	var saveQueue = Promise.resolve();
+	var updateQueue = Promise.resolve();
+	var persistQueue = Promise.resolve();
+	var persistTimer = null;
+	var dirty = false;
 	function normalizeChapterUrl(url) {
 		try {
 			const normalized = new URL(url);
@@ -19750,8 +19784,7 @@ ul, ol {
 		}
 		return positionCache;
 	}
-	async function persistPositions(positions) {
-		const serialized = JSON.stringify(positions);
+	async function persistPositions(serialized) {
 		if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY, serialized);
 		else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, serialized);
 	}
@@ -19765,16 +19798,37 @@ ul, ol {
 		if (!url || !Number.isFinite(percent)) return;
 		const normalizedUrl = normalizeChapterUrl(url);
 		const normalizedPercent = Math.max(0, Math.min(100, Math.round(percent * 10) / 10));
-		saveQueue = saveQueue.then(async () => {
+		updateQueue = updateQueue.then(async () => {
 			const positions = await loadPositions();
+			const isNewPosition = !(normalizedUrl in positions);
 			positions[normalizedUrl] = {
 				percent: normalizedPercent,
 				updatedAt: Date.now()
 			};
-			const entries = Object.entries(positions);
-			if (entries.length > MAX_SAVED_POSITIONS) entries.sort(([, a], [, b]) => b.updatedAt - a.updatedAt).slice(MAX_SAVED_POSITIONS).forEach(([key]) => delete positions[key]);
-			await persistPositions(positions);
-		}).catch((error) => console.error("[MNR] Failed to save reading position:", error));
+			if (isNewPosition && Object.keys(positions).length > MAX_SAVED_POSITIONS) Object.entries(positions).sort(([, a], [, b]) => b.updatedAt - a.updatedAt).slice(MAX_SAVED_POSITIONS).forEach(([key]) => delete positions[key]);
+			dirty = true;
+			schedulePersist();
+		}).catch((error) => console.error("[MNR] Failed to update reading position:", error));
+	}
+	function schedulePersist() {
+		if (persistTimer) return;
+		persistTimer = setTimeout(() => {
+			persistTimer = null;
+			flushReadingPositions();
+		}, PERSIST_INTERVAL_MS);
+	}
+	async function flushReadingPositions() {
+		await updateQueue;
+		if (persistTimer) {
+			clearTimeout(persistTimer);
+			persistTimer = null;
+		}
+		if (!dirty) return persistQueue;
+		const positions = await loadPositions();
+		const serialized = JSON.stringify(positions);
+		dirty = false;
+		persistQueue = persistQueue.then(() => persistPositions(serialized)).catch((error) => console.error("[MNR] Failed to save reading positions:", error));
+		return persistQueue;
 	}
 	var SCROLL_THROTTLE_MS = 16;
 	var SCROLL_SETTLE_CHECK_MS = 180;
@@ -20780,21 +20834,42 @@ ul, ol {
 	var _hoisted_12 = { class: "mnr-slider-row" };
 	var _hoisted_13 = ["value"];
 	var _hoisted_14 = { class: "mnr-slider-value" };
-	var _hoisted_15 = { class: "mnr-settings-section mnr-settings-section--desktop" };
+	var _hoisted_15 = { class: "mnr-settings-section" };
 	var _hoisted_16 = { class: "mnr-slider-row" };
 	var _hoisted_17 = ["value"];
 	var _hoisted_18 = { class: "mnr-slider-value" };
 	var _hoisted_19 = { class: "mnr-settings-section" };
-	var _hoisted_20 = { class: "mnr-settings-section" };
-	var _hoisted_21 = { class: "mnr-segmented-control" };
-	var _hoisted_22 = ["aria-pressed", "onClick"];
-	var _hoisted_23 = { class: "mnr-more-settings" };
-	var _hoisted_24 = { class: "mnr-more-content" };
-	var _hoisted_25 = { class: "mnr-switch-row" };
-	var _hoisted_26 = { class: "mnr-switch-row" };
-	var _hoisted_27 = { class: "mnr-switch-row" };
-	var _hoisted_28 = { class: "mnr-action-buttons" };
-	var _hoisted_29 = {
+	var _hoisted_20 = { class: "mnr-slider-row" };
+	var _hoisted_21 = ["value"];
+	var _hoisted_22 = { class: "mnr-slider-value" };
+	var _hoisted_23 = { class: "mnr-settings-section" };
+	var _hoisted_24 = { class: "mnr-slider-row" };
+	var _hoisted_25 = ["value"];
+	var _hoisted_26 = { class: "mnr-slider-value" };
+	var _hoisted_27 = { class: "mnr-settings-section" };
+	var _hoisted_28 = { class: "mnr-slider-row" };
+	var _hoisted_29 = ["value"];
+	var _hoisted_30 = { class: "mnr-slider-value" };
+	var _hoisted_31 = { class: "mnr-settings-section" };
+	var _hoisted_32 = ["value"];
+	var _hoisted_33 = { class: "mnr-settings-section" };
+	var _hoisted_34 = { class: "mnr-segmented-control" };
+	var _hoisted_35 = ["aria-pressed", "onClick"];
+	var _hoisted_36 = { class: "mnr-more-settings" };
+	var _hoisted_37 = { class: "mnr-more-content" };
+	var _hoisted_38 = { class: "mnr-switch-row" };
+	var _hoisted_39 = { class: "mnr-switch-row" };
+	var _hoisted_40 = { class: "mnr-switch-row" };
+	var _hoisted_41 = { class: "mnr-switch-row" };
+	var _hoisted_42 = { class: "mnr-switch-row" };
+	var _hoisted_43 = { class: "mnr-switch-row" };
+	var _hoisted_44 = { class: "mnr-more-section" };
+	var _hoisted_45 = { class: "mnr-segmented-control" };
+	var _hoisted_46 = ["aria-pressed"];
+	var _hoisted_47 = ["aria-pressed"];
+	var _hoisted_48 = { class: "mnr-more-section" };
+	var _hoisted_49 = { class: "mnr-action-buttons" };
+	var _hoisted_50 = {
 		key: 0,
 		class: "mnr-cache-progress"
 	};
@@ -20814,7 +20889,8 @@ ul, ol {
 			"copyDiagnostics",
 			"exit",
 			"siteAutoEnableChange",
-			"textConversionChange"
+			"textConversionChange",
+			"protectionModeChange"
 		],
 		setup(__props, { emit: __emit }) {
 			const props = __props;
@@ -20824,12 +20900,6 @@ ul, ol {
 			const panelRef = ref(null);
 			const closeButtonRef = ref(null);
 			let previouslyFocused = null;
-			const visibleThemeIds = new Set([
-				"system",
-				"light",
-				"dark",
-				"sepia"
-			]);
 			const conversionOptions = [
 				{
 					label: "原文",
@@ -20844,29 +20914,52 @@ ul, ol {
 					value: "tc"
 				}
 			];
+			const fontOptions = [
+				{
+					label: "系统默认",
+					value: "system-ui, -apple-system, \"Microsoft YaHei\", sans-serif"
+				},
+				{
+					label: "思源宋体",
+					value: "'Noto Serif SC', 'Source Han Serif SC', serif"
+				},
+				{
+					label: "苹方",
+					value: "'PingFang SC', 'Hiragino Sans GB', sans-serif"
+				},
+				{
+					label: "楷体",
+					value: "'Kaiti SC', 'STKaiti', serif"
+				}
+			];
 			const currentTheme = computed(() => configStore.themeId);
-			const themes = computed(() => {
-				const visible = THEMES.filter((theme) => visibleThemeIds.has(theme.id));
-				const legacyCurrent = THEMES.find((theme) => theme.id === currentTheme.value && !visibleThemeIds.has(theme.id));
-				return legacyCurrent ? [...visible, legacyCurrent] : visible;
-			});
+			const themes = THEMES;
 			const cacheProgress = computed(() => readerStore.cacheProgress);
 			const persistedCount = computed(() => readerStore.persistedUrls.size);
 			const fontSize = ref(configStore.reading.fontSize);
 			const lineHeight = ref(configStore.reading.lineHeight);
+			const letterSpacing = ref(configStore.reading.letterSpacing);
+			const paragraphIndent = ref(configStore.reading.paragraphIndent);
 			const maxWidth = ref(configStore.reading.maxWidth);
+			const padding = ref(configStore.reading.padding);
 			const fontFamily = ref(configStore.reading.fontFamily);
 			const textConversion = ref(configStore.reading.textConversion);
 			const showProgress = ref(configStore.behavior.showProgress);
 			const preloadNext = ref(configStore.behavior.preloadNext);
+			const keyboardNavigation = ref(configStore.behavior.keyboardNavigation);
+			const swipeGestures = ref(configStore.behavior.swipeGestures);
+			const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 			const siteAutoEnable = ref(props.siteAutoEnable);
+			const protectionMode = ref(configStore.protection.mode);
+			const customCSS = ref(configStore.customCSS);
 			function closePanel() {
+				configStore.flushSave();
 				emit("close");
 			}
 			function trapFocus(event) {
 				const panel = panelRef.value;
 				if (!panel) return;
-				const focusable = Array.from(panel.querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled]), summary, [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === document.activeElement);
+				const focusable = Array.from(panel.querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === document.activeElement);
 				if (focusable.length === 0) return;
 				const first = focusable[0];
 				const last = focusable[focusable.length - 1];
@@ -20893,10 +20986,28 @@ ul, ol {
 				configStore.updateReading({ lineHeight: value });
 				configStore.applyReading();
 			}
+			function updateLetterSpacing(event) {
+				const value = Number(event.target.value);
+				letterSpacing.value = value;
+				configStore.updateReading({ letterSpacing: value });
+				configStore.applyReading();
+			}
+			function updateParagraphIndent(event) {
+				const value = Number(event.target.value);
+				paragraphIndent.value = value;
+				configStore.updateReading({ paragraphIndent: value });
+				configStore.applyReading();
+			}
 			function updateMaxWidth(event) {
 				const value = Number(event.target.value);
 				maxWidth.value = value;
 				configStore.updateReading({ maxWidth: value });
+				configStore.applyReading();
+			}
+			function updatePadding(event) {
+				const value = Number(event.target.value);
+				padding.value = value;
+				configStore.updateReading({ padding: value });
 				configStore.applyReading();
 			}
 			function updateFontFamily() {
@@ -20911,6 +21022,14 @@ ul, ol {
 			function updateBehavior(key, value) {
 				configStore.updateBehavior({ [key]: value });
 			}
+			function updateProtectionMode(mode) {
+				protectionMode.value = mode;
+				configStore.updateProtection({ mode });
+				emit("protectionModeChange", mode);
+			}
+			function updateCustomCSS() {
+				configStore.setCustomCSS(customCSS.value);
+			}
 			async function handleClearCache() {
 				if (!window.confirm("确定要清除本书的离线缓存吗？")) return;
 				await readerStore.clearPersistedCache();
@@ -20924,16 +21043,25 @@ ul, ol {
 					previouslyFocused = document.activeElement;
 					fontSize.value = configStore.reading.fontSize;
 					lineHeight.value = configStore.reading.lineHeight;
+					letterSpacing.value = configStore.reading.letterSpacing;
+					paragraphIndent.value = configStore.reading.paragraphIndent;
 					maxWidth.value = configStore.reading.maxWidth;
+					padding.value = configStore.reading.padding;
 					fontFamily.value = configStore.reading.fontFamily;
 					textConversion.value = configStore.reading.textConversion;
 					showProgress.value = configStore.behavior.showProgress;
 					preloadNext.value = configStore.behavior.preloadNext;
+					keyboardNavigation.value = configStore.behavior.keyboardNavigation;
+					swipeGestures.value = configStore.behavior.swipeGestures;
+					autoHideHeader.value = configStore.behavior.autoHideHeader;
 					siteAutoEnable.value = props.siteAutoEnable;
+					protectionMode.value = configStore.protection.mode;
+					customCSS.value = configStore.customCSS;
 					await nextTick();
 					closeButtonRef.value?.focus({ preventScroll: true });
 					return;
 				}
+				configStore.flushSave();
 				previouslyFocused?.focus?.({ preventScroll: true });
 				previouslyFocused = null;
 			});
@@ -20951,17 +21079,17 @@ ul, ol {
 						"aria-modal": "true",
 						"aria-labelledby": "mnr-settings-title",
 						onKeydown: [withKeys(withModifiers(closePanel, ["stop"]), ["esc"]), withKeys(trapFocus, ["tab"])]
-					}, [createBaseVNode("header", _hoisted_2$1, [_cache[12] || (_cache[12] = createBaseVNode("h3", { id: "mnr-settings-title" }, "阅读设置", -1)), createBaseVNode("button", {
+					}, [createBaseVNode("header", _hoisted_2$1, [_cache[21] || (_cache[21] = createBaseVNode("h3", { id: "mnr-settings-title" }, "阅读设置", -1)), createBaseVNode("button", {
 						ref_key: "closeButtonRef",
 						ref: closeButtonRef,
 						class: "mnr-close-btn",
 						"aria-label": "关闭设置",
 						onClick: closePanel
-					}, [..._cache[11] || (_cache[11] = [createBaseVNode("svg", {
+					}, [..._cache[20] || (_cache[20] = [createBaseVNode("svg", {
 						viewBox: "0 0 24 24",
 						"aria-hidden": "true"
 					}, [createBaseVNode("path", { d: "m6 6 12 12M18 6 6 18" })], -1)])], 512)]), createBaseVNode("div", _hoisted_3$1, [
-						createBaseVNode("section", _hoisted_4$1, [_cache[13] || (_cache[13] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(themes.value, (theme) => {
+						createBaseVNode("section", _hoisted_4$1, [_cache[22] || (_cache[22] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
 							return openBlock(), createElementBlock("button", {
 								key: theme.id,
 								class: normalizeClass(["mnr-theme-btn", { active: currentTheme.value === theme.id }]),
@@ -20974,8 +21102,8 @@ ul, ol {
 								onClick: ($event) => setTheme(theme.id)
 							}, toDisplayString(theme.name), 15, _hoisted_6$1);
 						}), 128))])]),
-						createBaseVNode("section", _hoisted_7$1, [_cache[16] || (_cache[16] = createBaseVNode("h4", null, "字号", -1)), createBaseVNode("div", _hoisted_8$1, [
-							_cache[14] || (_cache[14] = createBaseVNode("span", {
+						createBaseVNode("section", _hoisted_7$1, [_cache[25] || (_cache[25] = createBaseVNode("h4", null, "字号", -1)), createBaseVNode("div", _hoisted_8$1, [
+							_cache[23] || (_cache[23] = createBaseVNode("span", {
 								class: "mnr-slider-label",
 								"aria-hidden": "true"
 							}, "A", -1)),
@@ -20988,14 +21116,14 @@ ul, ol {
 								"aria-label": "字体大小",
 								onInput: updateFontSize
 							}, null, 40, _hoisted_9$1),
-							_cache[15] || (_cache[15] = createBaseVNode("span", {
+							_cache[24] || (_cache[24] = createBaseVNode("span", {
 								class: "mnr-slider-label mnr-slider-label--large",
 								"aria-hidden": "true"
 							}, "A", -1)),
 							createBaseVNode("span", _hoisted_10$1, toDisplayString(fontSize.value) + "px", 1)
 						])]),
-						createBaseVNode("section", _hoisted_11$1, [_cache[19] || (_cache[19] = createBaseVNode("h4", null, "行距", -1)), createBaseVNode("div", _hoisted_12, [
-							_cache[17] || (_cache[17] = createBaseVNode("span", {
+						createBaseVNode("section", _hoisted_11$1, [_cache[28] || (_cache[28] = createBaseVNode("h4", null, "行距", -1)), createBaseVNode("div", _hoisted_12, [
+							_cache[26] || (_cache[26] = createBaseVNode("span", {
 								class: "mnr-slider-label",
 								"aria-hidden": "true"
 							}, "≡", -1)),
@@ -21009,14 +21137,56 @@ ul, ol {
 								"aria-label": "行间距",
 								onInput: updateLineHeight
 							}, null, 40, _hoisted_13),
-							_cache[18] || (_cache[18] = createBaseVNode("span", {
+							_cache[27] || (_cache[27] = createBaseVNode("span", {
 								class: "mnr-slider-label",
 								"aria-hidden": "true"
 							}, "☰", -1)),
 							createBaseVNode("span", _hoisted_14, toDisplayString(lineHeight.value), 1)
 						])]),
-						createBaseVNode("section", _hoisted_15, [_cache[22] || (_cache[22] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_16, [
-							_cache[20] || (_cache[20] = createBaseVNode("span", {
+						createBaseVNode("section", _hoisted_15, [_cache[31] || (_cache[31] = createBaseVNode("h4", null, "字间距", -1)), createBaseVNode("div", _hoisted_16, [
+							_cache[29] || (_cache[29] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "紧", -1)),
+							createBaseVNode("input", {
+								type: "range",
+								min: "0",
+								max: "0.2",
+								step: "0.01",
+								value: letterSpacing.value,
+								class: "mnr-slider",
+								"aria-label": "文字间距",
+								onInput: updateLetterSpacing
+							}, null, 40, _hoisted_17),
+							_cache[30] || (_cache[30] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "松", -1)),
+							createBaseVNode("span", _hoisted_18, toDisplayString(letterSpacing.value.toFixed(2)) + "em", 1)
+						])]),
+						createBaseVNode("section", _hoisted_19, [_cache[34] || (_cache[34] = createBaseVNode("h4", null, "段落缩进", -1)), createBaseVNode("div", _hoisted_20, [
+							_cache[32] || (_cache[32] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "0", -1)),
+							createBaseVNode("input", {
+								type: "range",
+								min: "0",
+								max: "4",
+								step: "0.5",
+								value: paragraphIndent.value,
+								class: "mnr-slider",
+								"aria-label": "段落首行缩进",
+								onInput: updateParagraphIndent
+							}, null, 40, _hoisted_21),
+							_cache[33] || (_cache[33] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "4", -1)),
+							createBaseVNode("span", _hoisted_22, toDisplayString(paragraphIndent.value) + "em", 1)
+						])]),
+						createBaseVNode("section", _hoisted_23, [_cache[37] || (_cache[37] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_24, [
+							_cache[35] || (_cache[35] = createBaseVNode("span", {
 								class: "mnr-slider-label",
 								"aria-hidden": "true"
 							}, "⊏⊐", -1)),
@@ -21029,14 +21199,35 @@ ul, ol {
 								class: "mnr-slider",
 								"aria-label": "正文内容宽度",
 								onInput: updateMaxWidth
-							}, null, 40, _hoisted_17),
-							_cache[21] || (_cache[21] = createBaseVNode("span", {
+							}, null, 40, _hoisted_25),
+							_cache[36] || (_cache[36] = createBaseVNode("span", {
 								class: "mnr-slider-label",
 								"aria-hidden": "true"
 							}, "⊏ ⊐", -1)),
-							createBaseVNode("span", _hoisted_18, toDisplayString(maxWidth.value) + "px", 1)
+							createBaseVNode("span", _hoisted_26, toDisplayString(maxWidth.value) + "px", 1)
 						])]),
-						createBaseVNode("section", _hoisted_19, [_cache[24] || (_cache[24] = createBaseVNode("label", {
+						createBaseVNode("section", _hoisted_27, [_cache[40] || (_cache[40] = createBaseVNode("h4", null, "内容边距", -1)), createBaseVNode("div", _hoisted_28, [
+							_cache[38] || (_cache[38] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "窄", -1)),
+							createBaseVNode("input", {
+								type: "range",
+								min: "12",
+								max: "48",
+								step: "2",
+								value: padding.value,
+								class: "mnr-slider",
+								"aria-label": "正文内容边距",
+								onInput: updatePadding
+							}, null, 40, _hoisted_29),
+							_cache[39] || (_cache[39] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "宽", -1)),
+							createBaseVNode("span", _hoisted_30, toDisplayString(padding.value) + "px", 1)
+						])]),
+						createBaseVNode("section", _hoisted_31, [_cache[41] || (_cache[41] = createBaseVNode("label", {
 							class: "mnr-field-label",
 							for: "mnr-font-family"
 						}, "字体", -1)), withDirectives(createBaseVNode("select", {
@@ -21044,45 +21235,81 @@ ul, ol {
 							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => fontFamily.value = $event),
 							class: "mnr-select",
 							onChange: updateFontFamily
-						}, [..._cache[23] || (_cache[23] = [
-							createBaseVNode("option", { value: "system-ui, -apple-system, 'Microsoft YaHei', sans-serif" }, " 系统默认 ", -1),
-							createBaseVNode("option", { value: "'Noto Serif SC', 'Source Han Serif SC', serif" }, "思源宋体", -1),
-							createBaseVNode("option", { value: "'PingFang SC', 'Hiragino Sans GB', sans-serif" }, "苹方", -1),
-							createBaseVNode("option", { value: "'Kaiti SC', 'STKaiti', serif" }, "楷体", -1)
-						])], 544), [[vModelSelect, fontFamily.value]])]),
-						createBaseVNode("section", _hoisted_20, [_cache[25] || (_cache[25] = createBaseVNode("h4", null, "简繁转换", -1)), createBaseVNode("div", _hoisted_21, [(openBlock(), createElementBlock(Fragment, null, renderList(conversionOptions, (option) => {
+						}, [(openBlock(), createElementBlock(Fragment, null, renderList(fontOptions, (option) => {
+							return createBaseVNode("option", {
+								key: option.label,
+								value: option.value
+							}, toDisplayString(option.label), 9, _hoisted_32);
+						}), 64))], 544), [[vModelSelect, fontFamily.value]])]),
+						createBaseVNode("section", _hoisted_33, [_cache[42] || (_cache[42] = createBaseVNode("h4", null, "简繁转换", -1)), createBaseVNode("div", _hoisted_34, [(openBlock(), createElementBlock(Fragment, null, renderList(conversionOptions, (option) => {
 							return createBaseVNode("button", {
 								key: option.value,
 								class: normalizeClass(["mnr-segment", { active: textConversion.value === option.value }]),
 								"aria-pressed": textConversion.value === option.value,
 								onClick: ($event) => updateTextConversion(option.value)
-							}, toDisplayString(option.label), 11, _hoisted_22);
+							}, toDisplayString(option.label), 11, _hoisted_35);
 						}), 64))])]),
-						createBaseVNode("details", _hoisted_23, [_cache[29] || (_cache[29] = createBaseVNode("summary", null, "更多设置", -1)), createBaseVNode("div", _hoisted_24, [
-							createBaseVNode("label", _hoisted_25, [_cache[26] || (_cache[26] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
+						createBaseVNode("details", _hoisted_36, [_cache[51] || (_cache[51] = createBaseVNode("summary", null, "更多设置", -1)), createBaseVNode("div", _hoisted_37, [
+							createBaseVNode("label", _hoisted_38, [_cache[43] || (_cache[43] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => showProgress.value = $event),
 								type: "checkbox",
 								onChange: _cache[2] || (_cache[2] = ($event) => updateBehavior("showProgress", showProgress.value))
 							}, null, 544), [[vModelCheckbox, showProgress.value]])]),
-							createBaseVNode("label", _hoisted_26, [_cache[27] || (_cache[27] = createBaseVNode("span", null, "自动加载下一章", -1)), withDirectives(createBaseVNode("input", {
+							createBaseVNode("label", _hoisted_39, [_cache[44] || (_cache[44] = createBaseVNode("span", null, "自动加载下一章", -1)), withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => preloadNext.value = $event),
 								type: "checkbox",
 								onChange: _cache[4] || (_cache[4] = ($event) => updateBehavior("preloadNext", preloadNext.value))
 							}, null, 544), [[vModelCheckbox, preloadNext.value]])]),
-							createBaseVNode("label", _hoisted_27, [_cache[28] || (_cache[28] = createBaseVNode("span", null, "在本站自动开启", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => siteAutoEnable.value = $event),
+							createBaseVNode("label", _hoisted_40, [_cache[45] || (_cache[45] = createBaseVNode("span", null, "键盘导航", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => keyboardNavigation.value = $event),
 								type: "checkbox",
-								onChange: _cache[6] || (_cache[6] = ($event) => emit("siteAutoEnableChange", siteAutoEnable.value))
+								onChange: _cache[6] || (_cache[6] = ($event) => updateBehavior("keyboardNavigation", keyboardNavigation.value))
+							}, null, 544), [[vModelCheckbox, keyboardNavigation.value]])]),
+							createBaseVNode("label", _hoisted_41, [_cache[46] || (_cache[46] = createBaseVNode("span", null, "触摸手势", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => swipeGestures.value = $event),
+								type: "checkbox",
+								onChange: _cache[8] || (_cache[8] = ($event) => updateBehavior("swipeGestures", swipeGestures.value))
+							}, null, 544), [[vModelCheckbox, swipeGestures.value]])]),
+							createBaseVNode("label", _hoisted_42, [_cache[47] || (_cache[47] = createBaseVNode("span", null, "自动隐藏工具栏", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => autoHideHeader.value = $event),
+								type: "checkbox",
+								onChange: _cache[10] || (_cache[10] = ($event) => updateBehavior("autoHideHeader", autoHideHeader.value))
+							}, null, 544), [[vModelCheckbox, autoHideHeader.value]])]),
+							createBaseVNode("label", _hoisted_43, [_cache[48] || (_cache[48] = createBaseVNode("span", null, "在本站自动开启", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => siteAutoEnable.value = $event),
+								type: "checkbox",
+								onChange: _cache[12] || (_cache[12] = ($event) => emit("siteAutoEnableChange", siteAutoEnable.value))
 							}, null, 544), [[vModelCheckbox, siteAutoEnable.value]])]),
-							createBaseVNode("div", _hoisted_28, [
+							createBaseVNode("div", _hoisted_44, [_cache[49] || (_cache[49] = createBaseVNode("span", { class: "mnr-more-label" }, "网站防护", -1)), createBaseVNode("div", _hoisted_45, [createBaseVNode("button", {
+								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "standard" }]),
+								"aria-pressed": protectionMode.value === "standard",
+								onClick: _cache[13] || (_cache[13] = ($event) => updateProtectionMode("standard"))
+							}, " 标准 ", 10, _hoisted_46), createBaseVNode("button", {
+								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "aggressive" }]),
+								"aria-pressed": protectionMode.value === "aggressive",
+								onClick: _cache[14] || (_cache[14] = ($event) => updateProtectionMode("aggressive"))
+							}, " 强力 ", 10, _hoisted_47)])]),
+							createBaseVNode("div", _hoisted_48, [_cache[50] || (_cache[50] = createBaseVNode("label", {
+								class: "mnr-more-label",
+								for: "mnr-custom-css"
+							}, "自定义 CSS", -1)), withDirectives(createBaseVNode("textarea", {
+								id: "mnr-custom-css",
+								"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => customCSS.value = $event),
+								class: "mnr-custom-css",
+								rows: "5",
+								spellcheck: "false",
+								placeholder: ".mnr-reader-content { ... }",
+								onInput: updateCustomCSS
+							}, null, 544), [[vModelText, customCSS.value]])]),
+							createBaseVNode("div", _hoisted_49, [
 								createBaseVNode("button", {
 									class: "mnr-action-btn",
-									onClick: _cache[7] || (_cache[7] = ($event) => emit("cacheAll"))
-								}, [createTextVNode(toDisplayString(cacheProgress.value.running ? "取消缓存" : "离线缓存") + " ", 1), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_29, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]),
+									onClick: _cache[16] || (_cache[16] = ($event) => emit("cacheAll"))
+								}, [createTextVNode(toDisplayString(cacheProgress.value.running ? "取消缓存" : "离线缓存") + " ", 1), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_50, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]),
 								!cacheProgress.value.running && cacheProgress.value.failed > 0 ? (openBlock(), createElementBlock("button", {
 									key: 0,
 									class: "mnr-action-btn",
-									onClick: _cache[8] || (_cache[8] = ($event) => emit("retryCache"))
+									onClick: _cache[17] || (_cache[17] = ($event) => emit("retryCache"))
 								}, " 重试失败章节（" + toDisplayString(cacheProgress.value.failed) + "） ", 1)) : createCommentVNode("", true),
 								persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
 									key: 1,
@@ -21091,11 +21318,11 @@ ul, ol {
 								}, " 清除离线缓存（" + toDisplayString(persistedCount.value) + "） ", 1)) : createCommentVNode("", true),
 								createBaseVNode("button", {
 									class: "mnr-action-btn",
-									onClick: _cache[9] || (_cache[9] = ($event) => emit("copyDiagnostics"))
+									onClick: _cache[18] || (_cache[18] = ($event) => emit("copyDiagnostics"))
 								}, " 复制诊断信息 "),
 								createBaseVNode("button", {
 									class: "mnr-action-btn mnr-action-btn--danger",
-									onClick: _cache[10] || (_cache[10] = ($event) => emit("exit"))
+									onClick: _cache[19] || (_cache[19] = ($event) => emit("exit"))
 								}, " 退出阅读模式 ")
 							])
 						])])
@@ -21138,7 +21365,8 @@ ul, ol {
 		emits: [
 			"copyDiagnostics",
 			"exit",
-			"siteAutoEnableChange"
+			"siteAutoEnableChange",
+			"protectionModeChange"
 		],
 		setup(__props, { emit: __emit }) {
 			const props = __props;
@@ -21328,6 +21556,9 @@ ul, ol {
 				emit("siteAutoEnableChange", enabled);
 				readerStore.showToast(enabled ? "已开启本站自动阅读" : "已关闭本站自动阅读", "info");
 			}
+			function handleProtectionModeChange(mode) {
+				emit("protectionModeChange", mode);
+			}
 			function setChapterRef(url) {
 				return (el) => {
 					if (!el) {
@@ -21420,6 +21651,17 @@ ul, ol {
 			watch(() => props.siteAutoEnable, (value) => {
 				siteAutoEnableValue.value = value;
 			});
+			watch(() => readerStore.currentChapterIndex, () => {
+				flushReadingPositions();
+			});
+			function flushPersistentState() {
+				if (readerStore.chapter?.url) saveReadingPosition(readerStore.chapter.url, readerStore.scrollPercent);
+				flushReadingPositions();
+				configStore.flushSave();
+			}
+			function handleVisibilityChange() {
+				if (document.visibilityState === "hidden") flushPersistentState();
+			}
 			onMounted(async () => {
 				configStore.applyAll();
 				const textConversion = configStore.reading.textConversion;
@@ -21432,6 +21674,8 @@ ul, ol {
 					mainRef.value.addEventListener("touchend", handleReaderTouchEnd, { passive: true });
 					mainRef.value.addEventListener("touchcancel", handleReaderTouchCancel, { passive: true });
 				}
+				document.addEventListener("visibilitychange", handleVisibilityChange);
+				window.addEventListener("pagehide", flushPersistentState);
 				const observerOptions = {
 					root: mainRef.value,
 					rootMargin: INTERSECTION_ROOT_MARGIN,
@@ -21450,7 +21694,9 @@ ul, ol {
 				scheduleAutoLoadNext("state");
 			});
 			onUnmounted(() => {
-				if (readerStore.chapter?.url) saveReadingPosition(readerStore.chapter.url, readerStore.scrollPercent);
+				flushPersistentState();
+				document.removeEventListener("visibilitychange", handleVisibilityChange);
+				window.removeEventListener("pagehide", flushPersistentState);
 				if (mainRef.value) {
 					mainRef.value.removeEventListener("scroll", handleScroll);
 					mainRef.value.removeEventListener("wheel", handleWheel);
@@ -21567,6 +21813,7 @@ ul, ol {
 						onRetryCache: handleRetryCache,
 						onCopyDiagnostics: _cache[4] || (_cache[4] = ($event) => emit("copyDiagnostics")),
 						onSiteAutoEnableChange: handleSiteAutoEnableChange,
+						onProtectionModeChange: handleProtectionModeChange,
 						onExit: _cache[5] || (_cache[5] = ($event) => emit("exit"))
 					}, null, 8, [
 						"visible",
@@ -21590,7 +21837,7 @@ ul, ol {
 				], 32);
 			};
 		}
-	}), [["__scopeId", "data-v-a506be0d"]]);
+	}), [["__scopeId", "data-v-cd167f97"]]);
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -21747,6 +21994,7 @@ ul, ol {
 				copyDiagnosticsFromMenu();
 			},
 			onExit: closeReader,
+			onProtectionModeChange: setProtectionMode,
 			onSiteAutoEnableChange: setCurrentSiteAutoEnable
 		});
 		app.use(pinia);
@@ -21817,6 +22065,13 @@ ul, ol {
 		} catch (e) {
 			console.error("[MNR] Failed to update site auto-enable preference:", e);
 		}
+	}
+	async function setProtectionMode(mode) {
+		if (!pinia) return;
+		const configStore = useConfigStore(pinia);
+		configStore.updateProtection({ mode });
+		await configStore.flushSave();
+		getSiteProtection().activate(toProtectionOptions(configStore.protection));
 	}
 	function showFloatingButton() {
 		hideFloatingButton();
@@ -21998,6 +22253,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-prompt-overlay[data-v-ba6110ad]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-ba6110ad]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-ba6110ad;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-ba6110ad{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-ba6110ad]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-ba6110ad]{font-size:28px}.mnr-prompt-title[data-v-ba6110ad]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-ba6110ad]{margin-bottom:16px}.mnr-confidence-bar[data-v-ba6110ad]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-ba6110ad]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-ba6110ad]{background:#4caf50}.mnr-confidence-fill.medium[data-v-ba6110ad]{background:#ff9800}.mnr-confidence-fill.low[data-v-ba6110ad]{background:#f44336}.mnr-confidence-text[data-v-ba6110ad]{color:#666;font-size:13px}.mnr-results[data-v-ba6110ad]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-ba6110ad]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-ba6110ad]{color:#2e7d32}.mnr-result-item.warning[data-v-ba6110ad]{color:#ed6c02}.mnr-result-icon[data-v-ba6110ad]{font-weight:700}.mnr-checkbox-label[data-v-ba6110ad]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-ba6110ad]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-ba6110ad]{gap:12px;display:flex}.mnr-btn[data-v-ba6110ad]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-ba6110ad]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-ba6110ad]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-ba6110ad]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-ba6110ad]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-ba6110ad],.mnr-fade-leave-active[data-v-ba6110ad]{transition:opacity .3s}.mnr-fade-enter-from[data-v-ba6110ad],.mnr-fade-leave-to[data-v-ba6110ad]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-ba6110ad]{background:#2a2a2a}.mnr-prompt-title[data-v-ba6110ad]{color:#e0e0e0}.mnr-confidence-bar[data-v-ba6110ad]{background:#444}.mnr-confidence-text[data-v-ba6110ad]{color:#aaa}.mnr-checkbox-label[data-v-ba6110ad]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-ba6110ad]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-ba6110ad]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-ba6110ad]{margin:8px;padding:16px}.mnr-prompt-title[data-v-ba6110ad]{font-size:16px}.mnr-btn[data-v-ba6110ad]{padding:12px 16px}}@media (prefers-reduced-motion:reduce){.mnr-prompt-card[data-v-ba6110ad],.mnr-confidence-fill[data-v-ba6110ad],.mnr-btn[data-v-ba6110ad],.mnr-fade-enter-active[data-v-ba6110ad],.mnr-fade-leave-active[data-v-ba6110ad]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-d9051526]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-d9051526]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-d9051526]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-d9051526]:active{transform:scale(.95)}.mnr-fab[data-v-d9051526]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-d9051526]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:22px;height:22px}.mnr-fab[data-v-d9051526]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-d9051526],.mnr-fade-slide-leave-active[data-v-d9051526]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-d9051526],.mnr-fade-slide-leave-to[data-v-d9051526]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-d9051526],.mnr-fade-slide-enter-active[data-v-d9051526],.mnr-fade-slide-leave-active[data-v-d9051526]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-666ac5a5]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-666ac5a5]{transform:translate(0)}.mnr-drawer-overlay[data-v-666ac5a5]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-666ac5a5]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-666ac5a5]{min-width:0}.mnr-drawer-title[data-v-666ac5a5]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-666ac5a5]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-666ac5a5]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-666ac5a5]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-666ac5a5]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-666ac5a5]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-drawer-tools[data-v-666ac5a5]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;gap:8px;padding:6px 12px 10px;display:flex}.mnr-cache-action[data-v-666ac5a5]{border:1px solid var(--mnr-border,#ddd);min-height:32px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:7px;padding:5px 10px;font-size:12px}.mnr-drawer-state[data-v-666ac5a5]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-666ac5a5]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-666ac5a5]{background:var(--mnr-border,#e0e0e0);flex-shrink:0;height:3px}.mnr-cache-progress-fill[data-v-666ac5a5]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-cache-stats[data-v-666ac5a5]{border-bottom:1px solid var(--mnr-border,#e5e5e5);color:var(--mnr-text,#666);flex-shrink:0;gap:12px;padding:7px 12px;font-size:12px;display:flex}.mnr-chapter-list[data-v-666ac5a5]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-666ac5a5]{height:44px}.mnr-chapter-button[data-v-666ac5a5]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-666ac5a5]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-666ac5a5]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.cached[data-v-666ac5a5]{color:#777}.mnr-chapter-button.persisted[data-v-666ac5a5],.mnr-cache-mark[data-v-666ac5a5]{color:#388e3c}.mnr-cache-mark[data-v-666ac5a5]{flex:none;font-size:12px}.mnr-drawer-close[data-v-666ac5a5]:hover,.mnr-chapter-button[data-v-666ac5a5]:hover,.mnr-cache-action[data-v-666ac5a5]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-drawer-close[data-v-666ac5a5]:focus-visible,.mnr-drawer-search input[data-v-666ac5a5]:focus-visible,.mnr-cache-action[data-v-666ac5a5]:focus-visible,.mnr-chapter-button[data-v-666ac5a5]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-666ac5a5]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-666ac5a5],.mnr-fade-leave-active[data-v-666ac5a5]{transition:opacity .24s}.mnr-fade-enter-from[data-v-666ac5a5],.mnr-fade-leave-to[data-v-666ac5a5]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-666ac5a5],.mnr-fade-enter-active[data-v-666ac5a5],.mnr-fade-leave-active[data-v-666ac5a5],.mnr-cache-progress-fill[data-v-666ac5a5]{transition:none}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3,.mnr-settings-section h4,.mnr-field-label{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3{font-size:18px}.mnr-close-btn{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content{padding:18px 16px max(24px, env(safe-area-inset-bottom));flex:1;overflow:auto}.mnr-settings-section{margin-bottom:22px}.mnr-settings-section h4,.mnr-field-label{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid{grid-template-columns:repeat(4,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;padding:10px 4px;font-size:12px}.mnr-slider-row{align-items:center;gap:10px;display:flex}.mnr-slider-label{width:30px;color:var(--mnr-text,#666);text-align:center;white-space:nowrap;flex:0 0 30px;line-height:1}.mnr-slider-label--large{font-size:1.2em}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:1;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:0;border-radius:50%;width:20px;height:20px}.mnr-slider-value{width:60px;color:var(--mnr-text,#666);text-align:right;white-space:nowrap;flex:0 0 60px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:10px 12px}.mnr-segment:last-child{border-right:0}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-more-settings{border-top:1px solid var(--mnr-border,#ddd)}.mnr-more-settings summary{color:var(--mnr-text,#555);cursor:pointer;padding:16px 0;font-size:14px;font-weight:600}.mnr-more-content{padding-bottom:8px}.mnr-switch-row{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-action-buttons{flex-direction:column;gap:8px;margin-top:14px;display:flex}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:8px;padding:11px 12px;font-size:14px}.mnr-action-btn--danger{color:#c93f49;border-color:#c93f49}.mnr-cache-progress{opacity:.75;margin-left:6px}.mnr-close-btn:hover,.mnr-action-btn:hover,.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-close-btn:focus-visible,.mnr-theme-btn:focus-visible,.mnr-slider:focus-visible,.mnr-select:focus-visible,.mnr-segment:focus-visible,.mnr-action-btn:focus-visible,.mnr-more-settings summary:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:opacity .22s,transform .22s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel{width:100%}.mnr-settings-section--desktop{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:none}}.mnr-reader[data-v-a506be0d]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-a506be0d]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-a506be0d]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,.05em);margin:0 auto}.mnr-reader-content[data-v-a506be0d] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-a506be0d] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-a506be0d] a{color:var(--mnr-link,#1976d2)}.mnr-chapter-boundary-nav[data-v-a506be0d]{border-top:1px solid var(--mnr-border,#e0e0e0);justify-content:center;gap:12px;margin:36px 0 12px;padding-top:18px;display:flex}.mnr-chapter-boundary-nav button[data-v-a506be0d]{border:1px solid var(--mnr-border,#e0e0e0);min-width:92px;color:var(--mnr-link,#1976d2);font:inherit;cursor:pointer;background:0 0;border-radius:8px;padding:9px 14px;font-size:14px}.mnr-chapter-boundary-nav button[data-v-a506be0d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-chapter-boundary-nav button[data-v-a506be0d]:disabled{opacity:.4;cursor:default}.mnr-chapter-boundary-nav button[data-v-a506be0d]:focus-visible,.mnr-reader-main[data-v-a506be0d]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-a506be0d]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-a506be0d]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-a506be0d]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-a506be0d]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-a506be0d]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-a506be0d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-a506be0d]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-a506be0d],.mnr-loading-next[data-v-a506be0d]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-a506be0d]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-a506be0d]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-a506be0d],.mnr-chapter-boundary-nav button[data-v-a506be0d]{transition:none}}\n/*$vite$:1*/", {});
+		})(".mnr-prompt-overlay[data-v-ba6110ad]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-ba6110ad]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-ba6110ad;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-ba6110ad{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-ba6110ad]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-ba6110ad]{font-size:28px}.mnr-prompt-title[data-v-ba6110ad]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-ba6110ad]{margin-bottom:16px}.mnr-confidence-bar[data-v-ba6110ad]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-ba6110ad]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-ba6110ad]{background:#4caf50}.mnr-confidence-fill.medium[data-v-ba6110ad]{background:#ff9800}.mnr-confidence-fill.low[data-v-ba6110ad]{background:#f44336}.mnr-confidence-text[data-v-ba6110ad]{color:#666;font-size:13px}.mnr-results[data-v-ba6110ad]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-ba6110ad]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-ba6110ad]{color:#2e7d32}.mnr-result-item.warning[data-v-ba6110ad]{color:#ed6c02}.mnr-result-icon[data-v-ba6110ad]{font-weight:700}.mnr-checkbox-label[data-v-ba6110ad]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-ba6110ad]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-ba6110ad]{gap:12px;display:flex}.mnr-btn[data-v-ba6110ad]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-ba6110ad]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-ba6110ad]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-ba6110ad]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-ba6110ad]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-ba6110ad],.mnr-fade-leave-active[data-v-ba6110ad]{transition:opacity .3s}.mnr-fade-enter-from[data-v-ba6110ad],.mnr-fade-leave-to[data-v-ba6110ad]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-ba6110ad]{background:#2a2a2a}.mnr-prompt-title[data-v-ba6110ad]{color:#e0e0e0}.mnr-confidence-bar[data-v-ba6110ad]{background:#444}.mnr-confidence-text[data-v-ba6110ad]{color:#aaa}.mnr-checkbox-label[data-v-ba6110ad]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-ba6110ad]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-ba6110ad]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-ba6110ad]{margin:8px;padding:16px}.mnr-prompt-title[data-v-ba6110ad]{font-size:16px}.mnr-btn[data-v-ba6110ad]{padding:12px 16px}}@media (prefers-reduced-motion:reduce){.mnr-prompt-card[data-v-ba6110ad],.mnr-confidence-fill[data-v-ba6110ad],.mnr-btn[data-v-ba6110ad],.mnr-fade-enter-active[data-v-ba6110ad],.mnr-fade-leave-active[data-v-ba6110ad]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-d9051526]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-d9051526]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-d9051526]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-d9051526]:active{transform:scale(.95)}.mnr-fab[data-v-d9051526]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-d9051526]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:22px;height:22px}.mnr-fab[data-v-d9051526]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-d9051526],.mnr-fade-slide-leave-active[data-v-d9051526]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-d9051526],.mnr-fade-slide-leave-to[data-v-d9051526]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-d9051526],.mnr-fade-slide-enter-active[data-v-d9051526],.mnr-fade-slide-leave-active[data-v-d9051526]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-666ac5a5]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-666ac5a5]{transform:translate(0)}.mnr-drawer-overlay[data-v-666ac5a5]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-666ac5a5]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-666ac5a5]{min-width:0}.mnr-drawer-title[data-v-666ac5a5]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-666ac5a5]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-666ac5a5]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-666ac5a5]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-666ac5a5]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-666ac5a5]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-drawer-tools[data-v-666ac5a5]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;gap:8px;padding:6px 12px 10px;display:flex}.mnr-cache-action[data-v-666ac5a5]{border:1px solid var(--mnr-border,#ddd);min-height:32px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:7px;padding:5px 10px;font-size:12px}.mnr-drawer-state[data-v-666ac5a5]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-666ac5a5]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-666ac5a5]{background:var(--mnr-border,#e0e0e0);flex-shrink:0;height:3px}.mnr-cache-progress-fill[data-v-666ac5a5]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-cache-stats[data-v-666ac5a5]{border-bottom:1px solid var(--mnr-border,#e5e5e5);color:var(--mnr-text,#666);flex-shrink:0;gap:12px;padding:7px 12px;font-size:12px;display:flex}.mnr-chapter-list[data-v-666ac5a5]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-666ac5a5]{height:44px}.mnr-chapter-button[data-v-666ac5a5]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-666ac5a5]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-666ac5a5]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.cached[data-v-666ac5a5]{color:#777}.mnr-chapter-button.persisted[data-v-666ac5a5],.mnr-cache-mark[data-v-666ac5a5]{color:#388e3c}.mnr-cache-mark[data-v-666ac5a5]{flex:none;font-size:12px}.mnr-drawer-close[data-v-666ac5a5]:hover,.mnr-chapter-button[data-v-666ac5a5]:hover,.mnr-cache-action[data-v-666ac5a5]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-drawer-close[data-v-666ac5a5]:focus-visible,.mnr-drawer-search input[data-v-666ac5a5]:focus-visible,.mnr-cache-action[data-v-666ac5a5]:focus-visible,.mnr-chapter-button[data-v-666ac5a5]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-666ac5a5]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-666ac5a5],.mnr-fade-leave-active[data-v-666ac5a5]{transition:opacity .24s}.mnr-fade-enter-from[data-v-666ac5a5],.mnr-fade-leave-to[data-v-666ac5a5]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-666ac5a5],.mnr-fade-enter-active[data-v-666ac5a5],.mnr-fade-leave-active[data-v-666ac5a5],.mnr-cache-progress-fill[data-v-666ac5a5]{transition:none}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3,.mnr-settings-section h4,.mnr-field-label{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3{font-size:18px}.mnr-close-btn{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content{padding:18px 16px max(24px, env(safe-area-inset-bottom));flex:1;overflow:auto}.mnr-settings-section{margin-bottom:22px}.mnr-settings-section h4,.mnr-field-label{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid{grid-template-columns:repeat(4,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;padding:10px 4px;font-size:12px}.mnr-slider-row{align-items:center;gap:10px;display:flex}.mnr-slider-label{width:30px;color:var(--mnr-text,#666);text-align:center;white-space:nowrap;flex:0 0 30px;line-height:1}.mnr-slider-label--large{font-size:1.2em}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:1;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:0;border-radius:50%;width:20px;height:20px}.mnr-slider-value{width:60px;color:var(--mnr-text,#666);text-align:right;white-space:nowrap;flex:0 0 60px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:10px 12px}.mnr-segment:last-child{border-right:0}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-more-settings{border-top:1px solid var(--mnr-border,#ddd)}.mnr-more-settings summary{color:var(--mnr-text,#555);cursor:pointer;padding:16px 0;font-size:14px;font-weight:600}.mnr-more-content{padding-bottom:8px}.mnr-more-section{margin-top:16px}.mnr-more-label{color:var(--mnr-text,#333);margin-bottom:8px;font-size:14px;font-weight:600;display:block}.mnr-switch-row{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-custom-css{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-action-buttons{flex-direction:column;gap:8px;margin-top:14px;display:flex}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:8px;padding:11px 12px;font-size:14px}.mnr-action-btn--danger{color:#c93f49;border-color:#c93f49}.mnr-cache-progress{opacity:.75;margin-left:6px}.mnr-close-btn:hover,.mnr-action-btn:hover,.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-close-btn:focus-visible,.mnr-theme-btn:focus-visible,.mnr-slider:focus-visible,.mnr-select:focus-visible,.mnr-custom-css:focus-visible,.mnr-segment:focus-visible,.mnr-action-btn:focus-visible,.mnr-more-settings summary:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:opacity .22s,transform .22s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel{width:100%}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:none}}.mnr-reader[data-v-cd167f97]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-cd167f97]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-cd167f97]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,.05em);margin:0 auto}.mnr-reader-content[data-v-cd167f97] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-cd167f97] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-cd167f97] a{color:var(--mnr-link,#1976d2)}.mnr-chapter-boundary-nav[data-v-cd167f97]{border-top:1px solid var(--mnr-border,#e0e0e0);justify-content:center;gap:12px;margin:36px 0 12px;padding-top:18px;display:flex}.mnr-chapter-boundary-nav button[data-v-cd167f97]{border:1px solid var(--mnr-border,#e0e0e0);min-width:92px;color:var(--mnr-link,#1976d2);font:inherit;cursor:pointer;background:0 0;border-radius:8px;padding:9px 14px;font-size:14px}.mnr-chapter-boundary-nav button[data-v-cd167f97]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-chapter-boundary-nav button[data-v-cd167f97]:disabled{opacity:.4;cursor:default}.mnr-chapter-boundary-nav button[data-v-cd167f97]:focus-visible,.mnr-reader-main[data-v-cd167f97]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-cd167f97]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-cd167f97]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-cd167f97]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-cd167f97]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-cd167f97]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-cd167f97]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-cd167f97]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-cd167f97],.mnr-loading-next[data-v-cd167f97]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-cd167f97]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-cd167f97]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-cd167f97],.mnr-chapter-boundary-nav button[data-v-cd167f97]{transition:none}}\n/*$vite$:1*/", {});
 	})();
 })();

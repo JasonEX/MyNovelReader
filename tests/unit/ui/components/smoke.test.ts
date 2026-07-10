@@ -6,6 +6,7 @@ import DetectionPrompt from '@/ui/components/detection/DetectionPrompt.vue';
 import FloatingToolbar from '@/ui/components/reader/FloatingToolbar.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import settingsPanelSource from '@/ui/components/settings/SettingsPanel.vue?raw';
+import { THEMES } from '@/ui/stores/config';
 
 import { createGmStorageMock, stubGmStorage } from '../../../testUtils/gmStorage';
 import { createDom } from '../../../testUtils/dom';
@@ -70,6 +71,7 @@ describe('UI component smoke', () => {
 
   it('SettingsPanel mounts and emits close on close button click', async () => {
     const onClose = vi.fn();
+    const onProtectionModeChange = vi.fn();
     injectSfcStyle(settingsPanelSource);
 
     const mountEl = document.createElement('div');
@@ -80,6 +82,7 @@ describe('UI component smoke', () => {
         h(SettingsPanel, {
           visible: true,
           onClose,
+          onProtectionModeChange,
         }),
     });
 
@@ -94,6 +97,21 @@ describe('UI component smoke', () => {
       expect(style.whiteSpace).toBe('nowrap');
       expect(style.flexShrink).toBe('0');
     }
+
+    expect(document.querySelectorAll('.mnr-theme-btn')).toHaveLength(THEMES.length);
+    expect(document.querySelector('[aria-label="文字间距"]')).not.toBeNull();
+    expect(document.querySelector('[aria-label="段落首行缩进"]')).not.toBeNull();
+    expect(document.querySelector('[aria-label="正文内容边距"]')).not.toBeNull();
+    expect(document.querySelector('#mnr-custom-css')).not.toBeNull();
+    const fontSelect = document.querySelector<HTMLSelectElement>('#mnr-font-family');
+    expect(fontSelect?.selectedOptions[0]?.textContent?.trim()).toBe('系统默认');
+
+    const aggressiveButton = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('.mnr-segment')
+    ).find(button => button.textContent?.trim() === '强力');
+    aggressiveButton?.click();
+    await nextTick();
+    expect(onProtectionModeChange).toHaveBeenCalledWith('aggressive');
 
     const closeBtn = document.querySelector('.mnr-close-btn') as HTMLButtonElement | null;
     expect(closeBtn).not.toBeNull();

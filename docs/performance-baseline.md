@@ -18,6 +18,7 @@ The commands write Chrome CPU profiles and metric summaries to `.test/performanc
 
 - `local-ui-profile.cpuprofile`
 - `local-ui-profile.json`
+- `storage-write-profile.json`
 - `real-site-startup-profile.cpuprofile`
 - `real-site-startup-profile.json`
 
@@ -27,37 +28,51 @@ Open a `.cpuprofile` file in Chrome DevTools Performance or JavaScript Profiler.
 
 The local profile uses a 180-paragraph chapter and a 5,000-chapter table of contents.
 
-| Measurement                           |              Observed range (3 runs) |
+| Measurement                           |              Observed range (6 runs) |
 | ------------------------------------- | -----------------------------------: |
-| Reader startup wall time              |                       1,176-2,259 ms |
-| Load and open 5,000-chapter TOC       |                           192-472 ms |
+| Reader startup wall time              |                         964-2,259 ms |
+| Load and open 5,000-chapter TOC       |                           162-472 ms |
 | Search the 5,000-chapter TOC          |                             14-30 ms |
 | Rendered TOC rows                     | 28 initially, 20 after search/scroll |
 | Drawer scroll CPU profile wall window |                           319-341 ms |
-| Reader scroll CPU profile wall window |                           485-492 ms |
-| Interaction task duration             |                           461-933 ms |
-| Interaction layout duration           |                            79-128 ms |
-| Interaction script duration           |                             25-42 ms |
+| Reader scroll CPU profile wall window |                           485-499 ms |
+| Interaction task duration             |                           422-933 ms |
+| Interaction layout duration           |                            74-128 ms |
+| Interaction script duration           |                             23-42 ms |
 
 The scroll loops deliberately wait for animation frames, so their wall times are not CPU times. Across
-the three CPU profiles, `handleScroll` used about 14-19 ms self time in total for the complete drawer and
+the six CPU profiles, `handleScroll` used about 10-19 ms self time in total for the complete drawer and
 reader stress sequence. The fixed-window TOC kept the live list below 50 rows while processing all 5,000
 entries.
+
+## Userscript storage writes
+
+The storage profile drives the font-size slider for two seconds and continuously scrolls the reader for
+five seconds. It counts actual `GM_setValue` calls made by the built userscript.
+
+| Scenario                |             Before coalescing |                            Current result |
+| ----------------------- | ----------------------------: | ----------------------------------------: |
+| Font-size input         | 120 events, 120 config writes |            121-122 events, 1 config write |
+| Reader scrolling        | 5 seconds, 10 position writes | 5 seconds / 302 events, 2 position writes |
+| Position write interval |              about 502-515 ms |                            4,016-4,033 ms |
+
+Reading styles still update on every input event. Only persistence is delayed, and pending state is
+flushed when settings close, chapters change, the reader unmounts, or the page becomes hidden.
 
 ## Real Ciweimao startup
 
 Target: `https://www.ciweimao.com/chapter/102930784` through the configured test proxy.
 
-| Measurement                  |         Observed range (2 runs) |
+| Measurement                  |         Observed range (4 runs) |
 | ---------------------------- | ------------------------------: |
-| Navigation to reader mounted |                  2,178-2,804 ms |
+| Navigation to reader mounted |                  2,178-4,017 ms |
 | Extracted content            | 3,184 characters, 88 paragraphs |
 | Total task duration          |                  1,349-2,003 ms |
 | Total script duration        |                      255-530 ms |
 | Total layout duration        |                    874-1,160 ms |
 
-Both profiles were dominated by host-page code: `jquery.nicescroll` used 304-489 ms self time, and jQuery
-request handling used roughly 192-416 ms. No individual MyNovelReader function exceeded 8.2 ms self time;
+All profiles were dominated by host-page code: `jquery.nicescroll` used 268-489 ms self time, and jQuery
+request handling used roughly 192-441 ms. No individual MyNovelReader function exceeded 8.2 ms self time;
 the measured entries included `removeAdPatterns`, DOM text-node visiting, and app style application. This
 does not justify a riskier parser shortcut that could reduce extraction correctness.
 
@@ -68,5 +83,5 @@ does not justify a riskier parser shortcut that could reduce extraction correctn
 - raw: at most 900 KiB
 - gzip: at most 250 KiB
 
-The current build is about 821 KiB raw and 229 KiB gzip. Minification is intentionally disabled so the
+The current build is about 832 KiB raw and 231 KiB gzip. Minification is intentionally disabled so the
 installed userscript remains inspectable.

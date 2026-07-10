@@ -7,9 +7,13 @@ type ReadingPositionMap = Record<string, ReadingPosition>;
 
 const STORAGE_KEY = 'mnr-reading-positions';
 const MAX_SAVED_POSITIONS = 200;
+const PERSIST_INTERVAL_MS = 4000;
 
 let positionCache: ReadingPositionMap | null = null;
-let saveQueue = Promise.resolve();
+let updateQueue = Promise.resolve();
+let persistQueue = Promise.resolve();
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let dirty = false;
 
 function normalizeChapterUrl(url: string): string {
   try {
@@ -42,8 +46,7 @@ async function loadPositions(): Promise<ReadingPositionMap> {
   return positionCache;
 }
 
-async function persistPositions(positions: ReadingPositionMap): Promise<void> {
-  const serialized = JSON.stringify(positions);
+async function persistPositions(serialized: string): Promise<void> {
   if (typeof GM_setValue !== 'undefined') {
     await GM_setValue(STORAGE_KEY, serialized);
   } else if (typeof localStorage !== 'undefined') {
@@ -64,20 +67,47 @@ export function saveReadingPosition(url: string, percent: number): void {
   const normalizedUrl = normalizeChapterUrl(url);
   const normalizedPercent = Math.max(0, Math.min(100, Math.round(percent * 10) / 10));
 
-  saveQueue = saveQueue
+  updateQueue = updateQueue
     .then(async () => {
       const positions = await loadPositions();
+      const isNewPosition = !(normalizedUrl in positions);
       positions[normalizedUrl] = { percent: normalizedPercent, updatedAt: Date.now() };
 
-      const entries = Object.entries(positions);
-      if (entries.length > MAX_SAVED_POSITIONS) {
+      if (isNewPosition && Object.keys(positions).length > MAX_SAVED_POSITIONS) {
+        const entries = Object.entries(positions);
         entries
           .sort(([, a], [, b]) => b.updatedAt - a.updatedAt)
           .slice(MAX_SAVED_POSITIONS)
           .forEach(([key]) => delete positions[key]);
       }
 
-      await persistPositions(positions);
+      dirty = true;
+      schedulePersist();
     })
-    .catch(error => console.error('[MNR] Failed to save reading position:', error));
+    .catch(error => console.error('[MNR] Failed to update reading position:', error));
+}
+
+function schedulePersist(): void {
+  if (persistTimer) return;
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    void flushReadingPositions();
+  }, PERSIST_INTERVAL_MS);
+}
+
+export async function flushReadingPositions(): Promise<void> {
+  await updateQueue;
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  if (!dirty) return persistQueue;
+
+  const positions = await loadPositions();
+  const serialized = JSON.stringify(positions);
+  dirty = false;
+  persistQueue = persistQueue
+    .then(() => persistPositions(serialized))
+    .catch(error => console.error('[MNR] Failed to save reading positions:', error));
+  return persistQueue;
 }

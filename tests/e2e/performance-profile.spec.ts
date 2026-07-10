@@ -232,6 +232,100 @@ test('profiles large-TOC and reader interactions on a deterministic page', async
   await profiler.stop('local-ui-profile', testInfo, { startupMs, interactions });
 });
 
+test('measures coalesced settings and reading-position writes', async ({
+  context,
+  page,
+}, testInfo) => {
+  test.setTimeout(30_000);
+  const chapterUrl = 'http://mnr-storage-profile.test/chapter/1.html';
+  const paragraphs = Array.from(
+    { length: 240 },
+    (_, index) => `<p>第 ${index + 1} 段存储写入压力测试正文。</p>`
+  ).join('');
+
+  await context.route(chapterUrl, route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html; charset=utf-8',
+      body: `<!doctype html><html><head><title>第一章 存储测试</title></head><body><h1>第一章 存储测试</h1><main id="content">${paragraphs}</main><nav><a href="/chapter/2.html">下一章</a></nav></body></html>`,
+    })
+  );
+  await addMyNovelReaderUserscript(context);
+  await page.goto(chapterUrl, { waitUntil: 'domcontentloaded' });
+  await waitForMnrReader(page);
+
+  const summary = await page.locator('#mnr-reader-root').evaluate(async host => {
+    const shadow = host.shadowRoot!;
+    const userscriptWindow = window as typeof window & {
+      GM_setValue: (key: string, value: unknown) => unknown;
+    };
+    const writes: Array<{ key: string; at: number; bytes: number }> = [];
+    const originalSetValue = userscriptWindow.GM_setValue;
+    userscriptWindow.GM_setValue = (key: string, value: unknown) => {
+      writes.push({ key, at: performance.now(), bytes: JSON.stringify(value).length });
+      return originalSetValue(key, value);
+    };
+
+    shadow.querySelector<HTMLElement>('[aria-label="打开设置"]')?.click();
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    const slider = shadow.querySelector<HTMLInputElement>('input[aria-label="字体大小"]')!;
+    const settingsStartedAt = performance.now();
+    let inputEvents = 0;
+    while (performance.now() - settingsStartedAt < 2000) {
+      slider.value = String(14 + (inputEvents % 15));
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+      inputEvents += 1;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+    await new Promise(resolve => setTimeout(resolve, 450));
+    const configWrites = writes.filter(write => write.key === 'mnr-config');
+
+    shadow.querySelector<HTMLElement>('[aria-label="关闭设置"]')?.click();
+    writes.length = 0;
+    const reader = shadow.querySelector<HTMLElement>('.mnr-reader-main')!;
+    const scrollStartedAt = performance.now();
+    let scrollEvents = 0;
+    while (performance.now() - scrollStartedAt < 5000) {
+      const ratio = ((performance.now() - scrollStartedAt) % 1000) / 1000;
+      reader.scrollTop = ratio * Math.max(0, reader.scrollHeight - reader.clientHeight);
+      reader.dispatchEvent(new Event('scroll'));
+      scrollEvents += 1;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+    await new Promise(resolve => setTimeout(resolve, 4200));
+    const positionWrites = writes.filter(write => write.key === 'mnr-reading-positions');
+
+    return {
+      inputEvents,
+      configWrites: configWrites.length,
+      configWriteIntervalsMs: configWrites
+        .slice(1)
+        .map((write, index) => Math.round(write.at - configWrites[index].at)),
+      scrollEvents,
+      positionWrites: positionWrites.length,
+      positionWriteIntervalsMs: positionWrites
+        .slice(1)
+        .map((write, index) => Math.round(write.at - positionWrites[index].at)),
+      maxConfigPayloadBytes: Math.max(0, ...configWrites.map(write => write.bytes)),
+      maxPositionPayloadBytes: Math.max(0, ...positionWrites.map(write => write.bytes)),
+    };
+  });
+
+  expect(summary.inputEvents).toBeGreaterThanOrEqual(100);
+  expect(summary.configWrites).toBeLessThanOrEqual(2);
+  expect(summary.scrollEvents).toBeGreaterThanOrEqual(250);
+  expect(summary.positionWrites).toBeLessThanOrEqual(2);
+
+  await mkdir(profileDir, { recursive: true });
+  const summaryPath = path.join(profileDir, 'storage-write-profile.json');
+  await writeFile(summaryPath, JSON.stringify(summary, null, 2));
+  await testInfo.attach('storage-write-profile', {
+    path: summaryPath,
+    contentType: 'application/json',
+  });
+  console.log(JSON.stringify({ label: 'storage-write-profile', ...summary }, null, 2));
+});
+
 test('profiles startup and rendering on the real target chapter', async ({
   browserName: _browserName,
 }, testInfo) => {

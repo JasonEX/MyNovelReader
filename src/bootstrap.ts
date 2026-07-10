@@ -303,6 +303,7 @@ function mountReaderUI(): void {
       void copyDiagnosticsFromMenu();
     },
     onExit: closeReader,
+    onProtectionModeChange: setProtectionMode,
     onSiteAutoEnableChange: setCurrentSiteAutoEnable,
   });
   app.use(pinia!);
@@ -415,6 +416,14 @@ function setCurrentSiteAutoEnable(enabled: boolean): void {
   } catch (e) {
     console.error('[MNR] Failed to update site auto-enable preference:', e);
   }
+}
+
+async function setProtectionMode(mode: 'standard' | 'aggressive'): Promise<void> {
+  if (!pinia) return;
+  const configStore = useConfigStore(pinia);
+  configStore.updateProtection({ mode });
+  await configStore.flushSave();
+  getSiteProtection().activate(toProtectionOptions(configStore.protection));
 }
 
 /**

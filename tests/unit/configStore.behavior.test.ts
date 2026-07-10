@@ -35,6 +35,7 @@ describe('ConfigStore - behavior', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -95,19 +96,58 @@ describe('ConfigStore - behavior', () => {
     expect(document.getElementById('mnr-custom-css')).toBeNull();
   });
 
-  it('auto-saves when settings change', async () => {
+  it('coalesces rapid setting changes into one storage write', async () => {
+    vi.useFakeTimers();
+    const gm = createGmStorageMock();
+    stubGmStorage(gm);
+
+    const store = useConfigStore();
+    for (let fontSize = 14; fontSize <= 28; fontSize++) {
+      store.updateReading({ fontSize });
+    }
+
+    await nextTick();
+    expect(gm.GM_setValue).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(299);
+    expect(gm.GM_setValue).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(gm.GM_setValue).toHaveBeenCalledWith(
+      'mnr-config',
+      expect.stringContaining('"fontSize":28')
+    );
+    expect(gm.GM_setValue).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushSave persists a pending change immediately', async () => {
+    vi.useFakeTimers();
     const gm = createGmStorageMock();
     stubGmStorage(gm);
 
     const store = useConfigStore();
     store.updateBehavior({ keyboardNavigation: false });
-
-    await nextTick();
+    await store.flushSave();
 
     expect(gm.GM_setValue).toHaveBeenCalledWith(
       'mnr-config',
       expect.stringContaining('"keyboardNavigation":false')
     );
+    expect(gm.GM_setValue).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not rewrite unchanged configuration after loading it', async () => {
+    vi.useFakeTimers();
+    const gm = createGmStorageMock({
+      'mnr-config': JSON.stringify({ themeId: 'dark', reading: { fontSize: 20 } }),
+    });
+    stubGmStorage(gm);
+
+    const store = useConfigStore();
+    await store.load();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(store.themeId).toBe('dark');
+    expect(gm.GM_setValue).not.toHaveBeenCalled();
   });
 
   it('save falls back to localStorage when GM_setValue is unavailable', async () => {

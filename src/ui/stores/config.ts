@@ -179,6 +179,7 @@ export function toProtectionOptions(settings: ProtectionSettings): ProtectionOpt
 
 // Storage key
 const STORAGE_KEY = 'mnr-config';
+const SAVE_DEBOUNCE_MS = 300;
 
 export const useConfigStore = defineStore('config', () => {
   // State
@@ -187,6 +188,10 @@ export const useConfigStore = defineStore('config', () => {
   const behavior = ref<BehaviorSettings>({ ...DEFAULT_BEHAVIOR });
   const protection = ref<ProtectionSettings>({ ...DEFAULT_PROTECTION });
   const customCSS = ref('');
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  let savePending = false;
+  let saveQueue = Promise.resolve();
+  let isHydrating = false;
 
   // Computed
   const theme = (): Theme => {
@@ -261,6 +266,7 @@ export const useConfigStore = defineStore('config', () => {
 
   // Persistence
   async function load() {
+    isHydrating = true;
     try {
       let data: unknown = null;
       let hasInvalidData = false;
@@ -333,36 +339,62 @@ export const useConfigStore = defineStore('config', () => {
       }
     } catch (e) {
       console.error('[ConfigStore] Load error:', e);
+    } finally {
+      isHydrating = false;
     }
   }
 
-  async function save() {
-    try {
-      const data = JSON.stringify({
-        themeId: themeId.value,
-        reading: reading.value,
-        behavior: behavior.value,
-        protection: protection.value,
-        customCSS: customCSS.value,
-      });
+  function serialize(): string {
+    return JSON.stringify({
+      themeId: themeId.value,
+      reading: reading.value,
+      behavior: behavior.value,
+      protection: protection.value,
+      customCSS: customCSS.value,
+    });
+  }
 
-      if (typeof GM_setValue !== 'undefined') {
-        await GM_setValue(STORAGE_KEY, data);
-      } else if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, data);
-      }
-    } catch (e) {
-      console.error('[ConfigStore] Save error:', e);
+  function save(): Promise<void> {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
     }
+    savePending = false;
+    const data = serialize();
+
+    saveQueue = saveQueue
+      .then(async () => {
+        if (typeof GM_setValue !== 'undefined') {
+          await GM_setValue(STORAGE_KEY, data);
+        } else if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, data);
+        }
+      })
+      .catch(e => console.error('[ConfigStore] Save error:', e));
+
+    return saveQueue;
+  }
+
+  function scheduleSave(): void {
+    savePending = true;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      void save();
+    }, SAVE_DEBOUNCE_MS);
+  }
+
+  function flushSave(): Promise<void> {
+    return savePending ? save() : saveQueue;
   }
 
   // Auto-save on changes
   watch(
     [themeId, reading, behavior, protection, customCSS],
     () => {
-      save();
+      if (!isHydrating) scheduleSave();
     },
-    { deep: true }
+    { deep: true, flush: 'sync' }
   );
 
   if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
@@ -379,7 +411,7 @@ export const useConfigStore = defineStore('config', () => {
     protection.value = { ...DEFAULT_PROTECTION };
     customCSS.value = '';
     applyAll();
-    save();
+    void save();
   }
 
   return {
@@ -404,6 +436,7 @@ export const useConfigStore = defineStore('config', () => {
     applyAll,
     load,
     save,
+    flushSave,
     $reset,
   };
 });

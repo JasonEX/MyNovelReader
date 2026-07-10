@@ -24,20 +24,22 @@ describe('readingPosition', () => {
   });
 
   it('saves a normalized, clamped chapter position', async () => {
-    const { getReadingPosition, saveReadingPosition } =
+    const { flushReadingPositions, getReadingPosition, saveReadingPosition } =
       await import('@/ui/stores/reader/readingPosition');
 
     saveReadingPosition('https://example.com/chapter/1#paragraph', 120);
+    await flushReadingPositions();
     await vi.waitFor(async () => {
       await expect(getReadingPosition('https://example.com/chapter/1')).resolves.toBe(100);
     });
   });
 
   it('rounds the persisted percentage without losing useful precision', async () => {
-    const { getReadingPosition, saveReadingPosition } =
+    const { flushReadingPositions, getReadingPosition, saveReadingPosition } =
       await import('@/ui/stores/reader/readingPosition');
 
     saveReadingPosition('https://example.com/chapter/2', 37.456);
+    await flushReadingPositions();
     await vi.waitFor(async () => {
       await expect(getReadingPosition('https://example.com/chapter/2')).resolves.toBe(37.5);
     });
@@ -55,12 +57,13 @@ describe('readingPosition', () => {
       )
     );
     vi.stubGlobal('GM_setValue', gmSetValue);
-    const { getReadingPosition, saveReadingPosition } =
+    const { flushReadingPositions, getReadingPosition, saveReadingPosition } =
       await import('@/ui/stores/reader/readingPosition');
 
     await expect(getReadingPosition('https://example.com/chapter/4')).resolves.toBe(42);
     saveReadingPosition('not a valid URL', 12);
-    await vi.waitFor(() => expect(gmSetValue).toHaveBeenCalled());
+    await flushReadingPositions();
+    expect(gmSetValue).toHaveBeenCalledTimes(1);
   });
 
   it('ignores invalid saves and recovers from malformed storage', async () => {
@@ -76,14 +79,36 @@ describe('readingPosition', () => {
   });
 
   it('keeps the saved-position index bounded', async () => {
-    const { saveReadingPosition } = await import('@/ui/stores/reader/readingPosition');
+    const { flushReadingPositions, saveReadingPosition } =
+      await import('@/ui/stores/reader/readingPosition');
     for (let index = 0; index < 205; index++) {
       saveReadingPosition(`https://example.com/chapter/${index}`, index % 100);
     }
+    await flushReadingPositions();
 
-    await vi.waitFor(() => {
-      const stored = JSON.parse(localStorage.getItem('mnr-reading-positions') || '{}');
-      expect(Object.keys(stored)).toHaveLength(200);
-    });
+    const stored = JSON.parse(localStorage.getItem('mnr-reading-positions') || '{}');
+    expect(Object.keys(stored)).toHaveLength(200);
+  });
+
+  it('coalesces multiple position updates into one persisted snapshot', async () => {
+    const gmSetValue = vi.fn();
+    vi.stubGlobal(
+      'GM_getValue',
+      vi.fn(() => null)
+    );
+    vi.stubGlobal('GM_setValue', gmSetValue);
+    const { flushReadingPositions, saveReadingPosition } =
+      await import('@/ui/stores/reader/readingPosition');
+
+    for (let percent = 1; percent <= 20; percent++) {
+      saveReadingPosition('https://example.com/chapter/5', percent);
+    }
+    await flushReadingPositions();
+
+    expect(gmSetValue).toHaveBeenCalledTimes(1);
+    expect(gmSetValue).toHaveBeenCalledWith(
+      'mnr-reading-positions',
+      expect.stringContaining('"percent":20')
+    );
   });
 });

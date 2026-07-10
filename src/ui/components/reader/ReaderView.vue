@@ -110,6 +110,7 @@
       @retryCache="handleRetryCache"
       @copyDiagnostics="emit('copyDiagnostics')"
       @siteAutoEnableChange="handleSiteAutoEnableChange"
+      @protectionModeChange="handleProtectionModeChange"
       @exit="emit('exit')"
     />
 
@@ -136,7 +137,11 @@ import {
 import { useTouchGestures } from '@/ui/composables/reader/useTouchGestures';
 import { useChapterNavigation } from '@/ui/composables/reader/useChapterNavigation';
 import { useReaderUIControls } from '@/ui/composables/reader/useReaderUIControls';
-import { getReadingPosition, saveReadingPosition } from '@/ui/stores/reader/readingPosition';
+import {
+  flushReadingPositions,
+  getReadingPosition,
+  saveReadingPosition,
+} from '@/ui/stores/reader/readingPosition';
 import ProgressIndicator from './ProgressIndicator.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import ChapterDrawer from './ChapterDrawer.vue';
@@ -148,6 +153,7 @@ const emit = defineEmits<{
   copyDiagnostics: [];
   exit: [];
   siteAutoEnableChange: [enabled: boolean];
+  protectionModeChange: [mode: 'standard' | 'aggressive'];
 }>();
 
 // Stores
@@ -429,6 +435,10 @@ function handleSiteAutoEnableChange(enabled: boolean) {
   readerStore.showToast(enabled ? '已开启本站自动阅读' : '已关闭本站自动阅读', 'info');
 }
 
+function handleProtectionModeChange(mode: 'standard' | 'aggressive') {
+  emit('protectionModeChange', mode);
+}
+
 function setChapterRef(url: string) {
   return (el: HTMLElement | null) => {
     if (!el) {
@@ -516,6 +526,25 @@ watch(
   }
 );
 
+watch(
+  () => readerStore.currentChapterIndex,
+  () => {
+    void flushReadingPositions();
+  }
+);
+
+function flushPersistentState(): void {
+  if (readerStore.chapter?.url) {
+    saveReadingPosition(readerStore.chapter.url, readerStore.scrollPercent);
+  }
+  void flushReadingPositions();
+  void configStore.flushSave();
+}
+
+function handleVisibilityChange(): void {
+  if (document.visibilityState === 'hidden') flushPersistentState();
+}
+
 onMounted(async () => {
   configStore.applyAll();
 
@@ -532,6 +561,8 @@ onMounted(async () => {
     mainRef.value.addEventListener('touchend', handleReaderTouchEnd, { passive: true });
     mainRef.value.addEventListener('touchcancel', handleReaderTouchCancel, { passive: true });
   }
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', flushPersistentState);
 
   const observerOptions = {
     root: mainRef.value,
@@ -563,9 +594,9 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (readerStore.chapter?.url) {
-    saveReadingPosition(readerStore.chapter.url, readerStore.scrollPercent);
-  }
+  flushPersistentState();
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('pagehide', flushPersistentState);
   if (mainRef.value) {
     mainRef.value.removeEventListener('scroll', handleScroll);
     mainRef.value.removeEventListener('wheel', handleWheel);

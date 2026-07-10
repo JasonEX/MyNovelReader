@@ -3,12 +3,14 @@ import { JSDOM } from 'jsdom';
 
 let configStore: {
   load: () => Promise<void>;
+  flushSave: () => Promise<void>;
+  updateProtection: (settings: { mode: 'standard' | 'aggressive' }) => void;
   protection: {
     blockRedirects: boolean;
     enableRightClick: boolean;
     enableSelection: boolean;
     blockPopups: boolean;
-    mode: 'normal' | 'aggressive';
+    mode: 'standard' | 'aggressive';
   };
 };
 let readerStore: {
@@ -71,7 +73,22 @@ vi.mock('@/ui/components/reader', async () => {
   return {
     ReaderView: defineComponent({
       name: 'ReaderViewStub',
-      render: () => h('div', { id: 'reader-view-stub' }, 'reader'),
+      props: {
+        onProtectionModeChange: { type: Function, required: false },
+      },
+      setup(props) {
+        return () =>
+          h('div', { id: 'reader-view-stub' }, [
+            h(
+              'button',
+              {
+                id: 'protection-mode-trigger',
+                onClick: () => props.onProtectionModeChange?.('aggressive'),
+              },
+              'aggressive'
+            ),
+          ]);
+      },
     }),
   };
 });
@@ -116,12 +133,16 @@ describe('bootstrap', () => {
 
     configStore = {
       load: vi.fn(async () => {}),
+      flushSave: vi.fn(async () => {}),
+      updateProtection: vi.fn(settings => {
+        configStore.protection = { ...configStore.protection, ...settings };
+      }),
       protection: {
         blockRedirects: true,
         enableRightClick: false,
         enableSelection: false,
         blockPopups: true,
-        mode: 'normal',
+        mode: 'standard',
       },
     };
     readerStore = {
@@ -305,6 +326,16 @@ describe('bootstrap', () => {
 
     const host = document.getElementById('mnr-reader-root') as HTMLElement;
     expect(host.shadowRoot?.querySelector('#reader-view-stub')).not.toBeNull();
+
+    const protectionTrigger = host.shadowRoot?.querySelector(
+      '#protection-mode-trigger'
+    ) as HTMLButtonElement;
+    protectionTrigger.click();
+    await vi.waitFor(() => expect(configStore.flushSave).toHaveBeenCalledTimes(1));
+    expect(configStore.updateProtection).toHaveBeenCalledWith({ mode: 'aggressive' });
+    expect(mockActivateProtection).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'aggressive' })
+    );
   });
 
   it('closeReader restores page without changing the site auto-enable preference', async () => {
