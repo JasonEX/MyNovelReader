@@ -96,8 +96,16 @@
             :aria-current="ch.isCurrent ? 'page' : undefined"
             @click="handleSelect(ch)"
           >
-            <span v-if="ch.isPersisted" class="mnr-cache-mark" aria-label="已离线缓存">✓</span>
-            <span v-else-if="ch.isCached" class="mnr-cache-mark" aria-label="已临时缓存">○</span>
+            <span v-if="ch.isPersisted" class="mnr-cache-mark" aria-label="已离线缓存">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m5 12 4 4L19 6" />
+              </svg>
+            </span>
+            <span v-else-if="ch.isCached" class="mnr-cache-mark" aria-label="已临时缓存">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="7" />
+              </svg>
+            </span>
             <span class="mnr-chapter-title-text">{{ ch.title }}</span>
           </button>
         </li>
@@ -457,7 +465,19 @@ watch(
 
 .mnr-cache-mark {
   flex: 0 0 auto;
-  font-size: 12px;
+  width: 14px;
+  height: 14px;
+}
+
+.mnr-cache-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .mnr-drawer-close:hover,

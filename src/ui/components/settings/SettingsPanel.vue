@@ -68,7 +68,11 @@
           <section class="mnr-settings-section">
             <h4>行距</h4>
             <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">≡</span>
+              <span class="mnr-slider-label" aria-hidden="true">
+                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
+                  <path d="M5 9h14M5 12h14M5 15h14" />
+                </svg>
+              </span>
               <input
                 type="range"
                 min="1.4"
@@ -79,7 +83,11 @@
                 aria-label="行间距"
                 @input="updateLineHeight"
               />
-              <span class="mnr-slider-label" aria-hidden="true">☰</span>
+              <span class="mnr-slider-label" aria-hidden="true">
+                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
+                  <path d="M5 6h14M5 12h14M5 18h14" />
+                </svg>
+              </span>
               <span class="mnr-slider-value">{{ lineHeight }}</span>
             </div>
           </section>
@@ -125,7 +133,11 @@
           <section class="mnr-settings-section">
             <h4>内容宽度</h4>
             <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">⊏⊐</span>
+              <span class="mnr-slider-label" aria-hidden="true">
+                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
+                  <path d="m4 8 4 4-4 4M20 8l-4 4 4 4" />
+                </svg>
+              </span>
               <input
                 type="range"
                 min="500"
@@ -136,7 +148,11 @@
                 aria-label="正文内容宽度"
                 @input="updateMaxWidth"
               />
-              <span class="mnr-slider-label" aria-hidden="true">⊏ ⊐</span>
+              <span class="mnr-slider-label" aria-hidden="true">
+                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
+                  <path d="m8 8-4 4 4 4M16 8l4 4-4 4" />
+                </svg>
+              </span>
               <span class="mnr-slider-value">{{ maxWidth }}px</span>
             </div>
           </section>
@@ -637,6 +653,18 @@ watch(
 
 .mnr-slider-label--large {
   font-size: 1.2em;
+}
+
+.mnr-scale-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .mnr-slider {

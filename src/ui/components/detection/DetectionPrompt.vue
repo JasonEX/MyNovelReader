@@ -12,7 +12,13 @@
       >
         <!-- Header -->
         <div class="mnr-prompt-header">
-          <span class="mnr-prompt-icon">📖</span>
+          <svg class="mnr-prompt-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 7v14" />
+            <path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" />
+            <path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" />
+            <path d="M3 18h6a3 3 0 0 1 3 3" />
+            <path d="M21 18h-6a3 3 0 0 0-3 3" />
+          </svg>
           <h3 id="mnr-prompt-title" class="mnr-prompt-title">启用 MyNovelReader?</h3>
         </div>
 
@@ -33,11 +39,17 @@
         <!-- Detection results -->
         <ul class="mnr-results">
           <li v-for="reason in positiveReasons" :key="reason" class="mnr-result-item success">
-            <span class="mnr-result-icon">✓</span>
+            <svg class="mnr-result-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m5 12 4 4L19 6" />
+            </svg>
             <span>{{ reason }}</span>
           </li>
           <li v-for="reason in negativeReasons" :key="reason" class="mnr-result-item warning">
-            <span class="mnr-result-icon">⚠</span>
+            <svg class="mnr-result-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21.7 18 13.7 4a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
             <span>{{ reason }}</span>
           </li>
         </ul>
@@ -195,7 +207,14 @@ watch(
 }
 
 .mnr-prompt-icon {
-  font-size: 28px;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--mnr-link, #1976d2);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .mnr-prompt-title {
@@ -263,7 +282,14 @@ watch(
 }
 
 .mnr-result-icon {
-  font-weight: bold;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .mnr-checkbox-label {

@@ -435,8 +435,18 @@ function showFloatingButton(): void {
 
   const button = document.createElement('button');
   button.id = 'mnr-floating-btn';
-  button.innerHTML = '📖';
+  button.innerHTML = `
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
+      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 7v14" />
+      <path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" />
+      <path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" />
+      <path d="M3 18h6a3 3 0 0 1 3 3" />
+      <path d="M21 18h-6a3 3 0 0 0-3 3" />
+    </svg>
+  `;
   button.title = '进入阅读模式';
+  button.setAttribute('aria-label', '进入阅读模式');
   button.style.cssText = `
     position: fixed;
     bottom: 20px;
@@ -447,7 +457,6 @@ function showFloatingButton(): void {
     border: none;
     background: #4a90d9;
     color: white;
-    font-size: 24px;
     cursor: pointer;
     z-index: 999999;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);

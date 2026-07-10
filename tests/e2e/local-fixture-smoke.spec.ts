@@ -71,6 +71,9 @@ test('runs the built userscript and restores the host page after exit', async ({
       toolbarButtons: shadow?.querySelectorAll('.mnr-floating-toolbar .mnr-fab').length ?? 0,
       hasDirectory: !!shadow?.querySelector('[aria-label="打开目录"]'),
       hasSettings: !!shadow?.querySelector('[aria-label="打开设置"]'),
+      settingsGearCircle: !!shadow?.querySelector('[aria-label="打开设置"] svg circle'),
+      settingsGearPath:
+        shadow?.querySelector('[aria-label="打开设置"] svg path')?.getAttribute('d') ?? '',
       hasToolbarCache: !!shadow?.querySelector('[aria-label="缓存管理"]'),
       boundaryNavigation: shadow?.querySelectorAll('.mnr-chapter-boundary-nav button').length ?? 0,
     };
@@ -79,6 +82,8 @@ test('runs the built userscript and restores the host page after exit', async ({
     toolbarButtons: 2,
     hasDirectory: true,
     hasSettings: true,
+    settingsGearCircle: true,
+    settingsGearPath: expect.stringContaining('M12.22 2h-.44'),
     hasToolbarCache: false,
     boundaryNavigation: 2,
   });
@@ -118,10 +123,14 @@ test('runs the built userscript and restores the host page after exit', async ({
     .poll(async () =>
       page.locator('#mnr-reader-root').evaluate(host => {
         const details = host.shadowRoot?.querySelector<HTMLDetailsElement>('.mnr-more-settings');
-        return { visible: !!details, open: details?.open ?? false };
+        return {
+          visible: !!details,
+          open: details?.open ?? false,
+          scaleIcons: host.shadowRoot?.querySelectorAll('.mnr-scale-icon').length ?? 0,
+        };
       })
     )
-    .toEqual({ visible: true, open: false });
+    .toEqual({ visible: true, open: false, scaleIcons: 4 });
   await page.keyboard.press('Escape');
 
   await page.keyboard.press('q');

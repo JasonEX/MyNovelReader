@@ -214,7 +214,10 @@ describe('bootstrap', () => {
     sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
     await bootstrap.initialize();
 
-    expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
+    const floatingButton = document.getElementById('mnr-floating-btn');
+    expect(floatingButton).not.toBeNull();
+    expect(floatingButton?.querySelector('svg')).not.toBeNull();
+    expect(floatingButton?.textContent?.trim()).toBe('');
     expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
     expect(manager.check).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);
