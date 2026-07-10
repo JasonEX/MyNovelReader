@@ -131,7 +131,7 @@ const DEFAULT_READING: ReadingSettings = {
   fontFamily: 'system-ui, -apple-system, "Microsoft YaHei", sans-serif',
   fontSize: 18,
   lineHeight: 1.8,
-  letterSpacing: 0.05,
+  letterSpacing: 0,
   paragraphIndent: 2,
   maxWidth: 800,
   padding: 20,

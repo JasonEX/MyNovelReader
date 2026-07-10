@@ -48,7 +48,7 @@ const BASE_RESET_CSS = `
 :host {
   all: initial;
   display: block;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+  font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color: #333;

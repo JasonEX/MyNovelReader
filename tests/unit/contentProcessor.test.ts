@@ -711,11 +711,55 @@ describe('ContentProcessor', () => {
   describe('convertBrToParagraphs', () => {
     it('should convert multiple br tags to paragraph breaks', () => {
       const element = doc.createElement('div');
-      element.innerHTML = 'Line 1<br><br>Line 2<br><br>Line 3';
+      element.innerHTML = '\u2003\u2003Line 1<br><br>\u3000\u3000Line 2<br><br>Line 3';
 
       const result = processor.process(element, doc);
+      const container = doc.createElement('div');
+      container.innerHTML = result;
+      const visibleNodes = Array.from(container.childNodes).filter(
+        node => node.nodeType !== 3 || !!node.nodeValue?.trim()
+      );
 
-      expect(result).toContain('</p><p>');
+      expect(visibleNodes).toHaveLength(3);
+      expect(
+        visibleNodes.every(node => node instanceof doc.defaultView!.HTMLParagraphElement)
+      ).toBe(true);
+      expect(
+        Array.from(container.querySelectorAll('p'), paragraph => paragraph.textContent)
+      ).toEqual(['Line 1', 'Line 2', 'Line 3']);
+    });
+
+    it('wraps bare text next to existing block content without leaving direct text nodes', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = '<h2>Title</h2><div class="content">First line<br><br>Second line</div>';
+
+      const result = processor.process(element, doc);
+      const container = doc.createElement('div');
+      container.innerHTML = result;
+      const content = container.querySelector('.content');
+      const visibleNodes = Array.from(content?.childNodes || []).filter(
+        node => node.nodeType !== 3 || !!node.nodeValue?.trim()
+      );
+
+      expect(visibleNodes.map(node => (node as Element).tagName)).toEqual(['P', 'P']);
+      expect(content?.textContent).toContain('First line');
+      expect(content?.textContent).toContain('Second line');
+    });
+
+    it('preserves list structure while normalizing surrounding prose', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = 'Intro<br><br><ul><li>One</li><li>Two</li></ul>';
+
+      const result = processor.process(element, doc);
+      const container = doc.createElement('div');
+      container.innerHTML = result;
+
+      expect(container.querySelector('p')?.textContent).toBe('Intro');
+      expect(Array.from(container.querySelectorAll('ul > li'), item => item.textContent)).toEqual([
+        'One',
+        'Two',
+      ]);
+      expect(container.querySelector('ul > p')).toBeNull();
     });
 
     it('should wrap content in paragraphs if not already wrapped', () => {

@@ -656,7 +656,7 @@ onUnmounted(() => {
   );
   font-size: var(--mnr-font-size, 18px);
   line-height: var(--mnr-line-height, 1.8);
-  letter-spacing: var(--mnr-letter-spacing, 0.05em);
+  letter-spacing: var(--mnr-letter-spacing, 0em);
 }
 
 .mnr-reader-content :deep(p) {

@@ -45,9 +45,13 @@ function makeDoc(): Document {
           </div>
           <div class="txtnav">
             <h1>第249章 打穿京营，夺下京城</h1>
-            <p>第一段正文，皇城之外风声渐急。</p>
-            <p>第二段正文，众人沿着长街向前推进。</p>
-            <p>请收藏本站，最新网址：www.69shuba.com</p>
+            <div id="txtcontent">
+              \u2003\u2003第一段正文，皇城之外风声渐急。<br>
+              <br>
+              \u2003\u2003第二段正文，众人沿着长街向前推进。<br>
+              <br>
+              请收藏本站，最新网址：www.69shuba.com
+            </div>
             <div id="txtright">右侧广告</div>
             <div class="bottom-ad">底部广告</div>
             <div class="page1">
@@ -103,6 +107,20 @@ describe('69shu rule', () => {
     expect(content).not.toContain('最新网址');
     expect(content).not.toContain('上一章');
     expect(content).not.toContain('下一章');
+
+    const parsedContent = makeDoc();
+    parsedContent.body.innerHTML = content;
+    const paragraphs = Array.from(parsedContent.querySelectorAll('p')).filter(paragraph =>
+      /第一段正文|第二段正文/.test(paragraph.textContent || '')
+    );
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]?.textContent).toBe('第一段正文，皇城之外风声渐急。');
+    expect(paragraphs[1]?.textContent).toBe('第二段正文，众人沿着长街向前推进。');
+    expect(
+      Array.from(parsedContent.body.querySelector('div')?.childNodes || []).some(
+        node => node.nodeType === 3 && !!node.nodeValue?.trim()
+      )
+    ).toBe(false);
   });
 
   it('does not throw when beforeParse receives a document without body', async () => {

@@ -727,6 +727,8 @@ watch(
   border-right: 1px solid var(--mnr-border, #ddd);
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #666);
+  font-size: 14px;
+  line-height: 1.4;
   cursor: pointer;
 }
 

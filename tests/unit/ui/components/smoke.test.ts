@@ -118,6 +118,7 @@ describe('UI component smoke', () => {
     const aggressiveButton = Array.from(
       document.querySelectorAll<HTMLButtonElement>('.mnr-segment')
     ).find(button => button.textContent?.trim() === '强力');
+    expect(window.getComputedStyle(aggressiveButton!).fontSize).toBe('14px');
     aggressiveButton?.click();
     await nextTick();
     expect(onProtectionModeChange).toHaveBeenCalledWith('aggressive');

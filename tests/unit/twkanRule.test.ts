@@ -94,5 +94,19 @@ describe('Twkan rule', () => {
     expect(content).not.toContain('章节更新');
     expect(content).not.toContain('域名');
     expect(content).not.toContain('支持本站運營');
+
+    const parsedContent = makeDoc();
+    parsedContent.body.innerHTML = content;
+    const paragraphs = Array.from(parsedContent.querySelectorAll('p')).filter(paragraph =>
+      /決鬥場|暴龍獸/.test(paragraph.textContent || '')
+    );
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]?.textContent).toBe('決鬥場上的光芒正在匯聚。');
+    expect(paragraphs[1]?.textContent).toContain('暴龍獸在光中抬起頭');
+    expect(
+      Array.from(parsedContent.body.querySelector('div')?.childNodes || []).some(
+        node => node.nodeType === 3 && !!node.nodeValue?.trim()
+      )
+    ).toBe(false);
   });
 });

@@ -45,6 +45,58 @@ const READER_UI_LABELS = new Set([
 ]);
 
 const READER_UI_BLOCK_SELECTOR = 'div, p, span, li, section, nav, header, footer';
+const PARAGRAPH_BLOCK_TAGS = new Set([
+  'ADDRESS',
+  'ARTICLE',
+  'ASIDE',
+  'BLOCKQUOTE',
+  'CAPTION',
+  'COLGROUP',
+  'DD',
+  'DETAILS',
+  'DIV',
+  'DL',
+  'DT',
+  'FIELDSET',
+  'FIGCAPTION',
+  'FIGURE',
+  'FOOTER',
+  'FORM',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'HEADER',
+  'HR',
+  'LI',
+  'MAIN',
+  'MENU',
+  'NAV',
+  'OL',
+  'P',
+  'PRE',
+  'SECTION',
+  'SUMMARY',
+  'TABLE',
+  'TBODY',
+  'TD',
+  'TFOOT',
+  'TH',
+  'THEAD',
+  'TR',
+  'UL',
+]);
+const PARAGRAPH_CONTAINER_TAGS = new Set([
+  'ARTICLE',
+  'ASIDE',
+  'BLOCKQUOTE',
+  'DIV',
+  'FIGCAPTION',
+  'MAIN',
+  'SECTION',
+]);
 
 export interface ProcessingOptions {
   /** Remove common ad patterns */
@@ -153,7 +205,7 @@ export class ContentProcessor {
     }
 
     // Convert br tags to paragraphs
-    html = this.convertBrToParagraphs(html);
+    html = this.convertBrToParagraphs(html, doc);
 
     // Clean duplicate title/book/author info at start and end
     html = this.cleanDuplicateInfo(html, doc);
@@ -463,22 +515,94 @@ export class ContentProcessor {
     return temp.innerHTML;
   }
 
-  /**
-   * Convert multiple br tags to paragraphs
-   */
-  private convertBrToParagraphs(html: string): string {
-    // Replace multiple br tags with paragraph breaks
-    let result = html.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p>');
+  /** Normalize br-delimited prose into real paragraphs. */
+  private convertBrToParagraphs(html: string, doc: Document): string {
+    const container = doc.createElement('div');
+    container.innerHTML = html;
 
-    // Wrap content in paragraphs if not already
-    if (!result.includes('<p>')) {
-      result = '<p>' + result.replace(/<br\s*\/?>/gi, '</p><p>') + '</p>';
-    }
+    const hasVisibleContent = (node: Node): boolean => {
+      if (node.nodeType === 3) return !!node.nodeValue?.trim();
+      return node.nodeType === 1;
+    };
 
-    // Clean up empty paragraphs
-    result = result.replace(/<p>\s*<\/p>/gi, '');
+    const stripSourceIndent = (paragraph: Element): void => {
+      const showText = typeof NodeFilter !== 'undefined' ? NodeFilter.SHOW_TEXT : 4;
+      const walker = doc.createTreeWalker(paragraph, showText);
+      let node: Node | null;
 
-    return result;
+      while ((node = walker.nextNode())) {
+        const value = node.nodeValue || '';
+        const normalized = value.replace(/^[\s\u00a0\u2000-\u200b\u202f\u205f\u3000]+/u, '');
+        if (normalized !== value) node.nodeValue = normalized;
+        if (normalized) break;
+      }
+    };
+
+    const normalizeContainer = (parent: Element): void => {
+      for (const child of Array.from(parent.children)) {
+        if (PARAGRAPH_CONTAINER_TAGS.has(child.tagName)) {
+          normalizeContainer(child);
+        }
+      }
+
+      const nodes = Array.from(parent.childNodes);
+      const hasInlineContent = nodes.some(node =>
+        node.nodeType === 3
+          ? !!node.nodeValue?.trim()
+          : node.nodeType === 1 &&
+            (node as Element).tagName !== 'BR' &&
+            !PARAGRAPH_BLOCK_TAGS.has((node as Element).tagName)
+      );
+      const hasDirectBreak = nodes.some(
+        node => node.nodeType === 1 && (node as Element).tagName === 'BR'
+      );
+      if (!hasInlineContent && !hasDirectBreak) return;
+
+      const fragment = doc.createDocumentFragment();
+      let paragraph: HTMLParagraphElement | null = null;
+
+      const ensureParagraph = (): HTMLParagraphElement => {
+        if (!paragraph) paragraph = doc.createElement('p');
+        return paragraph;
+      };
+
+      const flushParagraph = (): void => {
+        if (!paragraph) return;
+        if (Array.from(paragraph.childNodes).some(hasVisibleContent)) {
+          stripSourceIndent(paragraph);
+          if (paragraph.textContent?.trim() || paragraph.querySelector('*')) {
+            fragment.appendChild(paragraph);
+          }
+        }
+        paragraph = null;
+      };
+
+      for (const node of nodes) {
+        if (node.nodeType === 1) {
+          const element = node as Element;
+          if (element.tagName === 'BR') {
+            flushParagraph();
+            continue;
+          }
+          if (PARAGRAPH_BLOCK_TAGS.has(element.tagName)) {
+            flushParagraph();
+            fragment.appendChild(element);
+            continue;
+          }
+        }
+
+        if (node.nodeType === 3 && !node.nodeValue?.trim() && !paragraph) continue;
+        ensureParagraph().appendChild(node);
+      }
+
+      flushParagraph();
+      parent.replaceChildren(fragment);
+    };
+
+    normalizeContainer(container);
+    container.querySelectorAll('p').forEach(stripSourceIndent);
+
+    return container.innerHTML;
   }
 
   /**

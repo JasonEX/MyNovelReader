@@ -78,6 +78,7 @@ describe('ConfigStore - behavior', () => {
     const root = host.style;
     expect(root.getPropertyValue('--mnr-font-size')).toBe('20px');
     expect(root.getPropertyValue('--mnr-line-height')).toBe('2.1');
+    expect(root.getPropertyValue('--mnr-letter-spacing')).toBe('0em');
     expect(root.getPropertyValue('--mnr-paragraph-indent')).toBe('3em');
     expect(document.documentElement.style.getPropertyValue('--mnr-font-size')).toBe('');
   });
@@ -147,6 +148,19 @@ describe('ConfigStore - behavior', () => {
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(store.themeId).toBe('dark');
+    expect(gm.GM_setValue).not.toHaveBeenCalled();
+  });
+
+  it('preserves an explicitly stored letter spacing value', async () => {
+    const gm = createGmStorageMock({
+      'mnr-config': JSON.stringify({ reading: { letterSpacing: 0.05 } }),
+    });
+    stubGmStorage(gm);
+
+    const store = useConfigStore();
+    await store.load();
+
+    expect(store.reading.letterSpacing).toBe(0.05);
     expect(gm.GM_setValue).not.toHaveBeenCalled();
   });
 

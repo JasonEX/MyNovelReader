@@ -36,6 +36,7 @@ describe('shadowMount', () => {
     expect(shadowRoot).toBe(host.shadowRoot);
     expect(mountPoint.id).toBe('mnr-test-root-mount');
     expect(shadowRoot.contains(mountPoint)).toBe(true);
+    expect(shadowRoot.querySelector('style')?.textContent).toContain("'Microsoft YaHei UI'");
 
     expect(window.__MY_NOVEL_READER__?.shadowRoots?.has(shadowRoot)).toBe(true);
 
