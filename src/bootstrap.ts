@@ -18,15 +18,15 @@ import {
 } from '@/ui/stores/reader/hostPage';
 import { createApp, defineComponent, h, ref } from 'vue';
 import { getPageKind, getPageKindFromUrl, type PageKind } from '@/core/auto-enable/PageKind';
-import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
 import { installGlobalDebugErrorListeners, recordDebugEvent } from '@/core/debug/events';
-import { type ProtectionSettings, useConfigStore } from '@/ui/stores/config';
 import { redactUrl, toDebugValue } from '@/core/debug/diagnostics';
+import { toProtectionOptions, useConfigStore } from '@/ui/stores/config';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
 import { DetectionPrompt } from '@/ui/components/detection';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
+import { getSiteProtection } from '@/core/protection';
 import type { ParsedChapter } from '@/core/parser';
 import { ReaderView } from '@/ui/components/reader';
 import type { SiteRule } from '@/core/rules/types';
@@ -57,18 +57,6 @@ let app: ReturnType<typeof createApp> | null = null;
 let pinia: ReturnType<typeof createPinia> | null = null;
 let readerCleanup: (() => void) | null = null;
 
-function buildProtectionOptions(settings: ProtectionSettings): ProtectionOptions {
-  return {
-    blockRedirects: settings.blockRedirects,
-    enableRightClick: settings.enableRightClick,
-    enableSelection: settings.enableSelection,
-    blockPopups: settings.blockPopups,
-    clearTimers: true,
-    unlockKeyboard: true,
-    cleanupScripts: settings.mode === 'aggressive',
-  };
-}
-
 function shouldEnableEarlyProtection(url: string): boolean {
   try {
     const u = new URL(url);
@@ -98,9 +86,7 @@ function shouldEnableEarlyProtection(url: string): boolean {
 
 // Activate minimal protection as early as possible to block mobile ad-tech redirects.
 // This is intentionally conservative and will be reconfigured after settings are loaded.
-// NOTE: clearTimers is OFF here because at document-start the DOM is not ready, so
-// isCloudflareChallenge() always returns false and clearTimers would kill CF's challenge
-// scripts. Timers will be cleared later when activate() is called with full options.
+// Keep this phase reversible. Irreversible cleanup belongs to explicit aggressive mode.
 try {
   if (shouldEnableEarlyProtection(window.location.href)) {
     getSiteProtection().activate({
@@ -125,7 +111,11 @@ try {
  */
 export async function initialize(): Promise<void> {
   await ensureInitialized();
-  if (!appState.isInitialized || appState.autoEnableDone) return;
+  if (!appState.isInitialized) {
+    getSiteProtection().deactivate();
+    return;
+  }
+  if (appState.autoEnableDone) return;
 
   appState.autoEnableDone = true;
   await runAutoEnable();
@@ -156,7 +146,7 @@ async function ensureInitialized(): Promise<void> {
  */
 async function runAutoEnable(): Promise<void> {
   const configStore = useConfigStore(pinia!);
-  const protectionOptions = buildProtectionOptions(configStore.protection);
+  const protectionOptions = toProtectionOptions(configStore.protection);
 
   // Ensure the singleton is initialized with the current runtime options even if we skip auto-enable.
   const manager = getAutoEnableManager({
@@ -174,6 +164,7 @@ async function runAutoEnable(): Promise<void> {
     const flagTime = parseInt(skipFlag, 10);
     if (!isNaN(flagTime) && Date.now() - flagTime < 5000) {
       // Show floating button instead of auto-enabling
+      getSiteProtection().deactivate();
       showFloatingButton();
       return;
     }
@@ -185,12 +176,14 @@ async function runAutoEnable(): Promise<void> {
 
   // If user previously disabled auto-enable, show floating button only
   if (decision.method === 'user-disabled' || decision.showFloatingButton) {
+    getSiteProtection().deactivate();
     showFloatingButton();
     return;
   }
 
   // If no auto-enable needed and no floating button, just return
   if (!decision.shouldEnable) {
+    getSiteProtection().deactivate();
     return;
   }
 
@@ -205,6 +198,7 @@ async function runAutoEnable(): Promise<void> {
 
   // If an explicit/detected chapter page failed to auto-launch, keep a manual entry visible.
   if (!appState.isActive && decision.shouldEnable) {
+    getSiteProtection().deactivate();
     showFloatingButton();
   }
 }
@@ -222,24 +216,26 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
 
     // Track response
     const showPrompt = ref(true);
+    let promptApp: ReturnType<typeof createApp> | null = null;
+    let settled = false;
+
+    const finish = (response: { accepted: boolean; rememberForSite: boolean }) => {
+      if (settled) return;
+      settled = true;
+      showPrompt.value = false;
+      window.setTimeout(() => {
+        promptApp?.unmount();
+        promptApp = null;
+        cleanup();
+        resolve(response);
+      }, 300);
+    };
 
     // Create prompt component wrapper
     const PromptWrapper = defineComponent({
       setup() {
         const handleRespond = (response: { accepted: boolean; rememberForSite: boolean }) => {
-          showPrompt.value = false;
-          setTimeout(() => {
-            cleanup();
-            resolve(response);
-          }, 300);
-        };
-
-        const handleDismiss = () => {
-          showPrompt.value = false;
-          setTimeout(() => {
-            cleanup();
-            resolve({ accepted: false, rememberForSite: false });
-          }, 300);
+          finish(response);
         };
 
         return () =>
@@ -247,13 +243,12 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
             decision,
             visible: showPrompt.value,
             onRespond: handleRespond,
-            onDismiss: handleDismiss,
           });
       },
     });
 
     // Mount prompt
-    const promptApp = createApp(PromptWrapper);
+    promptApp = createApp(PromptWrapper);
     promptApp.mount(mountPoint);
   });
 }
@@ -301,8 +296,15 @@ function mountReaderUI(): void {
   const { mountPoint, cleanup } = createShadowMount('mnr-reader-root');
   readerCleanup = cleanup;
 
-  // Create and mount app with ReaderView
-  app = createApp(ReaderView);
+  // Create and mount app with explicit callbacks so UI components do not import bootstrap.
+  app = createApp(ReaderView, {
+    siteAutoEnable: getCurrentSiteAutoEnable(),
+    onCopyDiagnostics: () => {
+      void copyDiagnosticsFromMenu();
+    },
+    onExit: closeReader,
+    onSiteAutoEnableChange: setCurrentSiteAutoEnable,
+  });
   app.use(pinia!);
   app.mount(mountPoint);
 
@@ -333,18 +335,6 @@ export function closeReader(): void {
   recordDebugEvent('bootstrap.closeReader');
   const entryPageKind = appState.entryPageKind;
 
-  // Save site preference - user exited reader, don't auto-enable next time.
-  // Only persist this on chapter pages to avoid TOC false-positives polluting the whole domain.
-  if (entryPageKind === 'chapter') {
-    try {
-      const hostname = new URL(window.location.href).hostname;
-      const storage = getRuleStorage();
-      storage.setSitePreference(hostname, { enabled: false, timestamp: Date.now() });
-    } catch (e) {
-      console.error('[MNR] Failed to save site preference:', e);
-    }
-  }
-
   // Get current chapter URL before closing
   let targetUrl: string | null = null;
 
@@ -367,6 +357,8 @@ export function closeReader(): void {
     app.unmount();
     app = null;
   }
+
+  getSiteProtection().deactivate();
 
   // Cleanup Shadow DOM
   if (readerCleanup) {
@@ -404,6 +396,24 @@ export function closeReader(): void {
   // Show floating button to re-enter (chapter pages only)
   if (entryPageKind === 'chapter') {
     showFloatingButton();
+  }
+}
+
+function getCurrentSiteAutoEnable(): boolean {
+  try {
+    const hostname = new URL(window.location.href).hostname;
+    return getRuleStorage().getSitePreference(hostname)?.enabled !== false;
+  } catch {
+    return true;
+  }
+}
+
+function setCurrentSiteAutoEnable(enabled: boolean): void {
+  try {
+    const hostname = new URL(window.location.href).hostname;
+    getRuleStorage().setSitePreference(hostname, { enabled, timestamp: Date.now() });
+  } catch (e) {
+    console.error('[MNR] Failed to update site auto-enable preference:', e);
   }
 }
 
@@ -471,7 +481,7 @@ export async function manualEnable(): Promise<void> {
   if (!pinia) return;
 
   const configStore = useConfigStore(pinia);
-  const protectionOptions = buildProtectionOptions(configStore.protection);
+  const protectionOptions = toProtectionOptions(configStore.protection);
 
   const manager = getAutoEnableManager({
     enableProtection: true,
@@ -581,13 +591,17 @@ async function bootstrap(): Promise<void> {
   if (appState.isActive) return;
 
   const url = window.location.href;
-  if (!(await shouldBootstrapForPage(url, document))) return;
+  if (!(await shouldBootstrapForPage(url, document))) {
+    getSiteProtection().deactivate();
+    return;
+  }
 
   // If user disabled auto-enable for this site, avoid heavy initialization and show the floating button.
   try {
     const hostname = new URL(url).hostname;
     const pref = getRuleStorage().getSitePreference(hostname);
     if (pref?.enabled === false) {
+      getSiteProtection().deactivate();
       showFloatingButton();
       return;
     }

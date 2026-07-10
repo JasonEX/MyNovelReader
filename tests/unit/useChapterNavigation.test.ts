@@ -12,9 +12,9 @@ describe('useChapterNavigation', () => {
       url: 'https://example.com/',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env
-    globalThis.window = dom.window;
-    // @ts-expect-error - test env
+    // test env
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    // test env
     globalThis.document = dom.window.document;
 
     vi.stubGlobal(
@@ -453,11 +453,14 @@ describe('useChapterNavigation', () => {
         mainRef: mainEl,
         readerStore,
       });
+      const target = document.createElement('article');
+      target.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0 });
+      opts.chapterRefs.set(entries[0].chapter.url, target);
       const { navigateChapter } = useChapterNavigation(opts);
 
       await navigateChapter('prev');
-      // Should call jumpToChapter(0) which calls updateWindow and setCurrentChapter
-      expect(opts.updateWindow).toHaveBeenCalled();
+      await vi.waitFor(() => expect(mainEl.scrollTo).toHaveBeenCalled());
+      expect(readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
     });
 
     it('loads prev chapter when at beginning and hasPrev', async () => {
@@ -547,10 +550,14 @@ describe('useChapterNavigation', () => {
         mainRef: mainEl,
         readerStore,
       });
+      const target = document.createElement('article');
+      target.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0 });
+      opts.chapterRefs.set(entries[1].chapter.url, target);
       const { navigateChapter } = useChapterNavigation(opts);
 
       await navigateChapter('next');
-      expect(opts.updateWindow).toHaveBeenCalled();
+      await vi.waitFor(() => expect(mainEl.scrollTo).toHaveBeenCalled());
+      expect(readerStore.setCurrentChapter).toHaveBeenCalledWith(1);
     });
 
     it('loads next chapter when at end and hasNext', async () => {
@@ -738,8 +745,6 @@ describe('useChapterNavigation', () => {
       await loadPrevWithScrollAdjust();
 
       expect(readerStore.loadPrevChapter).toHaveBeenCalledWith('manual');
-      expect(opts.updateWindow).toHaveBeenCalledWith(1);
-      expect(opts.setChapterHeight).toHaveBeenCalledWith('https://example.com/ch0', 900);
       expect(mainEl.scrollTop).toBe(1020);
     });
   });

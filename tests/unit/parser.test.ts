@@ -412,6 +412,17 @@ describe('Parser', () => {
 
     (parser as unknown as { detectionEngine: DetectionEngineLike }).detectionEngine = {
       detect,
+      detectNavigation: vi.fn(() => ({
+        next: null,
+        prev: null,
+        index: null,
+      })) as unknown as DetectionEngineLike['detectNavigation'],
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
+      })) as unknown as DetectionEngineLike['detectSection'],
       quickCheck: vi.fn(() => true) as unknown as DetectionEngineLike['quickCheck'],
     };
 
@@ -978,6 +989,15 @@ describe('Parser', () => {
 
     (parser as unknown as { detectionEngine: DetectionEngineLike }).detectionEngine = {
       detect: vi.fn(() => detected) as unknown as DetectionEngineLike['detect'],
+      detectNavigation: vi.fn(
+        () => detected.results.navigation
+      ) as unknown as DetectionEngineLike['detectNavigation'],
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
+      })) as unknown as DetectionEngineLike['detectSection'],
       quickCheck: vi.fn(() => true) as unknown as DetectionEngineLike['quickCheck'],
     };
 
@@ -1067,6 +1087,17 @@ describe('Parser', () => {
 
     (parser as unknown as { detectionEngine: DetectionEngineLike }).detectionEngine = {
       detect,
+      detectNavigation: vi.fn(() => ({
+        next: null,
+        prev: null,
+        index: null,
+      })) as unknown as DetectionEngineLike['detectNavigation'],
+      detectSection: vi.fn(() => ({
+        isSection: false,
+        nextSectionUrl: null,
+        nextChapterUrl: null,
+        confidence: 0,
+      })) as unknown as DetectionEngineLike['detectSection'],
       quickCheck: vi.fn(() => true) as unknown as DetectionEngineLike['quickCheck'],
     };
 

@@ -99,6 +99,20 @@ export class AutoEnableManager {
     return decision;
   }
 
+  private activateProtection(): void {
+    if (!this.options.enableProtection) return;
+
+    const protection = getSiteProtection();
+    protection.activate(this.options.protectionOptions);
+    protection.removeOverlays();
+  }
+
+  private deactivateProtection(): void {
+    if (this.options.enableProtection) {
+      getSiteProtection().deactivate();
+    }
+  }
+
   constructor(options: AutoEnableOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.detectionEngine = new DetectionEngine();
@@ -307,14 +321,8 @@ export class AutoEnableManager {
         : await this.check(doc);
 
     if (!decision.shouldEnable) {
+      this.deactivateProtection();
       return;
-    }
-
-    // Enable site protection first
-    if (this.options.enableProtection) {
-      const protection = getSiteProtection();
-      protection.activate(this.options.protectionOptions);
-      protection.removeOverlays();
     }
 
     // Auto-launch for high confidence or rule match
@@ -329,6 +337,7 @@ export class AutoEnableManager {
 
     // Show prompt for medium confidence detection
     if (this.promptCallback) {
+      this.deactivateProtection();
       const response = await this.promptCallback(decision);
 
       if (response.accepted) {
@@ -337,13 +346,18 @@ export class AutoEnableManager {
           this.rememberSiteEnabled(doc);
         }
       }
+      return;
     }
+
+    this.deactivateProtection();
   }
 
   /**
    * Launch the reader
    */
   private async launch(doc: Document, decision: AutoEnableDecision): Promise<boolean> {
+    this.activateProtection();
+
     try {
       const currentUrl = doc.location?.href || window.location.href;
       const chapter = await this.sectionMerger.merge(doc, currentUrl);
@@ -352,9 +366,11 @@ export class AutoEnableManager {
         this.launchCallback(chapter, decision.rule);
         return true;
       }
+      this.deactivateProtection();
       return false;
     } catch (e) {
       console.error('[AutoEnableManager] Parse error:', e);
+      this.deactivateProtection();
       return false;
     }
   }
@@ -399,14 +415,10 @@ export class AutoEnableManager {
    * Manual enable (force launch without detection)
    */
   async manualEnable(doc: Document = document): Promise<void> {
-    // Enable protection
-    if (this.options.enableProtection) {
-      const protection = getSiteProtection();
-      protection.activate(this.options.protectionOptions);
-      protection.removeOverlays();
-    }
+    this.activateProtection();
 
     // Parse and launch
+    let launched = false;
     try {
       const currentUrl = doc.location?.href || window.location.href;
       const chapter = await this.sectionMerger.merge(doc, currentUrl);
@@ -414,9 +426,14 @@ export class AutoEnableManager {
       if (chapter && this.launchCallback) {
         this.launchCallback(chapter, chapter.rule);
         this.rememberSiteEnabled(doc);
+        launched = true;
       }
     } catch (e) {
       console.error('[AutoEnableManager] Manual enable error:', e);
+    } finally {
+      if (!launched) {
+        this.deactivateProtection();
+      }
     }
   }
 }

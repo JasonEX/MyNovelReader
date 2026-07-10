@@ -19,6 +19,7 @@ test('injects MyNovelReader through an existing Chrome CDP session', async ({
     !endpoint,
     'Set MNR_E2E_CDP_ENDPOINT, for example http://127.0.0.1:9222, to run CDP smoke.'
   );
+  if (!endpoint) return;
 
   const config = getMnrE2eConfig();
   let browser: Browser | undefined;

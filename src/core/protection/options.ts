@@ -30,7 +30,7 @@ const DEFAULT_PROTECTION_OPTIONS: Required<ProtectionOptions> = {
   blockPopups: true,
   removeEventHijacking: true,
   blockVisibilityDetection: true,
-  clearTimers: true,
+  clearTimers: false,
   cleanupScripts: false,
 };
 

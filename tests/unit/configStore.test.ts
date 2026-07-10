@@ -44,7 +44,7 @@ describe('ConfigStore', () => {
     expect(dom.window.document.getElementById('mnr-custom-css')).toBeNull();
     expect(gmSetValue).toHaveBeenCalledWith(
       'mnr-config',
-      expect.stringContaining('"themeId":"light"')
+      expect.stringContaining('"themeId":"system"')
     );
   });
 });

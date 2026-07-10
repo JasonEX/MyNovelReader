@@ -5,6 +5,7 @@ import type { ProtectionOptions } from '@/core/protection';
 
 type MockedSiteProtection = {
   activate: ReturnType<typeof vi.fn>;
+  deactivate: ReturnType<typeof vi.fn>;
   removeOverlays: ReturnType<typeof vi.fn>;
 };
 
@@ -34,6 +35,7 @@ const mockedRuleManager: MockedRuleManager = {
 
 const mockedProtection: MockedSiteProtection = {
   activate: vi.fn(),
+  deactivate: vi.fn(),
   removeOverlays: vi.fn(),
 };
 
@@ -87,6 +89,7 @@ describe('AutoEnableManager', () => {
     mockedRuleManager.matchRule.mockResolvedValue(null);
 
     mockedProtection.activate.mockImplementation(() => {});
+    mockedProtection.deactivate.mockImplementation(() => {});
     mockedProtection.removeOverlays.mockImplementation(() => {});
 
     mockedSectionMerger.merge.mockResolvedValue({
@@ -368,6 +371,25 @@ describe('AutoEnableManager', () => {
     expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps protection inactive when the prompt is declined', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: true });
+    const detectionEngine = manager as unknown as { detectionEngine: MockDetectionEngine };
+    detectionEngine.detectionEngine.detect.mockReturnValue({
+      results: {},
+      confidence: { overall: 0.7, reasons: ['ok'] },
+    });
+
+    manager.setPromptCallback(vi.fn(async () => ({ accepted: false, rememberForSite: false })));
+    manager.setLaunchCallback(vi.fn());
+
+    await manager.execute(createDoc('https://example.com/chapter/1'));
+
+    expect(mockedProtection.activate).not.toHaveBeenCalled();
+    expect(mockedProtection.deactivate).toHaveBeenCalledTimes(1);
+    expect(mockedSectionMerger.merge).not.toHaveBeenCalled();
+  });
+
   it('logs and swallows launch errors', async () => {
     mockedSectionMerger.merge.mockRejectedValueOnce(new Error('boom'));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -470,6 +492,19 @@ describe('AutoEnableManager', () => {
 
     expect(errorSpy).toHaveBeenCalled();
     expect(launchCallback).not.toHaveBeenCalled();
+  });
+
+  it('deactivates protection when manual parsing fails', async () => {
+    mockedSectionMerger.merge.mockResolvedValueOnce(null);
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: true });
+    manager.setLaunchCallback(vi.fn());
+
+    await manager.manualEnable(createDoc('https://example.com/chapter/1'));
+
+    expect(mockedProtection.activate).toHaveBeenCalledTimes(1);
+    expect(mockedProtection.deactivate).toHaveBeenCalledTimes(1);
   });
 });
 

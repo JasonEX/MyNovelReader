@@ -9,9 +9,9 @@
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-TW  小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁
 // @license            GPL version 3
-// @homepage           https://github.com/ywzhaiqi/userscript#readme
+// @homepage           https://github.com/JasonEX/MyNovelReader#readme
 // @homepageURL        https://greasyfork.org/scripts/292/
-// @source             https://github.com/ywzhaiqi/userscript.git
+// @source             https://github.com/JasonEX/MyNovelReader.git
 // @supportURL         https://github.com/JasonEX/MyNovelReader/issues
 // @match              *://*/*.html
 // @match              *://*/*.htm
@@ -57,13 +57,10 @@
 // @exclude            *://*/register*
 // @exclude            *://www.tadu.com/book/*/toc/
 // @connect            *
-// @grant              GM_addStyle
 // @grant              GM_deleteValue
-// @grant              GM_getResourceURL
 // @grant              GM_getValue
 // @grant              GM_info
 // @grant              GM_listValues
-// @grant              GM_openInTab
 // @grant              GM_registerMenuCommand
 // @grant              GM_setClipboard
 // @grant              GM_setValue
@@ -4167,7 +4164,7 @@
 		blockPopups: true,
 		removeEventHijacking: true,
 		blockVisibilityDetection: true,
-		clearTimers: true,
+		clearTimers: false,
 		cleanupScripts: false
 	};
 	var isCloudflareChallenge = (doc = document) => {
@@ -4283,14 +4280,14 @@
 			if (typeof callback === "string") return suspiciousPatterns.some((p) => p.test(callback));
 			return false;
 		};
-		window.setTimeout = (callback, delay, ...args) => {
+		window.setTimeout = ((callback, delay, ...args) => {
 			if (isSuspiciousCallback(callback) && (delay || 0) > 0) return 0;
 			return originalSetTimeout(callback, delay, ...args);
-		};
-		window.setInterval = (callback, delay, ...args) => {
+		});
+		window.setInterval = ((callback, delay, ...args) => {
 			if (isSuspiciousCallback(callback)) return 0;
 			return originalSetInterval(callback, delay, ...args);
-		};
+		});
 		const isBlockedExternalUrl = (url, kind) => {
 			if (url.protocol !== "http:" && url.protocol !== "https:") return true;
 			if (url.origin === window.location.origin) return false;
@@ -7906,6 +7903,15 @@
 			this.currentDecisionUrl = url;
 			return decision;
 		}
+		activateProtection() {
+			if (!this.options.enableProtection) return;
+			const protection = getSiteProtection();
+			protection.activate(this.options.protectionOptions);
+			protection.removeOverlays();
+		}
+		deactivateProtection() {
+			if (this.options.enableProtection) getSiteProtection().deactivate();
+		}
 		constructor(options = {}) {
 			this.hasRun = false;
 			this.options = {
@@ -8044,24 +8050,26 @@
 			this.hasRun = true;
 			const currentUrl = doc.location?.href || window.location.href;
 			const decision = this.currentDecision && this.currentDecisionUrl === currentUrl ? this.currentDecision : await this.check(doc);
-			if (!decision.shouldEnable) return;
-			if (this.options.enableProtection) {
-				const protection = getSiteProtection();
-				protection.activate(this.options.protectionOptions);
-				protection.removeOverlays();
+			if (!decision.shouldEnable) {
+				this.deactivateProtection();
+				return;
 			}
 			if (decision.method === "builtin-rule" || decision.confidence >= (this.options.autoLaunchThreshold || .9)) {
 				await this.launch(doc, decision);
 				return;
 			}
 			if (this.promptCallback) {
+				this.deactivateProtection();
 				const response = await this.promptCallback(decision);
 				if (response.accepted) {
 					if (await this.launch(doc, decision) && response.rememberForSite) this.rememberSiteEnabled(doc);
 				}
+				return;
 			}
+			this.deactivateProtection();
 		}
 		async launch(doc, decision) {
+			this.activateProtection();
 			try {
 				const currentUrl = doc.location?.href || window.location.href;
 				const chapter = await this.sectionMerger.merge(doc, currentUrl);
@@ -8069,9 +8077,11 @@
 					this.launchCallback(chapter, decision.rule);
 					return true;
 				}
+				this.deactivateProtection();
 				return false;
 			} catch (e) {
 				console.error("[AutoEnableManager] Parse error:", e);
+				this.deactivateProtection();
 				return false;
 			}
 		}
@@ -8100,20 +8110,20 @@
 			this.currentDecisionUrl = void 0;
 		}
 		async manualEnable(doc = document) {
-			if (this.options.enableProtection) {
-				const protection = getSiteProtection();
-				protection.activate(this.options.protectionOptions);
-				protection.removeOverlays();
-			}
+			this.activateProtection();
+			let launched = false;
 			try {
 				const currentUrl = doc.location?.href || window.location.href;
 				const chapter = await this.sectionMerger.merge(doc, currentUrl);
 				if (chapter && this.launchCallback) {
 					this.launchCallback(chapter, chapter.rule);
 					this.rememberSiteEnabled(doc);
+					launched = true;
 				}
 			} catch (e) {
 				console.error("[AutoEnableManager] Manual enable error:", e);
+			} finally {
+				if (!launched) this.deactivateProtection();
 			}
 		}
 	};
@@ -13073,7 +13083,56 @@
 		const fn = vnode.props["onUpdate:modelValue"] || false;
 		return isArray(fn) ? (value) => invokeArrayFns(fn, value) : fn;
 	};
+	function onCompositionStart(e) {
+		e.target.composing = true;
+	}
+	function onCompositionEnd(e) {
+		const target = e.target;
+		if (target.composing) {
+			target.composing = false;
+			target.dispatchEvent(new Event("input"));
+		}
+	}
 	var assignKey = Symbol("_assign");
+	function castValue(value, trim, number) {
+		if (trim) value = value.trim();
+		if (number) value = looseToNumber(value);
+		return value;
+	}
+	var vModelText = {
+		created(el, { modifiers: { lazy, trim, number } }, vnode) {
+			el[assignKey] = getModelAssigner(vnode);
+			const castToNumber = number || vnode.props && vnode.props.type === "number";
+			addEventListener(el, lazy ? "change" : "input", (e) => {
+				if (e.target.composing) return;
+				el[assignKey](castValue(el.value, trim, castToNumber));
+			});
+			if (trim || castToNumber) addEventListener(el, "change", () => {
+				el.value = castValue(el.value, trim, castToNumber);
+			});
+			if (!lazy) {
+				addEventListener(el, "compositionstart", onCompositionStart);
+				addEventListener(el, "compositionend", onCompositionEnd);
+				addEventListener(el, "change", onCompositionEnd);
+			}
+		},
+		mounted(el, { value }) {
+			el.value = value == null ? "" : value;
+		},
+		beforeUpdate(el, { value, oldValue, modifiers: { lazy, trim, number } }, vnode) {
+			el[assignKey] = getModelAssigner(vnode);
+			if (el.composing) return;
+			const elValue = (number || el.type === "number") && !/^0\d/.test(el.value) ? looseToNumber(el.value) : el.value;
+			const newValue = value == null ? "" : value;
+			if (elValue === newValue) return;
+			const rootNode = el.getRootNode();
+			if ((rootNode instanceof Document || rootNode instanceof ShadowRoot) && rootNode.activeElement === el && el.type !== "range") {
+				if (lazy && value === oldValue) return;
+				if (trim && el.value.trim() === newValue) return;
+			}
+			el.value = newValue;
+		}
+	};
 	var vModelCheckbox = {
 		deep: true,
 		created(el, _, vnode) {
@@ -13196,6 +13255,24 @@
 				if (guard && guard(event, modifiers)) return;
 			}
 			return fn(event, ...args);
+		}));
+	};
+	var keyNames = {
+		esc: "escape",
+		space: " ",
+		up: "arrow-up",
+		left: "arrow-left",
+		right: "arrow-right",
+		down: "arrow-down",
+		delete: "backspace"
+	};
+	var withKeys = (fn, modifiers) => {
+		const cache = fn._withKeys || (fn._withKeys = {});
+		const cacheKey = modifiers.join(".");
+		return cache[cacheKey] || (cache[cacheKey] = ((event) => {
+			if (!("key" in event)) return;
+			const eventKey = hyphenate(event.key);
+			if (modifiers.some((k) => k === eventKey || keyNames[k] === eventKey)) return fn(event);
 		}));
 	};
 	var rendererOptions = extend({ patchProp }, nodeOps);
@@ -13758,6 +13835,15 @@ ul, ol {
 	}
 	var THEMES = [
 		{
+			id: "system",
+			name: "跟随系统",
+			background: "#f5f5f5",
+			text: "#242424",
+			link: "#2563a8",
+			onLink: "#ffffff",
+			border: "#d8d8d8"
+		},
+		{
 			id: "light",
 			name: "默认",
 			background: "#ffffff",
@@ -13823,7 +13909,6 @@ ul, ol {
 		textConversion: "none"
 	};
 	var DEFAULT_BEHAVIOR = {
-		autoScrollToPosition: true,
 		keyboardNavigation: true,
 		swipeGestures: true,
 		autoHideHeader: true,
@@ -13837,15 +13922,31 @@ ul, ol {
 		enableSelection: true,
 		blockPopups: true
 	};
-	var STORAGE_KEY = "mnr-config";
+	function toProtectionOptions(settings) {
+		const aggressive = settings.mode === "aggressive";
+		return {
+			blockRedirects: settings.blockRedirects,
+			enableRightClick: settings.enableRightClick,
+			enableSelection: settings.enableSelection,
+			blockPopups: settings.blockPopups,
+			clearTimers: aggressive,
+			unlockKeyboard: true,
+			cleanupScripts: aggressive
+		};
+	}
+	var STORAGE_KEY$1 = "mnr-config";
 	var useConfigStore = defineStore("config", () => {
-		const themeId = ref("light");
+		const themeId = ref("system");
 		const reading = ref({ ...DEFAULT_READING });
 		const behavior = ref({ ...DEFAULT_BEHAVIOR });
 		const protection = ref({ ...DEFAULT_PROTECTION });
 		const customCSS = ref("");
 		const theme = () => {
-			return THEMES.find((t) => t.id === themeId.value) || THEMES[0];
+			if (themeId.value === "system") {
+				const prefersDark = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+				return THEMES.find((t) => t.id === (prefersDark ? "dark" : "light")) || THEMES[1];
+			}
+			return THEMES.find((t) => t.id === themeId.value) || THEMES[1];
 		};
 		function setTheme(id) {
 			if (THEMES.some((t) => t.id === id)) {
@@ -13909,8 +14010,8 @@ ul, ol {
 			try {
 				let data = null;
 				let hasInvalidData = false;
-				if (typeof GM_getValue !== "undefined") data = await GM_getValue(STORAGE_KEY, null);
-				else if (typeof localStorage !== "undefined") data = localStorage.getItem(STORAGE_KEY);
+				if (typeof GM_getValue !== "undefined") data = await GM_getValue(STORAGE_KEY$1, null);
+				else if (typeof localStorage !== "undefined") data = localStorage.getItem(STORAGE_KEY$1);
 				if (data) {
 					let parsed;
 					if (typeof data === "string") try {
@@ -13961,8 +14062,8 @@ ul, ol {
 					protection: protection.value,
 					customCSS: customCSS.value
 				});
-				if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY, data);
-				else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, data);
+				if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY$1, data);
+				else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY$1, data);
 			} catch (e) {
 				console.error("[ConfigStore] Save error:", e);
 			}
@@ -13976,8 +14077,11 @@ ul, ol {
 		], () => {
 			save();
 		}, { deep: true });
+		if (typeof window !== "undefined" && typeof window.matchMedia === "function") window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
+			if (themeId.value === "system") applyTheme();
+		});
 		function $reset() {
-			themeId.value = "light";
+			themeId.value = "system";
 			reading.value = { ...DEFAULT_READING };
 			behavior.value = { ...DEFAULT_BEHAVIOR };
 			protection.value = { ...DEFAULT_PROTECTION };
@@ -14005,27 +14109,27 @@ ul, ol {
 			$reset
 		};
 	});
-	var _hoisted_1$7 = {
-		class: "mnr-prompt-card",
-		role: "dialog",
-		"aria-modal": "true"
-	};
+	var _hoisted_1$7 = ["onKeydown"];
 	var _hoisted_2$5 = { class: "mnr-confidence" };
-	var _hoisted_3$4 = { class: "mnr-confidence-bar" };
-	var _hoisted_4$4 = { class: "mnr-confidence-text" };
-	var _hoisted_5$4 = { class: "mnr-results" };
+	var _hoisted_3$3 = { class: "mnr-confidence-bar" };
+	var _hoisted_4$3 = { class: "mnr-confidence-text" };
+	var _hoisted_5$3 = { class: "mnr-results" };
 	var _hoisted_6$3 = { class: "mnr-checkbox-label" };
+	var _hoisted_7$3 = { class: "mnr-prompt-actions" };
 	var DetectionPrompt_vue_vue_type_script_setup_true_lang_default = defineComponent({
 		__name: "DetectionPrompt",
 		props: {
 			decision: {},
 			visible: { type: Boolean }
 		},
-		emits: ["respond", "dismiss"],
+		emits: ["respond"],
 		setup(__props, { emit: __emit }) {
 			const props = __props;
 			const emit = __emit;
 			const rememberForSite = ref(true);
+			const cardRef = ref(null);
+			const acceptButtonRef = ref(null);
+			let previouslyFocused = null;
 			const confidence = computed(() => props.decision.confidence);
 			const confidenceClass = computed(() => {
 				if (confidence.value >= .8) return "high";
@@ -14049,21 +14153,56 @@ ul, ol {
 					accepted: false,
 					rememberForSite: false
 				});
-				emit("dismiss");
 			}
+			function trapFocus(event) {
+				const card = cardRef.value;
+				if (!card) return;
+				const focusable = Array.from(card.querySelectorAll("button:not([disabled]), input:not([disabled])"));
+				if (focusable.length === 0) return;
+				const first = focusable[0];
+				const last = focusable[focusable.length - 1];
+				if (event.shiftKey && document.activeElement === first) {
+					event.preventDefault();
+					last.focus();
+				} else if (!event.shiftKey && document.activeElement === last) {
+					event.preventDefault();
+					first.focus();
+				}
+			}
+			watch(() => props.visible, async (visible) => {
+				if (visible) {
+					previouslyFocused = document.activeElement;
+					await nextTick();
+					acceptButtonRef.value?.focus({ preventScroll: true });
+				} else {
+					previouslyFocused?.focus?.({ preventScroll: true });
+					previouslyFocused = null;
+				}
+			}, { immediate: true });
 			return (_ctx, _cache) => {
 				return openBlock(), createBlock(Transition, { name: "mnr-fade" }, {
 					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
 						key: 0,
 						class: "mnr-prompt-overlay",
 						onClick: withModifiers(handleDismiss, ["self"])
-					}, [createBaseVNode("div", _hoisted_1$7, [
-						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"), createBaseVNode("h3", { class: "mnr-prompt-title" }, "启用 MyNovelReader?")], -1)),
-						createBaseVNode("div", _hoisted_2$5, [createBaseVNode("div", _hoisted_3$4, [createBaseVNode("div", {
+					}, [createBaseVNode("div", {
+						ref_key: "cardRef",
+						ref: cardRef,
+						class: "mnr-prompt-card",
+						role: "dialog",
+						"aria-modal": "true",
+						"aria-labelledby": "mnr-prompt-title",
+						onKeydown: [withKeys(withModifiers(handleDismiss, ["stop"]), ["esc"]), withKeys(trapFocus, ["tab"])]
+					}, [
+						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("span", { class: "mnr-prompt-icon" }, "📖"), createBaseVNode("h3", {
+							id: "mnr-prompt-title",
+							class: "mnr-prompt-title"
+						}, "启用 MyNovelReader?")], -1)),
+						createBaseVNode("div", _hoisted_2$5, [createBaseVNode("div", _hoisted_3$3, [createBaseVNode("div", {
 							class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
 							style: normalizeStyle({ width: `${confidence.value * 100}%` })
-						}, null, 6)]), createBaseVNode("span", _hoisted_4$4, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
-						createBaseVNode("ul", _hoisted_5$4, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
+						}, null, 6)]), createBaseVNode("span", _hoisted_4$3, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
+						createBaseVNode("ul", _hoisted_5$3, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
 							return openBlock(), createElementBlock("li", {
 								key: reason,
 								class: "mnr-result-item success"
@@ -14079,14 +14218,16 @@ ul, ol {
 							type: "checkbox",
 							class: "mnr-checkbox"
 						}, null, 512), [[vModelCheckbox, rememberForSite.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
-						createBaseVNode("div", { class: "mnr-prompt-actions" }, [createBaseVNode("button", {
+						createBaseVNode("div", _hoisted_7$3, [createBaseVNode("button", {
 							class: "mnr-btn mnr-btn-secondary",
 							onClick: handleDismiss
 						}, "暂不"), createBaseVNode("button", {
+							ref_key: "acceptButtonRef",
+							ref: acceptButtonRef,
 							class: "mnr-btn mnr-btn-primary",
 							onClick: handleAccept
-						}, "启用阅读器")])
-					])])) : createCommentVNode("", true)]),
+						}, " 启用阅读器 ", 512)])
+					], 40, _hoisted_1$7)])) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
@@ -14097,7 +14238,7 @@ ul, ol {
 		for (const [key, val] of props) target[key] = val;
 		return target;
 	};
-	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-9a2b7cf4"]]);
+	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-ba6110ad"]]);
 	var VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
 	var HKVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一針 一針|一針見血 一針見血|三針 三針|丟巧針 丟巧針|丹稜 丹稜|九針 九針|亂針繡 亂針繡|仙台 仙台|倒扣針兒 倒扣針兒|做針線 做針線|八字方針 八字方針|刀割針扎 刀割針扎|分針 分針|別針 別針|刺胳針 刺胳針|刺針 刺針|北港島綫 北港島線|十針 十針|南港島綫 南港島線|南針 南針|反時針 反時針|口吃 口吃|台山 台山|台山市 台山市|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|向風針 向風針|唱針 唱針|啄針兒 啄針兒|嗎啡針 嗎啡針|大政方針 大政方針|大海撈針 大海撈針|大頭針 大頭針|天台 天台|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|太乙神針 太乙神針|奇台 奇台|女人心海底針 女人心海底針|定南針 定南針|定風針 定風針|將軍澳綫 將軍澳線|對針 對針|小針 小針|小針美容 小針美容|屯馬綫 屯馬線|平針縫 平針縫|幾針 幾針|引線穿針 引線穿針|張口 張口|張柏芝 張柏芝|張栢芝 張栢芝|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|懸針 懸針|懸針垂露 懸針垂露|手腕式指北針 手腕式指北針|扎針 扎針|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|指北針 指北針|指南針 指南針|指揮台 指揮台|指針 指針|指針式 指針式|探針 探針|控制台 控制台|插針 插針|搖針 搖針|搗針 搗針|撞針 撞針|擺針 擺針|收針 收針|教育方針 教育方針|敹一針 敹一針|方針 方針|時針 時針|暈針 暈針|曲別針 曲別針|東九龍綫 東九龍線|東海撈針 東海撈針|東涌綫 東涌線|東鐵綫 東鐵線|松針 松針|枝針 枝針|桑針 桑針|棒針 棒針|棒針衫 棒針衫|棘針 棘針|棘針科 棘針科|棘針門 棘針門|機場快綫 機場快線|步線行針 步線行針|毒針 毒針|毛線針 毛線針|毫針 毫針|水底撈針 水底撈針|沙中綫 沙中線|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|浙江天台縣 浙江天台縣|海底撈針 海底撈針|港島綫 港島線|漏針 漏針|炮台山循道衛理中學 炮台山循道衛理中學|無線新聞台 無線新聞台|無針不引線 無針不引線|無針注射器 無針注射器|燔針 燔針|留針 留針|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|短針 短針|石針 石針|硬肥皂 硬肥皂|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|秒針 秒針|秧針 秧針|穆稜 穆稜|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|紋光針 紋光針|細針密縷 細針密縷|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美白針 美白針|耳針 耳針|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|胃口 胃口|胸針 胸針|臺灣台 臺灣台|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|茅針 茅針|荃灣綫 荃灣線|葉針 葉針|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|補血針 補血針|補針 補針|見縫插針 見縫插針|觀塘綫 觀塘線|討針線 討針線|象牙針尖 象牙針尖|賀爾蒙針 賀爾蒙針|跳針 跳針|蹇吃 蹇吃|軟肥皂 軟肥皂|迪士尼綫 迪士尼線|迴紋針 迴紋針|退針 退針|逆時針 逆時針|避雷針 避雷針|郭台成 郭台成|郭台銘 郭台銘|鄧艾吃 鄧艾吃|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉤針 鉤針|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|長針 長針|開口 開口|防疫針 防疫針|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|面皂 面皂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|風向針 風向針|飛針走線 飛針走線|香皂 香皂|骨針 骨針|髮針 髮針|鬼針草 鬼針草|鳳台 鳳台|鹽水針 鹽水針|麻醉針 麻醉針|黃成 黃成|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針|龍應台 龍應台";
 	var HKVariantsRev_default = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|綫 線|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
@@ -18134,8 +18275,8 @@ ul, ol {
 			loadToc
 		};
 	}
-	async function parseWithSectionMerge(parser, initialDoc, url, _referer) {
-		return createSectionMerger(parser).merge(initialDoc, url);
+	async function parseWithSectionMerge(parser, initialDoc, url, options = {}) {
+		return createSectionMerger(parser).merge(initialDoc, url, options);
 	}
 	function trimCachedContents(cachedContents, maxSessionCache) {
 		if (cachedContents.size <= maxSessionCache) return;
@@ -18155,6 +18296,7 @@ ul, ol {
 			const runId = ctx.runtime.sessionId();
 			if (ctx.cacheProgress.value.running) return;
 			const seenUrls = new Set();
+			ctx.cacheFailedUrls.value = [];
 			await ctx.restoreCache();
 			if (ctx.runtime.isSessionStale(runId)) return;
 			const persistedSet = new Set(ctx.persistedUrls.value);
@@ -18180,6 +18322,7 @@ ul, ol {
 				ctx.cacheProgress.value = {
 					done: 0,
 					total: 0,
+					failed: 0,
 					running: false
 				};
 				return;
@@ -18187,6 +18330,7 @@ ul, ol {
 			ctx.cacheProgress.value = {
 				done: 0,
 				total: estimatedTotal,
+				failed: 0,
 				running: true
 			};
 			let nextUrl = taskList.shift();
@@ -18217,12 +18361,34 @@ ul, ol {
 				ctx.cacheAbort.value = null;
 				if (result.error === "abort") break;
 				if (!result.doc) {
+					ctx.cacheFailedUrls.value.push(targetUrl);
+					ctx.cacheProgress.value = {
+						...ctx.cacheProgress.value,
+						done: ctx.cacheProgress.value.done + 1,
+						failed: ctx.cacheProgress.value.failed + 1
+					};
 					nextUrl = taskList.shift() ?? null;
 					continue;
 				}
-				const parsed = await parseWithSectionMerge(getParser(), result.doc, targetUrl, referer);
+				const parser = getParser();
+				const controller = new AbortController();
+				const abortMerge = () => controller.abort();
+				ctx.cacheAbort.value = abortMerge;
+				let parsed;
+				try {
+					parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, { signal: controller.signal });
+				} finally {
+					if (ctx.cacheAbort.value === abortMerge) ctx.cacheAbort.value = null;
+				}
+				if (controller.signal.aborted) break;
 				if (ctx.runtime.isSessionStale(runId)) break;
 				if (!parsed) {
+					ctx.cacheFailedUrls.value.push(targetUrl);
+					ctx.cacheProgress.value = {
+						...ctx.cacheProgress.value,
+						done: ctx.cacheProgress.value.done + 1,
+						failed: ctx.cacheProgress.value.failed + 1
+					};
 					nextUrl = taskList.shift() ?? null;
 					continue;
 				}
@@ -18260,29 +18426,38 @@ ul, ol {
 					};
 				}
 			}
-			if (ctx.runtime.isSessionStale(runId)) return;
+			if (ctx.runtime.isSessionStale(runId) || !ctx.cacheProgress.value.running) return;
 			ctx.cacheProgress.value = {
 				...ctx.cacheProgress.value,
-				total: ctx.cacheProgress.value.done,
 				running: false
 			};
 			ctx.cacheAbort.value = null;
 			if (cacheBook && persistedSet.size > 0) ctx.persistedUrls.value = persistedSet;
 			await ctx.persistCache();
+			if (ctx.cacheProgress.value.failed > 0) ctx.showToast(`缓存完成，${ctx.cacheProgress.value.failed} 章失败`, "error", 3500);
+			else ctx.showToast("离线缓存完成", "info", 2500);
 		}
 		function cancelCacheAll() {
 			ctx.cacheProgress.value = {
 				done: 0,
 				total: 0,
+				failed: 0,
 				running: false
 			};
 			ctx.cacheQueue.value = [];
+			ctx.cacheFailedUrls.value = [];
 			ctx.cacheAbort.value?.();
 			ctx.cacheAbort.value = null;
 		}
+		function retryFailedCache() {
+			const urls = [...ctx.cacheFailedUrls.value];
+			if (urls.length === 0) return Promise.resolve();
+			return startCacheAll(urls);
+		}
 		return {
 			startCacheAll,
-			cancelCacheAll
+			cancelCacheAll,
+			retryFailedCache
 		};
 	}
 	function recordNavFailure(failures, key, opts) {
@@ -18525,7 +18700,7 @@ ul, ol {
 			url: load.refChapter.chapter.url
 		});
 	}
-	async function parseCandidateDocument(ctx, load, parser, doc, runId, referer, source) {
+	async function parseCandidateDocument(ctx, load, parser, doc, runId, _referer, source) {
 		if (isCloudflareChallenge(doc)) {
 			const count = recordNavFailure(ctx.navFailures, load.navKey, { maxFailures: 200 });
 			if (source === "manual" || count === 1) ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
@@ -18536,9 +18711,16 @@ ul, ol {
 			ctx.showToast(VIP_BLOCK_TOAST, "info", 3e3);
 			return "blocked";
 		}
-		const parsed = await parseWithSectionMerge(parser, doc, load.targetUrl, referer);
-		if (ctx.runtime.isViewStale(runId)) return "abort";
-		return parsed;
+		const controller = new AbortController();
+		const abort = () => controller.abort();
+		load.pendingAbortRef.value = abort;
+		try {
+			const parsed = await parseWithSectionMerge(parser, doc, load.targetUrl, { signal: controller.signal });
+			if (controller.signal.aborted || ctx.runtime.isViewStale(runId)) return "abort";
+			return parsed;
+		} finally {
+			clearPendingAbort(load, abort);
+		}
 	}
 	function clearPendingAbort(load, abort) {
 		if (load.pendingAbortRef.value === abort) load.pendingAbortRef.value = null;
@@ -18619,7 +18801,7 @@ ul, ol {
 		return true;
 	}
 	function trimDisplayChapters(ctx, isAppend) {
-		if (ctx.chapters.value.length <= 8) return;
+		if (ctx.chapters.value.length <= 6) return;
 		if (isAppend && ctx.currentChapterIndex.value > 2) {
 			const removed = ctx.chapters.value.shift();
 			if (removed) {
@@ -18859,7 +19041,17 @@ ul, ol {
 				ctx.showToast("重新加载失败", "error");
 				return;
 			}
-			const parsed = await parseWithSectionMerge(getParser(), result.doc, url, url);
+			const parser = getParser();
+			const controller = new AbortController();
+			const abortMerge = () => controller.abort();
+			ctx.reloadAbort.value = abortMerge;
+			let parsed;
+			try {
+				parsed = await parseWithSectionMerge(parser, result.doc, url, { signal: controller.signal });
+			} finally {
+				if (ctx.reloadAbort.value === abortMerge) ctx.reloadAbort.value = null;
+			}
+			if (controller.signal.aborted) return;
 			if (ctx.runtime.isViewStale(runId)) return;
 			if (parsed) {
 				if (parsed.prevUrl) parsed.prevUrl = normalizeUrlForFetch(parsed.prevUrl);
@@ -18936,9 +19128,11 @@ ul, ol {
 		const cacheProgress = ref({
 			done: 0,
 			total: 0,
+			failed: 0,
 			running: false
 		});
 		const cacheQueue = ref([]);
+		const cacheFailedUrls = ref([]);
 		const cacheAbort = ref(null);
 		const reloadAbort = ref(null);
 		const toc = ref([]);
@@ -19102,9 +19296,10 @@ ul, ol {
 			applyConversionToChapterEntry: applyConversionToChapterEntry$1,
 			getPersistedCachedChapter: getPersistedCachedChapterForCurrentBook
 		});
-		const { startCacheAll, cancelCacheAll } = createCacheAll({
+		const { startCacheAll, cancelCacheAll, retryFailedCache } = createCacheAll({
 			cacheProgress,
 			cacheQueue,
+			cacheFailedUrls,
 			cacheAbort,
 			loadedUrls,
 			cachedContents,
@@ -19114,7 +19309,8 @@ ul, ol {
 			chapters,
 			runtime,
 			restoreCache: restoreCache$1,
-			persistCache: persistCache$1
+			persistCache: persistCache$1,
+			showToast
 		});
 		const tocActions = createTocActions({
 			toc,
@@ -19148,9 +19344,11 @@ ul, ol {
 			cacheProgress.value = {
 				done: 0,
 				total: 0,
+				failed: 0,
 				running: false
 			};
 			cacheQueue.value = [];
+			cacheFailedUrls.value = [];
 		}
 		function clearAllData() {
 			chapters.value = [];
@@ -19454,6 +19652,7 @@ ul, ol {
 			applyTextConversion,
 			startCacheAll,
 			cancelCacheAll,
+			retryFailedCache,
 			loadToc: tocActions.loadToc,
 			rebuildChaptersAround,
 			reloadCurrentChapter,
@@ -19463,136 +19662,6 @@ ul, ol {
 			$reset
 		};
 	});
-	function useVirtualChapters(chapters, options = {}) {
-		const { windowSize = 5, overscan = 1, defaultHeight = 1200 } = options;
-		const heights = ref(new Map());
-		const virtualWindow = ref({
-			start: 0,
-			end: windowSize
-		});
-		const averageHeight = computed(() => {
-			const h = heights.value;
-			if (h.size === 0) return defaultHeight;
-			let sum = 0;
-			for (const v of h.values()) sum += v;
-			return sum / h.size;
-		});
-		const prefixOffsets = computed(() => {
-			const chaps = chapters.value;
-			const avg = averageHeight.value;
-			const h = heights.value;
-			const offsets = new Float64Array(chaps.length + 1);
-			for (let i = 0; i < chaps.length; i++) offsets[i + 1] = offsets[i] + (h.get(chaps[i].chapter.url) ?? avg);
-			return offsets;
-		});
-		const totalHeight = computed(() => {
-			const o = prefixOffsets.value;
-			return o[o.length - 1];
-		});
-		const visibleRange = computed(() => {
-			return {
-				start: Math.max(0, virtualWindow.value.start - overscan),
-				end: Math.min(chapters.value.length, virtualWindow.value.end + overscan)
-			};
-		});
-		const visibleChapters = computed(() => {
-			const { start, end } = visibleRange.value;
-			return chapters.value.slice(start, end).map((entry, idx) => ({
-				...entry,
-				index: start + idx
-			}));
-		});
-		const topSpacer = computed(() => {
-			const o = prefixOffsets.value;
-			const idx = visibleRange.value.start;
-			return idx >= 0 && idx < o.length ? o[idx] : 0;
-		});
-		const bottomSpacer = computed(() => {
-			const o = prefixOffsets.value;
-			const endIdx = visibleRange.value.end;
-			const total = o[o.length - 1];
-			const endOffset = endIdx >= 0 && endIdx < o.length ? o[endIdx] : total;
-			return Math.max(0, total - endOffset);
-		});
-		function setHeight(url, height) {
-			if (heights.value.get(url) !== height) heights.value.set(url, height);
-		}
-		function getOffsetBefore(index) {
-			if (index <= 0) return 0;
-			const o = prefixOffsets.value;
-			if (o.length <= 1) return 0;
-			return o[Math.min(index, o.length - 1)];
-		}
-		function updateWindow(currentIndex) {
-			const halfWindow = Math.floor(windowSize / 2);
-			const nextWindow = {
-				start: Math.max(0, currentIndex - halfWindow),
-				end: Math.min(chapters.value.length, currentIndex + halfWindow + 1)
-			};
-			if (virtualWindow.value.start === nextWindow.start && virtualWindow.value.end === nextWindow.end) return;
-			virtualWindow.value = nextWindow;
-		}
-		function reset() {
-			heights.value.clear();
-			virtualWindow.value = {
-				start: 0,
-				end: windowSize
-			};
-		}
-		watch(chapters, (newChapters, oldChapters = []) => {
-			const previousLength = oldChapters.length;
-			const appendedAtTail = newChapters.length > previousLength && previousLength > 0 && oldChapters.every((entry, index) => {
-				const nextEntry = newChapters[index];
-				return nextEntry?.id === entry.id && nextEntry.chapter.url === entry.chapter.url;
-			});
-			const wasAtTail = previousLength > 0 && virtualWindow.value.end >= previousLength;
-			const currentUrls = new Set(newChapters.map((entry) => entry.chapter.url));
-			for (const url of heights.value.keys()) if (!currentUrls.has(url)) heights.value.delete(url);
-			if (newChapters.length === 0) {
-				virtualWindow.value = {
-					start: 0,
-					end: 0
-				};
-				return;
-			}
-			if (virtualWindow.value.end === 0) {
-				virtualWindow.value = {
-					start: 0,
-					end: Math.min(newChapters.length, windowSize)
-				};
-				return;
-			}
-			if (appendedAtTail && wasAtTail) {
-				virtualWindow.value = {
-					start: Math.max(0, newChapters.length - windowSize),
-					end: newChapters.length
-				};
-				return;
-			}
-			const clampedEnd = Math.min(newChapters.length, virtualWindow.value.end);
-			const clampedStart = Math.min(virtualWindow.value.start, Math.max(0, clampedEnd - windowSize));
-			if (clampedStart !== virtualWindow.value.start || clampedEnd !== virtualWindow.value.end) virtualWindow.value = {
-				start: clampedStart,
-				end: clampedEnd
-			};
-		}, {
-			immediate: true,
-			flush: "sync"
-		});
-		return {
-			virtualWindow,
-			heights,
-			visibleChapters,
-			topSpacer,
-			bottomSpacer,
-			totalHeight,
-			averageHeight,
-			setHeight,
-			getOffsetBefore,
-			updateWindow,
-			reset
-		};
-	}
 	function useEventListener(type, listener, options = {}) {
 		const { target = window, passive = false, capture = false } = options;
 		let attached = false;
@@ -19654,31 +19723,87 @@ ul, ol {
 		}
 		useEventListener("keydown", handleKeyDown, { capture: true });
 	}
+	var STORAGE_KEY = "mnr-reading-positions";
+	var MAX_SAVED_POSITIONS = 200;
+	var positionCache = null;
+	var saveQueue = Promise.resolve();
+	function normalizeChapterUrl(url) {
+		try {
+			const normalized = new URL(url);
+			normalized.hash = "";
+			return normalized.toString();
+		} catch {
+			return url;
+		}
+	}
+	async function loadPositions() {
+		if (positionCache) return positionCache;
+		try {
+			let stored = null;
+			if (typeof GM_getValue !== "undefined") stored = await GM_getValue(STORAGE_KEY, null);
+			else if (typeof localStorage !== "undefined") stored = localStorage.getItem(STORAGE_KEY);
+			if (typeof stored === "string") stored = JSON.parse(stored);
+			positionCache = stored && typeof stored === "object" ? stored : {};
+		} catch (error) {
+			console.error("[MNR] Failed to load reading positions:", error);
+			positionCache = {};
+		}
+		return positionCache;
+	}
+	async function persistPositions(positions) {
+		const serialized = JSON.stringify(positions);
+		if (typeof GM_setValue !== "undefined") await GM_setValue(STORAGE_KEY, serialized);
+		else if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, serialized);
+	}
+	async function getReadingPosition(url) {
+		if (!url) return null;
+		const position = (await loadPositions())[normalizeChapterUrl(url)];
+		if (!position || !Number.isFinite(position.percent)) return null;
+		return Math.max(0, Math.min(100, position.percent));
+	}
+	function saveReadingPosition(url, percent) {
+		if (!url || !Number.isFinite(percent)) return;
+		const normalizedUrl = normalizeChapterUrl(url);
+		const normalizedPercent = Math.max(0, Math.min(100, Math.round(percent * 10) / 10));
+		saveQueue = saveQueue.then(async () => {
+			const positions = await loadPositions();
+			positions[normalizedUrl] = {
+				percent: normalizedPercent,
+				updatedAt: Date.now()
+			};
+			const entries = Object.entries(positions);
+			if (entries.length > MAX_SAVED_POSITIONS) entries.sort(([, a], [, b]) => b.updatedAt - a.updatedAt).slice(MAX_SAVED_POSITIONS).forEach(([key]) => delete positions[key]);
+			await persistPositions(positions);
+		}).catch((error) => console.error("[MNR] Failed to save reading position:", error));
+	}
 	var SCROLL_THROTTLE_MS = 16;
 	var SCROLL_SETTLE_CHECK_MS = 180;
+	var POSITION_SAVE_INTERVAL_MS = 500;
 	function throttle(fn, delay) {
 		let lastCall = 0;
 		let timeoutId = null;
-		return ((...fnArgs) => {
+		return ((...args) => {
 			const now = Date.now();
 			const remaining = delay - (now - lastCall);
 			if (remaining <= 0) {
-				if (timeoutId) {
-					clearTimeout(timeoutId);
-					timeoutId = null;
-				}
-				lastCall = now;
-				fn(...fnArgs);
-			} else if (!timeoutId) timeoutId = setTimeout(() => {
-				lastCall = Date.now();
+				if (timeoutId) clearTimeout(timeoutId);
 				timeoutId = null;
-				fn(...fnArgs);
+				lastCall = now;
+				fn(...args);
+				return;
+			}
+			if (timeoutId) return;
+			timeoutId = setTimeout(() => {
+				timeoutId = null;
+				lastCall = Date.now();
+				fn(...args);
 			}, remaining);
 		});
 	}
 	function useReaderScroll(options) {
-		const { mainRef, chapters, getOffsetBefore, updateWindow, readerStore, autoHideHeader, showControls, isNavigating, scheduleAutoLoadNext } = options;
+		const { mainRef, chapters, chapterRefs, readerStore, autoHideHeader, showControls, isNavigating, scheduleAutoLoadNext } = options;
 		let lastScrollTop = 0;
+		let lastPositionSaveAt = 0;
 		let pendingAutoLoadCheckFrame = null;
 		let pendingScrollSettleTimer = null;
 		function queuePostLayoutAutoLoadCheck() {
@@ -19699,45 +19824,74 @@ ul, ol {
 				scheduleAutoLoadNext("settled");
 			}, SCROLL_SETTLE_CHECK_MS);
 		}
-		function findChapterIndexByOffset(offset) {
-			const chapterCount = chapters.value.length;
-			if (chapterCount === 0) return -1;
-			const target = Math.max(0, offset);
-			let low = 0;
-			let high = chapterCount - 1;
-			let candidate = 0;
-			while (low <= high) {
-				const mid = Math.floor((low + high) / 2);
-				if (getOffsetBefore(mid) <= target) {
-					candidate = mid;
-					low = mid + 1;
-				} else high = mid - 1;
+		function findCurrentChapter(mainEl) {
+			const viewportCenter = mainEl.getBoundingClientRect().top + mainEl.clientHeight / 2;
+			let nearest = null;
+			for (let index = 0; index < chapters.value.length; index++) {
+				const url = chapters.value[index]?.chapter.url;
+				const element = url ? chapterRefs.get(url) : void 0;
+				if (!element) continue;
+				const rect = element.getBoundingClientRect();
+				if (rect.top <= viewportCenter && rect.bottom >= viewportCenter) return {
+					index,
+					element
+				};
+				const distance = Math.min(Math.abs(rect.top - viewportCenter), Math.abs(rect.bottom - viewportCenter));
+				if (!nearest || distance < nearest.distance) nearest = {
+					index,
+					element,
+					distance
+				};
 			}
-			return Math.min(candidate, chapterCount - 1);
+			return nearest ? {
+				index: nearest.index,
+				element: nearest.element
+			} : null;
+		}
+		function getChapterPercent(mainEl, chapterEl) {
+			const mainRect = mainEl.getBoundingClientRect();
+			const chapterRect = chapterEl.getBoundingClientRect();
+			const chapterTop = mainEl.scrollTop + chapterRect.top - mainRect.top;
+			const relativeTop = Math.max(0, mainEl.scrollTop - chapterTop);
+			if (chapterEl.offsetHeight <= mainEl.clientHeight) return 100;
+			const scrollableHeight = Math.max(1, chapterEl.offsetHeight - mainEl.clientHeight * .5);
+			return Math.max(0, Math.min(100, relativeTop / scrollableHeight * 100));
+		}
+		function saveCurrentPosition(url, percent) {
+			const now = Date.now();
+			if (now - lastPositionSaveAt < POSITION_SAVE_INTERVAL_MS) return;
+			lastPositionSaveAt = now;
+			saveReadingPosition(url, percent);
 		}
 		function handleScrollCore() {
 			const mainEl = mainRef.value;
 			if (!mainEl) return;
-			const currentScrollY = mainEl.scrollTop;
-			const scrollHeight = mainEl.scrollHeight - mainEl.clientHeight;
-			const overallPercent = scrollHeight > 0 ? Math.round(currentScrollY / scrollHeight * 100) : 100;
+			const currentScrollTop = mainEl.scrollTop;
 			if (isNavigating.value) {
-				readerStore.updateScroll(overallPercent);
+				const currentIndex = Number(readerStore.currentChapterIndex ?? 0);
+				const currentUrl = chapters.value[currentIndex]?.chapter.url;
+				const currentElement = currentUrl ? chapterRefs.get(currentUrl) : void 0;
+				const fallbackHeight = mainEl.scrollHeight - mainEl.clientHeight;
+				const percent = currentElement ? getChapterPercent(mainEl, currentElement) : fallbackHeight > 0 ? currentScrollTop / fallbackHeight * 100 : 100;
+				readerStore.updateScroll(percent);
 				return;
 			}
 			if (autoHideHeader.value) {
-				if (currentScrollY > lastScrollTop && currentScrollY > 100) showControls.value = false;
-				else if (currentScrollY < lastScrollTop - 20) showControls.value = true;
+				if (currentScrollTop > lastScrollTop && currentScrollTop > 100) showControls.value = false;
+				else if (currentScrollTop < lastScrollTop - 20) showControls.value = true;
 			}
-			lastScrollTop = currentScrollY;
-			const currentChapterIdx = findChapterIndexByOffset(currentScrollY + mainEl.clientHeight / 2);
-			if (currentChapterIdx === -1) {
-				readerStore.updateScroll(overallPercent);
-				return;
+			lastScrollTop = currentScrollTop;
+			const current = findCurrentChapter(mainEl);
+			if (current) {
+				const percent = getChapterPercent(mainEl, current.element);
+				if (!isNavigating.value) readerStore.setCurrentChapter(current.index);
+				readerStore.updateScroll(percent);
+				const url = chapters.value[current.index]?.chapter.url;
+				if (url) saveCurrentPosition(url, percent);
+			} else {
+				const scrollableHeight = mainEl.scrollHeight - mainEl.clientHeight;
+				readerStore.updateScroll(scrollableHeight > 0 ? currentScrollTop / scrollableHeight * 100 : 100);
 			}
-			readerStore.setCurrentChapter(currentChapterIdx);
-			updateWindow(currentChapterIdx);
-			readerStore.updateScroll(overallPercent);
 			scheduleAutoLoadNext("scroll");
 			queuePostLayoutAutoLoadCheck();
 			queueScrollSettledAutoLoadCheck();
@@ -20012,7 +20166,7 @@ ul, ol {
 	var SCROLL_BOUNDARY_EPSILON_PX$1 = 4;
 	var SMOOTH_NAVIGATION_LOCK_MS = 650;
 	function useChapterNavigation(options) {
-		const { mainRef, chapters, chapterRefs, readerStore, isNavigating, isLoadingPrev, isLoadingNext, hasPrev, hasNext, topSpacer, setChapterHeight, updateWindow } = options;
+		const { mainRef, chapters, chapterRefs, readerStore, isNavigating, isLoadingPrev, isLoadingNext, hasPrev, hasNext } = options;
 		let isLoadingPrevLocal = false;
 		function isAtTop(mainEl) {
 			return mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX$1;
@@ -20057,7 +20211,6 @@ ul, ol {
 			if (!mainEl) return;
 			if (index < 0 || index >= chapters.value.length) return;
 			isNavigating.value = true;
-			updateWindow(index);
 			await nextTick();
 			await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
 			const url = chapters.value[index]?.chapter.url;
@@ -20090,10 +20243,7 @@ ul, ol {
 			isLoadingPrevLocal = true;
 			try {
 				const oldScrollTop = mainEl.scrollTop;
-				const oldTopSpacer = topSpacer.value;
 				if (await readerStore.loadPrevChapter("manual")) {
-					await nextTick();
-					updateWindow(readerStore.currentChapterIndex);
 					await nextTick();
 					await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
 					if (jumpToStart) {
@@ -20101,14 +20251,7 @@ ul, ol {
 						return;
 					}
 					const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
-					if (chapterEls.length > 0) {
-						const newChapterHeight = chapterEls[0].offsetHeight;
-						const newEntry = readerStore.chapters[0];
-						if (newEntry) setChapterHeight(newEntry.chapter.url, newChapterHeight);
-						await nextTick();
-						const spacerDelta = topSpacer.value - oldTopSpacer;
-						mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
-					}
+					if (chapterEls.length > 0) mainEl.scrollTop = oldScrollTop + chapterEls[0].offsetHeight;
 				}
 			} finally {
 				isLoadingPrevLocal = false;
@@ -20133,11 +20276,11 @@ ul, ol {
 			const chaptersCount = readerStore.chapters.length;
 			if (isNavigating.value) return;
 			if (direction === "prev") {
-				if (currentIdx > 0) jumpToChapter(currentIdx - 1);
+				if (currentIdx > 0) await jumpToChapter(currentIdx - 1);
 				else if (hasPrev.value && !isLoadingPrev.value) {
 					if (await readerStore.loadPrevChapter("manual")) globalThis.requestAnimationFrame(() => jumpToChapter(0, "auto"));
 				} else if (!hasPrev.value) readerStore.showToast(readerStore.getVipBlockedToast("prev") || "已经是第一章了", "info");
-			} else if (currentIdx < chaptersCount - 1) jumpToChapter(currentIdx + 1);
+			} else if (currentIdx < chaptersCount - 1) await jumpToChapter(currentIdx + 1);
 			else if (hasNext.value && !isLoadingNext.value) {
 				if (await readerStore.loadNextChapter("manual")) globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
 			} else if (!hasNext.value) readerStore.showToast(readerStore.getVipBlockedToast("next") || "已经是最后一章了", "info");
@@ -20200,23 +20343,30 @@ ul, ol {
 			settingsVisible.value = true;
 			showControls.value = false;
 		}
+		function closeSettings() {
+			settingsVisible.value = false;
+			showControls.value = true;
+		}
 		function handleEscape() {
 			if (drawerOpen.value) drawerOpen.value = false;
-			else if (settingsVisible.value) settingsVisible.value = false;
+			else if (settingsVisible.value) closeSettings();
 		}
 		function toggleSettings() {
-			settingsVisible.value = !settingsVisible.value;
+			if (settingsVisible.value) closeSettings();
+			else openSettings();
 		}
 		return {
 			settingsVisible,
 			drawerOpen,
 			toggleDrawer,
 			openSettings,
+			closeSettings,
 			handleEscape,
 			toggleSettings
 		};
 	}
-	var _hoisted_1$6 = {
+	var _hoisted_1$6 = ["aria-valuenow"];
+	var _hoisted_2$4 = {
 		key: 0,
 		class: "mnr-progress-text"
 	};
@@ -20264,41 +20414,31 @@ ul, ol {
 				if (hideTimeout) clearTimeout(hideTimeout);
 			});
 			return (_ctx, _cache) => {
-				return openBlock(), createElementBlock("div", { class: normalizeClass(["mnr-progress", { hidden: !visible.value }]) }, [createBaseVNode("div", {
+				return openBlock(), createElementBlock("div", {
+					class: normalizeClass(["mnr-progress", { hidden: !visible.value }]),
+					role: "progressbar",
+					"aria-label": "本章阅读进度",
+					"aria-valuemin": "0",
+					"aria-valuemax": "100",
+					"aria-valuenow": percent.value
+				}, [createBaseVNode("div", {
 					class: "mnr-progress-bar",
 					style: normalizeStyle({ width: `${percent.value}%` })
-				}, null, 4), __props.showText ? (openBlock(), createElementBlock("span", _hoisted_1$6, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)], 2);
+				}, null, 4), __props.showText ? (openBlock(), createElementBlock("span", _hoisted_2$4, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)], 10, _hoisted_1$6);
 			};
 		}
-	}), [["__scopeId", "data-v-16ecd1aa"]]);
+	}), [["__scopeId", "data-v-fb6f172c"]]);
 	var _hoisted_1$5 = {
 		key: 0,
 		class: "mnr-floating-toolbar"
 	};
-	var _hoisted_2$4 = { class: "mnr-fab-group" };
-	var _hoisted_3$3 = ["disabled"];
-	var _hoisted_4$3 = { class: "mnr-icon" };
-	var _hoisted_5$3 = {
-		key: 0,
-		class: "mnr-fab-badge"
-	};
 	var FloatingToolbar_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "FloatingToolbar",
-		props: {
-			cacheRunning: { type: Boolean },
-			cacheDone: {},
-			cacheTotal: {},
-			cacheDisabled: { type: Boolean },
-			visible: {
-				type: Boolean,
-				default: true
-			}
-		},
-		emits: [
-			"toggleDrawer",
-			"toggleCache",
-			"openSettings"
-		],
+		props: { visible: {
+			type: Boolean,
+			default: true
+		} },
+		emits: ["toggleDrawer", "openSettings"],
 		setup(__props) {
 			return (_ctx, _cache) => {
 				return openBlock(), createBlock(Transition, { name: "mnr-fade-slide" }, {
@@ -20307,23 +20447,25 @@ ul, ol {
 						title: "目录 (Tab)",
 						"aria-label": "打开目录",
 						onClick: _cache[0] || (_cache[0] = withModifiers(($event) => _ctx.$emit("toggleDrawer"), ["stop"]))
-					}, [..._cache[3] || (_cache[3] = [createBaseVNode("span", { class: "mnr-icon" }, "☰", -1)])]), createBaseVNode("div", _hoisted_2$4, [createBaseVNode("button", {
-						class: "mnr-fab",
-						title: "缓存本书",
-						"aria-label": "缓存管理",
-						disabled: __props.cacheDisabled,
-						onClick: _cache[1] || (_cache[1] = withModifiers(($event) => _ctx.$emit("toggleCache"), ["stop"]))
-					}, [createBaseVNode("span", _hoisted_4$3, toDisplayString(__props.cacheRunning ? "⏹" : "☁"), 1), __props.cacheTotal > 0 ? (openBlock(), createElementBlock("span", _hoisted_5$3, toDisplayString(__props.cacheDone) + "/" + toDisplayString(__props.cacheTotal), 1)) : createCommentVNode("", true)], 8, _hoisted_3$3), createBaseVNode("button", {
+					}, [..._cache[2] || (_cache[2] = [createBaseVNode("svg", {
+						class: "mnr-icon",
+						viewBox: "0 0 24 24",
+						"aria-hidden": "true"
+					}, [createBaseVNode("path", { d: "M5 6h14M5 12h14M5 18h14" })], -1)])]), createBaseVNode("button", {
 						class: "mnr-fab",
 						title: "设置 (S)",
 						"aria-label": "打开设置",
-						onClick: _cache[2] || (_cache[2] = withModifiers(($event) => _ctx.$emit("openSettings"), ["stop"]))
-					}, [..._cache[4] || (_cache[4] = [createBaseVNode("span", { class: "mnr-icon" }, "⚙", -1)])])])])) : createCommentVNode("", true)]),
+						onClick: _cache[1] || (_cache[1] = withModifiers(($event) => _ctx.$emit("openSettings"), ["stop"]))
+					}, [..._cache[3] || (_cache[3] = [createBaseVNode("svg", {
+						class: "mnr-icon",
+						viewBox: "0 0 24 24",
+						"aria-hidden": "true"
+					}, [createBaseVNode("path", { d: "M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0-5 1.1 2.2 2.4.5 1.8-1.6 2.1 2.1-1.6 1.8.5 2.4 2.2 1.1-1.1 2.9-2.2 1.1-.5 2.4 1.6 1.8-2.1 2.1-1.8-1.6-2.4.5L12 20.5l-1.1-2.2-2.4-.5-1.8 1.6-2.1-2.1 1.6-1.8-.5-2.4L3.5 12l1.1-2.9 2.2-1.1.5-2.4-1.6-1.8 2.1-2.1 1.8 1.6 2.4-.5L12 3.5Z" })], -1)])])])) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
 		}
-	}), [["__scopeId", "data-v-dffc57fa"]]);
+	}), [["__scopeId", "data-v-d9051526"]]);
 	var MnrSpinner_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "MnrSpinner",
 		props: { size: { default: "medium" } },
@@ -20355,7 +20497,7 @@ ul, ol {
 				});
 			};
 		}
-	}), [["__scopeId", "data-v-83d04cea"]]);
+	}), [["__scopeId", "data-v-baea3e69"]]);
 	var _hoisted_1$3 = {
 		key: 0,
 		class: "mnr-loading-overlay",
@@ -20380,46 +20522,61 @@ ul, ol {
 			};
 		}
 	}), [["__scopeId", "data-v-01971069"]]);
-	var _hoisted_1$2 = { class: "mnr-drawer-header" };
-	var _hoisted_2$2 = { class: "mnr-drawer-title" };
-	var _hoisted_3$2 = {
-		key: 0,
-		class: "mnr-drawer-loading"
-	};
+	var _hoisted_1$2 = ["aria-hidden", "inert"];
+	var _hoisted_2$2 = { class: "mnr-drawer-header" };
+	var _hoisted_3$2 = { class: "mnr-drawer-heading" };
 	var _hoisted_4$2 = {
-		key: 1,
-		class: "mnr-drawer-empty"
+		id: "mnr-drawer-title",
+		class: "mnr-drawer-title"
 	};
 	var _hoisted_5$2 = {
 		key: 0,
-		class: "mnr-cache-progress-bar"
+		class: "mnr-drawer-position"
 	};
-	var _hoisted_6$2 = { class: "mnr-cache-progress-text" };
-	var _hoisted_7$2 = { class: "mnr-cache-progress-track" };
-	var _hoisted_8$2 = {
+	var _hoisted_6$2 = {
+		key: 0,
+		class: "mnr-drawer-search"
+	};
+	var _hoisted_7$2 = { class: "mnr-drawer-tools" };
+	var _hoisted_8$2 = { key: 0 };
+	var _hoisted_9$2 = {
 		key: 1,
+		class: "mnr-cache-progress-track",
+		"aria-hidden": "true"
+	};
+	var _hoisted_10$2 = {
+		key: 2,
 		class: "mnr-cache-stats"
 	};
-	var _hoisted_9$1 = {
-		key: 0,
-		class: "mnr-stat-persisted"
-	};
-	var _hoisted_10$1 = {
-		key: 1,
-		class: "mnr-stat-session"
-	};
-	var _hoisted_11$1 = { class: "mnr-chapter-list" };
-	var _hoisted_12$1 = ["onClick"];
+	var _hoisted_11$2 = { key: 0 };
+	var _hoisted_12$1 = { key: 1 };
 	var _hoisted_13$1 = {
-		key: 0,
-		class: "mnr-persisted-icon",
-		title: "已持久化"
+		key: 3,
+		class: "mnr-drawer-state"
 	};
 	var _hoisted_14$1 = {
-		key: 1,
-		class: "mnr-cached-icon",
-		title: "临时缓存"
+		key: 4,
+		class: "mnr-drawer-state"
 	};
+	var _hoisted_15$1 = {
+		key: 5,
+		class: "mnr-drawer-state"
+	};
+	var _hoisted_16$1 = ["aria-current", "onClick"];
+	var _hoisted_17$1 = {
+		key: 0,
+		class: "mnr-cache-mark",
+		"aria-label": "已离线缓存"
+	};
+	var _hoisted_18$1 = {
+		key: 1,
+		class: "mnr-cache-mark",
+		"aria-label": "已临时缓存"
+	};
+	var _hoisted_19$1 = { class: "mnr-chapter-title-text" };
+	var SEARCH_THRESHOLD = 50;
+	var ROW_HEIGHT = 44;
+	var OVERSCAN = 8;
 	var ChapterDrawer_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "ChapterDrawer",
 		props: {
@@ -20429,125 +20586,234 @@ ul, ol {
 			loading: { type: Boolean },
 			cacheProgress: {}
 		},
-		emits: ["close", "select"],
+		emits: [
+			"close",
+			"select",
+			"cacheAll",
+			"retryCache"
+		],
 		setup(__props, { emit: __emit }) {
 			const props = __props;
 			const emit = __emit;
 			const contentRef = ref(null);
-			const activeRef = ref(null);
-			const persistedCount = computed(() => props.chapters.filter((ch) => ch.isPersisted).length);
-			const sessionCount = computed(() => props.chapters.filter((ch) => ch.isCached && !ch.isPersisted).length);
-			const scrollActiveIntoView = async (behavior = "auto") => {
+			const drawerRef = ref(null);
+			const closeButtonRef = ref(null);
+			const query = ref("");
+			const scrollTop = ref(0);
+			const viewportHeight = ref(600);
+			let previouslyFocused = null;
+			const filteredChapters = computed(() => {
+				const needle = query.value.trim().toLocaleLowerCase();
+				if (!needle) return props.chapters;
+				return props.chapters.filter((chapter) => chapter.title.toLocaleLowerCase().includes(needle));
+			});
+			const currentChapterNumber = computed(() => {
+				const index = props.chapters.findIndex((chapter) => chapter.isCurrent);
+				return index >= 0 ? index + 1 : 0;
+			});
+			const persistedCount = computed(() => props.chapters.filter((chapter) => chapter.isPersisted).length);
+			const sessionCount = computed(() => props.chapters.filter((chapter) => chapter.isCached && !chapter.isPersisted).length);
+			const cachePercent = computed(() => {
+				if (props.cacheProgress.total <= 0) return 0;
+				return Math.min(100, props.cacheProgress.done / props.cacheProgress.total * 100);
+			});
+			const startIndex = computed(() => Math.max(0, Math.floor(scrollTop.value / ROW_HEIGHT) - OVERSCAN));
+			const visibleCount = computed(() => Math.ceil(viewportHeight.value / ROW_HEIGHT) + OVERSCAN * 2);
+			const endIndex = computed(() => Math.min(filteredChapters.value.length, startIndex.value + visibleCount.value));
+			const visibleChapters = computed(() => filteredChapters.value.slice(startIndex.value, endIndex.value));
+			const topSpacer = computed(() => startIndex.value * ROW_HEIGHT);
+			const bottomSpacer = computed(() => Math.max(0, (filteredChapters.value.length - endIndex.value) * ROW_HEIGHT));
+			function handleScroll() {
+				const content = contentRef.value;
+				if (!content) return;
+				scrollTop.value = content.scrollTop;
+				viewportHeight.value = content.clientHeight || 600;
+			}
+			function resetVirtualWindow() {
+				scrollTop.value = 0;
+				if (contentRef.value) contentRef.value.scrollTop = 0;
+			}
+			async function scrollCurrentIntoView() {
 				await nextTick();
-				if (!props.isOpen || props.loading) return;
-				const container = contentRef.value;
-				if (!container) return;
-				const active = container.querySelector("li.active") || activeRef.value;
-				if (!active) return;
-				activeRef.value = active;
-				const targetTop = active.offsetTop - container.clientHeight / 2 + active.offsetHeight / 2;
-				container.scrollTo({
-					top: Math.max(targetTop, 0),
-					behavior
-				});
-			};
-			watch(() => props.isOpen, async (open) => {
-				if (open) await scrollActiveIntoView("smooth");
-			}, { flush: "post" });
-			watch(() => [props.loading, props.chapters.length], async () => {
-				await scrollActiveIntoView();
-			}, { flush: "post" });
-			watch(activeRef, async () => {
-				await scrollActiveIntoView();
-			}, { flush: "post" });
+				const content = contentRef.value;
+				if (!content || query.value) return;
+				const currentIndex = props.chapters.findIndex((chapter) => chapter.isCurrent);
+				if (currentIndex < 0) return;
+				const targetTop = Math.max(0, currentIndex * ROW_HEIGHT - content.clientHeight / 2 + ROW_HEIGHT / 2);
+				content.scrollTop = targetTop;
+				scrollTop.value = targetTop;
+				viewportHeight.value = content.clientHeight || 600;
+			}
 			function handleSelect(entry) {
 				emit("select", entry);
 				emit("close");
 			}
+			function trapFocus(event) {
+				const drawer = drawerRef.value;
+				if (!drawer) return;
+				const focusable = Array.from(drawer.querySelectorAll("button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === document.activeElement);
+				if (focusable.length === 0) return;
+				const first = focusable[0];
+				const last = focusable[focusable.length - 1];
+				if (event.shiftKey && document.activeElement === first) {
+					event.preventDefault();
+					last.focus();
+				} else if (!event.shiftKey && document.activeElement === last) {
+					event.preventDefault();
+					first.focus();
+				}
+			}
+			watch(() => props.isOpen, async (open) => {
+				if (open) {
+					previouslyFocused = document.activeElement;
+					query.value = "";
+					await scrollCurrentIntoView();
+					closeButtonRef.value?.focus({ preventScroll: true });
+					return;
+				}
+				previouslyFocused?.focus?.({ preventScroll: true });
+				previouslyFocused = null;
+			}, { flush: "post" });
+			watch(() => [
+				props.loading,
+				props.chapters.length,
+				currentChapterNumber.value
+			], () => {
+				if (props.isOpen) scrollCurrentIntoView();
+			}, { flush: "post" });
 			return (_ctx, _cache) => {
 				return openBlock(), createElementBlock(Fragment, null, [createVNode(Transition, { name: "mnr-fade" }, {
 					default: withCtx(() => [__props.isOpen ? (openBlock(), createElementBlock("div", {
 						key: 0,
 						class: "mnr-drawer-overlay",
-						onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
+						onClick: _cache[0] || (_cache[0] = ($event) => emit("close"))
 					})) : createCommentVNode("", true)]),
 					_: 1
-				}), createBaseVNode("aside", { class: normalizeClass(["mnr-drawer", { open: __props.isOpen }]) }, [createBaseVNode("div", _hoisted_1$2, [createBaseVNode("h3", _hoisted_2$2, toDisplayString(__props.bookTitle || "目录"), 1), createBaseVNode("button", {
-					class: "mnr-drawer-close",
-					title: "关闭",
-					onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("close"))
-				}, "✕")]), __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$2, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[2] || (_cache[2] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_4$2, [..._cache[3] || (_cache[3] = [createBaseVNode("p", null, "暂无目录", -1)])])) : (openBlock(), createElementBlock("div", {
-					key: 2,
-					ref_key: "contentRef",
-					ref: contentRef,
-					class: "mnr-drawer-content"
-				}, [__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_5$2, [createBaseVNode("div", _hoisted_6$2, " 缓存中: " + toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1), createBaseVNode("div", _hoisted_7$2, [createBaseVNode("div", {
-					class: "mnr-cache-progress-fill",
-					style: normalizeStyle({ width: `${__props.cacheProgress.total > 0 ? __props.cacheProgress.done / __props.cacheProgress.total * 100 : 0}%` })
-				}, null, 4)])])) : persistedCount.value > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_8$2, [persistedCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_9$1, [_cache[4] || (_cache[4] = createBaseVNode("span", { class: "mnr-persisted-icon" }, "✓", -1)), createTextVNode(" 已保存 " + toDisplayString(persistedCount.value) + " 章 ", 1)])) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_10$1, [_cache[5] || (_cache[5] = createBaseVNode("span", { class: "mnr-cached-icon" }, "○", -1)), createTextVNode(" 临时 " + toDisplayString(sessionCount.value) + " 章 ", 1)])) : createCommentVNode("", true)])) : createCommentVNode("", true), createBaseVNode("ul", _hoisted_11$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(__props.chapters, (ch) => {
-					return openBlock(), createElementBlock("li", {
-						key: ch.url,
-						ref_for: true,
-						ref: (el) => {
-							if (ch.isCurrent) activeRef.value = el;
-						},
-						class: normalizeClass({
-							active: ch.isCurrent,
-							cached: ch.isCached && !ch.isPersisted && !ch.isCurrent,
-							persisted: ch.isPersisted && !ch.isCurrent
-						}),
-						onClick: ($event) => handleSelect(ch)
-					}, [ch.isPersisted ? (openBlock(), createElementBlock("span", _hoisted_13$1, "✓")) : ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_14$1, "○")) : createCommentVNode("", true), createTextVNode(" " + toDisplayString(ch.title), 1)], 10, _hoisted_12$1);
-				}), 128))])], 512))], 2)], 64);
+				}), createBaseVNode("aside", {
+					ref_key: "drawerRef",
+					ref: drawerRef,
+					class: normalizeClass(["mnr-drawer", { open: __props.isOpen }]),
+					"aria-hidden": !__props.isOpen,
+					inert: !__props.isOpen,
+					role: "dialog",
+					"aria-modal": "true",
+					"aria-labelledby": "mnr-drawer-title",
+					onKeydown: [_cache[5] || (_cache[5] = withKeys(withModifiers(($event) => emit("close"), ["stop"]), ["esc"])), withKeys(trapFocus, ["tab"])]
+				}, [
+					createBaseVNode("header", _hoisted_2$2, [createBaseVNode("div", _hoisted_3$2, [createBaseVNode("h3", _hoisted_4$2, toDisplayString(__props.bookTitle || "目录"), 1), currentChapterNumber.value ? (openBlock(), createElementBlock("span", _hoisted_5$2, " 第 " + toDisplayString(currentChapterNumber.value) + " / " + toDisplayString(__props.chapters.length) + " 章 ", 1)) : createCommentVNode("", true)]), createBaseVNode("button", {
+						ref_key: "closeButtonRef",
+						ref: closeButtonRef,
+						class: "mnr-drawer-close",
+						"aria-label": "关闭目录",
+						onClick: _cache[1] || (_cache[1] = ($event) => emit("close"))
+					}, [..._cache[6] || (_cache[6] = [createBaseVNode("svg", {
+						viewBox: "0 0 24 24",
+						"aria-hidden": "true"
+					}, [createBaseVNode("path", { d: "m6 6 12 12M18 6 6 18" })], -1)])], 512)]),
+					__props.chapters.length > SEARCH_THRESHOLD ? (openBlock(), createElementBlock("div", _hoisted_6$2, [_cache[7] || (_cache[7] = createBaseVNode("label", {
+						class: "mnr-visually-hidden",
+						for: "mnr-chapter-search"
+					}, "搜索章节", -1)), withDirectives(createBaseVNode("input", {
+						id: "mnr-chapter-search",
+						"onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => query.value = $event),
+						type: "search",
+						placeholder: "搜索章节",
+						autocomplete: "off",
+						onInput: resetVirtualWindow
+					}, null, 544), [[
+						vModelText,
+						query.value,
+						void 0,
+						{ trim: true }
+					]])])) : createCommentVNode("", true),
+					createBaseVNode("div", _hoisted_7$2, [createBaseVNode("button", {
+						class: "mnr-cache-action",
+						onClick: _cache[3] || (_cache[3] = ($event) => emit("cacheAll"))
+					}, [createTextVNode(toDisplayString(__props.cacheProgress.running ? "取消缓存" : "离线缓存") + " ", 1), __props.cacheProgress.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1)) : createCommentVNode("", true)]), !__props.cacheProgress.running && __props.cacheProgress.failed > 0 ? (openBlock(), createElementBlock("button", {
+						key: 0,
+						class: "mnr-cache-action",
+						onClick: _cache[4] || (_cache[4] = ($event) => emit("retryCache"))
+					}, " 重试失败 " + toDisplayString(__props.cacheProgress.failed) + " 章 ", 1)) : createCommentVNode("", true)]),
+					__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_9$2, [createBaseVNode("div", {
+						class: "mnr-cache-progress-fill",
+						style: normalizeStyle({ width: `${cachePercent.value}%` })
+					}, null, 4)])) : createCommentVNode("", true),
+					persistedCount.value > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_10$2, [persistedCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_11$2, "已保存 " + toDisplayString(persistedCount.value) + " 章", 1)) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_12$1, "临时 " + toDisplayString(sessionCount.value) + " 章", 1)) : createCommentVNode("", true)])) : createCommentVNode("", true),
+					__props.loading ? (openBlock(), createElementBlock("div", _hoisted_13$1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[8] || (_cache[8] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_14$1, "暂无目录")) : filteredChapters.value.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_15$1, "没有匹配的章节")) : (openBlock(), createElementBlock("div", {
+						key: 6,
+						ref_key: "contentRef",
+						ref: contentRef,
+						class: "mnr-drawer-content",
+						onScrollPassive: handleScroll
+					}, [createBaseVNode("ul", {
+						class: "mnr-chapter-list",
+						style: normalizeStyle({
+							paddingTop: `${topSpacer.value}px`,
+							paddingBottom: `${bottomSpacer.value}px`
+						})
+					}, [(openBlock(true), createElementBlock(Fragment, null, renderList(visibleChapters.value, (ch) => {
+						return openBlock(), createElementBlock("li", { key: ch.url }, [createBaseVNode("button", {
+							class: normalizeClass(["mnr-chapter-button", {
+								active: ch.isCurrent,
+								cached: ch.isCached && !ch.isPersisted && !ch.isCurrent,
+								persisted: ch.isPersisted && !ch.isCurrent
+							}]),
+							"aria-current": ch.isCurrent ? "page" : void 0,
+							onClick: ($event) => handleSelect(ch)
+						}, [ch.isPersisted ? (openBlock(), createElementBlock("span", _hoisted_17$1, "✓")) : ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_18$1, "○")) : createCommentVNode("", true), createBaseVNode("span", _hoisted_19$1, toDisplayString(ch.title), 1)], 10, _hoisted_16$1)]);
+					}), 128))], 4)], 544))
+				], 42, _hoisted_1$2)], 64);
 			};
 		}
-	}), [["__scopeId", "data-v-fe73b01a"]]);
-	var _hoisted_1$1 = { class: "mnr-settings-panel" };
+	}), [["__scopeId", "data-v-666ac5a5"]]);
+	var _hoisted_1$1 = ["onKeydown"];
 	var _hoisted_2$1 = { class: "mnr-settings-header" };
 	var _hoisted_3$1 = { class: "mnr-settings-content" };
 	var _hoisted_4$1 = { class: "mnr-settings-section" };
 	var _hoisted_5$1 = { class: "mnr-theme-grid" };
-	var _hoisted_6$1 = ["onClick"];
+	var _hoisted_6$1 = ["aria-pressed", "onClick"];
 	var _hoisted_7$1 = { class: "mnr-settings-section" };
 	var _hoisted_8$1 = { class: "mnr-slider-row" };
-	var _hoisted_9 = ["value"];
-	var _hoisted_10 = { class: "mnr-slider-value" };
-	var _hoisted_11 = { class: "mnr-settings-section" };
+	var _hoisted_9$1 = ["value"];
+	var _hoisted_10$1 = { class: "mnr-slider-value" };
+	var _hoisted_11$1 = { class: "mnr-settings-section" };
 	var _hoisted_12 = { class: "mnr-slider-row" };
 	var _hoisted_13 = ["value"];
 	var _hoisted_14 = { class: "mnr-slider-value" };
-	var _hoisted_15 = { class: "mnr-settings-section" };
+	var _hoisted_15 = { class: "mnr-settings-section mnr-settings-section--desktop" };
 	var _hoisted_16 = { class: "mnr-slider-row" };
 	var _hoisted_17 = ["value"];
 	var _hoisted_18 = { class: "mnr-slider-value" };
 	var _hoisted_19 = { class: "mnr-settings-section" };
 	var _hoisted_20 = { class: "mnr-settings-section" };
 	var _hoisted_21 = { class: "mnr-segmented-control" };
-	var _hoisted_22 = {
-		key: 0,
-		class: "mnr-hint"
-	};
-	var _hoisted_23 = { class: "mnr-settings-section" };
-	var _hoisted_24 = { class: "mnr-switch-row" };
+	var _hoisted_22 = ["aria-pressed", "onClick"];
+	var _hoisted_23 = { class: "mnr-more-settings" };
+	var _hoisted_24 = { class: "mnr-more-content" };
 	var _hoisted_25 = { class: "mnr-switch-row" };
 	var _hoisted_26 = { class: "mnr-switch-row" };
 	var _hoisted_27 = { class: "mnr-switch-row" };
-	var _hoisted_28 = { class: "mnr-settings-section" };
-	var _hoisted_29 = { class: "mnr-segmented-control" };
-	var _hoisted_30 = { class: "mnr-settings-section" };
-	var _hoisted_31 = { class: "mnr-action-buttons" };
-	var _hoisted_32 = { class: "mnr-cache-row" };
-	var _hoisted_33 = {
+	var _hoisted_28 = { class: "mnr-action-buttons" };
+	var _hoisted_29 = {
 		key: 0,
 		class: "mnr-cache-progress"
 	};
-	var _hoisted_34 = { class: "mnr-cache-count" };
 	var SettingsPanel_default = defineComponent({
 		__name: "SettingsPanel",
-		props: { visible: { type: Boolean } },
+		props: {
+			visible: { type: Boolean },
+			siteAutoEnable: {
+				type: Boolean,
+				default: true
+			}
+		},
 		emits: [
 			"close",
 			"cacheAll",
+			"retryCache",
+			"copyDiagnostics",
+			"exit",
+			"siteAutoEnableChange",
 			"textConversionChange"
 		],
 		setup(__props, { emit: __emit }) {
@@ -20555,37 +20821,80 @@ ul, ol {
 			const emit = __emit;
 			const configStore = useConfigStore();
 			const readerStore = useReaderStore();
-			const themes = THEMES;
+			const panelRef = ref(null);
+			const closeButtonRef = ref(null);
+			let previouslyFocused = null;
+			const visibleThemeIds = new Set([
+				"system",
+				"light",
+				"dark",
+				"sepia"
+			]);
+			const conversionOptions = [
+				{
+					label: "原文",
+					value: "none"
+				},
+				{
+					label: "简体",
+					value: "sc"
+				},
+				{
+					label: "繁體",
+					value: "tc"
+				}
+			];
 			const currentTheme = computed(() => configStore.themeId);
+			const themes = computed(() => {
+				const visible = THEMES.filter((theme) => visibleThemeIds.has(theme.id));
+				const legacyCurrent = THEMES.find((theme) => theme.id === currentTheme.value && !visibleThemeIds.has(theme.id));
+				return legacyCurrent ? [...visible, legacyCurrent] : visible;
+			});
+			const cacheProgress = computed(() => readerStore.cacheProgress);
+			const persistedCount = computed(() => readerStore.persistedUrls.size);
 			const fontSize = ref(configStore.reading.fontSize);
 			const lineHeight = ref(configStore.reading.lineHeight);
 			const maxWidth = ref(configStore.reading.maxWidth);
 			const fontFamily = ref(configStore.reading.fontFamily);
 			const textConversion = ref(configStore.reading.textConversion);
-			const keyboardNav = ref(configStore.behavior.keyboardNavigation);
-			const swipeGestures = ref(configStore.behavior.swipeGestures);
-			const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 			const showProgress = ref(configStore.behavior.showProgress);
-			const protectionMode = ref(configStore.protection.mode);
-			const cacheProgress = computed(() => readerStore.cacheProgress);
-			const persistedCount = computed(() => readerStore.persistedUrls.size);
+			const preloadNext = ref(configStore.behavior.preloadNext);
+			const siteAutoEnable = ref(props.siteAutoEnable);
+			function closePanel() {
+				emit("close");
+			}
+			function trapFocus(event) {
+				const panel = panelRef.value;
+				if (!panel) return;
+				const focusable = Array.from(panel.querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled]), summary, [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === document.activeElement);
+				if (focusable.length === 0) return;
+				const first = focusable[0];
+				const last = focusable[focusable.length - 1];
+				if (event.shiftKey && document.activeElement === first) {
+					event.preventDefault();
+					last.focus();
+				} else if (!event.shiftKey && document.activeElement === last) {
+					event.preventDefault();
+					first.focus();
+				}
+			}
 			function setTheme(id) {
 				configStore.setTheme(id);
 			}
-			function updateFontSize(e) {
-				const value = Number(e.target.value);
+			function updateFontSize(event) {
+				const value = Number(event.target.value);
 				fontSize.value = value;
 				configStore.updateReading({ fontSize: value });
 				configStore.applyReading();
 			}
-			function updateLineHeight(e) {
-				const value = Number(e.target.value);
+			function updateLineHeight(event) {
+				const value = Number(event.target.value);
 				lineHeight.value = value;
 				configStore.updateReading({ lineHeight: value });
 				configStore.applyReading();
 			}
-			function updateMaxWidth(e) {
-				const value = Number(e.target.value);
+			function updateMaxWidth(event) {
+				const value = Number(event.target.value);
 				maxWidth.value = value;
 				configStore.updateReading({ maxWidth: value });
 				configStore.applyReading();
@@ -20602,54 +20911,61 @@ ul, ol {
 			function updateBehavior(key, value) {
 				configStore.updateBehavior({ [key]: value });
 			}
-			function updateProtectionMode(mode) {
-				protectionMode.value = mode;
-				configStore.updateProtection({ mode });
-				if (mode === "aggressive") getSiteProtection().cleanupScripts();
-			}
 			async function handleClearCache() {
-				if (window.confirm("确定要清除本书的缓存吗？")) await readerStore.clearPersistedCache();
+				if (!window.confirm("确定要清除本书的离线缓存吗？")) return;
+				await readerStore.clearPersistedCache();
+				readerStore.showToast("离线缓存已清除", "info");
 			}
-			async function handleCopyDiagnosticInfo() {
-				await copyDiagnosticInfo({
-					readerStore,
-					configStore,
-					bootstrap: getAppDebugSnapshot(),
-					notify: (message, type = "info") => readerStore.showToast(message, type)
-				});
-			}
-			watch(() => props.visible, (visible) => {
+			watch(() => props.siteAutoEnable, (value) => {
+				siteAutoEnable.value = value;
+			});
+			watch(() => props.visible, async (visible) => {
 				if (visible) {
+					previouslyFocused = document.activeElement;
 					fontSize.value = configStore.reading.fontSize;
 					lineHeight.value = configStore.reading.lineHeight;
 					maxWidth.value = configStore.reading.maxWidth;
 					fontFamily.value = configStore.reading.fontFamily;
 					textConversion.value = configStore.reading.textConversion;
-					keyboardNav.value = configStore.behavior.keyboardNavigation;
-					swipeGestures.value = configStore.behavior.swipeGestures;
-					autoHideHeader.value = configStore.behavior.autoHideHeader;
 					showProgress.value = configStore.behavior.showProgress;
-					protectionMode.value = configStore.protection.mode;
+					preloadNext.value = configStore.behavior.preloadNext;
+					siteAutoEnable.value = props.siteAutoEnable;
+					await nextTick();
+					closeButtonRef.value?.focus({ preventScroll: true });
+					return;
 				}
+				previouslyFocused?.focus?.({ preventScroll: true });
+				previouslyFocused = null;
 			});
 			return (_ctx, _cache) => {
 				return openBlock(), createBlock(Transition, { name: "mnr-slide" }, {
 					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
 						key: 0,
 						class: "mnr-settings-overlay",
-						onClick: _cache[17] || (_cache[17] = withModifiers(($event) => _ctx.$emit("close"), ["self"]))
-					}, [createBaseVNode("div", _hoisted_1$1, [createBaseVNode("div", _hoisted_2$1, [
-						_cache[18] || (_cache[18] = createBaseVNode("h3", null, "阅读设置", -1)),
-						_cache[19] || (_cache[19] = createBaseVNode("span", { class: "mnr-shortcut-hint" }, "S", -1)),
-						createBaseVNode("button", {
-							class: "mnr-close-btn",
-							onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
-						}, "✕")
-					]), createBaseVNode("div", _hoisted_3$1, [
-						createBaseVNode("section", _hoisted_4$1, [_cache[20] || (_cache[20] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
+						onClick: withModifiers(closePanel, ["self"])
+					}, [createBaseVNode("section", {
+						ref_key: "panelRef",
+						ref: panelRef,
+						class: "mnr-settings-panel",
+						role: "dialog",
+						"aria-modal": "true",
+						"aria-labelledby": "mnr-settings-title",
+						onKeydown: [withKeys(withModifiers(closePanel, ["stop"]), ["esc"]), withKeys(trapFocus, ["tab"])]
+					}, [createBaseVNode("header", _hoisted_2$1, [_cache[12] || (_cache[12] = createBaseVNode("h3", { id: "mnr-settings-title" }, "阅读设置", -1)), createBaseVNode("button", {
+						ref_key: "closeButtonRef",
+						ref: closeButtonRef,
+						class: "mnr-close-btn",
+						"aria-label": "关闭设置",
+						onClick: closePanel
+					}, [..._cache[11] || (_cache[11] = [createBaseVNode("svg", {
+						viewBox: "0 0 24 24",
+						"aria-hidden": "true"
+					}, [createBaseVNode("path", { d: "m6 6 12 12M18 6 6 18" })], -1)])], 512)]), createBaseVNode("div", _hoisted_3$1, [
+						createBaseVNode("section", _hoisted_4$1, [_cache[13] || (_cache[13] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(themes.value, (theme) => {
 							return openBlock(), createElementBlock("button", {
 								key: theme.id,
 								class: normalizeClass(["mnr-theme-btn", { active: currentTheme.value === theme.id }]),
+								"aria-pressed": currentTheme.value === theme.id,
 								style: normalizeStyle({
 									background: theme.background,
 									color: theme.text,
@@ -20658,24 +20974,31 @@ ul, ol {
 								onClick: ($event) => setTheme(theme.id)
 							}, toDisplayString(theme.name), 15, _hoisted_6$1);
 						}), 128))])]),
-						createBaseVNode("section", _hoisted_7$1, [_cache[23] || (_cache[23] = createBaseVNode("h4", null, "字体大小", -1)), createBaseVNode("div", _hoisted_8$1, [
-							_cache[21] || (_cache[21] = createBaseVNode("span", { class: "mnr-slider-label" }, "A", -1)),
+						createBaseVNode("section", _hoisted_7$1, [_cache[16] || (_cache[16] = createBaseVNode("h4", null, "字号", -1)), createBaseVNode("div", _hoisted_8$1, [
+							_cache[14] || (_cache[14] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "A", -1)),
 							createBaseVNode("input", {
 								type: "range",
 								min: "14",
 								max: "28",
 								value: fontSize.value,
 								class: "mnr-slider",
+								"aria-label": "字体大小",
 								onInput: updateFontSize
-							}, null, 40, _hoisted_9),
-							_cache[22] || (_cache[22] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								style: { "font-size": "1.2em" }
+							}, null, 40, _hoisted_9$1),
+							_cache[15] || (_cache[15] = createBaseVNode("span", {
+								class: "mnr-slider-label mnr-slider-label--large",
+								"aria-hidden": "true"
 							}, "A", -1)),
-							createBaseVNode("span", _hoisted_10, toDisplayString(fontSize.value) + "px", 1)
+							createBaseVNode("span", _hoisted_10$1, toDisplayString(fontSize.value) + "px", 1)
 						])]),
-						createBaseVNode("section", _hoisted_11, [_cache[26] || (_cache[26] = createBaseVNode("h4", null, "行间距", -1)), createBaseVNode("div", _hoisted_12, [
-							_cache[24] || (_cache[24] = createBaseVNode("span", { class: "mnr-slider-label" }, "≡", -1)),
+						createBaseVNode("section", _hoisted_11$1, [_cache[19] || (_cache[19] = createBaseVNode("h4", null, "行距", -1)), createBaseVNode("div", _hoisted_12, [
+							_cache[17] || (_cache[17] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "≡", -1)),
 							createBaseVNode("input", {
 								type: "range",
 								min: "1.4",
@@ -20683,13 +21006,20 @@ ul, ol {
 								step: "0.1",
 								value: lineHeight.value,
 								class: "mnr-slider",
+								"aria-label": "行间距",
 								onInput: updateLineHeight
 							}, null, 40, _hoisted_13),
-							_cache[25] || (_cache[25] = createBaseVNode("span", { class: "mnr-slider-label" }, "☰", -1)),
+							_cache[18] || (_cache[18] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "☰", -1)),
 							createBaseVNode("span", _hoisted_14, toDisplayString(lineHeight.value), 1)
 						])]),
-						createBaseVNode("section", _hoisted_15, [_cache[29] || (_cache[29] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_16, [
-							_cache[27] || (_cache[27] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏⊐", -1)),
+						createBaseVNode("section", _hoisted_15, [_cache[22] || (_cache[22] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_16, [
+							_cache[20] || (_cache[20] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "⊏⊐", -1)),
 							createBaseVNode("input", {
 								type: "range",
 								min: "500",
@@ -20697,95 +21027,79 @@ ul, ol {
 								step: "50",
 								value: maxWidth.value,
 								class: "mnr-slider",
+								"aria-label": "正文内容宽度",
 								onInput: updateMaxWidth
 							}, null, 40, _hoisted_17),
-							_cache[28] || (_cache[28] = createBaseVNode("span", { class: "mnr-slider-label" }, "⊏ ⊐", -1)),
+							_cache[21] || (_cache[21] = createBaseVNode("span", {
+								class: "mnr-slider-label",
+								"aria-hidden": "true"
+							}, "⊏ ⊐", -1)),
 							createBaseVNode("span", _hoisted_18, toDisplayString(maxWidth.value) + "px", 1)
 						])]),
-						createBaseVNode("section", _hoisted_19, [_cache[31] || (_cache[31] = createBaseVNode("h4", null, "字体", -1)), withDirectives(createBaseVNode("select", {
-							"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => fontFamily.value = $event),
+						createBaseVNode("section", _hoisted_19, [_cache[24] || (_cache[24] = createBaseVNode("label", {
+							class: "mnr-field-label",
+							for: "mnr-font-family"
+						}, "字体", -1)), withDirectives(createBaseVNode("select", {
+							id: "mnr-font-family",
+							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => fontFamily.value = $event),
 							class: "mnr-select",
 							onChange: updateFontFamily
-						}, [..._cache[30] || (_cache[30] = [
+						}, [..._cache[23] || (_cache[23] = [
 							createBaseVNode("option", { value: "system-ui, -apple-system, 'Microsoft YaHei', sans-serif" }, " 系统默认 ", -1),
 							createBaseVNode("option", { value: "'Noto Serif SC', 'Source Han Serif SC', serif" }, "思源宋体", -1),
 							createBaseVNode("option", { value: "'PingFang SC', 'Hiragino Sans GB', sans-serif" }, "苹方", -1),
 							createBaseVNode("option", { value: "'Kaiti SC', 'STKaiti', serif" }, "楷体", -1)
 						])], 544), [[vModelSelect, fontFamily.value]])]),
-						createBaseVNode("section", _hoisted_20, [
-							_cache[32] || (_cache[32] = createBaseVNode("h4", null, "简繁转换", -1)),
-							createBaseVNode("div", _hoisted_21, [
+						createBaseVNode("section", _hoisted_20, [_cache[25] || (_cache[25] = createBaseVNode("h4", null, "简繁转换", -1)), createBaseVNode("div", _hoisted_21, [(openBlock(), createElementBlock(Fragment, null, renderList(conversionOptions, (option) => {
+							return createBaseVNode("button", {
+								key: option.value,
+								class: normalizeClass(["mnr-segment", { active: textConversion.value === option.value }]),
+								"aria-pressed": textConversion.value === option.value,
+								onClick: ($event) => updateTextConversion(option.value)
+							}, toDisplayString(option.label), 11, _hoisted_22);
+						}), 64))])]),
+						createBaseVNode("details", _hoisted_23, [_cache[29] || (_cache[29] = createBaseVNode("summary", null, "更多设置", -1)), createBaseVNode("div", _hoisted_24, [
+							createBaseVNode("label", _hoisted_25, [_cache[26] || (_cache[26] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => showProgress.value = $event),
+								type: "checkbox",
+								onChange: _cache[2] || (_cache[2] = ($event) => updateBehavior("showProgress", showProgress.value))
+							}, null, 544), [[vModelCheckbox, showProgress.value]])]),
+							createBaseVNode("label", _hoisted_26, [_cache[27] || (_cache[27] = createBaseVNode("span", null, "自动加载下一章", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => preloadNext.value = $event),
+								type: "checkbox",
+								onChange: _cache[4] || (_cache[4] = ($event) => updateBehavior("preloadNext", preloadNext.value))
+							}, null, 544), [[vModelCheckbox, preloadNext.value]])]),
+							createBaseVNode("label", _hoisted_27, [_cache[28] || (_cache[28] = createBaseVNode("span", null, "在本站自动开启", -1)), withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => siteAutoEnable.value = $event),
+								type: "checkbox",
+								onChange: _cache[6] || (_cache[6] = ($event) => emit("siteAutoEnableChange", siteAutoEnable.value))
+							}, null, 544), [[vModelCheckbox, siteAutoEnable.value]])]),
+							createBaseVNode("div", _hoisted_28, [
 								createBaseVNode("button", {
-									class: normalizeClass(["mnr-segment", { active: textConversion.value === "none" }]),
-									onClick: _cache[2] || (_cache[2] = ($event) => updateTextConversion("none"))
-								}, " 原文 ", 2),
+									class: "mnr-action-btn",
+									onClick: _cache[7] || (_cache[7] = ($event) => emit("cacheAll"))
+								}, [createTextVNode(toDisplayString(cacheProgress.value.running ? "取消缓存" : "离线缓存") + " ", 1), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_29, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]),
+								!cacheProgress.value.running && cacheProgress.value.failed > 0 ? (openBlock(), createElementBlock("button", {
+									key: 0,
+									class: "mnr-action-btn",
+									onClick: _cache[8] || (_cache[8] = ($event) => emit("retryCache"))
+								}, " 重试失败章节（" + toDisplayString(cacheProgress.value.failed) + "） ", 1)) : createCommentVNode("", true),
+								persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
+									key: 1,
+									class: "mnr-action-btn",
+									onClick: handleClearCache
+								}, " 清除离线缓存（" + toDisplayString(persistedCount.value) + "） ", 1)) : createCommentVNode("", true),
 								createBaseVNode("button", {
-									class: normalizeClass(["mnr-segment", { active: textConversion.value === "sc" }]),
-									onClick: _cache[3] || (_cache[3] = ($event) => updateTextConversion("sc"))
-								}, " 简体 ", 2),
+									class: "mnr-action-btn",
+									onClick: _cache[9] || (_cache[9] = ($event) => emit("copyDiagnostics"))
+								}, " 复制诊断信息 "),
 								createBaseVNode("button", {
-									class: normalizeClass(["mnr-segment", { active: textConversion.value === "tc" }]),
-									onClick: _cache[4] || (_cache[4] = ($event) => updateTextConversion("tc"))
-								}, " 繁體 ", 2)
-							]),
-							textConversion.value !== "none" ? (openBlock(), createElementBlock("p", _hoisted_22, toDisplayString(textConversion.value === "sc" ? "将繁体转换为简体中文" : "將簡體轉換為繁體中文"), 1)) : createCommentVNode("", true)
-						]),
-						createBaseVNode("section", _hoisted_23, [
-							_cache[37] || (_cache[37] = createBaseVNode("h4", null, "阅读行为", -1)),
-							createBaseVNode("label", _hoisted_24, [_cache[33] || (_cache[33] = createBaseVNode("span", null, "键盘导航", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => keyboardNav.value = $event),
-								type: "checkbox",
-								onChange: _cache[6] || (_cache[6] = ($event) => updateBehavior("keyboardNavigation", keyboardNav.value))
-							}, null, 544), [[vModelCheckbox, keyboardNav.value]])]),
-							createBaseVNode("label", _hoisted_25, [_cache[34] || (_cache[34] = createBaseVNode("span", null, "手势翻页", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => swipeGestures.value = $event),
-								type: "checkbox",
-								onChange: _cache[8] || (_cache[8] = ($event) => updateBehavior("swipeGestures", swipeGestures.value))
-							}, null, 544), [[vModelCheckbox, swipeGestures.value]])]),
-							createBaseVNode("label", _hoisted_26, [_cache[35] || (_cache[35] = createBaseVNode("span", null, "自动隐藏顶栏", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => autoHideHeader.value = $event),
-								type: "checkbox",
-								onChange: _cache[10] || (_cache[10] = ($event) => updateBehavior("autoHideHeader", autoHideHeader.value))
-							}, null, 544), [[vModelCheckbox, autoHideHeader.value]])]),
-							createBaseVNode("label", _hoisted_27, [_cache[36] || (_cache[36] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => showProgress.value = $event),
-								type: "checkbox",
-								onChange: _cache[12] || (_cache[12] = ($event) => updateBehavior("showProgress", showProgress.value))
-							}, null, 544), [[vModelCheckbox, showProgress.value]])])
-						]),
-						createBaseVNode("section", _hoisted_28, [
-							_cache[38] || (_cache[38] = createBaseVNode("h4", null, "页面防护", -1)),
-							createBaseVNode("div", _hoisted_29, [createBaseVNode("button", {
-								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "standard" }]),
-								onClick: _cache[13] || (_cache[13] = ($event) => updateProtectionMode("standard"))
-							}, " 标准 ", 2), createBaseVNode("button", {
-								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "aggressive" }]),
-								onClick: _cache[14] || (_cache[14] = ($event) => updateProtectionMode("aggressive"))
-							}, " 激进 ", 2)]),
-							_cache[39] || (_cache[39] = createBaseVNode("p", { class: "mnr-hint" }, "激进模式会尝试清理可疑脚本，可能影响站点功能。", -1))
-						]),
-						createBaseVNode("section", _hoisted_30, [_cache[42] || (_cache[42] = createBaseVNode("h4", null, "操作", -1)), createBaseVNode("div", _hoisted_31, [
-							createBaseVNode("div", _hoisted_32, [createBaseVNode("button", {
-								class: "mnr-action-btn",
-								onClick: _cache[15] || (_cache[15] = ($event) => _ctx.$emit("cacheAll"))
-							}, [_cache[40] || (_cache[40] = createTextVNode(" 缓存本书 ", -1)), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_33, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]), persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
-								key: 0,
-								class: "mnr-action-btn mnr-action-btn--danger",
-								onClick: handleClearCache
-							}, [_cache[41] || (_cache[41] = createTextVNode(" 清除 ", -1)), createBaseVNode("span", _hoisted_34, "(" + toDisplayString(persistedCount.value) + ")", 1)])) : createCommentVNode("", true)]),
-							createBaseVNode("button", {
-								class: "mnr-action-btn",
-								onClick: handleCopyDiagnosticInfo
-							}, "复制诊断信息"),
-							createBaseVNode("button", {
-								class: "mnr-action-btn",
-								onClick: _cache[16] || (_cache[16] = ($event) => {
-									_ctx.$emit("close");
-									unref(closeReader)();
-								})
-							}, " 退出阅读模式 ")
+									class: "mnr-action-btn mnr-action-btn--danger",
+									onClick: _cache[10] || (_cache[10] = ($event) => emit("exit"))
+								}, " 退出阅读模式 ")
+							])
 						])])
-					])])])) : createCommentVNode("", true)]),
+					])], 40, _hoisted_1$1)])) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
@@ -20799,19 +21113,36 @@ ul, ol {
 	var _hoisted_3 = { class: "mnr-chapter-title" };
 	var _hoisted_4 = ["innerHTML"];
 	var _hoisted_5 = {
+		class: "mnr-chapter-boundary-nav",
+		"aria-label": "章节导航"
+	};
+	var _hoisted_6 = ["disabled"];
+	var _hoisted_7 = ["disabled"];
+	var _hoisted_8 = {
 		key: 1,
 		class: "mnr-loading-next"
 	};
-	var _hoisted_6 = {
+	var _hoisted_9 = {
 		key: 2,
 		class: "mnr-chapter-end"
 	};
-	var _hoisted_7 = { class: "mnr-chapter-nav" };
-	var _hoisted_8 = ["href"];
+	var _hoisted_10 = { class: "mnr-chapter-nav" };
+	var _hoisted_11 = ["href"];
 	var SCROLL_BOUNDARY_EPSILON_PX = 4;
 	var ReaderView_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "ReaderView",
-		setup(__props) {
+		props: { siteAutoEnable: {
+			type: Boolean,
+			default: true
+		} },
+		emits: [
+			"copyDiagnostics",
+			"exit",
+			"siteAutoEnableChange"
+		],
+		setup(__props, { emit: __emit }) {
+			const props = __props;
+			const emit = __emit;
 			const readerStore = useReaderStore();
 			const configStore = useConfigStore();
 			const mainRef = ref(null);
@@ -20820,18 +21151,14 @@ ul, ol {
 			const isNavigating = ref(false);
 			const showControls = ref(true);
 			const chapterRefs = new Map();
-			const chapterResizeObservers = new Map();
-			const { settingsVisible, drawerOpen, toggleDrawer, openSettings, handleEscape, toggleSettings } = useReaderUIControls({
+			const siteAutoEnableValue = ref(props.siteAutoEnable);
+			const { settingsVisible, drawerOpen, toggleDrawer, openSettings, closeSettings, handleEscape, toggleSettings } = useReaderUIControls({
 				readerStore,
 				showControls
 			});
 			let topObserver = null;
 			let bottomObserver = null;
 			const chapters = computed(() => readerStore.chapters);
-			const { visibleChapters, topSpacer, bottomSpacer, setHeight: setChapterHeight, getOffsetBefore, updateWindow } = useVirtualChapters(chapters, {
-				windowSize: 5,
-				overscan: 2
-			});
 			const bookTitle = computed(() => readerStore.bookTitle);
 			const indexUrl = computed(() => readerStore.chapter?.indexUrl);
 			const isLoading = computed(() => readerStore.isLoading);
@@ -20862,8 +21189,7 @@ ul, ol {
 			const { handleScroll } = useReaderScroll({
 				mainRef,
 				chapters,
-				getOffsetBefore,
-				updateWindow,
+				chapterRefs,
 				readerStore,
 				autoHideHeader,
 				showControls,
@@ -20879,10 +21205,7 @@ ul, ol {
 				isLoadingPrev,
 				isLoadingNext,
 				hasPrev,
-				hasNext,
-				topSpacer,
-				setChapterHeight,
-				updateWindow
+				hasNext
 			});
 			const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
 				enabled: computed(() => configStore.behavior.swipeGestures),
@@ -20985,47 +21308,37 @@ ul, ol {
 			async function handleTextConversionChange(mode) {
 				await readerStore.applyTextConversion(mode);
 			}
-			function handleCacheAll() {
+			async function handleCacheAll() {
+				if (cacheProgress.value.running) {
+					readerStore.cancelCacheAll();
+					readerStore.showToast("已取消离线缓存", "info");
+					return;
+				}
+				await readerStore.loadToc();
+				const remaining = readerStore.tocWithStatus.filter((entry) => !entry.isPersisted).length;
+				const message = remaining > 0 ? `预计缓存 ${remaining} 章，过程可能需要一些时间。是否继续？` : "将从当前章节开始缓存后续内容，是否继续？";
+				if (!window.confirm(message)) return;
 				readerStore.startCacheAll();
 			}
-			function toggleCacheAll() {
-				if (cacheProgress.value.running) readerStore.cancelCacheAll();
-				else readerStore.startCacheAll();
+			function handleRetryCache() {
+				readerStore.retryFailedCache();
 			}
-			function disconnectChapterResizeObserver(url) {
-				chapterResizeObservers.get(url)?.disconnect();
-				chapterResizeObservers.delete(url);
-			}
-			function measureChapterHeight(url, el) {
-				setChapterHeight(url, el.offsetHeight);
-			}
-			function observeChapterSize(url, el) {
-				if (typeof globalThis.ResizeObserver !== "function") return;
-				const observer = new globalThis.ResizeObserver((entries) => {
-					const entry = entries[0];
-					if (!entry) return;
-					const height = (Array.isArray(entry.borderBoxSize) ? entry.borderBoxSize[0] : entry.borderBoxSize)?.blockSize || entry.target.offsetHeight || entry.contentRect.height;
-					if (height > 0) setChapterHeight(url, Math.round(height));
-				});
-				observer.observe(el);
-				chapterResizeObservers.set(url, observer);
+			function handleSiteAutoEnableChange(enabled) {
+				siteAutoEnableValue.value = enabled;
+				emit("siteAutoEnableChange", enabled);
+				readerStore.showToast(enabled ? "已开启本站自动阅读" : "已关闭本站自动阅读", "info");
 			}
 			function setChapterRef(url) {
 				return (el) => {
 					if (!el) {
 						chapterRefs.delete(url);
-						disconnectChapterResizeObserver(url);
 						return;
 					}
-					if (chapterRefs.get(url) === el) return;
-					disconnectChapterResizeObserver(url);
 					chapterRefs.set(url, el);
-					measureChapterHeight(url, el);
-					observeChapterSize(url, el);
 				};
 			}
 			function exitReader() {
-				closeReader();
+				emit("exit");
 			}
 			const keyboardEnabled = computed(() => configStore.behavior.keyboardNavigation);
 			useKeyboardShortcuts([
@@ -21086,6 +21399,27 @@ ul, ol {
 				}
 			], { enabled: keyboardEnabled });
 			const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
+			async function restoreReadingPosition() {
+				const mainEl = mainRef.value;
+				const currentUrl = readerStore.chapter?.url;
+				if (!mainEl || !currentUrl) return;
+				const percent = await getReadingPosition(currentUrl);
+				if (percent === null || percent < 3 || percent > 98) return;
+				await nextTick();
+				await new Promise((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+				const chapterEl = chapterRefs.get(currentUrl);
+				if (!chapterEl) return;
+				const mainRect = mainEl.getBoundingClientRect();
+				const chapterRect = chapterEl.getBoundingClientRect();
+				const chapterTop = mainEl.scrollTop + chapterRect.top - mainRect.top;
+				const scrollableHeight = Math.max(0, chapterEl.offsetHeight - mainEl.clientHeight * .5);
+				mainEl.scrollTop = chapterTop + percent / 100 * scrollableHeight;
+				readerStore.updateScroll(percent);
+				readerStore.showToast("已回到上次阅读位置", "info", 1800);
+			}
+			watch(() => props.siteAutoEnable, (value) => {
+				siteAutoEnableValue.value = value;
+			});
 			onMounted(async () => {
 				configStore.applyAll();
 				const textConversion = configStore.reading.textConversion;
@@ -21111,10 +21445,12 @@ ul, ol {
 				if (bottomSentinel.value) bottomObserver.observe(bottomSentinel.value);
 				if (topSentinel.value) topObserver.observe(topSentinel.value);
 				await nextTick();
+				await restoreReadingPosition();
 				mainRef.value?.focus();
 				scheduleAutoLoadNext("state");
 			});
 			onUnmounted(() => {
+				if (readerStore.chapter?.url) saveReadingPosition(readerStore.chapter.url, readerStore.scrollPercent);
 				if (mainRef.value) {
 					mainRef.value.removeEventListener("scroll", handleScroll);
 					mainRef.value.removeEventListener("wheel", handleWheel);
@@ -21127,8 +21463,7 @@ ul, ol {
 				bottomObserver?.disconnect();
 				topObserver = null;
 				bottomObserver = null;
-				chapterResizeObservers.forEach((observer) => observer.disconnect());
-				chapterResizeObservers.clear();
+				chapterRefs.clear();
 			});
 			return (_ctx, _cache) => {
 				return openBlock(), createElementBlock("div", {
@@ -21151,19 +21486,10 @@ ul, ol {
 					}, null, 8, ["percent"])) : createCommentVNode("", true),
 					createVNode(FloatingToolbar_default, {
 						visible: showControls.value,
-						"cache-running": cacheProgress.value.running,
-						"cache-done": cacheProgress.value.done,
-						"cache-total": cacheProgress.value.total,
-						"cache-disabled": cacheProgress.value.running && cacheProgress.value.total === 0,
 						onToggleDrawer: unref(toggleDrawer),
-						onToggleCache: toggleCacheAll,
 						onOpenSettings: unref(openSettings)
 					}, null, 8, [
 						"visible",
-						"cache-running",
-						"cache-done",
-						"cache-total",
-						"cache-disabled",
 						"onToggleDrawer",
 						"onOpenSettings"
 					]),
@@ -21174,7 +21500,9 @@ ul, ol {
 						loading: unref(readerStore).tocLoading,
 						"cache-progress": cacheProgress.value,
 						onClose: _cache[0] || (_cache[0] = ($event) => drawerOpen.value = false),
-						onSelect: handleChapterSelect
+						onSelect: handleChapterSelect,
+						onCacheAll: handleCacheAll,
+						onRetryCache: handleRetryCache
 					}, null, 8, [
 						"is-open",
 						"book-title",
@@ -21193,9 +21521,8 @@ ul, ol {
 							ref: topSentinel,
 							class: "mnr-sentinel"
 						}, null, 512),
-						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[3] || (_cache[3] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
-						createBaseVNode("div", { style: normalizeStyle({ height: `${unref(topSpacer)}px` }) }, null, 4),
-						(openBlock(true), createElementBlock(Fragment, null, renderList(unref(visibleChapters), (entry) => {
+						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[6] || (_cache[6] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
+						(openBlock(true), createElementBlock(Fragment, null, renderList(chapters.value, (entry, index) => {
 							return openBlock(), createElementBlock("article", {
 								key: entry.id,
 								ref_for: true,
@@ -21204,30 +21531,50 @@ ul, ol {
 								"data-chapter-url": entry.chapter.url,
 								lang: contentLang.value,
 								onClick: handleContentClick
-							}, [createBaseVNode("h1", _hoisted_3, toDisplayString(entry.chapter.title), 1), createBaseVNode("div", { innerHTML: entry.chapter.content }, null, 8, _hoisted_4)], 8, _hoisted_2);
+							}, [
+								createBaseVNode("h1", _hoisted_3, toDisplayString(entry.chapter.title), 1),
+								createBaseVNode("div", { innerHTML: entry.chapter.content }, null, 8, _hoisted_4),
+								createBaseVNode("nav", _hoisted_5, [createBaseVNode("button", {
+									type: "button",
+									disabled: index === 0 && !hasPrev.value,
+									onClick: _cache[1] || (_cache[1] = withModifiers(($event) => unref(navigateChapter)("prev"), ["stop"]))
+								}, " 上一章 ", 8, _hoisted_6), createBaseVNode("button", {
+									type: "button",
+									disabled: index === chapters.value.length - 1 && !hasNext.value,
+									onClick: _cache[2] || (_cache[2] = withModifiers(($event) => unref(navigateChapter)("next"), ["stop"]))
+								}, " 下一章 ", 8, _hoisted_7)])
+							], 8, _hoisted_2);
 						}), 128)),
-						createBaseVNode("div", { style: normalizeStyle({ height: `${unref(bottomSpacer)}px` }) }, null, 4),
 						createBaseVNode("div", {
 							ref_key: "bottomSentinel",
 							ref: bottomSentinel,
 							class: "mnr-sentinel"
 						}, null, 512),
-						isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_5, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[4] || (_cache[4] = createBaseVNode("span", null, "加载下一章...", -1))])) : createCommentVNode("", true),
-						chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [_cache[5] || (_cache[5] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)), createBaseVNode("div", _hoisted_7, [indexUrl.value ? (openBlock(), createElementBlock("a", {
+						isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_8, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[7] || (_cache[7] = createBaseVNode("span", null, "加载下一章...", -1))])) : createCommentVNode("", true),
+						chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_9, [_cache[8] || (_cache[8] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)), createBaseVNode("div", _hoisted_10, [indexUrl.value ? (openBlock(), createElementBlock("a", {
 							key: 0,
 							href: indexUrl.value,
 							class: "mnr-chapter-link index",
-							onClick: _cache[1] || (_cache[1] = withModifiers(($event) => navigate("index"), ["prevent"]))
-						}, " 返回目录 ", 8, _hoisted_8)) : createCommentVNode("", true)])])) : createCommentVNode("", true)
+							onClick: _cache[3] || (_cache[3] = withModifiers(($event) => navigate("index"), ["prevent"]))
+						}, " 返回目录 ", 8, _hoisted_11)) : createCommentVNode("", true)])])) : createCommentVNode("", true)
 					], 512),
 					createVNode(SettingsPanel_default, {
 						visible: unref(settingsVisible),
-						onClose: _cache[2] || (_cache[2] = ($event) => settingsVisible.value = false),
+						"site-auto-enable": siteAutoEnableValue.value,
+						onClose: unref(closeSettings),
 						onTextConversionChange: handleTextConversionChange,
-						onCacheAll: handleCacheAll
-					}, null, 8, ["visible"]),
+						onCacheAll: handleCacheAll,
+						onRetryCache: handleRetryCache,
+						onCopyDiagnostics: _cache[4] || (_cache[4] = ($event) => emit("copyDiagnostics")),
+						onSiteAutoEnableChange: handleSiteAutoEnableChange,
+						onExit: _cache[5] || (_cache[5] = ($event) => emit("exit"))
+					}, null, 8, [
+						"visible",
+						"site-auto-enable",
+						"onClose"
+					]),
 					isLoading.value ? (openBlock(), createBlock(unref(MnrLoadingOverlay_default), { key: 1 }, {
-						default: withCtx(() => [..._cache[6] || (_cache[6] = [createBaseVNode("span", null, "加载中...", -1)])]),
+						default: withCtx(() => [..._cache[9] || (_cache[9] = [createBaseVNode("span", null, "加载中...", -1)])]),
 						_: 1
 					})) : createCommentVNode("", true),
 					createVNode(unref(MnrToast_default), {
@@ -21243,7 +21590,7 @@ ul, ol {
 				], 32);
 			};
 		}
-	}), [["__scopeId", "data-v-c176e6fb"]]);
+	}), [["__scopeId", "data-v-a506be0d"]]);
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -21255,17 +21602,6 @@ ul, ol {
 	var app = null;
 	var pinia = null;
 	var readerCleanup = null;
-	function buildProtectionOptions(settings) {
-		return {
-			blockRedirects: settings.blockRedirects,
-			enableRightClick: settings.enableRightClick,
-			enableSelection: settings.enableSelection,
-			blockPopups: settings.blockPopups,
-			clearTimers: true,
-			unlockKeyboard: true,
-			cleanupScripts: settings.mode === "aggressive"
-		};
-	}
 	function shouldEnableEarlyProtection(url) {
 		try {
 			const u = new URL(url);
@@ -21299,7 +21635,11 @@ ul, ol {
 	}
 	async function initialize() {
 		await ensureInitialized();
-		if (!appState.isInitialized || appState.autoEnableDone) return;
+		if (!appState.isInitialized) {
+			getSiteProtection().deactivate();
+			return;
+		}
+		if (appState.autoEnableDone) return;
 		appState.autoEnableDone = true;
 		await runAutoEnable();
 	}
@@ -21317,13 +21657,14 @@ ul, ol {
 	async function runAutoEnable() {
 		const manager = getAutoEnableManager({
 			enableProtection: true,
-			protectionOptions: buildProtectionOptions(useConfigStore(pinia).protection)
+			protectionOptions: toProtectionOptions(useConfigStore(pinia).protection)
 		});
 		const skipFlag = sessionStorage.getItem("mnr_skip_auto_enable");
 		if (skipFlag) {
 			sessionStorage.removeItem("mnr_skip_auto_enable");
 			const flagTime = parseInt(skipFlag, 10);
 			if (!isNaN(flagTime) && Date.now() - flagTime < 5e3) {
+				getSiteProtection().deactivate();
 				showFloatingButton();
 				return;
 			}
@@ -21331,44 +21672,50 @@ ul, ol {
 		const decision = await manager.check(document);
 		appState.currentDecision = decision;
 		if (decision.method === "user-disabled" || decision.showFloatingButton) {
+			getSiteProtection().deactivate();
 			showFloatingButton();
 			return;
 		}
-		if (!decision.shouldEnable) return;
+		if (!decision.shouldEnable) {
+			getSiteProtection().deactivate();
+			return;
+		}
 		manager.setPromptCallback(showPrompt);
 		manager.setLaunchCallback(launchReader);
 		await manager.execute(document);
-		if (!appState.isActive && decision.shouldEnable) showFloatingButton();
+		if (!appState.isActive && decision.shouldEnable) {
+			getSiteProtection().deactivate();
+			showFloatingButton();
+		}
 	}
 	async function showPrompt(decision) {
 		return new Promise((resolve) => {
 			const { mountPoint, cleanup } = createShadowMount("mnr-prompt-root");
 			const showPrompt = ref(true);
-			createApp(defineComponent({ setup() {
+			let promptApp = null;
+			let settled = false;
+			const finish = (response) => {
+				if (settled) return;
+				settled = true;
+				showPrompt.value = false;
+				window.setTimeout(() => {
+					promptApp?.unmount();
+					promptApp = null;
+					cleanup();
+					resolve(response);
+				}, 300);
+			};
+			promptApp = createApp(defineComponent({ setup() {
 				const handleRespond = (response) => {
-					showPrompt.value = false;
-					setTimeout(() => {
-						cleanup();
-						resolve(response);
-					}, 300);
-				};
-				const handleDismiss = () => {
-					showPrompt.value = false;
-					setTimeout(() => {
-						cleanup();
-						resolve({
-							accepted: false,
-							rememberForSite: false
-						});
-					}, 300);
+					finish(response);
 				};
 				return () => h(DetectionPrompt_default, {
 					decision,
 					visible: showPrompt.value,
-					onRespond: handleRespond,
-					onDismiss: handleDismiss
+					onRespond: handleRespond
 				});
-			} })).mount(mountPoint);
+			} }));
+			promptApp.mount(mountPoint);
 		});
 	}
 	function launchReader(chapter, rule) {
@@ -21394,7 +21741,14 @@ ul, ol {
 		if (document.getElementById("mnr-reader-root")) return;
 		const { mountPoint, cleanup } = createShadowMount("mnr-reader-root");
 		readerCleanup = cleanup;
-		app = createApp(ReaderView_default);
+		app = createApp(ReaderView_default, {
+			siteAutoEnable: getCurrentSiteAutoEnable(),
+			onCopyDiagnostics: () => {
+				copyDiagnosticsFromMenu();
+			},
+			onExit: closeReader,
+			onSiteAutoEnableChange: setCurrentSiteAutoEnable
+		});
 		app.use(pinia);
 		app.mount(mountPoint);
 		hideOriginalContent();
@@ -21413,15 +21767,6 @@ ul, ol {
 		if (!appState.isActive) return;
 		recordDebugEvent("bootstrap.closeReader");
 		const entryPageKind = appState.entryPageKind;
-		if (entryPageKind === "chapter") try {
-			const hostname = new URL(window.location.href).hostname;
-			getRuleStorage().setSitePreference(hostname, {
-				enabled: false,
-				timestamp: Date.now()
-			});
-		} catch (e) {
-			console.error("[MNR] Failed to save site preference:", e);
-		}
 		let targetUrl = null;
 		if (pinia) {
 			const readerStore = useReaderStore(pinia);
@@ -21435,6 +21780,7 @@ ul, ol {
 			app.unmount();
 			app = null;
 		}
+		getSiteProtection().deactivate();
 		if (readerCleanup) {
 			readerCleanup();
 			readerCleanup = null;
@@ -21452,6 +21798,25 @@ ul, ol {
 		}
 		restoreHostPageSnapshot(originalHostPage);
 		if (entryPageKind === "chapter") showFloatingButton();
+	}
+	function getCurrentSiteAutoEnable() {
+		try {
+			const hostname = new URL(window.location.href).hostname;
+			return getRuleStorage().getSitePreference(hostname)?.enabled !== false;
+		} catch {
+			return true;
+		}
+	}
+	function setCurrentSiteAutoEnable(enabled) {
+		try {
+			const hostname = new URL(window.location.href).hostname;
+			getRuleStorage().setSitePreference(hostname, {
+				enabled,
+				timestamp: Date.now()
+			});
+		} catch (e) {
+			console.error("[MNR] Failed to update site auto-enable preference:", e);
+		}
 	}
 	function showFloatingButton() {
 		hideFloatingButton();
@@ -21501,7 +21866,7 @@ ul, ol {
 		if (!pinia) return;
 		const manager = getAutoEnableManager({
 			enableProtection: true,
-			protectionOptions: buildProtectionOptions(useConfigStore(pinia).protection)
+			protectionOptions: toProtectionOptions(useConfigStore(pinia).protection)
 		});
 		manager.setLaunchCallback(launchReader);
 		await manager.manualEnable(document);
@@ -21567,10 +21932,14 @@ ul, ol {
 		installGlobalDebugErrorListeners();
 		if (appState.isActive) return;
 		const url = window.location.href;
-		if (!await shouldBootstrapForPage(url, document)) return;
+		if (!await shouldBootstrapForPage(url, document)) {
+			getSiteProtection().deactivate();
+			return;
+		}
 		try {
 			const hostname = new URL(url).hostname;
 			if (getRuleStorage().getSitePreference(hostname)?.enabled === false) {
+				getSiteProtection().deactivate();
 				showFloatingButton();
 				return;
 			}
@@ -21629,6 +21998,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-prompt-overlay[data-v-9a2b7cf4]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-9a2b7cf4]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-9a2b7cf4;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-9a2b7cf4{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-9a2b7cf4]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-9a2b7cf4]{font-size:28px}.mnr-prompt-title[data-v-9a2b7cf4]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-9a2b7cf4]{margin-bottom:16px}.mnr-confidence-bar[data-v-9a2b7cf4]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-9a2b7cf4]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-9a2b7cf4]{background:#4caf50}.mnr-confidence-fill.medium[data-v-9a2b7cf4]{background:#ff9800}.mnr-confidence-fill.low[data-v-9a2b7cf4]{background:#f44336}.mnr-confidence-text[data-v-9a2b7cf4]{color:#666;font-size:13px}.mnr-results[data-v-9a2b7cf4]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-9a2b7cf4]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-9a2b7cf4]{color:#2e7d32}.mnr-result-item.warning[data-v-9a2b7cf4]{color:#ed6c02}.mnr-result-icon[data-v-9a2b7cf4]{font-weight:700}.mnr-checkbox-label[data-v-9a2b7cf4]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-9a2b7cf4]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-9a2b7cf4]{gap:12px;display:flex}.mnr-btn[data-v-9a2b7cf4]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-9a2b7cf4]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-9a2b7cf4]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-9a2b7cf4]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-9a2b7cf4]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-9a2b7cf4],.mnr-fade-leave-active[data-v-9a2b7cf4]{transition:opacity .3s}.mnr-fade-enter-from[data-v-9a2b7cf4],.mnr-fade-leave-to[data-v-9a2b7cf4]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-9a2b7cf4]{background:#2a2a2a}.mnr-prompt-title[data-v-9a2b7cf4]{color:#e0e0e0}.mnr-confidence-bar[data-v-9a2b7cf4]{background:#444}.mnr-confidence-text[data-v-9a2b7cf4]{color:#aaa}.mnr-checkbox-label[data-v-9a2b7cf4]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-9a2b7cf4]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-9a2b7cf4]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-9a2b7cf4]{margin:8px;padding:16px}.mnr-prompt-title[data-v-9a2b7cf4]{font-size:16px}.mnr-btn[data-v-9a2b7cf4]{padding:12px 16px}}.mnr-progress[data-v-16ecd1aa]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-16ecd1aa]{opacity:0}.mnr-progress-bar[data-v-16ecd1aa]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-16ecd1aa]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}.mnr-floating-toolbar[data-v-dffc57fa]{pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed;top:12px;left:12px;right:12px}.mnr-fab[data-v-dffc57fa]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-dffc57fa]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-dffc57fa]:active{transform:scale(.95)}.mnr-fab[data-v-dffc57fa]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-fab-group[data-v-dffc57fa]{gap:12px;display:flex}.mnr-fab-badge[data-v-dffc57fa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;line-height:1;position:absolute;top:-4px;right:-4px;box-shadow:0 2px 4px #0003}.mnr-icon[data-v-dffc57fa]{line-height:1;display:block}.mnr-fade-slide-enter-active[data-v-dffc57fa],.mnr-fade-slide-leave-active[data-v-dffc57fa]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-dffc57fa],.mnr-fade-slide-leave-to[data-v-dffc57fa]{opacity:0;transform:translateY(-20px)}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-83d04cea]{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;bottom:32px;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-83d04cea]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-83d04cea],.mnr-toast-leave-active[data-v-83d04cea]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-83d04cea],.mnr-toast-leave-to[data-v-83d04cea]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-fe73b01a]{background:var(--mnr-bg,#fff);width:85%;max-width:320px;color:var(--mnr-text,#333);z-index:1001;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:0;bottom:0;left:0;transform:translate(-100%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-fe73b01a]{transform:translate(0)}.mnr-drawer-overlay[data-v-fe73b01a]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-fade-enter-active[data-v-fe73b01a],.mnr-fade-leave-active[data-v-fe73b01a]{transition:opacity .3s}.mnr-fade-enter-from[data-v-fe73b01a],.mnr-fade-leave-to[data-v-fe73b01a]{opacity:0}.mnr-drawer-header[data-v-fe73b01a]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;padding:16px;display:flex}.mnr-drawer-title[data-v-fe73b01a]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-close[data-v-fe73b01a]{width:32px;height:32px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border:none;border-radius:50%;justify-content:center;align-items:center;font-size:18px;display:flex}.mnr-drawer-close[data-v-fe73b01a]:hover{background:var(--mnr-border,#e5e5e5)}.mnr-drawer-content[data-v-fe73b01a]{-webkit-overflow-scrolling:touch;flex:1;overflow-y:auto}.mnr-drawer-loading[data-v-fe73b01a]{color:var(--mnr-text,#666);flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:40px 20px;display:flex}.mnr-drawer-empty[data-v-fe73b01a]{text-align:center;color:var(--mnr-text,#666);opacity:.7;padding:40px 20px}.mnr-cache-progress-bar[data-v-fe73b01a]{background:var(--mnr-bg,#fff);border-bottom:1px solid var(--mnr-border,#e5e5e5);z-index:1;padding:12px 16px;position:sticky;top:0}.mnr-cache-progress-text[data-v-fe73b01a]{color:var(--mnr-link,#1976d2);margin-bottom:6px;font-size:12px}.mnr-cache-progress-track[data-v-fe73b01a]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;overflow:hidden}.mnr-cache-progress-fill[data-v-fe73b01a]{background:var(--mnr-link,#1976d2);border-radius:2px;height:100%;transition:width .3s}.mnr-cache-stats[data-v-fe73b01a]{border-bottom:1px solid var(--mnr-border,#e5e5e5);gap:12px;padding:8px 16px;font-size:12px;display:flex}.mnr-stat-persisted[data-v-fe73b01a]{color:#4caf50}.mnr-stat-session[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list[data-v-fe73b01a]{margin:0;padding:8px 0;list-style:none}.mnr-chapter-list li[data-v-fe73b01a]{cursor:pointer;border-left:3px solid #0000;align-items:flex-start;gap:4px;padding:12px 16px;scroll-margin-block:24px;font-size:14px;line-height:1.4;transition:all .15s;display:flex}.mnr-chapter-list li[data-v-fe73b01a]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-chapter-list li.active[data-v-fe73b01a]{border-left-color:var(--mnr-link,#1976d2);color:var(--mnr-link,#1976d2);background:#1976d21a;font-weight:500}.mnr-chapter-list li.cached[data-v-fe73b01a]{color:#9e9e9e}.mnr-chapter-list li.persisted[data-v-fe73b01a]{color:#4caf50}.mnr-cached-icon[data-v-fe73b01a]{color:#9e9e9e;flex-shrink:0;margin-top:2px;font-size:12px}.mnr-persisted-icon[data-v-fe73b01a]{color:#4caf50;flex-shrink:0;margin-top:2px;font-size:12px}@media (width>=1024px){.mnr-drawer[data-v-fe73b01a]{width:320px;max-width:320px}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{background:var(--mnr-bg,#fff);flex-direction:column;width:100%;max-width:360px;height:100%;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;padding:16px;display:flex}.mnr-settings-header h3{color:var(--mnr-text,#333);margin:0;font-size:18px}.mnr-shortcut-hint{background:var(--mnr-border,#e0e0e0);color:var(--mnr-text,#666);border-radius:4px;margin-left:auto;margin-right:12px;padding:2px 8px;font-family:monospace;font-size:12px}.mnr-close-btn{cursor:pointer;color:var(--mnr-text,#666);background:0 0;border:none;padding:4px 8px;font-size:20px}.mnr-settings-content{flex:1;padding:16px;overflow:auto}.mnr-settings-section{margin-bottom:24px}.mnr-settings-section h4{color:var(--mnr-text,#555);margin:0 0 12px;font-size:14px;font-weight:600}.mnr-theme-grid{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;padding:12px 8px;font-size:13px;transition:all .2s}.mnr-theme-btn.active{border-color:var(--mnr-link,#1976d2)}.mnr-slider-row{align-items:center;gap:12px;display:flex}.mnr-slider-label{text-align:center;white-space:nowrap;width:34px;color:var(--mnr-text,#666);flex:0 0 34px;line-height:1}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:auto;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{-webkit-appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:none;border-radius:50%;width:20px;height:20px}.mnr-slider-value{text-align:right;white-space:nowrap;width:64px;color:var(--mnr-text,#666);flex:0 0 64px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:6px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;border:none;flex:1;padding:10px 16px;font-size:14px;transition:all .2s}.mnr-segment:not(:last-child){border-right:1px solid var(--mnr-border,#ddd)}.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-hint{color:var(--mnr-text,#888);opacity:.8;margin-top:8px;font-size:12px}.mnr-switch-row{cursor:pointer;color:var(--mnr-text,#333);justify-content:space-between;align-items:center;padding:10px 0;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-action-buttons{flex-direction:column;gap:8px;display:flex}.mnr-cache-row{gap:8px;display:flex}.mnr-cache-row .mnr-action-btn{flex:1}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:6px;padding:12px;font-size:14px}.mnr-action-btn:hover{background:var(--mnr-border,#f5f5f5)}.mnr-action-btn--danger{color:#fff;background:#dc3545;border-color:#dc3545}.mnr-action-btn--danger:hover{background:#c82333;border-color:#c82333}.mnr-cache-count{opacity:.8;margin-left:4px}.mnr-slide-enter-active,.mnr-slide-leave-active{transition:all .3s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=480px){.mnr-settings-panel{max-width:100%}.mnr-theme-grid{grid-template-columns:repeat(2,1fr)}}.mnr-reader[data-v-c176e6fb]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-c176e6fb]{overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;padding-top:68px;padding-bottom:40px;overflow:auto}.mnr-reader-content[data-v-c176e6fb]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,.05em);margin:0 auto}.mnr-reader-content[data-v-c176e6fb] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-c176e6fb] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-c176e6fb] a{color:var(--mnr-link,#1976d2)}.mnr-chapter-title[data-v-c176e6fb]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-c176e6fb]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-c176e6fb]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-c176e6fb]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-c176e6fb]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-c176e6fb]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-c176e6fb]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-c176e6fb],.mnr-loading-next[data-v-c176e6fb]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-c176e6fb]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-c176e6fb]{padding:40px}}\n/*$vite$:1*/", {});
+		})(".mnr-prompt-overlay[data-v-ba6110ad]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-ba6110ad]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-ba6110ad;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-ba6110ad{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-ba6110ad]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-ba6110ad]{font-size:28px}.mnr-prompt-title[data-v-ba6110ad]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-ba6110ad]{margin-bottom:16px}.mnr-confidence-bar[data-v-ba6110ad]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-ba6110ad]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-ba6110ad]{background:#4caf50}.mnr-confidence-fill.medium[data-v-ba6110ad]{background:#ff9800}.mnr-confidence-fill.low[data-v-ba6110ad]{background:#f44336}.mnr-confidence-text[data-v-ba6110ad]{color:#666;font-size:13px}.mnr-results[data-v-ba6110ad]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-ba6110ad]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-ba6110ad]{color:#2e7d32}.mnr-result-item.warning[data-v-ba6110ad]{color:#ed6c02}.mnr-result-icon[data-v-ba6110ad]{font-weight:700}.mnr-checkbox-label[data-v-ba6110ad]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-ba6110ad]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-ba6110ad]{gap:12px;display:flex}.mnr-btn[data-v-ba6110ad]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-ba6110ad]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-ba6110ad]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-ba6110ad]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-ba6110ad]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-ba6110ad],.mnr-fade-leave-active[data-v-ba6110ad]{transition:opacity .3s}.mnr-fade-enter-from[data-v-ba6110ad],.mnr-fade-leave-to[data-v-ba6110ad]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-ba6110ad]{background:#2a2a2a}.mnr-prompt-title[data-v-ba6110ad]{color:#e0e0e0}.mnr-confidence-bar[data-v-ba6110ad]{background:#444}.mnr-confidence-text[data-v-ba6110ad]{color:#aaa}.mnr-checkbox-label[data-v-ba6110ad]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-ba6110ad]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-ba6110ad]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-ba6110ad]{margin:8px;padding:16px}.mnr-prompt-title[data-v-ba6110ad]{font-size:16px}.mnr-btn[data-v-ba6110ad]{padding:12px 16px}}@media (prefers-reduced-motion:reduce){.mnr-prompt-card[data-v-ba6110ad],.mnr-confidence-fill[data-v-ba6110ad],.mnr-btn[data-v-ba6110ad],.mnr-fade-enter-active[data-v-ba6110ad],.mnr-fade-leave-active[data-v-ba6110ad]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-d9051526]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-d9051526]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-d9051526]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-d9051526]:active{transform:scale(.95)}.mnr-fab[data-v-d9051526]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-d9051526]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:22px;height:22px}.mnr-fab[data-v-d9051526]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-d9051526],.mnr-fade-slide-leave-active[data-v-d9051526]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-d9051526],.mnr-fade-slide-leave-to[data-v-d9051526]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-d9051526],.mnr-fade-slide-enter-active[data-v-d9051526],.mnr-fade-slide-leave-active[data-v-d9051526]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-666ac5a5]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-666ac5a5]{transform:translate(0)}.mnr-drawer-overlay[data-v-666ac5a5]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-666ac5a5]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-666ac5a5]{min-width:0}.mnr-drawer-title[data-v-666ac5a5]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-666ac5a5]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-666ac5a5]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-666ac5a5]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-666ac5a5]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-666ac5a5]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-drawer-tools[data-v-666ac5a5]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;gap:8px;padding:6px 12px 10px;display:flex}.mnr-cache-action[data-v-666ac5a5]{border:1px solid var(--mnr-border,#ddd);min-height:32px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:7px;padding:5px 10px;font-size:12px}.mnr-drawer-state[data-v-666ac5a5]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-666ac5a5]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-666ac5a5]{background:var(--mnr-border,#e0e0e0);flex-shrink:0;height:3px}.mnr-cache-progress-fill[data-v-666ac5a5]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-cache-stats[data-v-666ac5a5]{border-bottom:1px solid var(--mnr-border,#e5e5e5);color:var(--mnr-text,#666);flex-shrink:0;gap:12px;padding:7px 12px;font-size:12px;display:flex}.mnr-chapter-list[data-v-666ac5a5]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-666ac5a5]{height:44px}.mnr-chapter-button[data-v-666ac5a5]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-666ac5a5]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-666ac5a5]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.cached[data-v-666ac5a5]{color:#777}.mnr-chapter-button.persisted[data-v-666ac5a5],.mnr-cache-mark[data-v-666ac5a5]{color:#388e3c}.mnr-cache-mark[data-v-666ac5a5]{flex:none;font-size:12px}.mnr-drawer-close[data-v-666ac5a5]:hover,.mnr-chapter-button[data-v-666ac5a5]:hover,.mnr-cache-action[data-v-666ac5a5]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-drawer-close[data-v-666ac5a5]:focus-visible,.mnr-drawer-search input[data-v-666ac5a5]:focus-visible,.mnr-cache-action[data-v-666ac5a5]:focus-visible,.mnr-chapter-button[data-v-666ac5a5]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-666ac5a5]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-666ac5a5],.mnr-fade-leave-active[data-v-666ac5a5]{transition:opacity .24s}.mnr-fade-enter-from[data-v-666ac5a5],.mnr-fade-leave-to[data-v-666ac5a5]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-666ac5a5],.mnr-fade-enter-active[data-v-666ac5a5],.mnr-fade-leave-active[data-v-666ac5a5],.mnr-cache-progress-fill[data-v-666ac5a5]{transition:none}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3,.mnr-settings-section h4,.mnr-field-label{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3{font-size:18px}.mnr-close-btn{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content{padding:18px 16px max(24px, env(safe-area-inset-bottom));flex:1;overflow:auto}.mnr-settings-section{margin-bottom:22px}.mnr-settings-section h4,.mnr-field-label{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid{grid-template-columns:repeat(4,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;padding:10px 4px;font-size:12px}.mnr-slider-row{align-items:center;gap:10px;display:flex}.mnr-slider-label{width:30px;color:var(--mnr-text,#666);text-align:center;white-space:nowrap;flex:0 0 30px;line-height:1}.mnr-slider-label--large{font-size:1.2em}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:1;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:0;border-radius:50%;width:20px;height:20px}.mnr-slider-value{width:60px;color:var(--mnr-text,#666);text-align:right;white-space:nowrap;flex:0 0 60px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:10px 12px}.mnr-segment:last-child{border-right:0}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-more-settings{border-top:1px solid var(--mnr-border,#ddd)}.mnr-more-settings summary{color:var(--mnr-text,#555);cursor:pointer;padding:16px 0;font-size:14px;font-weight:600}.mnr-more-content{padding-bottom:8px}.mnr-switch-row{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-action-buttons{flex-direction:column;gap:8px;margin-top:14px;display:flex}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:8px;padding:11px 12px;font-size:14px}.mnr-action-btn--danger{color:#c93f49;border-color:#c93f49}.mnr-cache-progress{opacity:.75;margin-left:6px}.mnr-close-btn:hover,.mnr-action-btn:hover,.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-close-btn:focus-visible,.mnr-theme-btn:focus-visible,.mnr-slider:focus-visible,.mnr-select:focus-visible,.mnr-segment:focus-visible,.mnr-action-btn:focus-visible,.mnr-more-settings summary:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:opacity .22s,transform .22s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel{width:100%}.mnr-settings-section--desktop{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:none}}.mnr-reader[data-v-a506be0d]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-a506be0d]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-a506be0d]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,.05em);margin:0 auto}.mnr-reader-content[data-v-a506be0d] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-a506be0d] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-a506be0d] a{color:var(--mnr-link,#1976d2)}.mnr-chapter-boundary-nav[data-v-a506be0d]{border-top:1px solid var(--mnr-border,#e0e0e0);justify-content:center;gap:12px;margin:36px 0 12px;padding-top:18px;display:flex}.mnr-chapter-boundary-nav button[data-v-a506be0d]{border:1px solid var(--mnr-border,#e0e0e0);min-width:92px;color:var(--mnr-link,#1976d2);font:inherit;cursor:pointer;background:0 0;border-radius:8px;padding:9px 14px;font-size:14px}.mnr-chapter-boundary-nav button[data-v-a506be0d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-chapter-boundary-nav button[data-v-a506be0d]:disabled{opacity:.4;cursor:default}.mnr-chapter-boundary-nav button[data-v-a506be0d]:focus-visible,.mnr-reader-main[data-v-a506be0d]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-a506be0d]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-a506be0d]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-a506be0d]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-a506be0d]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-a506be0d]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-a506be0d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-a506be0d]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-a506be0d],.mnr-loading-next[data-v-a506be0d]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-a506be0d]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-a506be0d]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-a506be0d],.mnr-chapter-boundary-nav button[data-v-a506be0d]{transition:none}}\n/*$vite$:1*/", {});
 	})();
 })();

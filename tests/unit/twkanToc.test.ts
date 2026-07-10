@@ -29,7 +29,7 @@ describe('Twkan TOC loading', () => {
   });
 
   it('loads full catalog entries from the chapterlist HTML endpoint', async () => {
-    const fetchMock = vi.fn(async () => ({
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
       ok: true,
       status: 200,
       text: async () => chapterListHtml,

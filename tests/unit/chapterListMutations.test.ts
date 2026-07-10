@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
-import type { CachedChapter, ChapterEntry } from '@/ui/stores/reader/types';
+import {
+  type CachedChapter,
+  type ChapterEntry,
+  MAX_CACHED_CHAPTERS,
+} from '@/ui/stores/reader/types';
 import {
   insertCachedChapter,
   insertParsedChapter,
@@ -107,7 +111,7 @@ describe('chapterListMutations', () => {
   });
 
   it('inserts previous parsed chapters and trims the display tail', async () => {
-    const entries = Array.from({ length: 8 }, (_, index) => makeEntry(index + 2));
+    const entries = Array.from({ length: MAX_CACHED_CHAPTERS }, (_, index) => makeEntry(index + 2));
     const ctx = makeContext(entries);
     ctx.currentConversionMode.value = 'tc';
     const parsed = makeChapter(1);
@@ -115,10 +119,10 @@ describe('chapterListMutations', () => {
 
     await expect(insertParsedChapter(ctx, load, parsed)).resolves.toBe(true);
 
-    expect(ctx.chapters.value).toHaveLength(8);
+    expect(ctx.chapters.value).toHaveLength(MAX_CACHED_CHAPTERS);
     expect(ctx.chapters.value[0].chapter.url).toBe('https://example.com/1.html');
-    expect(ctx.chapters.value.at(-1)?.chapter.url).toBe('https://example.com/8.html');
-    expect(ctx.loadedUrls.value.has('https://example.com/9.html')).toBe(false);
+    expect(ctx.chapters.value.at(-1)?.chapter.url).toBe('https://example.com/6.html');
+    expect(ctx.loadedUrls.value.has('https://example.com/7.html')).toBe(false);
     expect(ctx.currentChapterIndex.value).toBe(1);
     expect(ctx.history.value[0]).toBe('https://example.com/1.html');
     expect(ctx.cachedContents.value.get('https://example.com/1.html')?.chapter.url).toBe(
@@ -128,24 +132,24 @@ describe('chapterListMutations', () => {
   });
 
   it('trims the display head when appending far past the active chapter', async () => {
-    const entries = Array.from({ length: 8 }, (_, index) => makeEntry(index + 1));
+    const entries = Array.from({ length: MAX_CACHED_CHAPTERS }, (_, index) => makeEntry(index + 1));
     const ctx = makeContext(entries);
     ctx.currentChapterIndex.value = 4;
     ctx.originalContents.value.set(entries[0].id, entries[0].chapter.content);
     ctx.originalTitles.value.set(entries[0].id, { title: entries[0].chapter.title });
-    const parsed = makeChapter(9);
+    const parsed = makeChapter(7);
     const load = makeLoad(true, entries.at(-1)!);
 
     await expect(insertParsedChapter(ctx, load, parsed)).resolves.toBe(true);
 
-    expect(ctx.chapters.value).toHaveLength(8);
+    expect(ctx.chapters.value).toHaveLength(MAX_CACHED_CHAPTERS);
     expect(ctx.chapters.value[0].chapter.url).toBe('https://example.com/2.html');
-    expect(ctx.chapters.value.at(-1)?.chapter.url).toBe('https://example.com/9.html');
+    expect(ctx.chapters.value.at(-1)?.chapter.url).toBe('https://example.com/7.html');
     expect(ctx.loadedUrls.value.has('https://example.com/1.html')).toBe(false);
     expect(ctx.originalContents.value.has(entries[0].id)).toBe(false);
     expect(ctx.originalTitles.value.has(entries[0].id)).toBe(false);
     expect(ctx.currentChapterIndex.value).toBe(3);
-    expect(ctx.history.value).toEqual(['https://example.com/9.html']);
+    expect(ctx.history.value).toEqual(['https://example.com/7.html']);
   });
 
   it('rebuilds display state from cached content and applies conversion', async () => {

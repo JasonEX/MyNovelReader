@@ -25,23 +25,23 @@ describe('reader TOC (finalUrl base)', () => {
     });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom DOMParser to globalThis
+    // test env: assigning jsdom DOMParser to globalThis
     globalThis.DOMParser = dom.window.DOMParser;
-    // @ts-expect-error - test env: assigning jsdom Node to globalThis
+    // test env: assigning jsdom Node to globalThis
     globalThis.Node = dom.window.Node;
 
     setActivePinia(createPinia());
 
     // Stub GM_* storage APIs used by RuleStorage / caching.
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_listValues = () => [];
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_getValue = () => null;
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
+    globalThis.GM_getValue = <T>(_name: string, defaultValue?: T): T => defaultValue as T;
+    // userscript global stub
     globalThis.GM_setValue = () => {};
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_deleteValue = () => {};
 
     const indexUrl = 'https://example.com/book'; // Requested URL (no trailing slash)
@@ -67,8 +67,8 @@ describe('reader TOC (finalUrl base)', () => {
       return { abort: () => {} };
     });
 
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_xmlhttpRequest = gm;
+    // userscript global stub
+    globalThis.GM_xmlhttpRequest = gm as unknown as typeof GM_xmlhttpRequest;
 
     const store = useReaderStore();
     store.setChapter({
@@ -76,8 +76,8 @@ describe('reader TOC (finalUrl base)', () => {
       bookTitle: '测试书名',
       content: 'init',
       rawContent: 'init',
-      prevUrl: null,
-      nextUrl: null,
+      prevUrl: undefined,
+      nextUrl: undefined,
       indexUrl,
       url: 'https://example.com/book/chapter/0',
       confidence: 1,

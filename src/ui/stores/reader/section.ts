@@ -17,8 +17,8 @@ export async function parseWithSectionMerge(
   parser: ReturnType<typeof getParser>,
   initialDoc: Document,
   url: string,
-  _referer?: string
+  options: { signal?: AbortSignal } = {}
 ): Promise<ParsedChapter | null> {
   const merger = createSectionMerger(parser);
-  return merger.merge(initialDoc, url);
+  return merger.merge(initialDoc, url, options);
 }

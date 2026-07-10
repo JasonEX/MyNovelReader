@@ -342,12 +342,12 @@ export function createConsoleCollector(page: Page): string[] {
   return logs;
 }
 
-export function printRunSummary(
+export function printRunSummary<TState>(
   label: string,
   details: {
     logs?: string[];
     screenshotPath?: string;
-    state: MnrPageState;
+    state: TState;
     status?: number | null;
   }
 ): void {

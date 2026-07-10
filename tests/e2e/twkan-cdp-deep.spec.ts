@@ -159,7 +159,7 @@ async function openDrawer(page: Page): Promise<TwkanDeepState> {
     () => {
       const shadow = document.querySelector('#mnr-reader-root')?.shadowRoot;
       const loading = shadow?.querySelector('.mnr-drawer-loading');
-      return !loading && shadow.querySelectorAll('.mnr-chapter-list li').length >= 500;
+      return !loading && (shadow?.querySelectorAll('.mnr-chapter-list li').length || 0) >= 500;
     },
     undefined,
     { timeout: 30_000 }
@@ -172,6 +172,7 @@ test('Twkan CDP flow covers prev/next, TOC and cached chapter navigation', async
 }, testInfo) => {
   const endpoint = process.env.MNR_E2E_CDP_ENDPOINT;
   test.skip(!endpoint, 'Set MNR_E2E_CDP_ENDPOINT to run Twkan CDP deep E2E.');
+  if (!endpoint) return;
   test.setTimeout(Math.max(120_000, READ_DELAY_MS * 8 + 60_000));
 
   let browser: Browser | undefined;

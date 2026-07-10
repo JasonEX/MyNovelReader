@@ -116,19 +116,19 @@ export function blockRedirects(options: RedirectProtectionOptions = {}): () => v
     return false;
   };
 
-  window.setTimeout = (callback: TimerHandler, delay?: number, ...args: unknown[]) => {
+  window.setTimeout = ((callback: TimerHandler, delay?: number, ...args: unknown[]) => {
     if (isSuspiciousCallback(callback) && (delay || 0) > 0) {
       return 0;
     }
     return originalSetTimeout(callback, delay, ...args);
-  };
+  }) as typeof window.setTimeout;
 
-  window.setInterval = (callback: TimerHandler, delay?: number, ...args: unknown[]) => {
+  window.setInterval = ((callback: TimerHandler, delay?: number, ...args: unknown[]) => {
     if (isSuspiciousCallback(callback)) {
       return 0;
     }
     return originalSetInterval(callback, delay, ...args);
-  };
+  }) as typeof window.setInterval;
 
   // Block dynamic injection of third-party scripts/iframes (common on mobile ad-tech).
   // This is conservative: it only affects programmatic insertions, not static HTML.

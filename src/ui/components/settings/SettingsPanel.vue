@@ -1,17 +1,30 @@
 <template>
   <Transition name="mnr-slide">
-    <div v-if="visible" class="mnr-settings-overlay" @click.self="$emit('close')">
-      <div class="mnr-settings-panel">
-        <!-- Header -->
-        <div class="mnr-settings-header">
-          <h3>阅读设置</h3>
-          <span class="mnr-shortcut-hint">S</span>
-          <button class="mnr-close-btn" @click="$emit('close')">✕</button>
-        </div>
+    <div v-if="visible" class="mnr-settings-overlay" @click.self="closePanel">
+      <section
+        ref="panelRef"
+        class="mnr-settings-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mnr-settings-title"
+        @keydown.esc.stop="closePanel"
+        @keydown.tab="trapFocus"
+      >
+        <header class="mnr-settings-header">
+          <h3 id="mnr-settings-title">阅读设置</h3>
+          <button
+            ref="closeButtonRef"
+            class="mnr-close-btn"
+            aria-label="关闭设置"
+            @click="closePanel"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </header>
 
-        <!-- Content -->
         <div class="mnr-settings-content">
-          <!-- Theme -->
           <section class="mnr-settings-section">
             <h4>主题</h4>
             <div class="mnr-theme-grid">
@@ -20,6 +33,7 @@
                 :key="theme.id"
                 class="mnr-theme-btn"
                 :class="{ active: currentTheme === theme.id }"
+                :aria-pressed="currentTheme === theme.id"
                 :style="{
                   background: theme.background,
                   color: theme.text,
@@ -33,29 +47,28 @@
             </div>
           </section>
 
-          <!-- Font size -->
           <section class="mnr-settings-section">
-            <h4>字体大小</h4>
+            <h4>字号</h4>
             <div class="mnr-slider-row">
-              <span class="mnr-slider-label">A</span>
+              <span class="mnr-slider-label" aria-hidden="true">A</span>
               <input
                 type="range"
                 min="14"
                 max="28"
                 :value="fontSize"
                 class="mnr-slider"
+                aria-label="字体大小"
                 @input="updateFontSize"
               />
-              <span class="mnr-slider-label" style="font-size: 1.2em">A</span>
+              <span class="mnr-slider-label mnr-slider-label--large" aria-hidden="true">A</span>
               <span class="mnr-slider-value">{{ fontSize }}px</span>
             </div>
           </section>
 
-          <!-- Line height -->
           <section class="mnr-settings-section">
-            <h4>行间距</h4>
+            <h4>行距</h4>
             <div class="mnr-slider-row">
-              <span class="mnr-slider-label">≡</span>
+              <span class="mnr-slider-label" aria-hidden="true">≡</span>
               <input
                 type="range"
                 min="1.4"
@@ -63,18 +76,18 @@
                 step="0.1"
                 :value="lineHeight"
                 class="mnr-slider"
+                aria-label="行间距"
                 @input="updateLineHeight"
               />
-              <span class="mnr-slider-label">☰</span>
+              <span class="mnr-slider-label" aria-hidden="true">☰</span>
               <span class="mnr-slider-value">{{ lineHeight }}</span>
             </div>
           </section>
 
-          <!-- Content width -->
-          <section class="mnr-settings-section">
+          <section class="mnr-settings-section mnr-settings-section--desktop">
             <h4>内容宽度</h4>
             <div class="mnr-slider-row">
-              <span class="mnr-slider-label">⊏⊐</span>
+              <span class="mnr-slider-label" aria-hidden="true">⊏⊐</span>
               <input
                 type="range"
                 min="500"
@@ -82,17 +95,22 @@
                 step="50"
                 :value="maxWidth"
                 class="mnr-slider"
+                aria-label="正文内容宽度"
                 @input="updateMaxWidth"
               />
-              <span class="mnr-slider-label">⊏ ⊐</span>
+              <span class="mnr-slider-label" aria-hidden="true">⊏ ⊐</span>
               <span class="mnr-slider-value">{{ maxWidth }}px</span>
             </div>
           </section>
 
-          <!-- Font family -->
           <section class="mnr-settings-section">
-            <h4>字体</h4>
-            <select v-model="fontFamily" class="mnr-select" @change="updateFontFamily">
+            <label class="mnr-field-label" for="mnr-font-family">字体</label>
+            <select
+              id="mnr-font-family"
+              v-model="fontFamily"
+              class="mnr-select"
+              @change="updateFontFamily"
+            >
               <option value="system-ui, -apple-system, 'Microsoft YaHei', sans-serif">
                 系统默认
               </option>
@@ -102,197 +120,183 @@
             </select>
           </section>
 
-          <!-- Text conversion -->
           <section class="mnr-settings-section">
             <h4>简繁转换</h4>
             <div class="mnr-segmented-control">
               <button
+                v-for="option in conversionOptions"
+                :key="option.value"
                 class="mnr-segment"
-                :class="{ active: textConversion === 'none' }"
-                @click="updateTextConversion('none')"
+                :class="{ active: textConversion === option.value }"
+                :aria-pressed="textConversion === option.value"
+                @click="updateTextConversion(option.value)"
               >
-                原文
-              </button>
-              <button
-                class="mnr-segment"
-                :class="{ active: textConversion === 'sc' }"
-                @click="updateTextConversion('sc')"
-              >
-                简体
-              </button>
-              <button
-                class="mnr-segment"
-                :class="{ active: textConversion === 'tc' }"
-                @click="updateTextConversion('tc')"
-              >
-                繁體
+                {{ option.label }}
               </button>
             </div>
-            <p v-if="textConversion !== 'none'" class="mnr-hint">
-              {{ textConversion === 'sc' ? '将繁体转换为简体中文' : '將簡體轉換為繁體中文' }}
-            </p>
           </section>
 
-          <!-- Behavior -->
-          <section class="mnr-settings-section">
-            <h4>阅读行为</h4>
+          <details class="mnr-more-settings">
+            <summary>更多设置</summary>
+            <div class="mnr-more-content">
+              <label class="mnr-switch-row">
+                <span>显示阅读进度</span>
+                <input
+                  v-model="showProgress"
+                  type="checkbox"
+                  @change="updateBehavior('showProgress', showProgress)"
+                />
+              </label>
 
-            <label class="mnr-switch-row">
-              <span>键盘导航</span>
-              <input
-                v-model="keyboardNav"
-                type="checkbox"
-                @change="updateBehavior('keyboardNavigation', keyboardNav)"
-              />
-            </label>
+              <label class="mnr-switch-row">
+                <span>自动加载下一章</span>
+                <input
+                  v-model="preloadNext"
+                  type="checkbox"
+                  @change="updateBehavior('preloadNext', preloadNext)"
+                />
+              </label>
 
-            <label class="mnr-switch-row">
-              <span>手势翻页</span>
-              <input
-                v-model="swipeGestures"
-                type="checkbox"
-                @change="updateBehavior('swipeGestures', swipeGestures)"
-              />
-            </label>
+              <label class="mnr-switch-row">
+                <span>在本站自动开启</span>
+                <input
+                  v-model="siteAutoEnable"
+                  type="checkbox"
+                  @change="emit('siteAutoEnableChange', siteAutoEnable)"
+                />
+              </label>
 
-            <label class="mnr-switch-row">
-              <span>自动隐藏顶栏</span>
-              <input
-                v-model="autoHideHeader"
-                type="checkbox"
-                @change="updateBehavior('autoHideHeader', autoHideHeader)"
-              />
-            </label>
-
-            <label class="mnr-switch-row">
-              <span>显示阅读进度</span>
-              <input
-                v-model="showProgress"
-                type="checkbox"
-                @change="updateBehavior('showProgress', showProgress)"
-              />
-            </label>
-          </section>
-
-          <!-- Protection -->
-          <section class="mnr-settings-section">
-            <h4>页面防护</h4>
-            <div class="mnr-segmented-control">
-              <button
-                class="mnr-segment"
-                :class="{ active: protectionMode === 'standard' }"
-                @click="updateProtectionMode('standard')"
-              >
-                标准
-              </button>
-              <button
-                class="mnr-segment"
-                :class="{ active: protectionMode === 'aggressive' }"
-                @click="updateProtectionMode('aggressive')"
-              >
-                激进
-              </button>
-            </div>
-            <p class="mnr-hint">激进模式会尝试清理可疑脚本，可能影响站点功能。</p>
-          </section>
-
-          <!-- Actions -->
-          <section class="mnr-settings-section">
-            <h4>操作</h4>
-            <div class="mnr-action-buttons">
-              <div class="mnr-cache-row">
-                <button class="mnr-action-btn" @click="$emit('cacheAll')">
-                  缓存本书
+              <div class="mnr-action-buttons">
+                <button class="mnr-action-btn" @click="emit('cacheAll')">
+                  {{ cacheProgress.running ? '取消缓存' : '离线缓存' }}
                   <span v-if="cacheProgress.total > 0" class="mnr-cache-progress">
                     {{ cacheProgress.done }}/{{ cacheProgress.total }}
                   </span>
                 </button>
                 <button
-                  v-if="persistedCount > 0"
-                  class="mnr-action-btn mnr-action-btn--danger"
-                  @click="handleClearCache"
+                  v-if="!cacheProgress.running && cacheProgress.failed > 0"
+                  class="mnr-action-btn"
+                  @click="emit('retryCache')"
                 >
-                  清除
-                  <span class="mnr-cache-count">({{ persistedCount }})</span>
+                  重试失败章节（{{ cacheProgress.failed }}）
+                </button>
+                <button v-if="persistedCount > 0" class="mnr-action-btn" @click="handleClearCache">
+                  清除离线缓存（{{ persistedCount }}）
+                </button>
+                <button class="mnr-action-btn" @click="emit('copyDiagnostics')">
+                  复制诊断信息
+                </button>
+                <button class="mnr-action-btn mnr-action-btn--danger" @click="emit('exit')">
+                  退出阅读模式
                 </button>
               </div>
-              <button class="mnr-action-btn" @click="handleCopyDiagnosticInfo">复制诊断信息</button>
-              <button
-                class="mnr-action-btn"
-                @click="
-                  $emit('close');
-                  closeReader();
-                "
-              >
-                退出阅读模式
-              </button>
             </div>
-          </section>
+          </details>
         </div>
-      </div>
+      </section>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { useConfigStore, THEMES } from '@/ui/stores/config';
+import { computed, nextTick, ref, watch } from 'vue';
+import { THEMES, useConfigStore } from '@/ui/stores/config';
 import { useReaderStore } from '@/ui/stores/reader';
-import { closeReader, getAppDebugSnapshot } from '@/bootstrap';
-import { copyDiagnosticInfo } from '@/ui/debug/diagnostics';
-import { getSiteProtection } from '@/core/protection';
 
-const props = defineProps<{
-  visible: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    visible: boolean;
+    siteAutoEnable?: boolean;
+  }>(),
+  { siteAutoEnable: true }
+);
 
 const emit = defineEmits<{
   close: [];
   cacheAll: [];
+  retryCache: [];
+  copyDiagnostics: [];
+  exit: [];
+  siteAutoEnableChange: [enabled: boolean];
   textConversionChange: [mode: 'none' | 'sc' | 'tc'];
 }>();
 
-// Store
 const configStore = useConfigStore();
 const readerStore = useReaderStore();
+const panelRef = ref<HTMLElement | null>(null);
+const closeButtonRef = ref<globalThis.HTMLButtonElement | null>(null);
+let previouslyFocused: HTMLElement | null = null;
 
-// Local state synced with store
-const themes = THEMES;
+const visibleThemeIds = new Set(['system', 'light', 'dark', 'sepia']);
+const conversionOptions = [
+  { label: '原文', value: 'none' },
+  { label: '简体', value: 'sc' },
+  { label: '繁體', value: 'tc' },
+] as const;
 const currentTheme = computed(() => configStore.themeId);
+const themes = computed(() => {
+  const visible = THEMES.filter(theme => visibleThemeIds.has(theme.id));
+  const legacyCurrent = THEMES.find(
+    theme => theme.id === currentTheme.value && !visibleThemeIds.has(theme.id)
+  );
+  return legacyCurrent ? [...visible, legacyCurrent] : visible;
+});
+const cacheProgress = computed(() => readerStore.cacheProgress);
+const persistedCount = computed(() => readerStore.persistedUrls.size);
+
 const fontSize = ref(configStore.reading.fontSize);
 const lineHeight = ref(configStore.reading.lineHeight);
 const maxWidth = ref(configStore.reading.maxWidth);
 const fontFamily = ref(configStore.reading.fontFamily);
 const textConversion = ref(configStore.reading.textConversion);
-const keyboardNav = ref(configStore.behavior.keyboardNavigation);
-const swipeGestures = ref(configStore.behavior.swipeGestures);
-const autoHideHeader = ref(configStore.behavior.autoHideHeader);
 const showProgress = ref(configStore.behavior.showProgress);
-const protectionMode = ref(configStore.protection.mode);
-const cacheProgress = computed(() => readerStore.cacheProgress);
-const persistedCount = computed(() => readerStore.persistedUrls.size);
+const preloadNext = ref(configStore.behavior.preloadNext);
+const siteAutoEnable = ref(props.siteAutoEnable);
 
-// Methods
+function closePanel() {
+  emit('close');
+}
+
+function trapFocus(event: globalThis.KeyboardEvent) {
+  const panel = panelRef.value;
+  if (!panel) return;
+  const focusable = Array.from(
+    panel.querySelectorAll<globalThis.HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter(element => element.offsetParent !== null || element === document.activeElement);
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function setTheme(id: string) {
   configStore.setTheme(id);
 }
 
-function updateFontSize(e: Event) {
-  const value = Number((e.target as globalThis.HTMLInputElement).value);
+function updateFontSize(event: Event) {
+  const value = Number((event.target as globalThis.HTMLInputElement).value);
   fontSize.value = value;
   configStore.updateReading({ fontSize: value });
   configStore.applyReading();
 }
 
-function updateLineHeight(e: Event) {
-  const value = Number((e.target as globalThis.HTMLInputElement).value);
+function updateLineHeight(event: Event) {
+  const value = Number((event.target as globalThis.HTMLInputElement).value);
   lineHeight.value = value;
   configStore.updateReading({ lineHeight: value });
   configStore.applyReading();
 }
 
-function updateMaxWidth(e: Event) {
-  const value = Number((e.target as globalThis.HTMLInputElement).value);
+function updateMaxWidth(event: Event) {
+  const value = Number((event.target as globalThis.HTMLInputElement).value);
   maxWidth.value = value;
   configStore.updateReading({ maxWidth: value });
   configStore.applyReading();
@@ -306,241 +310,229 @@ function updateFontFamily() {
 function updateTextConversion(mode: 'none' | 'sc' | 'tc') {
   textConversion.value = mode;
   configStore.updateReading({ textConversion: mode });
-  // Emit event to trigger content re-conversion
   emit('textConversionChange', mode);
 }
 
-function updateBehavior(key: string, value: boolean) {
+function updateBehavior(key: 'showProgress' | 'preloadNext', value: boolean) {
   configStore.updateBehavior({ [key]: value });
 }
 
-function updateProtectionMode(mode: 'standard' | 'aggressive') {
-  protectionMode.value = mode;
-  configStore.updateProtection({ mode });
-  if (mode === 'aggressive') {
-    getSiteProtection().cleanupScripts();
-  }
-}
-
 async function handleClearCache() {
-  if (window.confirm('确定要清除本书的缓存吗？')) {
-    await readerStore.clearPersistedCache();
+  if (!window.confirm('确定要清除本书的离线缓存吗？')) return;
+  await readerStore.clearPersistedCache();
+  readerStore.showToast('离线缓存已清除', 'info');
+}
+
+watch(
+  () => props.siteAutoEnable,
+  value => {
+    siteAutoEnable.value = value;
   }
-}
+);
 
-async function handleCopyDiagnosticInfo() {
-  await copyDiagnosticInfo({
-    readerStore,
-    configStore,
-    bootstrap: getAppDebugSnapshot(),
-    notify: (message, type = 'info') => readerStore.showToast(message, type),
-  });
-}
-
-// Sync with store when panel opens
 watch(
   () => props.visible,
-  visible => {
+  async visible => {
     if (visible) {
+      previouslyFocused = document.activeElement as HTMLElement | null;
       fontSize.value = configStore.reading.fontSize;
       lineHeight.value = configStore.reading.lineHeight;
       maxWidth.value = configStore.reading.maxWidth;
       fontFamily.value = configStore.reading.fontFamily;
       textConversion.value = configStore.reading.textConversion;
-      keyboardNav.value = configStore.behavior.keyboardNavigation;
-      swipeGestures.value = configStore.behavior.swipeGestures;
-      autoHideHeader.value = configStore.behavior.autoHideHeader;
       showProgress.value = configStore.behavior.showProgress;
-      protectionMode.value = configStore.protection.mode;
+      preloadNext.value = configStore.behavior.preloadNext;
+      siteAutoEnable.value = props.siteAutoEnable;
+      await nextTick();
+      closeButtonRef.value?.focus({ preventScroll: true });
+      return;
     }
+
+    previouslyFocused?.focus?.({ preventScroll: true });
+    previouslyFocused = null;
   }
 );
 </script>
 
 <style>
-/* Settings panel styles - not scoped because Teleport moves content outside Vue tree */
 .mnr-settings-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .mnr-settings-panel {
-  width: 100%;
-  max-width: 360px;
-  height: 100%;
-  background: var(--mnr-bg, #fff);
   display: flex;
+  width: min(100%, 380px);
+  height: 100%;
   flex-direction: column;
+  padding-right: env(safe-area-inset-right);
+  background: var(--mnr-bg, #fff);
+  color: var(--mnr-text, #333);
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .mnr-settings-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  justify-content: space-between;
+  padding: max(16px, env(safe-area-inset-top)) 16px 16px;
   border-bottom: 1px solid var(--mnr-border, #e0e0e0);
 }
 
-.mnr-settings-header h3 {
+.mnr-settings-header h3,
+.mnr-settings-section h4,
+.mnr-field-label {
   margin: 0;
-  font-size: 18px;
   color: var(--mnr-text, #333);
 }
 
-.mnr-shortcut-hint {
-  margin-left: auto;
-  margin-right: 12px;
-  padding: 2px 8px;
-  background: var(--mnr-border, #e0e0e0);
-  border-radius: 4px;
-  font-size: 12px;
-  font-family: monospace;
-  color: var(--mnr-text, #666);
+.mnr-settings-header h3 {
+  font-size: 18px;
 }
 
 .mnr-close-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
-  padding: 4px 8px;
-  color: var(--mnr-text, #666);
+}
+
+.mnr-close-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .mnr-settings-content {
   flex: 1;
   overflow: auto;
-  padding: 16px;
+  padding: 18px 16px max(24px, env(safe-area-inset-bottom));
 }
 
 .mnr-settings-section {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
-.mnr-settings-section h4 {
-  margin: 0 0 12px 0;
+.mnr-settings-section h4,
+.mnr-field-label {
+  display: block;
+  margin-bottom: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--mnr-text, #555);
 }
 
-/* Theme grid */
 .mnr-theme-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
 .mnr-theme-btn {
-  padding: 12px 8px;
+  min-width: 0;
+  padding: 10px 4px;
   border: 2px solid transparent;
   border-radius: 8px;
+  font-size: 12px;
   cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s ease;
 }
 
-.mnr-theme-btn.active {
-  border-color: var(--mnr-link, #1976d2);
-}
-
-/* Sliders */
 .mnr-slider-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .mnr-slider-label {
-  flex: 0 0 34px;
-  width: 34px;
-  text-align: center;
-  line-height: 1;
-  white-space: nowrap;
+  flex: 0 0 30px;
+  width: 30px;
   color: var(--mnr-text, #666);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mnr-slider-label--large {
+  font-size: 1.2em;
 }
 
 .mnr-slider {
-  flex: 1 1 auto;
+  flex: 1;
   min-width: 0;
   height: 4px;
-  -webkit-appearance: none;
   appearance: none;
-  background: var(--mnr-border, #e0e0e0);
   border-radius: 2px;
+  background: var(--mnr-border, #e0e0e0);
 }
 
 .mnr-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background: var(--mnr-link, #1976d2);
+  appearance: none;
   border-radius: 50%;
+  background: var(--mnr-link, #1976d2);
   cursor: pointer;
 }
 
 .mnr-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  background: var(--mnr-link, #1976d2);
-  border: none;
+  border: 0;
   border-radius: 50%;
+  background: var(--mnr-link, #1976d2);
   cursor: pointer;
 }
 
 .mnr-slider-value {
-  flex: 0 0 64px;
-  width: 64px;
+  flex: 0 0 60px;
+  width: 60px;
+  color: var(--mnr-text, #666);
+  font-size: 13px;
   text-align: right;
   white-space: nowrap;
-  font-size: 13px;
-  color: var(--mnr-text, #666);
 }
 
-/* Select */
 .mnr-select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--mnr-border, #ddd);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #333);
   font-size: 14px;
 }
 
-/* Segmented control */
 .mnr-segmented-control {
   display: flex;
+  overflow: hidden;
   border: 1px solid var(--mnr-border, #ddd);
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .mnr-segment {
   flex: 1;
-  padding: 10px 16px;
-  border: none;
+  padding: 10px 12px;
+  border: 0;
+  border-right: 1px solid var(--mnr-border, #ddd);
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #666);
-  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.mnr-segment:not(:last-child) {
-  border-right: 1px solid var(--mnr-border, #ddd);
-}
-
-.mnr-segment:hover {
-  background: var(--mnr-border, #f0f0f0);
+.mnr-segment:last-child {
+  border-right: 0;
 }
 
 .mnr-segment.active {
@@ -548,21 +540,29 @@ watch(
   color: var(--mnr-on-link, #fff);
 }
 
-.mnr-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--mnr-text, #888);
-  opacity: 0.8;
+.mnr-more-settings {
+  border-top: 1px solid var(--mnr-border, #ddd);
 }
 
-/* Switch rows */
+.mnr-more-settings summary {
+  padding: 16px 0;
+  color: var(--mnr-text, #555);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mnr-more-content {
+  padding-bottom: 8px;
+}
+
 .mnr-switch-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  cursor: pointer;
+  justify-content: space-between;
+  min-height: 44px;
   color: var(--mnr-text, #333);
+  cursor: pointer;
 }
 
 .mnr-switch-row input {
@@ -571,57 +571,57 @@ watch(
   accent-color: var(--mnr-link, #1976d2);
 }
 
-/* Action buttons */
 .mnr-action-buttons {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.mnr-cache-row {
-  display: flex;
-  gap: 8px;
-}
-
-.mnr-cache-row .mnr-action-btn {
-  flex: 1;
+  margin-top: 14px;
 }
 
 .mnr-action-btn {
   width: 100%;
-  padding: 12px;
+  padding: 11px 12px;
   border: 1px solid var(--mnr-border, #ddd);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #333);
   font-size: 14px;
   cursor: pointer;
 }
 
-.mnr-action-btn:hover {
-  background: var(--mnr-border, #f5f5f5);
-}
-
 .mnr-action-btn--danger {
-  background: #dc3545;
-  color: #fff;
-  border-color: #dc3545;
+  border-color: #c93f49;
+  color: #c93f49;
 }
 
-.mnr-action-btn--danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+.mnr-cache-progress {
+  margin-left: 6px;
+  opacity: 0.75;
 }
 
-.mnr-cache-count {
-  margin-left: 4px;
-  opacity: 0.8;
+.mnr-close-btn:hover,
+.mnr-action-btn:hover,
+.mnr-segment:hover {
+  background: var(--mnr-border, #f0f0f0);
 }
 
-/* Transitions */
+.mnr-close-btn:focus-visible,
+.mnr-theme-btn:focus-visible,
+.mnr-slider:focus-visible,
+.mnr-select:focus-visible,
+.mnr-segment:focus-visible,
+.mnr-action-btn:focus-visible,
+.mnr-more-settings summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);
+  outline-offset: 2px;
+}
+
 .mnr-slide-enter-active,
-.mnr-slide-leave-active {
-  transition: all 0.3s ease;
+.mnr-slide-leave-active,
+.mnr-settings-panel {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
 }
 
 .mnr-slide-enter-from,
@@ -634,14 +634,21 @@ watch(
   transform: translateX(100%);
 }
 
-/* Mobile */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .mnr-settings-panel {
-    max-width: 100%;
+    width: 100%;
   }
 
-  .mnr-theme-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .mnr-settings-section--desktop {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnr-slide-enter-active,
+  .mnr-slide-leave-active,
+  .mnr-settings-panel {
+    transition: none;
   }
 }
 </style>

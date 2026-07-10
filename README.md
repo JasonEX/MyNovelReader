@@ -2,7 +2,7 @@
 
 [![User script generation](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml)
 
-现代化的小说阅读 UserScript，支持自动翻页、自定义样式、语音朗读等功能。核心逻辑已使用 TypeScript 重构。
+现代化的小说阅读 UserScript，支持智能正文识别、连续阅读、阅读位置恢复、简繁转换和克制的排版定制。核心逻辑使用 TypeScript 实现。
 
 ## 安装
 
@@ -37,6 +37,9 @@
 npm install                  # 安装依赖并安装 Husky 钩子
 npm run dev                  # 监听文件变化自动构建到 scripts/
 npm run build                # 生产构建，生成 scripts/MyNovelReader.user.js
+npm run check:size           # 检查用户脚本原始与 gzip 体积预算
+npm run profile:performance  # 生成本地压力场景 Chrome CPU Profile
+npm run profile:performance:real # 额外生成真实站点启动 Profile
 npm test                     # 运行全部单测（watch）
 npm run test:run             # 单次运行全部单测
 npm run test:coverage        # 生成 coverage 报告（已在 .gitignore）
@@ -44,10 +47,13 @@ npm run e2e:warmup           # 打开持久化浏览器 profile，手动通过 C
 npm run e2e:smoke            # 构建并在真实章节页注入脚本，验证阅读器实际渲染
 npm run e2e:smoke:headed     # 有些站点不信任 headless 时，用有界面浏览器跑同一套 smoke
 npm run e2e:smoke:cdp        # 连接已开启远程调试端口的真实 Chrome 会话做 smoke
+npm run e2e:local             # 构建并运行本地固定页面 smoke
 npm run lint                 # 基础语法检查
 npm run lint:strict          # 不允许有 warnings
 npm run lint:fix             # 自动修复可修复的 lint 问题
 npm run typecheck            # TypeScript 类型检查（noEmit）
+npm run typecheck:tests      # 测试代码 TypeScript 类型检查
+npm run validate             # 完整本地验证
 npm run format               # Prettier 全量格式化
 npx vitest run tests/unit/xxx.test.ts  # 运行单个测试
 ```
@@ -136,6 +142,10 @@ npm run e2e:smoke:cdp
 
 - [Github][ywzhaiqi_github]
 - [Greasy Fork][ywzhaiqi_greasyfork]
+
+## 许可证
+
+本项目以 [GPL-3.0-only](LICENSE) 发布。
 
 [ywzhaiqi_github]: https://github.com/ywzhaiqi/userscript
 [ywzhaiqi_greasyfork]: https://greasyfork.org/users/145-ywzhaiqi

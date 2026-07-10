@@ -29,11 +29,11 @@ describe('p_key template + extensionless section merge', () => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom DOMParser to globalThis
+    // test env: assigning jsdom DOMParser to globalThis
     globalThis.DOMParser = dom.window.DOMParser;
-    // @ts-expect-error - test env: assigning jsdom Node to globalThis
+    // test env: assigning jsdom Node to globalThis
     globalThis.Node = dom.window.Node;
 
     setActivePinia(createPinia());
@@ -93,13 +93,13 @@ describe('p_key template + extensionless section merge', () => {
     `;
 
     // Stub GM_* storage APIs used by RuleStorage (RuleManager initializes during parse()).
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_listValues = () => [];
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_getValue = () => null;
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
+    globalThis.GM_getValue = <T>(_name: string, defaultValue?: T): T => defaultValue as T;
+    // userscript global stub
     globalThis.GM_setValue = () => {};
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_deleteValue = () => {};
 
     const gm = vi.fn((opts: MockGmXhrOpts) => {
@@ -111,8 +111,8 @@ describe('p_key template + extensionless section merge', () => {
       return { abort: () => {} };
     });
 
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_xmlhttpRequest = gm;
+    // userscript global stub
+    globalThis.GM_xmlhttpRequest = gm as unknown as typeof GM_xmlhttpRequest;
 
     const store = useReaderStore();
 

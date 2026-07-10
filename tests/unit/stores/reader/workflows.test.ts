@@ -210,7 +210,8 @@ describe('ReaderStore - workflows', () => {
     const checkpoint = parseStoredJson<{ urls: string[] }>(gm.store.get(indexKey));
     expect(checkpoint?.urls).toEqual(['https://example.com/book/1/2.html']);
 
-    resolveSecondFetch?.();
+    const releaseSecondFetch = resolveSecondFetch as (() => void) | null;
+    releaseSecondFetch?.();
     await run;
 
     const finalIndex = parseStoredJson<{ urls: string[] }>(gm.store.get(indexKey));
@@ -221,6 +222,112 @@ describe('ReaderStore - workflows', () => {
         'https://example.com/book/1/3.html',
       ])
     );
+  });
+
+  it('reports failed cache entries and can retry them', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    mockFetchAndParseUrl.mockImplementation((url: string) => ({
+      promise: Promise.resolve({
+        doc: null,
+        status: 503,
+        finalUrl: url,
+        error: 'http',
+      }),
+      abort: vi.fn(),
+    }));
+
+    await store.startCacheAll([
+      'https://example.com/book/1/2.html',
+      'https://example.com/book/1/3.html',
+    ]);
+
+    expect(store.cacheProgress).toMatchObject({ done: 2, total: 2, failed: 2, running: false });
+
+    const doc = new DOMParser().parseFromString('<html><body>ok</body></html>', 'text/html');
+    mockFetchAndParseUrl.mockImplementation((url: string) => ({
+      promise: Promise.resolve({ doc, status: 200, finalUrl: url, error: null }),
+      abort: vi.fn(),
+    }));
+    mockParseWithSectionMerge.mockImplementation(async (_parser, _doc, url: string) => ({
+      title: '章节',
+      content: '<p>content</p>',
+      rawContent: '<p>content</p>',
+      url,
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+      nextUrl: null,
+    }));
+
+    await store.retryFailedCache();
+    expect(store.cacheProgress).toMatchObject({ done: 2, total: 2, failed: 0, running: false });
+  });
+
+  it('finishes immediately when there is nothing to cache', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    await store.startCacheAll([]);
+    await store.retryFailedCache();
+
+    expect(store.cacheProgress).toEqual({ done: 0, total: 0, failed: 0, running: false });
+    expect(fetchAndParseUrl).not.toHaveBeenCalled();
+  });
+
+  it('counts already loaded URLs without requesting them again', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    await store.startCacheAll(['https://example.com/book/1/1.html']);
+
+    expect(store.cacheProgress).toMatchObject({ done: 1, total: 1, failed: 0, running: false });
+    expect(fetchAndParseUrl).not.toHaveBeenCalled();
+  });
+
+  it('records a parse failure after a successful fetch', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+    const doc = new DOMParser().parseFromString('<html><body>invalid</body></html>', 'text/html');
+    mockFetchAndParseUrl.mockReturnValue({
+      promise: Promise.resolve({ doc, status: 200, finalUrl: null, error: null }),
+      abort: vi.fn(),
+    });
+    mockParseWithSectionMerge.mockResolvedValue(null);
+
+    await store.startCacheAll(['https://example.com/book/1/2.html']);
+
+    expect(store.cacheProgress).toMatchObject({ done: 1, total: 1, failed: 1, running: false });
   });
 
   it('cancelCacheAll aborts in-flight request and stops caching', async () => {
@@ -253,6 +360,49 @@ describe('ReaderStore - workflows', () => {
     await p;
 
     expect(abort).toHaveBeenCalledTimes(1);
+    expect(store.cacheProgress.running).toBe(false);
+  });
+
+  it('cancelCacheAll aborts an in-flight section merge', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const doc = new DOMParser().parseFromString('<html><body>next</body></html>', 'text/html');
+    mockFetchAndParseUrl.mockReturnValue({
+      promise: Promise.resolve({
+        doc,
+        status: 200,
+        finalUrl: 'https://example.com/book/1/2.html',
+        error: null,
+      }),
+      abort: vi.fn(),
+    });
+
+    let mergeSignal: AbortSignal | undefined;
+    mockParseWithSectionMerge.mockImplementation(
+      async (_parser, _doc, _url, options: { signal?: AbortSignal }) => {
+        mergeSignal = options.signal;
+        await new Promise<void>(resolve => {
+          options.signal?.addEventListener('abort', () => resolve(), { once: true });
+        });
+        return null;
+      }
+    );
+
+    const run = store.startCacheAll(['https://example.com/book/1/2.html']);
+    await vi.waitFor(() => expect(mergeSignal).toBeDefined());
+
+    store.cancelCacheAll();
+    await run;
+
+    expect(mergeSignal?.aborted).toBe(true);
     expect(store.cacheProgress.running).toBe(false);
   });
 

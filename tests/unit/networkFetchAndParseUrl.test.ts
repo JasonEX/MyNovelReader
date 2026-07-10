@@ -2,6 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDom } from '../testUtils/dom';
 import { fetchAndParseUrl } from '@/core/utils/network';
 
+const makeXhrResponse = (
+  opts: GM_xmlhttpRequestOptions,
+  overrides: Partial<GmXhrResponse> = {}
+): GmXhrResponse => ({
+  readyState: 4,
+  responseHeaders: '',
+  responseText: '',
+  status: 0,
+  statusText: '',
+  finalUrl: opts.url,
+  ...overrides,
+});
+
 describe('fetchAndParseUrl (url validation)', () => {
   beforeEach(() => {
     createDom('https://reader.test/');
@@ -15,7 +28,7 @@ describe('fetchAndParseUrl (url validation)', () => {
 
   it('returns invalid-url for non-http(s) schemes without calling GM_xmlhttpRequest', async () => {
     const gm = vi.fn();
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl('data:text/html,<p>x</p>', 'https://example.com/');
@@ -27,7 +40,7 @@ describe('fetchAndParseUrl (url validation)', () => {
 
   it('blocks private network targets when referer is a different host', async () => {
     const gm = vi.fn();
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl('http://127.0.0.1/secret', 'https://example.com/');
@@ -39,14 +52,16 @@ describe('fetchAndParseUrl (url validation)', () => {
 
   it('allows private network targets when referer is the same host', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      opts.onload?.({
-        status: 200,
-        responseText: '<!doctype html><html><body>ok</body></html>',
-        finalUrl: opts.url,
-      });
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+          finalUrl: opts.url,
+        })
+      );
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl(
@@ -70,7 +85,7 @@ describe('fetchAndParseUrl (url validation)', () => {
       });
     });
 
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
     vi.stubGlobal('fetch', fetchMock);
     window.fetch = fetchMock as unknown as typeof fetch;

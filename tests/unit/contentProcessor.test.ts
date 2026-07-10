@@ -918,35 +918,21 @@ describe('ContentProcessor', () => {
       const rules = [{ pattern: '\\d+', replacement: 'NUM', flags: 'g' }];
       processor.setOptions({ replaceRules: rules });
 
-      const ActualRegExp = globalThis.RegExp;
-      function RegExpPassthrough(pattern: string | RegExp, flags?: string): RegExp {
-        return new ActualRegExp(pattern, flags);
-      }
-      const newRegExpSpy = vi
-        .spyOn(globalThis, 'RegExp' as never)
-        .mockImplementation(RegExpPassthrough as never);
-      const callsBefore = newRegExpSpy.mock.calls.length;
+      const regexCache = (processor as unknown as { regexCache: Map<string, RegExp | null> })
+        .regexCache;
 
       const el1 = doc.createElement('div');
       el1.innerHTML = '<p>Test 111</p>';
       processor.process(el1, doc);
 
-      const callsAfterFirst = newRegExpSpy.mock.calls.length;
+      expect(regexCache.size).toBe(1);
 
       const el2 = doc.createElement('div');
       el2.innerHTML = '<p>Test 222</p>';
       const result2 = processor.process(el2, doc);
 
-      const callsAfterSecond = newRegExpSpy.mock.calls.length;
-
-      // The regex for the replace rule should not be compiled again on the second call
-      // (other RegExp calls may happen internally, but the replace-rule one should be cached)
       expect(result2).toContain('NUM');
-      // Second process should create fewer RegExp instances than the first
-      // because the replace rule regex is cached
-      expect(callsAfterSecond - callsAfterFirst).toBeLessThanOrEqual(callsAfterFirst - callsBefore);
-
-      newRegExpSpy.mockRestore();
+      expect(regexCache.size).toBe(1);
     });
 
     it('should clear regex cache when setOptions is called', () => {

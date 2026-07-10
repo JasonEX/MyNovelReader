@@ -76,14 +76,16 @@ describe('network utilities', () => {
 
   it('allows private-network hosts when referer is the same host (IPv6)', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      opts.onload?.({
-        status: 200,
-        responseText: '<!doctype html><html><body>ok</body></html>',
-        finalUrl: opts.url,
-      });
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+          finalUrl: opts.url,
+        })
+      );
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl('http://[::1]/ch#x', 'http://[::1]/');
@@ -97,14 +99,16 @@ describe('network utilities', () => {
 
   it('GM_xmlhttpRequest success parses HTML and sets base', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      opts.onload?.({
-        status: 200,
-        responseText: '<!doctype html><html><head></head><body><a href="/x">x</a></body></html>',
-        finalUrl: opts.url,
-      });
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><head></head><body><a href="/x">x</a></body></html>',
+          finalUrl: opts.url,
+        })
+      );
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl('https://example.com/ch1', 'https://example.com/');
@@ -122,17 +126,19 @@ describe('network utilities', () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
       calls++;
       if (calls === 1) {
-        opts.onload?.({ status: 500, responseText: 'oops', finalUrl: opts.url });
+        opts.onload?.(makeXhrResponse(opts, { status: 500, responseText: 'oops' }));
       } else {
-        opts.onload?.({
-          status: 200,
-          responseText: '<!doctype html><html><body>ok</body></html>',
-          finalUrl: opts.url,
-        });
+        opts.onload?.(
+          makeXhrResponse(opts, {
+            status: 200,
+            responseText: '<!doctype html><html><body>ok</body></html>',
+            finalUrl: opts.url,
+          })
+        );
       }
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl('https://example.com/ch2', 'https://example.com/', {
@@ -193,7 +199,7 @@ describe('network utilities', () => {
       url: 'https://example.com/final',
       text: async () => '<!doctype html><html><head></head><body><a href="/x">x</a></body></html>',
     }));
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
@@ -218,7 +224,7 @@ describe('network utilities', () => {
       arrayBuffer: async () => hexToArrayBuffer(gbkHtml),
       text: async () => '',
     }));
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await fetchAndParseUrl('https://example.com/book/', 'https://example.com/', {
@@ -238,7 +244,7 @@ describe('network utilities', () => {
       url: 'https://example.com/notfound',
       text: async () => 'nope',
     }));
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
@@ -256,7 +262,7 @@ describe('network utilities', () => {
     const fetchMock = vi.fn(async () => {
       throw new Error('boom');
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {
@@ -276,14 +282,16 @@ describe('network utilities', () => {
     });
 
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      opts.onload?.({
-        status: 200,
-        responseText: '<!doctype html><html><body>ok</body></html>',
-        finalUrl: opts.url,
-      });
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+          finalUrl: opts.url,
+        })
+      );
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const { promise } = fetchAndParseUrl('chapter/1', 'not a url');
@@ -304,7 +312,7 @@ describe('network utilities', () => {
       opts.onerror?.(makeXhrResponse(opts));
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     await expect(
@@ -315,7 +323,7 @@ describe('network utilities', () => {
       opts.onabort?.(makeXhrResponse(opts));
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gmAbort);
     await expect(
       fetchAndParseUrl('https://example.com/ch', 'https://example.com/', { retries: 0 }).promise
@@ -325,7 +333,7 @@ describe('network utilities', () => {
       opts.ontimeout?.(makeXhrResponse(opts));
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gmTimeout);
     await expect(
       fetchAndParseUrl('https://example.com/ch', 'https://example.com/', { retries: 0 }).promise
@@ -334,14 +342,16 @@ describe('network utilities', () => {
 
   it('returns parse error when DOMParser throws', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      opts.onload?.({
-        status: 200,
-        responseText: '<!doctype html><html><body>ok</body></html>',
-        finalUrl: opts.url,
-      });
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+          finalUrl: opts.url,
+        })
+      );
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     class BrokenDomParser {
@@ -359,20 +369,22 @@ describe('network utilities', () => {
 
   it('inserts <base> when parsed document lacks head', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
-      opts.onload?.({
-        status: 200,
-        responseText: '<!doctype html><html><body>ok</body></html>',
-        finalUrl: opts.url,
-      });
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+          finalUrl: opts.url,
+        })
+      );
       return { abort: () => {} };
     });
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const real = new DOMParser();
     class NoHeadDomParser {
       parseFromString(html: string, mime: string): Document {
-        const doc = real.parseFromString(html, mime);
+        const doc = real.parseFromString(html, mime as DOMParserSupportedType);
         Object.defineProperty(doc, 'head', { value: null, configurable: true });
         return doc;
       }
@@ -393,7 +405,7 @@ describe('network utilities', () => {
         throw new Error('abort boom');
       },
     }));
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     vi.stubGlobal('GM_xmlhttpRequest', gm);
 
     const gmReq = fetchAndParseUrl('https://example.com/ch', 'https://example.com/', {

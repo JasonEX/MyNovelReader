@@ -16,9 +16,9 @@ describe('useReaderAutoLoad', () => {
       url: 'https://example.com/',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env
-    globalThis.window = dom.window;
-    // @ts-expect-error - test env
+    // test env
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    // test env
     globalThis.document = dom.window.document;
 
     setActivePinia(createPinia());

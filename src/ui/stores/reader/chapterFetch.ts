@@ -147,7 +147,7 @@ export async function parseCandidateDocument(
   parser: Parser,
   doc: Document,
   runId: number,
-  referer: string,
+  _referer: string,
   source: LoadSource
 ): Promise<ParsedCandidateResult> {
   if (isCloudflareChallenge(doc)) {
@@ -166,11 +166,21 @@ export async function parseCandidateDocument(
     return 'blocked';
   }
 
-  const parsed = await parseWithSectionMerge(parser, doc, load.targetUrl, referer);
-  if (ctx.runtime.isViewStale(runId)) {
-    return 'abort';
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  load.pendingAbortRef.value = abort;
+
+  try {
+    const parsed = await parseWithSectionMerge(parser, doc, load.targetUrl, {
+      signal: controller.signal,
+    });
+    if (controller.signal.aborted || ctx.runtime.isViewStale(runId)) {
+      return 'abort';
+    }
+    return parsed;
+  } finally {
+    clearPendingAbort(load, abort);
   }
-  return parsed;
 }
 
 export function clearPendingAbort(load: PreparedChapterLoad, abort: () => void): void {

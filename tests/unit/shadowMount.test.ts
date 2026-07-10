@@ -19,7 +19,7 @@ describe('shadowMount', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
   });
 

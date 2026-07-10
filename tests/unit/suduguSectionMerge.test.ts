@@ -30,21 +30,21 @@ describe('sudugu section merge', () => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: page2Url });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom DOMParser to globalThis
+    // test env: assigning jsdom DOMParser to globalThis
     globalThis.DOMParser = dom.window.DOMParser;
-    // @ts-expect-error - test env: assigning jsdom Node to globalThis
+    // test env: assigning jsdom Node to globalThis
     globalThis.Node = dom.window.Node;
 
     // Stub GM_* storage APIs used by RuleManager/RuleStorage.
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_listValues = () => [];
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_getValue = () => null;
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
+    globalThis.GM_getValue = <T>(_name: string, defaultValue?: T): T => defaultValue as T;
+    // userscript global stub
     globalThis.GM_setValue = () => {};
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_deleteValue = () => {};
 
     const makeHtml = (nav: string, contentToken: string) => `
@@ -97,8 +97,8 @@ describe('sudugu section merge', () => {
       return { abort: () => opts.onabort?.() };
     });
 
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_xmlhttpRequest = gm;
+    // userscript global stub
+    globalThis.GM_xmlhttpRequest = gm as unknown as typeof GM_xmlhttpRequest;
 
     let launched: import('@/core/parser').ParsedChapter | null = null;
     const manager = new AutoEnableManager({ enableProtection: false });
@@ -109,12 +109,14 @@ describe('sudugu section merge', () => {
     await manager.manualEnable(dom.window.document);
 
     expect(launched).not.toBeNull();
-    expect(launched?.url).toBe(page1Url);
-    expect(launched?.prevUrl).toBe(prevChapterUrl);
-    expect(launched?.nextUrl).toBe(nextChapterUrl);
-    expect(launched?.content).toContain('PAGE1_CONTENT');
-    expect(launched?.content).toContain('PAGE2_CONTENT');
-    expect(launched?.content).toContain('PAGE3_CONTENT');
-    expect(launched?.content).toContain('PAGE4_CONTENT');
+    const chapter = launched as import('@/core/parser').ParsedChapter | null;
+    if (!chapter) throw new Error('reader did not launch');
+    expect(chapter.url).toBe(page1Url);
+    expect(chapter.prevUrl).toBe(prevChapterUrl);
+    expect(chapter.nextUrl).toBe(nextChapterUrl);
+    expect(chapter.content).toContain('PAGE1_CONTENT');
+    expect(chapter.content).toContain('PAGE2_CONTENT');
+    expect(chapter.content).toContain('PAGE3_CONTENT');
+    expect(chapter.content).toContain('PAGE4_CONTENT');
   });
 });

@@ -87,9 +87,9 @@ describe('SiteProtection (extra coverage)', () => {
 
     const originalSetTimeout = vi.fn(() => 123);
     const originalSetInterval = vi.fn(() => 456);
-    // @ts-expect-error - overriding in test
+    // overriding in test
     dom.window.setTimeout = originalSetTimeout;
-    // @ts-expect-error - overriding in test
+    // overriding in test
     dom.window.setInterval = originalSetInterval;
 
     protection = new SiteProtection({
@@ -107,9 +107,9 @@ describe('SiteProtection (extra coverage)', () => {
     protection.activate();
 
     // Suspicious string callback
-    // @ts-expect-error - TimerHandler supports string
+    // TimerHandler supports string
     expect(dom.window.setTimeout('location.href="https://evil.example/"', 100)).toBe(0);
-    // @ts-expect-error - TimerHandler supports string
+    // TimerHandler supports string
     expect(dom.window.setInterval('window.open("https://evil.example/")', 100)).toBe(0);
 
     // Safe function callback should pass through to original
@@ -617,9 +617,9 @@ describe('SiteProtection (extra coverage)', () => {
 
     const originalWrite = vi.fn();
     const originalWriteln = vi.fn();
-    // @ts-expect-error - override for test
+    // override for test
     doc.write = originalWrite;
-    // @ts-expect-error - override for test
+    // override for test
     doc.writeln = originalWriteln;
 
     protection = new SiteProtection({

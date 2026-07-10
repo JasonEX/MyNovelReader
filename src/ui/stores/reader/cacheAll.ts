@@ -28,6 +28,7 @@ export interface CacheAllContext {
   // State refs
   cacheProgress: Ref<CacheProgressState>;
   cacheQueue: Ref<string[]>;
+  cacheFailedUrls: Ref<string[]>;
   cacheAbort: Ref<(() => void) | null>;
   loadedUrls: Ref<Set<string>>;
   cachedContents: Ref<Map<string, CachedChapter>>;
@@ -47,6 +48,7 @@ export interface CacheAllContext {
   // Callbacks
   restoreCache: () => Promise<void>;
   persistCache: () => Promise<void>;
+  showToast: (message: string, type?: 'info' | 'error', duration?: number) => void;
 }
 
 // ============ Factory ============
@@ -61,6 +63,7 @@ export function createCacheAll(ctx: CacheAllContext) {
     if (ctx.cacheProgress.value.running) return;
 
     const seenUrls = new Set<string>();
+    ctx.cacheFailedUrls.value = [];
 
     // Ensure we have the latest persistedUrls before building the task list.
     await ctx.restoreCache();
@@ -103,10 +106,10 @@ export function createCacheAll(ctx: CacheAllContext) {
     const estimatedTotal = taskList.length;
     if (ctx.runtime.isSessionStale(runId)) return;
     if (estimatedTotal === 0) {
-      ctx.cacheProgress.value = { done: 0, total: 0, running: false };
+      ctx.cacheProgress.value = { done: 0, total: 0, failed: 0, running: false };
       return;
     }
-    ctx.cacheProgress.value = { done: 0, total: estimatedTotal, running: true };
+    ctx.cacheProgress.value = { done: 0, total: estimatedTotal, failed: 0, running: true };
 
     let nextUrl: string | undefined | null = taskList.shift();
     let referer =
@@ -148,16 +151,43 @@ export function createCacheAll(ctx: CacheAllContext) {
         break;
       }
       if (!result.doc) {
+        ctx.cacheFailedUrls.value.push(targetUrl);
+        ctx.cacheProgress.value = {
+          ...ctx.cacheProgress.value,
+          done: ctx.cacheProgress.value.done + 1,
+          failed: ctx.cacheProgress.value.failed + 1,
+        };
         nextUrl = taskList.shift() ?? null;
         continue;
       }
 
       const parser = getParser();
-      const parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, referer);
+      const controller = new AbortController();
+      const abortMerge = () => controller.abort();
+      ctx.cacheAbort.value = abortMerge;
+      let parsed: ParsedChapter | null;
+      try {
+        parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, {
+          signal: controller.signal,
+        });
+      } finally {
+        if (ctx.cacheAbort.value === abortMerge) {
+          ctx.cacheAbort.value = null;
+        }
+      }
+      if (controller.signal.aborted) {
+        break;
+      }
       if (ctx.runtime.isSessionStale(runId)) {
         break;
       }
       if (!parsed) {
+        ctx.cacheFailedUrls.value.push(targetUrl);
+        ctx.cacheProgress.value = {
+          ...ctx.cacheProgress.value,
+          done: ctx.cacheProgress.value.done + 1,
+          failed: ctx.cacheProgress.value.failed + 1,
+        };
         nextUrl = taskList.shift() ?? null;
         continue;
       }
@@ -219,11 +249,10 @@ export function createCacheAll(ctx: CacheAllContext) {
       }
     }
 
-    if (ctx.runtime.isSessionStale(runId)) return;
+    if (ctx.runtime.isSessionStale(runId) || !ctx.cacheProgress.value.running) return;
     // Final total update
     ctx.cacheProgress.value = {
       ...ctx.cacheProgress.value,
-      total: ctx.cacheProgress.value.done,
       running: false,
     };
     ctx.cacheAbort.value = null;
@@ -233,14 +262,27 @@ export function createCacheAll(ctx: CacheAllContext) {
       ctx.persistedUrls.value = persistedSet;
     }
     await ctx.persistCache();
+
+    if (ctx.cacheProgress.value.failed > 0) {
+      ctx.showToast(`缓存完成，${ctx.cacheProgress.value.failed} 章失败`, 'error', 3500);
+    } else {
+      ctx.showToast('离线缓存完成', 'info', 2500);
+    }
   }
 
   function cancelCacheAll(): void {
-    ctx.cacheProgress.value = { done: 0, total: 0, running: false };
+    ctx.cacheProgress.value = { done: 0, total: 0, failed: 0, running: false };
     ctx.cacheQueue.value = [];
+    ctx.cacheFailedUrls.value = [];
     ctx.cacheAbort.value?.();
     ctx.cacheAbort.value = null;
   }
 
-  return { startCacheAll, cancelCacheAll };
+  function retryFailedCache(): Promise<void> {
+    const urls = [...ctx.cacheFailedUrls.value];
+    if (urls.length === 0) return Promise.resolve();
+    return startCacheAll(urls);
+  }
+
+  return { startCacheAll, cancelCacheAll, retryFailedCache };
 }

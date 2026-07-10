@@ -54,7 +54,7 @@ export const useReaderStore = defineStore('reader', () => {
   const currentChapterIndex = ref(0);
   const error = ref<string | null>(null);
   const toastType = ref<'info' | 'error'>('error');
-  const toastTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = ref<number | null>(null);
   const scrollPercent = ref(0);
   const history = ref<string[]>([]);
   const loadedUrls = ref<Set<string>>(new Set());
@@ -66,8 +66,9 @@ export const useReaderStore = defineStore('reader', () => {
   const pendingNextAbort = ref<(() => void) | null>(null);
   const pendingPrevAbort = ref<(() => void) | null>(null);
   const navFailures = new Map<string, { count: number; nextRetryAt: number }>();
-  const cacheProgress = ref<CacheProgressState>({ done: 0, total: 0, running: false });
+  const cacheProgress = ref<CacheProgressState>({ done: 0, total: 0, failed: 0, running: false });
   const cacheQueue = ref<string[]>([]);
+  const cacheFailedUrls = ref<string[]>([]);
   const cacheAbort = ref<(() => void) | null>(null);
   const reloadAbort = ref<(() => void) | null>(null);
   const toc = ref<TocEntry[]>([]);
@@ -272,9 +273,10 @@ export const useReaderStore = defineStore('reader', () => {
     getPersistedCachedChapter: getPersistedCachedChapterForCurrentBook,
   });
 
-  const { startCacheAll, cancelCacheAll } = createCacheAll({
+  const { startCacheAll, cancelCacheAll, retryFailedCache } = createCacheAll({
     cacheProgress,
     cacheQueue,
+    cacheFailedUrls,
     cacheAbort,
     loadedUrls,
     cachedContents,
@@ -285,6 +287,7 @@ export const useReaderStore = defineStore('reader', () => {
     runtime,
     restoreCache,
     persistCache,
+    showToast,
   });
 
   const tocActions = createTocActions({
@@ -320,8 +323,9 @@ export const useReaderStore = defineStore('reader', () => {
     isLoadingPrev.value = false;
     isLoadingNext.value = false;
     tocLoading.value = false;
-    cacheProgress.value = { done: 0, total: 0, running: false };
+    cacheProgress.value = { done: 0, total: 0, failed: 0, running: false };
     cacheQueue.value = [];
+    cacheFailedUrls.value = [];
   }
 
   /** Clear all navigation/cache/toc data */
@@ -657,6 +661,7 @@ export const useReaderStore = defineStore('reader', () => {
     applyTextConversion,
     startCacheAll,
     cancelCacheAll,
+    retryFailedCache,
     loadToc: tocActions.loadToc,
     rebuildChaptersAround,
     reloadCurrentChapter,

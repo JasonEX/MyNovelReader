@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { JSDOM } from 'jsdom';
 
+import { toProtectionOptions, useConfigStore } from '@/ui/stores/config';
 import { createShadowMount } from '@/ui/shadowMount';
-import { useConfigStore } from '@/ui/stores/config';
 
 describe('ConfigStore (extra coverage)', () => {
   let dom: JSDOM;
@@ -89,7 +89,7 @@ describe('ConfigStore (extra coverage)', () => {
     await store.load();
 
     // Should fall back to defaults
-    expect(store.themeId).toBe('light');
+    expect(store.themeId).toBe('system');
   });
 
   it('handles null config data gracefully', async () => {
@@ -101,7 +101,7 @@ describe('ConfigStore (extra coverage)', () => {
     const store = useConfigStore();
     await store.load();
 
-    expect(store.themeId).toBe('light');
+    expect(store.themeId).toBe('system');
   });
 
   it('falls back to localStorage when GM_getValue is not available', async () => {
@@ -154,14 +154,22 @@ describe('ConfigStore (extra coverage)', () => {
     store.themeId = 'dark';
     store.$reset();
 
-    expect(store.themeId).toBe('light');
+    expect(store.themeId).toBe('system');
     expect(store.customCSS).toBe('');
   });
 
   it('updateProtection merges settings', () => {
     const store = useConfigStore();
-    store.updateProtection({ blockVisibility: false });
-    expect(store.protection.blockVisibility).toBe(false);
+    store.updateProtection({ blockRedirects: false });
+    expect(store.protection.blockRedirects).toBe(false);
+  });
+
+  it('only enables irreversible timer cleanup in aggressive mode', () => {
+    const store = useConfigStore();
+
+    expect(toProtectionOptions(store.protection).clearTimers).toBe(false);
+    store.updateProtection({ mode: 'aggressive' });
+    expect(toProtectionOptions(store.protection).clearTimers).toBe(true);
   });
 
   it('setCustomCSS applies CSS inside Shadow DOM', () => {
@@ -175,6 +183,26 @@ describe('ConfigStore (extra coverage)', () => {
     expect(dom.window.document.getElementById('mnr-custom-css')).toBeNull();
   });
 
+  it('refreshes the system theme when the OS color scheme changes', () => {
+    let onChange: (() => void) | undefined;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn(() => ({
+        matches: true,
+        addEventListener: (_type: string, listener: () => void) => {
+          onChange = listener;
+        },
+      })),
+    });
+    setActivePinia(createPinia());
+    const store = useConfigStore();
+    store.setTheme('system');
+
+    onChange?.();
+
+    expect(store.theme().id).toBe('dark');
+  });
+
   it('load handles exception gracefully', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const gmGetValue = vi.fn(async () => {
@@ -186,7 +214,7 @@ describe('ConfigStore (extra coverage)', () => {
     await store.load();
 
     // Should not throw, defaults should be applied
-    expect(store.themeId).toBe('light');
+    expect(store.themeId).toBe('system');
   });
 
   it('save handles exception gracefully', async () => {

@@ -21,12 +21,14 @@ let readerStore: {
 
 const {
   mockActivateProtection,
+  mockDeactivateProtection,
   mockGetAutoEnableManager,
   mockGetRuleManager,
   mockGetSitePreference,
   mockSetSitePreference,
 } = vi.hoisted(() => ({
   mockActivateProtection: vi.fn(),
+  mockDeactivateProtection: vi.fn(),
   mockGetAutoEnableManager: vi.fn(),
   mockGetRuleManager: vi.fn(),
   mockGetSitePreference: vi.fn(),
@@ -42,7 +44,10 @@ vi.mock('@/core/rules/RuleManager', () => ({
 }));
 
 vi.mock('@/core/protection', () => ({
-  getSiteProtection: () => ({ activate: mockActivateProtection }),
+  getSiteProtection: () => ({
+    activate: mockActivateProtection,
+    deactivate: mockDeactivateProtection,
+  }),
 }));
 
 vi.mock('@/core/rules/RuleStorage', () => ({
@@ -53,6 +58,7 @@ vi.mock('@/core/rules/RuleStorage', () => ({
 }));
 
 vi.mock('@/ui/stores/config', () => ({
+  toProtectionOptions: (protection: unknown) => protection,
   useConfigStore: () => configStore,
 }));
 
@@ -98,6 +104,7 @@ describe('bootstrap', () => {
   beforeEach(() => {
     vi.resetModules();
     mockActivateProtection.mockReset();
+    mockDeactivateProtection.mockReset();
     mockGetAutoEnableManager.mockReset();
     mockGetRuleManager.mockReset();
     mockGetSitePreference.mockReset();
@@ -143,9 +150,9 @@ describe('bootstrap', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = dom.window.sessionStorage;
 
     await import('@/bootstrap');
@@ -167,9 +174,9 @@ describe('bootstrap', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = dom.window.sessionStorage;
 
     const manager = {
@@ -200,9 +207,9 @@ describe('bootstrap', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = dom.window.sessionStorage;
     Object.defineProperty(document, 'readyState', {
       configurable: true,
@@ -252,9 +259,9 @@ describe('bootstrap', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = dom.window.sessionStorage;
 
     const decision = { shouldEnable: true, method: 'detection' };
@@ -294,12 +301,13 @@ describe('bootstrap', () => {
     expect(document.getElementById('mnr-hide-original')).not.toBeNull();
     expect(readerStore.activate).toHaveBeenCalledTimes(1);
     expect(readerStore.setChapter).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('mnr-prompt-root')).toBeNull();
 
     const host = document.getElementById('mnr-reader-root') as HTMLElement;
     expect(host.shadowRoot?.querySelector('#reader-view-stub')).not.toBeNull();
   });
 
-  it('closeReader restores page and saves site preference for chapter pages', async () => {
+  it('closeReader restores page without changing the site auto-enable preference', async () => {
     // Import the module on a non-chapter page to avoid auto-bootstrap side effects.
     const domInit = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/index.html',
@@ -307,9 +315,9 @@ describe('bootstrap', () => {
     });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = domInit.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = domInit.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = domInit.window.sessionStorage;
 
     const bootstrap = await import('@/bootstrap');
@@ -321,9 +329,9 @@ describe('bootstrap', () => {
     });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = domChapter.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = domChapter.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = domChapter.window.sessionStorage;
     document.title = 'Original Chapter Title';
     window.history.replaceState({ site: 'original' }, '', window.location.href);
@@ -358,11 +366,9 @@ describe('bootstrap', () => {
 
     bootstrap.closeReader();
 
-    expect(mockSetSitePreference).toHaveBeenCalledWith(
-      'example.com',
-      expect.objectContaining({ enabled: false })
-    );
+    expect(mockSetSitePreference).not.toHaveBeenCalled();
     expect(readerStore.deactivate).toHaveBeenCalledTimes(1);
+    expect(mockDeactivateProtection).toHaveBeenCalled();
     expect(document.getElementById('mnr-reader-root')).toBeNull();
     expect(document.getElementById('mnr-hide-original')).toBeNull();
     expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
@@ -378,9 +384,9 @@ describe('bootstrap', () => {
     });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = domInit.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = domInit.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = domInit.window.sessionStorage;
 
     const bootstrap = await import('@/bootstrap');
@@ -391,9 +397,9 @@ describe('bootstrap', () => {
     });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = domChapter.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = domChapter.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = domChapter.window.sessionStorage;
 
     const rule = {
@@ -429,10 +435,7 @@ describe('bootstrap', () => {
 
     bootstrap.closeReader();
 
-    expect(mockSetSitePreference).toHaveBeenCalledWith(
-      'www.deqixs.org',
-      expect.objectContaining({ enabled: false })
-    );
+    expect(mockSetSitePreference).not.toHaveBeenCalled();
     expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
   });
 
@@ -444,9 +447,9 @@ describe('bootstrap', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom sessionStorage to globalThis
+    // test env: assigning jsdom sessionStorage to globalThis
     globalThis.sessionStorage = dom.window.sessionStorage;
 
     const manager = {

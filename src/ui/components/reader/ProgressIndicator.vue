@@ -1,5 +1,13 @@
 <template>
-  <div class="mnr-progress" :class="{ hidden: !visible }">
+  <div
+    class="mnr-progress"
+    :class="{ hidden: !visible }"
+    role="progressbar"
+    aria-label="本章阅读进度"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    :aria-valuenow="percent"
+  >
     <div class="mnr-progress-bar" :style="{ width: `${percent}%` }"></div>
     <span v-if="showText" class="mnr-progress-text">{{ percent }}%</span>
   </div>
@@ -96,5 +104,12 @@ onUnmounted(() => {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnr-progress,
+  .mnr-progress-bar {
+    transition: none;
+  }
 }
 </style>

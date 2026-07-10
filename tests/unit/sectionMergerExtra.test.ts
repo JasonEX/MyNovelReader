@@ -64,7 +64,7 @@ describe('SectionMerger (extra coverage)', () => {
     };
 
     const fakeParser = {
-      parse: vi.fn(async (doc: Document, url: string) => parsed[url] || null),
+      parse: vi.fn(async (_doc: Document, url: string) => parsed[url] || null),
       detectSection: vi.fn((_doc: Document, _url: string) => ({
         isSection: true,
         nextSectionUrl: null,

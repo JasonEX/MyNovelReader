@@ -227,6 +227,7 @@ async function verifyRenderedChapter(
       ? state.chapters.find(item => item.url === expectedUrl)
       : state.chapters[options.articleIndex];
   expect(chapter, `missing rendered chapter ${expectedUrl}`).toBeTruthy();
+  if (!chapter) throw new Error(`missing rendered chapter ${expectedUrl}`);
   expect(chapter.url).toBe(expectedUrl);
   expect(chapter.title).toContain(chapterOrdinals[expectedOffset]);
   expect(chapter.paragraphCount).toBeGreaterThanOrEqual(options.minParagraphs ?? 35);
@@ -262,7 +263,7 @@ async function openDrawer(page: Page): Promise<ReaderDeepState> {
     () => {
       const shadow = document.querySelector('#mnr-reader-root')?.shadowRoot;
       const loading = shadow?.querySelector('.mnr-drawer-loading');
-      return !loading && shadow.querySelectorAll('.mnr-chapter-list li').length >= 10;
+      return !loading && (shadow?.querySelectorAll('.mnr-chapter-list li').length || 0) >= 10;
     },
     undefined,
     { timeout: 30_000 }

@@ -1,11 +1,19 @@
 <template>
   <Transition name="mnr-fade">
     <div v-if="visible" class="mnr-prompt-overlay" @click.self="handleDismiss">
-      <div class="mnr-prompt-card" role="dialog" aria-modal="true">
+      <div
+        ref="cardRef"
+        class="mnr-prompt-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mnr-prompt-title"
+        @keydown.esc.stop="handleDismiss"
+        @keydown.tab="trapFocus"
+      >
         <!-- Header -->
         <div class="mnr-prompt-header">
           <span class="mnr-prompt-icon">📖</span>
-          <h3 class="mnr-prompt-title">启用 MyNovelReader?</h3>
+          <h3 id="mnr-prompt-title" class="mnr-prompt-title">启用 MyNovelReader?</h3>
         </div>
 
         <!-- Confidence indicator -->
@@ -43,7 +51,9 @@
         <!-- Actions -->
         <div class="mnr-prompt-actions">
           <button class="mnr-btn mnr-btn-secondary" @click="handleDismiss">暂不</button>
-          <button class="mnr-btn mnr-btn-primary" @click="handleAccept">启用阅读器</button>
+          <button ref="acceptButtonRef" class="mnr-btn mnr-btn-primary" @click="handleAccept">
+            启用阅读器
+          </button>
         </div>
       </div>
     </div>
@@ -51,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import type { AutoEnableDecision, UserPromptResponse } from '@/core/AutoEnableManager';
 
 // Props
@@ -63,11 +73,13 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   respond: [response: UserPromptResponse];
-  dismiss: [];
 }>();
 
 // State
 const rememberForSite = ref(true);
+const cardRef = ref<globalThis.HTMLElement | null>(null);
+const acceptButtonRef = ref<globalThis.HTMLButtonElement | null>(null);
+let previouslyFocused: globalThis.HTMLElement | null = null;
 
 // Computed
 const confidence = computed(() => props.decision.confidence);
@@ -103,8 +115,40 @@ function handleDismiss() {
     accepted: false,
     rememberForSite: false,
   });
-  emit('dismiss');
 }
+
+function trapFocus(event: globalThis.KeyboardEvent) {
+  const card = cardRef.value;
+  if (!card) return;
+  const focusable = Array.from(
+    card.querySelectorAll<globalThis.HTMLElement>('button:not([disabled]), input:not([disabled])')
+  );
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+watch(
+  () => props.visible,
+  async visible => {
+    if (visible) {
+      previouslyFocused = document.activeElement as globalThis.HTMLElement | null;
+      await nextTick();
+      acceptButtonRef.value?.focus({ preventScroll: true });
+    } else {
+      previouslyFocused?.focus?.({ preventScroll: true });
+      previouslyFocused = null;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -332,6 +376,17 @@ function handleDismiss() {
 
   .mnr-btn {
     padding: 12px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnr-prompt-card,
+  .mnr-confidence-fill,
+  .mnr-btn,
+  .mnr-fade-enter-active,
+  .mnr-fade-leave-active {
+    animation: none;
+    transition: none;
   }
 }
 </style>

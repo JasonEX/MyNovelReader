@@ -30,7 +30,7 @@ defineEmits<{
 <style scoped>
 .mnr-toast {
   position: fixed;
-  bottom: 32px;
+  bottom: max(32px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   background: rgba(30, 30, 30, 0.9);
@@ -65,5 +65,12 @@ defineEmits<{
 .mnr-toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(40px) scale(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnr-toast-enter-active,
+  .mnr-toast-leave-active {
+    transition: none;
+  }
 }
 </style>

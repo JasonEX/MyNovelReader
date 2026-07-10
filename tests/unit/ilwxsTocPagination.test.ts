@@ -22,11 +22,11 @@ describe('ilwxs TOC pagination', () => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom DOMParser to globalThis
+    // test env: assigning jsdom DOMParser to globalThis
     globalThis.DOMParser = dom.window.DOMParser;
-    // @ts-expect-error - test env: assigning jsdom Node to globalThis
+    // test env: assigning jsdom Node to globalThis
     globalThis.Node = dom.window.Node;
 
     setActivePinia(createPinia());
@@ -91,13 +91,13 @@ describe('ilwxs TOC pagination', () => {
     `;
 
     // Stub GM_* storage APIs (restoreCache runs on setChapter)
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_listValues = () => [];
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_getValue = () => null;
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
+    globalThis.GM_getValue = <T>(_name: string, defaultValue?: T): T => defaultValue as T;
+    // userscript global stub
     globalThis.GM_setValue = () => {};
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_deleteValue = () => {};
 
     const gm = vi.fn((opts: MockGmXhrOpts) => {
@@ -109,8 +109,8 @@ describe('ilwxs TOC pagination', () => {
       return { abort: () => {} };
     });
 
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_xmlhttpRequest = gm;
+    // userscript global stub
+    globalThis.GM_xmlhttpRequest = gm as unknown as typeof GM_xmlhttpRequest;
 
     const store = useReaderStore();
     store.setChapter({
@@ -118,8 +118,8 @@ describe('ilwxs TOC pagination', () => {
       bookTitle: '最后的黑暗之王',
       content: 'x',
       rawContent: 'x',
-      prevUrl: null,
-      nextUrl: null,
+      prevUrl: undefined,
+      nextUrl: undefined,
       indexUrl: page1Url,
       url: 'https://m.ilwxs.com/shu/36354/125361606.html',
       confidence: 1,

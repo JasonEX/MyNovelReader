@@ -1,60 +1,38 @@
 <template>
   <Transition name="mnr-fade-slide">
     <div v-if="visible" class="mnr-floating-toolbar">
-      <!-- 左侧：目录按钮 -->
       <button
         class="mnr-fab"
         title="目录 (Tab)"
         aria-label="打开目录"
         @click.stop="$emit('toggleDrawer')"
       >
-        <span class="mnr-icon">☰</span>
+        <svg class="mnr-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 6h14M5 12h14M5 18h14" />
+        </svg>
       </button>
 
-      <!-- 右侧：设置和缓存 -->
-      <div class="mnr-fab-group">
-        <button
-          class="mnr-fab"
-          title="缓存本书"
-          aria-label="缓存管理"
-          :disabled="cacheDisabled"
-          @click.stop="$emit('toggleCache')"
-        >
-          <span class="mnr-icon">{{ cacheRunning ? '⏹' : '☁' }}</span>
-          <span v-if="cacheTotal > 0" class="mnr-fab-badge">
-            {{ cacheDone }}/{{ cacheTotal }}
-          </span>
-        </button>
-        <button
-          class="mnr-fab"
-          title="设置 (S)"
-          aria-label="打开设置"
-          @click.stop="$emit('openSettings')"
-        >
-          <span class="mnr-icon">⚙</span>
-        </button>
-      </div>
+      <button
+        class="mnr-fab"
+        title="设置 (S)"
+        aria-label="打开设置"
+        @click.stop="$emit('openSettings')"
+      >
+        <svg class="mnr-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0-5 1.1 2.2 2.4.5 1.8-1.6 2.1 2.1-1.6 1.8.5 2.4 2.2 1.1-1.1 2.9-2.2 1.1-.5 2.4 1.6 1.8-2.1 2.1-1.8-1.6-2.4.5L12 20.5l-1.1-2.2-2.4-.5-1.8 1.6-2.1-2.1 1.6-1.8-.5-2.4L3.5 12l1.1-2.9 2.2-1.1.5-2.4-1.6-1.8 2.1-2.1 1.8 1.6 2.4-.5L12 3.5Z"
+          />
+        </svg>
+      </button>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-withDefaults(
-  defineProps<{
-    cacheRunning: boolean;
-    cacheDone: number;
-    cacheTotal: number;
-    cacheDisabled?: boolean;
-    visible?: boolean;
-  }>(),
-  {
-    visible: true,
-  }
-);
+withDefaults(defineProps<{ visible?: boolean }>(), { visible: true });
 
 defineEmits<{
   toggleDrawer: [];
-  toggleCache: [];
   openSettings: [];
 }>();
 </script>
@@ -62,9 +40,9 @@ defineEmits<{
 <style scoped>
 .mnr-floating-toolbar {
   position: fixed;
-  top: 12px;
-  left: 12px;
-  right: 12px;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
   display: flex;
   justify-content: space-between;
   pointer-events: none;
@@ -107,28 +85,19 @@ defineEmits<{
   box-shadow: none;
 }
 
-.mnr-fab-group {
-  display: flex;
-  gap: 12px;
-}
-
-.mnr-fab-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--mnr-link, #1976d2);
-  color: var(--mnr-on-link, #fff);
-  font-size: 10px;
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 10px;
-  line-height: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
 .mnr-icon {
-  line-height: 1;
-  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mnr-fab:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);
+  outline-offset: 2px;
 }
 
 /* Transitions */
@@ -143,5 +112,13 @@ defineEmits<{
 .mnr-fade-slide-leave-to {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnr-fab,
+  .mnr-fade-slide-enter-active,
+  .mnr-fade-slide-leave-active {
+    transition: none;
+  }
 }
 </style>

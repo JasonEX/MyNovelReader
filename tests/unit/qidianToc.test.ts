@@ -39,7 +39,7 @@ describe('Qidian TOC loading', () => {
   });
 
   it('loads Qidian catalog entries from the category JSON endpoint', async () => {
-    const fetchMock = vi.fn(async () => ({
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
       ok: true,
       status: 200,
       json: async () => qidianCategoryResponse,

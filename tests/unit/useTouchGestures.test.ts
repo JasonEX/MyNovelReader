@@ -13,11 +13,11 @@ describe('useTouchGestures', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env
-    globalThis.window = dom.window;
-    // @ts-expect-error - test env
+    // test env
+    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    // test env
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env
+    // test env
     globalThis.HTMLElement = dom.window.HTMLElement;
   });
 

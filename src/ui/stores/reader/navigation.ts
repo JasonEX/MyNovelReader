@@ -281,7 +281,22 @@ export function createNavigation(ctx: NavigationContext) {
     }
 
     const parser = getParser();
-    const parsed = await parseWithSectionMerge(parser, result.doc, url, url);
+    const controller = new AbortController();
+    const abortMerge = () => controller.abort();
+    ctx.reloadAbort.value = abortMerge;
+    let parsed: ParsedChapter | null;
+    try {
+      parsed = await parseWithSectionMerge(parser, result.doc, url, {
+        signal: controller.signal,
+      });
+    } finally {
+      if (ctx.reloadAbort.value === abortMerge) {
+        ctx.reloadAbort.value = null;
+      }
+    }
+    if (controller.signal.aborted) {
+      return;
+    }
     if (ctx.runtime.isViewStale(runId)) {
       return;
     }

@@ -18,9 +18,6 @@ export interface UseChapterNavigationOptions {
   isLoadingNext: ComputedRef<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
-  topSpacer: ComputedRef<number>;
-  setChapterHeight: (url: string, height: number) => void;
-  updateWindow: (index: number) => void;
 }
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
@@ -37,9 +34,6 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isLoadingNext,
     hasPrev,
     hasNext,
-    topSpacer,
-    setChapterHeight,
-    updateWindow,
   } = options;
 
   let isLoadingPrevLocal = false;
@@ -115,12 +109,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
     isNavigating.value = true;
 
-    // Update virtual window first to include target chapter
-    updateWindow(index);
-
-    // Wait for Vue to update the DOM after window change
     await nextTick();
-    // Wait a frame so layout/offsets are correct
     await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
 
     const url = chapters.value[index]?.chapter.url;
@@ -170,20 +159,12 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isLoadingPrevLocal = true;
 
     try {
-      // 1. Remember current scroll position and topSpacer
+      // Remember the current position so prepending a chapter does not move the visible text.
       const oldScrollTop = mainEl.scrollTop;
-      const oldTopSpacer = topSpacer.value;
 
       const success = await readerStore.loadPrevChapter('manual');
 
       if (success) {
-        // 2. Wait for Vue to update DOM
-        await nextTick();
-
-        // 3. Update virtual window to include new chapter (critical!)
-        updateWindow(readerStore.currentChapterIndex);
-
-        // 4. Wait for window change to trigger re-render
         await nextTick();
         await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
 
@@ -193,24 +174,11 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
           return;
         }
 
-        // 5. Get new chapter height and cache it
         const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
         if (chapterEls.length > 0) {
           const newChapterEl = chapterEls[0] as HTMLElement;
           const newChapterHeight = newChapterEl.offsetHeight;
-
-          // 6. Ensure new chapter height is cached
-          const newEntry = readerStore.chapters[0];
-          if (newEntry) {
-            setChapterHeight(newEntry.chapter.url, newChapterHeight);
-          }
-
-          // 7. Wait for heights update to trigger reactive updates
-          await nextTick();
-
-          // 8. Calculate scroll adjustment including spacer delta
-          const spacerDelta = topSpacer.value - oldTopSpacer;
-          mainEl.scrollTop = oldScrollTop + newChapterHeight + spacerDelta;
+          mainEl.scrollTop = oldScrollTop + newChapterHeight;
         }
       }
     } finally {
@@ -258,7 +226,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
     if (direction === 'prev') {
       if (currentIdx > 0) {
-        jumpToChapter(currentIdx - 1);
+        await jumpToChapter(currentIdx - 1);
       } else if (hasPrev.value && !isLoadingPrev.value) {
         const success = await readerStore.loadPrevChapter('manual');
         if (success) {
@@ -271,7 +239,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
       }
     } else {
       if (currentIdx < chaptersCount - 1) {
-        jumpToChapter(currentIdx + 1);
+        await jumpToChapter(currentIdx + 1);
       } else if (hasNext.value && !isLoadingNext.value) {
         const success = await readerStore.loadNextChapter('manual');
         if (success) {

@@ -18,12 +18,7 @@
     <!-- Floating toolbar -->
     <FloatingToolbar
       :visible="showControls"
-      :cache-running="cacheProgress.running"
-      :cache-done="cacheProgress.done"
-      :cache-total="cacheProgress.total"
-      :cache-disabled="cacheProgress.running && cacheProgress.total === 0"
       @toggle-drawer="toggleDrawer"
-      @toggle-cache="toggleCacheAll"
       @open-settings="openSettings"
     />
 
@@ -36,6 +31,8 @@
       :cache-progress="cacheProgress"
       @close="drawerOpen = false"
       @select="handleChapterSelect"
+      @cache-all="handleCacheAll"
+      @retry-cache="handleRetryCache"
     />
 
     <!-- Main content with virtualized infinite scroll -->
@@ -49,10 +46,7 @@
         <span>加载上一章...</span>
       </div>
 
-      <!-- Virtualized chapters -->
-      <div :style="{ height: `${topSpacer}px` }"></div>
-
-      <template v-for="entry in visibleChapters" :key="entry.id">
+      <template v-for="(entry, index) in chapters" :key="entry.id">
         <article
           :ref="setChapterRef(entry.chapter.url)"
           class="mnr-reader-content"
@@ -62,10 +56,24 @@
         >
           <h1 class="mnr-chapter-title">{{ entry.chapter.title }}</h1>
           <div v-html="entry.chapter.content"></div>
+          <nav class="mnr-chapter-boundary-nav" aria-label="章节导航">
+            <button
+              type="button"
+              :disabled="index === 0 && !hasPrev"
+              @click.stop="navigateChapter('prev')"
+            >
+              上一章
+            </button>
+            <button
+              type="button"
+              :disabled="index === chapters.length - 1 && !hasNext"
+              @click.stop="navigateChapter('next')"
+            >
+              下一章
+            </button>
+          </nav>
         </article>
       </template>
-
-      <div :style="{ height: `${bottomSpacer}px` }"></div>
 
       <!-- Bottom sentinel for IntersectionObserver -->
       <div ref="bottomSentinel" class="mnr-sentinel"></div>
@@ -95,9 +103,14 @@
     <!-- Settings panel -->
     <SettingsPanel
       :visible="settingsVisible"
-      @close="settingsVisible = false"
+      :site-auto-enable="siteAutoEnableValue"
+      @close="closeSettings"
       @textConversionChange="handleTextConversionChange"
       @cacheAll="handleCacheAll"
+      @retryCache="handleRetryCache"
+      @copyDiagnostics="emit('copyDiagnostics')"
+      @siteAutoEnableChange="handleSiteAutoEnableChange"
+      @exit="emit('exit')"
     />
 
     <!-- Loading overlay -->
@@ -111,10 +124,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useReaderStore, type TocEntryWithStatus } from '@/ui/stores/reader';
 import { useConfigStore } from '@/ui/stores/config';
-import { useVirtualChapters } from '@/ui/composables/useVirtualChapters';
 import { useKeyboardShortcuts } from '@/ui/composables/useKeyboardShortcuts';
 import { useReaderScroll } from '@/ui/composables/reader/useReaderScroll';
 import {
@@ -124,12 +136,19 @@ import {
 import { useTouchGestures } from '@/ui/composables/reader/useTouchGestures';
 import { useChapterNavigation } from '@/ui/composables/reader/useChapterNavigation';
 import { useReaderUIControls } from '@/ui/composables/reader/useReaderUIControls';
-import { closeReader } from '@/bootstrap';
+import { getReadingPosition, saveReadingPosition } from '@/ui/stores/reader/readingPosition';
 import ProgressIndicator from './ProgressIndicator.vue';
 import FloatingToolbar from './FloatingToolbar.vue';
 import ChapterDrawer from './ChapterDrawer.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import { MnrSpinner, MnrToast, MnrLoadingOverlay } from '@/ui/components/common';
+
+const props = withDefaults(defineProps<{ siteAutoEnable?: boolean }>(), { siteAutoEnable: true });
+const emit = defineEmits<{
+  copyDiagnostics: [];
+  exit: [];
+  siteAutoEnableChange: [enabled: boolean];
+}>();
 
 // Stores
 const readerStore = useReaderStore();
@@ -142,11 +161,18 @@ const bottomSentinel = ref<HTMLElement | null>(null);
 const isNavigating = ref(false);
 const showControls = ref(true);
 const chapterRefs = new Map<string, HTMLElement>();
-const chapterResizeObservers = new Map<string, { disconnect: () => void }>();
+const siteAutoEnableValue = ref(props.siteAutoEnable);
 
 // UI controls composable
-const { settingsVisible, drawerOpen, toggleDrawer, openSettings, handleEscape, toggleSettings } =
-  useReaderUIControls({ readerStore, showControls });
+const {
+  settingsVisible,
+  drawerOpen,
+  toggleDrawer,
+  openSettings,
+  closeSettings,
+  handleEscape,
+  toggleSettings,
+} = useReaderUIControls({ readerStore, showControls });
 
 // IntersectionObserver instances
 let topObserver: globalThis.IntersectionObserver | null = null;
@@ -154,19 +180,6 @@ let bottomObserver: globalThis.IntersectionObserver | null = null;
 
 // Computed
 const chapters = computed(() => readerStore.chapters);
-
-// Virtual chapters composable
-const {
-  visibleChapters,
-  topSpacer,
-  bottomSpacer,
-  setHeight: setChapterHeight,
-  getOffsetBefore,
-  updateWindow,
-} = useVirtualChapters(chapters, {
-  windowSize: 5,
-  overscan: 2,
-});
 
 const bookTitle = computed(() => readerStore.bookTitle);
 const indexUrl = computed(() => readerStore.chapter?.indexUrl);
@@ -205,8 +218,7 @@ const { scheduleAutoLoadNext } = useReaderAutoLoad({
 const { handleScroll } = useReaderScroll({
   mainRef,
   chapters,
-  getOffsetBefore,
-  updateWindow,
+  chapterRefs,
   readerStore,
   autoHideHeader,
   showControls,
@@ -231,9 +243,6 @@ const {
   isLoadingNext,
   hasPrev,
   hasNext,
-  topSpacer,
-  setChapterHeight,
-  updateWindow,
 });
 
 // Touch gestures composable
@@ -393,69 +402,45 @@ async function handleTextConversionChange(mode: 'none' | 'sc' | 'tc') {
   await readerStore.applyTextConversion(mode);
 }
 
-function handleCacheAll() {
-  readerStore.startCacheAll();
-}
-
-function toggleCacheAll() {
+async function handleCacheAll() {
   if (cacheProgress.value.running) {
     readerStore.cancelCacheAll();
-  } else {
-    readerStore.startCacheAll();
+    readerStore.showToast('已取消离线缓存', 'info');
+    return;
   }
+
+  await readerStore.loadToc();
+  const remaining = readerStore.tocWithStatus.filter(entry => !entry.isPersisted).length;
+  const message =
+    remaining > 0
+      ? `预计缓存 ${remaining} 章，过程可能需要一些时间。是否继续？`
+      : '将从当前章节开始缓存后续内容，是否继续？';
+  if (!window.confirm(message)) return;
+  void readerStore.startCacheAll();
 }
 
-// Ref setter for virtualized chapters
-function disconnectChapterResizeObserver(url: string): void {
-  chapterResizeObservers.get(url)?.disconnect();
-  chapterResizeObservers.delete(url);
+function handleRetryCache() {
+  void readerStore.retryFailedCache();
 }
 
-function measureChapterHeight(url: string, el: HTMLElement): void {
-  setChapterHeight(url, el.offsetHeight);
-}
-
-function observeChapterSize(url: string, el: HTMLElement): void {
-  if (typeof globalThis.ResizeObserver !== 'function') return;
-
-  const observer = new globalThis.ResizeObserver(entries => {
-    const entry = entries[0];
-    if (!entry) return;
-
-    const borderBoxSize = Array.isArray(entry.borderBoxSize)
-      ? entry.borderBoxSize[0]
-      : entry.borderBoxSize;
-    const height =
-      borderBoxSize?.blockSize ||
-      (entry.target as HTMLElement).offsetHeight ||
-      entry.contentRect.height;
-    if (height > 0) {
-      setChapterHeight(url, Math.round(height));
-    }
-  });
-  observer.observe(el);
-  chapterResizeObservers.set(url, observer);
+function handleSiteAutoEnableChange(enabled: boolean) {
+  siteAutoEnableValue.value = enabled;
+  emit('siteAutoEnableChange', enabled);
+  readerStore.showToast(enabled ? '已开启本站自动阅读' : '已关闭本站自动阅读', 'info');
 }
 
 function setChapterRef(url: string) {
   return (el: HTMLElement | null) => {
     if (!el) {
       chapterRefs.delete(url);
-      disconnectChapterResizeObserver(url);
       return;
     }
-    if (chapterRefs.get(url) === el) {
-      return;
-    }
-    disconnectChapterResizeObserver(url);
     chapterRefs.set(url, el);
-    measureChapterHeight(url, el);
-    observeChapterSize(url, el);
   };
 }
 
 function exitReader() {
-  closeReader();
+  emit('exit');
 }
 
 // === Keyboard shortcuts ===
@@ -502,6 +487,35 @@ useKeyboardShortcuts(
 
 const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
 
+async function restoreReadingPosition(): Promise<void> {
+  const mainEl = mainRef.value;
+  const currentUrl = readerStore.chapter?.url;
+  if (!mainEl || !currentUrl) return;
+
+  const percent = await getReadingPosition(currentUrl);
+  if (percent === null || percent < 3 || percent > 98) return;
+
+  await nextTick();
+  await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
+  const chapterEl = chapterRefs.get(currentUrl);
+  if (!chapterEl) return;
+
+  const mainRect = mainEl.getBoundingClientRect();
+  const chapterRect = chapterEl.getBoundingClientRect();
+  const chapterTop = mainEl.scrollTop + chapterRect.top - mainRect.top;
+  const scrollableHeight = Math.max(0, chapterEl.offsetHeight - mainEl.clientHeight * 0.5);
+  mainEl.scrollTop = chapterTop + (percent / 100) * scrollableHeight;
+  readerStore.updateScroll(percent);
+  readerStore.showToast('已回到上次阅读位置', 'info', 1800);
+}
+
+watch(
+  () => props.siteAutoEnable,
+  value => {
+    siteAutoEnableValue.value = value;
+  }
+);
+
 onMounted(async () => {
   configStore.applyAll();
 
@@ -542,12 +556,16 @@ onMounted(async () => {
   }
 
   await nextTick();
+  await restoreReadingPosition();
   mainRef.value?.focus();
 
   scheduleAutoLoadNext('state');
 });
 
 onUnmounted(() => {
+  if (readerStore.chapter?.url) {
+    saveReadingPosition(readerStore.chapter.url, readerStore.scrollPercent);
+  }
   if (mainRef.value) {
     mainRef.value.removeEventListener('scroll', handleScroll);
     mainRef.value.removeEventListener('wheel', handleWheel);
@@ -562,8 +580,7 @@ onUnmounted(() => {
   topObserver = null;
   bottomObserver = null;
 
-  chapterResizeObservers.forEach(observer => observer.disconnect());
-  chapterResizeObservers.clear();
+  chapterRefs.clear();
 });
 </script>
 
@@ -588,7 +605,7 @@ onUnmounted(() => {
   flex: 1;
   overflow: auto;
   padding-top: 68px;
-  padding-bottom: 40px;
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
   /* Prevent rubber-band bounce from propagating and messing with prev-chapter positioning */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
@@ -625,6 +642,42 @@ onUnmounted(() => {
 
 .mnr-reader-content :deep(a) {
   color: var(--mnr-link, #1976d2);
+}
+
+.mnr-chapter-boundary-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 36px 0 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--mnr-border, #e0e0e0);
+}
+
+.mnr-chapter-boundary-nav button {
+  min-width: 92px;
+  padding: 9px 14px;
+  border: 1px solid var(--mnr-border, #e0e0e0);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mnr-link, #1976d2);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mnr-chapter-boundary-nav button:hover {
+  background: var(--mnr-border, #f0f0f0);
+}
+
+.mnr-chapter-boundary-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mnr-chapter-boundary-nav button:focus-visible,
+.mnr-reader-main:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .mnr-chapter-title {
@@ -698,6 +751,13 @@ onUnmounted(() => {
 @media (min-width: 1024px) {
   .mnr-reader-content {
     padding: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnr-chapter-link,
+  .mnr-chapter-boundary-nav button {
+    transition: none;
   }
 }
 </style>

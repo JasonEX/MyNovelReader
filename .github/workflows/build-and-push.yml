@@ -3,13 +3,17 @@ name: User script generation
 
 on: [push]
 
+concurrency:
+  group: userscript-generation-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -28,11 +32,45 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Typecheck tests
+        run: npm run typecheck:tests
+
       - name: Test
         run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+      - name: Check bundle size
+        run: npm run check:size
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Local userscript smoke
+        run: npm run e2e:local:run
+
+      - name: Upload generated userscript
+        uses: actions/upload-artifact@v6
+        with:
+          name: generated-userscript
+          path: scripts/MyNovelReader.user.js
+          if-no-files-found: error
+
+  sync-artifact:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download generated userscript
+        uses: actions/download-artifact@v7
+        with:
+          name: generated-userscript
+          path: scripts
 
       - name: Normalize EOL
         run: sed -i 's/\r//g' scripts/MyNovelReader.user.js

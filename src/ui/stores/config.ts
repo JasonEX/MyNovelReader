@@ -5,6 +5,7 @@
 import { ref, watch } from 'vue';
 import { setShadowCustomCSS, setShadowStyleProperties } from '@/ui/shadowMount';
 import { defineStore } from 'pinia';
+import type { ProtectionOptions } from '@/core/protection';
 
 /** Theme definition */
 export interface Theme {
@@ -39,8 +40,6 @@ export interface ReadingSettings {
 
 /** Behavior settings */
 export interface BehaviorSettings {
-  /** Auto scroll to last position */
-  autoScrollToPosition: boolean;
   /** Enable keyboard navigation */
   keyboardNavigation: boolean;
   /** Enable swipe gestures */
@@ -71,6 +70,15 @@ export interface ProtectionSettings {
 
 // Default themes - improved for better readability
 export const THEMES: Theme[] = [
+  {
+    id: 'system',
+    name: '跟随系统',
+    background: '#f5f5f5',
+    text: '#242424',
+    link: '#2563a8',
+    onLink: '#ffffff',
+    border: '#d8d8d8',
+  },
   {
     id: 'light',
     name: '默认',
@@ -140,7 +148,6 @@ const DEFAULT_READING: ReadingSettings = {
 };
 
 const DEFAULT_BEHAVIOR: BehaviorSettings = {
-  autoScrollToPosition: true,
   keyboardNavigation: true,
   swipeGestures: true,
   autoHideHeader: true,
@@ -156,12 +163,26 @@ const DEFAULT_PROTECTION: ProtectionSettings = {
   blockPopups: true,
 };
 
+export function toProtectionOptions(settings: ProtectionSettings): ProtectionOptions {
+  const aggressive = settings.mode === 'aggressive';
+
+  return {
+    blockRedirects: settings.blockRedirects,
+    enableRightClick: settings.enableRightClick,
+    enableSelection: settings.enableSelection,
+    blockPopups: settings.blockPopups,
+    clearTimers: aggressive,
+    unlockKeyboard: true,
+    cleanupScripts: aggressive,
+  };
+}
+
 // Storage key
 const STORAGE_KEY = 'mnr-config';
 
 export const useConfigStore = defineStore('config', () => {
   // State
-  const themeId = ref('light');
+  const themeId = ref('system');
   const reading = ref<ReadingSettings>({ ...DEFAULT_READING });
   const behavior = ref<BehaviorSettings>({ ...DEFAULT_BEHAVIOR });
   const protection = ref<ProtectionSettings>({ ...DEFAULT_PROTECTION });
@@ -169,7 +190,14 @@ export const useConfigStore = defineStore('config', () => {
 
   // Computed
   const theme = (): Theme => {
-    return THEMES.find(t => t.id === themeId.value) || THEMES[0];
+    if (themeId.value === 'system') {
+      const prefersDark =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return THEMES.find(t => t.id === (prefersDark ? 'dark' : 'light')) || THEMES[1];
+    }
+    return THEMES.find(t => t.id === themeId.value) || THEMES[1];
   };
 
   // Actions
@@ -337,8 +365,15 @@ export const useConfigStore = defineStore('config', () => {
     { deep: true }
   );
 
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    systemTheme.addEventListener?.('change', () => {
+      if (themeId.value === 'system') applyTheme();
+    });
+  }
+
   function $reset() {
-    themeId.value = 'light';
+    themeId.value = 'system';
     reading.value = { ...DEFAULT_READING };
     behavior.value = { ...DEFAULT_BEHAVIOR };
     protection.value = { ...DEFAULT_PROTECTION };

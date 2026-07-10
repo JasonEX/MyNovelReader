@@ -26,16 +26,25 @@ export function useReaderUIControls(options: UseReaderUIControlsOptions) {
     showControls.value = false;
   }
 
+  function closeSettings() {
+    settingsVisible.value = false;
+    showControls.value = true;
+  }
+
   function handleEscape() {
     if (drawerOpen.value) {
       drawerOpen.value = false;
     } else if (settingsVisible.value) {
-      settingsVisible.value = false;
+      closeSettings();
     }
   }
 
   function toggleSettings() {
-    settingsVisible.value = !settingsVisible.value;
+    if (settingsVisible.value) {
+      closeSettings();
+    } else {
+      openSettings();
+    }
   }
 
   return {
@@ -43,6 +52,7 @@ export function useReaderUIControls(options: UseReaderUIControlsOptions) {
     drawerOpen,
     toggleDrawer,
     openSettings,
+    closeSettings,
     handleEscape,
     toggleSettings,
   };

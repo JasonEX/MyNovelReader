@@ -1,8 +1,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "lib": ["es2022", "dom", "dom.iterable"],
     "rootDir": "..",
-    "types": ["vue", "vitest/globals"]
+    "types": ["node", "vite/client", "vitest/globals", "vue"]
   },
-  "include": ["./**/*.ts"]
+  "include": ["../src/**/*.d.ts", "./**/*.ts"]
 }

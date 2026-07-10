@@ -41,23 +41,23 @@ describe('ilwxs navigation index', () => {
 
     // @ts-expect-error - test env: assigning jsdom window to globalThis
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assigning jsdom document to globalThis
+    // test env: assigning jsdom document to globalThis
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assigning jsdom DOMParser to globalThis
+    // test env: assigning jsdom DOMParser to globalThis
     globalThis.DOMParser = dom.window.DOMParser;
-    // @ts-expect-error - test env: assigning jsdom Node to globalThis
+    // test env: assigning jsdom Node to globalThis
     globalThis.Node = dom.window.Node;
-    // @ts-expect-error - test env: align DOM constructors for instanceof checks
+    // test env: align DOM constructors for instanceof checks
     globalThis.HTMLAnchorElement = dom.window.HTMLAnchorElement;
 
     // Stub GM_* storage APIs used by RuleStorage / RuleManager
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_listValues = () => [];
-    // @ts-expect-error - userscript global stub
-    globalThis.GM_getValue = () => null;
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
+    globalThis.GM_getValue = <T>(_name: string, defaultValue?: T): T => defaultValue as T;
+    // userscript global stub
     globalThis.GM_setValue = () => {};
-    // @ts-expect-error - userscript global stub
+    // userscript global stub
     globalThis.GM_deleteValue = () => {};
 
     const parser = getParser();

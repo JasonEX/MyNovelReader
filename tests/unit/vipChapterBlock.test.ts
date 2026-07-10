@@ -38,11 +38,11 @@ describe('VIP chapter block', () => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
     // @ts-expect-error - test env: assign jsdom window
     globalThis.window = dom.window;
-    // @ts-expect-error - test env: assign jsdom document
+    // test env: assign jsdom document
     globalThis.document = dom.window.document;
-    // @ts-expect-error - test env: assign jsdom DOMParser
+    // test env: assign jsdom DOMParser
     globalThis.DOMParser = dom.window.DOMParser;
-    // @ts-expect-error - test env: assign jsdom Node
+    // test env: assign jsdom Node
     globalThis.Node = dom.window.Node;
 
     setActivePinia(createPinia());

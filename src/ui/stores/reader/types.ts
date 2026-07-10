@@ -8,7 +8,7 @@ import type { SiteRule } from '@/core/rules/types';
 // ============ Constants ============
 
 /** Maximum chapters kept in the display list */
-export const MAX_CACHED_CHAPTERS = 8;
+export const MAX_CACHED_CHAPTERS = 6;
 
 /** LRU cache limit for in-memory session cache */
 export const MAX_SESSION_CACHE = 500;
@@ -28,6 +28,7 @@ export type LoadSource = 'auto' | 'manual';
 export interface CacheProgressState {
   done: number;
   total: number;
+  failed: number;
   running: boolean;
 }
 

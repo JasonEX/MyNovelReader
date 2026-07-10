@@ -28,21 +28,18 @@ const META_BASE = {
     'zh-TW': '小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁',
   } satisfies LocalizedText,
   license: 'GPL version 3',
-  homepage: 'https://github.com/ywzhaiqi/userscript#readme',
+  homepage: 'https://github.com/JasonEX/MyNovelReader#readme',
   homepageURL: 'https://greasyfork.org/scripts/292/',
-  source: 'https://github.com/ywzhaiqi/userscript.git',
+  source: 'https://github.com/JasonEX/MyNovelReader.git',
   supportURL: 'https://github.com/JasonEX/MyNovelReader/issues',
 
   // GM API grants
   grants: [
     'GM_xmlhttpRequest',
-    'GM_addStyle',
     'GM_getValue',
     'GM_setValue',
     'GM_deleteValue',
     'GM_listValues',
-    'GM_getResourceURL',
-    'GM_openInTab',
     'GM_setClipboard',
     'GM_registerMenuCommand',
     'GM_info',
@@ -121,7 +118,7 @@ const META_BASE = {
   resources: {} as UserscriptResourceMap,
 
   // External dependencies (minimized)
-  requires: [],
+  requires: [] as string[],
 };
 
 export type UserscriptMeta = typeof META_BASE & {
