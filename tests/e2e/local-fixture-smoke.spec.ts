@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 
 import {
   addMyNovelReaderUserscript,
@@ -23,6 +23,10 @@ const fixtureHtml = `<!doctype html>
   <head>
     <meta charset="utf-8">
     <title>第100章 本地测试 - 测试小说</title>
+    <style>
+      button { padding: 0 14px 0 2px; line-height: 3; text-align: left; }
+      button svg { margin-left: 6px; vertical-align: baseline; }
+    </style>
   </head>
   <body>
     <main id="host-page">
@@ -36,6 +40,30 @@ const fixtureHtml = `<!doctype html>
     </main>
   </body>
 </html>`;
+
+function expectCentered(alignment: { x: number; y: number } | null): void {
+  expect(alignment).not.toBeNull();
+  expect(Math.abs(alignment?.x ?? Infinity)).toBeLessThanOrEqual(0.5);
+  expect(Math.abs(alignment?.y ?? Infinity)).toBeLessThanOrEqual(0.5);
+}
+
+async function getIconAlignments(
+  buttons: Locator
+): Promise<Array<{ x: number; y: number } | null>> {
+  return buttons.evaluateAll(elements =>
+    elements.map(button => {
+      const icon = button.querySelector('svg');
+      if (!icon) return null;
+
+      const buttonRect = button.getBoundingClientRect();
+      const iconRect = icon.getBoundingClientRect();
+      return {
+        x: iconRect.left + iconRect.width / 2 - (buttonRect.left + buttonRect.width / 2),
+        y: iconRect.top + iconRect.height / 2 - (buttonRect.top + buttonRect.height / 2),
+      };
+    })
+  );
+}
 
 test('runs the built userscript and restores the host page after exit', async ({
   context,
@@ -75,7 +103,7 @@ test('runs the built userscript and restores the host page after exit', async ({
       settingsGearPath:
         shadow?.querySelector('[aria-label="打开设置"] svg path')?.getAttribute('d') ?? '',
       hasToolbarCache: !!shadow?.querySelector('[aria-label="缓存管理"]'),
-      boundaryNavigation: shadow?.querySelectorAll('.mnr-chapter-boundary-nav button').length ?? 0,
+      boundaryNavigation: shadow?.querySelectorAll('.mnr-chapter-boundary-nav').length ?? 0,
     };
   });
   expect(primaryUi).toEqual({
@@ -85,8 +113,13 @@ test('runs the built userscript and restores the host page after exit', async ({
     settingsGearCircle: true,
     settingsGearPath: expect.stringContaining('M12.22 2h-.44'),
     hasToolbarCache: false,
-    boundaryNavigation: 2,
+    boundaryNavigation: 0,
   });
+  const toolbarIconAlignment = await getIconAlignments(
+    page.locator('#mnr-reader-root').locator('.mnr-fab')
+  );
+  expect(toolbarIconAlignment).toHaveLength(2);
+  toolbarIconAlignment.forEach(expectCentered);
 
   await page.locator('#mnr-reader-root').evaluate(host => {
     host.shadowRoot?.querySelector<HTMLElement>('[aria-label="打开目录"]')?.click();
@@ -114,6 +147,10 @@ test('runs the built userscript and restores the host page after exit', async ({
   expect(renderedToc.renderedRows).toBeGreaterThan(0);
   expect(renderedToc.renderedRows).toBeLessThan(50);
   expect(renderedToc.totalText).toContain('1200');
+  const [drawerCloseAlignment] = await getIconAlignments(
+    page.locator('#mnr-reader-root').locator('.mnr-drawer-close')
+  );
+  expectCentered(drawerCloseAlignment ?? null);
   await page.keyboard.press('Escape');
 
   await page.locator('#mnr-reader-root').evaluate(host => {
@@ -131,6 +168,10 @@ test('runs the built userscript and restores the host page after exit', async ({
       })
     )
     .toEqual({ visible: true, open: false, scaleIcons: 4 });
+  const [settingsCloseAlignment] = await getIconAlignments(
+    page.locator('#mnr-reader-root').locator('.mnr-close-btn')
+  );
+  expectCentered(settingsCloseAlignment ?? null);
   await page.keyboard.press('Escape');
 
   await page.keyboard.press('q');
@@ -147,6 +188,8 @@ test('runs the built userscript and restores the host page after exit', async ({
     'box-shadow',
     'rgba(0, 0, 0, 0.15) 0px 4px 12px 0px'
   );
+  const [floatingEntryAlignment] = await getIconAlignments(page.locator('#mnr-floating-btn'));
+  expectCentered(floatingEntryAlignment ?? null);
   await expect(page).toHaveTitle('第100章 本地测试 - 测试小说');
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });

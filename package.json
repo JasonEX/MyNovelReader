@@ -1,6 +1,6 @@
 {
   "name": "my-novel-reader",
-  "version": "9.2.1",
+  "version": "9.2.2",
   "buildDate": "2026-07-10",
   "type": "module",
   "description": "小说阅读脚本 - 统一阅读样式，智能内容检测，自动翻页",

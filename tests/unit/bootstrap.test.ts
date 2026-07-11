@@ -218,6 +218,12 @@ describe('bootstrap', () => {
     expect(floatingButton).not.toBeNull();
     expect(floatingButton?.querySelector('svg')).not.toBeNull();
     expect(floatingButton?.textContent?.trim()).toBe('');
+    expect(floatingButton?.style.display).toBe('flex');
+    expect(floatingButton?.style.alignItems).toBe('center');
+    expect(floatingButton?.style.justifyContent).toBe('center');
+    expect(floatingButton?.style.padding).toBe('0px');
+    expect(floatingButton?.querySelector('svg')?.style.display).toBe('block');
+    expect(floatingButton?.querySelector('svg')?.style.margin).toBe('0px');
     expect(floatingButton?.style.background).toBe('rgb(25, 118, 210)');
     expect(floatingButton?.style.boxShadow).toContain('0 4px 12px');
     expect(floatingButton?.style.boxShadow.replaceAll(' ', '')).toContain('rgba(0,0,0,0.15)');

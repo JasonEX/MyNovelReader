@@ -46,7 +46,7 @@
         <span>加载上一章...</span>
       </div>
 
-      <template v-for="(entry, index) in chapters" :key="entry.id">
+      <template v-for="entry in chapters" :key="entry.id">
         <article
           :ref="setChapterRef(entry.chapter.url)"
           class="mnr-reader-content"
@@ -56,22 +56,6 @@
         >
           <h1 class="mnr-chapter-title">{{ entry.chapter.title }}</h1>
           <div v-html="entry.chapter.content"></div>
-          <nav class="mnr-chapter-boundary-nav" aria-label="章节导航">
-            <button
-              type="button"
-              :disabled="index === 0 && !hasPrev"
-              @click.stop="navigateChapter('prev')"
-            >
-              上一章
-            </button>
-            <button
-              type="button"
-              :disabled="index === chapters.length - 1 && !hasNext"
-              @click.stop="navigateChapter('next')"
-            >
-              下一章
-            </button>
-          </nav>
         </article>
       </template>
 
@@ -675,37 +659,6 @@ onUnmounted(() => {
   color: var(--mnr-link, #1976d2);
 }
 
-.mnr-chapter-boundary-nav {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin: 36px 0 12px;
-  padding-top: 18px;
-  border-top: 1px solid var(--mnr-border, #e0e0e0);
-}
-
-.mnr-chapter-boundary-nav button {
-  min-width: 92px;
-  padding: 9px 14px;
-  border: 1px solid var(--mnr-border, #e0e0e0);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--mnr-link, #1976d2);
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.mnr-chapter-boundary-nav button:hover {
-  background: var(--mnr-border, #f0f0f0);
-}
-
-.mnr-chapter-boundary-nav button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.mnr-chapter-boundary-nav button:focus-visible,
 .mnr-reader-main:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);
   outline-offset: 2px;
@@ -786,8 +739,7 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mnr-chapter-link,
-  .mnr-chapter-boundary-nav button {
+  .mnr-chapter-link {
     transition: none;
   }
 }

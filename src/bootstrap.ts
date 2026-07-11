@@ -437,7 +437,8 @@ function showFloatingButton(): void {
   button.id = 'mnr-floating-btn';
   button.innerHTML = `
     <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
-      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+      style="display:block; width:26px; height:26px; flex:none; margin:0">
       <path d="M12 7v14" />
       <path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" />
       <path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" />
@@ -453,10 +454,18 @@ function showFloatingButton(): void {
     right: 20px;
     width: 50px;
     height: 50px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
     border-radius: 50%;
     border: none;
     background: #1976d2;
     color: white;
+    line-height: 1;
+    text-align: center;
     cursor: pointer;
     z-index: 999999;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);

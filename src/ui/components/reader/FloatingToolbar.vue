@@ -54,6 +54,7 @@ defineEmits<{
   pointer-events: auto;
   width: 44px;
   height: 44px;
+  padding: 0;
   border-radius: 50%;
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #333);
@@ -87,8 +88,10 @@ defineEmits<{
 }
 
 .mnr-icon {
+  display: block;
   width: 22px;
   height: 22px;
+  flex: 0 0 auto;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
