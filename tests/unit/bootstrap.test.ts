@@ -93,23 +93,25 @@ vi.mock('@/ui/components/reader', async () => {
   };
 });
 
-vi.mock('@/ui/components/detection', async () => {
-  const { defineComponent } = await import('vue');
+vi.mock('@/ui/components/entry', async () => {
+  const { defineComponent, h } = await import('vue');
   return {
-    DetectionPrompt: defineComponent({
-      name: 'DetectionPromptStub',
-      props: {
-        onRespond: { type: Function, required: false },
-      },
-      setup(props) {
+    ReaderEntryPrompt: defineComponent({
+      name: 'ReaderEntryPromptStub',
+      emits: ['respond'],
+      setup(_props, { emit }) {
         Promise.resolve().then(() => {
-          (
-            props as unknown as {
-              onRespond?: (r: { accepted: boolean; rememberForSite: boolean }) => void;
-            }
-          ).onRespond?.({ accepted: true, rememberForSite: false });
+          emit('respond', { accepted: true, rememberForSite: false });
         });
         return () => null;
+      },
+    }),
+    ReaderEntryButton: defineComponent({
+      name: 'ReaderEntryButtonStub',
+      emits: ['enter'],
+      setup(_props, { emit }) {
+        return () =>
+          h('button', { id: 'mnr-entry-button', onClick: () => emit('enter') }, '进入阅读模式');
       },
     }),
   };
@@ -187,7 +189,7 @@ describe('bootstrap', () => {
     );
   });
 
-  it('shows floating button when skip flag is set', async () => {
+  it('shows an isolated manual entry when the skip flag is set', async () => {
     dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/index.html',
       pretendToBeVisual: true,
@@ -214,19 +216,12 @@ describe('bootstrap', () => {
     sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
     await bootstrap.initialize();
 
-    const floatingButton = document.getElementById('mnr-floating-btn');
-    expect(floatingButton).not.toBeNull();
-    expect(floatingButton?.querySelector('svg')).not.toBeNull();
-    expect(floatingButton?.textContent?.trim()).toBe('');
-    expect(floatingButton?.style.display).toBe('flex');
-    expect(floatingButton?.style.alignItems).toBe('center');
-    expect(floatingButton?.style.justifyContent).toBe('center');
-    expect(floatingButton?.style.padding).toBe('0px');
-    expect(floatingButton?.querySelector('svg')?.style.display).toBe('block');
-    expect(floatingButton?.querySelector('svg')?.style.margin).toBe('0px');
-    expect(floatingButton?.style.background).toBe('rgb(25, 118, 210)');
-    expect(floatingButton?.style.boxShadow).toContain('0 4px 12px');
-    expect(floatingButton?.style.boxShadow.replaceAll(' ', '')).toContain('rgba(0,0,0,0.15)');
+    const entryHost = document.getElementById('mnr-entry-root');
+    expect(entryHost).not.toBeNull();
+    expect(entryHost?.querySelector('#mnr-entry-button')).toBeNull();
+    expect(entryHost?.shadowRoot?.querySelector('#mnr-entry-button')?.textContent).toBe(
+      '进入阅读模式'
+    );
     expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
     expect(manager.check).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);
@@ -300,12 +295,12 @@ describe('bootstrap', () => {
     const decision = { shouldEnable: true, method: 'detection' };
     const chapter = { title: 't', content: 'c', rawContent: 'c', url: dom.window.location.href };
 
-    let promptCb: ((d: unknown) => Promise<unknown>) | null = null;
+    let promptCb: (() => Promise<unknown>) | null = null;
     let launchCb: ((c: unknown, r?: unknown) => void) | null = null;
 
     const manager = {
       check: vi.fn(async () => decision),
-      setPromptCallback: vi.fn((cb: (d: unknown) => Promise<unknown>) => {
+      setPromptCallback: vi.fn((cb: () => Promise<unknown>) => {
         promptCb = cb;
       }),
       setLaunchCallback: vi.fn((cb: (c: unknown, r?: unknown) => void) => {
@@ -313,7 +308,7 @@ describe('bootstrap', () => {
       }),
       execute: vi.fn(async () => {
         if (promptCb) {
-          const res = (await promptCb(decision)) as { accepted?: boolean };
+          const res = (await promptCb()) as { accepted?: boolean };
           if (res?.accepted && launchCb) launchCb(chapter);
         } else if (launchCb) {
           launchCb(chapter);
@@ -334,7 +329,7 @@ describe('bootstrap', () => {
     expect(document.getElementById('mnr-hide-original')).not.toBeNull();
     expect(readerStore.activate).toHaveBeenCalledTimes(1);
     expect(readerStore.setChapter).toHaveBeenCalledTimes(1);
-    expect(document.getElementById('mnr-prompt-root')).toBeNull();
+    expect(document.getElementById('mnr-entry-prompt-root')).toBeNull();
 
     const host = document.getElementById('mnr-reader-root') as HTMLElement;
     expect(host.shadowRoot?.querySelector('#reader-view-stub')).not.toBeNull();
@@ -414,7 +409,7 @@ describe('bootstrap', () => {
     expect(mockDeactivateProtection).toHaveBeenCalled();
     expect(document.getElementById('mnr-reader-root')).toBeNull();
     expect(document.getElementById('mnr-hide-original')).toBeNull();
-    expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
+    expect(document.getElementById('mnr-entry-root')).not.toBeNull();
     expect(document.title).toBe('Original Chapter Title');
     expect(window.history.state).toEqual({ site: 'original' });
     expect(bootstrap.isActive()).toBe(false);
@@ -479,10 +474,10 @@ describe('bootstrap', () => {
     bootstrap.closeReader();
 
     expect(mockSetSitePreference).not.toHaveBeenCalled();
-    expect(document.getElementById('mnr-floating-btn')).not.toBeNull();
+    expect(document.getElementById('mnr-entry-root')).not.toBeNull();
   });
 
-  it('manualEnable hides floating button and calls manager.manualEnable', async () => {
+  it('manual entry owns its lifecycle while manualEnable runs', async () => {
     dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/index.html',
       pretendToBeVisual: true,
@@ -505,14 +500,58 @@ describe('bootstrap', () => {
     mockGetAutoEnableManager.mockReturnValue(manager);
 
     const bootstrap = await import('@/bootstrap');
+    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    await bootstrap.initialize();
 
-    const button = document.createElement('button');
-    button.id = 'mnr-floating-btn';
-    document.body.appendChild(button);
+    const entryHost = document.getElementById('mnr-entry-root');
+    const entryButton = entryHost?.shadowRoot?.querySelector(
+      '#mnr-entry-button'
+    ) as HTMLButtonElement | null;
+    expect(entryButton).not.toBeNull();
+    entryButton?.click();
 
-    await bootstrap.manualEnable();
+    await vi.waitFor(() => expect(manager.manualEnable).toHaveBeenCalledTimes(1));
+    expect(document.getElementById('mnr-entry-root')).toBeNull();
+  });
 
-    expect(document.getElementById('mnr-floating-btn')).toBeNull();
-    expect(manager.manualEnable).toHaveBeenCalledTimes(1);
+  it('restores manual entry when reader launch fails on a chapter page', async () => {
+    dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/chapter/1',
+      pretendToBeVisual: true,
+    });
+
+    // @ts-expect-error - test env: assigning jsdom window to globalThis
+    globalThis.window = dom.window;
+    // test env: assigning jsdom document to globalThis
+    globalThis.document = dom.window.document;
+    // test env: assigning jsdom sessionStorage to globalThis
+    globalThis.sessionStorage = dom.window.sessionStorage;
+
+    const launchError = new Error('parse failed');
+    const manager = {
+      check: vi.fn(async () => ({ shouldEnable: false })),
+      setPromptCallback: vi.fn(),
+      setLaunchCallback: vi.fn(),
+      execute: vi.fn(async () => {}),
+      manualEnable: vi.fn(async () => {
+        throw launchError;
+      }),
+    };
+    mockGetAutoEnableManager.mockReturnValue(manager);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    const bootstrap = await import('@/bootstrap');
+    await bootstrap.initialize();
+
+    const entryButton = document
+      .getElementById('mnr-entry-root')
+      ?.shadowRoot?.querySelector('#mnr-entry-button') as HTMLButtonElement | null;
+    expect(entryButton).not.toBeNull();
+    entryButton?.click();
+
+    await vi.waitFor(() => expect(manager.manualEnable).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(document.getElementById('mnr-entry-root')).not.toBeNull());
+    expect(consoleError).toHaveBeenCalledWith('[MNR] Manual enable error:', launchError);
   });
 });

@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.0
+// @version            9.3.1
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -8081,7 +8081,7 @@
 					method: "user-disabled",
 					confidence: 0,
 					reasons: ["用户已关闭该站点自动启用"],
-					showFloatingButton: true
+					showManualEntry: true
 				});
 				if (sitePreference?.enabled === true) return decide({
 					shouldEnable: true,
@@ -8100,7 +8100,7 @@
 						method: "user-disabled",
 						confidence: 0,
 						reasons: ["用户已关闭该站点自动启用"],
-						showFloatingButton: true
+						showManualEntry: true
 					});
 					return decide({
 						shouldEnable: true,
@@ -8123,7 +8123,7 @@
 				method: "user-disabled",
 				confidence: 0,
 				reasons: ["用户已关闭该站点自动启用"],
-				showFloatingButton: true
+				showManualEntry: true
 			});
 			if (sitePreference?.enabled === true) return decide({
 				shouldEnable: true,
@@ -8167,7 +8167,7 @@
 			}
 			if (this.promptCallback) {
 				this.deactivateProtection();
-				const response = await this.promptCallback(decision);
+				const response = await this.promptCallback();
 				if (response.accepted) {
 					if (await this.launch(doc, decision) && response.rememberForSite) this.rememberSiteEnabled(doc);
 				}
@@ -8240,7 +8240,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.0";
+	var VERSION = "9.3.1";
 	var BUILD_DATE = "2026-07-11";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
@@ -8477,8 +8477,8 @@
 			pageFlags: getPageFlags(),
 			mnrRoots: {
 				readerRoot: Boolean(document.getElementById("mnr-reader-root")),
-				promptRoot: Boolean(document.getElementById("mnr-prompt-root")),
-				floatingButton: Boolean(document.getElementById("mnr-floating-btn")),
+				entryPromptRoot: Boolean(document.getElementById("mnr-entry-prompt-root")),
+				readerEntryRoot: Boolean(document.getElementById("mnr-entry-root")),
 				hideOriginalStyle: Boolean(document.getElementById("mnr-hide-original"))
 			},
 			historyState: toDebugValue(window.history.state)
@@ -12392,6 +12392,11 @@
 	function createTextVNode(text = " ", flag = 0) {
 		return createVNode(Text, null, text, flag);
 	}
+	function createStaticVNode(content, numberOfNodes) {
+		const vnode = createVNode(Static, null, content);
+		vnode.staticCount = numberOfNodes;
+		return vnode;
+	}
 	function createCommentVNode(text = "", asBlock = false) {
 		return asBlock ? (openBlock(), createBlock(Comment, null, text)) : createVNode(Comment, null, text);
 	}
@@ -13381,6 +13386,174 @@
 		if (isString(container)) return document.querySelector(container);
 		return container;
 	}
+	var ReaderEntryButton_vue_vue_type_script_setup_true_lang_default = defineComponent({
+		__name: "ReaderEntryButton",
+		emits: ["enter"],
+		setup(__props, { emit: __emit }) {
+			const emit = __emit;
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock("button", {
+					id: "mnr-entry-button",
+					class: "mnr-reader-entry",
+					type: "button",
+					title: "进入阅读模式",
+					"aria-label": "进入阅读模式",
+					onClick: _cache[0] || (_cache[0] = ($event) => emit("enter"))
+				}, [..._cache[1] || (_cache[1] = [createStaticVNode("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" data-v-e6dad6e3><path d=\"M12 7v14\" data-v-e6dad6e3></path><path d=\"M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15\" data-v-e6dad6e3></path><path d=\"M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3\" data-v-e6dad6e3></path><path d=\"M3 18h6a3 3 0 0 1 3 3\" data-v-e6dad6e3></path><path d=\"M21 18h-6a3 3 0 0 0-3 3\" data-v-e6dad6e3></path></svg><span data-v-e6dad6e3>进入阅读模式</span>", 2)])]);
+			};
+		}
+	});
+	var _plugin_vue_export_helper_default = (sfc, props) => {
+		const target = sfc.__vccOpts || sfc;
+		for (const [key, val] of props) target[key] = val;
+		return target;
+	};
+	var ReaderEntryButton_default = _plugin_vue_export_helper_default(ReaderEntryButton_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-e6dad6e3"]]);
+	function useEventListener(type, listener, options = {}) {
+		const { target = window, passive = false, capture = false } = options;
+		let attached = false;
+		const add = (currentTarget) => {
+			const element = unref(currentTarget);
+			if (element && !attached) {
+				element.addEventListener(type, listener, {
+					capture,
+					passive
+				});
+				attached = true;
+			}
+		};
+		const remove = (currentTarget) => {
+			const element = unref(currentTarget);
+			if (element && attached) {
+				element.removeEventListener(type, listener, capture);
+				attached = false;
+			}
+		};
+		onMounted(() => add(target));
+		onScopeDispose(() => remove(target));
+		if (isRef(target)) watch(target, (newTarget, oldTarget) => {
+			remove(oldTarget);
+			add(newTarget);
+		});
+		return () => remove(target);
+	}
+	function getDeepActiveElement() {
+		let active = document.activeElement;
+		while (active instanceof window.HTMLElement && active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+		return active instanceof window.HTMLElement ? active : null;
+	}
+	var _hoisted_1$8 = { class: "mnr-entry-preference" };
+	var _hoisted_2$6 = { class: "mnr-entry-prompt-actions" };
+	var ReaderEntryPrompt_default = _plugin_vue_export_helper_default(defineComponent({
+		__name: "ReaderEntryPrompt",
+		props: { visible: { type: Boolean } },
+		emits: ["respond"],
+		setup(__props, { emit: __emit }) {
+			const props = __props;
+			const emit = __emit;
+			const rememberForSite = ref(true);
+			const cardRef = ref(null);
+			const acceptButtonRef = ref(null);
+			let previouslyFocused = null;
+			function handleAccept() {
+				emit("respond", {
+					accepted: true,
+					rememberForSite: rememberForSite.value
+				});
+			}
+			function handleDismiss() {
+				emit("respond", {
+					accepted: false,
+					rememberForSite: false
+				});
+			}
+			function trapFocus(event) {
+				const card = cardRef.value;
+				if (!card) return;
+				const focusable = Array.from(card.querySelectorAll("button:not([disabled]), input:not([disabled])"));
+				if (focusable.length === 0) return;
+				const first = focusable[0];
+				const last = focusable[focusable.length - 1];
+				const activeElement = getDeepActiveElement();
+				if (event.shiftKey && activeElement === first) {
+					event.preventDefault();
+					last.focus();
+				} else if (!event.shiftKey && activeElement === last) {
+					event.preventDefault();
+					first.focus();
+				}
+			}
+			function handleDialogKeydown(event) {
+				const keyboardEvent = event;
+				const card = cardRef.value;
+				if (!props.visible || !card || !keyboardEvent.composedPath().includes(card)) return;
+				if (keyboardEvent.key === "Escape") {
+					keyboardEvent.preventDefault();
+					keyboardEvent.stopImmediatePropagation();
+					handleDismiss();
+				} else if (keyboardEvent.key === "Tab") {
+					keyboardEvent.stopImmediatePropagation();
+					trapFocus(keyboardEvent);
+				}
+			}
+			useEventListener("keydown", handleDialogKeydown, { capture: true });
+			watch(() => props.visible, async (visible) => {
+				if (visible) {
+					previouslyFocused = getDeepActiveElement();
+					await nextTick();
+					acceptButtonRef.value?.focus({ preventScroll: true });
+				} else {
+					await nextTick();
+					previouslyFocused?.focus?.({ preventScroll: true });
+					previouslyFocused = null;
+				}
+			}, { immediate: true });
+			return (_ctx, _cache) => {
+				return openBlock(), createBlock(Transition, { name: "mnr-entry-prompt-fade" }, {
+					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
+						key: 0,
+						class: "mnr-entry-prompt-overlay",
+						onClick: withModifiers(handleDismiss, ["self"])
+					}, [createBaseVNode("section", {
+						ref_key: "cardRef",
+						ref: cardRef,
+						class: "mnr-entry-prompt-card",
+						role: "dialog",
+						"aria-modal": "true",
+						"aria-labelledby": "mnr-entry-prompt-title",
+						"aria-describedby": "mnr-entry-prompt-description"
+					}, [
+						_cache[2] || (_cache[2] = createBaseVNode("header", { class: "mnr-entry-prompt-header" }, [createBaseVNode("span", {
+							class: "mnr-entry-prompt-icon",
+							"aria-hidden": "true"
+						}, [createBaseVNode("svg", { viewBox: "0 0 24 24" }, [
+							createBaseVNode("path", { d: "M12 7v14" }),
+							createBaseVNode("path", { d: "M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" }),
+							createBaseVNode("path", { d: "M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" }),
+							createBaseVNode("path", { d: "M3 18h6a3 3 0 0 1 3 3" }),
+							createBaseVNode("path", { d: "M21 18h-6a3 3 0 0 0-3 3" })
+						])]), createBaseVNode("div", null, [createBaseVNode("h3", { id: "mnr-entry-prompt-title" }, "检测到小说正文"), createBaseVNode("p", { id: "mnr-entry-prompt-description" }, " 是否使用阅读模式打开本章？正文将采用统一排版并支持连续滚动阅读。 ")])], -1)),
+						createBaseVNode("label", _hoisted_1$8, [withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => rememberForSite.value = $event),
+							type: "checkbox"
+						}, null, 512), [[vModelCheckbox, rememberForSite.value]]), _cache[1] || (_cache[1] = createBaseVNode("span", null, [createBaseVNode("strong", null, "以后在本站自动进入"), createBaseVNode("small", null, "下次打开本站章节时直接进入阅读模式")], -1))]),
+						createBaseVNode("div", _hoisted_2$6, [createBaseVNode("button", {
+							type: "button",
+							class: "mnr-entry-button secondary",
+							onClick: handleDismiss
+						}, " 暂不 "), createBaseVNode("button", {
+							ref_key: "acceptButtonRef",
+							ref: acceptButtonRef,
+							type: "button",
+							class: "mnr-entry-button primary",
+							onClick: handleAccept
+						}, " 进入阅读模式 ", 512)])
+					], 512)])) : createCommentVNode("", true)]),
+					_: 1
+				});
+			};
+		}
+	}), [["__scopeId", "data-v-2c14cbfa"]]);
 	function getMnrGlobalState() {
 		if (!window.__MY_NOVEL_READER__) window.__MY_NOVEL_READER__ = {};
 		return window.__MY_NOVEL_READER__;
@@ -14206,205 +14379,6 @@ ul, ol {
 			$reset
 		};
 	});
-	function useEventListener(type, listener, options = {}) {
-		const { target = window, passive = false, capture = false } = options;
-		let attached = false;
-		const add = (currentTarget) => {
-			const element = unref(currentTarget);
-			if (element && !attached) {
-				element.addEventListener(type, listener, {
-					capture,
-					passive
-				});
-				attached = true;
-			}
-		};
-		const remove = (currentTarget) => {
-			const element = unref(currentTarget);
-			if (element && attached) {
-				element.removeEventListener(type, listener, capture);
-				attached = false;
-			}
-		};
-		onMounted(() => add(target));
-		onScopeDispose(() => remove(target));
-		if (isRef(target)) watch(target, (newTarget, oldTarget) => {
-			remove(oldTarget);
-			add(newTarget);
-		});
-		return () => remove(target);
-	}
-	function getDeepActiveElement() {
-		let active = document.activeElement;
-		while (active instanceof window.HTMLElement && active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
-		return active instanceof window.HTMLElement ? active : null;
-	}
-	var _hoisted_1$8 = { class: "mnr-confidence" };
-	var _hoisted_2$6 = { class: "mnr-confidence-bar" };
-	var _hoisted_3$4 = { class: "mnr-confidence-text" };
-	var _hoisted_4$4 = { class: "mnr-results" };
-	var _hoisted_5$4 = { class: "mnr-checkbox-label" };
-	var _hoisted_6$4 = { class: "mnr-prompt-actions" };
-	var DetectionPrompt_vue_vue_type_script_setup_true_lang_default = defineComponent({
-		__name: "DetectionPrompt",
-		props: {
-			decision: {},
-			visible: { type: Boolean }
-		},
-		emits: ["respond"],
-		setup(__props, { emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const rememberForSite = ref(true);
-			const cardRef = ref(null);
-			const acceptButtonRef = ref(null);
-			let previouslyFocused = null;
-			const confidence = computed(() => props.decision.confidence);
-			const confidenceClass = computed(() => {
-				if (confidence.value >= .8) return "high";
-				if (confidence.value >= .6) return "medium";
-				return "low";
-			});
-			const positiveReasons = computed(() => {
-				return props.decision.reasons.filter((r) => r.includes("找到") || r.includes("检测到") || r.includes("成功"));
-			});
-			const negativeReasons = computed(() => {
-				return props.decision.reasons.filter((r) => r.includes("未能") || r.includes("置信度") || r.includes("警告"));
-			});
-			function handleAccept() {
-				emit("respond", {
-					accepted: true,
-					rememberForSite: rememberForSite.value
-				});
-			}
-			function handleDismiss() {
-				emit("respond", {
-					accepted: false,
-					rememberForSite: false
-				});
-			}
-			function trapFocus(event) {
-				const card = cardRef.value;
-				if (!card) return;
-				const focusable = Array.from(card.querySelectorAll("button:not([disabled]), input:not([disabled])"));
-				if (focusable.length === 0) return;
-				const first = focusable[0];
-				const last = focusable[focusable.length - 1];
-				const activeElement = getDeepActiveElement();
-				if (event.shiftKey && activeElement === first) {
-					event.preventDefault();
-					last.focus();
-				} else if (!event.shiftKey && activeElement === last) {
-					event.preventDefault();
-					first.focus();
-				}
-			}
-			function handleDialogKeydown(event) {
-				const keyboardEvent = event;
-				const card = cardRef.value;
-				if (!props.visible || !card || !keyboardEvent.composedPath().includes(card)) return;
-				if (keyboardEvent.key === "Escape") {
-					keyboardEvent.preventDefault();
-					keyboardEvent.stopImmediatePropagation();
-					handleDismiss();
-				} else if (keyboardEvent.key === "Tab") {
-					keyboardEvent.stopImmediatePropagation();
-					trapFocus(keyboardEvent);
-				}
-			}
-			useEventListener("keydown", handleDialogKeydown, { capture: true });
-			watch(() => props.visible, async (visible) => {
-				if (visible) {
-					previouslyFocused = getDeepActiveElement();
-					await nextTick();
-					acceptButtonRef.value?.focus({ preventScroll: true });
-				} else {
-					await nextTick();
-					previouslyFocused?.focus?.({ preventScroll: true });
-					previouslyFocused = null;
-				}
-			}, { immediate: true });
-			return (_ctx, _cache) => {
-				return openBlock(), createBlock(Transition, { name: "mnr-fade" }, {
-					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", {
-						key: 0,
-						class: "mnr-prompt-overlay",
-						onClick: withModifiers(handleDismiss, ["self"])
-					}, [createBaseVNode("div", {
-						ref_key: "cardRef",
-						ref: cardRef,
-						class: "mnr-prompt-card",
-						role: "dialog",
-						"aria-modal": "true",
-						"aria-labelledby": "mnr-prompt-title"
-					}, [
-						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("svg", {
-							class: "mnr-prompt-icon",
-							viewBox: "0 0 24 24",
-							"aria-hidden": "true"
-						}, [
-							createBaseVNode("path", { d: "M12 7v14" }),
-							createBaseVNode("path", { d: "M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" }),
-							createBaseVNode("path", { d: "M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" }),
-							createBaseVNode("path", { d: "M3 18h6a3 3 0 0 1 3 3" }),
-							createBaseVNode("path", { d: "M21 18h-6a3 3 0 0 0-3 3" })
-						]), createBaseVNode("h3", {
-							id: "mnr-prompt-title",
-							class: "mnr-prompt-title"
-						}, "启用 MyNovelReader?")], -1)),
-						createBaseVNode("div", _hoisted_1$8, [createBaseVNode("div", _hoisted_2$6, [createBaseVNode("div", {
-							class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
-							style: normalizeStyle({ width: `${confidence.value * 100}%` })
-						}, null, 6)]), createBaseVNode("span", _hoisted_3$4, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
-						createBaseVNode("ul", _hoisted_4$4, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
-							return openBlock(), createElementBlock("li", {
-								key: reason,
-								class: "mnr-result-item success"
-							}, [_cache[1] || (_cache[1] = createBaseVNode("svg", {
-								class: "mnr-result-icon",
-								viewBox: "0 0 24 24",
-								"aria-hidden": "true"
-							}, [createBaseVNode("path", { d: "m5 12 4 4L19 6" })], -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
-						}), 128)), (openBlock(true), createElementBlock(Fragment, null, renderList(negativeReasons.value, (reason) => {
-							return openBlock(), createElementBlock("li", {
-								key: reason,
-								class: "mnr-result-item warning"
-							}, [_cache[2] || (_cache[2] = createBaseVNode("svg", {
-								class: "mnr-result-icon",
-								viewBox: "0 0 24 24",
-								"aria-hidden": "true"
-							}, [
-								createBaseVNode("path", { d: "M21.7 18 13.7 4a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z" }),
-								createBaseVNode("path", { d: "M12 9v4" }),
-								createBaseVNode("path", { d: "M12 17h.01" })
-							], -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
-						}), 128))]),
-						createBaseVNode("label", _hoisted_5$4, [withDirectives(createBaseVNode("input", {
-							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => rememberForSite.value = $event),
-							type: "checkbox",
-							class: "mnr-checkbox"
-						}, null, 512), [[vModelCheckbox, rememberForSite.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
-						createBaseVNode("div", _hoisted_6$4, [createBaseVNode("button", {
-							class: "mnr-btn mnr-btn-secondary",
-							onClick: handleDismiss
-						}, "暂不"), createBaseVNode("button", {
-							ref_key: "acceptButtonRef",
-							ref: acceptButtonRef,
-							class: "mnr-btn mnr-btn-primary",
-							onClick: handleAccept
-						}, " 启用阅读器 ", 512)])
-					], 512)])) : createCommentVNode("", true)]),
-					_: 1
-				});
-			};
-		}
-	});
-	var _plugin_vue_export_helper_default = (sfc, props) => {
-		const target = sfc.__vccOpts || sfc;
-		for (const [key, val] of props) target[key] = val;
-		return target;
-	};
-	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-16e49de1"]]);
 	var VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
 	var HKVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一針 一針|一針見血 一針見血|三針 三針|丟巧針 丟巧針|丹稜 丹稜|九針 九針|亂針繡 亂針繡|仙台 仙台|倒扣針兒 倒扣針兒|做針線 做針線|八字方針 八字方針|刀割針扎 刀割針扎|分針 分針|別針 別針|刺胳針 刺胳針|刺針 刺針|北港島綫 北港島線|十針 十針|南港島綫 南港島線|南針 南針|反時針 反時針|口吃 口吃|台山 台山|台山市 台山市|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|向風針 向風針|唱針 唱針|啄針兒 啄針兒|嗎啡針 嗎啡針|大政方針 大政方針|大海撈針 大海撈針|大頭針 大頭針|天台 天台|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|太乙神針 太乙神針|奇台 奇台|女人心海底針 女人心海底針|定南針 定南針|定風針 定風針|將軍澳綫 將軍澳線|對針 對針|小針 小針|小針美容 小針美容|屯馬綫 屯馬線|平針縫 平針縫|幾針 幾針|引線穿針 引線穿針|張口 張口|張柏芝 張柏芝|張栢芝 張栢芝|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|懸針 懸針|懸針垂露 懸針垂露|手腕式指北針 手腕式指北針|扎針 扎針|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|指北針 指北針|指南針 指南針|指揮台 指揮台|指針 指針|指針式 指針式|探針 探針|控制台 控制台|插針 插針|搖針 搖針|搗針 搗針|撞針 撞針|擺針 擺針|收針 收針|教育方針 教育方針|敹一針 敹一針|方針 方針|時針 時針|暈針 暈針|曲別針 曲別針|東九龍綫 東九龍線|東海撈針 東海撈針|東涌綫 東涌線|東鐵綫 東鐵線|松針 松針|枝針 枝針|桑針 桑針|棒針 棒針|棒針衫 棒針衫|棘針 棘針|棘針科 棘針科|棘針門 棘針門|機場快綫 機場快線|步線行針 步線行針|毒針 毒針|毛線針 毛線針|毫針 毫針|水底撈針 水底撈針|沙中綫 沙中線|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|浙江天台縣 浙江天台縣|海底撈針 海底撈針|港島綫 港島線|漏針 漏針|炮台山循道衛理中學 炮台山循道衛理中學|無線新聞台 無線新聞台|無針不引線 無針不引線|無針注射器 無針注射器|燔針 燔針|留針 留針|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|短針 短針|石針 石針|硬肥皂 硬肥皂|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|秒針 秒針|秧針 秧針|穆稜 穆稜|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|紋光針 紋光針|細針密縷 細針密縷|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美白針 美白針|耳針 耳針|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|胃口 胃口|胸針 胸針|臺灣台 臺灣台|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|茅針 茅針|荃灣綫 荃灣線|葉針 葉針|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|補血針 補血針|補針 補針|見縫插針 見縫插針|觀塘綫 觀塘線|討針線 討針線|象牙針尖 象牙針尖|賀爾蒙針 賀爾蒙針|跳針 跳針|蹇吃 蹇吃|軟肥皂 軟肥皂|迪士尼綫 迪士尼線|迴紋針 迴紋針|退針 退針|逆時針 逆時針|避雷針 避雷針|郭台成 郭台成|郭台銘 郭台銘|鄧艾吃 鄧艾吃|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉤針 鉤針|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|長針 長針|開口 開口|防疫針 防疫針|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|面皂 面皂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|風向針 風向針|飛針走線 飛針走線|香皂 香皂|骨針 骨針|髮針 髮針|鬼針草 鬼針草|鳳台 鳳台|鹽水針 鹽水針|麻醉針 麻醉針|黃成 黃成|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針|龍應台 龍應台";
 	var HKVariantsRev_default = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|綫 線|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
@@ -20716,29 +20690,28 @@ ul, ol {
 		key: 0,
 		class: "mnr-drawer-search"
 	};
-	var _hoisted_7$3 = { class: "mnr-drawer-tools" };
-	var _hoisted_8$3 = { key: 0 };
-	var _hoisted_9$2 = {
+	var _hoisted_7$3 = {
+		class: "mnr-offline-section",
+		"aria-labelledby": "mnr-offline-title"
+	};
+	var _hoisted_8$3 = { class: "mnr-offline-main" };
+	var _hoisted_9$2 = { class: "mnr-offline-copy" };
+	var _hoisted_10$1 = { "aria-live": "polite" };
+	var _hoisted_11$1 = ["aria-valuenow"];
+	var _hoisted_12$1 = {
 		key: 1,
-		class: "mnr-cache-progress-track",
-		"aria-hidden": "true"
+		class: "mnr-offline-secondary"
 	};
-	var _hoisted_10$1 = {
-		key: 2,
-		class: "mnr-cache-stats"
-	};
-	var _hoisted_11$1 = { key: 0 };
-	var _hoisted_12$1 = { key: 1 };
 	var _hoisted_13$1 = {
-		key: 3,
+		key: 1,
 		class: "mnr-drawer-state"
 	};
 	var _hoisted_14$1 = {
-		key: 4,
+		key: 2,
 		class: "mnr-drawer-state"
 	};
 	var _hoisted_15$1 = {
-		key: 5,
+		key: 3,
 		class: "mnr-drawer-state"
 	};
 	var _hoisted_16$1 = ["aria-current", "onClick"];
@@ -20747,12 +20720,7 @@ ul, ol {
 		class: "mnr-cache-mark",
 		"aria-label": "已离线缓存"
 	};
-	var _hoisted_18$1 = {
-		key: 1,
-		class: "mnr-cache-mark",
-		"aria-label": "已临时缓存"
-	};
-	var _hoisted_19$1 = { class: "mnr-chapter-title-text" };
+	var _hoisted_18$1 = { class: "mnr-chapter-title-text" };
 	var SEARCH_THRESHOLD = 50;
 	var ROW_HEIGHT = 44;
 	var OVERSCAN = 8;
@@ -20791,7 +20759,12 @@ ul, ol {
 				const index = props.chapters.findIndex((chapter) => chapter.isCurrent);
 				return index >= 0 ? index + 1 : 0;
 			});
-			const sessionCount = computed(() => props.chapters.filter((chapter) => chapter.isCached && !chapter.isPersisted).length);
+			const offlineStatus = computed(() => {
+				if (props.cacheProgress.running) return props.cacheProgress.total > 0 ? `已缓存 ${props.cacheProgress.done} / ${props.cacheProgress.total} 章` : "正在准备缓存";
+				if (props.cacheProgress.failed > 0) return `有 ${props.cacheProgress.failed} 章缓存失败`;
+				if (props.persistedCount > 0) return `已保存 ${props.persistedCount} 章`;
+				return "尚未缓存";
+			});
 			const cachePercent = computed(() => {
 				if (props.cacheProgress.total <= 0) return 0;
 				return Math.min(100, props.cacheProgress.done / props.cacheProgress.total * 100);
@@ -20915,29 +20888,38 @@ ul, ol {
 						void 0,
 						{ trim: true }
 					]])])) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_7$3, [
-						createBaseVNode("button", {
-							class: "mnr-cache-action",
+					createBaseVNode("section", _hoisted_7$3, [
+						createBaseVNode("div", _hoisted_8$3, [createBaseVNode("div", _hoisted_9$2, [_cache[8] || (_cache[8] = createBaseVNode("strong", { id: "mnr-offline-title" }, "离线阅读", -1)), createBaseVNode("span", _hoisted_10$1, toDisplayString(offlineStatus.value), 1)]), createBaseVNode("button", {
+							class: "mnr-offline-action primary",
+							type: "button",
 							onClick: _cache[3] || (_cache[3] = ($event) => emit("cacheAll"))
-						}, [createTextVNode(toDisplayString(__props.cacheProgress.running ? "取消缓存" : "离线缓存") + " ", 1), __props.cacheProgress.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_8$3, toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1)) : createCommentVNode("", true)]),
-						!__props.cacheProgress.running && __props.cacheProgress.failed > 0 ? (openBlock(), createElementBlock("button", {
+						}, toDisplayString(__props.cacheProgress.running ? "取消" : "缓存本书"), 1)]),
+						__props.cacheProgress.running ? (openBlock(), createElementBlock("div", {
 							key: 0,
-							class: "mnr-cache-action",
+							class: "mnr-cache-progress-track",
+							role: "progressbar",
+							"aria-label": "离线缓存进度",
+							"aria-valuemin": "0",
+							"aria-valuemax": "100",
+							"aria-valuenow": Math.round(cachePercent.value)
+						}, [createBaseVNode("div", {
+							class: "mnr-cache-progress-fill",
+							style: normalizeStyle({ width: `${cachePercent.value}%` })
+						}, null, 4)], 8, _hoisted_11$1)) : createCommentVNode("", true),
+						!__props.cacheProgress.running && (__props.cacheProgress.failed > 0 || __props.persistedCount > 0) ? (openBlock(), createElementBlock("div", _hoisted_12$1, [__props.cacheProgress.failed > 0 ? (openBlock(), createElementBlock("button", {
+							key: 0,
+							class: "mnr-offline-action",
+							type: "button",
 							onClick: _cache[4] || (_cache[4] = ($event) => emit("retryCache"))
-						}, " 重试失败 " + toDisplayString(__props.cacheProgress.failed) + " 章 ", 1)) : createCommentVNode("", true),
-						!__props.cacheProgress.running && __props.persistedCount > 0 ? (openBlock(), createElementBlock("button", {
+						}, " 重试失败章节（" + toDisplayString(__props.cacheProgress.failed) + "） ", 1)) : createCommentVNode("", true), __props.persistedCount > 0 ? (openBlock(), createElementBlock("button", {
 							key: 1,
-							class: "mnr-cache-action",
+							class: "mnr-offline-action danger",
+							type: "button",
 							onClick: _cache[5] || (_cache[5] = ($event) => emit("clearCache"))
-						}, " 清除缓存 ")) : createCommentVNode("", true)
+						}, " 清除缓存 ")) : createCommentVNode("", true)])) : createCommentVNode("", true)
 					]),
-					__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_9$2, [createBaseVNode("div", {
-						class: "mnr-cache-progress-fill",
-						style: normalizeStyle({ width: `${cachePercent.value}%` })
-					}, null, 4)])) : createCommentVNode("", true),
-					__props.persistedCount > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_10$1, [__props.persistedCount > 0 ? (openBlock(), createElementBlock("span", _hoisted_11$1, "已保存 " + toDisplayString(__props.persistedCount) + " 章", 1)) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_12$1, "临时 " + toDisplayString(sessionCount.value) + " 章", 1)) : createCommentVNode("", true)])) : createCommentVNode("", true),
-					__props.loading ? (openBlock(), createElementBlock("div", _hoisted_13$1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[8] || (_cache[8] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_14$1, "暂无目录")) : filteredChapters.value.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_15$1, "没有匹配的章节")) : (openBlock(), createElementBlock("div", {
-						key: 6,
+					__props.loading ? (openBlock(), createElementBlock("div", _hoisted_13$1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[9] || (_cache[9] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_14$1, "暂无目录")) : filteredChapters.value.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_15$1, "没有匹配的章节")) : (openBlock(), createElementBlock("div", {
+						key: 4,
 						ref_key: "contentRef",
 						ref: contentRef,
 						class: "mnr-drawer-content",
@@ -20952,27 +20934,19 @@ ul, ol {
 						return openBlock(), createElementBlock("li", { key: ch.url }, [createBaseVNode("button", {
 							class: normalizeClass(["mnr-chapter-button", {
 								active: ch.isCurrent,
-								cached: ch.isCached && !ch.isPersisted && !ch.isCurrent,
 								persisted: ch.isPersisted && !ch.isCurrent
 							}]),
 							"aria-current": ch.isCurrent ? "page" : void 0,
 							onClick: ($event) => handleSelect(ch)
-						}, [ch.isPersisted ? (openBlock(), createElementBlock("span", _hoisted_17$1, [..._cache[9] || (_cache[9] = [createBaseVNode("svg", {
+						}, [ch.isPersisted && !ch.isCurrent ? (openBlock(), createElementBlock("span", _hoisted_17$1, [..._cache[10] || (_cache[10] = [createBaseVNode("svg", {
 							viewBox: "0 0 24 24",
 							"aria-hidden": "true"
-						}, [createBaseVNode("path", { d: "m5 12 4 4L19 6" })], -1)])])) : ch.isCached ? (openBlock(), createElementBlock("span", _hoisted_18$1, [..._cache[10] || (_cache[10] = [createBaseVNode("svg", {
-							viewBox: "0 0 24 24",
-							"aria-hidden": "true"
-						}, [createBaseVNode("circle", {
-							cx: "12",
-							cy: "12",
-							r: "7"
-						})], -1)])])) : createCommentVNode("", true), createBaseVNode("span", _hoisted_19$1, toDisplayString(ch.title), 1)], 10, _hoisted_16$1)]);
+						}, [createBaseVNode("path", { d: "m5 12 4 4L19 6" })], -1)])])) : createCommentVNode("", true), createBaseVNode("span", _hoisted_18$1, toDisplayString(ch.title), 1)], 10, _hoisted_16$1)]);
 					}), 128))], 4)], 544))
 				], 10, _hoisted_1$3)], 64);
 			};
 		}
-	}), [["__scopeId", "data-v-c5d5da9c"]]);
+	}), [["__scopeId", "data-v-aeddb985"]]);
 	var _hoisted_1$2 = { class: "mnr-reading-control" };
 	var _hoisted_2$2 = { class: "mnr-reading-control-header" };
 	var _hoisted_3$2 = ["id", "for"];
@@ -21922,6 +21896,8 @@ ul, ol {
 	var app = null;
 	var pinia = null;
 	var readerCleanup = null;
+	var readerEntryApp = null;
+	var readerEntryCleanup = null;
 	function shouldEnableEarlyProtection(url) {
 		try {
 			const u = new URL(url);
@@ -21985,15 +21961,15 @@ ul, ol {
 			const flagTime = parseInt(skipFlag, 10);
 			if (!isNaN(flagTime) && Date.now() - flagTime < 5e3) {
 				getSiteProtection().deactivate();
-				showFloatingButton();
+				showReaderEntry();
 				return;
 			}
 		}
 		const decision = await manager.check(document);
 		appState.currentDecision = decision;
-		if (decision.method === "user-disabled" || decision.showFloatingButton) {
+		if (decision.method === "user-disabled" || decision.showManualEntry) {
 			getSiteProtection().deactivate();
-			showFloatingButton();
+			showReaderEntry();
 			return;
 		}
 		if (!decision.shouldEnable) {
@@ -22005,19 +21981,19 @@ ul, ol {
 		await manager.execute(document);
 		if (!appState.isActive && decision.shouldEnable) {
 			getSiteProtection().deactivate();
-			showFloatingButton();
+			showReaderEntry();
 		}
 	}
-	async function showPrompt(decision) {
+	async function showPrompt() {
 		return new Promise((resolve) => {
-			const { mountPoint, cleanup } = createShadowMount("mnr-prompt-root");
-			const showPrompt = ref(true);
+			const { mountPoint, cleanup } = createShadowMount("mnr-entry-prompt-root");
+			const promptVisible = ref(true);
 			let promptApp = null;
 			let settled = false;
 			const finish = (response) => {
 				if (settled) return;
 				settled = true;
-				showPrompt.value = false;
+				promptVisible.value = false;
 				window.setTimeout(() => {
 					promptApp?.unmount();
 					promptApp = null;
@@ -22025,17 +22001,27 @@ ul, ol {
 					resolve(response);
 				}, 300);
 			};
-			promptApp = createApp(defineComponent({ setup() {
+			const PromptWrapper = defineComponent({ setup() {
 				const handleRespond = (response) => {
 					finish(response);
 				};
-				return () => h(DetectionPrompt_default, {
-					decision,
-					visible: showPrompt.value,
+				return () => h(ReaderEntryPrompt_default, {
+					visible: promptVisible.value,
 					onRespond: handleRespond
 				});
-			} }));
-			promptApp.mount(mountPoint);
+			} });
+			try {
+				promptApp = createApp(PromptWrapper);
+				promptApp.mount(mountPoint);
+			} catch (e) {
+				settled = true;
+				cleanup();
+				console.error("[MNR] Failed to mount reader entry prompt:", e);
+				resolve({
+					accepted: false,
+					rememberForSite: false
+				});
+			}
 		});
 	}
 	function launchReader(chapter, rule) {
@@ -22043,6 +22029,7 @@ ul, ol {
 			console.error("[MNR] Pinia not initialized");
 			return;
 		}
+		hideReaderEntry();
 		recordDebugEvent("bootstrap.launchReader", {
 			url: chapter.url,
 			title: chapter.title,
@@ -22078,7 +22065,7 @@ ul, ol {
 		const style = document.createElement("style");
 		style.id = "mnr-hide-original";
 		style.textContent = `
-    body > *:not(#mnr-reader-root):not(#mnr-prompt-root):not(script):not(style) {
+    body > *:not(#mnr-reader-root):not(#mnr-entry-prompt-root):not(script):not(style) {
       display: none !important;
     }
   `;
@@ -22118,7 +22105,7 @@ ul, ol {
 			return;
 		}
 		restoreHostPageSnapshot(originalHostPage);
-		if (entryPageKind === "chapter") showFloatingButton();
+		if (entryPageKind === "chapter") showReaderEntry();
 	}
 	function getCurrentSiteAutoEnable() {
 		try {
@@ -22146,79 +22133,44 @@ ul, ol {
 		await configStore.flushSave();
 		getSiteProtection().activate(toProtectionOptions(configStore.protection));
 	}
-	function showFloatingButton() {
-		hideFloatingButton();
-		const button = document.createElement("button");
-		button.id = "mnr-floating-btn";
-		button.innerHTML = `
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
-      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-      style="display:block; width:26px; height:26px; flex:none; margin:0">
-      <path d="M12 7v14" />
-      <path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" />
-      <path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" />
-      <path d="M3 18h6a3 3 0 0 1 3 3" />
-      <path d="M21 18h-6a3 3 0 0 0-3 3" />
-    </svg>
-  `;
-		button.title = "进入阅读模式";
-		button.setAttribute("aria-label", "进入阅读模式");
-		button.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    padding: 0;
-    border-radius: 50%;
-    border: none;
-    background: #1976d2;
-    color: white;
-    line-height: 1;
-    text-align: center;
-    cursor: pointer;
-    z-index: 999999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
-  `;
-		button.onmouseover = () => {
-			button.style.transform = "translateY(-2px)";
-			button.style.background = "#1565c0";
-			button.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
-		};
-		button.onmouseout = () => {
-			button.style.transform = "translateY(0)";
-			button.style.background = "#1976d2";
-			button.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-		};
-		button.onclick = async () => {
-			hideFloatingButton();
-			await manualEnable();
-		};
-		document.body.appendChild(button);
+	function showReaderEntry() {
+		if (appState.isActive || readerEntryApp) return;
+		const { mountPoint, cleanup } = createShadowMount("mnr-entry-root");
+		readerEntryCleanup = cleanup;
+		try {
+			readerEntryApp = createApp(ReaderEntryButton_default, { onEnter: () => {
+				manualEnable().catch((e) => console.error("[MNR] Manual enable error:", e));
+			} });
+			readerEntryApp.mount(mountPoint);
+		} catch (e) {
+			readerEntryApp = null;
+			readerEntryCleanup = null;
+			cleanup();
+			console.error("[MNR] Failed to mount reader entry:", e);
+		}
 	}
-	function hideFloatingButton() {
-		const btn = document.getElementById("mnr-floating-btn");
-		if (btn) btn.remove();
+	function hideReaderEntry() {
+		readerEntryApp?.unmount();
+		readerEntryApp = null;
+		readerEntryCleanup?.();
+		readerEntryCleanup = null;
 	}
 	async function manualEnable() {
 		const currentUrl = window.location.href;
 		recordDebugEvent("bootstrap.manualEnable", { url: currentUrl });
-		hideFloatingButton();
-		await ensureInitialized();
-		if (!pinia) return;
-		const manager = getAutoEnableManager({
-			enableProtection: true,
-			protectionOptions: toProtectionOptions(useConfigStore(pinia).protection)
-		});
-		manager.setLaunchCallback(launchReader);
-		await manager.manualEnable(document);
-		if (!appState.isActive && await shouldShowManualEntryForPage(currentUrl, document)) showFloatingButton();
+		hideReaderEntry();
+		try {
+			await ensureInitialized();
+			if (!pinia) return;
+			const manager = getAutoEnableManager({
+				enableProtection: true,
+				protectionOptions: toProtectionOptions(useConfigStore(pinia).protection)
+			});
+			manager.setLaunchCallback(launchReader);
+			await manager.manualEnable(document);
+		} finally {
+			if (!appState.isActive && await shouldShowManualEntryForPage(currentUrl, document)) showReaderEntry();
+		}
 	}
 	function getAppDebugSnapshot() {
 		const decision = appState.currentDecision;
@@ -22232,7 +22184,7 @@ ul, ol {
 				method: decision.method,
 				confidence: decision.confidence,
 				reasons: decision.reasons,
-				showFloatingButton: decision.showFloatingButton,
+				showManualEntry: decision.showManualEntry,
 				ruleId: decision.rule?.id
 			}) : null,
 			originalHostPage: appState.originalHostPage ? toDebugValue({
@@ -22288,7 +22240,7 @@ ul, ol {
 			const hostname = new URL(url).hostname;
 			if (getRuleStorage().getSitePreference(hostname)?.enabled === false) {
 				getSiteProtection().deactivate();
-				showFloatingButton();
+				showReaderEntry();
 				return;
 			}
 		} catch (e) {
@@ -22346,6 +22298,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-prompt-overlay[data-v-16e49de1]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-16e49de1]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-16e49de1;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-16e49de1{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-16e49de1]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-16e49de1]{fill:none;width:28px;height:28px;stroke:var(--mnr-link,#1976d2);stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none}.mnr-prompt-title[data-v-16e49de1]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-16e49de1]{margin-bottom:16px}.mnr-confidence-bar[data-v-16e49de1]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-16e49de1]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-16e49de1]{background:#4caf50}.mnr-confidence-fill.medium[data-v-16e49de1]{background:#ff9800}.mnr-confidence-fill.low[data-v-16e49de1]{background:#f44336}.mnr-confidence-text[data-v-16e49de1]{color:#666;font-size:13px}.mnr-results[data-v-16e49de1]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-16e49de1]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-16e49de1]{color:#2e7d32}.mnr-result-item.warning[data-v-16e49de1]{color:#ed6c02}.mnr-result-icon[data-v-16e49de1]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:18px;height:18px}.mnr-checkbox-label[data-v-16e49de1]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-16e49de1]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-16e49de1]{gap:12px;display:flex}.mnr-btn[data-v-16e49de1]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-16e49de1]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-16e49de1]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-16e49de1]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-16e49de1]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-16e49de1],.mnr-fade-leave-active[data-v-16e49de1]{transition:opacity .3s}.mnr-fade-enter-from[data-v-16e49de1],.mnr-fade-leave-to[data-v-16e49de1]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-16e49de1]{background:#2a2a2a}.mnr-prompt-title[data-v-16e49de1]{color:#e0e0e0}.mnr-confidence-bar[data-v-16e49de1]{background:#444}.mnr-confidence-text[data-v-16e49de1]{color:#aaa}.mnr-checkbox-label[data-v-16e49de1]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-16e49de1]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-16e49de1]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-16e49de1]{margin:8px;padding:16px}.mnr-prompt-title[data-v-16e49de1]{font-size:16px}.mnr-btn[data-v-16e49de1]{padding:12px 16px}}@media (prefers-reduced-motion:reduce){.mnr-prompt-card[data-v-16e49de1],.mnr-confidence-fill[data-v-16e49de1],.mnr-btn[data-v-16e49de1],.mnr-fade-enter-active[data-v-16e49de1],.mnr-fade-leave-active[data-v-16e49de1]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-c5d5da9c]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-c5d5da9c]{transform:translate(0)}.mnr-drawer-overlay[data-v-c5d5da9c]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-c5d5da9c]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-c5d5da9c]{min-width:0}.mnr-drawer-title[data-v-c5d5da9c]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-c5d5da9c]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-c5d5da9c]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-c5d5da9c]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-c5d5da9c]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-c5d5da9c]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-drawer-tools[data-v-c5d5da9c]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-wrap:wrap;flex-shrink:0;gap:8px;padding:6px 12px 10px;display:flex}.mnr-cache-action[data-v-c5d5da9c]{border:1px solid var(--mnr-border,#ddd);min-height:32px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:7px;padding:5px 10px;font-size:12px}.mnr-drawer-state[data-v-c5d5da9c]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-c5d5da9c]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-c5d5da9c]{background:var(--mnr-border,#e0e0e0);flex-shrink:0;height:3px}.mnr-cache-progress-fill[data-v-c5d5da9c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-cache-stats[data-v-c5d5da9c]{border-bottom:1px solid var(--mnr-border,#e5e5e5);color:var(--mnr-text,#666);flex-shrink:0;gap:12px;padding:7px 12px;font-size:12px;display:flex}.mnr-chapter-list[data-v-c5d5da9c]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-c5d5da9c]{height:44px}.mnr-chapter-button[data-v-c5d5da9c]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-c5d5da9c]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-c5d5da9c]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.cached[data-v-c5d5da9c]{color:#777}.mnr-chapter-button.persisted[data-v-c5d5da9c],.mnr-cache-mark[data-v-c5d5da9c]{color:#388e3c}.mnr-cache-mark[data-v-c5d5da9c]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-c5d5da9c]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-c5d5da9c]:hover,.mnr-chapter-button[data-v-c5d5da9c]:hover,.mnr-cache-action[data-v-c5d5da9c]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-drawer-close[data-v-c5d5da9c]:focus-visible,.mnr-drawer-search input[data-v-c5d5da9c]:focus-visible,.mnr-cache-action[data-v-c5d5da9c]:focus-visible,.mnr-chapter-button[data-v-c5d5da9c]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-c5d5da9c]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-c5d5da9c],.mnr-fade-leave-active[data-v-c5d5da9c]{transition:opacity .24s}.mnr-fade-enter-from[data-v-c5d5da9c],.mnr-fade-leave-to[data-v-c5d5da9c]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-c5d5da9c],.mnr-fade-enter-active[data-v-c5d5da9c],.mnr-fade-leave-active[data-v-c5d5da9c],.mnr-cache-progress-fill[data-v-c5d5da9c]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-b372098d]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-b372098d]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-b372098d]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-b372098d],.mnr-settings-section h4[data-v-b372098d],.mnr-field-label[data-v-b372098d]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-b372098d]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-b372098d]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-b372098d]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-b372098d]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-b372098d],.mnr-field-label[data-v-b372098d],.mnr-settings-fieldset legend[data-v-b372098d]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-b372098d]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-b372098d]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-b372098d]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-b372098d]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-b372098d]{margin-top:18px}.mnr-select[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-b372098d]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-b372098d]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-b372098d]:last-child{border-right:0}.mnr-segment.active[data-v-b372098d]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-b372098d]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-b372098d]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-b372098d]{padding-bottom:4px}.mnr-settings-group-content[data-v-b372098d]>:first-child{margin-top:0}.mnr-switch-row[data-v-b372098d]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-b372098d]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-b372098d]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-settings-footer[data-v-b372098d]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-b372098d]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-b372098d]:hover,.mnr-secondary-action[data-v-b372098d]:hover,.mnr-segment[data-v-b372098d]:hover,.mnr-exit-btn[data-v-b372098d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-b372098d]:focus-visible,.mnr-close-btn[data-v-b372098d]:focus-visible,.mnr-theme-btn[data-v-b372098d]:focus-visible,.mnr-select[data-v-b372098d]:focus-visible,.mnr-segment[data-v-b372098d]:focus-visible,.mnr-secondary-action[data-v-b372098d]:focus-visible,.mnr-settings-group summary[data-v-b372098d]:focus-visible,.mnr-switch-row input[data-v-b372098d]:focus-visible,.mnr-custom-css[data-v-b372098d]:focus-visible,.mnr-exit-btn[data-v-b372098d]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-b372098d],.mnr-slide-leave-active[data-v-b372098d],.mnr-settings-panel[data-v-b372098d]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-b372098d],.mnr-slide-leave-to[data-v-b372098d]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-b372098d],.mnr-slide-leave-to .mnr-settings-panel[data-v-b372098d]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-b372098d]{width:100%}.mnr-reading-preview[data-v-b372098d]{display:block}.mnr-desktop-width[data-v-b372098d]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-b372098d],.mnr-slide-leave-active[data-v-b372098d],.mnr-settings-panel[data-v-b372098d]{transition:none}}.mnr-reader[data-v-e9267a1f]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-e9267a1f]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-e9267a1f]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-e9267a1f] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-e9267a1f] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-e9267a1f] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-e9267a1f]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-e9267a1f]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-e9267a1f]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-e9267a1f]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e9267a1f]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-e9267a1f]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-e9267a1f]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-e9267a1f]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-e9267a1f],.mnr-loading-next[data-v-e9267a1f]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-e9267a1f]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-e9267a1f]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-e9267a1f]{transition:none}}\n/*$vite$:1*/", {});
+		})(".mnr-reader-entry[data-v-e6dad6e3]{right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));z-index:2147483646;background:var(--mnr-link,#1976d2);min-width:48px;height:48px;color:var(--mnr-on-link,#fff);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;border-radius:24px;justify-content:center;align-items:center;gap:8px;margin:0;padding:0 16px;font-size:14px;font-weight:600;line-height:1;transition:transform .18s,filter .18s,box-shadow .18s;animation:.2s ease-out mnr-entry-in-e6dad6e3;display:flex;position:fixed;box-shadow:0 6px 18px #0003}.mnr-reader-entry svg[data-v-e6dad6e3]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:0 0 24px;width:24px;height:24px}.mnr-reader-entry span[data-v-e6dad6e3]{white-space:nowrap}.mnr-reader-entry[data-v-e6dad6e3]:active{transform:scale(.96)}.mnr-reader-entry[data-v-e6dad6e3]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 48%, #fff);outline-offset:3px}@media (hover:hover){.mnr-reader-entry[data-v-e6dad6e3]:hover{filter:brightness(.94);transform:translateY(-2px);box-shadow:0 8px 22px #0000003d}}@media (width<=480px){.mnr-reader-entry[data-v-e6dad6e3]{width:48px;padding:0}.mnr-reader-entry span[data-v-e6dad6e3]{display:none}}@keyframes mnr-entry-in-e6dad6e3{0%{opacity:0;transform:translateY(8px)scale(.96)}}@media (prefers-reduced-motion:reduce){.mnr-reader-entry[data-v-e6dad6e3]{transition:none;animation:none}}.mnr-entry-prompt-overlay[data-v-2c14cbfa]{z-index:2147483647;padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));background:#00000085;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.mnr-entry-prompt-card[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:var(--mnr-bg,#fff);width:min(100%,400px);max-height:calc(100dvh - 32px);color:var(--mnr-text,#333);border-radius:14px;padding:24px;animation:.24s ease-out mnr-entry-prompt-in-2c14cbfa;overflow:auto;box-shadow:0 18px 50px #00000047}.mnr-entry-prompt-header[data-v-2c14cbfa]{align-items:flex-start;gap:14px;display:flex}.mnr-entry-prompt-icon[data-v-2c14cbfa]{background:color-mix(in srgb, var(--mnr-link,#1976d2) 12%, transparent);width:44px;height:44px;color:var(--mnr-link,#1976d2);border-radius:12px;flex:0 0 44px;place-items:center;display:grid}.mnr-entry-prompt-icon svg[data-v-2c14cbfa]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:26px;height:26px}.mnr-entry-prompt-header h3[data-v-2c14cbfa]{margin:1px 0 6px;font-size:18px;font-weight:700;line-height:1.4}.mnr-entry-prompt-header p[data-v-2c14cbfa]{opacity:.76;margin:0;font-size:14px;line-height:1.65}.mnr-entry-preference[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:color-mix(in srgb, var(--mnr-border,#e0e0e0) 34%, transparent);cursor:pointer;border-radius:10px;align-items:flex-start;gap:10px;margin:22px 0;padding:13px 14px;display:flex}.mnr-entry-preference input[data-v-2c14cbfa]{width:20px;height:20px;accent-color:var(--mnr-link,#1976d2);flex:0 0 20px;margin:1px 0 0}.mnr-entry-preference span[data-v-2c14cbfa],.mnr-entry-preference strong[data-v-2c14cbfa],.mnr-entry-preference small[data-v-2c14cbfa]{display:block}.mnr-entry-preference strong[data-v-2c14cbfa]{font-size:14px;font-weight:600}.mnr-entry-preference small[data-v-2c14cbfa]{opacity:.68;margin-top:3px;font-size:12px;line-height:1.5}.mnr-entry-prompt-actions[data-v-2c14cbfa]{grid-template-columns:1fr 1.25fr;gap:10px;display:grid}.mnr-entry-button[data-v-2c14cbfa]{cursor:pointer;border:1px solid #0000;border-radius:9px;min-height:44px;padding:10px 14px;font-size:14px;font-weight:600;transition:filter .18s,background .18s}.mnr-entry-button.secondary[data-v-2c14cbfa]{border-color:var(--mnr-border,#ddd);color:var(--mnr-text,#555);background:0 0}.mnr-entry-button.primary[data-v-2c14cbfa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-entry-button[data-v-2c14cbfa]:focus-visible,.mnr-entry-preference input[data-v-2c14cbfa]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}@media (hover:hover){.mnr-entry-button[data-v-2c14cbfa]:hover{filter:brightness(.94)}.mnr-entry-button.secondary[data-v-2c14cbfa]:hover{background:var(--mnr-border,#f0f0f0)}}.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:opacity .24s}.mnr-entry-prompt-fade-enter-from[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-to[data-v-2c14cbfa]{opacity:0}@keyframes mnr-entry-prompt-in-2c14cbfa{0%{opacity:0;transform:translateY(12px)scale(.98)}}@media (width<=480px){.mnr-entry-prompt-card[data-v-2c14cbfa]{padding:20px}.mnr-entry-prompt-header[data-v-2c14cbfa]{gap:12px}.mnr-entry-prompt-icon[data-v-2c14cbfa]{flex-basis:40px;width:40px;height:40px}}@media (prefers-reduced-motion:reduce){.mnr-entry-prompt-card[data-v-2c14cbfa],.mnr-entry-button[data-v-2c14cbfa],.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-aeddb985]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-aeddb985]{transform:translate(0)}.mnr-drawer-overlay[data-v-aeddb985]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-aeddb985]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-aeddb985]{min-width:0}.mnr-drawer-title[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-aeddb985]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-aeddb985]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-offline-section[data-v-aeddb985]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;padding:10px 12px 12px}.mnr-offline-main[data-v-aeddb985]{justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-offline-copy[data-v-aeddb985]{min-width:0}.mnr-offline-copy strong[data-v-aeddb985],.mnr-offline-copy span[data-v-aeddb985]{display:block}.mnr-offline-copy strong[data-v-aeddb985]{font-size:13px;font-weight:600}.mnr-offline-copy span[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.7;margin-top:2px;font-size:12px}.mnr-offline-action[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);min-height:36px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600}.mnr-offline-action.primary[data-v-aeddb985]{border-color:var(--mnr-link,#1976d2);background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);flex:none}.mnr-offline-action.danger[data-v-aeddb985]{color:var(--mnr-text,#555)}.mnr-offline-secondary[data-v-aeddb985]{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.mnr-drawer-state[data-v-aeddb985]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-aeddb985]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-aeddb985]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;margin-top:10px;overflow:hidden}.mnr-cache-progress-fill[data-v-aeddb985]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-chapter-list[data-v-aeddb985]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-aeddb985]{height:44px}.mnr-chapter-button[data-v-aeddb985]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-aeddb985]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.persisted[data-v-aeddb985],.mnr-cache-mark[data-v-aeddb985]{color:#388e3c}.mnr-cache-mark[data-v-aeddb985]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-aeddb985]:hover,.mnr-chapter-button[data-v-aeddb985]:hover,.mnr-offline-action[data-v-aeddb985]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-offline-action.primary[data-v-aeddb985]:hover{background:var(--mnr-link,#1976d2);filter:brightness(.94)}.mnr-drawer-close[data-v-aeddb985]:focus-visible,.mnr-drawer-search input[data-v-aeddb985]:focus-visible,.mnr-offline-action[data-v-aeddb985]:focus-visible,.mnr-chapter-button[data-v-aeddb985]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-aeddb985]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985]{transition:opacity .24s}.mnr-fade-enter-from[data-v-aeddb985],.mnr-fade-leave-to[data-v-aeddb985]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-aeddb985],.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985],.mnr-cache-progress-fill[data-v-aeddb985]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-b372098d]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-b372098d]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-b372098d]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-b372098d],.mnr-settings-section h4[data-v-b372098d],.mnr-field-label[data-v-b372098d]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-b372098d]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-b372098d]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-b372098d]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-b372098d]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-b372098d],.mnr-field-label[data-v-b372098d],.mnr-settings-fieldset legend[data-v-b372098d]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-b372098d]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-b372098d]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-b372098d]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-b372098d]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-b372098d]{margin-top:18px}.mnr-select[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-b372098d]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-b372098d]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-b372098d]:last-child{border-right:0}.mnr-segment.active[data-v-b372098d]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-b372098d]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-b372098d]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-b372098d]{padding-bottom:4px}.mnr-settings-group-content[data-v-b372098d]>:first-child{margin-top:0}.mnr-switch-row[data-v-b372098d]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-b372098d]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-b372098d]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-settings-footer[data-v-b372098d]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-b372098d]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-b372098d]:hover,.mnr-secondary-action[data-v-b372098d]:hover,.mnr-segment[data-v-b372098d]:hover,.mnr-exit-btn[data-v-b372098d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-b372098d]:focus-visible,.mnr-close-btn[data-v-b372098d]:focus-visible,.mnr-theme-btn[data-v-b372098d]:focus-visible,.mnr-select[data-v-b372098d]:focus-visible,.mnr-segment[data-v-b372098d]:focus-visible,.mnr-secondary-action[data-v-b372098d]:focus-visible,.mnr-settings-group summary[data-v-b372098d]:focus-visible,.mnr-switch-row input[data-v-b372098d]:focus-visible,.mnr-custom-css[data-v-b372098d]:focus-visible,.mnr-exit-btn[data-v-b372098d]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-b372098d],.mnr-slide-leave-active[data-v-b372098d],.mnr-settings-panel[data-v-b372098d]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-b372098d],.mnr-slide-leave-to[data-v-b372098d]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-b372098d],.mnr-slide-leave-to .mnr-settings-panel[data-v-b372098d]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-b372098d]{width:100%}.mnr-reading-preview[data-v-b372098d]{display:block}.mnr-desktop-width[data-v-b372098d]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-b372098d],.mnr-slide-leave-active[data-v-b372098d],.mnr-settings-panel[data-v-b372098d]{transition:none}}.mnr-reader[data-v-e9267a1f]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-e9267a1f]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-e9267a1f]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-e9267a1f] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-e9267a1f] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-e9267a1f] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-e9267a1f]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-e9267a1f]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-e9267a1f]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-e9267a1f]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e9267a1f]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-e9267a1f]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-e9267a1f]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-e9267a1f]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-e9267a1f],.mnr-loading-next[data-v-e9267a1f]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-e9267a1f]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-e9267a1f]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-e9267a1f]{transition:none}}\n/*$vite$:1*/", {});
 	})();
 })();

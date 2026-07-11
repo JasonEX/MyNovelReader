@@ -32,9 +32,11 @@ describe('ConfigStore - behavior', () => {
     setupPinia();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
     vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();

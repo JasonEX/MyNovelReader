@@ -128,7 +128,7 @@ describe('AutoEnableManager', () => {
     expect(decision).toMatchObject({
       shouldEnable: false,
       method: 'user-disabled',
-      showFloatingButton: true,
+      showManualEntry: true,
     });
   });
 
@@ -165,7 +165,7 @@ describe('AutoEnableManager', () => {
       shouldEnable: false,
       method: 'manual',
     });
-    expect(decision.showFloatingButton).not.toBe(true);
+    expect(decision.showManualEntry).not.toBe(true);
   });
 
   it('skips URLs matching skip patterns', async () => {

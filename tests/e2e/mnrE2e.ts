@@ -30,12 +30,12 @@ export interface MnrPageState {
   cloudflareChallenge: boolean;
   contentChars: number;
   contentPreview: string;
-  floatingButton: boolean;
+  readerEntry: boolean;
   href: string;
   originalHidden: boolean;
   pageTitle: string;
   paragraphCount: number;
-  promptRoot: boolean;
+  entryPromptRoot: boolean;
   readerMounted: boolean;
   readerRoot: boolean;
   hostPageStyles: boolean;
@@ -151,23 +151,26 @@ export async function getFirstPage(context: BrowserContext): Promise<Page> {
   return context.pages()[0] || context.newPage();
 }
 
-async function acceptPromptOrFloatingButton(page: Page): Promise<void> {
+async function acceptPromptOrReaderEntry(page: Page): Promise<void> {
   await page.waitForTimeout(300);
 
   const clicked = await page.evaluate(() => {
-    const promptHost = document.querySelector('#mnr-prompt-root');
+    const promptHost = document.querySelector('#mnr-entry-prompt-root');
     const promptRoot = promptHost?.shadowRoot;
     const acceptButton = Array.from(promptRoot?.querySelectorAll('button') || []).find(button =>
-      button.textContent?.includes('启用阅读器')
+      button.textContent?.includes('进入阅读模式')
     ) as HTMLButtonElement | undefined;
     if (acceptButton) {
       acceptButton.click();
       return true;
     }
 
-    const floatingButton = document.querySelector('#mnr-floating-btn') as HTMLButtonElement | null;
-    if (floatingButton) {
-      floatingButton.click();
+    const entryHost = document.querySelector('#mnr-entry-root');
+    const entryButton = entryHost?.shadowRoot?.querySelector(
+      '#mnr-entry-button'
+    ) as HTMLButtonElement | null;
+    if (entryButton) {
+      entryButton.click();
       return true;
     }
 
@@ -195,8 +198,8 @@ async function collectMnrPageState(page: Page): Promise<MnrPageState> {
       document.querySelector(cloudflareSelectors.join(',')) !== null;
 
     const root = document.querySelector('#mnr-reader-root');
-    const prompt = document.querySelector('#mnr-prompt-root');
-    const floating = document.querySelector('#mnr-floating-btn');
+    const prompt = document.querySelector('#mnr-entry-prompt-root');
+    const entry = document.querySelector('#mnr-entry-root');
     const reader = root?.shadowRoot?.querySelector('.mnr-reader');
     const content = root?.shadowRoot?.querySelector('.mnr-reader-content');
     const title = root?.shadowRoot?.querySelector('.mnr-chapter-title')?.textContent?.trim() || '';
@@ -209,13 +212,13 @@ async function collectMnrPageState(page: Page): Promise<MnrPageState> {
       cloudflareChallenge,
       contentChars: contentText.length,
       contentPreview: contentText.slice(0, 160),
-      floatingButton: !!floating,
+      readerEntry: !!entry,
       hostPageStyles: !!document.querySelector('#mnr-global-styles'),
       href: location.href,
       originalHidden: !!document.querySelector('#mnr-hide-original'),
       pageTitle: document.title,
       paragraphCount: root?.shadowRoot?.querySelectorAll('.mnr-reader-content p').length || 0,
-      promptRoot: !!prompt,
+      entryPromptRoot: !!prompt,
       readerMounted: !!reader,
       readerRoot: !!root,
       shadowTitle: title,
@@ -260,8 +263,8 @@ export async function waitForMnrReader(page: Page): Promise<MnrPageState> {
     .waitForFunction(
       () =>
         !!document.querySelector('#mnr-reader-root') ||
-        !!document.querySelector('#mnr-prompt-root') ||
-        !!document.querySelector('#mnr-floating-btn') ||
+        !!document.querySelector('#mnr-entry-prompt-root') ||
+        !!document.querySelector('#mnr-entry-root') ||
         location.pathname.startsWith('/cdn-cgi/') ||
         document.querySelector('[id*="cf-chl"], [class*="cf-chl"], form[action*="/cdn-cgi/"]') !==
           null,
@@ -270,7 +273,7 @@ export async function waitForMnrReader(page: Page): Promise<MnrPageState> {
     )
     .catch(() => undefined);
 
-  await acceptPromptOrFloatingButton(page);
+  await acceptPromptOrReaderEntry(page);
 
   await page
     .waitForFunction(

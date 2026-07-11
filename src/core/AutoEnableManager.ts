@@ -34,8 +34,8 @@ export interface AutoEnableDecision {
   detection?: DetectionEngineResult;
   /** Reasons for the decision */
   reasons: string[];
-  /** Whether to show the floating button (even if not auto-enabling) */
-  showFloatingButton?: boolean;
+  /** Whether to keep a manual reader entry visible */
+  showManualEntry?: boolean;
 }
 
 /** User prompt response */
@@ -47,7 +47,7 @@ export interface UserPromptResponse {
 }
 
 /** Callback for showing prompt to user */
-export type PromptCallback = (decision: AutoEnableDecision) => Promise<UserPromptResponse>;
+export type PromptCallback = () => Promise<UserPromptResponse>;
 
 /** Callback when reader should launch */
 export type LaunchCallback = (chapter: ParsedChapter, rule?: SiteRule) => void;
@@ -195,14 +195,13 @@ export class AutoEnableManager {
     // Check site preference immediately when URL alone proves this is a chapter.
     if (urlPageKind === 'chapter') {
       if (sitePreference?.enabled === false) {
-        // User previously exited reader on this site, don't auto-enable
-        // But still show floating button so they can manually enable
+        // User previously disabled auto-entry on this site; retain an explicit manual entry.
         return decide({
           shouldEnable: false,
           method: 'user-disabled',
           confidence: 0,
           reasons: ['用户已关闭该站点自动启用'],
-          showFloatingButton: true,
+          showManualEntry: true,
         });
       }
       if (sitePreference?.enabled === true) {
@@ -229,7 +228,7 @@ export class AutoEnableManager {
             method: 'user-disabled',
             confidence: 0,
             reasons: ['用户已关闭该站点自动启用'],
-            showFloatingButton: true,
+            showManualEntry: true,
           });
         }
 
@@ -260,7 +259,7 @@ export class AutoEnableManager {
         method: 'user-disabled',
         confidence: 0,
         reasons: ['用户已关闭该站点自动启用'],
-        showFloatingButton: true,
+        showManualEntry: true,
       });
     }
     if (sitePreference?.enabled === true) {
@@ -338,7 +337,7 @@ export class AutoEnableManager {
     // Show prompt for medium confidence detection
     if (this.promptCallback) {
       this.deactivateProtection();
-      const response = await this.promptCallback(decision);
+      const response = await this.promptCallback();
 
       if (response.accepted) {
         const launched = await this.launch(doc, decision);

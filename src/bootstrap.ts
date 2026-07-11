@@ -19,11 +19,11 @@ import {
 import { createApp, defineComponent, h, ref } from 'vue';
 import { getPageKind, getPageKindFromUrl, type PageKind } from '@/core/auto-enable/PageKind';
 import { installGlobalDebugErrorListeners, recordDebugEvent } from '@/core/debug/events';
+import { ReaderEntryButton, ReaderEntryPrompt } from '@/ui/components/entry';
 import { redactUrl, toDebugValue } from '@/core/debug/diagnostics';
 import { toProtectionOptions, useConfigStore } from '@/ui/stores/config';
 import { createPinia } from 'pinia';
 import { createShadowMount } from '@/ui/shadowMount';
-import { DetectionPrompt } from '@/ui/components/detection';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { getSiteProtection } from '@/core/protection';
@@ -56,6 +56,8 @@ const appState: AppState = {
 let app: ReturnType<typeof createApp> | null = null;
 let pinia: ReturnType<typeof createPinia> | null = null;
 let readerCleanup: (() => void) | null = null;
+let readerEntryApp: ReturnType<typeof createApp> | null = null;
+let readerEntryCleanup: (() => void) | null = null;
 
 function shouldEnableEarlyProtection(url: string): boolean {
   try {
@@ -163,9 +165,9 @@ async function runAutoEnable(): Promise<void> {
     // Only skip if flag was set recently (within 5 seconds)
     const flagTime = parseInt(skipFlag, 10);
     if (!isNaN(flagTime) && Date.now() - flagTime < 5000) {
-      // Show floating button instead of auto-enabling
+      // Keep a manual entry instead of auto-enabling.
       getSiteProtection().deactivate();
-      showFloatingButton();
+      showReaderEntry();
       return;
     }
   }
@@ -174,14 +176,14 @@ async function runAutoEnable(): Promise<void> {
   const decision = await manager.check(document);
   appState.currentDecision = decision;
 
-  // If user previously disabled auto-enable, show floating button only
-  if (decision.method === 'user-disabled' || decision.showFloatingButton) {
+  // If user previously disabled auto-enable, keep only the manual entry.
+  if (decision.method === 'user-disabled' || decision.showManualEntry) {
     getSiteProtection().deactivate();
-    showFloatingButton();
+    showReaderEntry();
     return;
   }
 
-  // If no auto-enable needed and no floating button, just return
+  // If no auto-enable or manual entry is needed, stop here.
   if (!decision.shouldEnable) {
     getSiteProtection().deactivate();
     return;
@@ -199,30 +201,30 @@ async function runAutoEnable(): Promise<void> {
   // If an explicit/detected chapter page failed to auto-launch, keep a manual entry visible.
   if (!appState.isActive && decision.shouldEnable) {
     getSiteProtection().deactivate();
-    showFloatingButton();
+    showReaderEntry();
   }
 }
 
 /**
  * Show detection prompt to user
  */
-async function showPrompt(decision: AutoEnableDecision): Promise<{
+async function showPrompt(): Promise<{
   accepted: boolean;
   rememberForSite: boolean;
 }> {
   return new Promise(resolve => {
     // Create Shadow DOM mount point for CSS isolation
-    const { mountPoint, cleanup } = createShadowMount('mnr-prompt-root');
+    const { mountPoint, cleanup } = createShadowMount('mnr-entry-prompt-root');
 
     // Track response
-    const showPrompt = ref(true);
+    const promptVisible = ref(true);
     let promptApp: ReturnType<typeof createApp> | null = null;
     let settled = false;
 
     const finish = (response: { accepted: boolean; rememberForSite: boolean }) => {
       if (settled) return;
       settled = true;
-      showPrompt.value = false;
+      promptVisible.value = false;
       window.setTimeout(() => {
         promptApp?.unmount();
         promptApp = null;
@@ -239,17 +241,22 @@ async function showPrompt(decision: AutoEnableDecision): Promise<{
         };
 
         return () =>
-          h(DetectionPrompt, {
-            decision,
-            visible: showPrompt.value,
+          h(ReaderEntryPrompt, {
+            visible: promptVisible.value,
             onRespond: handleRespond,
           });
       },
     });
 
-    // Mount prompt
-    promptApp = createApp(PromptWrapper);
-    promptApp.mount(mountPoint);
+    try {
+      promptApp = createApp(PromptWrapper);
+      promptApp.mount(mountPoint);
+    } catch (e) {
+      settled = true;
+      cleanup();
+      console.error('[MNR] Failed to mount reader entry prompt:', e);
+      resolve({ accepted: false, rememberForSite: false });
+    }
   });
 }
 
@@ -261,6 +268,8 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
     console.error('[MNR] Pinia not initialized');
     return;
   }
+
+  hideReaderEntry();
 
   // Save host page state before the reader modifies title/URL.
   recordDebugEvent('bootstrap.launchReader', {
@@ -320,7 +329,7 @@ function hideOriginalContent(): void {
   const style = document.createElement('style');
   style.id = 'mnr-hide-original';
   style.textContent = `
-    body > *:not(#mnr-reader-root):not(#mnr-prompt-root):not(script):not(style) {
+    body > *:not(#mnr-reader-root):not(#mnr-entry-prompt-root):not(script):not(style) {
       display: none !important;
     }
   `;
@@ -389,14 +398,14 @@ export function closeReader(): void {
     // Set flag to prevent auto-enable on the new page
     sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
     window.location.href = targetUrl;
-    return; // Don't show floating button, page will reload
+    return; // The next page load will decide whether to show the manual entry.
   }
 
   restoreHostPageSnapshot(originalHostPage);
 
-  // Show floating button to re-enter (chapter pages only)
+  // Keep a manual re-entry on chapter pages.
   if (entryPageKind === 'chapter') {
-    showFloatingButton();
+    showReaderEntry();
   }
 }
 
@@ -426,100 +435,61 @@ async function setProtectionMode(mode: 'standard' | 'aggressive'): Promise<void>
   getSiteProtection().activate(toProtectionOptions(configStore.protection));
 }
 
-/**
- * Show floating button to re-enter reader
- */
-function showFloatingButton(): void {
-  // Remove existing button if any
-  hideFloatingButton();
+/** Show the isolated manual entry without initializing reader state. */
+function showReaderEntry(): void {
+  if (appState.isActive || readerEntryApp) return;
 
-  const button = document.createElement('button');
-  button.id = 'mnr-floating-btn';
-  button.innerHTML = `
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
-      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-      style="display:block; width:26px; height:26px; flex:none; margin:0">
-      <path d="M12 7v14" />
-      <path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15" />
-      <path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3" />
-      <path d="M3 18h6a3 3 0 0 1 3 3" />
-      <path d="M21 18h-6a3 3 0 0 0-3 3" />
-    </svg>
-  `;
-  button.title = '进入阅读模式';
-  button.setAttribute('aria-label', '进入阅读模式');
-  button.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    padding: 0;
-    border-radius: 50%;
-    border: none;
-    background: #1976d2;
-    color: white;
-    line-height: 1;
-    text-align: center;
-    cursor: pointer;
-    z-index: 999999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
-  `;
-  button.onmouseover = () => {
-    button.style.transform = 'translateY(-2px)';
-    button.style.background = '#1565c0';
-    button.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-  };
-  button.onmouseout = () => {
-    button.style.transform = 'translateY(0)';
-    button.style.background = '#1976d2';
-    button.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-  };
-  button.onclick = async () => {
-    hideFloatingButton();
-    await manualEnable();
-  };
-  document.body.appendChild(button);
-}
+  const { mountPoint, cleanup } = createShadowMount('mnr-entry-root');
+  readerEntryCleanup = cleanup;
 
-/**
- * Hide floating button
- */
-function hideFloatingButton(): void {
-  const btn = document.getElementById('mnr-floating-btn');
-  if (btn) {
-    btn.remove();
+  try {
+    readerEntryApp = createApp(ReaderEntryButton, {
+      onEnter: () => {
+        manualEnable().catch(e => console.error('[MNR] Manual enable error:', e));
+      },
+    });
+    readerEntryApp.mount(mountPoint);
+  } catch (e) {
+    readerEntryApp = null;
+    readerEntryCleanup = null;
+    cleanup();
+    console.error('[MNR] Failed to mount reader entry:', e);
   }
 }
 
+/** Remove the manual entry and release its Shadow DOM registration. */
+function hideReaderEntry(): void {
+  readerEntryApp?.unmount();
+  readerEntryApp = null;
+  readerEntryCleanup?.();
+  readerEntryCleanup = null;
+}
+
 /**
- * Manual enable (for toolbar button)
+ * Manually enter reading mode.
  */
 export async function manualEnable(): Promise<void> {
   const currentUrl = window.location.href;
   recordDebugEvent('bootstrap.manualEnable', { url: currentUrl });
-  hideFloatingButton();
+  hideReaderEntry();
 
-  await ensureInitialized();
-  if (!pinia) return;
+  try {
+    await ensureInitialized();
+    if (!pinia) return;
 
-  const configStore = useConfigStore(pinia);
-  const protectionOptions = toProtectionOptions(configStore.protection);
+    const configStore = useConfigStore(pinia);
+    const protectionOptions = toProtectionOptions(configStore.protection);
 
-  const manager = getAutoEnableManager({
-    enableProtection: true,
-    protectionOptions,
-  });
-  manager.setLaunchCallback(launchReader);
-  await manager.manualEnable(document);
-  if (!appState.isActive && (await shouldShowManualEntryForPage(currentUrl, document))) {
-    showFloatingButton();
+    const manager = getAutoEnableManager({
+      enableProtection: true,
+      protectionOptions,
+    });
+    manager.setLaunchCallback(launchReader);
+    await manager.manualEnable(document);
+  } finally {
+    if (!appState.isActive && (await shouldShowManualEntryForPage(currentUrl, document))) {
+      showReaderEntry();
+    }
   }
 }
 
@@ -551,7 +521,7 @@ export function getAppDebugSnapshot(): BootstrapDebugSnapshot {
           method: decision.method,
           confidence: decision.confidence,
           reasons: decision.reasons,
-          showFloatingButton: decision.showFloatingButton,
+          showManualEntry: decision.showManualEntry,
           ruleId: decision.rule?.id,
         })
       : null,
@@ -625,13 +595,13 @@ async function bootstrap(): Promise<void> {
     return;
   }
 
-  // If user disabled auto-enable for this site, avoid heavy initialization and show the floating button.
+  // If auto-enable is disabled, avoid store initialization and keep a lightweight manual entry.
   try {
     const hostname = new URL(url).hostname;
     const pref = getRuleStorage().getSitePreference(hostname);
     if (pref?.enabled === false) {
       getSiteProtection().deactivate();
-      showFloatingButton();
+      showReaderEntry();
       return;
     }
   } catch (e) {

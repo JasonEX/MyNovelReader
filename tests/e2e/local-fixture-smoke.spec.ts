@@ -24,8 +24,8 @@ const fixtureHtml = `<!doctype html>
     <meta charset="utf-8">
     <title>第100章 本地测试 - 测试小说</title>
     <style>
-      button { padding: 0 14px 0 2px; line-height: 3; text-align: left; }
-      button svg { margin-left: 6px; vertical-align: baseline; }
+      button { padding: 0 14px 0 2px !important; line-height: 3 !important; text-align: left !important; }
+      button svg { margin-left: 6px !important; vertical-align: baseline !important; }
     </style>
   </head>
   <body>
@@ -140,11 +140,20 @@ test('runs the built userscript and restores the host page after exit', async ({
     return {
       renderedRows: shadow?.querySelectorAll('.mnr-chapter-button').length ?? 0,
       totalText: shadow?.querySelector('.mnr-drawer-position')?.textContent?.trim() ?? '',
+      offlineTitle: shadow?.querySelector('#mnr-offline-title')?.textContent?.trim() ?? '',
+      offlineStatus: shadow?.querySelector('.mnr-offline-copy span')?.textContent?.trim() ?? '',
+      offlineAction:
+        shadow?.querySelector('.mnr-offline-action.primary')?.textContent?.trim() ?? '',
+      temporaryCacheMarks: shadow?.querySelectorAll('[aria-label="已临时缓存"]').length ?? 0,
     };
   });
   expect(renderedToc.renderedRows).toBeGreaterThan(0);
   expect(renderedToc.renderedRows).toBeLessThan(50);
   expect(renderedToc.totalText).toContain('1200');
+  expect(renderedToc.offlineTitle).toBe('离线阅读');
+  expect(renderedToc.offlineStatus).toBe('尚未缓存');
+  expect(renderedToc.offlineAction).toBe('缓存本书');
+  expect(renderedToc.temporaryCacheMarks).toBe(0);
   const [drawerCloseAlignment] = await getIconAlignments(
     page.locator('#mnr-reader-root').locator('.mnr-drawer-close')
   );
@@ -226,17 +235,71 @@ test('runs the built userscript and restores the host page after exit', async ({
 
   await expect(page.locator('#host-page')).toBeVisible();
   await expect(page.locator('#mnr-hide-original')).toHaveCount(0);
-  await expect(page.locator('#mnr-floating-btn')).toBeVisible();
-  await expect(page.locator('#mnr-floating-btn')).toHaveCSS(
-    'background-color',
-    'rgb(25, 118, 210)'
-  );
-  await expect(page.locator('#mnr-floating-btn')).toHaveCSS(
-    'box-shadow',
-    'rgba(0, 0, 0, 0.15) 0px 4px 12px 0px'
-  );
-  const [floatingEntryAlignment] = await getIconAlignments(page.locator('#mnr-floating-btn'));
-  expectCentered(floatingEntryAlignment ?? null);
+  const readerEntry = page.locator('#mnr-entry-root').locator('#mnr-entry-button');
+  await expect(readerEntry).toBeVisible();
+  await expect(readerEntry).toHaveText('进入阅读模式');
+  await expect(readerEntry).toHaveCSS('background-color', 'rgb(0, 102, 204)');
+  await expect(readerEntry).toHaveCSS('box-shadow', 'rgba(0, 0, 0, 0.2) 0px 6px 18px 0px');
+  const entryAlignment = await readerEntry.evaluate(button => {
+    const icon = button.querySelector('svg');
+    if (!icon) return null;
+    const buttonRect = button.getBoundingClientRect();
+    const iconRect = icon.getBoundingClientRect();
+    return {
+      y: iconRect.top + iconRect.height / 2 - (buttonRect.top + buttonRect.height / 2),
+    };
+  });
+  expect(Math.abs(entryAlignment?.y ?? Infinity)).toBeLessThanOrEqual(0.5);
   await expect(page).toHaveTitle('第100章 本地测试 - 测试小说');
+  expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});
+
+test('keeps detection details internal and hands a dismissed prompt off to manual entry', async ({
+  context,
+  page,
+}) => {
+  const promptUrl = 'http://mnr.test/chapter/200.html';
+  const promptHtml = `<!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="utf-8">
+        <title>第200章 安静的正文 - 测试小说</title>
+        <style>button { all: unset !important; width: 1px !important; height: 1px !important; }</style>
+      </head>
+      <body>
+        <h1>第200章 安静的正文</h1>
+        <div id="content">${paragraphs}</div>
+      </body>
+    </html>`;
+
+  await context.route(promptUrl, route =>
+    route.fulfill({
+      body: promptHtml,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addMyNovelReaderUserscript(context);
+  const logs = createConsoleCollector(page);
+  await page.goto(promptUrl, { waitUntil: 'domcontentloaded' });
+
+  const prompt = page.locator('#mnr-entry-prompt-root');
+  await expect(prompt.locator('[role="dialog"]')).toBeVisible();
+  await expect(prompt.locator('#mnr-entry-prompt-title')).toHaveText('检测到小说正文');
+  await expect(prompt.locator('text=检测置信度')).toHaveCount(0);
+  await expect(prompt.locator('.mnr-result-list')).toHaveCount(0);
+  await expect(prompt.locator('.mnr-entry-button.primary')).toBeFocused();
+  await expect(prompt.locator('.mnr-entry-button.primary')).toHaveCSS('min-height', '44px');
+
+  await page.keyboard.press('Escape');
+  await expect(prompt).toHaveCount(0);
+
+  const readerEntry = page.locator('#mnr-entry-root').locator('#mnr-entry-button');
+  await expect(readerEntry).toBeVisible();
+  await readerEntry.click();
+  await expect(page.locator('#mnr-entry-root')).toHaveCount(0);
+  await expect(page.locator('#mnr-reader-root').locator('.mnr-reader-content')).toContainText(
+    '这是第 1 段测试正文'
+  );
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });

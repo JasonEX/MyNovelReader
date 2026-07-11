@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick } from 'vue';
 
+import { ReaderEntryButton, ReaderEntryPrompt } from '@/ui/components/entry';
 import ChapterDrawer from '@/ui/components/reader/ChapterDrawer.vue';
-import DetectionPrompt from '@/ui/components/detection/DetectionPrompt.vue';
 import FloatingToolbar from '@/ui/components/reader/FloatingToolbar.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import settingsPanelSource from '@/ui/components/settings/SettingsPanel.vue?raw';
@@ -35,7 +35,7 @@ describe('UI component smoke', () => {
     stubGmStorage(gm);
   });
 
-  it('DetectionPrompt mounts and emits respond on accept', async () => {
+  it('ReaderEntryPrompt presents a product decision and emits respond on accept', async () => {
     const onRespond = vi.fn();
 
     const mountEl = document.createElement('div');
@@ -43,14 +43,8 @@ describe('UI component smoke', () => {
 
     const app = createApp({
       render: () =>
-        h(DetectionPrompt, {
+        h(ReaderEntryPrompt, {
           visible: true,
-          decision: {
-            shouldEnable: true,
-            method: 'detection',
-            confidence: 0.9,
-            reasons: ['找到正文', '检测到标题', '警告：导航不完整'],
-          },
           onRespond,
         }),
     });
@@ -58,15 +52,41 @@ describe('UI component smoke', () => {
     app.mount(mountEl);
     await nextTick();
 
-    expect(document.querySelector('.mnr-prompt-icon svg')).toBeNull();
-    expect(document.querySelector('.mnr-prompt-icon')).toBeInstanceOf(SVGElement);
-    expect(document.querySelectorAll('.mnr-result-icon')).toHaveLength(3);
-    const acceptBtn = document.querySelector('.mnr-btn-primary') as HTMLButtonElement | null;
+    expect(document.querySelector('.mnr-entry-prompt-icon svg')).toBeInstanceOf(SVGElement);
+    expect(document.querySelector('.mnr-entry-prompt-card')?.textContent).not.toContain(
+      '检测置信度'
+    );
+    expect(document.querySelector('.mnr-entry-prompt-card')?.textContent).not.toContain(
+      '未找到下一章链接'
+    );
+    const acceptBtn = document.querySelector(
+      '.mnr-entry-button.primary'
+    ) as HTMLButtonElement | null;
     expect(acceptBtn).not.toBeNull();
     acceptBtn?.click();
     await nextTick();
 
     expect(onRespond).toHaveBeenCalledWith({ accepted: true, rememberForSite: true });
+
+    app.unmount();
+    mountEl.remove();
+  });
+
+  it('ReaderEntryButton exposes a clear manual reading action', async () => {
+    const onEnter = vi.fn();
+    const mountEl = document.createElement('div');
+    document.body.appendChild(mountEl);
+    const app = createApp({ render: () => h(ReaderEntryButton, { onEnter }) });
+
+    app.mount(mountEl);
+    await nextTick();
+
+    const button = document.querySelector<HTMLButtonElement>('#mnr-entry-button');
+    expect(button?.textContent?.trim()).toBe('进入阅读模式');
+    expect(button?.getAttribute('aria-label')).toBe('进入阅读模式');
+    expect(button?.querySelector('svg')).toBeInstanceOf(SVGElement);
+    button?.click();
+    expect(onEnter).toHaveBeenCalledTimes(1);
 
     app.unmount();
     mountEl.remove();
@@ -165,6 +185,7 @@ describe('UI component smoke', () => {
 
   it('ChapterDrawer searches a large TOC without rendering every row', async () => {
     const onClearCache = vi.fn();
+    const onCacheAll = vi.fn();
     const chapters = Array.from({ length: 1200 }, (_, index) => ({
       title: `第 ${index + 1} 章`,
       url: `https://example.com/chapter/${index + 1}`,
@@ -182,6 +203,7 @@ describe('UI component smoke', () => {
           loading: false,
           cacheProgress: { done: 0, total: 0, failed: 0, running: false },
           persistedCount: 1,
+          onCacheAll,
           onClearCache,
         }),
     });
@@ -192,9 +214,17 @@ describe('UI component smoke', () => {
     expect(document.querySelectorAll('.mnr-chapter-button').length).toBeLessThan(50);
     const search = document.querySelector<HTMLInputElement>('#mnr-chapter-search');
     expect(search).not.toBeNull();
-    expect(document.querySelectorAll('.mnr-cache-mark svg')).toHaveLength(2);
+    expect(document.querySelector('#mnr-offline-title')?.textContent).toBe('离线阅读');
+    expect(document.querySelector('.mnr-offline-copy span')?.textContent).toBe('已保存 1 章');
+    expect(document.querySelectorAll('.mnr-cache-mark svg')).toHaveLength(0);
+    const cacheBookButton = document.querySelector<HTMLButtonElement>(
+      '.mnr-offline-action.primary'
+    );
+    expect(cacheBookButton?.textContent?.trim()).toBe('缓存本书');
+    cacheBookButton?.click();
+    expect(onCacheAll).toHaveBeenCalledTimes(1);
     const clearCacheButton = Array.from(
-      document.querySelectorAll<HTMLButtonElement>('.mnr-cache-action')
+      document.querySelectorAll<HTMLButtonElement>('.mnr-offline-action')
     ).find(button => button.textContent?.trim() === '清除缓存');
     expect(clearCacheButton).not.toBeNull();
     clearCacheButton?.click();

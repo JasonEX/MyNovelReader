@@ -44,37 +44,51 @@
       />
     </div>
 
-    <div class="mnr-drawer-tools">
-      <button class="mnr-cache-action" @click="emit('cacheAll')">
-        {{ cacheProgress.running ? '取消缓存' : '离线缓存' }}
-        <span v-if="cacheProgress.total > 0">
-          {{ cacheProgress.done }}/{{ cacheProgress.total }}
-        </span>
-      </button>
-      <button
-        v-if="!cacheProgress.running && cacheProgress.failed > 0"
-        class="mnr-cache-action"
-        @click="emit('retryCache')"
-      >
-        重试失败 {{ cacheProgress.failed }} 章
-      </button>
-      <button
-        v-if="!cacheProgress.running && persistedCount > 0"
-        class="mnr-cache-action"
-        @click="emit('clearCache')"
-      >
-        清除缓存
-      </button>
-    </div>
+    <section class="mnr-offline-section" aria-labelledby="mnr-offline-title">
+      <div class="mnr-offline-main">
+        <div class="mnr-offline-copy">
+          <strong id="mnr-offline-title">离线阅读</strong>
+          <span aria-live="polite">{{ offlineStatus }}</span>
+        </div>
+        <button class="mnr-offline-action primary" type="button" @click="emit('cacheAll')">
+          {{ cacheProgress.running ? '取消' : '缓存本书' }}
+        </button>
+      </div>
 
-    <div v-if="cacheProgress.running" class="mnr-cache-progress-track" aria-hidden="true">
-      <div class="mnr-cache-progress-fill" :style="{ width: `${cachePercent}%` }"></div>
-    </div>
+      <div
+        v-if="cacheProgress.running"
+        class="mnr-cache-progress-track"
+        role="progressbar"
+        aria-label="离线缓存进度"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        :aria-valuenow="Math.round(cachePercent)"
+      >
+        <div class="mnr-cache-progress-fill" :style="{ width: `${cachePercent}%` }"></div>
+      </div>
 
-    <div v-if="persistedCount > 0 || sessionCount > 0" class="mnr-cache-stats">
-      <span v-if="persistedCount > 0">已保存 {{ persistedCount }} 章</span>
-      <span v-if="sessionCount > 0">临时 {{ sessionCount }} 章</span>
-    </div>
+      <div
+        v-if="!cacheProgress.running && (cacheProgress.failed > 0 || persistedCount > 0)"
+        class="mnr-offline-secondary"
+      >
+        <button
+          v-if="cacheProgress.failed > 0"
+          class="mnr-offline-action"
+          type="button"
+          @click="emit('retryCache')"
+        >
+          重试失败章节（{{ cacheProgress.failed }}）
+        </button>
+        <button
+          v-if="persistedCount > 0"
+          class="mnr-offline-action danger"
+          type="button"
+          @click="emit('clearCache')"
+        >
+          清除缓存
+        </button>
+      </div>
+    </section>
 
     <div v-if="loading" class="mnr-drawer-state">
       <MnrSpinner size="small" />
@@ -95,20 +109,18 @@
             class="mnr-chapter-button"
             :class="{
               active: ch.isCurrent,
-              cached: ch.isCached && !ch.isPersisted && !ch.isCurrent,
               persisted: ch.isPersisted && !ch.isCurrent,
             }"
             :aria-current="ch.isCurrent ? 'page' : undefined"
             @click="handleSelect(ch)"
           >
-            <span v-if="ch.isPersisted" class="mnr-cache-mark" aria-label="已离线缓存">
+            <span
+              v-if="ch.isPersisted && !ch.isCurrent"
+              class="mnr-cache-mark"
+              aria-label="已离线缓存"
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m5 12 4 4L19 6" />
-              </svg>
-            </span>
-            <span v-else-if="ch.isCached" class="mnr-cache-mark" aria-label="已临时缓存">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="7" />
               </svg>
             </span>
             <span class="mnr-chapter-title-text">{{ ch.title }}</span>
@@ -163,9 +175,16 @@ const currentChapterNumber = computed(() => {
   const index = props.chapters.findIndex(chapter => chapter.isCurrent);
   return index >= 0 ? index + 1 : 0;
 });
-const sessionCount = computed(
-  () => props.chapters.filter(chapter => chapter.isCached && !chapter.isPersisted).length
-);
+const offlineStatus = computed(() => {
+  if (props.cacheProgress.running) {
+    return props.cacheProgress.total > 0
+      ? `已缓存 ${props.cacheProgress.done} / ${props.cacheProgress.total} 章`
+      : '正在准备缓存';
+  }
+  if (props.cacheProgress.failed > 0) return `有 ${props.cacheProgress.failed} 章缓存失败`;
+  if (props.persistedCount > 0) return `已保存 ${props.persistedCount} 章`;
+  return '尚未缓存';
+});
 const cachePercent = computed(() => {
   if (props.cacheProgress.total <= 0) return 0;
   return Math.min(100, (props.cacheProgress.done / props.cacheProgress.total) * 100);
@@ -372,24 +391,68 @@ watch(
   font-size: 14px;
 }
 
-.mnr-drawer-tools {
-  display: flex;
-  flex-wrap: wrap;
+.mnr-offline-section {
   flex-shrink: 0;
-  gap: 8px;
-  padding: 6px 12px 10px;
+  padding: 10px 12px 12px;
   border-bottom: 1px solid var(--mnr-border, #e5e5e5);
 }
 
-.mnr-cache-action {
-  min-height: 32px;
-  padding: 5px 10px;
+.mnr-offline-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mnr-offline-copy {
+  min-width: 0;
+}
+
+.mnr-offline-copy strong,
+.mnr-offline-copy span {
+  display: block;
+}
+
+.mnr-offline-copy strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mnr-offline-copy span {
+  margin-top: 2px;
+  color: var(--mnr-text, #666);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.mnr-offline-action {
+  min-height: 36px;
+  padding: 6px 11px;
   border: 1px solid var(--mnr-border, #ddd);
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
   color: var(--mnr-link, #1976d2);
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.mnr-offline-action.primary {
+  flex: 0 0 auto;
+  border-color: var(--mnr-link, #1976d2);
+  background: var(--mnr-link, #1976d2);
+  color: var(--mnr-on-link, #fff);
+}
+
+.mnr-offline-action.danger {
+  color: var(--mnr-text, #555);
+}
+
+.mnr-offline-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .mnr-drawer-state {
@@ -413,8 +476,10 @@ watch(
 }
 
 .mnr-cache-progress-track {
-  flex-shrink: 0;
-  height: 3px;
+  height: 4px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 2px;
   background: var(--mnr-border, #e0e0e0);
 }
 
@@ -422,16 +487,6 @@ watch(
   height: 100%;
   background: var(--mnr-link, #1976d2);
   transition: width 0.2s ease;
-}
-
-.mnr-cache-stats {
-  display: flex;
-  flex-shrink: 0;
-  gap: 12px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--mnr-border, #e5e5e5);
-  color: var(--mnr-text, #666);
-  font-size: 12px;
 }
 
 .mnr-chapter-list {
@@ -475,10 +530,6 @@ watch(
   font-weight: 600;
 }
 
-.mnr-chapter-button.cached {
-  color: #777;
-}
-
 .mnr-chapter-button.persisted,
 .mnr-cache-mark {
   color: #388e3c;
@@ -503,13 +554,18 @@ watch(
 
 .mnr-drawer-close:hover,
 .mnr-chapter-button:hover,
-.mnr-cache-action:hover {
+.mnr-offline-action:hover {
   background: var(--mnr-border, #f0f0f0);
+}
+
+.mnr-offline-action.primary:hover {
+  background: var(--mnr-link, #1976d2);
+  filter: brightness(0.94);
 }
 
 .mnr-drawer-close:focus-visible,
 .mnr-drawer-search input:focus-visible,
-.mnr-cache-action:focus-visible,
+.mnr-offline-action:focus-visible,
 .mnr-chapter-button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);
   outline-offset: -3px;
