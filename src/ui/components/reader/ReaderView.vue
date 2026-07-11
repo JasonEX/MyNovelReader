@@ -29,14 +29,16 @@
       :chapters="readerStore.tocWithStatus"
       :loading="readerStore.tocLoading"
       :cache-progress="cacheProgress"
-      @close="drawerOpen = false"
+      :persisted-count="readerStore.persistedUrls.size"
+      @close="closeDrawer"
       @select="handleChapterSelect"
       @cache-all="handleCacheAll"
       @retry-cache="handleRetryCache"
+      @clear-cache="handleClearCache"
     />
 
     <!-- Main content with virtualized infinite scroll -->
-    <main ref="mainRef" class="mnr-reader-main" tabindex="-1">
+    <main ref="mainRef" class="mnr-reader-main" tabindex="-1" :inert="hasOpenPanel">
       <!-- Top sentinel for IntersectionObserver -->
       <div ref="topSentinel" class="mnr-sentinel"></div>
 
@@ -90,8 +92,6 @@
       :site-auto-enable="siteAutoEnableValue"
       @close="closeSettings"
       @textConversionChange="handleTextConversionChange"
-      @cacheAll="handleCacheAll"
-      @retryCache="handleRetryCache"
       @copyDiagnostics="emit('copyDiagnostics')"
       @siteAutoEnableChange="handleSiteAutoEnableChange"
       @protectionModeChange="handleProtectionModeChange"
@@ -157,10 +157,11 @@ const siteAutoEnableValue = ref(props.siteAutoEnable);
 const {
   settingsVisible,
   drawerOpen,
+  hasOpenPanel,
   toggleDrawer,
+  closeDrawer,
   openSettings,
   closeSettings,
-  handleEscape,
   toggleSettings,
 } = useReaderUIControls({ readerStore, showControls });
 
@@ -413,6 +414,12 @@ function handleRetryCache() {
   void readerStore.retryFailedCache();
 }
 
+async function handleClearCache() {
+  if (!window.confirm('确定要清除本书的离线缓存吗？')) return;
+  await readerStore.clearPersistedCache();
+  readerStore.showToast('离线缓存已清除', 'info');
+}
+
 function handleSiteAutoEnableChange(enabled: boolean) {
   siteAutoEnableValue.value = enabled;
   emit('siteAutoEnableChange', enabled);
@@ -439,11 +446,12 @@ function exitReader() {
 
 // === Keyboard shortcuts ===
 
-const keyboardEnabled = computed(() => configStore.behavior.keyboardNavigation);
+const readerShortcutsEnabled = computed(
+  () => configStore.behavior.keyboardNavigation && !hasOpenPanel.value
+);
 
 useKeyboardShortcuts(
   [
-    { key: 'escape', handler: handleEscape, allowInInputs: true },
     { key: 'tab', handler: toggleDrawer, preventDefault: true },
     {
       key: 'enter',
@@ -474,7 +482,7 @@ useKeyboardShortcuts(
       preventDefault: true,
     },
   ],
-  { enabled: keyboardEnabled }
+  { enabled: readerShortcutsEnabled }
 );
 
 // === Lifecycle ===

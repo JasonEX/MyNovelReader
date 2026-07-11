@@ -92,15 +92,6 @@ describe('UI component smoke', () => {
     app.mount(mountEl);
     await nextTick();
 
-    const scaleIcons = Array.from(document.querySelectorAll<SVGElement>('.mnr-scale-icon'));
-    expect(scaleIcons).toHaveLength(4);
-    for (const icon of scaleIcons) {
-      const label = icon.closest<HTMLElement>('.mnr-slider-label')!;
-      const style = window.getComputedStyle(label);
-      expect(style.whiteSpace).toBe('nowrap');
-      expect(style.flexShrink).toBe('0');
-    }
-
     expect(document.querySelectorAll('.mnr-theme-btn')).toHaveLength(THEMES.length);
     expect(
       Array.from(document.querySelectorAll('.mnr-theme-btn'), button => button.textContent?.trim())
@@ -108,10 +99,30 @@ describe('UI component smoke', () => {
     expect(
       window.getComputedStyle(document.querySelector('.mnr-theme-grid')!).gridTemplateColumns
     ).toContain('repeat(3');
-    expect(document.querySelector('[aria-label="文字间距"]')).not.toBeNull();
-    expect(document.querySelector('[aria-label="段落首行缩进"]')).not.toBeNull();
-    expect(document.querySelector('[aria-label="正文内容边距"]')).not.toBeNull();
+    const sliderIds = [
+      'mnr-font-size',
+      'mnr-line-height',
+      'mnr-letter-spacing',
+      'mnr-paragraph-indent',
+      'mnr-max-width',
+      'mnr-padding',
+    ];
+    for (const id of sliderIds) {
+      expect(document.querySelector(`input#${id}[type="range"]`)).not.toBeNull();
+      expect(document.querySelector(`label[for="${id}"]`)).not.toBeNull();
+      expect(document.querySelector(`output[for="${id}"]`)).not.toBeNull();
+    }
+
+    expect(
+      Array.from(document.querySelectorAll('details > summary'), summary =>
+        summary.textContent?.trim()
+      )
+    ).toEqual(['排版细节', '阅读行为', '本站与高级']);
     expect(document.querySelector('#mnr-custom-css')).not.toBeNull();
+    expect(document.querySelector('.mnr-cache-action')).toBeNull();
+    expect(document.querySelector('.mnr-settings-footer .mnr-exit-btn')?.textContent).toContain(
+      '退出阅读模式'
+    );
     const fontSelect = document.querySelector<HTMLSelectElement>('#mnr-font-family');
     expect(fontSelect?.selectedOptions[0]?.textContent?.trim()).toBe('系统默认');
 
@@ -153,11 +164,12 @@ describe('UI component smoke', () => {
   });
 
   it('ChapterDrawer searches a large TOC without rendering every row', async () => {
+    const onClearCache = vi.fn();
     const chapters = Array.from({ length: 1200 }, (_, index) => ({
       title: `第 ${index + 1} 章`,
       url: `https://example.com/chapter/${index + 1}`,
       isCached: index === 0 || index === 1,
-      isPersisted: index === 0,
+      isPersisted: false,
       isCurrent: index === 599,
     }));
     const mountEl = document.createElement('div');
@@ -169,6 +181,8 @@ describe('UI component smoke', () => {
           chapters,
           loading: false,
           cacheProgress: { done: 0, total: 0, failed: 0, running: false },
+          persistedCount: 1,
+          onClearCache,
         }),
     });
 
@@ -179,6 +193,12 @@ describe('UI component smoke', () => {
     const search = document.querySelector<HTMLInputElement>('#mnr-chapter-search');
     expect(search).not.toBeNull();
     expect(document.querySelectorAll('.mnr-cache-mark svg')).toHaveLength(2);
+    const clearCacheButton = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('.mnr-cache-action')
+    ).find(button => button.textContent?.trim() === '清除缓存');
+    expect(clearCacheButton).not.toBeNull();
+    clearCacheButton?.click();
+    expect(onClearCache).toHaveBeenCalledTimes(1);
     if (search) {
       search.value = '第 1200 章';
       search.dispatchEvent(new Event('input', { bubbles: true }));

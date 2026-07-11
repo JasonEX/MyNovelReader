@@ -205,15 +205,16 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   function updateReading(settings: Partial<ReadingSettings>) {
-    reading.value = { ...reading.value, ...settings };
+    Object.assign(reading.value, settings);
+    applyReading(settings);
   }
 
   function updateBehavior(settings: Partial<BehaviorSettings>) {
-    behavior.value = { ...behavior.value, ...settings };
+    Object.assign(behavior.value, settings);
   }
 
   function updateProtection(settings: Partial<ProtectionSettings>) {
-    protection.value = { ...protection.value, ...settings };
+    Object.assign(protection.value, settings);
   }
 
   function setCustomCSS(css: string) {
@@ -232,17 +233,30 @@ export const useConfigStore = defineStore('config', () => {
     });
   }
 
-  function applyReading() {
-    const r = reading.value;
-    setShadowStyleProperties({
-      '--mnr-font-family': r.fontFamily,
-      '--mnr-font-size': `${r.fontSize}px`,
-      '--mnr-line-height': `${r.lineHeight}`,
-      '--mnr-letter-spacing': `${r.letterSpacing}em`,
-      '--mnr-paragraph-indent': `${r.paragraphIndent}em`,
-      '--mnr-max-width': `${r.maxWidth}px`,
-      '--mnr-padding': `${r.padding}px`,
-    });
+  function applyReading(settings: Partial<ReadingSettings> = reading.value) {
+    const properties: Record<string, string> = {};
+    if (settings.fontFamily !== undefined) {
+      properties['--mnr-font-family'] = settings.fontFamily;
+    }
+    if (settings.fontSize !== undefined) {
+      properties['--mnr-font-size'] = `${settings.fontSize}px`;
+    }
+    if (settings.lineHeight !== undefined) {
+      properties['--mnr-line-height'] = `${settings.lineHeight}`;
+    }
+    if (settings.letterSpacing !== undefined) {
+      properties['--mnr-letter-spacing'] = `${settings.letterSpacing}em`;
+    }
+    if (settings.paragraphIndent !== undefined) {
+      properties['--mnr-paragraph-indent'] = `${settings.paragraphIndent}em`;
+    }
+    if (settings.maxWidth !== undefined) {
+      properties['--mnr-max-width'] = `${settings.maxWidth}px`;
+    }
+    if (settings.padding !== undefined) {
+      properties['--mnr-padding'] = `${settings.padding}px`;
+    }
+    if (Object.keys(properties).length > 0) setShadowStyleProperties(properties);
   }
 
   function applyCustomCSS() {
@@ -405,6 +419,11 @@ export const useConfigStore = defineStore('config', () => {
     void save();
   }
 
+  function resetReading() {
+    reading.value = { ...DEFAULT_READING };
+    applyReading();
+  }
+
   return {
     // State
     themeId,
@@ -422,6 +441,7 @@ export const useConfigStore = defineStore('config', () => {
     updateBehavior,
     updateProtection,
     setCustomCSS,
+    resetReading,
     applyTheme,
     applyReading,
     applyAll,

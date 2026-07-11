@@ -1,6 +1,6 @@
 <template>
   <Transition name="mnr-fade-slide">
-    <div v-if="visible" class="mnr-floating-toolbar">
+    <div v-show="visible" class="mnr-floating-toolbar">
       <button
         class="mnr-fab"
         title="目录 (Tab)"

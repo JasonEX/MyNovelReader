@@ -44,23 +44,27 @@ describe('useReaderUIControls', () => {
 
     expect(controls.settingsVisible.value).toBe(false);
     expect(controls.drawerOpen.value).toBe(false);
+    expect(controls.hasOpenPanel.value).toBe(false);
   });
 
   it('toggleDrawer opens drawer and loads TOC', () => {
-    const { controls, readerStore } = createControls();
+    const { controls, readerStore, showControls } = createControls();
 
     controls.toggleDrawer();
     expect(controls.drawerOpen.value).toBe(true);
+    expect(controls.hasOpenPanel.value).toBe(true);
+    expect(showControls.value).toBe(false);
     expect(readerStore.loadToc).toHaveBeenCalled();
   });
 
   it('toggleDrawer closes drawer without loading TOC again', () => {
-    const { controls, readerStore } = createControls();
+    const { controls, readerStore, showControls } = createControls();
 
     controls.toggleDrawer();
     controls.toggleDrawer();
 
     expect(controls.drawerOpen.value).toBe(false);
+    expect(showControls.value).toBe(true);
     expect(readerStore.loadToc).toHaveBeenCalledTimes(1);
   });
 
@@ -69,27 +73,39 @@ describe('useReaderUIControls', () => {
 
     controls.openSettings();
     expect(controls.settingsVisible.value).toBe(true);
+    expect(controls.drawerOpen.value).toBe(false);
+    expect(controls.hasOpenPanel.value).toBe(true);
     expect(showControls.value).toBe(false);
   });
 
-  it('handleEscape closes drawer before settings', () => {
-    const { controls } = createControls();
-
-    controls.drawerOpen.value = true;
-    controls.settingsVisible.value = true;
-
-    controls.handleEscape();
-    expect(controls.drawerOpen.value).toBe(false);
-    expect(controls.settingsVisible.value).toBe(true);
-  });
-
-  it('handleEscape closes settings when drawer is closed', () => {
+  it('keeps drawer and settings mutually exclusive', () => {
     const { controls, showControls } = createControls();
 
-    controls.settingsVisible.value = true;
-    controls.handleEscape();
+    controls.toggleDrawer();
+    controls.openSettings();
+
+    expect(controls.drawerOpen.value).toBe(false);
+    expect(controls.settingsVisible.value).toBe(true);
+    expect(showControls.value).toBe(false);
+
+    controls.toggleDrawer();
 
     expect(controls.settingsVisible.value).toBe(false);
+    expect(controls.drawerOpen.value).toBe(true);
+    expect(showControls.value).toBe(false);
+  });
+
+  it('closes only the currently active panel', () => {
+    const { controls, showControls } = createControls();
+
+    controls.toggleDrawer();
+    controls.closeDrawer();
+    expect(controls.hasOpenPanel.value).toBe(false);
+    expect(showControls.value).toBe(true);
+
+    controls.openSettings();
+    controls.closeSettings();
+    expect(controls.hasOpenPanel.value).toBe(false);
     expect(showControls.value).toBe(true);
   });
 
@@ -103,5 +119,15 @@ describe('useReaderUIControls', () => {
     controls.toggleSettings();
     expect(controls.settingsVisible.value).toBe(false);
     expect(showControls.value).toBe(true);
+  });
+
+  it('restores the toolbar state that preceded a keyboard-opened panel', () => {
+    const { controls, showControls } = createControls();
+    showControls.value = false;
+
+    controls.openSettings();
+    controls.closeSettings();
+
+    expect(showControls.value).toBe(false);
   });
 });

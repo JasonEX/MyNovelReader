@@ -7,17 +7,10 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="mnr-settings-title"
-        @keydown.esc.stop="closePanel"
-        @keydown.tab="trapFocus"
       >
         <header class="mnr-settings-header">
-          <h3 id="mnr-settings-title">阅读设置</h3>
-          <button
-            ref="closeButtonRef"
-            class="mnr-close-btn"
-            aria-label="关闭设置"
-            @click="closePanel"
-          >
+          <h3 id="mnr-settings-title" ref="titleRef" tabindex="-1">阅读设置</h3>
+          <button class="mnr-close-btn" aria-label="关闭设置" @click="closePanel">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="m6 6 12 12M18 6 6 18" />
             </svg>
@@ -25,315 +18,268 @@
         </header>
 
         <div class="mnr-settings-content">
-          <section class="mnr-settings-section">
-            <h4>主题</h4>
-            <div class="mnr-theme-grid">
+          <section class="mnr-settings-section" aria-labelledby="mnr-appearance-title">
+            <h4 id="mnr-appearance-title">阅读外观</h4>
+
+            <div class="mnr-theme-grid" aria-label="阅读主题">
               <button
                 v-for="theme in themes"
                 :key="theme.id"
                 class="mnr-theme-btn"
-                :class="{ active: currentTheme === theme.id }"
-                :aria-pressed="currentTheme === theme.id"
+                :class="{ active: configStore.themeId === theme.id }"
+                :aria-pressed="configStore.themeId === theme.id"
                 :style="{
                   background: theme.background,
                   color: theme.text,
                   borderColor:
-                    currentTheme === theme.id ? 'var(--mnr-link, #1976d2)' : theme.border,
+                    configStore.themeId === theme.id ? 'var(--mnr-link, #1976d2)' : theme.border,
                 }"
-                @click="setTheme(theme.id)"
+                @click="configStore.setTheme(theme.id)"
               >
                 {{ theme.name }}
               </button>
             </div>
-          </section>
 
-          <section class="mnr-settings-section">
-            <h4>字号</h4>
-            <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">A</span>
-              <input
-                type="range"
-                min="14"
-                max="28"
-                :value="fontSize"
-                class="mnr-slider"
-                aria-label="字体大小"
-                @input="updateFontSize"
-              />
-              <span class="mnr-slider-label mnr-slider-label--large" aria-hidden="true">A</span>
-              <span class="mnr-slider-value">{{ fontSize }}px</span>
+            <div class="mnr-reading-preview" aria-hidden="true">
+              <span>排版预览</span>
+              <p>山高月小，水落石出。愿每一页都读得舒适从容。</p>
             </div>
-          </section>
 
-          <section class="mnr-settings-section">
-            <h4>行距</h4>
-            <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">
-                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
-                  <path d="M5 9h14M5 12h14M5 15h14" />
-                </svg>
-              </span>
-              <input
-                type="range"
-                min="1.4"
-                max="2.4"
-                step="0.1"
-                :value="lineHeight"
-                class="mnr-slider"
-                aria-label="行间距"
-                @input="updateLineHeight"
-              />
-              <span class="mnr-slider-label" aria-hidden="true">
-                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
-                  <path d="M5 6h14M5 12h14M5 18h14" />
-                </svg>
-              </span>
-              <span class="mnr-slider-value">{{ lineHeight }}</span>
-            </div>
-          </section>
+            <ReadingSlider
+              id="mnr-font-size"
+              label="字号"
+              :model-value="configStore.reading.fontSize"
+              :min="14"
+              :max="28"
+              min-label="小"
+              max-label="大"
+              :display-value="`${configStore.reading.fontSize} 像素`"
+              @update:model-value="updateNumericReading('fontSize', $event)"
+            />
 
-          <section class="mnr-settings-section">
-            <h4>字间距</h4>
-            <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">紧</span>
-              <input
-                type="range"
-                min="0"
-                max="0.2"
-                step="0.01"
-                :value="letterSpacing"
-                class="mnr-slider"
-                aria-label="文字间距"
-                @input="updateLetterSpacing"
-              />
-              <span class="mnr-slider-label" aria-hidden="true">松</span>
-              <span class="mnr-slider-value">{{ letterSpacing.toFixed(2) }}em</span>
-            </div>
-          </section>
+            <ReadingSlider
+              id="mnr-line-height"
+              label="行距"
+              :model-value="configStore.reading.lineHeight"
+              :min="1.4"
+              :max="2.4"
+              :step="0.1"
+              min-label="紧"
+              max-label="松"
+              :display-value="`${configStore.reading.lineHeight} 倍`"
+              @update:model-value="updateNumericReading('lineHeight', $event)"
+            />
 
-          <section class="mnr-settings-section">
-            <h4>段落缩进</h4>
-            <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">0</span>
-              <input
-                type="range"
-                min="0"
-                max="4"
-                step="0.5"
-                :value="paragraphIndent"
-                class="mnr-slider"
-                aria-label="段落首行缩进"
-                @input="updateParagraphIndent"
-              />
-              <span class="mnr-slider-label" aria-hidden="true">4</span>
-              <span class="mnr-slider-value">{{ paragraphIndent }}em</span>
-            </div>
-          </section>
-
-          <section class="mnr-settings-section">
-            <h4>内容宽度</h4>
-            <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">
-                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
-                  <path d="m4 8 4 4-4 4M20 8l-4 4 4 4" />
-                </svg>
-              </span>
-              <input
-                type="range"
-                min="500"
-                max="1200"
-                step="50"
-                :value="maxWidth"
-                class="mnr-slider"
-                aria-label="正文内容宽度"
-                @input="updateMaxWidth"
-              />
-              <span class="mnr-slider-label" aria-hidden="true">
-                <svg class="mnr-scale-icon" viewBox="0 0 24 24">
-                  <path d="m8 8-4 4 4 4M16 8l4 4-4 4" />
-                </svg>
-              </span>
-              <span class="mnr-slider-value">{{ maxWidth }}px</span>
-            </div>
-          </section>
-
-          <section class="mnr-settings-section">
-            <h4>内容边距</h4>
-            <div class="mnr-slider-row">
-              <span class="mnr-slider-label" aria-hidden="true">窄</span>
-              <input
-                type="range"
-                min="12"
-                max="48"
-                step="2"
-                :value="padding"
-                class="mnr-slider"
-                aria-label="正文内容边距"
-                @input="updatePadding"
-              />
-              <span class="mnr-slider-label" aria-hidden="true">宽</span>
-              <span class="mnr-slider-value">{{ padding }}px</span>
-            </div>
-          </section>
-
-          <section class="mnr-settings-section">
             <label class="mnr-field-label" for="mnr-font-family">字体</label>
             <select
               id="mnr-font-family"
-              v-model="fontFamily"
               class="mnr-select"
+              :value="configStore.reading.fontFamily"
               @change="updateFontFamily"
             >
               <option v-for="option in fontOptions" :key="option.label" :value="option.value">
                 {{ option.label }}
               </option>
             </select>
+
+            <fieldset class="mnr-settings-fieldset">
+              <legend>简繁转换</legend>
+              <div class="mnr-segmented-control">
+                <button
+                  v-for="option in conversionOptions"
+                  :key="option.value"
+                  class="mnr-segment"
+                  :class="{ active: configStore.reading.textConversion === option.value }"
+                  :aria-pressed="configStore.reading.textConversion === option.value"
+                  @click="updateTextConversion(option.value)"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </fieldset>
+
+            <button class="mnr-secondary-action" @click="resetAppearance">恢复默认外观</button>
           </section>
 
-          <section class="mnr-settings-section">
-            <h4>简繁转换</h4>
-            <div class="mnr-segmented-control">
-              <button
-                v-for="option in conversionOptions"
-                :key="option.value"
-                class="mnr-segment"
-                :class="{ active: textConversion === option.value }"
-                :aria-pressed="textConversion === option.value"
-                @click="updateTextConversion(option.value)"
-              >
-                {{ option.label }}
-              </button>
+          <details class="mnr-settings-group">
+            <summary>排版细节</summary>
+            <div class="mnr-settings-group-content">
+              <ReadingSlider
+                id="mnr-letter-spacing"
+                label="字间距"
+                :model-value="configStore.reading.letterSpacing"
+                :min="0"
+                :max="0.2"
+                :step="0.01"
+                min-label="紧"
+                max-label="松"
+                :display-value="`${Math.round(configStore.reading.letterSpacing * 100)}%`"
+                @update:model-value="updateNumericReading('letterSpacing', $event)"
+              />
+
+              <ReadingSlider
+                id="mnr-paragraph-indent"
+                label="段落缩进"
+                :model-value="configStore.reading.paragraphIndent"
+                :min="0"
+                :max="4"
+                :step="0.5"
+                min-label="0"
+                max-label="4"
+                :display-value="`${configStore.reading.paragraphIndent} 字`"
+                @update:model-value="updateNumericReading('paragraphIndent', $event)"
+              />
+
+              <ReadingSlider
+                id="mnr-max-width"
+                class="mnr-desktop-width"
+                label="桌面内容宽度"
+                :model-value="configStore.reading.maxWidth"
+                :min="500"
+                :max="1200"
+                :step="50"
+                min-label="窄"
+                max-label="宽"
+                :display-value="`${configStore.reading.maxWidth} 像素`"
+                @update:model-value="updateNumericReading('maxWidth', $event)"
+              />
+
+              <ReadingSlider
+                id="mnr-padding"
+                label="页面边距"
+                :model-value="configStore.reading.padding"
+                :min="12"
+                :max="48"
+                :step="2"
+                min-label="窄"
+                max-label="宽"
+                :display-value="`${configStore.reading.padding} 像素`"
+                @update:model-value="updateNumericReading('padding', $event)"
+              />
             </div>
-          </section>
+          </details>
 
-          <details class="mnr-more-settings">
-            <summary>更多设置</summary>
-            <div class="mnr-more-content">
+          <details class="mnr-settings-group">
+            <summary>阅读行为</summary>
+            <div class="mnr-settings-group-content">
               <label class="mnr-switch-row">
                 <span>显示阅读进度</span>
                 <input
-                  v-model="showProgress"
                   type="checkbox"
-                  @change="updateBehavior('showProgress', showProgress)"
+                  :checked="configStore.behavior.showProgress"
+                  @change="updateBehavior('showProgress', $event)"
                 />
               </label>
 
               <label class="mnr-switch-row">
                 <span>自动加载下一章</span>
                 <input
-                  v-model="preloadNext"
                   type="checkbox"
-                  @change="updateBehavior('preloadNext', preloadNext)"
-                />
-              </label>
-
-              <label class="mnr-switch-row">
-                <span>键盘导航</span>
-                <input
-                  v-model="keyboardNavigation"
-                  type="checkbox"
-                  @change="updateBehavior('keyboardNavigation', keyboardNavigation)"
-                />
-              </label>
-
-              <label class="mnr-switch-row">
-                <span>触摸手势</span>
-                <input
-                  v-model="swipeGestures"
-                  type="checkbox"
-                  @change="updateBehavior('swipeGestures', swipeGestures)"
+                  :checked="configStore.behavior.preloadNext"
+                  @change="updateBehavior('preloadNext', $event)"
                 />
               </label>
 
               <label class="mnr-switch-row">
                 <span>自动隐藏工具栏</span>
                 <input
-                  v-model="autoHideHeader"
                   type="checkbox"
-                  @change="updateBehavior('autoHideHeader', autoHideHeader)"
+                  :checked="configStore.behavior.autoHideHeader"
+                  @change="updateBehavior('autoHideHeader', $event)"
                 />
               </label>
 
               <label class="mnr-switch-row">
-                <span>在本站自动开启</span>
+                <span>键盘导航</span>
                 <input
-                  v-model="siteAutoEnable"
                   type="checkbox"
-                  @change="emit('siteAutoEnableChange', siteAutoEnable)"
+                  :checked="configStore.behavior.keyboardNavigation"
+                  @change="updateBehavior('keyboardNavigation', $event)"
                 />
               </label>
 
-              <div class="mnr-more-section">
-                <span class="mnr-more-label">网站防护</span>
+              <label class="mnr-switch-row">
+                <span>触摸手势</span>
+                <input
+                  type="checkbox"
+                  :checked="configStore.behavior.swipeGestures"
+                  @change="updateBehavior('swipeGestures', $event)"
+                />
+              </label>
+            </div>
+          </details>
+
+          <details class="mnr-settings-group">
+            <summary>本站与高级</summary>
+            <div class="mnr-settings-group-content">
+              <label class="mnr-switch-row">
+                <span>在本站自动开启</span>
+                <input type="checkbox" :checked="siteAutoEnable" @change="updateSiteAutoEnable" />
+              </label>
+
+              <fieldset class="mnr-settings-fieldset">
+                <legend>网站防护</legend>
                 <div class="mnr-segmented-control">
                   <button
                     class="mnr-segment"
-                    :class="{ active: protectionMode === 'standard' }"
-                    :aria-pressed="protectionMode === 'standard'"
+                    :class="{ active: configStore.protection.mode === 'standard' }"
+                    :aria-pressed="configStore.protection.mode === 'standard'"
                     @click="updateProtectionMode('standard')"
                   >
                     标准
                   </button>
                   <button
                     class="mnr-segment"
-                    :class="{ active: protectionMode === 'aggressive' }"
-                    :aria-pressed="protectionMode === 'aggressive'"
+                    :class="{ active: configStore.protection.mode === 'aggressive' }"
+                    :aria-pressed="configStore.protection.mode === 'aggressive'"
                     @click="updateProtectionMode('aggressive')"
                   >
                     强力
                   </button>
                 </div>
-              </div>
+              </fieldset>
 
-              <div class="mnr-more-section">
-                <label class="mnr-more-label" for="mnr-custom-css">自定义 CSS</label>
-                <textarea
-                  id="mnr-custom-css"
-                  v-model="customCSS"
-                  class="mnr-custom-css"
-                  rows="5"
-                  spellcheck="false"
-                  placeholder=".mnr-reader-content { ... }"
-                  @input="updateCustomCSS"
-                ></textarea>
-              </div>
+              <label class="mnr-field-label" for="mnr-custom-css">自定义 CSS</label>
+              <textarea
+                id="mnr-custom-css"
+                class="mnr-custom-css"
+                rows="5"
+                spellcheck="false"
+                placeholder=".mnr-reader-content { ... }"
+                :value="configStore.customCSS"
+                @input="updateCustomCSS"
+              ></textarea>
 
-              <div class="mnr-action-buttons">
-                <button class="mnr-action-btn" @click="emit('cacheAll')">
-                  {{ cacheProgress.running ? '取消缓存' : '离线缓存' }}
-                  <span v-if="cacheProgress.total > 0" class="mnr-cache-progress">
-                    {{ cacheProgress.done }}/{{ cacheProgress.total }}
-                  </span>
-                </button>
-                <button
-                  v-if="!cacheProgress.running && cacheProgress.failed > 0"
-                  class="mnr-action-btn"
-                  @click="emit('retryCache')"
-                >
-                  重试失败章节（{{ cacheProgress.failed }}）
-                </button>
-                <button v-if="persistedCount > 0" class="mnr-action-btn" @click="handleClearCache">
-                  清除离线缓存（{{ persistedCount }}）
-                </button>
-                <button class="mnr-action-btn" @click="emit('copyDiagnostics')">
-                  复制诊断信息
-                </button>
-                <button class="mnr-action-btn mnr-action-btn--danger" @click="emit('exit')">
-                  退出阅读模式
-                </button>
-              </div>
+              <button class="mnr-secondary-action" @click="emit('copyDiagnostics')">
+                复制诊断信息
+              </button>
             </div>
           </details>
         </div>
+
+        <footer class="mnr-settings-footer">
+          <button class="mnr-exit-btn" @click="emit('exit')">退出阅读模式</button>
+        </footer>
       </section>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
-import { THEMES, useConfigStore } from '@/ui/stores/config';
-import { useReaderStore } from '@/ui/stores/reader';
+import { nextTick, ref, watch } from 'vue';
+import { useEventListener } from '@/ui/composables/useEventListener';
+import { getDeepActiveElement } from '@/ui/focus';
+import {
+  THEMES,
+  type BehaviorSettings,
+  type ReadingSettings,
+  useConfigStore,
+} from '@/ui/stores/config';
+import ReadingSlider from './ReadingSlider.vue';
+
+type NumericReadingKey =
+  'fontSize' | 'lineHeight' | 'letterSpacing' | 'paragraphIndent' | 'maxWidth' | 'padding';
+type BooleanBehaviorKey = keyof BehaviorSettings;
 
 const props = withDefaults(
   defineProps<{
@@ -345,8 +291,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   close: [];
-  cacheAll: [];
-  retryCache: [];
   copyDiagnostics: [];
   exit: [];
   siteAutoEnableChange: [enabled: boolean];
@@ -355,11 +299,10 @@ const emit = defineEmits<{
 }>();
 
 const configStore = useConfigStore();
-const readerStore = useReaderStore();
 const panelRef = ref<HTMLElement | null>(null);
-const closeButtonRef = ref<globalThis.HTMLButtonElement | null>(null);
-let previouslyFocused: HTMLElement | null = null;
+const titleRef = ref<HTMLElement | null>(null);
 
+const themes = THEMES;
 const conversionOptions = [
   { label: '原文', value: 'none' },
   { label: '简体', value: 'sc' },
@@ -374,174 +317,110 @@ const fontOptions = [
   { label: '苹方', value: "'PingFang SC', 'Hiragino Sans GB', sans-serif" },
   { label: '楷体', value: "'Kaiti SC', 'STKaiti', serif" },
 ] as const;
-const currentTheme = computed(() => configStore.themeId);
-const themes = THEMES;
-const cacheProgress = computed(() => readerStore.cacheProgress);
-const persistedCount = computed(() => readerStore.persistedUrls.size);
-
-const fontSize = ref(configStore.reading.fontSize);
-const lineHeight = ref(configStore.reading.lineHeight);
-const letterSpacing = ref(configStore.reading.letterSpacing);
-const paragraphIndent = ref(configStore.reading.paragraphIndent);
-const maxWidth = ref(configStore.reading.maxWidth);
-const padding = ref(configStore.reading.padding);
-const fontFamily = ref(configStore.reading.fontFamily);
-const textConversion = ref(configStore.reading.textConversion);
-const showProgress = ref(configStore.behavior.showProgress);
-const preloadNext = ref(configStore.behavior.preloadNext);
-const keyboardNavigation = ref(configStore.behavior.keyboardNavigation);
-const swipeGestures = ref(configStore.behavior.swipeGestures);
-const autoHideHeader = ref(configStore.behavior.autoHideHeader);
-const siteAutoEnable = ref(props.siteAutoEnable);
-const protectionMode = ref(configStore.protection.mode);
-const customCSS = ref(configStore.customCSS);
 
 function closePanel() {
   void configStore.flushSave();
   emit('close');
 }
 
-function trapFocus(event: globalThis.KeyboardEvent) {
+function trapFocus(event: KeyboardEvent) {
   const panel = panelRef.value;
   if (!panel) return;
+
   const focusable = Array.from(
-    panel.querySelectorAll<globalThis.HTMLElement>(
+    panel.querySelectorAll<HTMLElement>(
       'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
     )
-  ).filter(element => element.offsetParent !== null || element === document.activeElement);
+  ).filter(element => element.offsetParent !== null || element === getDeepActiveElement());
   if (focusable.length === 0) return;
+
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
+  const activeElement = getDeepActiveElement();
+  if (activeElement === titleRef.value) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  } else if (event.shiftKey && activeElement === first) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
+  } else if (!event.shiftKey && activeElement === last) {
     event.preventDefault();
     first.focus();
   }
 }
 
-function setTheme(id: string) {
-  configStore.setTheme(id);
+function handleDialogKeydown(event: Event) {
+  const keyboardEvent = event as globalThis.KeyboardEvent;
+  const panel = panelRef.value;
+  if (!props.visible || !panel || !keyboardEvent.composedPath().includes(panel)) return;
+
+  if (keyboardEvent.key === 'Escape') {
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopImmediatePropagation();
+    closePanel();
+  } else if (keyboardEvent.key === 'Tab') {
+    keyboardEvent.stopImmediatePropagation();
+    trapFocus(keyboardEvent);
+  }
 }
 
-function updateFontSize(event: Event) {
-  const value = Number((event.target as globalThis.HTMLInputElement).value);
-  fontSize.value = value;
-  configStore.updateReading({ fontSize: value });
-  configStore.applyReading();
+useEventListener('keydown', handleDialogKeydown, { capture: true });
+
+function updateNumericReading(key: NumericReadingKey, value: number) {
+  configStore.updateReading({ [key]: value } as Partial<ReadingSettings>);
 }
 
-function updateLineHeight(event: Event) {
-  const value = Number((event.target as globalThis.HTMLInputElement).value);
-  lineHeight.value = value;
-  configStore.updateReading({ lineHeight: value });
-  configStore.applyReading();
-}
-
-function updateLetterSpacing(event: Event) {
-  const value = Number((event.target as globalThis.HTMLInputElement).value);
-  letterSpacing.value = value;
-  configStore.updateReading({ letterSpacing: value });
-  configStore.applyReading();
-}
-
-function updateParagraphIndent(event: Event) {
-  const value = Number((event.target as globalThis.HTMLInputElement).value);
-  paragraphIndent.value = value;
-  configStore.updateReading({ paragraphIndent: value });
-  configStore.applyReading();
-}
-
-function updateMaxWidth(event: Event) {
-  const value = Number((event.target as globalThis.HTMLInputElement).value);
-  maxWidth.value = value;
-  configStore.updateReading({ maxWidth: value });
-  configStore.applyReading();
-}
-
-function updatePadding(event: Event) {
-  const value = Number((event.target as globalThis.HTMLInputElement).value);
-  padding.value = value;
-  configStore.updateReading({ padding: value });
-  configStore.applyReading();
-}
-
-function updateFontFamily() {
-  configStore.updateReading({ fontFamily: fontFamily.value });
-  configStore.applyReading();
+function updateFontFamily(event: Event) {
+  configStore.updateReading({
+    fontFamily: (event.currentTarget as globalThis.HTMLSelectElement).value,
+  });
 }
 
 function updateTextConversion(mode: 'none' | 'sc' | 'tc') {
-  textConversion.value = mode;
   configStore.updateReading({ textConversion: mode });
   emit('textConversionChange', mode);
 }
 
-function updateBehavior(
-  key: 'showProgress' | 'preloadNext' | 'keyboardNavigation' | 'swipeGestures' | 'autoHideHeader',
-  value: boolean
-) {
-  configStore.updateBehavior({ [key]: value });
+function updateBehavior(key: BooleanBehaviorKey, event: Event) {
+  configStore.updateBehavior({
+    [key]: (event.currentTarget as globalThis.HTMLInputElement).checked,
+  });
+}
+
+function updateSiteAutoEnable(event: Event) {
+  emit('siteAutoEnableChange', (event.currentTarget as globalThis.HTMLInputElement).checked);
 }
 
 function updateProtectionMode(mode: 'standard' | 'aggressive') {
-  protectionMode.value = mode;
   configStore.updateProtection({ mode });
   emit('protectionModeChange', mode);
 }
 
-function updateCustomCSS() {
-  configStore.setCustomCSS(customCSS.value);
+function updateCustomCSS(event: Event) {
+  configStore.setCustomCSS((event.currentTarget as globalThis.HTMLTextAreaElement).value);
 }
 
-async function handleClearCache() {
-  if (!window.confirm('确定要清除本书的离线缓存吗？')) return;
-  await readerStore.clearPersistedCache();
-  readerStore.showToast('离线缓存已清除', 'info');
+function resetAppearance() {
+  configStore.setTheme('system');
+  configStore.resetReading();
+  emit('textConversionChange', 'none');
 }
-
-watch(
-  () => props.siteAutoEnable,
-  value => {
-    siteAutoEnable.value = value;
-  }
-);
 
 watch(
   () => props.visible,
   async visible => {
     if (visible) {
-      previouslyFocused = document.activeElement as HTMLElement | null;
-      fontSize.value = configStore.reading.fontSize;
-      lineHeight.value = configStore.reading.lineHeight;
-      letterSpacing.value = configStore.reading.letterSpacing;
-      paragraphIndent.value = configStore.reading.paragraphIndent;
-      maxWidth.value = configStore.reading.maxWidth;
-      padding.value = configStore.reading.padding;
-      fontFamily.value = configStore.reading.fontFamily;
-      textConversion.value = configStore.reading.textConversion;
-      showProgress.value = configStore.behavior.showProgress;
-      preloadNext.value = configStore.behavior.preloadNext;
-      keyboardNavigation.value = configStore.behavior.keyboardNavigation;
-      swipeGestures.value = configStore.behavior.swipeGestures;
-      autoHideHeader.value = configStore.behavior.autoHideHeader;
-      siteAutoEnable.value = props.siteAutoEnable;
-      protectionMode.value = configStore.protection.mode;
-      customCSS.value = configStore.customCSS;
       await nextTick();
-      closeButtonRef.value?.focus({ preventScroll: true });
+      titleRef.value?.focus({ preventScroll: true });
       return;
     }
 
     void configStore.flushSave();
-    previouslyFocused?.focus?.({ preventScroll: true });
-    previouslyFocused = null;
   }
 );
 </script>
 
-<style>
+<style scoped>
 .mnr-settings-overlay {
   position: fixed;
   inset: 0;
@@ -564,6 +443,7 @@ watch(
 
 .mnr-settings-header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   padding: max(16px, env(safe-area-inset-top)) 16px 16px;
@@ -578,6 +458,7 @@ watch(
 }
 
 .mnr-settings-header h3 {
+  border-radius: 4px;
   font-size: 18px;
 }
 
@@ -606,15 +487,13 @@ watch(
 .mnr-settings-content {
   flex: 1;
   overflow: auto;
-  padding: 18px 16px max(24px, env(safe-area-inset-bottom));
-}
-
-.mnr-settings-section {
-  margin-bottom: 22px;
+  padding: 18px 16px 24px;
+  overscroll-behavior: contain;
 }
 
 .mnr-settings-section h4,
-.mnr-field-label {
+.mnr-field-label,
+.mnr-settings-fieldset legend {
   display: block;
   margin-bottom: 10px;
   font-size: 14px;
@@ -629,88 +508,60 @@ watch(
 
 .mnr-theme-btn {
   min-width: 0;
-  padding: 10px 4px;
+  min-height: 42px;
+  padding: 8px 4px;
   border: 2px solid transparent;
   border-radius: 8px;
   font-size: 12px;
   cursor: pointer;
 }
 
-.mnr-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.mnr-reading-preview {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--mnr-border, #ddd);
+  border-radius: 8px;
+  background: var(--mnr-bg, #fff);
+  color: var(--mnr-text, #333);
 }
 
-.mnr-slider-label {
-  flex: 0 0 30px;
-  width: 30px;
-  color: var(--mnr-text, #666);
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.mnr-slider-label--large {
-  font-size: 1.2em;
-}
-
-.mnr-scale-icon {
+.mnr-reading-preview span {
   display: block;
-  width: 22px;
-  height: 22px;
-  margin: 0 auto;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  margin-bottom: 4px;
+  font-size: 12px;
+  opacity: 0.65;
 }
 
-.mnr-slider {
-  flex: 1;
-  min-width: 0;
-  height: 4px;
-  appearance: none;
-  border-radius: 2px;
-  background: var(--mnr-border, #e0e0e0);
+.mnr-reading-preview p {
+  margin: 0;
+  font-family: var(--mnr-font-family, system-ui, sans-serif);
+  font-size: var(--mnr-font-size, 18px);
+  line-height: var(--mnr-line-height, 1.8);
+  letter-spacing: var(--mnr-letter-spacing, 0);
+  text-indent: var(--mnr-paragraph-indent, 2em);
 }
 
-.mnr-slider::-webkit-slider-thumb {
-  width: 20px;
-  height: 20px;
-  appearance: none;
-  border-radius: 50%;
-  background: var(--mnr-link, #1976d2);
-  cursor: pointer;
-}
-
-.mnr-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--mnr-link, #1976d2);
-  cursor: pointer;
-}
-
-.mnr-slider-value {
-  flex: 0 0 60px;
-  width: 60px;
-  color: var(--mnr-text, #666);
-  font-size: 13px;
-  text-align: right;
-  white-space: nowrap;
+.mnr-field-label {
+  margin-top: 18px;
 }
 
 .mnr-select {
   width: 100%;
-  padding: 10px 12px;
+  min-height: 42px;
+  padding: 9px 12px;
   border: 1px solid var(--mnr-border, #ddd);
   border-radius: 8px;
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #333);
   font-size: 14px;
+}
+
+.mnr-settings-fieldset {
+  min-width: 0;
+  margin: 18px 0 0;
+  padding: 0;
+  border: 0;
 }
 
 .mnr-segmented-control {
@@ -721,14 +572,14 @@ watch(
 }
 
 .mnr-segment {
+  min-height: 42px;
   flex: 1;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border: 0;
   border-right: 1px solid var(--mnr-border, #ddd);
   background: var(--mnr-bg, #fff);
   color: var(--mnr-text, #666);
   font-size: 14px;
-  line-height: 1.4;
   cursor: pointer;
 }
 
@@ -741,46 +592,55 @@ watch(
   color: var(--mnr-on-link, #fff);
 }
 
-.mnr-more-settings {
+.mnr-secondary-action {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 16px;
+  padding: 9px 12px;
+  border: 1px solid var(--mnr-border, #ddd);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mnr-text, #333);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mnr-settings-group {
+  margin-top: 18px;
   border-top: 1px solid var(--mnr-border, #ddd);
 }
 
-.mnr-more-settings summary {
-  padding: 16px 0;
-  color: var(--mnr-text, #555);
+.mnr-settings-group summary {
+  min-height: 48px;
+  padding: 14px 0;
+  color: var(--mnr-text, #333);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.mnr-more-content {
-  padding-bottom: 8px;
+.mnr-settings-group-content {
+  padding-bottom: 4px;
 }
 
-.mnr-more-section {
-  margin-top: 16px;
-}
-
-.mnr-more-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--mnr-text, #333);
-  font-size: 14px;
-  font-weight: 600;
+.mnr-settings-group-content > :first-child {
+  margin-top: 0;
 }
 
 .mnr-switch-row {
   display: flex;
+  min-height: 44px;
   align-items: center;
   justify-content: space-between;
-  min-height: 44px;
+  gap: 16px;
   color: var(--mnr-text, #333);
   cursor: pointer;
 }
 
 .mnr-switch-row input {
-  width: 40px;
+  width: 22px;
   height: 22px;
+  flex: 0 0 auto;
   accent-color: var(--mnr-link, #1976d2);
 }
 
@@ -801,48 +661,42 @@ watch(
     monospace;
 }
 
-.mnr-action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
+.mnr-settings-footer {
+  flex-shrink: 0;
+  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--mnr-border, #ddd);
+  background: var(--mnr-bg, #fff);
 }
 
-.mnr-action-btn {
+.mnr-exit-btn {
   width: 100%;
-  padding: 11px 12px;
-  border: 1px solid var(--mnr-border, #ddd);
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #c93f49;
   border-radius: 8px;
-  background: var(--mnr-bg, #fff);
-  color: var(--mnr-text, #333);
+  background: transparent;
+  color: #c93f49;
   font-size: 14px;
   cursor: pointer;
 }
 
-.mnr-action-btn--danger {
-  border-color: #c93f49;
-  color: #c93f49;
-}
-
-.mnr-cache-progress {
-  margin-left: 6px;
-  opacity: 0.75;
-}
-
 .mnr-close-btn:hover,
-.mnr-action-btn:hover,
-.mnr-segment:hover {
+.mnr-secondary-action:hover,
+.mnr-segment:hover,
+.mnr-exit-btn:hover {
   background: var(--mnr-border, #f0f0f0);
 }
 
+.mnr-settings-header h3:focus-visible,
 .mnr-close-btn:focus-visible,
 .mnr-theme-btn:focus-visible,
-.mnr-slider:focus-visible,
 .mnr-select:focus-visible,
-.mnr-custom-css:focus-visible,
 .mnr-segment:focus-visible,
-.mnr-action-btn:focus-visible,
-.mnr-more-settings summary:focus-visible {
+.mnr-secondary-action:focus-visible,
+.mnr-settings-group summary:focus-visible,
+.mnr-switch-row input:focus-visible,
+.mnr-custom-css:focus-visible,
+.mnr-exit-btn:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);
   outline-offset: 2px;
 }
@@ -868,6 +722,14 @@ watch(
 @media (max-width: 600px) {
   .mnr-settings-panel {
     width: 100%;
+  }
+
+  .mnr-reading-preview {
+    display: block;
+  }
+
+  .mnr-desktop-width {
+    display: none;
   }
 }
 

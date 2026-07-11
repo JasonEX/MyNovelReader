@@ -202,7 +202,7 @@ test('profiles large-TOC and reader interactions on a deterministic page', async
 
     const settingsStartedAt = performance.now();
     shadow.querySelector<HTMLElement>('[aria-label="打开设置"]')?.click();
-    await waitFor(() => !!shadow.querySelector('.mnr-more-settings'));
+    await waitFor(() => !!shadow.querySelector('.mnr-settings-panel'));
     const settingsOpenMs = performance.now() - settingsStartedAt;
     shadow.querySelector<HTMLElement>('[aria-label="关闭设置"]')?.click();
 
@@ -268,7 +268,7 @@ test('measures coalesced settings and reading-position writes', async ({
 
     shadow.querySelector<HTMLElement>('[aria-label="打开设置"]')?.click();
     await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-    const slider = shadow.querySelector<HTMLInputElement>('input[aria-label="字体大小"]')!;
+    const slider = shadow.querySelector<HTMLInputElement>('#mnr-font-size')!;
     const settingsStartedAt = performance.now();
     let inputEvents = 0;
     while (performance.now() - settingsStartedAt < 2000) {

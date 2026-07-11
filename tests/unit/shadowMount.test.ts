@@ -79,6 +79,20 @@ describe('shadowMount', () => {
     expect(second.shadowRoot.querySelector('#mnr-custom-css')).toBeNull();
   });
 
+  it('updates only changed runtime styles and keeps custom CSS independent', () => {
+    const { host, shadowRoot } = createShadowMount('mnr-incremental-style-root');
+    setShadowStyleProperties({ '--mnr-font-size': '18px', '--mnr-line-height': '1.8' });
+    const setProperty = vi.spyOn(host.style, 'setProperty');
+
+    setShadowStyleProperties({ '--mnr-font-size': '20px' });
+    expect(setProperty).toHaveBeenCalledOnce();
+    expect(setProperty).toHaveBeenCalledWith('--mnr-font-size', '20px');
+
+    setShadowCustomCSS('.incremental{display:block;}');
+    expect(setProperty).toHaveBeenCalledOnce();
+    expect(shadowRoot.querySelector('#mnr-custom-css')?.textContent).toContain('incremental');
+  });
+
   it('queues runtime styles before a Shadow DOM root exists', () => {
     setShadowStyleProperties({ '--mnr-text': '#abcdef' });
     setShadowCustomCSS('.queued{display:block;}');

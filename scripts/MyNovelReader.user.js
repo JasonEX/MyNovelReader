@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.2.2
+// @version            9.3.0
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -8240,8 +8240,8 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.2.2";
-	var BUILD_DATE = "2026-07-10";
+	var VERSION = "9.3.0";
+	var BUILD_DATE = "2026-07-11";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
 		if (!url) return null;
@@ -12981,6 +12981,35 @@
 	}
 	var vShowOriginalDisplay = Symbol("_vod");
 	var vShowHidden = Symbol("_vsh");
+	var vShow = {
+		name: "show",
+		beforeMount(el, { value }, { transition }) {
+			el[vShowOriginalDisplay] = el.style.display === "none" ? "" : el.style.display;
+			if (transition && value) transition.beforeEnter(el);
+			else setDisplay(el, value);
+		},
+		mounted(el, { value }, { transition }) {
+			if (transition && value) transition.enter(el);
+		},
+		updated(el, { value, oldValue }, { transition }) {
+			if (!value === !oldValue) return;
+			if (transition) if (value) {
+				transition.beforeEnter(el);
+				setDisplay(el, true);
+				transition.enter(el);
+			} else transition.leave(el, () => {
+				setDisplay(el, false);
+			});
+			else setDisplay(el, value);
+		},
+		beforeUnmount(el, { value }) {
+			setDisplay(el, value);
+		}
+	};
+	function setDisplay(el, value) {
+		el.style.display = value ? el[vShowOriginalDisplay] : "none";
+		el[vShowHidden] = !value;
+	}
 	var CSS_VAR_TEXT = Symbol("");
 	var displayRE = /(?:^|;)\s*display\s*:/;
 	function patchStyle(el, prev, next) {
@@ -13283,49 +13312,6 @@
 		}
 		if (el.checked !== checked) el.checked = checked;
 	}
-	var vModelSelect = {
-		deep: true,
-		created(el, { value, modifiers: { number } }, vnode) {
-			const isSetModel = isSet(value);
-			addEventListener(el, "change", () => {
-				const selectedVal = Array.prototype.filter.call(el.options, (o) => o.selected).map((o) => number ? looseToNumber(getValue(o)) : getValue(o));
-				el[assignKey](el.multiple ? isSetModel ? new Set(selectedVal) : selectedVal : selectedVal[0]);
-				el._assigning = true;
-				nextTick(() => {
-					el._assigning = false;
-				});
-			});
-			el[assignKey] = getModelAssigner(vnode);
-		},
-		mounted(el, { value }) {
-			setSelected(el, value);
-		},
-		beforeUpdate(el, _binding, vnode) {
-			el[assignKey] = getModelAssigner(vnode);
-		},
-		updated(el, { value }) {
-			if (!el._assigning) setSelected(el, value);
-		}
-	};
-	function setSelected(el, value) {
-		const isMultiple = el.multiple;
-		const isArrayValue = isArray(value);
-		if (isMultiple && !isArrayValue && !isSet(value)) return;
-		for (let i = 0, l = el.options.length; i < l; i++) {
-			const option = el.options[i];
-			const optionValue = getValue(option);
-			if (isMultiple) if (isArrayValue) {
-				const optionType = typeof optionValue;
-				if (optionType === "string" || optionType === "number") option.selected = value.some((v) => String(v) === String(optionValue));
-				else option.selected = looseIndexOf(value, optionValue) > -1;
-			} else option.selected = value.has(optionValue);
-			else if (looseEqual(getValue(option), value)) {
-				if (el.selectedIndex !== i) el.selectedIndex = i;
-				return;
-			}
-		}
-		if (!isMultiple && el.selectedIndex !== -1) el.selectedIndex = -1;
-	}
 	function getValue(el) {
 		return "_value" in el ? el._value : el.value;
 	}
@@ -13362,24 +13348,6 @@
 				if (guard && guard(event, modifiers)) return;
 			}
 			return fn(event, ...args);
-		}));
-	};
-	var keyNames = {
-		esc: "escape",
-		space: " ",
-		up: "arrow-up",
-		left: "arrow-left",
-		right: "arrow-right",
-		down: "arrow-down",
-		delete: "backspace"
-	};
-	var withKeys = (fn, modifiers) => {
-		const cache = fn._withKeys || (fn._withKeys = {});
-		const cacheKey = modifiers.join(".");
-		return cache[cacheKey] || (cache[cacheKey] = ((event) => {
-			if (!("key" in event)) return;
-			const eventKey = hyphenate(event.key);
-			if (modifiers.some((k) => k === eventKey || keyNames[k] === eventKey)) return fn(event);
 		}));
 	};
 	var rendererOptions = extend({ patchProp }, nodeOps);
@@ -13506,14 +13474,21 @@ ul, ol {
 		shadowRoot.appendChild(style);
 		return style;
 	}
-	function applyRuntimeStyles(shadowRoot, state = getMnrGlobalState()) {
+	function applyStyleProperties(shadowRoot, properties) {
 		const host = shadowRoot.host;
-		if (state.styleProperties && host?.style) for (const [name, value] of Object.entries(state.styleProperties)) host.style.setProperty(name, value);
+		if (!host?.style) return;
+		for (const [name, value] of Object.entries(properties)) host.style.setProperty(name, value);
+	}
+	function applyCustomCSS(shadowRoot, css) {
 		const customStyle = shadowRoot.querySelector("#mnr-custom-css");
-		if (state.customCSS) {
+		if (css) {
 			const style = customStyle || ensureStyleElement(shadowRoot, "mnr-custom-css");
-			style.textContent = state.customCSS;
+			style.textContent = css;
 		} else customStyle?.remove();
+	}
+	function applyRuntimeStyles(shadowRoot, state = getMnrGlobalState()) {
+		if (state.styleProperties) applyStyleProperties(shadowRoot, state.styleProperties);
+		applyCustomCSS(shadowRoot, state.customCSS || "");
 	}
 	function applyAppStyles(shadowRoot, state = getMnrGlobalState()) {
 		if (!state.styles) return;
@@ -13522,16 +13497,14 @@ ul, ol {
 	}
 	function setShadowStyleProperties(properties) {
 		const state = getMnrGlobalState();
-		state.styleProperties = {
-			...state.styleProperties || {},
-			...properties
-		};
-		for (const shadowRoot of getRegisteredShadowRoots(state)) applyRuntimeStyles(shadowRoot, state);
+		state.styleProperties ||= {};
+		Object.assign(state.styleProperties, properties);
+		for (const shadowRoot of getRegisteredShadowRoots(state)) applyStyleProperties(shadowRoot, properties);
 	}
 	function setShadowCustomCSS(css) {
 		const state = getMnrGlobalState();
 		state.customCSS = css;
-		for (const shadowRoot of getRegisteredShadowRoots(state)) applyRuntimeStyles(shadowRoot, state);
+		for (const shadowRoot of getRegisteredShadowRoots(state)) applyCustomCSS(shadowRoot, css);
 	}
 	function createShadowMount(hostId) {
 		const globalState = getMnrGlobalState();
@@ -14058,22 +14031,14 @@ ul, ol {
 			}
 		}
 		function updateReading(settings) {
-			reading.value = {
-				...reading.value,
-				...settings
-			};
+			Object.assign(reading.value, settings);
+			applyReading(settings);
 		}
 		function updateBehavior(settings) {
-			behavior.value = {
-				...behavior.value,
-				...settings
-			};
+			Object.assign(behavior.value, settings);
 		}
 		function updateProtection(settings) {
-			protection.value = {
-				...protection.value,
-				...settings
-			};
+			Object.assign(protection.value, settings);
 		}
 		function setCustomCSS(css) {
 			customCSS.value = css;
@@ -14089,17 +14054,16 @@ ul, ol {
 				"--mnr-border": t.border
 			});
 		}
-		function applyReading() {
-			const r = reading.value;
-			setShadowStyleProperties({
-				"--mnr-font-family": r.fontFamily,
-				"--mnr-font-size": `${r.fontSize}px`,
-				"--mnr-line-height": `${r.lineHeight}`,
-				"--mnr-letter-spacing": `${r.letterSpacing}em`,
-				"--mnr-paragraph-indent": `${r.paragraphIndent}em`,
-				"--mnr-max-width": `${r.maxWidth}px`,
-				"--mnr-padding": `${r.padding}px`
-			});
+		function applyReading(settings = reading.value) {
+			const properties = {};
+			if (settings.fontFamily !== void 0) properties["--mnr-font-family"] = settings.fontFamily;
+			if (settings.fontSize !== void 0) properties["--mnr-font-size"] = `${settings.fontSize}px`;
+			if (settings.lineHeight !== void 0) properties["--mnr-line-height"] = `${settings.lineHeight}`;
+			if (settings.letterSpacing !== void 0) properties["--mnr-letter-spacing"] = `${settings.letterSpacing}em`;
+			if (settings.paragraphIndent !== void 0) properties["--mnr-paragraph-indent"] = `${settings.paragraphIndent}em`;
+			if (settings.maxWidth !== void 0) properties["--mnr-max-width"] = `${settings.maxWidth}px`;
+			if (settings.padding !== void 0) properties["--mnr-padding"] = `${settings.padding}px`;
+			if (Object.keys(properties).length > 0) setShadowStyleProperties(properties);
 		}
 		function applyCustomCSS() {
 			setShadowCustomCSS(customCSS.value);
@@ -14216,6 +14180,10 @@ ul, ol {
 			applyAll();
 			save();
 		}
+		function resetReading() {
+			reading.value = { ...DEFAULT_READING };
+			applyReading();
+		}
 		return {
 			themeId,
 			reading,
@@ -14228,6 +14196,7 @@ ul, ol {
 			updateBehavior,
 			updateProtection,
 			setCustomCSS,
+			resetReading,
 			applyTheme,
 			applyReading,
 			applyAll,
@@ -14237,13 +14206,45 @@ ul, ol {
 			$reset
 		};
 	});
-	var _hoisted_1$7 = ["onKeydown"];
-	var _hoisted_2$5 = { class: "mnr-confidence" };
-	var _hoisted_3$3 = { class: "mnr-confidence-bar" };
-	var _hoisted_4$3 = { class: "mnr-confidence-text" };
-	var _hoisted_5$3 = { class: "mnr-results" };
-	var _hoisted_6$3 = { class: "mnr-checkbox-label" };
-	var _hoisted_7$3 = { class: "mnr-prompt-actions" };
+	function useEventListener(type, listener, options = {}) {
+		const { target = window, passive = false, capture = false } = options;
+		let attached = false;
+		const add = (currentTarget) => {
+			const element = unref(currentTarget);
+			if (element && !attached) {
+				element.addEventListener(type, listener, {
+					capture,
+					passive
+				});
+				attached = true;
+			}
+		};
+		const remove = (currentTarget) => {
+			const element = unref(currentTarget);
+			if (element && attached) {
+				element.removeEventListener(type, listener, capture);
+				attached = false;
+			}
+		};
+		onMounted(() => add(target));
+		onScopeDispose(() => remove(target));
+		if (isRef(target)) watch(target, (newTarget, oldTarget) => {
+			remove(oldTarget);
+			add(newTarget);
+		});
+		return () => remove(target);
+	}
+	function getDeepActiveElement() {
+		let active = document.activeElement;
+		while (active instanceof window.HTMLElement && active.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+		return active instanceof window.HTMLElement ? active : null;
+	}
+	var _hoisted_1$8 = { class: "mnr-confidence" };
+	var _hoisted_2$6 = { class: "mnr-confidence-bar" };
+	var _hoisted_3$4 = { class: "mnr-confidence-text" };
+	var _hoisted_4$4 = { class: "mnr-results" };
+	var _hoisted_5$4 = { class: "mnr-checkbox-label" };
+	var _hoisted_6$4 = { class: "mnr-prompt-actions" };
 	var DetectionPrompt_vue_vue_type_script_setup_true_lang_default = defineComponent({
 		__name: "DetectionPrompt",
 		props: {
@@ -14289,20 +14290,36 @@ ul, ol {
 				if (focusable.length === 0) return;
 				const first = focusable[0];
 				const last = focusable[focusable.length - 1];
-				if (event.shiftKey && document.activeElement === first) {
+				const activeElement = getDeepActiveElement();
+				if (event.shiftKey && activeElement === first) {
 					event.preventDefault();
 					last.focus();
-				} else if (!event.shiftKey && document.activeElement === last) {
+				} else if (!event.shiftKey && activeElement === last) {
 					event.preventDefault();
 					first.focus();
 				}
 			}
+			function handleDialogKeydown(event) {
+				const keyboardEvent = event;
+				const card = cardRef.value;
+				if (!props.visible || !card || !keyboardEvent.composedPath().includes(card)) return;
+				if (keyboardEvent.key === "Escape") {
+					keyboardEvent.preventDefault();
+					keyboardEvent.stopImmediatePropagation();
+					handleDismiss();
+				} else if (keyboardEvent.key === "Tab") {
+					keyboardEvent.stopImmediatePropagation();
+					trapFocus(keyboardEvent);
+				}
+			}
+			useEventListener("keydown", handleDialogKeydown, { capture: true });
 			watch(() => props.visible, async (visible) => {
 				if (visible) {
-					previouslyFocused = document.activeElement;
+					previouslyFocused = getDeepActiveElement();
 					await nextTick();
 					acceptButtonRef.value?.focus({ preventScroll: true });
 				} else {
+					await nextTick();
 					previouslyFocused?.focus?.({ preventScroll: true });
 					previouslyFocused = null;
 				}
@@ -14319,8 +14336,7 @@ ul, ol {
 						class: "mnr-prompt-card",
 						role: "dialog",
 						"aria-modal": "true",
-						"aria-labelledby": "mnr-prompt-title",
-						onKeydown: [withKeys(withModifiers(handleDismiss, ["stop"]), ["esc"]), withKeys(trapFocus, ["tab"])]
+						"aria-labelledby": "mnr-prompt-title"
 					}, [
 						_cache[4] || (_cache[4] = createBaseVNode("div", { class: "mnr-prompt-header" }, [createBaseVNode("svg", {
 							class: "mnr-prompt-icon",
@@ -14336,11 +14352,11 @@ ul, ol {
 							id: "mnr-prompt-title",
 							class: "mnr-prompt-title"
 						}, "启用 MyNovelReader?")], -1)),
-						createBaseVNode("div", _hoisted_2$5, [createBaseVNode("div", _hoisted_3$3, [createBaseVNode("div", {
+						createBaseVNode("div", _hoisted_1$8, [createBaseVNode("div", _hoisted_2$6, [createBaseVNode("div", {
 							class: normalizeClass(["mnr-confidence-fill", confidenceClass.value]),
 							style: normalizeStyle({ width: `${confidence.value * 100}%` })
-						}, null, 6)]), createBaseVNode("span", _hoisted_4$3, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
-						createBaseVNode("ul", _hoisted_5$3, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
+						}, null, 6)]), createBaseVNode("span", _hoisted_3$4, " 检测置信度: " + toDisplayString((confidence.value * 100).toFixed(0)) + "% ", 1)]),
+						createBaseVNode("ul", _hoisted_4$4, [(openBlock(true), createElementBlock(Fragment, null, renderList(positiveReasons.value, (reason) => {
 							return openBlock(), createElementBlock("li", {
 								key: reason,
 								class: "mnr-result-item success"
@@ -14363,12 +14379,12 @@ ul, ol {
 								createBaseVNode("path", { d: "M12 17h.01" })
 							], -1)), createBaseVNode("span", null, toDisplayString(reason), 1)]);
 						}), 128))]),
-						createBaseVNode("label", _hoisted_6$3, [withDirectives(createBaseVNode("input", {
+						createBaseVNode("label", _hoisted_5$4, [withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => rememberForSite.value = $event),
 							type: "checkbox",
 							class: "mnr-checkbox"
 						}, null, 512), [[vModelCheckbox, rememberForSite.value]]), _cache[3] || (_cache[3] = createBaseVNode("span", null, "为此站点自动启用", -1))]),
-						createBaseVNode("div", _hoisted_7$3, [createBaseVNode("button", {
+						createBaseVNode("div", _hoisted_6$4, [createBaseVNode("button", {
 							class: "mnr-btn mnr-btn-secondary",
 							onClick: handleDismiss
 						}, "暂不"), createBaseVNode("button", {
@@ -14377,7 +14393,7 @@ ul, ol {
 							class: "mnr-btn mnr-btn-primary",
 							onClick: handleAccept
 						}, " 启用阅读器 ", 512)])
-					], 40, _hoisted_1$7)])) : createCommentVNode("", true)]),
+					], 512)])) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
@@ -14388,7 +14404,7 @@ ul, ol {
 		for (const [key, val] of props) target[key] = val;
 		return target;
 	};
-	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-7f92d5fe"]]);
+	var DetectionPrompt_default = _plugin_vue_export_helper_default(DetectionPrompt_vue_vue_type_script_setup_true_lang_default, [["__scopeId", "data-v-16e49de1"]]);
 	var VIP_BLOCK_TOAST = "该章节为VIP/付费内容，无法加载";
 	var HKVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一針 一針|一針見血 一針見血|三針 三針|丟巧針 丟巧針|丹稜 丹稜|九針 九針|亂針繡 亂針繡|仙台 仙台|倒扣針兒 倒扣針兒|做針線 做針線|八字方針 八字方針|刀割針扎 刀割針扎|分針 分針|別針 別針|刺胳針 刺胳針|刺針 刺針|北港島綫 北港島線|十針 十針|南港島綫 南港島線|南針 南針|反時針 反時針|口吃 口吃|台山 台山|台山市 台山市|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|向風針 向風針|唱針 唱針|啄針兒 啄針兒|嗎啡針 嗎啡針|大政方針 大政方針|大海撈針 大海撈針|大頭針 大頭針|天台 天台|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|太乙神針 太乙神針|奇台 奇台|女人心海底針 女人心海底針|定南針 定南針|定風針 定風針|將軍澳綫 將軍澳線|對針 對針|小針 小針|小針美容 小針美容|屯馬綫 屯馬線|平針縫 平針縫|幾針 幾針|引線穿針 引線穿針|張口 張口|張柏芝 張柏芝|張栢芝 張栢芝|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|懸針 懸針|懸針垂露 懸針垂露|手腕式指北針 手腕式指北針|扎針 扎針|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|指北針 指北針|指南針 指南針|指揮台 指揮台|指針 指針|指針式 指針式|探針 探針|控制台 控制台|插針 插針|搖針 搖針|搗針 搗針|撞針 撞針|擺針 擺針|收針 收針|教育方針 教育方針|敹一針 敹一針|方針 方針|時針 時針|暈針 暈針|曲別針 曲別針|東九龍綫 東九龍線|東海撈針 東海撈針|東涌綫 東涌線|東鐵綫 東鐵線|松針 松針|枝針 枝針|桑針 桑針|棒針 棒針|棒針衫 棒針衫|棘針 棘針|棘針科 棘針科|棘針門 棘針門|機場快綫 機場快線|步線行針 步線行針|毒針 毒針|毛線針 毛線針|毫針 毫針|水底撈針 水底撈針|沙中綫 沙中線|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|浙江天台縣 浙江天台縣|海底撈針 海底撈針|港島綫 港島線|漏針 漏針|炮台山循道衛理中學 炮台山循道衛理中學|無線新聞台 無線新聞台|無針不引線 無針不引線|無針注射器 無針注射器|燔針 燔針|留針 留針|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|短針 短針|石針 石針|硬肥皂 硬肥皂|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|秒針 秒針|秧針 秧針|穆稜 穆稜|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|紋光針 紋光針|細針密縷 細針密縷|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美白針 美白針|耳針 耳針|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|胃口 胃口|胸針 胸針|臺灣台 臺灣台|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|茅針 茅針|荃灣綫 荃灣線|葉針 葉針|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|補血針 補血針|補針 補針|見縫插針 見縫插針|觀塘綫 觀塘線|討針線 討針線|象牙針尖 象牙針尖|賀爾蒙針 賀爾蒙針|跳針 跳針|蹇吃 蹇吃|軟肥皂 軟肥皂|迪士尼綫 迪士尼線|迴紋針 迴紋針|退針 退針|逆時針 逆時針|避雷針 避雷針|郭台成 郭台成|郭台銘 郭台銘|鄧艾吃 鄧艾吃|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉤針 鉤針|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|長針 長針|開口 開口|防疫針 防疫針|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|面皂 面皂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|風向針 風向針|飛針走線 飛針走線|香皂 香皂|骨針 骨針|髮針 髮針|鬼針草 鬼針草|鳳台 鳳台|鹽水針 鹽水針|麻醉針 麻醉針|黃成 黃成|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針|龍應台 龍應台";
 	var HKVariantsRev_default = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|綫 線|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
@@ -19812,34 +19828,6 @@ ul, ol {
 			$reset
 		};
 	});
-	function useEventListener(type, listener, options = {}) {
-		const { target = window, passive = false, capture = false } = options;
-		let attached = false;
-		const add = (currentTarget) => {
-			const element = unref(currentTarget);
-			if (element && !attached) {
-				element.addEventListener(type, listener, {
-					capture,
-					passive
-				});
-				attached = true;
-			}
-		};
-		const remove = (currentTarget) => {
-			const element = unref(currentTarget);
-			if (element && attached) {
-				element.removeEventListener(type, listener, capture);
-				attached = false;
-			}
-		};
-		onMounted(() => add(target));
-		onScopeDispose(() => remove(target));
-		if (isRef(target)) watch(target, (newTarget, oldTarget) => {
-			remove(oldTarget);
-			add(newTarget);
-		});
-		return () => remove(target);
-	}
 	function isInputElement(el) {
 		const tagName = el.tagName;
 		return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || el.isContentEditable;
@@ -20507,23 +20495,38 @@ ul, ol {
 	}
 	function useReaderUIControls(options) {
 		const { readerStore, showControls } = options;
-		const settingsVisible = ref(false);
-		const drawerOpen = ref(false);
+		const activePanel = ref(null);
+		const settingsVisible = computed(() => activePanel.value === "settings");
+		const drawerOpen = computed(() => activePanel.value === "drawer");
+		const hasOpenPanel = computed(() => activePanel.value !== null);
+		let previouslyFocused = null;
+		let controlsVisibleBeforePanel = true;
+		function setActivePanel(panel) {
+			if (activePanel.value === null && panel !== null) {
+				previouslyFocused = getDeepActiveElement();
+				controlsVisibleBeforePanel = showControls.value;
+			}
+			activePanel.value = panel;
+			showControls.value = panel === null ? controlsVisibleBeforePanel : false;
+			if (panel === null && previouslyFocused) {
+				const focusTarget = previouslyFocused;
+				previouslyFocused = null;
+				nextTick(() => focusTarget.focus({ preventScroll: true }));
+			}
+		}
 		function toggleDrawer() {
-			drawerOpen.value = !drawerOpen.value;
-			if (drawerOpen.value) readerStore.loadToc();
+			const nextPanel = drawerOpen.value ? null : "drawer";
+			setActivePanel(nextPanel);
+			if (nextPanel === "drawer") readerStore.loadToc();
+		}
+		function closeDrawer() {
+			if (drawerOpen.value) setActivePanel(null);
 		}
 		function openSettings() {
-			settingsVisible.value = true;
-			showControls.value = false;
+			setActivePanel("settings");
 		}
 		function closeSettings() {
-			settingsVisible.value = false;
-			showControls.value = true;
-		}
-		function handleEscape() {
-			if (drawerOpen.value) drawerOpen.value = false;
-			else if (settingsVisible.value) closeSettings();
+			if (settingsVisible.value) setActivePanel(null);
 		}
 		function toggleSettings() {
 			if (settingsVisible.value) closeSettings();
@@ -20532,15 +20535,16 @@ ul, ol {
 		return {
 			settingsVisible,
 			drawerOpen,
+			hasOpenPanel,
 			toggleDrawer,
+			closeDrawer,
 			openSettings,
 			closeSettings,
-			handleEscape,
 			toggleSettings
 		};
 	}
-	var _hoisted_1$6 = ["aria-valuenow"];
-	var _hoisted_2$4 = {
+	var _hoisted_1$7 = ["aria-valuenow"];
+	var _hoisted_2$5 = {
 		key: 0,
 		class: "mnr-progress-text"
 	};
@@ -20598,14 +20602,11 @@ ul, ol {
 				}, [createBaseVNode("div", {
 					class: "mnr-progress-bar",
 					style: normalizeStyle({ width: `${percent.value}%` })
-				}, null, 4), __props.showText ? (openBlock(), createElementBlock("span", _hoisted_2$4, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)], 10, _hoisted_1$6);
+				}, null, 4), __props.showText ? (openBlock(), createElementBlock("span", _hoisted_2$5, toDisplayString(percent.value) + "%", 1)) : createCommentVNode("", true)], 10, _hoisted_1$7);
 			};
 		}
 	}), [["__scopeId", "data-v-fb6f172c"]]);
-	var _hoisted_1$5 = {
-		key: 0,
-		class: "mnr-floating-toolbar"
-	};
+	var _hoisted_1$6 = { class: "mnr-floating-toolbar" };
 	var FloatingToolbar_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "FloatingToolbar",
 		props: { visible: {
@@ -20616,7 +20617,7 @@ ul, ol {
 		setup(__props) {
 			return (_ctx, _cache) => {
 				return openBlock(), createBlock(Transition, { name: "mnr-fade-slide" }, {
-					default: withCtx(() => [__props.visible ? (openBlock(), createElementBlock("div", _hoisted_1$5, [createBaseVNode("button", {
+					default: withCtx(() => [withDirectives(createBaseVNode("div", _hoisted_1$6, [createBaseVNode("button", {
 						class: "mnr-fab",
 						title: "目录 (Tab)",
 						"aria-label": "打开目录",
@@ -20638,12 +20639,12 @@ ul, ol {
 						cx: "12",
 						cy: "12",
 						r: "3"
-					}), createBaseVNode("path", { d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" })], -1)])])])) : createCommentVNode("", true)]),
+					}), createBaseVNode("path", { d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" })], -1)])])], 512), [[vShow, __props.visible]])]),
 					_: 1
 				});
 			};
 		}
-	}), [["__scopeId", "data-v-3b51b0fe"]]);
+	}), [["__scopeId", "data-v-99e4013e"]]);
 	var MnrSpinner_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "MnrSpinner",
 		props: { size: { default: "medium" } },
@@ -20653,7 +20654,7 @@ ul, ol {
 			};
 		}
 	}), [["__scopeId", "data-v-c925c262"]]);
-	var _hoisted_1$4 = ["role"];
+	var _hoisted_1$5 = ["role"];
 	var MnrToast_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "MnrToast",
 		props: {
@@ -20670,19 +20671,19 @@ ul, ol {
 						class: normalizeClass(["mnr-toast", { "mnr-toast--error": __props.type === "error" }]),
 						role: __props.type === "error" ? "alert" : "status",
 						onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("dismiss"))
-					}, toDisplayString(__props.message), 11, _hoisted_1$4)) : createCommentVNode("", true)]),
+					}, toDisplayString(__props.message), 11, _hoisted_1$5)) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
 		}
 	}), [["__scopeId", "data-v-baea3e69"]]);
-	var _hoisted_1$3 = {
+	var _hoisted_1$4 = {
 		key: 0,
 		class: "mnr-loading-overlay",
 		role: "alert",
 		"aria-busy": "true"
 	};
-	var _hoisted_2$3 = {
+	var _hoisted_2$4 = {
 		key: 1,
 		class: "mnr-loading-overlay--inline",
 		role: "alert",
@@ -20696,28 +20697,28 @@ ul, ol {
 		} },
 		setup(__props) {
 			return (_ctx, _cache) => {
-				return !__props.inline ? (openBlock(), createElementBlock("div", _hoisted_1$3, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)])) : (openBlock(), createElementBlock("div", _hoisted_2$3, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)]));
+				return !__props.inline ? (openBlock(), createElementBlock("div", _hoisted_1$4, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)])) : (openBlock(), createElementBlock("div", _hoisted_2$4, [createVNode(MnrSpinner_default, { size: "medium" }), renderSlot(_ctx.$slots, "default", {}, void 0, true)]));
 			};
 		}
 	}), [["__scopeId", "data-v-01971069"]]);
-	var _hoisted_1$2 = ["aria-hidden", "inert"];
-	var _hoisted_2$2 = { class: "mnr-drawer-header" };
-	var _hoisted_3$2 = { class: "mnr-drawer-heading" };
-	var _hoisted_4$2 = {
+	var _hoisted_1$3 = ["aria-hidden", "inert"];
+	var _hoisted_2$3 = { class: "mnr-drawer-header" };
+	var _hoisted_3$3 = { class: "mnr-drawer-heading" };
+	var _hoisted_4$3 = {
 		id: "mnr-drawer-title",
 		class: "mnr-drawer-title"
 	};
-	var _hoisted_5$2 = {
+	var _hoisted_5$3 = {
 		key: 0,
 		class: "mnr-drawer-position"
 	};
-	var _hoisted_6$2 = {
+	var _hoisted_6$3 = {
 		key: 0,
 		class: "mnr-drawer-search"
 	};
-	var _hoisted_7$2 = { class: "mnr-drawer-tools" };
-	var _hoisted_8$2 = { key: 0 };
-	var _hoisted_9$1 = {
+	var _hoisted_7$3 = { class: "mnr-drawer-tools" };
+	var _hoisted_8$3 = { key: 0 };
+	var _hoisted_9$2 = {
 		key: 1,
 		class: "mnr-cache-progress-track",
 		"aria-hidden": "true"
@@ -20762,13 +20763,15 @@ ul, ol {
 			bookTitle: {},
 			chapters: {},
 			loading: { type: Boolean },
-			cacheProgress: {}
+			cacheProgress: {},
+			persistedCount: {}
 		},
 		emits: [
 			"close",
 			"select",
 			"cacheAll",
-			"retryCache"
+			"retryCache",
+			"clearCache"
 		],
 		setup(__props, { emit: __emit }) {
 			const props = __props;
@@ -20779,7 +20782,6 @@ ul, ol {
 			const query = ref("");
 			const scrollTop = ref(0);
 			const viewportHeight = ref(600);
-			let previouslyFocused = null;
 			const filteredChapters = computed(() => {
 				const needle = query.value.trim().toLocaleLowerCase();
 				if (!needle) return props.chapters;
@@ -20789,7 +20791,6 @@ ul, ol {
 				const index = props.chapters.findIndex((chapter) => chapter.isCurrent);
 				return index >= 0 ? index + 1 : 0;
 			});
-			const persistedCount = computed(() => props.chapters.filter((chapter) => chapter.isPersisted).length);
 			const sessionCount = computed(() => props.chapters.filter((chapter) => chapter.isCached && !chapter.isPersisted).length);
 			const cachePercent = computed(() => {
 				if (props.cacheProgress.total <= 0) return 0;
@@ -20829,28 +20830,39 @@ ul, ol {
 			function trapFocus(event) {
 				const drawer = drawerRef.value;
 				if (!drawer) return;
-				const focusable = Array.from(drawer.querySelectorAll("button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === document.activeElement);
+				const focusable = Array.from(drawer.querySelectorAll("button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === getDeepActiveElement());
 				if (focusable.length === 0) return;
 				const first = focusable[0];
 				const last = focusable[focusable.length - 1];
-				if (event.shiftKey && document.activeElement === first) {
+				const activeElement = getDeepActiveElement();
+				if (event.shiftKey && activeElement === first) {
 					event.preventDefault();
 					last.focus();
-				} else if (!event.shiftKey && document.activeElement === last) {
+				} else if (!event.shiftKey && activeElement === last) {
 					event.preventDefault();
 					first.focus();
 				}
 			}
+			function handleDialogKeydown(event) {
+				const keyboardEvent = event;
+				const drawer = drawerRef.value;
+				if (!props.isOpen || !drawer || !keyboardEvent.composedPath().includes(drawer)) return;
+				if (keyboardEvent.key === "Escape") {
+					keyboardEvent.preventDefault();
+					keyboardEvent.stopImmediatePropagation();
+					emit("close");
+				} else if (keyboardEvent.key === "Tab") {
+					keyboardEvent.stopImmediatePropagation();
+					trapFocus(keyboardEvent);
+				}
+			}
+			useEventListener("keydown", handleDialogKeydown, { capture: true });
 			watch(() => props.isOpen, async (open) => {
 				if (open) {
-					previouslyFocused = document.activeElement;
 					query.value = "";
 					await scrollCurrentIntoView();
 					closeButtonRef.value?.focus({ preventScroll: true });
-					return;
 				}
-				previouslyFocused?.focus?.({ preventScroll: true });
-				previouslyFocused = null;
 			}, { flush: "post" });
 			watch(() => [
 				props.loading,
@@ -20875,10 +20887,9 @@ ul, ol {
 					inert: !__props.isOpen,
 					role: "dialog",
 					"aria-modal": "true",
-					"aria-labelledby": "mnr-drawer-title",
-					onKeydown: [_cache[5] || (_cache[5] = withKeys(withModifiers(($event) => emit("close"), ["stop"]), ["esc"])), withKeys(trapFocus, ["tab"])]
+					"aria-labelledby": "mnr-drawer-title"
 				}, [
-					createBaseVNode("header", _hoisted_2$2, [createBaseVNode("div", _hoisted_3$2, [createBaseVNode("h3", _hoisted_4$2, toDisplayString(__props.bookTitle || "目录"), 1), currentChapterNumber.value ? (openBlock(), createElementBlock("span", _hoisted_5$2, " 第 " + toDisplayString(currentChapterNumber.value) + " / " + toDisplayString(__props.chapters.length) + " 章 ", 1)) : createCommentVNode("", true)]), createBaseVNode("button", {
+					createBaseVNode("header", _hoisted_2$3, [createBaseVNode("div", _hoisted_3$3, [createBaseVNode("h3", _hoisted_4$3, toDisplayString(__props.bookTitle || "目录"), 1), currentChapterNumber.value ? (openBlock(), createElementBlock("span", _hoisted_5$3, " 第 " + toDisplayString(currentChapterNumber.value) + " / " + toDisplayString(__props.chapters.length) + " 章 ", 1)) : createCommentVNode("", true)]), createBaseVNode("button", {
 						ref_key: "closeButtonRef",
 						ref: closeButtonRef,
 						class: "mnr-drawer-close",
@@ -20888,7 +20899,7 @@ ul, ol {
 						viewBox: "0 0 24 24",
 						"aria-hidden": "true"
 					}, [createBaseVNode("path", { d: "m6 6 12 12M18 6 6 18" })], -1)])], 512)]),
-					__props.chapters.length > SEARCH_THRESHOLD ? (openBlock(), createElementBlock("div", _hoisted_6$2, [_cache[7] || (_cache[7] = createBaseVNode("label", {
+					__props.chapters.length > SEARCH_THRESHOLD ? (openBlock(), createElementBlock("div", _hoisted_6$3, [_cache[7] || (_cache[7] = createBaseVNode("label", {
 						class: "mnr-visually-hidden",
 						for: "mnr-chapter-search"
 					}, "搜索章节", -1)), withDirectives(createBaseVNode("input", {
@@ -20904,19 +20915,27 @@ ul, ol {
 						void 0,
 						{ trim: true }
 					]])])) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_7$2, [createBaseVNode("button", {
-						class: "mnr-cache-action",
-						onClick: _cache[3] || (_cache[3] = ($event) => emit("cacheAll"))
-					}, [createTextVNode(toDisplayString(__props.cacheProgress.running ? "取消缓存" : "离线缓存") + " ", 1), __props.cacheProgress.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1)) : createCommentVNode("", true)]), !__props.cacheProgress.running && __props.cacheProgress.failed > 0 ? (openBlock(), createElementBlock("button", {
-						key: 0,
-						class: "mnr-cache-action",
-						onClick: _cache[4] || (_cache[4] = ($event) => emit("retryCache"))
-					}, " 重试失败 " + toDisplayString(__props.cacheProgress.failed) + " 章 ", 1)) : createCommentVNode("", true)]),
-					__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_9$1, [createBaseVNode("div", {
+					createBaseVNode("div", _hoisted_7$3, [
+						createBaseVNode("button", {
+							class: "mnr-cache-action",
+							onClick: _cache[3] || (_cache[3] = ($event) => emit("cacheAll"))
+						}, [createTextVNode(toDisplayString(__props.cacheProgress.running ? "取消缓存" : "离线缓存") + " ", 1), __props.cacheProgress.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_8$3, toDisplayString(__props.cacheProgress.done) + "/" + toDisplayString(__props.cacheProgress.total), 1)) : createCommentVNode("", true)]),
+						!__props.cacheProgress.running && __props.cacheProgress.failed > 0 ? (openBlock(), createElementBlock("button", {
+							key: 0,
+							class: "mnr-cache-action",
+							onClick: _cache[4] || (_cache[4] = ($event) => emit("retryCache"))
+						}, " 重试失败 " + toDisplayString(__props.cacheProgress.failed) + " 章 ", 1)) : createCommentVNode("", true),
+						!__props.cacheProgress.running && __props.persistedCount > 0 ? (openBlock(), createElementBlock("button", {
+							key: 1,
+							class: "mnr-cache-action",
+							onClick: _cache[5] || (_cache[5] = ($event) => emit("clearCache"))
+						}, " 清除缓存 ")) : createCommentVNode("", true)
+					]),
+					__props.cacheProgress.running ? (openBlock(), createElementBlock("div", _hoisted_9$2, [createBaseVNode("div", {
 						class: "mnr-cache-progress-fill",
 						style: normalizeStyle({ width: `${cachePercent.value}%` })
 					}, null, 4)])) : createCommentVNode("", true),
-					persistedCount.value > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_10$1, [persistedCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_11$1, "已保存 " + toDisplayString(persistedCount.value) + " 章", 1)) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_12$1, "临时 " + toDisplayString(sessionCount.value) + " 章", 1)) : createCommentVNode("", true)])) : createCommentVNode("", true),
+					__props.persistedCount > 0 || sessionCount.value > 0 ? (openBlock(), createElementBlock("div", _hoisted_10$1, [__props.persistedCount > 0 ? (openBlock(), createElementBlock("span", _hoisted_11$1, "已保存 " + toDisplayString(__props.persistedCount) + " 章", 1)) : createCommentVNode("", true), sessionCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_12$1, "临时 " + toDisplayString(sessionCount.value) + " 章", 1)) : createCommentVNode("", true)])) : createCommentVNode("", true),
 					__props.loading ? (openBlock(), createElementBlock("div", _hoisted_13$1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[8] || (_cache[8] = createBaseVNode("span", null, "加载目录中...", -1))])) : __props.chapters.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_14$1, "暂无目录")) : filteredChapters.value.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_15$1, "没有匹配的章节")) : (openBlock(), createElementBlock("div", {
 						key: 6,
 						ref_key: "contentRef",
@@ -20950,64 +20969,108 @@ ul, ol {
 							r: "7"
 						})], -1)])])) : createCommentVNode("", true), createBaseVNode("span", _hoisted_19$1, toDisplayString(ch.title), 1)], 10, _hoisted_16$1)]);
 					}), 128))], 4)], 544))
-				], 42, _hoisted_1$2)], 64);
+				], 10, _hoisted_1$3)], 64);
 			};
 		}
-	}), [["__scopeId", "data-v-7b667994"]]);
-	var _hoisted_1$1 = ["onKeydown"];
-	var _hoisted_2$1 = { class: "mnr-settings-header" };
-	var _hoisted_3$1 = { class: "mnr-settings-content" };
-	var _hoisted_4$1 = { class: "mnr-settings-section" };
-	var _hoisted_5$1 = { class: "mnr-theme-grid" };
-	var _hoisted_6$1 = ["aria-pressed", "onClick"];
-	var _hoisted_7$1 = { class: "mnr-settings-section" };
-	var _hoisted_8$1 = { class: "mnr-slider-row" };
-	var _hoisted_9 = ["value"];
-	var _hoisted_10 = { class: "mnr-slider-value" };
-	var _hoisted_11 = { class: "mnr-settings-section" };
-	var _hoisted_12 = { class: "mnr-slider-row" };
-	var _hoisted_13 = ["value"];
-	var _hoisted_14 = { class: "mnr-slider-value" };
-	var _hoisted_15 = { class: "mnr-settings-section" };
-	var _hoisted_16 = { class: "mnr-slider-row" };
-	var _hoisted_17 = ["value"];
-	var _hoisted_18 = { class: "mnr-slider-value" };
-	var _hoisted_19 = { class: "mnr-settings-section" };
-	var _hoisted_20 = { class: "mnr-slider-row" };
-	var _hoisted_21 = ["value"];
-	var _hoisted_22 = { class: "mnr-slider-value" };
-	var _hoisted_23 = { class: "mnr-settings-section" };
-	var _hoisted_24 = { class: "mnr-slider-row" };
-	var _hoisted_25 = ["value"];
-	var _hoisted_26 = { class: "mnr-slider-value" };
-	var _hoisted_27 = { class: "mnr-settings-section" };
-	var _hoisted_28 = { class: "mnr-slider-row" };
-	var _hoisted_29 = ["value"];
-	var _hoisted_30 = { class: "mnr-slider-value" };
-	var _hoisted_31 = { class: "mnr-settings-section" };
-	var _hoisted_32 = ["value"];
-	var _hoisted_33 = { class: "mnr-settings-section" };
-	var _hoisted_34 = { class: "mnr-segmented-control" };
-	var _hoisted_35 = ["aria-pressed", "onClick"];
-	var _hoisted_36 = { class: "mnr-more-settings" };
-	var _hoisted_37 = { class: "mnr-more-content" };
-	var _hoisted_38 = { class: "mnr-switch-row" };
-	var _hoisted_39 = { class: "mnr-switch-row" };
-	var _hoisted_40 = { class: "mnr-switch-row" };
-	var _hoisted_41 = { class: "mnr-switch-row" };
-	var _hoisted_42 = { class: "mnr-switch-row" };
-	var _hoisted_43 = { class: "mnr-switch-row" };
-	var _hoisted_44 = { class: "mnr-more-section" };
-	var _hoisted_45 = { class: "mnr-segmented-control" };
-	var _hoisted_46 = ["aria-pressed"];
-	var _hoisted_47 = ["aria-pressed"];
-	var _hoisted_48 = { class: "mnr-more-section" };
-	var _hoisted_49 = { class: "mnr-action-buttons" };
-	var _hoisted_50 = {
-		key: 0,
-		class: "mnr-cache-progress"
+	}), [["__scopeId", "data-v-c5d5da9c"]]);
+	var _hoisted_1$2 = { class: "mnr-reading-control" };
+	var _hoisted_2$2 = { class: "mnr-reading-control-header" };
+	var _hoisted_3$2 = ["id", "for"];
+	var _hoisted_4$2 = ["for"];
+	var _hoisted_5$2 = { class: "mnr-reading-slider-row" };
+	var _hoisted_6$2 = { "aria-hidden": "true" };
+	var _hoisted_7$2 = [
+		"id",
+		"min",
+		"max",
+		"step",
+		"value",
+		"aria-labelledby",
+		"aria-valuetext"
+	];
+	var _hoisted_8$2 = { "aria-hidden": "true" };
+	var ReadingSlider_default = _plugin_vue_export_helper_default(defineComponent({
+		__name: "ReadingSlider",
+		props: {
+			id: {},
+			label: {},
+			modelValue: {},
+			min: {},
+			max: {},
+			step: { default: 1 },
+			minLabel: {},
+			maxLabel: {},
+			displayValue: {}
+		},
+		emits: ["update:modelValue"],
+		setup(__props, { emit: __emit }) {
+			const emit = __emit;
+			function handleInput(event) {
+				emit("update:modelValue", Number(event.currentTarget.value));
+			}
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock("div", _hoisted_1$2, [createBaseVNode("div", _hoisted_2$2, [createBaseVNode("label", {
+					id: `${__props.id}-label`,
+					for: __props.id
+				}, toDisplayString(__props.label), 9, _hoisted_3$2), createBaseVNode("output", { for: __props.id }, toDisplayString(__props.displayValue), 9, _hoisted_4$2)]), createBaseVNode("div", _hoisted_5$2, [
+					createBaseVNode("span", _hoisted_6$2, toDisplayString(__props.minLabel), 1),
+					createBaseVNode("input", {
+						id: __props.id,
+						type: "range",
+						min: __props.min,
+						max: __props.max,
+						step: __props.step,
+						value: __props.modelValue,
+						"aria-labelledby": `${__props.id}-label`,
+						"aria-valuetext": __props.displayValue,
+						onInput: handleInput
+					}, null, 40, _hoisted_7$2),
+					createBaseVNode("span", _hoisted_8$2, toDisplayString(__props.maxLabel), 1)
+				])]);
+			};
+		}
+	}), [["__scopeId", "data-v-e6745e69"]]);
+	var _hoisted_1$1 = { class: "mnr-settings-header" };
+	var _hoisted_2$1 = { class: "mnr-settings-content" };
+	var _hoisted_3$1 = {
+		class: "mnr-settings-section",
+		"aria-labelledby": "mnr-appearance-title"
 	};
-	var SettingsPanel_default = defineComponent({
+	var _hoisted_4$1 = {
+		class: "mnr-theme-grid",
+		"aria-label": "阅读主题"
+	};
+	var _hoisted_5$1 = ["aria-pressed", "onClick"];
+	var _hoisted_6$1 = ["value"];
+	var _hoisted_7$1 = ["value"];
+	var _hoisted_8$1 = { class: "mnr-settings-fieldset" };
+	var _hoisted_9$1 = { class: "mnr-segmented-control" };
+	var _hoisted_10 = ["aria-pressed", "onClick"];
+	var _hoisted_11 = { class: "mnr-settings-group" };
+	var _hoisted_12 = { class: "mnr-settings-group-content" };
+	var _hoisted_13 = { class: "mnr-settings-group" };
+	var _hoisted_14 = { class: "mnr-settings-group-content" };
+	var _hoisted_15 = { class: "mnr-switch-row" };
+	var _hoisted_16 = ["checked"];
+	var _hoisted_17 = { class: "mnr-switch-row" };
+	var _hoisted_18 = ["checked"];
+	var _hoisted_19 = { class: "mnr-switch-row" };
+	var _hoisted_20 = ["checked"];
+	var _hoisted_21 = { class: "mnr-switch-row" };
+	var _hoisted_22 = ["checked"];
+	var _hoisted_23 = { class: "mnr-switch-row" };
+	var _hoisted_24 = ["checked"];
+	var _hoisted_25 = { class: "mnr-settings-group" };
+	var _hoisted_26 = { class: "mnr-settings-group-content" };
+	var _hoisted_27 = { class: "mnr-switch-row" };
+	var _hoisted_28 = ["checked"];
+	var _hoisted_29 = { class: "mnr-settings-fieldset" };
+	var _hoisted_30 = { class: "mnr-segmented-control" };
+	var _hoisted_31 = ["aria-pressed"];
+	var _hoisted_32 = ["aria-pressed"];
+	var _hoisted_33 = ["value"];
+	var _hoisted_34 = { class: "mnr-settings-footer" };
+	var SettingsPanel_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "SettingsPanel",
 		props: {
 			visible: { type: Boolean },
@@ -21018,8 +21081,6 @@ ul, ol {
 		},
 		emits: [
 			"close",
-			"cacheAll",
-			"retryCache",
 			"copyDiagnostics",
 			"exit",
 			"siteAutoEnableChange",
@@ -21030,10 +21091,9 @@ ul, ol {
 			const props = __props;
 			const emit = __emit;
 			const configStore = useConfigStore();
-			const readerStore = useReaderStore();
 			const panelRef = ref(null);
-			const closeButtonRef = ref(null);
-			let previouslyFocused = null;
+			const titleRef = ref(null);
+			const themes = THEMES;
 			const conversionOptions = [
 				{
 					label: "原文",
@@ -21066,26 +21126,6 @@ ul, ol {
 					value: "'Kaiti SC', 'STKaiti', serif"
 				}
 			];
-			const currentTheme = computed(() => configStore.themeId);
-			const themes = THEMES;
-			const cacheProgress = computed(() => readerStore.cacheProgress);
-			const persistedCount = computed(() => readerStore.persistedUrls.size);
-			const fontSize = ref(configStore.reading.fontSize);
-			const lineHeight = ref(configStore.reading.lineHeight);
-			const letterSpacing = ref(configStore.reading.letterSpacing);
-			const paragraphIndent = ref(configStore.reading.paragraphIndent);
-			const maxWidth = ref(configStore.reading.maxWidth);
-			const padding = ref(configStore.reading.padding);
-			const fontFamily = ref(configStore.reading.fontFamily);
-			const textConversion = ref(configStore.reading.textConversion);
-			const showProgress = ref(configStore.behavior.showProgress);
-			const preloadNext = ref(configStore.behavior.preloadNext);
-			const keyboardNavigation = ref(configStore.behavior.keyboardNavigation);
-			const swipeGestures = ref(configStore.behavior.swipeGestures);
-			const autoHideHeader = ref(configStore.behavior.autoHideHeader);
-			const siteAutoEnable = ref(props.siteAutoEnable);
-			const protectionMode = ref(configStore.protection.mode);
-			const customCSS = ref(configStore.customCSS);
 			function closePanel() {
 				configStore.flushSave();
 				emit("close");
@@ -21093,111 +21133,71 @@ ul, ol {
 			function trapFocus(event) {
 				const panel = panelRef.value;
 				if (!panel) return;
-				const focusable = Array.from(panel.querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === document.activeElement);
+				const focusable = Array.from(panel.querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex=\"-1\"])")).filter((element) => element.offsetParent !== null || element === getDeepActiveElement());
 				if (focusable.length === 0) return;
 				const first = focusable[0];
 				const last = focusable[focusable.length - 1];
-				if (event.shiftKey && document.activeElement === first) {
+				const activeElement = getDeepActiveElement();
+				if (activeElement === titleRef.value) {
+					event.preventDefault();
+					(event.shiftKey ? last : first).focus();
+				} else if (event.shiftKey && activeElement === first) {
 					event.preventDefault();
 					last.focus();
-				} else if (!event.shiftKey && document.activeElement === last) {
+				} else if (!event.shiftKey && activeElement === last) {
 					event.preventDefault();
 					first.focus();
 				}
 			}
-			function setTheme(id) {
-				configStore.setTheme(id);
+			function handleDialogKeydown(event) {
+				const keyboardEvent = event;
+				const panel = panelRef.value;
+				if (!props.visible || !panel || !keyboardEvent.composedPath().includes(panel)) return;
+				if (keyboardEvent.key === "Escape") {
+					keyboardEvent.preventDefault();
+					keyboardEvent.stopImmediatePropagation();
+					closePanel();
+				} else if (keyboardEvent.key === "Tab") {
+					keyboardEvent.stopImmediatePropagation();
+					trapFocus(keyboardEvent);
+				}
 			}
-			function updateFontSize(event) {
-				const value = Number(event.target.value);
-				fontSize.value = value;
-				configStore.updateReading({ fontSize: value });
-				configStore.applyReading();
+			useEventListener("keydown", handleDialogKeydown, { capture: true });
+			function updateNumericReading(key, value) {
+				configStore.updateReading({ [key]: value });
 			}
-			function updateLineHeight(event) {
-				const value = Number(event.target.value);
-				lineHeight.value = value;
-				configStore.updateReading({ lineHeight: value });
-				configStore.applyReading();
-			}
-			function updateLetterSpacing(event) {
-				const value = Number(event.target.value);
-				letterSpacing.value = value;
-				configStore.updateReading({ letterSpacing: value });
-				configStore.applyReading();
-			}
-			function updateParagraphIndent(event) {
-				const value = Number(event.target.value);
-				paragraphIndent.value = value;
-				configStore.updateReading({ paragraphIndent: value });
-				configStore.applyReading();
-			}
-			function updateMaxWidth(event) {
-				const value = Number(event.target.value);
-				maxWidth.value = value;
-				configStore.updateReading({ maxWidth: value });
-				configStore.applyReading();
-			}
-			function updatePadding(event) {
-				const value = Number(event.target.value);
-				padding.value = value;
-				configStore.updateReading({ padding: value });
-				configStore.applyReading();
-			}
-			function updateFontFamily() {
-				configStore.updateReading({ fontFamily: fontFamily.value });
-				configStore.applyReading();
+			function updateFontFamily(event) {
+				configStore.updateReading({ fontFamily: event.currentTarget.value });
 			}
 			function updateTextConversion(mode) {
-				textConversion.value = mode;
 				configStore.updateReading({ textConversion: mode });
 				emit("textConversionChange", mode);
 			}
-			function updateBehavior(key, value) {
-				configStore.updateBehavior({ [key]: value });
+			function updateBehavior(key, event) {
+				configStore.updateBehavior({ [key]: event.currentTarget.checked });
+			}
+			function updateSiteAutoEnable(event) {
+				emit("siteAutoEnableChange", event.currentTarget.checked);
 			}
 			function updateProtectionMode(mode) {
-				protectionMode.value = mode;
 				configStore.updateProtection({ mode });
 				emit("protectionModeChange", mode);
 			}
-			function updateCustomCSS() {
-				configStore.setCustomCSS(customCSS.value);
+			function updateCustomCSS(event) {
+				configStore.setCustomCSS(event.currentTarget.value);
 			}
-			async function handleClearCache() {
-				if (!window.confirm("确定要清除本书的离线缓存吗？")) return;
-				await readerStore.clearPersistedCache();
-				readerStore.showToast("离线缓存已清除", "info");
+			function resetAppearance() {
+				configStore.setTheme("system");
+				configStore.resetReading();
+				emit("textConversionChange", "none");
 			}
-			watch(() => props.siteAutoEnable, (value) => {
-				siteAutoEnable.value = value;
-			});
 			watch(() => props.visible, async (visible) => {
 				if (visible) {
-					previouslyFocused = document.activeElement;
-					fontSize.value = configStore.reading.fontSize;
-					lineHeight.value = configStore.reading.lineHeight;
-					letterSpacing.value = configStore.reading.letterSpacing;
-					paragraphIndent.value = configStore.reading.paragraphIndent;
-					maxWidth.value = configStore.reading.maxWidth;
-					padding.value = configStore.reading.padding;
-					fontFamily.value = configStore.reading.fontFamily;
-					textConversion.value = configStore.reading.textConversion;
-					showProgress.value = configStore.behavior.showProgress;
-					preloadNext.value = configStore.behavior.preloadNext;
-					keyboardNavigation.value = configStore.behavior.keyboardNavigation;
-					swipeGestures.value = configStore.behavior.swipeGestures;
-					autoHideHeader.value = configStore.behavior.autoHideHeader;
-					siteAutoEnable.value = props.siteAutoEnable;
-					protectionMode.value = configStore.protection.mode;
-					customCSS.value = configStore.customCSS;
 					await nextTick();
-					closeButtonRef.value?.focus({ preventScroll: true });
+					titleRef.value?.focus({ preventScroll: true });
 					return;
 				}
 				configStore.flushSave();
-				previouslyFocused?.focus?.({ preventScroll: true });
-				previouslyFocused = null;
 			});
 			return (_ctx, _cache) => {
 				return openBlock(), createBlock(Transition, { name: "mnr-slide" }, {
@@ -21211,290 +21211,232 @@ ul, ol {
 						class: "mnr-settings-panel",
 						role: "dialog",
 						"aria-modal": "true",
-						"aria-labelledby": "mnr-settings-title",
-						onKeydown: [withKeys(withModifiers(closePanel, ["stop"]), ["esc"]), withKeys(trapFocus, ["tab"])]
-					}, [createBaseVNode("header", _hoisted_2$1, [_cache[21] || (_cache[21] = createBaseVNode("h3", { id: "mnr-settings-title" }, "阅读设置", -1)), createBaseVNode("button", {
-						ref_key: "closeButtonRef",
-						ref: closeButtonRef,
-						class: "mnr-close-btn",
-						"aria-label": "关闭设置",
-						onClick: closePanel
-					}, [..._cache[20] || (_cache[20] = [createBaseVNode("svg", {
-						viewBox: "0 0 24 24",
-						"aria-hidden": "true"
-					}, [createBaseVNode("path", { d: "m6 6 12 12M18 6 6 18" })], -1)])], 512)]), createBaseVNode("div", _hoisted_3$1, [
-						createBaseVNode("section", _hoisted_4$1, [_cache[22] || (_cache[22] = createBaseVNode("h4", null, "主题", -1)), createBaseVNode("div", _hoisted_5$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
-							return openBlock(), createElementBlock("button", {
-								key: theme.id,
-								class: normalizeClass(["mnr-theme-btn", { active: currentTheme.value === theme.id }]),
-								"aria-pressed": currentTheme.value === theme.id,
-								style: normalizeStyle({
-									background: theme.background,
-									color: theme.text,
-									borderColor: currentTheme.value === theme.id ? "var(--mnr-link, #1976d2)" : theme.border
-								}),
-								onClick: ($event) => setTheme(theme.id)
-							}, toDisplayString(theme.name), 15, _hoisted_6$1);
-						}), 128))])]),
-						createBaseVNode("section", _hoisted_7$1, [_cache[25] || (_cache[25] = createBaseVNode("h4", null, "字号", -1)), createBaseVNode("div", _hoisted_8$1, [
-							_cache[23] || (_cache[23] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "A", -1)),
-							createBaseVNode("input", {
-								type: "range",
-								min: "14",
-								max: "28",
-								value: fontSize.value,
-								class: "mnr-slider",
-								"aria-label": "字体大小",
-								onInput: updateFontSize
-							}, null, 40, _hoisted_9),
-							_cache[24] || (_cache[24] = createBaseVNode("span", {
-								class: "mnr-slider-label mnr-slider-label--large",
-								"aria-hidden": "true"
-							}, "A", -1)),
-							createBaseVNode("span", _hoisted_10, toDisplayString(fontSize.value) + "px", 1)
-						])]),
-						createBaseVNode("section", _hoisted_11, [_cache[28] || (_cache[28] = createBaseVNode("h4", null, "行距", -1)), createBaseVNode("div", _hoisted_12, [
-							_cache[26] || (_cache[26] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, [createBaseVNode("svg", {
-								class: "mnr-scale-icon",
-								viewBox: "0 0 24 24"
-							}, [createBaseVNode("path", { d: "M5 9h14M5 12h14M5 15h14" })])], -1)),
-							createBaseVNode("input", {
-								type: "range",
-								min: "1.4",
-								max: "2.4",
-								step: "0.1",
-								value: lineHeight.value,
-								class: "mnr-slider",
-								"aria-label": "行间距",
-								onInput: updateLineHeight
-							}, null, 40, _hoisted_13),
-							_cache[27] || (_cache[27] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, [createBaseVNode("svg", {
-								class: "mnr-scale-icon",
-								viewBox: "0 0 24 24"
-							}, [createBaseVNode("path", { d: "M5 6h14M5 12h14M5 18h14" })])], -1)),
-							createBaseVNode("span", _hoisted_14, toDisplayString(lineHeight.value), 1)
-						])]),
-						createBaseVNode("section", _hoisted_15, [_cache[31] || (_cache[31] = createBaseVNode("h4", null, "字间距", -1)), createBaseVNode("div", _hoisted_16, [
-							_cache[29] || (_cache[29] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "紧", -1)),
-							createBaseVNode("input", {
-								type: "range",
-								min: "0",
-								max: "0.2",
-								step: "0.01",
-								value: letterSpacing.value,
-								class: "mnr-slider",
-								"aria-label": "文字间距",
-								onInput: updateLetterSpacing
-							}, null, 40, _hoisted_17),
-							_cache[30] || (_cache[30] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "松", -1)),
-							createBaseVNode("span", _hoisted_18, toDisplayString(letterSpacing.value.toFixed(2)) + "em", 1)
-						])]),
-						createBaseVNode("section", _hoisted_19, [_cache[34] || (_cache[34] = createBaseVNode("h4", null, "段落缩进", -1)), createBaseVNode("div", _hoisted_20, [
-							_cache[32] || (_cache[32] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "0", -1)),
-							createBaseVNode("input", {
-								type: "range",
-								min: "0",
-								max: "4",
-								step: "0.5",
-								value: paragraphIndent.value,
-								class: "mnr-slider",
-								"aria-label": "段落首行缩进",
-								onInput: updateParagraphIndent
-							}, null, 40, _hoisted_21),
-							_cache[33] || (_cache[33] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "4", -1)),
-							createBaseVNode("span", _hoisted_22, toDisplayString(paragraphIndent.value) + "em", 1)
-						])]),
-						createBaseVNode("section", _hoisted_23, [_cache[37] || (_cache[37] = createBaseVNode("h4", null, "内容宽度", -1)), createBaseVNode("div", _hoisted_24, [
-							_cache[35] || (_cache[35] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, [createBaseVNode("svg", {
-								class: "mnr-scale-icon",
-								viewBox: "0 0 24 24"
-							}, [createBaseVNode("path", { d: "m4 8 4 4-4 4M20 8l-4 4 4 4" })])], -1)),
-							createBaseVNode("input", {
-								type: "range",
-								min: "500",
-								max: "1200",
-								step: "50",
-								value: maxWidth.value,
-								class: "mnr-slider",
-								"aria-label": "正文内容宽度",
-								onInput: updateMaxWidth
-							}, null, 40, _hoisted_25),
-							_cache[36] || (_cache[36] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, [createBaseVNode("svg", {
-								class: "mnr-scale-icon",
-								viewBox: "0 0 24 24"
-							}, [createBaseVNode("path", { d: "m8 8-4 4 4 4M16 8l4 4-4 4" })])], -1)),
-							createBaseVNode("span", _hoisted_26, toDisplayString(maxWidth.value) + "px", 1)
-						])]),
-						createBaseVNode("section", _hoisted_27, [_cache[40] || (_cache[40] = createBaseVNode("h4", null, "内容边距", -1)), createBaseVNode("div", _hoisted_28, [
-							_cache[38] || (_cache[38] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "窄", -1)),
-							createBaseVNode("input", {
-								type: "range",
-								min: "12",
-								max: "48",
-								step: "2",
-								value: padding.value,
-								class: "mnr-slider",
-								"aria-label": "正文内容边距",
-								onInput: updatePadding
-							}, null, 40, _hoisted_29),
-							_cache[39] || (_cache[39] = createBaseVNode("span", {
-								class: "mnr-slider-label",
-								"aria-hidden": "true"
-							}, "宽", -1)),
-							createBaseVNode("span", _hoisted_30, toDisplayString(padding.value) + "px", 1)
-						])]),
-						createBaseVNode("section", _hoisted_31, [_cache[41] || (_cache[41] = createBaseVNode("label", {
-							class: "mnr-field-label",
-							for: "mnr-font-family"
-						}, "字体", -1)), withDirectives(createBaseVNode("select", {
-							id: "mnr-font-family",
-							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => fontFamily.value = $event),
-							class: "mnr-select",
-							onChange: updateFontFamily
-						}, [(openBlock(), createElementBlock(Fragment, null, renderList(fontOptions, (option) => {
-							return createBaseVNode("option", {
-								key: option.label,
-								value: option.value
-							}, toDisplayString(option.label), 9, _hoisted_32);
-						}), 64))], 544), [[vModelSelect, fontFamily.value]])]),
-						createBaseVNode("section", _hoisted_33, [_cache[42] || (_cache[42] = createBaseVNode("h4", null, "简繁转换", -1)), createBaseVNode("div", _hoisted_34, [(openBlock(), createElementBlock(Fragment, null, renderList(conversionOptions, (option) => {
-							return createBaseVNode("button", {
-								key: option.value,
-								class: normalizeClass(["mnr-segment", { active: textConversion.value === option.value }]),
-								"aria-pressed": textConversion.value === option.value,
-								onClick: ($event) => updateTextConversion(option.value)
-							}, toDisplayString(option.label), 11, _hoisted_35);
-						}), 64))])]),
-						createBaseVNode("details", _hoisted_36, [_cache[51] || (_cache[51] = createBaseVNode("summary", null, "更多设置", -1)), createBaseVNode("div", _hoisted_37, [
-							createBaseVNode("label", _hoisted_38, [_cache[43] || (_cache[43] = createBaseVNode("span", null, "显示阅读进度", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => showProgress.value = $event),
-								type: "checkbox",
-								onChange: _cache[2] || (_cache[2] = ($event) => updateBehavior("showProgress", showProgress.value))
-							}, null, 544), [[vModelCheckbox, showProgress.value]])]),
-							createBaseVNode("label", _hoisted_39, [_cache[44] || (_cache[44] = createBaseVNode("span", null, "自动加载下一章", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => preloadNext.value = $event),
-								type: "checkbox",
-								onChange: _cache[4] || (_cache[4] = ($event) => updateBehavior("preloadNext", preloadNext.value))
-							}, null, 544), [[vModelCheckbox, preloadNext.value]])]),
-							createBaseVNode("label", _hoisted_40, [_cache[45] || (_cache[45] = createBaseVNode("span", null, "键盘导航", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => keyboardNavigation.value = $event),
-								type: "checkbox",
-								onChange: _cache[6] || (_cache[6] = ($event) => updateBehavior("keyboardNavigation", keyboardNavigation.value))
-							}, null, 544), [[vModelCheckbox, keyboardNavigation.value]])]),
-							createBaseVNode("label", _hoisted_41, [_cache[46] || (_cache[46] = createBaseVNode("span", null, "触摸手势", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => swipeGestures.value = $event),
-								type: "checkbox",
-								onChange: _cache[8] || (_cache[8] = ($event) => updateBehavior("swipeGestures", swipeGestures.value))
-							}, null, 544), [[vModelCheckbox, swipeGestures.value]])]),
-							createBaseVNode("label", _hoisted_42, [_cache[47] || (_cache[47] = createBaseVNode("span", null, "自动隐藏工具栏", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => autoHideHeader.value = $event),
-								type: "checkbox",
-								onChange: _cache[10] || (_cache[10] = ($event) => updateBehavior("autoHideHeader", autoHideHeader.value))
-							}, null, 544), [[vModelCheckbox, autoHideHeader.value]])]),
-							createBaseVNode("label", _hoisted_43, [_cache[48] || (_cache[48] = createBaseVNode("span", null, "在本站自动开启", -1)), withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => siteAutoEnable.value = $event),
-								type: "checkbox",
-								onChange: _cache[12] || (_cache[12] = ($event) => emit("siteAutoEnableChange", siteAutoEnable.value))
-							}, null, 544), [[vModelCheckbox, siteAutoEnable.value]])]),
-							createBaseVNode("div", _hoisted_44, [_cache[49] || (_cache[49] = createBaseVNode("span", { class: "mnr-more-label" }, "网站防护", -1)), createBaseVNode("div", _hoisted_45, [createBaseVNode("button", {
-								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "standard" }]),
-								"aria-pressed": protectionMode.value === "standard",
-								onClick: _cache[13] || (_cache[13] = ($event) => updateProtectionMode("standard"))
-							}, " 标准 ", 10, _hoisted_46), createBaseVNode("button", {
-								class: normalizeClass(["mnr-segment", { active: protectionMode.value === "aggressive" }]),
-								"aria-pressed": protectionMode.value === "aggressive",
-								onClick: _cache[14] || (_cache[14] = ($event) => updateProtectionMode("aggressive"))
-							}, " 强力 ", 10, _hoisted_47)])]),
-							createBaseVNode("div", _hoisted_48, [_cache[50] || (_cache[50] = createBaseVNode("label", {
-								class: "mnr-more-label",
-								for: "mnr-custom-css"
-							}, "自定义 CSS", -1)), withDirectives(createBaseVNode("textarea", {
-								id: "mnr-custom-css",
-								"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => customCSS.value = $event),
-								class: "mnr-custom-css",
-								rows: "5",
-								spellcheck: "false",
-								placeholder: ".mnr-reader-content { ... }",
-								onInput: updateCustomCSS
-							}, null, 544), [[vModelText, customCSS.value]])]),
-							createBaseVNode("div", _hoisted_49, [
+						"aria-labelledby": "mnr-settings-title"
+					}, [
+						createBaseVNode("header", _hoisted_1$1, [createBaseVNode("h3", {
+							id: "mnr-settings-title",
+							ref_key: "titleRef",
+							ref: titleRef,
+							tabindex: "-1"
+						}, "阅读设置", 512), createBaseVNode("button", {
+							class: "mnr-close-btn",
+							"aria-label": "关闭设置",
+							onClick: closePanel
+						}, [..._cache[15] || (_cache[15] = [createBaseVNode("svg", {
+							viewBox: "0 0 24 24",
+							"aria-hidden": "true"
+						}, [createBaseVNode("path", { d: "m6 6 12 12M18 6 6 18" })], -1)])])]),
+						createBaseVNode("div", _hoisted_2$1, [
+							createBaseVNode("section", _hoisted_3$1, [
+								_cache[17] || (_cache[17] = createBaseVNode("h4", { id: "mnr-appearance-title" }, "阅读外观", -1)),
+								createBaseVNode("div", _hoisted_4$1, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(themes), (theme) => {
+									return openBlock(), createElementBlock("button", {
+										key: theme.id,
+										class: normalizeClass(["mnr-theme-btn", { active: unref(configStore).themeId === theme.id }]),
+										"aria-pressed": unref(configStore).themeId === theme.id,
+										style: normalizeStyle({
+											background: theme.background,
+											color: theme.text,
+											borderColor: unref(configStore).themeId === theme.id ? "var(--mnr-link, #1976d2)" : theme.border
+										}),
+										onClick: ($event) => unref(configStore).setTheme(theme.id)
+									}, toDisplayString(theme.name), 15, _hoisted_5$1);
+								}), 128))]),
+								_cache[18] || (_cache[18] = createBaseVNode("div", {
+									class: "mnr-reading-preview",
+									"aria-hidden": "true"
+								}, [createBaseVNode("span", null, "排版预览"), createBaseVNode("p", null, "山高月小，水落石出。愿每一页都读得舒适从容。")], -1)),
+								createVNode(ReadingSlider_default, {
+									id: "mnr-font-size",
+									label: "字号",
+									"model-value": unref(configStore).reading.fontSize,
+									min: 14,
+									max: 28,
+									"min-label": "小",
+									"max-label": "大",
+									"display-value": `${unref(configStore).reading.fontSize} 像素`,
+									"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => updateNumericReading("fontSize", $event))
+								}, null, 8, ["model-value", "display-value"]),
+								createVNode(ReadingSlider_default, {
+									id: "mnr-line-height",
+									label: "行距",
+									"model-value": unref(configStore).reading.lineHeight,
+									min: 1.4,
+									max: 2.4,
+									step: .1,
+									"min-label": "紧",
+									"max-label": "松",
+									"display-value": `${unref(configStore).reading.lineHeight} 倍`,
+									"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => updateNumericReading("lineHeight", $event))
+								}, null, 8, ["model-value", "display-value"]),
+								_cache[19] || (_cache[19] = createBaseVNode("label", {
+									class: "mnr-field-label",
+									for: "mnr-font-family"
+								}, "字体", -1)),
+								createBaseVNode("select", {
+									id: "mnr-font-family",
+									class: "mnr-select",
+									value: unref(configStore).reading.fontFamily,
+									onChange: updateFontFamily
+								}, [(openBlock(), createElementBlock(Fragment, null, renderList(fontOptions, (option) => {
+									return createBaseVNode("option", {
+										key: option.label,
+										value: option.value
+									}, toDisplayString(option.label), 9, _hoisted_7$1);
+								}), 64))], 40, _hoisted_6$1),
+								createBaseVNode("fieldset", _hoisted_8$1, [_cache[16] || (_cache[16] = createBaseVNode("legend", null, "简繁转换", -1)), createBaseVNode("div", _hoisted_9$1, [(openBlock(), createElementBlock(Fragment, null, renderList(conversionOptions, (option) => {
+									return createBaseVNode("button", {
+										key: option.value,
+										class: normalizeClass(["mnr-segment", { active: unref(configStore).reading.textConversion === option.value }]),
+										"aria-pressed": unref(configStore).reading.textConversion === option.value,
+										onClick: ($event) => updateTextConversion(option.value)
+									}, toDisplayString(option.label), 11, _hoisted_10);
+								}), 64))])]),
 								createBaseVNode("button", {
-									class: "mnr-action-btn",
-									onClick: _cache[16] || (_cache[16] = ($event) => emit("cacheAll"))
-								}, [createTextVNode(toDisplayString(cacheProgress.value.running ? "取消缓存" : "离线缓存") + " ", 1), cacheProgress.value.total > 0 ? (openBlock(), createElementBlock("span", _hoisted_50, toDisplayString(cacheProgress.value.done) + "/" + toDisplayString(cacheProgress.value.total), 1)) : createCommentVNode("", true)]),
-								!cacheProgress.value.running && cacheProgress.value.failed > 0 ? (openBlock(), createElementBlock("button", {
-									key: 0,
-									class: "mnr-action-btn",
-									onClick: _cache[17] || (_cache[17] = ($event) => emit("retryCache"))
-								}, " 重试失败章节（" + toDisplayString(cacheProgress.value.failed) + "） ", 1)) : createCommentVNode("", true),
-								persistedCount.value > 0 ? (openBlock(), createElementBlock("button", {
-									key: 1,
-									class: "mnr-action-btn",
-									onClick: handleClearCache
-								}, " 清除离线缓存（" + toDisplayString(persistedCount.value) + "） ", 1)) : createCommentVNode("", true),
+									class: "mnr-secondary-action",
+									onClick: resetAppearance
+								}, "恢复默认外观")
+							]),
+							createBaseVNode("details", _hoisted_11, [_cache[20] || (_cache[20] = createBaseVNode("summary", null, "排版细节", -1)), createBaseVNode("div", _hoisted_12, [
+								createVNode(ReadingSlider_default, {
+									id: "mnr-letter-spacing",
+									label: "字间距",
+									"model-value": unref(configStore).reading.letterSpacing,
+									min: 0,
+									max: .2,
+									step: .01,
+									"min-label": "紧",
+									"max-label": "松",
+									"display-value": `${Math.round(unref(configStore).reading.letterSpacing * 100)}%`,
+									"onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => updateNumericReading("letterSpacing", $event))
+								}, null, 8, ["model-value", "display-value"]),
+								createVNode(ReadingSlider_default, {
+									id: "mnr-paragraph-indent",
+									label: "段落缩进",
+									"model-value": unref(configStore).reading.paragraphIndent,
+									min: 0,
+									max: 4,
+									step: .5,
+									"min-label": "0",
+									"max-label": "4",
+									"display-value": `${unref(configStore).reading.paragraphIndent} 字`,
+									"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => updateNumericReading("paragraphIndent", $event))
+								}, null, 8, ["model-value", "display-value"]),
+								createVNode(ReadingSlider_default, {
+									id: "mnr-max-width",
+									class: "mnr-desktop-width",
+									label: "桌面内容宽度",
+									"model-value": unref(configStore).reading.maxWidth,
+									min: 500,
+									max: 1200,
+									step: 50,
+									"min-label": "窄",
+									"max-label": "宽",
+									"display-value": `${unref(configStore).reading.maxWidth} 像素`,
+									"onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => updateNumericReading("maxWidth", $event))
+								}, null, 8, ["model-value", "display-value"]),
+								createVNode(ReadingSlider_default, {
+									id: "mnr-padding",
+									label: "页面边距",
+									"model-value": unref(configStore).reading.padding,
+									min: 12,
+									max: 48,
+									step: 2,
+									"min-label": "窄",
+									"max-label": "宽",
+									"display-value": `${unref(configStore).reading.padding} 像素`,
+									"onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => updateNumericReading("padding", $event))
+								}, null, 8, ["model-value", "display-value"])
+							])]),
+							createBaseVNode("details", _hoisted_13, [_cache[26] || (_cache[26] = createBaseVNode("summary", null, "阅读行为", -1)), createBaseVNode("div", _hoisted_14, [
+								createBaseVNode("label", _hoisted_15, [_cache[21] || (_cache[21] = createBaseVNode("span", null, "显示阅读进度", -1)), createBaseVNode("input", {
+									type: "checkbox",
+									checked: unref(configStore).behavior.showProgress,
+									onChange: _cache[6] || (_cache[6] = ($event) => updateBehavior("showProgress", $event))
+								}, null, 40, _hoisted_16)]),
+								createBaseVNode("label", _hoisted_17, [_cache[22] || (_cache[22] = createBaseVNode("span", null, "自动加载下一章", -1)), createBaseVNode("input", {
+									type: "checkbox",
+									checked: unref(configStore).behavior.preloadNext,
+									onChange: _cache[7] || (_cache[7] = ($event) => updateBehavior("preloadNext", $event))
+								}, null, 40, _hoisted_18)]),
+								createBaseVNode("label", _hoisted_19, [_cache[23] || (_cache[23] = createBaseVNode("span", null, "自动隐藏工具栏", -1)), createBaseVNode("input", {
+									type: "checkbox",
+									checked: unref(configStore).behavior.autoHideHeader,
+									onChange: _cache[8] || (_cache[8] = ($event) => updateBehavior("autoHideHeader", $event))
+								}, null, 40, _hoisted_20)]),
+								createBaseVNode("label", _hoisted_21, [_cache[24] || (_cache[24] = createBaseVNode("span", null, "键盘导航", -1)), createBaseVNode("input", {
+									type: "checkbox",
+									checked: unref(configStore).behavior.keyboardNavigation,
+									onChange: _cache[9] || (_cache[9] = ($event) => updateBehavior("keyboardNavigation", $event))
+								}, null, 40, _hoisted_22)]),
+								createBaseVNode("label", _hoisted_23, [_cache[25] || (_cache[25] = createBaseVNode("span", null, "触摸手势", -1)), createBaseVNode("input", {
+									type: "checkbox",
+									checked: unref(configStore).behavior.swipeGestures,
+									onChange: _cache[10] || (_cache[10] = ($event) => updateBehavior("swipeGestures", $event))
+								}, null, 40, _hoisted_24)])
+							])]),
+							createBaseVNode("details", _hoisted_25, [_cache[30] || (_cache[30] = createBaseVNode("summary", null, "本站与高级", -1)), createBaseVNode("div", _hoisted_26, [
+								createBaseVNode("label", _hoisted_27, [_cache[27] || (_cache[27] = createBaseVNode("span", null, "在本站自动开启", -1)), createBaseVNode("input", {
+									type: "checkbox",
+									checked: __props.siteAutoEnable,
+									onChange: updateSiteAutoEnable
+								}, null, 40, _hoisted_28)]),
+								createBaseVNode("fieldset", _hoisted_29, [_cache[28] || (_cache[28] = createBaseVNode("legend", null, "网站防护", -1)), createBaseVNode("div", _hoisted_30, [createBaseVNode("button", {
+									class: normalizeClass(["mnr-segment", { active: unref(configStore).protection.mode === "standard" }]),
+									"aria-pressed": unref(configStore).protection.mode === "standard",
+									onClick: _cache[11] || (_cache[11] = ($event) => updateProtectionMode("standard"))
+								}, " 标准 ", 10, _hoisted_31), createBaseVNode("button", {
+									class: normalizeClass(["mnr-segment", { active: unref(configStore).protection.mode === "aggressive" }]),
+									"aria-pressed": unref(configStore).protection.mode === "aggressive",
+									onClick: _cache[12] || (_cache[12] = ($event) => updateProtectionMode("aggressive"))
+								}, " 强力 ", 10, _hoisted_32)])]),
+								_cache[29] || (_cache[29] = createBaseVNode("label", {
+									class: "mnr-field-label",
+									for: "mnr-custom-css"
+								}, "自定义 CSS", -1)),
+								createBaseVNode("textarea", {
+									id: "mnr-custom-css",
+									class: "mnr-custom-css",
+									rows: "5",
+									spellcheck: "false",
+									placeholder: ".mnr-reader-content { ... }",
+									value: unref(configStore).customCSS,
+									onInput: updateCustomCSS
+								}, null, 40, _hoisted_33),
 								createBaseVNode("button", {
-									class: "mnr-action-btn",
-									onClick: _cache[18] || (_cache[18] = ($event) => emit("copyDiagnostics"))
-								}, " 复制诊断信息 "),
-								createBaseVNode("button", {
-									class: "mnr-action-btn mnr-action-btn--danger",
-									onClick: _cache[19] || (_cache[19] = ($event) => emit("exit"))
-								}, " 退出阅读模式 ")
-							])
-						])])
-					])], 40, _hoisted_1$1)])) : createCommentVNode("", true)]),
+									class: "mnr-secondary-action",
+									onClick: _cache[13] || (_cache[13] = ($event) => emit("copyDiagnostics"))
+								}, " 复制诊断信息 ")
+							])])
+						]),
+						createBaseVNode("footer", _hoisted_34, [createBaseVNode("button", {
+							class: "mnr-exit-btn",
+							onClick: _cache[14] || (_cache[14] = ($event) => emit("exit"))
+						}, "退出阅读模式")])
+					], 512)])) : createCommentVNode("", true)]),
 					_: 1
 				});
 			};
 		}
-	});
-	var _hoisted_1 = {
+	}), [["__scopeId", "data-v-b372098d"]]);
+	var _hoisted_1 = ["inert"];
+	var _hoisted_2 = {
 		key: 0,
 		class: "mnr-loading-prev"
 	};
-	var _hoisted_2 = ["data-chapter-url", "lang"];
-	var _hoisted_3 = { class: "mnr-chapter-title" };
-	var _hoisted_4 = ["innerHTML"];
-	var _hoisted_5 = {
+	var _hoisted_3 = ["data-chapter-url", "lang"];
+	var _hoisted_4 = { class: "mnr-chapter-title" };
+	var _hoisted_5 = ["innerHTML"];
+	var _hoisted_6 = {
 		key: 1,
 		class: "mnr-loading-next"
 	};
-	var _hoisted_6 = {
+	var _hoisted_7 = {
 		key: 2,
 		class: "mnr-chapter-end"
 	};
-	var _hoisted_7 = { class: "mnr-chapter-nav" };
-	var _hoisted_8 = ["href"];
+	var _hoisted_8 = { class: "mnr-chapter-nav" };
+	var _hoisted_9 = ["href"];
 	var SCROLL_BOUNDARY_EPSILON_PX = 4;
 	var ReaderView_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "ReaderView",
@@ -21520,7 +21462,7 @@ ul, ol {
 			const showControls = ref(true);
 			const chapterRefs = new Map();
 			const siteAutoEnableValue = ref(props.siteAutoEnable);
-			const { settingsVisible, drawerOpen, toggleDrawer, openSettings, closeSettings, handleEscape, toggleSettings } = useReaderUIControls({
+			const { settingsVisible, drawerOpen, hasOpenPanel, toggleDrawer, closeDrawer, openSettings, closeSettings, toggleSettings } = useReaderUIControls({
 				readerStore,
 				showControls
 			});
@@ -21691,6 +21633,11 @@ ul, ol {
 			function handleRetryCache() {
 				readerStore.retryFailedCache();
 			}
+			async function handleClearCache() {
+				if (!window.confirm("确定要清除本书的离线缓存吗？")) return;
+				await readerStore.clearPersistedCache();
+				readerStore.showToast("离线缓存已清除", "info");
+			}
 			function handleSiteAutoEnableChange(enabled) {
 				siteAutoEnableValue.value = enabled;
 				emit("siteAutoEnableChange", enabled);
@@ -21711,13 +21658,8 @@ ul, ol {
 			function exitReader() {
 				emit("exit");
 			}
-			const keyboardEnabled = computed(() => configStore.behavior.keyboardNavigation);
+			const readerShortcutsEnabled = computed(() => configStore.behavior.keyboardNavigation && !hasOpenPanel.value);
 			useKeyboardShortcuts([
-				{
-					key: "escape",
-					handler: handleEscape,
-					allowInInputs: true
-				},
 				{
 					key: "tab",
 					handler: toggleDrawer,
@@ -21768,7 +21710,7 @@ ul, ol {
 					handler: (e) => scrollReader(e.shiftKey ? "pageup" : "pagedown"),
 					preventDefault: true
 				}
-			], { enabled: keyboardEnabled });
+			], { enabled: readerShortcutsEnabled });
 			const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
 			async function restoreReadingPosition() {
 				const mainEl = mainRef.value;
@@ -21885,29 +21827,34 @@ ul, ol {
 						chapters: unref(readerStore).tocWithStatus,
 						loading: unref(readerStore).tocLoading,
 						"cache-progress": cacheProgress.value,
-						onClose: _cache[0] || (_cache[0] = ($event) => drawerOpen.value = false),
+						"persisted-count": unref(readerStore).persistedUrls.size,
+						onClose: unref(closeDrawer),
 						onSelect: handleChapterSelect,
 						onCacheAll: handleCacheAll,
-						onRetryCache: handleRetryCache
+						onRetryCache: handleRetryCache,
+						onClearCache: handleClearCache
 					}, null, 8, [
 						"is-open",
 						"book-title",
 						"chapters",
 						"loading",
-						"cache-progress"
+						"cache-progress",
+						"persisted-count",
+						"onClose"
 					]),
 					createBaseVNode("main", {
 						ref_key: "mainRef",
 						ref: mainRef,
 						class: "mnr-reader-main",
-						tabindex: "-1"
+						tabindex: "-1",
+						inert: unref(hasOpenPanel)
 					}, [
 						createBaseVNode("div", {
 							ref_key: "topSentinel",
 							ref: topSentinel,
 							class: "mnr-sentinel"
 						}, null, 512),
-						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_1, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[4] || (_cache[4] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
+						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_2, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[3] || (_cache[3] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
 						(openBlock(true), createElementBlock(Fragment, null, renderList(chapters.value, (entry) => {
 							return openBlock(), createElementBlock("article", {
 								key: entry.id,
@@ -21917,39 +21864,37 @@ ul, ol {
 								"data-chapter-url": entry.chapter.url,
 								lang: contentLang.value,
 								onClick: handleContentClick
-							}, [createBaseVNode("h1", _hoisted_3, toDisplayString(entry.chapter.title), 1), createBaseVNode("div", { innerHTML: entry.chapter.content }, null, 8, _hoisted_4)], 8, _hoisted_2);
+							}, [createBaseVNode("h1", _hoisted_4, toDisplayString(entry.chapter.title), 1), createBaseVNode("div", { innerHTML: entry.chapter.content }, null, 8, _hoisted_5)], 8, _hoisted_3);
 						}), 128)),
 						createBaseVNode("div", {
 							ref_key: "bottomSentinel",
 							ref: bottomSentinel,
 							class: "mnr-sentinel"
 						}, null, 512),
-						isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_5, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[5] || (_cache[5] = createBaseVNode("span", null, "加载下一章...", -1))])) : createCommentVNode("", true),
-						chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [_cache[6] || (_cache[6] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)), createBaseVNode("div", _hoisted_7, [indexUrl.value ? (openBlock(), createElementBlock("a", {
+						isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_6, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[4] || (_cache[4] = createBaseVNode("span", null, "加载下一章...", -1))])) : createCommentVNode("", true),
+						chapters.value.length > 0 && !hasNext.value && !isLoadingNext.value ? (openBlock(), createElementBlock("div", _hoisted_7, [_cache[5] || (_cache[5] = createBaseVNode("p", { class: "mnr-chapter-end-text" }, "— 已是最后一章 —", -1)), createBaseVNode("div", _hoisted_8, [indexUrl.value ? (openBlock(), createElementBlock("a", {
 							key: 0,
 							href: indexUrl.value,
 							class: "mnr-chapter-link index",
-							onClick: _cache[1] || (_cache[1] = withModifiers(($event) => navigate("index"), ["prevent"]))
-						}, " 返回目录 ", 8, _hoisted_8)) : createCommentVNode("", true)])])) : createCommentVNode("", true)
-					], 512),
+							onClick: _cache[0] || (_cache[0] = withModifiers(($event) => navigate("index"), ["prevent"]))
+						}, " 返回目录 ", 8, _hoisted_9)) : createCommentVNode("", true)])])) : createCommentVNode("", true)
+					], 8, _hoisted_1),
 					createVNode(SettingsPanel_default, {
 						visible: unref(settingsVisible),
 						"site-auto-enable": siteAutoEnableValue.value,
 						onClose: unref(closeSettings),
 						onTextConversionChange: handleTextConversionChange,
-						onCacheAll: handleCacheAll,
-						onRetryCache: handleRetryCache,
-						onCopyDiagnostics: _cache[2] || (_cache[2] = ($event) => emit("copyDiagnostics")),
+						onCopyDiagnostics: _cache[1] || (_cache[1] = ($event) => emit("copyDiagnostics")),
 						onSiteAutoEnableChange: handleSiteAutoEnableChange,
 						onProtectionModeChange: handleProtectionModeChange,
-						onExit: _cache[3] || (_cache[3] = ($event) => emit("exit"))
+						onExit: _cache[2] || (_cache[2] = ($event) => emit("exit"))
 					}, null, 8, [
 						"visible",
 						"site-auto-enable",
 						"onClose"
 					]),
 					isLoading.value ? (openBlock(), createBlock(unref(MnrLoadingOverlay_default), { key: 1 }, {
-						default: withCtx(() => [..._cache[7] || (_cache[7] = [createBaseVNode("span", null, "加载中...", -1)])]),
+						default: withCtx(() => [..._cache[6] || (_cache[6] = [createBaseVNode("span", null, "加载中...", -1)])]),
 						_: 1
 					})) : createCommentVNode("", true),
 					createVNode(unref(MnrToast_default), {
@@ -21965,7 +21910,7 @@ ul, ol {
 				], 32);
 			};
 		}
-	}), [["__scopeId", "data-v-8c0bf9fd"]]);
+	}), [["__scopeId", "data-v-e9267a1f"]]);
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -22401,6 +22346,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-prompt-overlay[data-v-7f92d5fe]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-7f92d5fe]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-7f92d5fe;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-7f92d5fe{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-7f92d5fe]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-7f92d5fe]{fill:none;width:28px;height:28px;stroke:var(--mnr-link,#1976d2);stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none}.mnr-prompt-title[data-v-7f92d5fe]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-7f92d5fe]{margin-bottom:16px}.mnr-confidence-bar[data-v-7f92d5fe]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-7f92d5fe]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-7f92d5fe]{background:#4caf50}.mnr-confidence-fill.medium[data-v-7f92d5fe]{background:#ff9800}.mnr-confidence-fill.low[data-v-7f92d5fe]{background:#f44336}.mnr-confidence-text[data-v-7f92d5fe]{color:#666;font-size:13px}.mnr-results[data-v-7f92d5fe]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-7f92d5fe]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-7f92d5fe]{color:#2e7d32}.mnr-result-item.warning[data-v-7f92d5fe]{color:#ed6c02}.mnr-result-icon[data-v-7f92d5fe]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:18px;height:18px}.mnr-checkbox-label[data-v-7f92d5fe]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-7f92d5fe]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-7f92d5fe]{gap:12px;display:flex}.mnr-btn[data-v-7f92d5fe]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-7f92d5fe]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-7f92d5fe]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-7f92d5fe]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-7f92d5fe]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-7f92d5fe],.mnr-fade-leave-active[data-v-7f92d5fe]{transition:opacity .3s}.mnr-fade-enter-from[data-v-7f92d5fe],.mnr-fade-leave-to[data-v-7f92d5fe]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-7f92d5fe]{background:#2a2a2a}.mnr-prompt-title[data-v-7f92d5fe]{color:#e0e0e0}.mnr-confidence-bar[data-v-7f92d5fe]{background:#444}.mnr-confidence-text[data-v-7f92d5fe]{color:#aaa}.mnr-checkbox-label[data-v-7f92d5fe]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-7f92d5fe]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-7f92d5fe]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-7f92d5fe]{margin:8px;padding:16px}.mnr-prompt-title[data-v-7f92d5fe]{font-size:16px}.mnr-btn[data-v-7f92d5fe]{padding:12px 16px}}@media (prefers-reduced-motion:reduce){.mnr-prompt-card[data-v-7f92d5fe],.mnr-confidence-fill[data-v-7f92d5fe],.mnr-btn[data-v-7f92d5fe],.mnr-fade-enter-active[data-v-7f92d5fe],.mnr-fade-leave-active[data-v-7f92d5fe]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-3b51b0fe]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-3b51b0fe]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-3b51b0fe]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-3b51b0fe]:active{transform:scale(.95)}.mnr-fab[data-v-3b51b0fe]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-3b51b0fe]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-3b51b0fe]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-3b51b0fe],.mnr-fade-slide-leave-active[data-v-3b51b0fe]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-3b51b0fe],.mnr-fade-slide-leave-to[data-v-3b51b0fe]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-3b51b0fe],.mnr-fade-slide-enter-active[data-v-3b51b0fe],.mnr-fade-slide-leave-active[data-v-3b51b0fe]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-7b667994]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-7b667994]{transform:translate(0)}.mnr-drawer-overlay[data-v-7b667994]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-7b667994]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-7b667994]{min-width:0}.mnr-drawer-title[data-v-7b667994]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-7b667994]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-7b667994]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-7b667994]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-7b667994]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-7b667994]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-drawer-tools[data-v-7b667994]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;gap:8px;padding:6px 12px 10px;display:flex}.mnr-cache-action[data-v-7b667994]{border:1px solid var(--mnr-border,#ddd);min-height:32px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:7px;padding:5px 10px;font-size:12px}.mnr-drawer-state[data-v-7b667994]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-7b667994]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-7b667994]{background:var(--mnr-border,#e0e0e0);flex-shrink:0;height:3px}.mnr-cache-progress-fill[data-v-7b667994]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-cache-stats[data-v-7b667994]{border-bottom:1px solid var(--mnr-border,#e5e5e5);color:var(--mnr-text,#666);flex-shrink:0;gap:12px;padding:7px 12px;font-size:12px;display:flex}.mnr-chapter-list[data-v-7b667994]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-7b667994]{height:44px}.mnr-chapter-button[data-v-7b667994]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-7b667994]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-7b667994]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.cached[data-v-7b667994]{color:#777}.mnr-chapter-button.persisted[data-v-7b667994],.mnr-cache-mark[data-v-7b667994]{color:#388e3c}.mnr-cache-mark[data-v-7b667994]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-7b667994]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-7b667994]:hover,.mnr-chapter-button[data-v-7b667994]:hover,.mnr-cache-action[data-v-7b667994]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-drawer-close[data-v-7b667994]:focus-visible,.mnr-drawer-search input[data-v-7b667994]:focus-visible,.mnr-cache-action[data-v-7b667994]:focus-visible,.mnr-chapter-button[data-v-7b667994]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-7b667994]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-7b667994],.mnr-fade-leave-active[data-v-7b667994]{transition:opacity .24s}.mnr-fade-enter-from[data-v-7b667994],.mnr-fade-leave-to[data-v-7b667994]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-7b667994],.mnr-fade-enter-active[data-v-7b667994],.mnr-fade-leave-active[data-v-7b667994],.mnr-cache-progress-fill[data-v-7b667994]{transition:none}}.mnr-settings-overlay{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3,.mnr-settings-section h4,.mnr-field-label{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3{font-size:18px}.mnr-close-btn{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content{padding:18px 16px max(24px, env(safe-area-inset-bottom));flex:1;overflow:auto}.mnr-settings-section{margin-bottom:22px}.mnr-settings-section h4,.mnr-field-label{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;padding:10px 4px;font-size:12px}.mnr-slider-row{align-items:center;gap:10px;display:flex}.mnr-slider-label{width:30px;color:var(--mnr-text,#666);text-align:center;white-space:nowrap;flex:0 0 30px;line-height:1}.mnr-slider-label--large{font-size:1.2em}.mnr-scale-icon{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:22px;height:22px;margin:0 auto;display:block}.mnr-slider{appearance:none;background:var(--mnr-border,#e0e0e0);border-radius:2px;flex:1;min-width:0;height:4px}.mnr-slider::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);cursor:pointer;border-radius:50%;width:20px;height:20px}.mnr-slider::-moz-range-thumb{background:var(--mnr-link,#1976d2);cursor:pointer;border:0;border-radius:50%;width:20px;height:20px}.mnr-slider-value{width:60px;color:var(--mnr-text,#666);text-align:right;white-space:nowrap;flex:0 0 60px;font-size:13px}.mnr-select{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font-size:14px}.mnr-segmented-control{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:10px 12px;font-size:14px;line-height:1.4}.mnr-segment:last-child{border-right:0}.mnr-segment.active{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-more-settings{border-top:1px solid var(--mnr-border,#ddd)}.mnr-more-settings summary{color:var(--mnr-text,#555);cursor:pointer;padding:16px 0;font-size:14px;font-weight:600}.mnr-more-content{padding-bottom:8px}.mnr-more-section{margin-top:16px}.mnr-more-label{color:var(--mnr-text,#333);margin-bottom:8px;font-size:14px;font-weight:600;display:block}.mnr-switch-row{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;display:flex}.mnr-switch-row input{width:40px;height:22px;accent-color:var(--mnr-link,#1976d2)}.mnr-custom-css{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-action-buttons{flex-direction:column;gap:8px;margin-top:14px;display:flex}.mnr-action-btn{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);cursor:pointer;border-radius:8px;padding:11px 12px;font-size:14px}.mnr-action-btn--danger{color:#c93f49;border-color:#c93f49}.mnr-cache-progress{opacity:.75;margin-left:6px}.mnr-close-btn:hover,.mnr-action-btn:hover,.mnr-segment:hover{background:var(--mnr-border,#f0f0f0)}.mnr-close-btn:focus-visible,.mnr-theme-btn:focus-visible,.mnr-slider:focus-visible,.mnr-select:focus-visible,.mnr-custom-css:focus-visible,.mnr-segment:focus-visible,.mnr-action-btn:focus-visible,.mnr-more-settings summary:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:opacity .22s,transform .22s}.mnr-slide-enter-from,.mnr-slide-leave-to{opacity:0}.mnr-slide-enter-from .mnr-settings-panel,.mnr-slide-leave-to .mnr-settings-panel{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel{width:100%}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active,.mnr-slide-leave-active,.mnr-settings-panel{transition:none}}.mnr-reader[data-v-8c0bf9fd]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-8c0bf9fd]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-8c0bf9fd]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-8c0bf9fd] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-8c0bf9fd] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-8c0bf9fd] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-8c0bf9fd]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-8c0bf9fd]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-8c0bf9fd]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-8c0bf9fd]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-8c0bf9fd]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-8c0bf9fd]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-8c0bf9fd]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-8c0bf9fd]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-8c0bf9fd],.mnr-loading-next[data-v-8c0bf9fd]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-8c0bf9fd]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-8c0bf9fd]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-8c0bf9fd]{transition:none}}\n/*$vite$:1*/", {});
+		})(".mnr-prompt-overlay[data-v-16e49de1]{z-index:999999;background:#00000080;justify-content:center;align-items:center;padding:16px;display:flex;position:fixed;inset:0}.mnr-prompt-card[data-v-16e49de1]{background:#fff;border-radius:12px;width:100%;max-width:360px;padding:20px;animation:.3s ease-out mnr-slide-up-16e49de1;box-shadow:0 4px 24px #00000026}@keyframes mnr-slide-up-16e49de1{0%{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.mnr-prompt-header[data-v-16e49de1]{align-items:center;gap:12px;margin-bottom:16px;display:flex}.mnr-prompt-icon[data-v-16e49de1]{fill:none;width:28px;height:28px;stroke:var(--mnr-link,#1976d2);stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none}.mnr-prompt-title[data-v-16e49de1]{color:#333;margin:0;font-size:18px;font-weight:600}.mnr-confidence[data-v-16e49de1]{margin-bottom:16px}.mnr-confidence-bar[data-v-16e49de1]{background:#e0e0e0;border-radius:3px;height:6px;margin-bottom:6px;overflow:hidden}.mnr-confidence-fill[data-v-16e49de1]{border-radius:3px;height:100%;transition:width .3s}.mnr-confidence-fill.high[data-v-16e49de1]{background:#4caf50}.mnr-confidence-fill.medium[data-v-16e49de1]{background:#ff9800}.mnr-confidence-fill.low[data-v-16e49de1]{background:#f44336}.mnr-confidence-text[data-v-16e49de1]{color:#666;font-size:13px}.mnr-results[data-v-16e49de1]{margin:0 0 16px;padding:0;list-style:none}.mnr-result-item[data-v-16e49de1]{align-items:center;gap:8px;padding:6px 0;font-size:14px;display:flex}.mnr-result-item.success[data-v-16e49de1]{color:#2e7d32}.mnr-result-item.warning[data-v-16e49de1]{color:#ed6c02}.mnr-result-icon[data-v-16e49de1]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:18px;height:18px}.mnr-checkbox-label[data-v-16e49de1]{cursor:pointer;color:#555;border-top:1px solid #eee;align-items:center;gap:8px;margin-bottom:16px;padding:12px 0;font-size:14px;display:flex}.mnr-checkbox[data-v-16e49de1]{cursor:pointer;width:18px;height:18px;accent-color:var(--mnr-link,#1976d2)}.mnr-prompt-actions[data-v-16e49de1]{gap:12px;display:flex}.mnr-btn[data-v-16e49de1]{cursor:pointer;border:none;border-radius:8px;flex:1;padding:10px 16px;font-size:14px;font-weight:500;transition:all .2s}.mnr-btn-secondary[data-v-16e49de1]{color:#666;background:#f5f5f5}.mnr-btn-secondary[data-v-16e49de1]:hover{background:#e0e0e0}.mnr-btn-primary[data-v-16e49de1]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-btn-primary[data-v-16e49de1]:hover{filter:brightness(.92)}.mnr-fade-enter-active[data-v-16e49de1],.mnr-fade-leave-active[data-v-16e49de1]{transition:opacity .3s}.mnr-fade-enter-from[data-v-16e49de1],.mnr-fade-leave-to[data-v-16e49de1]{opacity:0}@media (prefers-color-scheme:dark){.mnr-prompt-card[data-v-16e49de1]{background:#2a2a2a}.mnr-prompt-title[data-v-16e49de1]{color:#e0e0e0}.mnr-confidence-bar[data-v-16e49de1]{background:#444}.mnr-confidence-text[data-v-16e49de1]{color:#aaa}.mnr-checkbox-label[data-v-16e49de1]{color:#bbb;border-top-color:#444}.mnr-btn-secondary[data-v-16e49de1]{color:#ccc;background:#3a3a3a}.mnr-btn-secondary[data-v-16e49de1]:hover{background:#4a4a4a}}@media (width<=480px){.mnr-prompt-card[data-v-16e49de1]{margin:8px;padding:16px}.mnr-prompt-title[data-v-16e49de1]{font-size:16px}.mnr-btn[data-v-16e49de1]{padding:12px 16px}}@media (prefers-reduced-motion:reduce){.mnr-prompt-card[data-v-16e49de1],.mnr-confidence-fill[data-v-16e49de1],.mnr-btn[data-v-16e49de1],.mnr-fade-enter-active[data-v-16e49de1],.mnr-fade-leave-active[data-v-16e49de1]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-c5d5da9c]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-c5d5da9c]{transform:translate(0)}.mnr-drawer-overlay[data-v-c5d5da9c]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-c5d5da9c]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-c5d5da9c]{min-width:0}.mnr-drawer-title[data-v-c5d5da9c]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-c5d5da9c]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-c5d5da9c]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-c5d5da9c]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-c5d5da9c]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-c5d5da9c]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-drawer-tools[data-v-c5d5da9c]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-wrap:wrap;flex-shrink:0;gap:8px;padding:6px 12px 10px;display:flex}.mnr-cache-action[data-v-c5d5da9c]{border:1px solid var(--mnr-border,#ddd);min-height:32px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:7px;padding:5px 10px;font-size:12px}.mnr-drawer-state[data-v-c5d5da9c]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-c5d5da9c]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-c5d5da9c]{background:var(--mnr-border,#e0e0e0);flex-shrink:0;height:3px}.mnr-cache-progress-fill[data-v-c5d5da9c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-cache-stats[data-v-c5d5da9c]{border-bottom:1px solid var(--mnr-border,#e5e5e5);color:var(--mnr-text,#666);flex-shrink:0;gap:12px;padding:7px 12px;font-size:12px;display:flex}.mnr-chapter-list[data-v-c5d5da9c]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-c5d5da9c]{height:44px}.mnr-chapter-button[data-v-c5d5da9c]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-c5d5da9c]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-c5d5da9c]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.cached[data-v-c5d5da9c]{color:#777}.mnr-chapter-button.persisted[data-v-c5d5da9c],.mnr-cache-mark[data-v-c5d5da9c]{color:#388e3c}.mnr-cache-mark[data-v-c5d5da9c]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-c5d5da9c]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-c5d5da9c]:hover,.mnr-chapter-button[data-v-c5d5da9c]:hover,.mnr-cache-action[data-v-c5d5da9c]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-drawer-close[data-v-c5d5da9c]:focus-visible,.mnr-drawer-search input[data-v-c5d5da9c]:focus-visible,.mnr-cache-action[data-v-c5d5da9c]:focus-visible,.mnr-chapter-button[data-v-c5d5da9c]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-c5d5da9c]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-c5d5da9c],.mnr-fade-leave-active[data-v-c5d5da9c]{transition:opacity .24s}.mnr-fade-enter-from[data-v-c5d5da9c],.mnr-fade-leave-to[data-v-c5d5da9c]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-c5d5da9c],.mnr-fade-enter-active[data-v-c5d5da9c],.mnr-fade-leave-active[data-v-c5d5da9c],.mnr-cache-progress-fill[data-v-c5d5da9c]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-b372098d]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-b372098d]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-b372098d]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-b372098d],.mnr-settings-section h4[data-v-b372098d],.mnr-field-label[data-v-b372098d]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-b372098d]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-b372098d]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-b372098d]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-b372098d]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-b372098d],.mnr-field-label[data-v-b372098d],.mnr-settings-fieldset legend[data-v-b372098d]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-b372098d]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-b372098d]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-b372098d]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-b372098d]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-b372098d]{margin-top:18px}.mnr-select[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-b372098d]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-b372098d]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-b372098d]:last-child{border-right:0}.mnr-segment.active[data-v-b372098d]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-b372098d]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-b372098d]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-b372098d]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-b372098d]{padding-bottom:4px}.mnr-settings-group-content[data-v-b372098d]>:first-child{margin-top:0}.mnr-switch-row[data-v-b372098d]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-b372098d]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-b372098d]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-settings-footer[data-v-b372098d]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-b372098d]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-b372098d]:hover,.mnr-secondary-action[data-v-b372098d]:hover,.mnr-segment[data-v-b372098d]:hover,.mnr-exit-btn[data-v-b372098d]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-b372098d]:focus-visible,.mnr-close-btn[data-v-b372098d]:focus-visible,.mnr-theme-btn[data-v-b372098d]:focus-visible,.mnr-select[data-v-b372098d]:focus-visible,.mnr-segment[data-v-b372098d]:focus-visible,.mnr-secondary-action[data-v-b372098d]:focus-visible,.mnr-settings-group summary[data-v-b372098d]:focus-visible,.mnr-switch-row input[data-v-b372098d]:focus-visible,.mnr-custom-css[data-v-b372098d]:focus-visible,.mnr-exit-btn[data-v-b372098d]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-b372098d],.mnr-slide-leave-active[data-v-b372098d],.mnr-settings-panel[data-v-b372098d]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-b372098d],.mnr-slide-leave-to[data-v-b372098d]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-b372098d],.mnr-slide-leave-to .mnr-settings-panel[data-v-b372098d]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-b372098d]{width:100%}.mnr-reading-preview[data-v-b372098d]{display:block}.mnr-desktop-width[data-v-b372098d]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-b372098d],.mnr-slide-leave-active[data-v-b372098d],.mnr-settings-panel[data-v-b372098d]{transition:none}}.mnr-reader[data-v-e9267a1f]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-e9267a1f]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.mnr-reader-content[data-v-e9267a1f]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-e9267a1f] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-e9267a1f] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-e9267a1f] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-e9267a1f]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-e9267a1f]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-e9267a1f]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-e9267a1f]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e9267a1f]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-e9267a1f]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-e9267a1f]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-e9267a1f]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-e9267a1f],.mnr-loading-next[data-v-e9267a1f]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-e9267a1f]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-e9267a1f]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-e9267a1f]{transition:none}}\n/*$vite$:1*/", {});
 	})();
 })();

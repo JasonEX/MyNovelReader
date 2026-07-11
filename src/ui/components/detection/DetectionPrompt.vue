@@ -7,8 +7,6 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="mnr-prompt-title"
-        @keydown.esc.stop="handleDismiss"
-        @keydown.tab="trapFocus"
       >
         <!-- Header -->
         <div class="mnr-prompt-header">
@@ -75,6 +73,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import type { AutoEnableDecision, UserPromptResponse } from '@/core/AutoEnableManager';
+import { useEventListener } from '@/ui/composables/useEventListener';
+import { getDeepActiveElement } from '@/ui/focus';
 
 // Props
 const props = defineProps<{
@@ -138,23 +138,42 @@ function trapFocus(event: globalThis.KeyboardEvent) {
   if (focusable.length === 0) return;
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
+  const activeElement = getDeepActiveElement();
+  if (event.shiftKey && activeElement === first) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
+  } else if (!event.shiftKey && activeElement === last) {
     event.preventDefault();
     first.focus();
   }
 }
 
+function handleDialogKeydown(event: Event) {
+  const keyboardEvent = event as globalThis.KeyboardEvent;
+  const card = cardRef.value;
+  if (!props.visible || !card || !keyboardEvent.composedPath().includes(card)) return;
+
+  if (keyboardEvent.key === 'Escape') {
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopImmediatePropagation();
+    handleDismiss();
+  } else if (keyboardEvent.key === 'Tab') {
+    keyboardEvent.stopImmediatePropagation();
+    trapFocus(keyboardEvent);
+  }
+}
+
+useEventListener('keydown', handleDialogKeydown, { capture: true });
+
 watch(
   () => props.visible,
   async visible => {
     if (visible) {
-      previouslyFocused = document.activeElement as globalThis.HTMLElement | null;
+      previouslyFocused = getDeepActiveElement();
       await nextTick();
       acceptButtonRef.value?.focus({ preventScroll: true });
     } else {
+      await nextTick();
       previouslyFocused?.focus?.({ preventScroll: true });
       previouslyFocused = null;
     }

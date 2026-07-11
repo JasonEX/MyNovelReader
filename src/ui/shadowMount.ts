@@ -131,21 +131,28 @@ function ensureStyleElement(shadowRoot: ShadowRoot, id: string): HTMLStyleElemen
   return style;
 }
 
-function applyRuntimeStyles(shadowRoot: ShadowRoot, state = getMnrGlobalState()): void {
+function applyStyleProperties(shadowRoot: ShadowRoot, properties: Record<string, string>): void {
   const host = shadowRoot.host as HTMLElement | null;
-  if (state.styleProperties && host?.style) {
-    for (const [name, value] of Object.entries(state.styleProperties)) {
-      host.style.setProperty(name, value);
-    }
-  }
+  if (!host?.style) return;
 
+  for (const [name, value] of Object.entries(properties)) {
+    host.style.setProperty(name, value);
+  }
+}
+
+function applyCustomCSS(shadowRoot: ShadowRoot, css: string): void {
   const customStyle = shadowRoot.querySelector('#mnr-custom-css') as HTMLStyleElement | null;
-  if (state.customCSS) {
+  if (css) {
     const style = customStyle || ensureStyleElement(shadowRoot, 'mnr-custom-css');
-    style.textContent = state.customCSS;
+    style.textContent = css;
   } else {
     customStyle?.remove();
   }
+}
+
+function applyRuntimeStyles(shadowRoot: ShadowRoot, state = getMnrGlobalState()): void {
+  if (state.styleProperties) applyStyleProperties(shadowRoot, state.styleProperties);
+  applyCustomCSS(shadowRoot, state.customCSS || '');
 }
 
 function applyAppStyles(shadowRoot: ShadowRoot, state = getMnrGlobalState()): void {
@@ -157,9 +164,10 @@ function applyAppStyles(shadowRoot: ShadowRoot, state = getMnrGlobalState()): vo
 
 export function setShadowStyleProperties(properties: Record<string, string>): void {
   const state = getMnrGlobalState();
-  state.styleProperties = { ...(state.styleProperties || {}), ...properties };
+  state.styleProperties ||= {};
+  Object.assign(state.styleProperties, properties);
   for (const shadowRoot of getRegisteredShadowRoots(state)) {
-    applyRuntimeStyles(shadowRoot, state);
+    applyStyleProperties(shadowRoot, properties);
   }
 }
 
@@ -167,7 +175,7 @@ export function setShadowCustomCSS(css: string): void {
   const state = getMnrGlobalState();
   state.customCSS = css;
   for (const shadowRoot of getRegisteredShadowRoots(state)) {
-    applyRuntimeStyles(shadowRoot, state);
+    applyCustomCSS(shadowRoot, css);
   }
 }
 

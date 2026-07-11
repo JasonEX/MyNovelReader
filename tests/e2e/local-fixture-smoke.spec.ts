@@ -121,9 +121,7 @@ test('runs the built userscript and restores the host page after exit', async ({
   expect(toolbarIconAlignment).toHaveLength(2);
   toolbarIconAlignment.forEach(expectCentered);
 
-  await page.locator('#mnr-reader-root').evaluate(host => {
-    host.shadowRoot?.querySelector<HTMLElement>('[aria-label="打开目录"]')?.click();
-  });
+  await page.locator('#mnr-reader-root').locator('[aria-label="打开目录"]').click();
   await expect
     .poll(() =>
       page.locator('#mnr-reader-root').evaluate(host => {
@@ -153,26 +151,75 @@ test('runs the built userscript and restores the host page after exit', async ({
   expectCentered(drawerCloseAlignment ?? null);
   await page.keyboard.press('Escape');
 
-  await page.locator('#mnr-reader-root').evaluate(host => {
-    host.shadowRoot?.querySelector<HTMLElement>('[aria-label="打开设置"]')?.click();
-  });
+  await page.locator('#mnr-reader-root').locator('[aria-label="打开设置"]').click();
   await expect
-    .poll(async () =>
+    .poll(() =>
       page.locator('#mnr-reader-root').evaluate(host => {
-        const details = host.shadowRoot?.querySelector<HTMLDetailsElement>('.mnr-more-settings');
+        const shadow = host.shadowRoot;
         return {
-          visible: !!details,
-          open: details?.open ?? false,
-          scaleIcons: host.shadowRoot?.querySelectorAll('.mnr-scale-icon').length ?? 0,
+          visible: !!shadow?.querySelector('.mnr-settings-panel'),
+          groups: Array.from(shadow?.querySelectorAll('details > summary') ?? [], summary =>
+            summary.textContent?.trim()
+          ),
+          sliders: shadow?.querySelectorAll('input[type="range"]').length ?? 0,
+          mainInert: shadow?.querySelector('.mnr-reader-main')?.hasAttribute('inert') ?? false,
+          activeId: shadow?.activeElement?.id ?? '',
+          drawerOpen: shadow?.querySelector('.mnr-drawer')?.classList.contains('open') ?? false,
+          settingsCacheAction: !!shadow?.querySelector('.mnr-settings-panel .mnr-cache-action'),
         };
       })
     )
-    .toEqual({ visible: true, open: false, scaleIcons: 4 });
+    .toEqual({
+      visible: true,
+      groups: ['排版细节', '阅读行为', '本站与高级'],
+      sliders: 6,
+      mainInert: true,
+      activeId: 'mnr-settings-title',
+      drawerOpen: false,
+      settingsCacheAction: false,
+    });
+
+  const fontSizeControl = page.locator('#mnr-reader-root').locator('#mnr-font-size');
+  await expect(fontSizeControl).toHaveAttribute('aria-labelledby', 'mnr-font-size-label');
+  const fontSizeBox = await fontSizeControl.boundingBox();
+  expect(fontSizeBox?.height).toBeGreaterThanOrEqual(32);
+
+  await page.keyboard.press('Tab');
+  await expect
+    .poll(() =>
+      page.locator('#mnr-reader-root').evaluate(host => ({
+        activeLabel: host.shadowRoot?.activeElement?.getAttribute('aria-label') ?? '',
+        drawerOpen:
+          host.shadowRoot?.querySelector('.mnr-drawer')?.classList.contains('open') ?? false,
+      }))
+    )
+    .toEqual({ activeLabel: '关闭设置', drawerOpen: false });
+
+  const typographyDetails = page
+    .locator('#mnr-reader-root')
+    .locator('details')
+    .filter({ hasText: '排版细节' });
+  await typographyDetails.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(typographyDetails).toHaveAttribute('open', '');
+  expect(page.url()).toBe(targetUrl);
+
+  await page.keyboard.press('q');
+  await expect(page.locator('#mnr-reader-root')).toHaveCount(1);
   const [settingsCloseAlignment] = await getIconAlignments(
     page.locator('#mnr-reader-root').locator('.mnr-close-btn')
   );
   expectCentered(settingsCloseAlignment ?? null);
   await page.keyboard.press('Escape');
+  await expect(page.locator('#mnr-reader-root').locator('.mnr-settings-panel')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.locator('#mnr-reader-root').evaluate(host => ({
+        mainInert: host.shadowRoot?.querySelector('.mnr-reader-main')?.hasAttribute('inert'),
+        activeLabel: host.shadowRoot?.activeElement?.getAttribute('aria-label') ?? '',
+      }))
+    )
+    .toEqual({ mainInert: false, activeLabel: '打开设置' });
 
   await page.keyboard.press('q');
   await expect.poll(() => page.locator('#mnr-reader-root').count()).toBe(0);

@@ -72,8 +72,9 @@ describe('ConfigStore - behavior', () => {
 
     const { host } = createShadowMount('mnr-config-reading-root');
     const store = useConfigStore();
-    store.updateReading({ fontSize: 20, lineHeight: 2.1, paragraphIndent: 3 });
     store.applyReading();
+    const setProperty = vi.spyOn(host.style, 'setProperty');
+    store.updateReading({ fontSize: 20, lineHeight: 2.1, paragraphIndent: 3 });
 
     const root = host.style;
     expect(root.getPropertyValue('--mnr-font-size')).toBe('20px');
@@ -81,6 +82,11 @@ describe('ConfigStore - behavior', () => {
     expect(root.getPropertyValue('--mnr-letter-spacing')).toBe('0em');
     expect(root.getPropertyValue('--mnr-paragraph-indent')).toBe('3em');
     expect(document.documentElement.style.getPropertyValue('--mnr-font-size')).toBe('');
+    expect(setProperty.mock.calls.map(([property]) => property)).toEqual([
+      '--mnr-font-size',
+      '--mnr-line-height',
+      '--mnr-paragraph-indent',
+    ]);
   });
 
   it('setCustomCSS injects/updates the custom style element inside Shadow DOM', () => {

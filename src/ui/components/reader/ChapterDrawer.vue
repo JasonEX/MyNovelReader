@@ -12,8 +12,6 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="mnr-drawer-title"
-    @keydown.esc.stop="emit('close')"
-    @keydown.tab="trapFocus"
   >
     <header class="mnr-drawer-header">
       <div class="mnr-drawer-heading">
@@ -59,6 +57,13 @@
         @click="emit('retryCache')"
       >
         重试失败 {{ cacheProgress.failed }} 章
+      </button>
+      <button
+        v-if="!cacheProgress.running && persistedCount > 0"
+        class="mnr-cache-action"
+        @click="emit('clearCache')"
+      >
+        清除缓存
       </button>
     </div>
 
@@ -116,8 +121,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
+import { useEventListener } from '@/ui/composables/useEventListener';
 import type { CacheProgressState, TocEntryWithStatus } from '@/ui/stores/reader';
 import { MnrSpinner } from '@/ui/components/common';
+import { getDeepActiveElement } from '@/ui/focus';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -125,6 +132,7 @@ const props = defineProps<{
   chapters: TocEntryWithStatus[];
   loading: boolean;
   cacheProgress: CacheProgressState;
+  persistedCount: number;
 }>();
 
 const emit = defineEmits<{
@@ -132,6 +140,7 @@ const emit = defineEmits<{
   select: [entry: TocEntryWithStatus];
   cacheAll: [];
   retryCache: [];
+  clearCache: [];
 }>();
 
 const SEARCH_THRESHOLD = 50;
@@ -143,7 +152,6 @@ const closeButtonRef = ref<globalThis.HTMLButtonElement | null>(null);
 const query = ref('');
 const scrollTop = ref(0);
 const viewportHeight = ref(600);
-let previouslyFocused: HTMLElement | null = null;
 
 const filteredChapters = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase();
@@ -155,7 +163,6 @@ const currentChapterNumber = computed(() => {
   const index = props.chapters.findIndex(chapter => chapter.isCurrent);
   return index >= 0 ? index + 1 : 0;
 });
-const persistedCount = computed(() => props.chapters.filter(chapter => chapter.isPersisted).length);
 const sessionCount = computed(
   () => props.chapters.filter(chapter => chapter.isCached && !chapter.isPersisted).length
 );
@@ -215,34 +222,47 @@ function trapFocus(event: globalThis.KeyboardEvent) {
     drawer.querySelectorAll<globalThis.HTMLElement>(
       'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
     )
-  ).filter(element => element.offsetParent !== null || element === document.activeElement);
+  ).filter(element => element.offsetParent !== null || element === getDeepActiveElement());
   if (focusable.length === 0) return;
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
+  const activeElement = getDeepActiveElement();
+  if (event.shiftKey && activeElement === first) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
+  } else if (!event.shiftKey && activeElement === last) {
     event.preventDefault();
     first.focus();
   }
 }
 
+function handleDialogKeydown(event: Event) {
+  const keyboardEvent = event as globalThis.KeyboardEvent;
+  const drawer = drawerRef.value;
+  if (!props.isOpen || !drawer || !keyboardEvent.composedPath().includes(drawer)) return;
+
+  if (keyboardEvent.key === 'Escape') {
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopImmediatePropagation();
+    emit('close');
+  } else if (keyboardEvent.key === 'Tab') {
+    keyboardEvent.stopImmediatePropagation();
+    trapFocus(keyboardEvent);
+  }
+}
+
+useEventListener('keydown', handleDialogKeydown, { capture: true });
+
 watch(
   () => props.isOpen,
   async open => {
     if (open) {
-      previouslyFocused = document.activeElement as HTMLElement | null;
       query.value = '';
       await scrollCurrentIntoView();
       closeButtonRef.value?.focus({
         preventScroll: true,
       });
-      return;
     }
-
-    previouslyFocused?.focus?.({ preventScroll: true });
-    previouslyFocused = null;
   },
   { flush: 'post' }
 );
@@ -354,6 +374,7 @@ watch(
 
 .mnr-drawer-tools {
   display: flex;
+  flex-wrap: wrap;
   flex-shrink: 0;
   gap: 8px;
   padding: 6px 12px 10px;

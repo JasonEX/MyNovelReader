@@ -1,4 +1,5 @@
-import { type Ref, ref } from 'vue';
+import { computed, nextTick, type Ref, ref } from 'vue';
+import { getDeepActiveElement } from '@/ui/focus';
 import type { useReaderStore } from '@/ui/stores/reader';
 
 export interface UseReaderUIControlsOptions {
@@ -8,35 +9,45 @@ export interface UseReaderUIControlsOptions {
 
 export function useReaderUIControls(options: UseReaderUIControlsOptions) {
   const { readerStore, showControls } = options;
+  const activePanel = ref<'drawer' | 'settings' | null>(null);
+  const settingsVisible = computed(() => activePanel.value === 'settings');
+  const drawerOpen = computed(() => activePanel.value === 'drawer');
+  const hasOpenPanel = computed(() => activePanel.value !== null);
+  let previouslyFocused: globalThis.HTMLElement | null = null;
+  let controlsVisibleBeforePanel = true;
 
-  // UI state
-  const settingsVisible = ref(false);
-  const drawerOpen = ref(false);
-
-  // Methods
-  function toggleDrawer() {
-    drawerOpen.value = !drawerOpen.value;
-    if (drawerOpen.value) {
-      readerStore.loadToc();
+  function setActivePanel(panel: 'drawer' | 'settings' | null) {
+    if (activePanel.value === null && panel !== null) {
+      previouslyFocused = getDeepActiveElement();
+      controlsVisibleBeforePanel = showControls.value;
     }
+
+    activePanel.value = panel;
+    showControls.value = panel === null ? controlsVisibleBeforePanel : false;
+
+    if (panel === null && previouslyFocused) {
+      const focusTarget = previouslyFocused;
+      previouslyFocused = null;
+      void nextTick(() => focusTarget.focus({ preventScroll: true }));
+    }
+  }
+
+  function toggleDrawer() {
+    const nextPanel = drawerOpen.value ? null : 'drawer';
+    setActivePanel(nextPanel);
+    if (nextPanel === 'drawer') readerStore.loadToc();
+  }
+
+  function closeDrawer() {
+    if (drawerOpen.value) setActivePanel(null);
   }
 
   function openSettings() {
-    settingsVisible.value = true;
-    showControls.value = false;
+    setActivePanel('settings');
   }
 
   function closeSettings() {
-    settingsVisible.value = false;
-    showControls.value = true;
-  }
-
-  function handleEscape() {
-    if (drawerOpen.value) {
-      drawerOpen.value = false;
-    } else if (settingsVisible.value) {
-      closeSettings();
-    }
+    if (settingsVisible.value) setActivePanel(null);
   }
 
   function toggleSettings() {
@@ -50,10 +61,11 @@ export function useReaderUIControls(options: UseReaderUIControlsOptions) {
   return {
     settingsVisible,
     drawerOpen,
+    hasOpenPanel,
     toggleDrawer,
+    closeDrawer,
     openSettings,
     closeSettings,
-    handleEscape,
     toggleSettings,
   };
 }
