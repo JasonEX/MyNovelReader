@@ -339,6 +339,52 @@ describe('AutoEnableManager', () => {
     expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 
+  it('launches a progressive first page before replacing it with the merged chapter', async () => {
+    const rule = {
+      id: 'progressive',
+      version: 1,
+      match: { pattern: 'example' },
+      content: { selector: '#content' },
+      advanced: { checkSection: true, progressiveSectionMerge: true },
+      meta: { source: 'builtin' as const },
+    };
+    const firstPage = {
+      title: 'Chapter 1',
+      content: '<p>first</p>',
+      rawContent: '<p>first</p>',
+      url: 'https://example.com/chapter/1',
+      confidence: 1,
+      method: 'rule' as const,
+      rule,
+    };
+    const merged = { ...firstPage, content: '<p>first</p><p>second</p>' };
+    mockedRuleManager.matchRule.mockResolvedValue({
+      rule,
+      source: 'builtin',
+      matchedPattern: 'example',
+    });
+    mockedSectionMerger.merge.mockImplementationOnce(
+      async (
+        _doc: Document,
+        _url: string,
+        options: { onFirstPage?: (chapter: typeof firstPage) => void }
+      ) => {
+        options.onFirstPage?.(firstPage);
+        return merged;
+      }
+    );
+
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    await manager.execute(createDoc('https://example.com/chapter/1'));
+
+    expect(launchCallback).toHaveBeenNthCalledWith(1, firstPage, rule, 'initial');
+    expect(launchCallback).toHaveBeenNthCalledWith(2, merged, rule, 'update');
+  });
+
   it('execute prompts, remembers site preference, then launches for medium-confidence detection', async () => {
     const { AutoEnableManager } = await import('@/core/AutoEnableManager');
     const manager = new AutoEnableManager({
@@ -474,7 +520,11 @@ describe('AutoEnableManager', () => {
     const doc = createDoc('https://example.com/chapter/1');
     await manager.manualEnable(doc);
 
-    expect(launchCallback).toHaveBeenCalledWith(expect.objectContaining({ rule }), rule);
+    expect(launchCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ rule }),
+      rule,
+      'complete'
+    );
   });
 
   it('manualEnable logs and swallows merge errors', async () => {

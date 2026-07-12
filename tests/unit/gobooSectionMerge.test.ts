@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import { collectTocCandidates } from '@/ui/stores/reader/tocEntries';
@@ -87,11 +87,17 @@ describe('Goboo section merge', () => {
 
     const parser = new Parser();
     const merger = createSectionMerger(parser);
+    const firstPages: Array<{ content: string; nextUrl?: string }> = [];
     const result = await merger.merge(makeDoc(pages.get(page1Url)!, page1Url), page1Url, {
       fetcher: async url => makeDoc(pages.get(url)!, url),
       maxPages: 10,
+      onFirstPage: chapter => firstPages.push(chapter),
     });
 
+    expect(firstPages).toHaveLength(1);
+    expect(firstPages[0]?.content).toContain('第一页正文。');
+    expect(firstPages[0]?.content).not.toContain('第二页正文。');
+    expect(firstPages[0]?.nextUrl).toBeUndefined();
     expect(result?.title).toBe('001 团藏，你根部姓志村啊？');
     expect(result?.bookTitle).toBe('穿越三代：让木叶再次伟大！');
     expect(result?.url).toBe(page1Url);
@@ -102,6 +108,39 @@ describe('Goboo section merge', () => {
     expect(result?.content).toContain('第三页正文。');
     expect(result?.content).not.toContain('小说免费阅读，请收藏');
     expect(result?.content).not.toContain('阅|读|模|式');
+  });
+
+  it('decodes p_key continuation without waiting for the inert load-more button', async () => {
+    const url = 'https://m.goboo.cc/gb_1/94443/1';
+    const visible = '当前页可见正文。'.repeat(80);
+    const hidden = '编码中的后续正文。'.repeat(80);
+    const encoded = Buffer.from(`<p>${hidden}</p>`, 'utf8').toString('base64');
+    const doc = makeDoc(
+      `<!doctype html>
+      <html>
+        <head>
+          <title>001 测试章节 - 测试小说小说 - 钢笔小说</title>
+        </head>
+        <body>
+          <div class="content">
+            <p>【测试小说】小说免费阅读，请收藏 钢笔小说【goboo.cc】</p>
+            <p>${visible}</p>
+            <p>阅|读|模|式|或|畅|读|模|式|下，无|法|显|示|本|章|节|全|部|内|容，请|返|回|原|网|页阅|读。<button>加|载|更|多</button></p>
+          </div>
+          <script>const p_key='${encoded}';</script>
+        </body>
+      </html>`,
+      url
+    );
+    const timeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+
+    const result = await new Parser().parse(doc, url);
+
+    expect(timeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), 1200);
+    expect(result?.content).toContain(visible);
+    expect(result?.content).toContain(hidden);
+    expect(result?.content).not.toContain('加载更多');
+    expect(result?.content).not.toContain('小说免费阅读，请收藏');
   });
 
   it('uses the line_1 node as the catalog title instead of concatenating date/index text', () => {

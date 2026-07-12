@@ -56,6 +56,39 @@ describe('ReaderStore - workflows', () => {
     mockGetParser.mockReturnValue({} as unknown);
   });
 
+  it('updates a progressively merged chapter without resetting its reader entry', () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>第一页</p>',
+      rawContent: '<p>第一页</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+    const entryId = store.chapters[0]?.id;
+
+    const updated = store.updateChapter({
+      title: '第1章',
+      content: '<p>第一页</p><p>第二页</p>',
+      rawContent: '<p>第一页</p><p>第二页</p>',
+      url: 'https://example.com/book/1/1.html#section',
+      nextUrl: 'https://example.com/book/1/2.html#top',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    expect(updated).toBe(true);
+    expect(store.chapters).toHaveLength(1);
+    expect(store.chapters[0]?.id).toBe(entryId);
+    expect(store.chapters[0]?.chapter.content).toContain('第二页');
+    expect(store.chapters[0]?.chapter.url).toBe('https://example.com/book/1/1.html');
+    expect(store.chapters[0]?.chapter.nextUrl).toBe('https://example.com/book/1/2.html');
+    expect(
+      store.cachedContents.get('https://example.com/book/1/1.html')?.chapter.content
+    ).toContain('第二页');
+  });
+
   it('loadToc retries once when first attempt returns empty', async () => {
     vi.useFakeTimers();
 

@@ -422,6 +422,48 @@ export const useReaderStore = defineStore('reader', () => {
     void restoreCache();
   }
 
+  /** Replace a progressively loaded chapter without resetting the reader session. */
+  function updateChapter(newChapter: ParsedChapter, newRule?: SiteRule): boolean {
+    const url = normalizeUrlForFetch(newChapter.url);
+    const entry = chapters.value.find(item => normalizeUrlForFetch(item.chapter.url) === url);
+    if (!entry) return false;
+
+    recordDebugEvent('reader.updateChapter', {
+      url,
+      title: newChapter.title,
+      ruleId: newRule?.id || newChapter.rule?.id,
+    });
+
+    newChapter.url = url;
+    if (newChapter.prevUrl) newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
+    if (newChapter.nextUrl) newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
+    if (newChapter.indexUrl) newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
+
+    const effectiveRule = newRule || newChapter.rule || entry.rule;
+    entry.chapter = newChapter;
+    entry.rule = effectiveRule;
+    originalContents.value.set(entry.id, newChapter.content);
+    originalTitles.value.set(entry.id, {
+      title: newChapter.title,
+      bookTitle: newChapter.bookTitle,
+    });
+    cachedContents.value.set(url, {
+      chapter: newChapter,
+      rule: effectiveRule,
+      cachedAt: Date.now(),
+    });
+
+    if (currentConversionMode.value !== 'none') {
+      void applyConversionToChapterEntry(entry.id, currentConversionMode.value).then(() => {
+        if (chapters.value[currentChapterIndex.value]?.id === entry.id) syncCurrentHostPage();
+      });
+    } else if (chapters.value[currentChapterIndex.value]?.id === entry.id) {
+      syncCurrentHostPage();
+    }
+
+    return true;
+  }
+
   function updateScroll(percent: number) {
     scrollPercent.value = Math.max(0, Math.min(100, percent));
   }
@@ -649,6 +691,7 @@ export const useReaderStore = defineStore('reader', () => {
     activate,
     deactivate,
     setChapter,
+    updateChapter,
     setCurrentChapter,
     loadNextChapter,
     loadPrevChapter,

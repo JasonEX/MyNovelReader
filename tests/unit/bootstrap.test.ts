@@ -17,6 +17,8 @@ let readerStore: {
   activate: () => void;
   deactivate: () => void;
   setChapter: (chapter: { url?: string }, rule?: unknown) => void;
+  updateChapter: (chapter: { url?: string }, rule?: unknown) => boolean;
+  showToast: (message: string, type?: 'info' | 'error') => void;
   currentChapterIndex: number;
   chapters: Array<{ chapter: { url?: string } }>;
 };
@@ -154,6 +156,8 @@ describe('bootstrap', () => {
         readerStore.chapters = [{ chapter: { url: chapter.url } }];
         readerStore.currentChapterIndex = 0;
       }),
+      updateChapter: vi.fn(() => true),
+      showToast: vi.fn(),
       currentChapterIndex: 0,
       chapters: [],
     };
@@ -343,6 +347,60 @@ describe('bootstrap', () => {
     expect(mockActivateProtection).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'aggressive' })
     );
+  });
+
+  it('updates a progressive chapter without mounting a second reader', async () => {
+    dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/chapter/1',
+      pretendToBeVisual: true,
+    });
+    // @ts-expect-error - test env: assigning jsdom window to globalThis
+    globalThis.window = dom.window;
+    // test env: assigning jsdom document to globalThis
+    globalThis.document = dom.window.document;
+    // test env: assigning jsdom sessionStorage to globalThis
+    globalThis.sessionStorage = dom.window.sessionStorage;
+
+    const first = {
+      title: '第1章',
+      content: '<p>第一页</p>',
+      rawContent: '<p>第一页</p>',
+      url: dom.window.location.href,
+    };
+    const merged = { ...first, content: '<p>第一页</p><p>第二页</p>' };
+    let launchCb:
+      | ((chapter: unknown, rule?: unknown, stage?: 'initial' | 'update' | 'complete') => void)
+      | null = null;
+    const manager = {
+      check: vi.fn(async () => ({ shouldEnable: true, method: 'builtin-rule' })),
+      setPromptCallback: vi.fn(),
+      setLaunchCallback: vi.fn(
+        (
+          callback: (
+            chapter: unknown,
+            rule?: unknown,
+            stage?: 'initial' | 'update' | 'complete'
+          ) => void
+        ) => {
+          launchCb = callback;
+        }
+      ),
+      execute: vi.fn(async () => {
+        launchCb?.(first, undefined, 'initial');
+        launchCb?.(merged, undefined, 'update');
+      }),
+      manualEnable: vi.fn(async () => {}),
+    };
+    mockGetAutoEnableManager.mockReturnValue(manager);
+
+    const bootstrap = await import('@/bootstrap');
+    await bootstrap.initialize();
+
+    expect(bootstrap.isActive()).toBe(true);
+    expect(readerStore.setChapter).toHaveBeenCalledWith(first, undefined);
+    expect(readerStore.updateChapter).toHaveBeenCalledWith(merged, undefined);
+    expect(readerStore.activate).toHaveBeenCalledTimes(1);
+    expect(document.querySelectorAll('#mnr-reader-root')).toHaveLength(1);
   });
 
   it('closeReader restores page without changing the site auto-enable preference', async () => {

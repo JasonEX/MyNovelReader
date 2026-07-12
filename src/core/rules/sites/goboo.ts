@@ -1,6 +1,6 @@
 import type { BeforeParseHook, SiteRule } from '../types';
 
-const gobooBeforeParse: BeforeParseHook = async (doc, url) => {
+const gobooBeforeParse: BeforeParseHook = (doc, url) => {
   try {
     const fallbackUrl =
       typeof location !== 'undefined' && typeof location.href === 'string' ? location.href : '';
@@ -16,21 +16,16 @@ const gobooBeforeParse: BeforeParseHook = async (doc, url) => {
       doc.body.appendChild(index);
     }
 
-    if (
-      typeof document !== 'undefined' &&
-      doc === document &&
-      doc.querySelector('.content button')
-    ) {
-      await new Promise<void>(resolve => setTimeout(resolve, 1200));
-    }
+    const hasEncodedContent = Array.from(doc.scripts).some(script =>
+      /p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(script.textContent || '')
+    );
 
     doc.querySelectorAll('.content p').forEach(p => {
       const text = (p.textContent || '').replace(/\s+/g, '');
-      if (
-        /小说免费阅读，请收藏.*goboo\.cc/i.test(text) ||
-        /阅\|读\|模\|式\|或\|畅\|读\|模\|式/.test(text) ||
-        /加\|载\|更\|多/.test(text)
-      ) {
+      const isPromotion = /小说免费阅读，请收藏.*goboo\.cc/i.test(text);
+      const isLoadMoreBlocker =
+        /阅\|读\|模\|式\|或\|畅\|读\|模\|式/.test(text) || /加\|载\|更\|多/.test(text);
+      if (isPromotion || (!hasEncodedContent && isLoadMoreBlocker)) {
         p.remove();
       }
     });
@@ -88,6 +83,7 @@ export const gobooRule: SiteRule = {
   advanced: {
     checkSection: true,
     sectionDelayMs: 1200,
+    progressiveSectionMerge: true,
   },
   meta: {
     source: 'builtin',

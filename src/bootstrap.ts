@@ -263,11 +263,24 @@ async function showPrompt(): Promise<{
 /**
  * Launch the reader with parsed content
  */
-function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
+function launchReader(
+  chapter: ParsedChapter,
+  rule?: SiteRule,
+  stage: 'initial' | 'update' | 'complete' = 'complete'
+): void {
   if (!pinia) {
     console.error('[MNR] Pinia not initialized');
     return;
   }
+
+  const readerStore = useReaderStore(pinia);
+  if (stage === 'update') {
+    if (appState.isActive) {
+      readerStore.updateChapter(chapter, rule);
+    }
+    return;
+  }
+  if (appState.isActive) return;
 
   hideReaderEntry();
 
@@ -282,9 +295,11 @@ function launchReader(chapter: ParsedChapter, rule?: SiteRule): void {
   appState.entryPageKind = pageKind === 'chapter' || rule || chapter.rule ? 'chapter' : pageKind;
 
   // Update reader store
-  const readerStore = useReaderStore(pinia);
   readerStore.activate();
   readerStore.setChapter(chapter, rule);
+  if (stage === 'initial') {
+    readerStore.showToast('正在加载本章剩余内容…', 'info');
+  }
 
   appState.isActive = true;
 

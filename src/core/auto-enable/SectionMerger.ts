@@ -32,6 +32,8 @@ export interface SectionMergeOptions {
   signal?: AbortSignal;
   /** Custom fetcher function */
   fetcher?: (url: string, referrer: string) => Promise<Document | null>;
+  /** Called with the first page before progressive section merging continues. */
+  onFirstPage?: (chapter: ParsedChapter) => void;
 }
 
 interface StartPageState {
@@ -111,6 +113,13 @@ export class SectionMerger {
 
     const state = this.decideSectionMerge(startPage, first, confidenceThreshold, !!options.fetcher);
     if (state.kind === 'done') return state.chapter;
+
+    if (first.rule?.advanced?.progressiveSectionMerge) {
+      options.onFirstPage?.({
+        ...first,
+        nextUrl: state.nextChapterUrl || undefined,
+      });
+    }
 
     return this.mergeSections(startPage, first, state, maxPages, options.fetcher, options.signal);
   }

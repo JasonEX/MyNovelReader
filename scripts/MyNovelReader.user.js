@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.1
+// @version            9.3.2
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -6034,7 +6034,7 @@
 		}
 	};
 	var goboo_exports$1 = __exportAll({ gobooRule: () => gobooRule });
-	var gobooBeforeParse = async (doc, url) => {
+	var gobooBeforeParse = (doc, url) => {
 		try {
 			const fallbackUrl = typeof location !== "undefined" && typeof location.href === "string" ? location.href : "";
 			const pageUrl = url || doc.location?.href || fallbackUrl;
@@ -6047,10 +6047,12 @@
 				index.style.display = "none";
 				doc.body.appendChild(index);
 			}
-			if (typeof document !== "undefined" && doc === document && doc.querySelector(".content button")) await new Promise((resolve) => setTimeout(resolve, 1200));
+			const hasEncodedContent = Array.from(doc.scripts).some((script) => /p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(script.textContent || ""));
 			doc.querySelectorAll(".content p").forEach((p) => {
 				const text = (p.textContent || "").replace(/\s+/g, "");
-				if (/小说免费阅读，请收藏.*goboo\.cc/i.test(text) || /阅\|读\|模\|式\|或\|畅\|读\|模\|式/.test(text) || /加\|载\|更\|多/.test(text)) p.remove();
+				const isPromotion = /小说免费阅读，请收藏.*goboo\.cc/i.test(text);
+				const isLoadMoreBlocker = /阅\|读\|模\|式\|或\|畅\|读\|模\|式/.test(text) || /加\|载\|更\|多/.test(text);
+				if (isPromotion || !hasEncodedContent && isLoadMoreBlocker) p.remove();
 			});
 		} catch (e) {
 			console.warn("[MyNovelReader] Goboo beforeParse error:", e);
@@ -6095,7 +6097,8 @@
 		hooks: { beforeParse: gobooBeforeParse },
 		advanced: {
 			checkSection: true,
-			sectionDelayMs: 1200
+			sectionDelayMs: 1200,
+			progressiveSectionMerge: true
 		},
 		meta: {
 			source: "builtin",
@@ -7734,6 +7737,10 @@
 			if (!first) return null;
 			const state = this.decideSectionMerge(startPage, first, confidenceThreshold, !!options.fetcher);
 			if (state.kind === "done") return state.chapter;
+			if (first.rule?.advanced?.progressiveSectionMerge) options.onFirstPage?.({
+				...first,
+				nextUrl: state.nextChapterUrl || void 0
+			});
 			return this.mergeSections(startPage, first, state, maxPages, options.fetcher, options.signal);
 		}
 		async resolveStartPage(doc, url, options) {
@@ -8177,17 +8184,24 @@
 		}
 		async launch(doc, decision) {
 			this.activateProtection();
+			let launchedEarly = false;
 			try {
 				const currentUrl = doc.location?.href || window.location.href;
-				const chapter = await this.sectionMerger.merge(doc, currentUrl);
+				const chapter = await this.sectionMerger.merge(doc, currentUrl, { onFirstPage: (firstPage) => {
+					if (!this.launchCallback) return;
+					this.launchCallback(firstPage, decision.rule || firstPage.rule, "initial");
+					launchedEarly = true;
+				} });
 				if (chapter && this.launchCallback) {
-					this.launchCallback(chapter, decision.rule);
+					this.launchCallback(chapter, decision.rule || chapter.rule, launchedEarly ? "update" : "complete");
 					return true;
 				}
+				if (launchedEarly) return true;
 				this.deactivateProtection();
 				return false;
 			} catch (e) {
 				console.error("[AutoEnableManager] Parse error:", e);
+				if (launchedEarly) return true;
 				this.deactivateProtection();
 				return false;
 			}
@@ -8221,9 +8235,13 @@
 			let launched = false;
 			try {
 				const currentUrl = doc.location?.href || window.location.href;
-				const chapter = await this.sectionMerger.merge(doc, currentUrl);
+				const chapter = await this.sectionMerger.merge(doc, currentUrl, { onFirstPage: (firstPage) => {
+					if (!this.launchCallback) return;
+					this.launchCallback(firstPage, firstPage.rule, "initial");
+					launched = true;
+				} });
 				if (chapter && this.launchCallback) {
-					this.launchCallback(chapter, chapter.rule);
+					this.launchCallback(chapter, chapter.rule, launched ? "update" : "complete");
 					this.rememberSiteEnabled(doc);
 					launched = true;
 				}
@@ -8240,8 +8258,8 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.1";
-	var BUILD_DATE = "2026-07-11";
+	var VERSION = "9.3.2";
+	var BUILD_DATE = "2026-07-13";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
 		if (!url) return null;
@@ -19569,6 +19587,38 @@ ul, ol {
 			syncCurrentHostPage();
 			restoreCache$1();
 		}
+		function updateChapter(newChapter, newRule) {
+			const url = normalizeUrlForFetch(newChapter.url);
+			const entry = chapters.value.find((item) => normalizeUrlForFetch(item.chapter.url) === url);
+			if (!entry) return false;
+			recordDebugEvent("reader.updateChapter", {
+				url,
+				title: newChapter.title,
+				ruleId: newRule?.id || newChapter.rule?.id
+			});
+			newChapter.url = url;
+			if (newChapter.prevUrl) newChapter.prevUrl = normalizeUrlForFetch(newChapter.prevUrl);
+			if (newChapter.nextUrl) newChapter.nextUrl = normalizeUrlForFetch(newChapter.nextUrl);
+			if (newChapter.indexUrl) newChapter.indexUrl = normalizeUrlForFetch(newChapter.indexUrl);
+			const effectiveRule = newRule || newChapter.rule || entry.rule;
+			entry.chapter = newChapter;
+			entry.rule = effectiveRule;
+			originalContents.value.set(entry.id, newChapter.content);
+			originalTitles.value.set(entry.id, {
+				title: newChapter.title,
+				bookTitle: newChapter.bookTitle
+			});
+			cachedContents.value.set(url, {
+				chapter: newChapter,
+				rule: effectiveRule,
+				cachedAt: Date.now()
+			});
+			if (currentConversionMode.value !== "none") applyConversionToChapterEntry$1(entry.id, currentConversionMode.value).then(() => {
+				if (chapters.value[currentChapterIndex.value]?.id === entry.id) syncCurrentHostPage();
+			});
+			else if (chapters.value[currentChapterIndex.value]?.id === entry.id) syncCurrentHostPage();
+			return true;
+		}
 		function updateScroll(percent) {
 			scrollPercent.value = Math.max(0, Math.min(100, percent));
 		}
@@ -19780,6 +19830,7 @@ ul, ol {
 			activate,
 			deactivate,
 			setChapter,
+			updateChapter,
 			setCurrentChapter,
 			loadNextChapter,
 			loadPrevChapter,
@@ -22024,11 +22075,17 @@ ul, ol {
 			}
 		});
 	}
-	function launchReader(chapter, rule) {
+	function launchReader(chapter, rule, stage = "complete") {
 		if (!pinia) {
 			console.error("[MNR] Pinia not initialized");
 			return;
 		}
+		const readerStore = useReaderStore(pinia);
+		if (stage === "update") {
+			if (appState.isActive) readerStore.updateChapter(chapter, rule);
+			return;
+		}
+		if (appState.isActive) return;
 		hideReaderEntry();
 		recordDebugEvent("bootstrap.launchReader", {
 			url: chapter.url,
@@ -22038,9 +22095,9 @@ ul, ol {
 		appState.originalHostPage = captureHostPageSnapshot();
 		const pageKind = getPageKind(window.location.href, document);
 		appState.entryPageKind = pageKind === "chapter" || rule || chapter.rule ? "chapter" : pageKind;
-		const readerStore = useReaderStore(pinia);
 		readerStore.activate();
 		readerStore.setChapter(chapter, rule);
+		if (stage === "initial") readerStore.showToast("正在加载本章剩余内容…", "info");
 		appState.isActive = true;
 		mountReaderUI();
 	}

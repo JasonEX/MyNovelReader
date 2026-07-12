@@ -50,7 +50,11 @@ export interface UserPromptResponse {
 export type PromptCallback = () => Promise<UserPromptResponse>;
 
 /** Callback when reader should launch */
-export type LaunchCallback = (chapter: ParsedChapter, rule?: SiteRule) => void;
+export type LaunchCallback = (
+  chapter: ParsedChapter,
+  rule?: SiteRule,
+  stage?: 'initial' | 'update' | 'complete'
+) => void;
 
 /** Auto-enable options */
 export interface AutoEnableOptions {
@@ -357,18 +361,31 @@ export class AutoEnableManager {
   private async launch(doc: Document, decision: AutoEnableDecision): Promise<boolean> {
     this.activateProtection();
 
+    let launchedEarly = false;
     try {
       const currentUrl = doc.location?.href || window.location.href;
-      const chapter = await this.sectionMerger.merge(doc, currentUrl);
+      const chapter = await this.sectionMerger.merge(doc, currentUrl, {
+        onFirstPage: firstPage => {
+          if (!this.launchCallback) return;
+          this.launchCallback(firstPage, decision.rule || firstPage.rule, 'initial');
+          launchedEarly = true;
+        },
+      });
 
       if (chapter && this.launchCallback) {
-        this.launchCallback(chapter, decision.rule);
+        this.launchCallback(
+          chapter,
+          decision.rule || chapter.rule,
+          launchedEarly ? 'update' : 'complete'
+        );
         return true;
       }
+      if (launchedEarly) return true;
       this.deactivateProtection();
       return false;
     } catch (e) {
       console.error('[AutoEnableManager] Parse error:', e);
+      if (launchedEarly) return true;
       this.deactivateProtection();
       return false;
     }
@@ -420,10 +437,16 @@ export class AutoEnableManager {
     let launched = false;
     try {
       const currentUrl = doc.location?.href || window.location.href;
-      const chapter = await this.sectionMerger.merge(doc, currentUrl);
+      const chapter = await this.sectionMerger.merge(doc, currentUrl, {
+        onFirstPage: firstPage => {
+          if (!this.launchCallback) return;
+          this.launchCallback(firstPage, firstPage.rule, 'initial');
+          launched = true;
+        },
+      });
 
       if (chapter && this.launchCallback) {
-        this.launchCallback(chapter, chapter.rule);
+        this.launchCallback(chapter, chapter.rule, launched ? 'update' : 'complete');
         this.rememberSiteEnabled(doc);
         launched = true;
       }

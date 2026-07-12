@@ -41,6 +41,35 @@ const fixtureHtml = `<!doctype html>
   </body>
 </html>`;
 
+function makeGobooPage(pageNumber: number, nextHref: string, nextText = '下一页'): string {
+  const visible = `第${pageNumber}页可见正文。`.repeat(48);
+  const hidden = `第${pageNumber}页编码后续正文。`.repeat(48);
+  const encoded = Buffer.from(`<p>${hidden}</p>`, 'utf8').toString('base64');
+  const prevHref = pageNumber === 1 ? 'javascript:void(0);' : `/gb_1/94443/1/${pageNumber - 1}`;
+
+  return `<!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="utf-8">
+        <title>001 本地分页测试(${pageNumber}/3) - 测试书小说 - 钢笔小说</title>
+      </head>
+      <body>
+        <h1>001 本地分页测试(${pageNumber}/3)</h1>
+        <div class="content">
+          <p>【测试书】小说免费阅读，请收藏 钢笔小说【goboo.cc】</p>
+          <p>${visible}</p>
+          <p>阅|读|模|式|或|畅|读|模|式|下，无|法|显|示|本|章|节|全|部|内|容，请|返|回|原|网|页阅|读。<button>加|载|更|多</button></p>
+        </div>
+        <div class="page">
+          <span class="left"><a href="${prevHref}">上一页</a></span>
+          <span class="center"><a href="/ml_1/94443?cid=1">目录</a></span>
+          <span class="right"><a href="${nextHref}">${nextText}</a></span>
+        </div>
+        <script>const p_key='${encoded}';</script>
+      </body>
+    </html>`;
+}
+
 function expectCentered(alignment: { x: number; y: number } | null): void {
   expect(alignment).not.toBeNull();
   expect(Math.abs(alignment?.x ?? Infinity)).toBeLessThanOrEqual(0.5);
@@ -301,5 +330,74 @@ test('keeps detection details internal and hands a dismissed prompt off to manua
   await expect(page.locator('#mnr-reader-root').locator('.mnr-reader-content')).toContainText(
     '这是第 1 段测试正文'
   );
+  expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});
+
+test('shows the first Goboo section before rate-limited background merging completes', async ({
+  context,
+  page,
+}) => {
+  const firstUrl = 'https://m.goboo.cc/gb_1/94443/1';
+  const secondUrl = `${firstUrl}/2`;
+  const thirdUrl = `${firstUrl}/3`;
+  const requestTimes = new Map<string, number>();
+  const startedAt = Date.now();
+
+  await context.route(firstUrl, route =>
+    route.fulfill({
+      body: makeGobooPage(1, '/gb_1/94443/1/2'),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await context.route(secondUrl, route =>
+    route.fulfill({
+      body: makeGobooPage(2, '/gb_1/94443/1/3'),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await context.route(thirdUrl, route =>
+    route.fulfill({
+      body: makeGobooPage(3, '/gb_1/94443/2', '下一章'),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  page.on('request', request => {
+    if (request.url() === secondUrl || request.url() === thirdUrl) {
+      requestTimes.set(request.url(), Date.now() - startedAt);
+    }
+  });
+  await addMyNovelReaderUserscript(context);
+  const logs = createConsoleCollector(page);
+
+  await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#mnr-reader-root')).toHaveCount(1, { timeout: 1_000 });
+  const initialText = await page
+    .locator('#mnr-reader-root')
+    .evaluate(host =>
+      host.shadowRoot?.querySelector('.mnr-reader-content')?.textContent?.replace(/\s+/g, '')
+    );
+
+  expect(initialText).toContain('第1页可见正文');
+  expect(initialText).toContain('第1页编码后续正文');
+  expect(initialText).not.toContain('第2页可见正文');
+  expect(requestTimes.has(secondUrl)).toBe(false);
+
+  await expect
+    .poll(
+      () =>
+        page
+          .locator('#mnr-reader-root')
+          .evaluate(host =>
+            host.shadowRoot?.querySelector('.mnr-reader-content')?.textContent?.replace(/\s+/g, '')
+          ),
+      { timeout: 6_000 }
+    )
+    .toContain('第3页编码后续正文');
+
+  expect(requestTimes.get(thirdUrl)! - requestTimes.get(secondUrl)!).toBeGreaterThanOrEqual(1_000);
+  await expect(page.locator('#mnr-reader-root')).toHaveCount(1);
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });
