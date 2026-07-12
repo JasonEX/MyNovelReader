@@ -6,7 +6,6 @@ Thumbs.db
 .ace-tool/
 .vscode/
 *.sublime-workspace
-AGENTS.md
 coverage/
 test-results/
 
