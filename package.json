@@ -51,7 +51,7 @@
   "dependencies": {
     "chinese-conv": "^4.0.0",
     "dompurify": "^3.1.6",
-    "opencc-js": "^1.4.0"
+    "opencc-js": "^1.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
