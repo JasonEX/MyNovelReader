@@ -221,6 +221,23 @@ describe('useReaderAutoLoad', () => {
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
   });
 
+  it('preloads when progressive section merging reveals the next chapter', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const nextAvailable = ref(false);
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    opts.hasNext = computed(() => nextAvailable.value);
+
+    useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(5000);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    nextAvailable.value = true;
+    await nextTick();
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+  });
+
   it('schedules after loading state clears without loading during the busy state', async () => {
     const mainEl = document.createElement('div');
     defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });

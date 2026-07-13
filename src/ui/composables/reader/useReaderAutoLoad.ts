@@ -207,6 +207,17 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   );
 
   watch(
+    () => hasNext.value,
+    available => {
+      if (!available) {
+        clearAutoLoadTimer();
+        return;
+      }
+      scheduleAutoLoadNext('state');
+    }
+  );
+
+  watch(
     () => [isLoadingNext.value, isLoadingPrev.value, isLoading.value, isNavigating.value],
     ([loadingNext, loadingPrev, loading, navigating]) => {
       if (loadingNext || loadingPrev || loading || navigating) return;

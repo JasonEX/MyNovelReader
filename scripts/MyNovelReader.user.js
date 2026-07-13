@@ -20432,6 +20432,13 @@ ul, ol {
 		watch(() => readerStore.currentChapterIndex, () => {
 			scheduleAutoLoadNext("state");
 		});
+		watch(() => hasNext.value, (available) => {
+			if (!available) {
+				clearAutoLoadTimer();
+				return;
+			}
+			scheduleAutoLoadNext("state");
+		});
 		watch(() => [
 			isLoadingNext.value,
 			isLoadingPrev.value,

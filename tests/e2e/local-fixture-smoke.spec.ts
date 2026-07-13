@@ -142,6 +142,27 @@ function makeGobooPage(pageNumber: number, nextHref: string, nextText = '下一�
     </html>`;
 }
 
+function makeGobooNextChapter(): string {
+  const content = '第2章已由共享自动加载器成功预载。'.repeat(96);
+
+  return `<!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="utf-8">
+        <title>002 通用自动预载回归 - 测试书小说 - 钢笔小说</title>
+      </head>
+      <body>
+        <h1>002 通用自动预载回归</h1>
+        <div class="content"><p>${content}</p></div>
+        <div class="page">
+          <a class="left" href="/gb_1/94443/1">上一章</a>
+          <a class="center" href="/ml_1/94443?cid=2">目录</a>
+          <a class="right" href="/gb_1/94443/3">下一章</a>
+        </div>
+      </body>
+    </html>`;
+}
+
 function expectCentered(alignment: { x: number; y: number } | null): void {
   expect(alignment).not.toBeNull();
   expect(Math.abs(alignment?.x ?? Infinity)).toBeLessThanOrEqual(0.5);
@@ -460,6 +481,7 @@ test('shows the first Goboo section before rate-limited background merging compl
   const firstUrl = 'https://m.goboo.cc/gb_1/94443/1';
   const secondUrl = `${firstUrl}/2`;
   const thirdUrl = `${firstUrl}/3`;
+  const nextChapterUrl = 'https://m.goboo.cc/gb_1/94443/2';
   const requestTimes = new Map<string, number>();
   const startedAt = Date.now();
 
@@ -480,6 +502,13 @@ test('shows the first Goboo section before rate-limited background merging compl
   await context.route(thirdUrl, route =>
     route.fulfill({
       body: makeGobooPage(3, '/gb_1/94443/2', '下一章'),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await context.route(nextChapterUrl, route =>
+    route.fulfill({
+      body: makeGobooNextChapter(),
       contentType: 'text/html; charset=utf-8',
       status: 200,
     })
@@ -518,6 +547,18 @@ test('shows the first Goboo section before rate-limited background merging compl
     .toContain('第3页编码后续正文');
 
   expect(requestTimes.get(thirdUrl)! - requestTimes.get(secondUrl)!).toBeGreaterThanOrEqual(1_000);
+  await expect
+    .poll(
+      () =>
+        page
+          .locator('#mnr-reader-root')
+          .evaluate(host => host.shadowRoot?.querySelectorAll('.mnr-reader-content').length || 0),
+      { timeout: 8_000 }
+    )
+    .toBe(2);
+  await expect(
+    page.locator('#mnr-reader-root').locator('.mnr-reader-content').nth(1)
+  ).toContainText('第2章已由共享自动加载器成功预载');
   await expect(page.locator('#mnr-reader-root')).toHaveCount(1);
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });
