@@ -1165,6 +1165,7 @@
 		"direction",
 		"display",
 		"divisor",
+		"dominant-baseline",
 		"dur",
 		"edgemode",
 		"elevation",
@@ -1292,6 +1293,7 @@
 		"transform-origin",
 		"text-anchor",
 		"text-decoration",
+		"text-orientation",
 		"text-rendering",
 		"textlength",
 		"type",
@@ -1454,7 +1456,7 @@
 	function createDOMPurify() {
 		let window = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : getGlobal();
 		const DOMPurify = (root) => createDOMPurify(root);
-		DOMPurify.version = "3.4.11";
+		DOMPurify.version = "3.4.12";
 		DOMPurify.removed = [];
 		if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document || !window.Element) {
 			DOMPurify.isSupported = false;
@@ -1858,6 +1860,7 @@
 			}
 		};
 		const _neutralizeRoot = function _neutralizeRoot(root) {
+			_neutralizeSubtree(root);
 			const childNodes = getChildNodes(root);
 			if (childNodes) {
 				const snapshot = [];
@@ -1916,6 +1919,30 @@
 			while (stack.length > 0) {
 				const node = stack.pop();
 				if ((getNodeType ? getNodeType(node) : node.nodeType) === NODE_TYPE.element) _stripDisallowedAttributes(node);
+				const childNodes = getChildNodes(node);
+				if (childNodes) for (let i = childNodes.length - 1; i >= 0; --i) stack.push(childNodes[i]);
+			}
+		};
+		const _neutralizePatchLinkage = function _neutralizePatchLinkage(root) {
+			if (!SAFE_FOR_XML) return;
+			const stack = [root];
+			while (stack.length > 0) {
+				const node = stack.pop();
+				const nodeType = getNodeType ? getNodeType(node) : node.nodeType;
+				if (nodeType === NODE_TYPE.processingInstruction || nodeType === NODE_TYPE.comment && regExpTest(COMMENT_MARKUP_PROBE, node.data)) {
+					try {
+						remove(node);
+					} catch (_) {}
+					continue;
+				}
+				if (nodeType === NODE_TYPE.element) {
+					const element = node;
+					const lcTag = transformCaseFunc(getNodeName ? getNodeName(node) : node.nodeName);
+					try {
+						if (element.hasAttribute && element.hasAttribute("patchsrc")) element.removeAttribute("patchsrc");
+						if (element.hasAttribute && element.hasAttribute("for") && lcTag !== "label" && lcTag !== "output") element.removeAttribute("for");
+					} catch (_) {}
+				}
 				const childNodes = getChildNodes(node);
 				if (childNodes) for (let i = childNodes.length - 1; i >= 0; --i) stack.push(childNodes[i]);
 			}
@@ -2021,8 +2048,9 @@
 			_forceRemove(currentNode);
 			return true;
 		};
-		const _sanitizeElements = function _sanitizeElements(currentNode) {
+		const _sanitizeElements = function _sanitizeElements(currentNode, root) {
 			_executeHooks(hooks.beforeSanitizeElements, currentNode, null);
+			if (currentNode !== root && getParentNode(currentNode) === null) return true;
 			if (_isClobbered(currentNode)) {
 				_forceRemove(currentNode);
 				return true;
@@ -2032,11 +2060,16 @@
 				tagName,
 				allowedTags: ALLOWED_TAGS
 			});
+			if (currentNode !== root && getParentNode(currentNode) === null) return true;
 			if (_isUnsafeNode(currentNode, tagName)) {
 				_forceRemove(currentNode);
 				return true;
 			}
-			if (FORBID_TAGS[tagName] || !(EXTRA_ELEMENT_HANDLING.tagCheck instanceof Function && EXTRA_ELEMENT_HANDLING.tagCheck(tagName)) && !ALLOWED_TAGS[tagName]) return _sanitizeDisallowedNode(currentNode, tagName);
+			if (FORBID_TAGS[tagName] || !(EXTRA_ELEMENT_HANDLING.tagCheck instanceof Function && EXTRA_ELEMENT_HANDLING.tagCheck(tagName)) && !ALLOWED_TAGS[tagName]) {
+				const removed = _sanitizeDisallowedNode(currentNode, tagName);
+				if (removed === false) _executeHooks(hooks.afterSanitizeElements, currentNode, null);
+				return removed;
+			}
 			if ((getNodeType ? getNodeType(currentNode) : currentNode.nodeType) === NODE_TYPE.element && !_checkValidNamespace(currentNode)) {
 				_forceRemove(currentNode);
 				return true;
@@ -2057,6 +2090,8 @@
 		};
 		const _isValidAttribute = function _isValidAttribute(lcTag, lcName, value) {
 			if (FORBID_ATTR[lcName]) return false;
+			if (SAFE_FOR_XML && lcName === "patchsrc") return false;
+			if (SAFE_FOR_XML && lcName === "for" && lcTag !== "label" && lcTag !== "output") return false;
 			if (SANITIZE_DOM && (lcName === "id" || lcName === "name") && (value in document || value in formElement)) return false;
 			const nameIsPermitted = ALLOWED_ATTR[lcName] || EXTRA_ELEMENT_HANDLING.attributeCheck instanceof Function && EXTRA_ELEMENT_HANDLING.attributeCheck(lcName, lcTag);
 			if (ALLOW_DATA_ATTR && regExpTest(DATA_ATTR$1, lcName));
@@ -2162,7 +2197,7 @@
 			_executeHooks(hooks.beforeSanitizeShadowDOM, fragment, null);
 			while (shadowNode = shadowIterator.nextNode()) {
 				_executeHooks(hooks.uponSanitizeShadowNode, shadowNode, null);
-				_sanitizeElements(shadowNode);
+				_sanitizeElements(shadowNode, fragment);
 				_sanitizeAttributes(shadowNode);
 				if (_isDocumentFragment(shadowNode.content)) _sanitizeShadowDOM2(shadowNode.content);
 				if ((getNodeType ? getNodeType(shadowNode) : shadowNode.nodeType) === NODE_TYPE.element) {
@@ -2237,12 +2272,19 @@
 			DOMPurify.removed = [];
 			const inPlace = IN_PLACE && typeof dirty !== "string" && _isNode(dirty);
 			if (inPlace) {
+				_neutralizePatchLinkage(dirty);
 				const nn = getNodeName ? getNodeName(dirty) : dirty.nodeName;
 				if (typeof nn === "string") {
 					const tagName = transformCaseFunc(nn);
-					if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) throw typeErrorCreate("root node is forbidden and cannot be sanitized in-place");
+					if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
+						_neutralizeRoot(dirty);
+						throw typeErrorCreate("root node is forbidden and cannot be sanitized in-place");
+					}
 				}
-				if (_isClobbered(dirty)) throw typeErrorCreate("root node is clobbered and cannot be sanitized in-place");
+				if (_isClobbered(dirty)) {
+					_neutralizeRoot(dirty);
+					throw typeErrorCreate("root node is clobbered and cannot be sanitized in-place");
+				}
 				try {
 					_sanitizeAttachedShadowRoots(dirty);
 				} catch (error) {
@@ -2262,15 +2304,21 @@
 				if (!body) return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : "";
 			}
 			if (body && FORCE_BODY) _forceRemove(body.firstChild);
-			const nodeIterator = _createNodeIterator(inPlace ? dirty : body);
+			const walkRoot = inPlace ? dirty : body;
+			const nodeIterator = _createNodeIterator(walkRoot);
 			try {
 				while (currentNode = nodeIterator.nextNode()) {
-					_sanitizeElements(currentNode);
+					_sanitizeElements(currentNode, walkRoot);
 					_sanitizeAttributes(currentNode);
 					if (_isDocumentFragment(currentNode.content)) _sanitizeShadowDOM2(currentNode.content);
 				}
 			} catch (error) {
-				if (inPlace) _neutralizeRoot(dirty);
+				if (inPlace) {
+					_neutralizeRoot(dirty);
+					arrayForEach(DOMPurify.removed, (entry) => {
+						if (entry.element) _neutralizeSubtree(entry.element);
+					});
+				}
 				throw error;
 			}
 			if (inPlace) {
