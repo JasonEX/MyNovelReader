@@ -1,4 +1,4 @@
-import { expect, type Locator, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import {
   addMyNovelReaderUserscript,
@@ -40,6 +40,47 @@ const fixtureHtml = `<!doctype html>
     </main>
   </body>
 </html>`;
+
+const nextFixtureHtml = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <title>第101章 手势续读 - 测试小说</title>
+  </head>
+  <body>
+    <main>
+      <h1>第101章 手势续读</h1>
+      <div id="content">${paragraphs.replaceAll('本地固定页面', '移动端手势')}</div>
+      <nav>
+        <a href="/chapter/100.html">上一章</a>
+        <a href="/book/1/index.html">目录</a>
+        <a href="/chapter/102.html">下一章</a>
+      </nav>
+    </main>
+  </body>
+</html>`;
+
+async function dispatchReaderTouch(
+  page: Page,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  point: { x: number; y: number }
+): Promise<void> {
+  await page.locator('#mnr-reader-root').evaluate(
+    (host, input) => {
+      const main = host.shadowRoot?.querySelector('.mnr-reader-main');
+      if (!main) throw new Error('reader main element not found');
+
+      const touch = { identifier: 1, clientX: input.point.x, clientY: input.point.y };
+      const event = new Event(input.type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        touches: { value: input.type === 'touchend' ? [] : [touch] },
+        changedTouches: { value: [touch] },
+      });
+      main.dispatchEvent(event);
+    },
+    { type, point }
+  );
+}
 
 function makeGobooPage(pageNumber: number, nextHref: string, nextText = '下一页'): string {
   const visible = `第${pageNumber}页可见正文。`.repeat(48);
@@ -400,4 +441,107 @@ test('shows the first Goboo section before rate-limited background merging compl
   expect(requestTimes.get(thirdUrl)! - requestTimes.get(secondUrl)!).toBeGreaterThanOrEqual(1_000);
   await expect(page.locator('#mnr-reader-root')).toHaveCount(1);
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});
+
+test.describe('mobile gesture paging', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('keeps vertical scrolling native and turns one screen with horizontal swipes', async ({
+    context,
+    page,
+  }) => {
+    const nextUrl = 'http://mnr.test/chapter/101.html';
+    let nextRequests = 0;
+
+    await context.route(targetUrl, route =>
+      route.fulfill({
+        body: fixtureHtml,
+        contentType: 'text/html; charset=utf-8',
+        status: 200,
+      })
+    );
+    await context.route(nextUrl, route => {
+      nextRequests += 1;
+      return route.fulfill({
+        body: nextFixtureHtml,
+        contentType: 'text/html; charset=utf-8',
+        status: 200,
+      });
+    });
+    await addMyNovelReaderUserscript(context);
+
+    const logs = createConsoleCollector(page);
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+    assertMnrSmokeState(await waitForMnrReader(page));
+
+    const readerRoot = page.locator('#mnr-reader-root');
+    const readerMain = readerRoot.locator('.mnr-reader-main');
+    await expect(readerMain).toHaveCSS('touch-action', 'pan-y pinch-zoom');
+
+    await readerRoot.locator('[aria-label="打开设置"]').click();
+    const behaviorSettings = readerRoot.locator('details').filter({ hasText: '阅读行为' });
+    await behaviorSettings.locator('summary').click();
+    await expect(behaviorSettings).toHaveAttribute('open', '');
+    const gestureSetting = readerRoot
+      .locator('.mnr-switch-row')
+      .filter({ hasText: '左右滑动翻屏' });
+    await expect(gestureSetting).toHaveCount(1);
+    await expect(gestureSetting.locator('input')).toBeChecked();
+
+    const preloadSetting = readerRoot
+      .locator('.mnr-switch-row')
+      .filter({ hasText: '自动加载下一章' });
+    await preloadSetting.locator('input').uncheck();
+    await readerRoot.locator('.mnr-close-btn').click();
+
+    const initialPosition = await readerMain.evaluate(main => ({
+      scrollTop: main.scrollTop,
+      clientHeight: main.clientHeight,
+    }));
+    await dispatchReaderTouch(page, 'touchstart', { x: 330, y: 420 });
+    await dispatchReaderTouch(page, 'touchend', { x: 70, y: 420 });
+    await expect
+      .poll(() => readerMain.evaluate(main => main.scrollTop))
+      .toBeGreaterThan(initialPosition.scrollTop + initialPosition.clientHeight * 0.75);
+    expect(nextRequests).toBe(0);
+
+    await page.waitForTimeout(700);
+    await dispatchReaderTouch(page, 'touchstart', { x: 70, y: 420 });
+    await dispatchReaderTouch(page, 'touchend', { x: 330, y: 420 });
+    await expect.poll(() => readerMain.evaluate(main => main.scrollTop)).toBeLessThan(80);
+
+    await page.waitForTimeout(700);
+    await readerMain.evaluate(main => {
+      main.scrollTop = main.scrollHeight;
+    });
+
+    await dispatchReaderTouch(page, 'touchstart', { x: 195, y: 500 });
+    await dispatchReaderTouch(page, 'touchmove', { x: 195, y: 480 });
+    await expect(readerRoot.locator('.mnr-boundary-gesture-hint')).toHaveText('继续上滑加载下一章');
+    await dispatchReaderTouch(page, 'touchend', { x: 195, y: 480 });
+    await expect(readerRoot.locator('.mnr-boundary-gesture-hint')).toHaveCount(0);
+    await page.waitForTimeout(250);
+    expect(nextRequests).toBe(0);
+
+    await dispatchReaderTouch(page, 'touchstart', { x: 195, y: 500 });
+    await dispatchReaderTouch(page, 'touchmove', { x: 195, y: 430 });
+    await expect(readerRoot.locator('.mnr-boundary-gesture-hint')).toHaveText('松手加载下一章');
+    await dispatchReaderTouch(page, 'touchend', { x: 195, y: 430 });
+
+    await expect.poll(() => nextRequests).toBe(1);
+    await expect(readerRoot.locator('.mnr-chapter-title')).toHaveCount(2);
+    await expect(readerRoot.locator('.mnr-chapter-title').nth(1)).toHaveText('第101章 手势续读');
+    await expect
+      .poll(() =>
+        readerRoot.evaluate(host => {
+          const shadow = host.shadowRoot;
+          const main = shadow?.querySelector('.mnr-reader-main');
+          const chapter = shadow?.querySelectorAll('.mnr-reader-content')[1];
+          if (!main || !chapter) return Number.POSITIVE_INFINITY;
+          return Math.abs(chapter.getBoundingClientRect().top - main.getBoundingClientRect().top);
+        })
+      )
+      .toBeLessThan(2);
+    expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+  });
 });

@@ -1,7 +1,7 @@
 /**
  * useTouchGestures - Composable for swipe gesture handling
  *
- * Detects horizontal swipe gestures for chapter navigation
+ * Detects horizontal swipe gestures for page turns
  * while properly filtering out vertical scrolls and interactive elements.
  */
 
@@ -13,6 +13,7 @@ type SwipeStartState = {
   x: number;
   y: number;
   time: number;
+  threshold: number;
   cancelled: boolean;
 };
 
@@ -29,7 +30,9 @@ type TouchEventLike = {
 };
 
 // === Constants ===
-const SWIPE_THRESHOLD_PX = 80;
+const SWIPE_MIN_THRESHOLD_PX = 72;
+const SWIPE_MAX_THRESHOLD_PX = 120;
+const SWIPE_VIEWPORT_RATIO = 0.18;
 const SWIPE_MAX_DURATION_MS = 700;
 const SWIPE_CANCEL_VERTICAL_PX = 28;
 const SWIPE_AXIS_RATIO = 1.5;
@@ -40,8 +43,19 @@ function isTouchEvent(e: Event): e is Event & TouchEventLike {
 }
 
 function isInteractiveElement(target: unknown): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return Boolean(target.closest('a, button, input, textarea, select, label'));
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      'a, button, input, textarea, select, label, summary, [contenteditable], [role="button"]'
+    )
+  );
+}
+
+function getSwipeThreshold(): number {
+  return Math.min(
+    SWIPE_MAX_THRESHOLD_PX,
+    Math.max(SWIPE_MIN_THRESHOLD_PX, window.innerWidth * SWIPE_VIEWPORT_RATIO)
+  );
 }
 
 export interface UseTouchGesturesOptions {
@@ -67,6 +81,7 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
       x: touch.clientX,
       y: touch.clientY,
       time: Date.now(),
+      threshold: getSwipeThreshold(),
       cancelled: false,
     };
   }
@@ -116,10 +131,10 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
 
-    if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+    if (Math.abs(dx) < start.threshold) return;
     if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
 
-    // Reader UX: swipe left => next, swipe right => prev
+    // Reader UX: swipe left => page down, swipe right => page up.
     if (dx < 0) {
       onSwipeLeft();
     } else {

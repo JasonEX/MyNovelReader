@@ -15,6 +15,16 @@
     <!-- Progress indicator -->
     <ProgressIndicator v-if="showProgress" :percent="scrollPercent" :auto-hide="true" />
 
+    <div
+      v-if="boundaryGestureHint"
+      class="mnr-boundary-gesture-hint"
+      :class="`is-${boundaryGestureDirection}`"
+      role="status"
+      aria-live="polite"
+    >
+      {{ boundaryGestureHint }}
+    </div>
+
     <!-- Floating toolbar -->
     <FloatingToolbar
       :visible="showControls"
@@ -218,35 +228,39 @@ const { handleScroll } = useReaderScroll({
 });
 
 // Chapter navigation composable
-const {
-  navigateChapter,
-  jumpToCachedChapter,
-  scrollReader,
-  loadPrevWithScrollAdjust,
-  handleWheel,
-} = useChapterNavigation({
-  mainRef,
-  chapters,
-  chapterRefs,
-  readerStore,
-  isNavigating,
-  isLoadingPrev,
-  isLoadingNext,
-  hasPrev,
-  hasNext,
-});
+const { navigateChapter, jumpToCachedChapter, scrollReader, turnReaderPage, handleWheel } =
+  useChapterNavigation({
+    mainRef,
+    chapters,
+    chapterRefs,
+    readerStore,
+    isNavigating,
+    isLoadingPrev,
+    isLoadingNext,
+    hasPrev,
+    hasNext,
+  });
 
 // Touch gestures composable
-const swipeEnabled = computed(() => configStore.behavior.swipeGestures);
+const swipeEnabled = computed(
+  () =>
+    configStore.behavior.swipeGestures &&
+    !hasOpenPanel.value &&
+    !isLoading.value &&
+    !isLoadingPrev.value &&
+    !isLoadingNext.value &&
+    !isNavigating.value
+);
 const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
   enabled: swipeEnabled,
-  onSwipeLeft: () => void navigateChapter('next'),
-  onSwipeRight: () => void navigateChapter('prev'),
+  onSwipeLeft: () => void turnReaderPage('next'),
+  onSwipeRight: () => void turnReaderPage('prev'),
 });
 
 // === UI event handlers ===
 
 type TouchPointLike = {
+  identifier: number;
   clientX: number;
   clientY: number;
 };
@@ -256,8 +270,22 @@ type SingleTouchEventLike = Event & {
 };
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
-let lastTouchPoint: TouchPointLike | null = null;
-let isManualBoundaryLoadingNext = false;
+const BOUNDARY_PULL_HINT_PX = 12;
+const BOUNDARY_PULL_TRIGGER_PX = 48;
+const BOUNDARY_AXIS_RATIO = 1.25;
+
+type BoundaryGestureDirection = 'prev' | 'next';
+type BoundaryPullState = {
+  id: number;
+  startX: number;
+  startY: number;
+  direction: BoundaryGestureDirection;
+  ready: boolean;
+};
+
+const boundaryGestureHint = ref('');
+const boundaryGestureDirection = ref<BoundaryGestureDirection | null>(null);
+let boundaryPull: BoundaryPullState | null = null;
 
 function shieldEvent(event: Event) {
   event.stopPropagation();
@@ -278,62 +306,99 @@ function isAtBottom(mainEl: HTMLElement): boolean {
   );
 }
 
-function triggerNextAppendFromBoundary(): void {
-  if (!hasNext.value) return;
-  if (
-    isLoadingNext.value ||
-    isLoadingPrev.value ||
-    isLoading.value ||
-    isNavigating.value ||
-    isManualBoundaryLoadingNext
-  ) {
-    return;
-  }
-
-  isManualBoundaryLoadingNext = true;
-  void readerStore.loadNextChapter('manual').finally(() => {
-    isManualBoundaryLoadingNext = false;
-    scheduleAutoLoadNext('state');
-  });
-}
-
 function preventIfCancelable(event: Event): void {
   if (event.cancelable === false) return;
   event.preventDefault();
 }
 
+function clearBoundaryPull(): void {
+  boundaryPull = null;
+  boundaryGestureHint.value = '';
+  boundaryGestureDirection.value = null;
+}
+
+function isGestureBlocked(event: Event): boolean {
+  if (
+    hasOpenPanel.value ||
+    isLoading.value ||
+    isLoadingPrev.value ||
+    isLoadingNext.value ||
+    isNavigating.value
+  ) {
+    return true;
+  }
+
+  const selection = window.getSelection();
+  if (selection && selection.toString().length > 0) return true;
+
+  if (!(event.target instanceof Element)) return false;
+  return Boolean(
+    event.target.closest(
+      'a, button, input, textarea, select, label, summary, [contenteditable], [role="button"]'
+    )
+  );
+}
+
 function handleReaderTouchStart(event: Event): void {
-  if (isSingleTouchEvent(event)) {
-    const touch = event.touches[0];
-    lastTouchPoint = { clientX: touch.clientX, clientY: touch.clientY };
-  } else {
-    lastTouchPoint = null;
+  clearBoundaryPull();
+
+  const mainEl = mainRef.value;
+  if (mainEl && isSingleTouchEvent(event) && !isGestureBlocked(event)) {
+    const direction =
+      isAtBottom(mainEl) && hasNext.value
+        ? 'next'
+        : isAtTop(mainEl) && hasPrev.value
+          ? 'prev'
+          : null;
+
+    if (direction) {
+      const touch = event.touches[0];
+      boundaryPull = {
+        id: touch.identifier,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        direction,
+        ready: false,
+      };
+    }
   }
 
   handleTouchStart(event);
 }
 
 function guardTouchBoundary(event: Event): void {
-  const mainEl = mainRef.value;
-  if (!mainEl || !isSingleTouchEvent(event) || !lastTouchPoint) return;
+  if (!boundaryPull || !isSingleTouchEvent(event)) return;
 
-  const touch = event.touches[0];
-  const deltaX = lastTouchPoint.clientX - touch.clientX;
-  const deltaY = lastTouchPoint.clientY - touch.clientY;
-  lastTouchPoint = { clientX: touch.clientX, clientY: touch.clientY };
+  const touch = Array.from(event.touches).find(point => point.identifier === boundaryPull?.id);
+  if (!touch) return;
 
-  if (Math.abs(deltaY) < 2) return;
-  if (Math.abs(deltaY) < Math.abs(deltaX)) return;
-
-  if (deltaY > 0 && isAtBottom(mainEl)) {
-    preventIfCancelable(event);
-    triggerNextAppendFromBoundary();
-  } else if (deltaY < 0 && isAtTop(mainEl)) {
-    preventIfCancelable(event);
-    if (hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-      void loadPrevWithScrollAdjust();
-    }
+  const deltaX = touch.clientX - boundaryPull.startX;
+  const deltaY = touch.clientY - boundaryPull.startY;
+  if (
+    Math.abs(deltaX) >= BOUNDARY_PULL_HINT_PX &&
+    Math.abs(deltaX) > Math.abs(deltaY) * BOUNDARY_AXIS_RATIO
+  ) {
+    clearBoundaryPull();
+    return;
   }
+
+  const pullDistance = boundaryPull.direction === 'next' ? -deltaY : deltaY;
+  if (pullDistance < BOUNDARY_PULL_HINT_PX) {
+    boundaryPull.ready = false;
+    boundaryGestureHint.value = '';
+    boundaryGestureDirection.value = null;
+    return;
+  }
+
+  boundaryPull.ready = pullDistance >= BOUNDARY_PULL_TRIGGER_PX;
+  boundaryGestureDirection.value = boundaryPull.direction;
+  if (boundaryPull.direction === 'next') {
+    boundaryGestureHint.value = boundaryPull.ready ? '松手加载下一章' : '继续上滑加载下一章';
+  } else {
+    boundaryGestureHint.value = boundaryPull.ready ? '松手加载上一章' : '继续下滑加载上一章';
+  }
+
+  if (boundaryPull.ready) preventIfCancelable(event);
 }
 
 function handleReaderTouchMove(event: Event): void {
@@ -342,13 +407,15 @@ function handleReaderTouchMove(event: Event): void {
 }
 
 function handleReaderTouchEnd(event: Event): void {
-  lastTouchPoint = null;
+  const boundaryDirection = boundaryPull?.ready ? boundaryPull.direction : null;
+  clearBoundaryPull();
   handleTouchEnd(event);
+  if (boundaryDirection) void turnReaderPage(boundaryDirection);
   scheduleAutoLoadNext('settled');
 }
 
 function handleReaderTouchCancel(): void {
-  lastTouchPoint = null;
+  clearBoundaryPull();
   handleTouchCancel();
   scheduleAutoLoadNext('settled');
 }
@@ -632,6 +699,31 @@ onUnmounted(() => {
   /* Prevent rubber-band bounce from propagating and messing with prev-chapter positioning */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y pinch-zoom;
+}
+
+.mnr-boundary-gesture-hint {
+  position: fixed;
+  left: 50%;
+  z-index: 4;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnr-text, #1a1a1a) 86%, transparent);
+  color: var(--mnr-bg, #ffffff);
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.mnr-boundary-gesture-hint.is-prev {
+  top: max(16px, env(safe-area-inset-top));
+}
+
+.mnr-boundary-gesture-hint.is-next {
+  bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .mnr-reader-content {

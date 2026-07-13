@@ -199,7 +199,7 @@
               </label>
 
               <label class="mnr-switch-row">
-                <span>触摸手势</span>
+                <span>左右滑动翻屏</span>
                 <input
                   type="checkbox"
                   :checked="configStore.behavior.swipeGestures"

@@ -19,6 +19,8 @@ describe('useTouchGestures', () => {
     globalThis.document = dom.window.document;
     // test env
     globalThis.HTMLElement = dom.window.HTMLElement;
+    // test env
+    globalThis.Element = dom.window.Element;
   });
 
   afterEach(() => {
@@ -103,7 +105,7 @@ describe('useTouchGestures', () => {
       onSwipeRight,
     });
 
-    // Move only 50px (threshold is 80)
+    // Move only 50px (below the 72px minimum threshold)
     handleTouchStart(makeTouchEvent('touchstart', [{ identifier: 0, clientX: 200, clientY: 200 }]));
     handleTouchEnd(makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 150, clientY: 200 }]));
 
@@ -262,6 +264,56 @@ describe('useTouchGestures', () => {
     handleTouchEnd(makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 100, clientY: 200 }]));
 
     expect(onSwipeLeft).not.toHaveBeenCalled();
+  });
+
+  it('ignores swipe starting inside an element with button semantics', () => {
+    const onSwipeLeft = vi.fn();
+    vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
+
+    const { handleTouchStart, handleTouchEnd } = useTouchGestures({
+      enabled: computed(() => true),
+      onSwipeLeft,
+      onSwipeRight: vi.fn(),
+    });
+
+    const button = document.createElement('div');
+    button.setAttribute('role', 'button');
+    const child = document.createElement('span');
+    button.appendChild(child);
+    document.body.appendChild(button);
+
+    handleTouchStart(
+      makeTouchEvent(
+        'touchstart',
+        [{ identifier: 0, clientX: 300, clientY: 200 }],
+        undefined,
+        child
+      )
+    );
+    handleTouchEnd(makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 100, clientY: 200 }]));
+
+    expect(onSwipeLeft).not.toHaveBeenCalled();
+  });
+
+  it('adapts the swipe distance to the viewport width', () => {
+    const onSwipeLeft = vi.fn();
+    vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
+    Object.defineProperty(window, 'innerWidth', { value: 390, configurable: true });
+
+    const { handleTouchStart, handleTouchEnd } = useTouchGestures({
+      enabled: computed(() => true),
+      onSwipeLeft,
+      onSwipeRight: vi.fn(),
+    });
+
+    handleTouchStart(makeTouchEvent('touchstart', [{ identifier: 0, clientX: 200, clientY: 200 }]));
+    handleTouchEnd(makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 126, clientY: 200 }]));
+    expect(onSwipeLeft).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(window, 'innerWidth', { value: 1_000, configurable: true });
+    handleTouchStart(makeTouchEvent('touchstart', [{ identifier: 0, clientX: 300, clientY: 200 }]));
+    handleTouchEnd(makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 200, clientY: 200 }]));
+    expect(onSwipeLeft).toHaveBeenCalledTimes(1);
   });
 
   it('ignores swipe where vertical movement dominates at the end', () => {

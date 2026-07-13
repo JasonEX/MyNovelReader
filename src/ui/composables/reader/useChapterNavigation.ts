@@ -22,6 +22,7 @@ export interface UseChapterNavigationOptions {
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
 const SMOOTH_NAVIGATION_LOCK_MS = 650;
+const PAGE_SCROLL_RATIO = 0.9;
 
 export function useChapterNavigation(options: UseChapterNavigationOptions) {
   const {
@@ -37,6 +38,17 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   } = options;
 
   let isLoadingPrevLocal = false;
+
+  function scrollByPage(mainEl: HTMLElement, direction: 'prev' | 'next'): void {
+    isNavigating.value = true;
+    mainEl.scrollBy({
+      top: mainEl.clientHeight * PAGE_SCROLL_RATIO * (direction === 'next' ? 1 : -1),
+      behavior: 'smooth',
+    });
+    setTimeout(() => {
+      isNavigating.value = false;
+    }, SMOOTH_NAVIGATION_LOCK_MS);
+  }
 
   function isAtTop(mainEl: HTMLElement): boolean {
     return mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX;
@@ -152,9 +164,9 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
    * Load previous chapter with scroll position adjustment
    * jumpToStart: true => snap to the start (title) of the newly loaded chapter to avoid bounce
    */
-  async function loadPrevWithScrollAdjust(jumpToStart = false) {
+  async function loadPrevWithScrollAdjust(jumpToStart = false): Promise<boolean> {
     const mainEl = mainRef.value;
-    if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return;
+    if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return false;
 
     isLoadingPrevLocal = true;
 
@@ -171,7 +183,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
         if (jumpToStart) {
           // When user explicitly wants to go to previous chapter, snap to its title
           await jumpToChapter(0, 'auto');
-          return;
+          return true;
         }
 
         const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
@@ -180,9 +192,66 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
           const newChapterHeight = newChapterEl.offsetHeight;
           mainEl.scrollTop = oldScrollTop + newChapterHeight;
         }
+
+        return true;
       }
+
+      return false;
     } finally {
       isLoadingPrevLocal = false;
+    }
+  }
+
+  /**
+   * Turn one reader page while preserving a small overlap for reading continuity.
+   * At content boundaries, continue into the adjacent chapter instead of clamping.
+   */
+  async function turnReaderPage(direction: 'prev' | 'next'): Promise<void> {
+    const mainEl = mainRef.value;
+    if (!mainEl) return;
+    if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return;
+
+    if (direction === 'next') {
+      if (!isAtBottom(mainEl)) {
+        scrollByPage(mainEl, direction);
+        return;
+      }
+
+      if (!hasNext.value) {
+        readerStore.showToast(readerStore.getVipBlockedToast('next') || '已经是最后一章了', 'info');
+        return;
+      }
+
+      isNavigating.value = true;
+      let loaded = false;
+      try {
+        loaded = await readerStore.loadNextChapter('manual');
+        if (loaded) {
+          await jumpToChapter(readerStore.chapters.length - 1, 'auto');
+        }
+      } finally {
+        if (!loaded) isNavigating.value = false;
+      }
+      return;
+    }
+
+    if (!isAtTop(mainEl)) {
+      scrollByPage(mainEl, direction);
+      return;
+    }
+
+    if (!hasPrev.value) {
+      readerStore.showToast(readerStore.getVipBlockedToast('prev') || '已经是第一章了', 'info');
+      return;
+    }
+
+    isNavigating.value = true;
+    let loaded = false;
+    try {
+      loaded = await loadPrevWithScrollAdjust();
+      if (loaded) scrollByPage(mainEl, direction);
+    } finally {
+      if (!loaded) isNavigating.value = false;
     }
   }
 
@@ -260,7 +329,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     if (!mainEl) return;
 
     const step = 150; // slightly more than standard line height
-    const pageHeight = mainEl.clientHeight * 0.9;
+    const pageHeight = mainEl.clientHeight * PAGE_SCROLL_RATIO;
 
     let top = 0;
     let behavior: 'auto' | 'smooth' = 'auto';
@@ -303,6 +372,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     jumpToCachedChapter,
     scrollToChapter,
     loadPrevWithScrollAdjust,
+    turnReaderPage,
     handleWheel,
     scrollReader,
   };

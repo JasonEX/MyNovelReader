@@ -714,6 +714,94 @@ describe('useChapterNavigation', () => {
     });
   });
 
+  describe('turnReaderPage', () => {
+    it('scrolls by 90% of the viewport while content remains', async () => {
+      vi.useFakeTimers();
+      const mainEl = document.createElement('div');
+      mainEl.scrollBy = vi.fn();
+      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
+      Object.defineProperty(mainEl, 'scrollTop', { value: 500, writable: true });
+
+      const opts = createNavigationOptions({ mainRef: mainEl });
+      const { turnReaderPage } = useChapterNavigation(opts);
+
+      await turnReaderPage('next');
+
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 720, behavior: 'smooth' });
+      expect(opts.isNavigating.value).toBe(true);
+      vi.advanceTimersByTime(650);
+      expect(opts.isNavigating.value).toBe(false);
+    });
+
+    it('loads the next chapter at the bottom and lands on its title', async () => {
+      const mainEl = document.createElement('div');
+      mainEl.scrollTo = vi.fn();
+      mainEl.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0 });
+      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
+      Object.defineProperty(mainEl, 'scrollTop', { value: 1_200, writable: true });
+
+      const current = makeChapterEntry('https://example.com/ch1');
+      const next = makeChapterEntry('https://example.com/ch2');
+      const entries = [current];
+      const readerStore = {
+        chapters: entries,
+        currentChapterIndex: 0,
+        setCurrentChapter: vi.fn(),
+        loadNextChapter: vi.fn().mockImplementation(async () => {
+          entries.push(next);
+          return true;
+        }),
+        loadPrevChapter: vi.fn(),
+        showToast: vi.fn(),
+        getVipBlockedToast: vi.fn().mockReturnValue(null),
+      };
+      const target = document.createElement('article');
+      target.getBoundingClientRect = vi.fn().mockReturnValue({ top: 800 });
+      const opts = createNavigationOptions({
+        chapters: entries,
+        mainRef: mainEl,
+        hasNext: true,
+        readerStore,
+      });
+      opts.chapterRefs.set(next.chapter.url, target);
+      const { turnReaderPage } = useChapterNavigation(opts);
+
+      await turnReaderPage('next');
+
+      expect(readerStore.loadNextChapter).toHaveBeenCalledWith('manual');
+      expect(mainEl.scrollTo).toHaveBeenCalledWith({ top: 2_000, behavior: 'auto' });
+      expect(readerStore.setCurrentChapter).toHaveBeenCalledWith(1);
+    });
+
+    it('loads the previous chapter at the top and reveals its last screen', async () => {
+      const setTimeoutSpy = vi
+        .spyOn(globalThis, 'setTimeout')
+        .mockImplementation(() => 0 as unknown as ReturnType<typeof setTimeout>);
+      const mainEl = document.createElement('div');
+      mainEl.scrollBy = vi.fn();
+      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
+      Object.defineProperty(mainEl, 'scrollTop', { value: 0, writable: true });
+
+      const previousChapterEl = document.createElement('article');
+      previousChapterEl.className = 'mnr-reader-content';
+      Object.defineProperty(previousChapterEl, 'offsetHeight', { value: 1_000 });
+      mainEl.appendChild(previousChapterEl);
+
+      const opts = createNavigationOptions({ mainRef: mainEl, hasPrev: true });
+      const { turnReaderPage } = useChapterNavigation(opts);
+
+      await turnReaderPage('prev');
+
+      expect(opts.readerStore.loadPrevChapter).toHaveBeenCalledWith('manual');
+      expect(mainEl.scrollTop).toBe(1_000);
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: -720, behavior: 'smooth' });
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 650);
+    });
+  });
+
   describe('loadPrevWithScrollAdjust', () => {
     it('preserves the current view after prepending a previous chapter', async () => {
       const mainEl = document.createElement('div');
