@@ -71,11 +71,9 @@ export function loadDocumentInIframe(
     iframe.onload = () => {
       window.setTimeout(() => {
         try {
+          if (iframe?.contentWindow?.location.href === 'about:blank') return;
           const doc = iframe?.contentDocument;
-          if (!doc) {
-            finish(null);
-            return;
-          }
+          if (!doc?.body || doc.body.childNodes.length === 0) return;
           finish({ doc, cleanup });
         } catch {
           finish(null);
@@ -90,8 +88,8 @@ export function loadDocumentInIframe(
       finish(null);
       return;
     }
-    parent.appendChild(iframe);
     iframe.src = url;
+    parent.appendChild(iframe);
   });
 
   return {

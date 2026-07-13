@@ -43,13 +43,23 @@ export const isCloudflareChallenge = (doc: Document = document): boolean => {
     '[id*="cf-chl"]',
     '[class*="cf-chl"]',
     'form[action*="/cdn-cgi/"]',
-    'script[src*="/cdn-cgi/challenge-platform"]',
-    'link[href*="/cdn-cgi/challenge-platform"]',
     'iframe[src*="challenges.cloudflare.com"]',
     'iframe[src*="captcha.cloudflare.com"]',
   ];
 
   if (doc.querySelector(selectors.join(',')) !== null) return true;
+
+  const hasManagedChallengeResource = Array.from(
+    doc.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src], link[href]')
+  ).some(element => {
+    const resourceUrl = element.getAttribute('src') || element.getAttribute('href') || '';
+    if (!/\/cdn-cgi\/challenge-platform\//i.test(resourceUrl)) return false;
+
+    // Cloudflare also injects JS Detection on otherwise readable pages. It is an
+    // anti-bot signal, not an interactive challenge that should block parsing.
+    return !/\/cdn-cgi\/challenge-platform\/scripts\/jsd\//i.test(resourceUrl);
+  });
+  if (hasManagedChallengeResource) return true;
 
   const title = (doc.title || '').trim().toLowerCase();
   if (title === 'just a moment...' || title === 'attention required! | cloudflare') {
@@ -59,7 +69,7 @@ export const isCloudflareChallenge = (doc: Document = document): boolean => {
   const scriptText = Array.from(doc.querySelectorAll('script'))
     .map(script => `${script.getAttribute('src') || ''}\n${script.textContent || ''}`)
     .join('\n');
-  if (/_cf_chl_opt|cf_chl_|challenge-platform|challenges\.cloudflare\.com/i.test(scriptText)) {
+  if (/_cf_chl_opt|cf_chl_|challenges\.cloudflare\.com/i.test(scriptText)) {
     return true;
   }
 

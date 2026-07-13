@@ -60,6 +60,37 @@ const nextFixtureHtml = `<!doctype html>
   </body>
 </html>`;
 
+const hetushuFirstUrl = 'https://www.hetushu.com/book/9145/6567989.html';
+const hetushuSecondUrl = 'https://www.hetushu.com/book/9145/6567990.html';
+
+function makeHetushuFixture(options: {
+  chapterTitle: string;
+  nextUrl: string;
+  prevUrl: string;
+}): string {
+  const contentRows = Array.from(
+    { length: 56 },
+    (_, index) =>
+      `<div class="shown">${options.chapterTitle}第 ${index + 1} 段正常正文，验证和图书翻页解析不会把 JS Detection 当成挑战页。<acronym>www.hetushu.com</acronym></div>`
+  ).join('');
+
+  return `<!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="utf-8">
+        <title>木叶：让宇智波再次伟大_${options.chapterTitle}_虚空吟唱者_和图书</title>
+        <style>#content .shown { display: block; }</style>
+        <script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script>
+      </head>
+      <body>
+        <div id="left"><h3><a href="/book/9145/index.html">木叶：让宇智波再次伟大</a></h3></div>
+        <a id="pre" href="${options.prevUrl}">上一章</a>
+        <a id="next" href="${options.nextUrl}">下一章</a>
+        <div id="content"><h2>${options.chapterTitle}</h2>${contentRows}</div>
+      </body>
+    </html>`;
+}
+
 async function dispatchReaderTouch(
   page: Page,
   type: 'touchstart' | 'touchmove' | 'touchend',
@@ -322,6 +353,54 @@ test('runs the built userscript and restores the host page after exit', async ({
   expect(Math.abs(entryAlignment?.y ?? Infinity)).toBeLessThanOrEqual(0.5);
   await expect(page).toHaveTitle('第100章 本地测试 - 测试小说');
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});
+
+test('keeps normal Cloudflare JS Detection pages readable across previous navigation', async ({
+  context,
+  page,
+}) => {
+  await context.route(hetushuSecondUrl, route =>
+    route.fulfill({
+      body: makeHetushuFixture({
+        chapterTitle: '第二章 宇智波止水',
+        nextUrl: '/book/9145/6567991.html',
+        prevUrl: '/book/9145/6567989.html',
+      }),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await context.route(hetushuFirstUrl, route =>
+    route.fulfill({
+      body: makeHetushuFixture({
+        chapterTitle: '第一章 还不如不激活呢',
+        nextUrl: '/book/9145/6567990.html',
+        prevUrl: '/book/9145/6567988.html',
+      }),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await context.route('**/cdn-cgi/challenge-platform/scripts/jsd/main.js', route =>
+    route.fulfill({ body: '', contentType: 'text/javascript', status: 200 })
+  );
+  await addMyNovelReaderUserscript(context);
+
+  await page.goto(hetushuSecondUrl, { waitUntil: 'domcontentloaded' });
+  const readerRoot = page.locator('#mnr-reader-root');
+  await expect(readerRoot).toHaveCount(1);
+  await expect(readerRoot.locator(`article[data-chapter-url="${hetushuSecondUrl}"]`)).toContainText(
+    '第二章 宇智波止水'
+  );
+  await expect(page.locator('script[src*="/challenge-platform/scripts/jsd/"]')).toHaveCount(1);
+
+  await readerRoot.locator('.mnr-reader-main').focus();
+  await page.keyboard.press('ArrowLeft');
+
+  await expect.poll(() => page.url()).toBe(hetushuFirstUrl);
+  await expect(readerRoot.locator(`article[data-chapter-url="${hetushuFirstUrl}"]`)).toContainText(
+    '第一章 还不如不激活呢'
+  );
 });
 
 test('keeps detection details internal and hands a dismissed prompt off to manual entry', async ({

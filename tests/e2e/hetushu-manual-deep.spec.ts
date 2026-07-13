@@ -44,7 +44,6 @@ type ChapterSummary = {
 type ReaderDeepState = {
   appStyles: boolean;
   bookTitleFromDrawer: string;
-  cacheButton: boolean;
   chapterCount: number;
   chapters: ChapterSummary[];
   cloudflareChallenge: boolean;
@@ -55,6 +54,9 @@ type ReaderDeepState = {
   drawerOpen: boolean;
   href: string;
   menuCommands: string[];
+  offlineCacheAction: string;
+  offlineCacheStatus: string;
+  offlineCacheTitle: string;
   originalHidden: boolean;
   pageTitle: string;
   readerMounted: boolean;
@@ -133,10 +135,12 @@ async function collectDeepState(page: Page): Promise<ReaderDeepState> {
       '[id*="cf-chl"]',
       '[class*="cf-chl"]',
       'form[action*="/cdn-cgi/"]',
-      'script[src*="/cdn-cgi/challenge-platform"]',
       'iframe[src*="challenges.cloudflare.com"]',
       'iframe[src*="captcha.cloudflare.com"]',
     ];
+    const hasManagedChallengeResource = Array.from(
+      document.querySelectorAll<HTMLScriptElement>('script[src*="/cdn-cgi/challenge-platform/"]')
+    ).some(script => !script.src.includes('/cdn-cgi/challenge-platform/scripts/jsd/'));
     const root = document.querySelector('#mnr-reader-root');
     const shadow = root?.shadowRoot || null;
     const articles = Array.from(shadow?.querySelectorAll('article.mnr-reader-content') || []);
@@ -159,18 +163,18 @@ async function collectDeepState(page: Page): Promise<ReaderDeepState> {
     });
     const drawer = shadow?.querySelector('.mnr-drawer');
     const drawerItems = Array.from(shadow?.querySelectorAll('.mnr-chapter-list li') || []);
-    const activeItem = drawerItems.find(item => item.classList.contains('active'));
+    const activeItem = shadow?.querySelector('.mnr-chapter-button.active');
     const settingsPanel = shadow?.querySelector('.mnr-settings-panel');
 
     return {
       appStyles: !!shadow?.querySelector('#mnr-app-styles'),
       bookTitleFromDrawer: normalize(shadow?.querySelector('.mnr-drawer-title')?.textContent),
-      cacheButton: !!shadow?.querySelector('[aria-label="缓存管理"]'),
       chapterCount: chapters.length,
       chapters,
       cloudflareChallenge:
         location.pathname.startsWith('/cdn-cgi/') ||
-        document.querySelector(cloudflareSelectors.join(',')) !== null,
+        document.querySelector(cloudflareSelectors.join(',')) !== null ||
+        hasManagedChallengeResource,
       currentTitle: chapters[chapters.length - 1]?.title || '',
       drawerActiveTitle: normalize(activeItem?.textContent),
       drawerChapterCount: drawerItems.length,
@@ -181,6 +185,11 @@ async function collectDeepState(page: Page): Promise<ReaderDeepState> {
       menuCommands: ((window as any).__mnrMenuCommands || []).map(
         (command: { caption?: string }) => command.caption || ''
       ),
+      offlineCacheAction: normalize(
+        shadow?.querySelector('.mnr-offline-action.primary')?.textContent
+      ),
+      offlineCacheStatus: normalize(shadow?.querySelector('.mnr-offline-copy span')?.textContent),
+      offlineCacheTitle: normalize(shadow?.querySelector('#mnr-offline-title')?.textContent),
       originalHidden: !!document.querySelector('#mnr-hide-original'),
       pageTitle: document.title,
       readerMounted: !!shadow?.querySelector('.mnr-reader'),
@@ -309,18 +318,18 @@ async function pressAndWaitForUrl(
 ) {
   await focusReaderForKeyboard(page);
   await page.keyboard.press(key);
-  await waitForReadingPace(page);
   await page.waitForFunction(url => location.href === url, expectedUrl, { timeout: 20_000 });
+  await waitForReadingPace(page);
 }
 
 async function clickTocEntry(page: Page, titlePart: string): Promise<void> {
   await page.evaluate(text => {
     const shadow = document.querySelector('#mnr-reader-root')?.shadowRoot;
-    const item = Array.from(
-      shadow?.querySelectorAll<HTMLElement>('.mnr-chapter-list li') || []
+    const button = Array.from(
+      shadow?.querySelectorAll<HTMLButtonElement>('.mnr-chapter-button') || []
     ).find(node => (node.textContent || '').includes(text));
-    if (!item) throw new Error(`TOC item not found: ${text}`);
-    item.click();
+    if (!button) throw new Error(`TOC item not found: ${text}`);
+    button.click();
   }, titlePart);
 }
 
@@ -376,7 +385,6 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
     let state = await ensureBaseReaderState(page);
     expect(state.pageTitle).toContain(BOOK_TITLE);
     expect(state.toolbar).toBe(true);
-    expect(state.cacheButton).toBe(true);
     await verifyRenderedChapter(page, 1, { articleIndex: 0 });
 
     await pressAndWaitForUrl(page, 'ArrowLeft', FIRST_URL);
@@ -394,7 +402,6 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
     await invokeManualEnable(page);
     state = await ensureBaseReaderState(page);
     expect(state.toolbar).toBe(true);
-    expect(state.cacheButton).toBe(true);
     await verifyRenderedChapter(page, 0, { articleIndex: 0, minParagraphs: 50 });
 
     const openedSettings = await openSettings(page);
@@ -436,6 +443,9 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
     const drawerState = await openDrawer(page);
     expect(drawerState.drawerOpen).toBe(true);
     expect(drawerState.bookTitleFromDrawer).toContain(BOOK_TITLE);
+    expect(drawerState.offlineCacheTitle).toBe('离线阅读');
+    expect(drawerState.offlineCacheStatus).toBe('尚未缓存');
+    expect(drawerState.offlineCacheAction).toBe('缓存本书');
     expect(drawerState.drawerChapterCount).toBeGreaterThanOrEqual(CHAPTER_COUNT);
     expect(drawerState.drawerActiveTitle).toContain('第十章');
     for (const ordinal of chapterOrdinals) {
@@ -444,8 +454,8 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
 
     // Select chapter 1 from TOC after it has been trimmed from the visible list.
     await clickTocEntry(page, '第一章');
-    await waitForReadingPace(page);
     await page.waitForFunction(url => location.href === url, FIRST_URL, { timeout: 20_000 });
+    await waitForReadingPace(page);
     await verifyRenderedChapter(page, 0, { articleIndex: 0, minParagraphs: 50 });
 
     // Then go to chapter 2 again from the cache-backed rebuilt session.

@@ -1,8 +1,178 @@
 import type { BeforeParseHook, SiteRule } from '../types';
 
+const SUBSTEP_READY_TIMEOUT_MS = 4000;
+const MAPPED_VISIBLE_ATTRIBUTE = 'data-mnr-hetushu-visible';
+
+async function waitForLiveContentElement(doc: Document): Promise<Element | null> {
+  const existing = doc.querySelector('#content');
+  const view = doc.defaultView;
+  if (existing || !view || !doc.documentElement) return existing;
+
+  return new Promise(resolve => {
+    let settled = false;
+    let observer: MutationObserver | null = null;
+    const finish = (contentEl: Element | null) => {
+      if (settled) return;
+      settled = true;
+      view.clearTimeout(timeoutId);
+      observer?.disconnect();
+      resolve(contentEl);
+    };
+    const timeoutId = view.setTimeout(() => finish(null), SUBSTEP_READY_TIMEOUT_MS);
+
+    observer = new view.MutationObserver(() => {
+      const contentEl = doc.querySelector('#content');
+      if (contentEl) finish(contentEl);
+    });
+    observer.observe(doc.documentElement, {
+      attributes: true,
+      attributeFilter: ['id'],
+      childList: true,
+      subtree: true,
+    });
+
+    const contentEl = doc.querySelector('#content');
+    if (contentEl) finish(contentEl);
+  });
+}
+
+function hasPendingSubstepContent(doc: Document, contentEl: Element): boolean {
+  return (
+    doc.body?.dataset.randomtype === 'substep' &&
+    contentEl.firstElementChild?.classList.contains('mask') === true
+  );
+}
+
+function hasRestoredSubstepContent(doc: Document, contentEl: Element): boolean {
+  if (doc.body?.dataset.randomtype !== 'substep') return true;
+  if (hasPendingSubstepContent(doc, contentEl)) return false;
+  if (Array.from(contentEl.children).some(element => element.tagName === 'P')) return true;
+
+  const rows = Array.from(contentEl.children).filter(
+    element => element.tagName === 'DIV' && !element.classList.contains('chapter')
+  );
+  return (
+    rows.length > 0 &&
+    rows.every(
+      element => element.classList.length > 0 || element.hasAttribute(MAPPED_VISIBLE_ATTRIBUTE)
+    )
+  );
+}
+
+async function waitForLiveSubstepContent(doc: Document, contentEl: Element): Promise<boolean> {
+  const view = doc.defaultView;
+  if (!view || !hasPendingSubstepContent(doc, contentEl)) return true;
+
+  return new Promise(resolve => {
+    let settled = false;
+    let observer: MutationObserver | null = null;
+    const finish = (ready: boolean) => {
+      if (settled) return;
+      settled = true;
+      view.clearTimeout(timeoutId);
+      observer?.disconnect();
+      resolve(ready);
+    };
+    const timeoutId = view.setTimeout(() => finish(false), SUBSTEP_READY_TIMEOUT_MS);
+
+    observer = new view.MutationObserver(() => {
+      if (!hasPendingSubstepContent(doc, contentEl)) finish(true);
+    });
+    observer.observe(contentEl, { childList: true });
+
+    if (!hasPendingSubstepContent(doc, contentEl)) finish(true);
+  });
+}
+
+function decodeSubstepMapping(token: string): number[] | null {
+  try {
+    if (typeof atob !== 'function') return null;
+    const values = atob(token).split(/[A-Z]+%/);
+    if (!values.length || values.some(value => !/^\d+$/.test(value))) return null;
+    return values.map(Number);
+  } catch {
+    return null;
+  }
+}
+
+function applySubstepMapping(contentEl: Element, mapping: number[]): boolean {
+  const firstElement = contentEl.firstElementChild;
+  const mask = firstElement?.classList.contains('mask') ? firstElement : null;
+
+  const nodes = Array.from(contentEl.childNodes).filter(
+    node => node !== mask && (node.nodeType !== 3 || !!node.textContent?.trim())
+  );
+  let contentStart = 0;
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
+    if (node.nodeType !== 1) continue;
+    const element = node as Element;
+    if (element.tagName === 'H2') contentStart = index + 1;
+    if (element.tagName === 'DIV' && element.className !== 'chapter') break;
+  }
+
+  const sourceNodes = nodes.slice(contentStart);
+  if (mapping.length !== sourceNodes.length) return false;
+
+  const ordered: Array<Node | undefined> = new Array(sourceNodes.length);
+  let lowTargetCount = 0;
+  for (let index = 0; index < mapping.length; index++) {
+    const encodedTarget = mapping[index];
+    const target = encodedTarget < 5 ? encodedTarget : encodedTarget - lowTargetCount;
+    if (encodedTarget < 5) lowTargetCount++;
+    if (target < 0 || target >= ordered.length || ordered[target]) return false;
+    ordered[target] = sourceNodes[index];
+  }
+  if (ordered.some(node => !node)) return false;
+
+  for (const node of ordered) {
+    if (node?.nodeType === 1) {
+      (node as Element).setAttribute(MAPPED_VISIBLE_ATTRIBUTE, 'true');
+    }
+  }
+  contentEl.replaceChildren(...nodes.slice(0, contentStart), ...(ordered as Node[]));
+  return true;
+}
+
+async function restoreSubstepContent(
+  doc: Document,
+  contentEl: Element,
+  pageUrl: string
+): Promise<boolean> {
+  if (doc.body?.dataset.randomtype !== 'substep') return true;
+  if (typeof fetch !== 'function') return false;
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(pageUrl);
+  } catch {
+    return false;
+  }
+  const chapterId = parsedUrl.pathname.match(/\/(\d+)\.html$/)?.[1];
+  if (!chapterId || parsedUrl.hostname !== 'www.hetushu.com') return false;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), SUBSTEP_READY_TIMEOUT_MS);
+  try {
+    const response = await fetch(new URL(`r${chapterId}.json`, parsedUrl).href, {
+      credentials: 'include',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      signal: controller.signal,
+    });
+    if (!response.ok) return false;
+    const token = response.headers.get('token');
+    const mapping = token ? decodeSubstepMapping(token) : null;
+    return mapping ? applySubstepMapping(contentEl, mapping) : false;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 const hetushuBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
   try {
-    const contentEl = doc.querySelector('#content');
+    const contentEl = await waitForLiveContentElement(doc);
     if (!contentEl) return;
 
     const win = doc.defaultView || (typeof window !== 'undefined' ? window : null);
@@ -11,6 +181,18 @@ const hetushuBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
         ? window.location.href
         : '';
     const pageUrl = url || doc.location?.href || fallbackUrl;
+    if (!hasRestoredSubstepContent(doc, contentEl)) {
+      if (doc.defaultView && hasPendingSubstepContent(doc, contentEl)) {
+        await waitForLiveSubstepContent(doc, contentEl);
+      }
+      let ready = hasRestoredSubstepContent(doc, contentEl);
+      if (!ready && (!doc.defaultView || !hasPendingSubstepContent(doc, contentEl))) {
+        ready = await restoreSubstepContent(doc, contentEl, pageUrl);
+      }
+      if (!ready) {
+        console.warn('[MyNovelReader] Hetushu content reorder did not complete:', pageUrl);
+      }
+    }
     const titleEl = contentEl.querySelector('h2');
     const watermarkSelector =
       'acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins';
@@ -81,6 +263,7 @@ const hetushuBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
       return true;
     };
     const isVisible = (el: Element) => {
+      if (el.hasAttribute(MAPPED_VISIBLE_ATTRIBUTE)) return true;
       if (!win || !hasLayout(el)) return isVisibleByClass(el);
       const style = win.getComputedStyle(el);
       if (style.display === 'none') return false;
@@ -139,7 +322,7 @@ const hetushuBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
 export const hetushuRule: SiteRule = {
   id: 'hetushu',
   name: '和图书',
-  version: 2,
+  version: 3,
   match: {
     pattern: '^https?://www\\.hetushu\\.com/book/\\d+/\\d+\\.html$',
   },

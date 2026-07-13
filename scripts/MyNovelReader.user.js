@@ -4221,15 +4221,18 @@
 			"[id*=\"cf-chl\"]",
 			"[class*=\"cf-chl\"]",
 			"form[action*=\"/cdn-cgi/\"]",
-			"script[src*=\"/cdn-cgi/challenge-platform\"]",
-			"link[href*=\"/cdn-cgi/challenge-platform\"]",
 			"iframe[src*=\"challenges.cloudflare.com\"]",
 			"iframe[src*=\"captcha.cloudflare.com\"]"
 		].join(",")) !== null) return true;
+		if (Array.from(doc.querySelectorAll("script[src], link[href]")).some((element) => {
+			const resourceUrl = element.getAttribute("src") || element.getAttribute("href") || "";
+			if (!/\/cdn-cgi\/challenge-platform\//i.test(resourceUrl)) return false;
+			return !/\/cdn-cgi\/challenge-platform\/scripts\/jsd\//i.test(resourceUrl);
+		})) return true;
 		const title = (doc.title || "").trim().toLowerCase();
 		if (title === "just a moment..." || title === "attention required! | cloudflare") return true;
 		const scriptText = Array.from(doc.querySelectorAll("script")).map((script) => `${script.getAttribute("src") || ""}\n${script.textContent || ""}`).join("\n");
-		if (/_cf_chl_opt|cf_chl_|challenge-platform|challenges\.cloudflare\.com/i.test(scriptText)) return true;
+		if (/_cf_chl_opt|cf_chl_|challenges\.cloudflare\.com/i.test(scriptText)) return true;
 		const bodyText = (doc.body?.textContent || "").replace(/\s+/g, " ").trim();
 		return /enable javascript and cookies to continue/i.test(bodyText);
 	};
@@ -6154,13 +6157,148 @@
 		}
 	};
 	var hetushu_exports = __exportAll({ hetushuRule: () => hetushuRule });
+	var SUBSTEP_READY_TIMEOUT_MS = 4e3;
+	var MAPPED_VISIBLE_ATTRIBUTE = "data-mnr-hetushu-visible";
+	async function waitForLiveContentElement(doc) {
+		const existing = doc.querySelector("#content");
+		const view = doc.defaultView;
+		if (existing || !view || !doc.documentElement) return existing;
+		return new Promise((resolve) => {
+			let settled = false;
+			let observer = null;
+			const finish = (contentEl) => {
+				if (settled) return;
+				settled = true;
+				view.clearTimeout(timeoutId);
+				observer?.disconnect();
+				resolve(contentEl);
+			};
+			const timeoutId = view.setTimeout(() => finish(null), SUBSTEP_READY_TIMEOUT_MS);
+			observer = new view.MutationObserver(() => {
+				const contentEl = doc.querySelector("#content");
+				if (contentEl) finish(contentEl);
+			});
+			observer.observe(doc.documentElement, {
+				attributes: true,
+				attributeFilter: ["id"],
+				childList: true,
+				subtree: true
+			});
+			const contentEl = doc.querySelector("#content");
+			if (contentEl) finish(contentEl);
+		});
+	}
+	function hasPendingSubstepContent(doc, contentEl) {
+		return doc.body?.dataset.randomtype === "substep" && contentEl.firstElementChild?.classList.contains("mask") === true;
+	}
+	function hasRestoredSubstepContent(doc, contentEl) {
+		if (doc.body?.dataset.randomtype !== "substep") return true;
+		if (hasPendingSubstepContent(doc, contentEl)) return false;
+		if (Array.from(contentEl.children).some((element) => element.tagName === "P")) return true;
+		const rows = Array.from(contentEl.children).filter((element) => element.tagName === "DIV" && !element.classList.contains("chapter"));
+		return rows.length > 0 && rows.every((element) => element.classList.length > 0 || element.hasAttribute(MAPPED_VISIBLE_ATTRIBUTE));
+	}
+	async function waitForLiveSubstepContent(doc, contentEl) {
+		const view = doc.defaultView;
+		if (!view || !hasPendingSubstepContent(doc, contentEl)) return true;
+		return new Promise((resolve) => {
+			let settled = false;
+			let observer = null;
+			const finish = (ready) => {
+				if (settled) return;
+				settled = true;
+				view.clearTimeout(timeoutId);
+				observer?.disconnect();
+				resolve(ready);
+			};
+			const timeoutId = view.setTimeout(() => finish(false), SUBSTEP_READY_TIMEOUT_MS);
+			observer = new view.MutationObserver(() => {
+				if (!hasPendingSubstepContent(doc, contentEl)) finish(true);
+			});
+			observer.observe(contentEl, { childList: true });
+			if (!hasPendingSubstepContent(doc, contentEl)) finish(true);
+		});
+	}
+	function decodeSubstepMapping(token) {
+		try {
+			if (typeof atob !== "function") return null;
+			const values = atob(token).split(/[A-Z]+%/);
+			if (!values.length || values.some((value) => !/^\d+$/.test(value))) return null;
+			return values.map(Number);
+		} catch {
+			return null;
+		}
+	}
+	function applySubstepMapping(contentEl, mapping) {
+		const firstElement = contentEl.firstElementChild;
+		const mask = firstElement?.classList.contains("mask") ? firstElement : null;
+		const nodes = Array.from(contentEl.childNodes).filter((node) => node !== mask && (node.nodeType !== 3 || !!node.textContent?.trim()));
+		let contentStart = 0;
+		for (let index = 0; index < nodes.length; index++) {
+			const node = nodes[index];
+			if (node.nodeType !== 1) continue;
+			const element = node;
+			if (element.tagName === "H2") contentStart = index + 1;
+			if (element.tagName === "DIV" && element.className !== "chapter") break;
+		}
+		const sourceNodes = nodes.slice(contentStart);
+		if (mapping.length !== sourceNodes.length) return false;
+		const ordered = new Array(sourceNodes.length);
+		let lowTargetCount = 0;
+		for (let index = 0; index < mapping.length; index++) {
+			const encodedTarget = mapping[index];
+			const target = encodedTarget < 5 ? encodedTarget : encodedTarget - lowTargetCount;
+			if (encodedTarget < 5) lowTargetCount++;
+			if (target < 0 || target >= ordered.length || ordered[target]) return false;
+			ordered[target] = sourceNodes[index];
+		}
+		if (ordered.some((node) => !node)) return false;
+		for (const node of ordered) if (node?.nodeType === 1) node.setAttribute(MAPPED_VISIBLE_ATTRIBUTE, "true");
+		contentEl.replaceChildren(...nodes.slice(0, contentStart), ...ordered);
+		return true;
+	}
+	async function restoreSubstepContent(doc, contentEl, pageUrl) {
+		if (doc.body?.dataset.randomtype !== "substep") return true;
+		if (typeof fetch !== "function") return false;
+		let parsedUrl;
+		try {
+			parsedUrl = new URL(pageUrl);
+		} catch {
+			return false;
+		}
+		const chapterId = parsedUrl.pathname.match(/\/(\d+)\.html$/)?.[1];
+		if (!chapterId || parsedUrl.hostname !== "www.hetushu.com") return false;
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), SUBSTEP_READY_TIMEOUT_MS);
+		try {
+			const response = await fetch(new URL(`r${chapterId}.json`, parsedUrl).href, {
+				credentials: "include",
+				headers: { "X-Requested-With": "XMLHttpRequest" },
+				signal: controller.signal
+			});
+			if (!response.ok) return false;
+			const token = response.headers.get("token");
+			const mapping = token ? decodeSubstepMapping(token) : null;
+			return mapping ? applySubstepMapping(contentEl, mapping) : false;
+		} catch {
+			return false;
+		} finally {
+			clearTimeout(timeoutId);
+		}
+	}
 	var hetushuBeforeParse = async (doc, url, helpers) => {
 		try {
-			const contentEl = doc.querySelector("#content");
+			const contentEl = await waitForLiveContentElement(doc);
 			if (!contentEl) return;
 			const win = doc.defaultView || (typeof window !== "undefined" ? window : null);
 			const fallbackUrl = typeof window !== "undefined" && typeof window.location?.href === "string" ? window.location.href : "";
 			const pageUrl = url || doc.location?.href || fallbackUrl;
+			if (!hasRestoredSubstepContent(doc, contentEl)) {
+				if (doc.defaultView && hasPendingSubstepContent(doc, contentEl)) await waitForLiveSubstepContent(doc, contentEl);
+				let ready = hasRestoredSubstepContent(doc, contentEl);
+				if (!ready && (!doc.defaultView || !hasPendingSubstepContent(doc, contentEl))) ready = await restoreSubstepContent(doc, contentEl, pageUrl);
+				if (!ready) console.warn("[MyNovelReader] Hetushu content reorder did not complete:", pageUrl);
+			}
 			const titleEl = contentEl.querySelector("h2");
 			const watermarkSelector = "acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins";
 			const normalizeWatermarkText = (value) => value.replace(/[\s\u3000]+/g, "").replace(/[ｗwＷW]+[.．•·。]*[hｈ][eｅ][tｔ][uｕ][sｓ][hｈ][uｕ][.．。]*(?:com|ｃｏｍ)(?:[.．。]*(?:com|ｃｏｍ))?/gi, "");
@@ -6220,6 +6358,7 @@
 				return true;
 			};
 			const isVisible = (el) => {
+				if (el.hasAttribute(MAPPED_VISIBLE_ATTRIBUTE)) return true;
 				if (!win || !hasLayout(el)) return isVisibleByClass(el);
 				const style = win.getComputedStyle(el);
 				if (style.display === "none") return false;
@@ -6270,7 +6409,7 @@
 	var hetushuRule = {
 		id: "hetushu",
 		name: "和图书",
-		version: 2,
+		version: 3,
 		match: { pattern: "^https?://www\\.hetushu\\.com/book/\\d+/\\d+\\.html$" },
 		content: {
 			selector: "#content",
@@ -18851,11 +18990,9 @@ ul, ol {
 				iframe.onload = () => {
 					window.setTimeout(() => {
 						try {
+							if (iframe?.contentWindow?.location.href === "about:blank") return;
 							const doc = iframe?.contentDocument;
-							if (!doc) {
-								finish(null);
-								return;
-							}
+							if (!doc?.body || doc.body.childNodes.length === 0) return;
 							finish({
 								doc,
 								cleanup
@@ -18872,8 +19009,8 @@ ul, ol {
 					finish(null);
 					return;
 				}
-				parent.appendChild(iframe);
 				iframe.src = url;
+				parent.appendChild(iframe);
 			}),
 			abort: () => finish(null)
 		};

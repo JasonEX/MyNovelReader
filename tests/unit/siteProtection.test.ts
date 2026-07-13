@@ -60,6 +60,29 @@ describe('SiteProtection', () => {
       expect(isCloudflareChallenge(localDom.window.document)).toBe(false);
     });
 
+    it('does not misclassify readable pages with Cloudflare JS detection', () => {
+      const localDom = new JSDOM(
+        `<!DOCTYPE html>
+        <html>
+          <head>
+            <title>第一章 - 示例小说</title>
+            <script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script>
+          </head>
+          <body>
+            <main id="content"><p>这是正常显示的章节正文。</p></main>
+            <script>
+              window.__CF$cv$params = { r: 'ray-id' };
+              const script = document.createElement('script');
+              script.src = '/cdn-cgi/challenge-platform/scripts/jsd/main.js';
+            </script>
+          </body>
+        </html>`,
+        { url: 'https://www.hetushu.com/book/9145/6567989.html' }
+      );
+
+      expect(isCloudflareChallenge(localDom.window.document)).toBe(false);
+    });
+
     it('detects Cloudflare challenge pages by /cdn-cgi/ path', () => {
       const localDom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
         url: 'https://example.com/cdn-cgi/l/chk_jschl',
@@ -71,6 +94,15 @@ describe('SiteProtection', () => {
     it('detects Cloudflare challenge pages by /cdn-cgi/ markers', () => {
       const localDom = new JSDOM(
         '<!DOCTYPE html><html><body><form action="/cdn-cgi/challenge-platform/h/g/orchestrate"></form></body></html>',
+        { url: 'https://example.com/' }
+      );
+
+      expect(isCloudflareChallenge(localDom.window.document)).toBe(true);
+    });
+
+    it('detects Cloudflare managed challenge script resources', () => {
+      const localDom = new JSDOM(
+        '<!DOCTYPE html><html><head><script src="/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1"></script></head><body></body></html>',
         { url: 'https://example.com/' }
       );
 
