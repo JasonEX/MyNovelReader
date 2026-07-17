@@ -6,11 +6,16 @@ import { getPageKind } from '@/core/auto-enable/PageKind';
 describe('getPageKind', () => {
   it('classifies by URL (chapter)', () => {
     expect(getPageKind('https://example.com/chapter/1')).toBe('chapter');
+    expect(getPageKind('https://example.com/chapter/chapter-123.html')).toBe('chapter');
+    expect(
+      getPageKind('https://ttks.tw/novel/chapters/kaijuxiangqinnvshenbuhuodugujiujian/83.html')
+    ).toBe('chapter');
   });
 
   it('classifies by URL (toc)', () => {
     expect(getPageKind('https://example.com/book/1/toc/')).toBe('toc');
     expect(getPageKind('https://example.com/book/1?toc=1')).toBe('toc');
+    expect(getPageKind('https://ttks.tw/novel/chapters/book2026shuziming/index.html')).toBe('toc');
   });
 
   it('falls back to document title for toc', () => {

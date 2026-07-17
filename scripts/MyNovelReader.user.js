@@ -3966,6 +3966,7 @@
 	var TOC_URL_PATTERN = /(?:^|\/)(?:catalog|toc|contents?|mulu|dir(?:ectory)?|chapterlist|chapters)(?:\/|$)/i;
 	var TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
 	var CHAPTER_URL_STRONG_PATTERN = /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/[^?#]*\d/i;
+	var CHAPTER_URL_TERMINAL_PATTERN = /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/(?:[^/?#]+\/)*\d+(?:\.html?)?\/?$/i;
 	var CHAPTER_LINK_TEXT_PATTERN = /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
 	var NAV_LINK_TEXT_PATTERN = /(?:下一[章页]|上一[章页]|下一章|上一章|next|prev)/i;
 	function parseHttpUrl$1(url) {
@@ -3982,6 +3983,7 @@
 		if (!parsed) return "other";
 		const pathname = parsed.pathname.toLowerCase();
 		const search = parsed.search.toLowerCase();
+		if (CHAPTER_URL_TERMINAL_PATTERN.test(pathname)) return "chapter";
 		if (TOC_URL_PATTERN.test(pathname) || TOC_QUERY_PATTERN.test(search)) return "toc";
 		if (CHAPTER_URL_STRONG_PATTERN.test(pathname)) return "chapter";
 		return "other";
@@ -6706,6 +6708,61 @@
 			exampleUrl: "https://www.sudugu.org/109/1226047.html"
 		}
 	};
+	var ttks_exports = __exportAll({ ttksRule: () => ttksRule });
+	var WATERMARK_TAIL_PATTERN = /\s*(?:[（(【]\s*)?(?:[寫写]到[這这][裡里]我希望[讀读]者[記记]一下我[們们]域名|由[於于][緩缓]存原因[，,]?[請请]用[戶户]直接(?:瀏覽|浏览)器(?:訪問|访问)|本[書书]首[發发]|天天看[小小說说]{2}解[書书]荒|[記记]住本站域名)[\s\S]*$/u;
+	var ttksBeforeParse = (doc) => {
+		const content = doc.querySelector(".frame_body > .title + .content");
+		if (!content) return;
+		const paragraphs = Array.from(content.querySelectorAll(":scope > p"));
+		for (const paragraph of paragraphs) {
+			const text = paragraph.textContent || "";
+			const cleaned = text.replace(WATERMARK_TAIL_PATTERN, "").trimEnd();
+			if (cleaned !== text) if (cleaned) paragraph.textContent = cleaned;
+			else paragraph.remove();
+		}
+		const trailingParagraphs = Array.from(content.querySelectorAll(":scope > p"));
+		for (let index = trailingParagraphs.length - 1; index >= 0; index--) {
+			const paragraph = trailingParagraphs[index];
+			const text = (paragraph.textContent || "").replace(/\s+/g, "").trim();
+			if (!text) {
+				paragraph.remove();
+				continue;
+			}
+			if (/^(?:>|福)$/.test(text)) {
+				paragraph.remove();
+				continue;
+			}
+			break;
+		}
+	};
+	var ttksRule = {
+		id: "ttks",
+		name: "天天看小說",
+		version: 1,
+		match: { pattern: "^https?://(?:www\\.)?ttks\\.tw/novel/chapters/[^/?#]+/\\d+\\.html(?:[?#].*)?$" },
+		content: {
+			selector: ".frame_body > .title + .content",
+			remove: ".anchor_bookmark, .txtcenter, .div_feedback, .social_share_frame"
+		},
+		navigation: {
+			prev: "#linkPrev",
+			index: ".breadcrumb_nav a[href$=\"/index.html\"]",
+			next: "#linkNext"
+		},
+		title: {
+			selector: ".frame_body > .title h1, .frame_body > .title",
+			bookSelector: ".breadcrumb_nav a[href$=\"/index.html\"]"
+		},
+		hooks: { beforeParse: ttksBeforeParse },
+		advanced: {
+			noSection: true,
+			useIframe: true
+		},
+		meta: {
+			source: "builtin",
+			exampleUrl: "https://ttks.tw/novel/chapters/kaijuxiangqinnvshenbuhuodugujiujian/83.html"
+		}
+	};
 	var twkan_exports$1 = __exportAll({ twkanRule: () => twkanRule });
 	var twkanRule = {
 		id: "twkan",
@@ -6798,6 +6855,7 @@
 		"./qidian.ts": qidian_exports$1,
 		"./shu69.ts": shu69_exports,
 		"./sudugu.ts": sudugu_exports,
+		"./ttks.ts": ttks_exports,
 		"./twkan.ts": twkan_exports$1,
 		"./uuread.ts": uuread_exports
 	});

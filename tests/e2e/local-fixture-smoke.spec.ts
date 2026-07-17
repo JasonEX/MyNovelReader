@@ -91,6 +91,47 @@ function makeHetushuFixture(options: {
     </html>`;
 }
 
+const ttksBookPath = '/novel/chapters/kaijuxiangqinnvshenbuhuodugujiujian';
+
+function makeTtksFixture(options: {
+  body: string;
+  chapterTitle: string;
+  nextChapter: number;
+  prevChapter: number;
+  trailingNoise: string;
+}): string {
+  return `<!doctype html>
+    <html lang="zh-TW">
+      <head>
+        <meta charset="utf-8">
+        <title>⚡ 《開局相親女神捕，獲獨孤九劍》 ${options.chapterTitle} - ⚡ 天天看小說</title>
+      </head>
+      <body>
+        <div class="frame_body">
+          <div class="breadcrumb_nav">
+            <a href="/">首頁</a>
+            <a href="${ttksBookPath}/index.html">《開局相親女神捕，獲獨孤九劍》</a>
+          </div>
+          <div class="title"><h1>${options.chapterTitle}</h1></div>
+          <div class="content">
+            <a class="anchor_bookmark" href="/bookmark">書籤圖示</a>
+            <div class="txtcenter">loadAdv(1, 0);</div>
+            <p>${options.chapterTitle}</p>
+            ${options.body}
+            <p>${options.trailingNoise}</p>
+            <div class="txtcenter">loadAdv(3, 0);</div>
+            <div class="div_feedback">添加書籤 返回目錄 章節報錯</div>
+            <div class="social_share_frame">分享給朋友</div>
+          </div>
+          <div class="content">
+            <a id="linkPrev" href="${ttksBookPath}/${options.prevChapter}.html">上一章</a>
+            <a id="linkNext" href="${ttksBookPath}/${options.nextChapter}.html">下一章</a>
+          </div>
+        </div>
+      </body>
+    </html>`;
+}
+
 async function dispatchReaderTouch(
   page: Page,
   type: 'touchstart' | 'touchmove' | 'touchend',
@@ -422,6 +463,97 @@ test('keeps normal Cloudflare JS Detection pages readable across previous naviga
   await expect(readerRoot.locator(`article[data-chapter-url="${hetushuFirstUrl}"]`)).toContainText(
     '第一章 还不如不激活呢'
   );
+});
+
+test('auto-starts TTKS and navigates through a short author-note chapter', async ({
+  context,
+  page,
+}) => {
+  const firstUrl = `https://ttks.tw${ttksBookPath}/83.html`;
+  const noteUrl = `https://ttks.tw${ttksBookPath}/84.html`;
+  const thirdUrl = `https://ttks.tw${ttksBookPath}/85.html`;
+  let noteRequests = 0;
+  let thirdRequests = 0;
+
+  await context.route(firstUrl, route =>
+    route.fulfill({
+      body: makeTtksFixture({
+        chapterTitle: '第82章 真黑袍（求月票）',
+        body: `
+          <p>第一段正常正文。</p>
+          <p>第一節結尾正文。\u3000\u3000【寫到這裡我希望讀者記一下我們域名 天天看小說超貼心，𝗍𝗍𝗄𝗌.𝗍𝗐等你尋 】</p>
+          <p>${'本章後續正常正文。'.repeat(80)}</p>
+          <p>本章結尾正文。</p>
+        `,
+        nextChapter: 84,
+        prevChapter: 82,
+        trailingNoise: '福',
+      }),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await context.route(noteUrl, route => {
+    noteRequests += 1;
+    return route.fulfill({
+      body: makeTtksFixture({
+        chapterTitle: '求點月票！',
+        body: '<p>如題，兄弟們，雙倍月票最後一天了，不要留在手機了呀！</p><p>問道在此跪求一波月票！</p>',
+        nextChapter: 85,
+        prevChapter: 83,
+        trailingNoise: '&gt;',
+      }),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    });
+  });
+  await context.route(thirdUrl, route => {
+    thirdRequests += 1;
+    return route.fulfill({
+      body: makeTtksFixture({
+        chapterTitle: '第83章 大劫指對七絕旋風腿',
+        body: `<p>${'下一章正常正文。'.repeat(80)}</p><p>下一章結尾正文。</p>`,
+        nextChapter: 86,
+        prevChapter: 84,
+        trailingNoise: '&gt;',
+      }),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    });
+  });
+  await addMyNovelReaderUserscript(context);
+
+  await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
+  const readerRoot = page.locator('#mnr-reader-root');
+  await expect(readerRoot).toHaveCount(1);
+  await expect(page.locator('#mnr-entry-root, #mnr-entry-prompt-root')).toHaveCount(0);
+
+  const firstChapter = readerRoot.locator(`article[data-chapter-url="${firstUrl}"]`);
+  await expect(firstChapter.locator('.mnr-chapter-title')).toHaveText('第82章 真黑袍（求月票）');
+  await expect(firstChapter).toContainText('第一節結尾正文。');
+  await expect(firstChapter).toContainText('本章結尾正文。');
+  await expect(firstChapter).not.toContainText('天天看小說');
+  await expect(firstChapter).not.toContainText('loadAdv');
+  await expect(firstChapter).not.toContainText('添加書籤');
+  await expect(firstChapter).not.toContainText('福');
+
+  await readerRoot.locator('.mnr-reader-main').focus();
+  await page.keyboard.press('ArrowRight');
+  const noteChapter = readerRoot.locator(`article[data-chapter-url="${noteUrl}"]`);
+  await expect(noteChapter.locator('.mnr-chapter-title')).toHaveText('求點月票！');
+  await expect(noteChapter).toContainText('雙倍月票最後一天');
+  await expect(noteChapter).toContainText('問道在此跪求一波月票');
+  await expect.poll(() => page.url()).toBe(noteUrl);
+  expect(noteRequests).toBe(1);
+
+  await page.waitForTimeout(700);
+  await readerRoot.locator('.mnr-reader-main').focus();
+  await page.keyboard.press('ArrowRight');
+  const thirdChapter = readerRoot.locator(`article[data-chapter-url="${thirdUrl}"]`);
+  await expect(thirdChapter.locator('.mnr-chapter-title')).toHaveText('第83章 大劫指對七絕旋風腿');
+  await expect(thirdChapter).toContainText('下一章結尾正文。');
+  await expect.poll(() => page.url()).toBe(thirdUrl);
+  expect(thirdRequests).toBe(1);
 });
 
 test('keeps detection details internal and hands a dismissed prompt off to manual entry', async ({

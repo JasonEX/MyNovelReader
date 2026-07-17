@@ -13,6 +13,8 @@ const TOC_QUERY_PATTERN = /[?&](?:catalog|toc|contents?)=|[?&](?:mulu|dir)=/i;
 // For ambiguous URLs (e.g. numeric .html), fall back to DOM heuristics instead.
 const CHAPTER_URL_STRONG_PATTERN =
   /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/[^?#]*\d/i;
+const CHAPTER_URL_TERMINAL_PATTERN =
+  /\/(?:chapter|chapters?|read|txt|article|novel\/chapters)\/(?:[^/?#]+\/)*\d+(?:\.html?)?\/?$/i;
 
 const CHAPTER_LINK_TEXT_PATTERN =
   /第\s*[一二两三四五六七八九十○零百千万亿0-9]{1,9}\s*[章回卷节折篇幕集话話]|Chapter\s*\d+/i;
@@ -35,6 +37,12 @@ function getKindFromUrl(url: string): PageKind {
 
   const pathname = parsed.pathname.toLowerCase();
   const search = parsed.search.toLowerCase();
+
+  // A terminal numeric chapter under an explicit reading path is more specific than
+  // the broad `/chapters/` TOC marker used by some sites for both pages.
+  if (CHAPTER_URL_TERMINAL_PATTERN.test(pathname)) {
+    return 'chapter';
+  }
 
   if (TOC_URL_PATTERN.test(pathname) || TOC_QUERY_PATTERN.test(search)) {
     return 'toc';
