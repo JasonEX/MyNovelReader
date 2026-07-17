@@ -612,9 +612,17 @@
 			return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
 		}
 	}
-	var entries = Object.entries, setPrototypeOf = Object.setPrototypeOf, isFrozen = Object.isFrozen, getPrototypeOf = Object.getPrototypeOf, getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-	var freeze = Object.freeze, seal = Object.seal, create = Object.create;
-	var _ref = typeof Reflect !== "undefined" && Reflect, apply$1 = _ref.apply, construct = _ref.construct;
+	var entries = Object.entries;
+	var setPrototypeOf = Object.setPrototypeOf;
+	var isFrozen = Object.isFrozen;
+	var getPrototypeOf = Object.getPrototypeOf;
+	var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+	var freeze = Object.freeze;
+	var seal = Object.seal;
+	var create = Object.create;
+	var _ref = typeof Reflect !== "undefined" && Reflect;
+	var apply$1 = _ref.apply;
+	var construct = _ref.construct;
 	if (!freeze) freeze = function freeze(x) {
 		return x;
 	};
@@ -9014,7 +9022,10 @@
 			if (this._active) {
 				this._isPaused = true;
 				let i, l;
-				if (this.scopes) for (i = 0, l = this.scopes.length; i < l; i++) this.scopes[i].pause();
+				if (this.scopes) {
+					const scopes = this.scopes.slice();
+					for (i = 0, l = scopes.length; i < l; i++) scopes[i].pause();
+				}
 				for (i = 0, l = this.effects.length; i < l; i++) this.effects[i].pause();
 			}
 		}
@@ -9023,8 +9034,12 @@
 				if (this._isPaused) {
 					this._isPaused = false;
 					let i, l;
-					if (this.scopes) for (i = 0, l = this.scopes.length; i < l; i++) this.scopes[i].resume();
-					for (i = 0, l = this.effects.length; i < l; i++) this.effects[i].resume();
+					if (this.scopes) {
+						const scopes = this.scopes.slice();
+						for (i = 0, l = scopes.length; i < l; i++) scopes[i].resume();
+					}
+					const effects = this.effects.slice();
+					for (i = 0, l = effects.length; i < l; i++) effects[i].resume();
 				}
 			}
 		}
@@ -9070,7 +9085,8 @@
 				for (i = 0, l = this.cleanups.length; i < l; i++) this.cleanups[i]();
 				this.cleanups.length = 0;
 				if (this.scopes) {
-					for (i = 0, l = this.scopes.length; i < l; i++) this.scopes[i].stop(true);
+					const scopes = this.scopes.slice();
+					for (i = 0, l = scopes.length; i < l; i++) scopes[i].stop(true);
 					this.scopes.length = 0;
 				}
 				if (!this.detached && this.parent && !fromParent) {
@@ -10380,10 +10396,12 @@
 		const renderFnWithContext = (...args) => {
 			if (renderFnWithContext._d) setBlockTracking(-1);
 			const prevInstance = setCurrentRenderingInstance(ctx);
+			const prevStackSize = blockStack.length;
 			let res;
 			try {
 				res = fn(...args);
 			} finally {
+				for (let i = blockStack.length; i > prevStackSize; i--) closeBlock();
 				setCurrentRenderingInstance(prevInstance);
 				if (renderFnWithContext._d) setBlockTracking(1);
 			}
@@ -10817,14 +10835,8 @@
 				if (oldRawRefAtom.k) refs[oldRawRefAtom.k] = null;
 			}
 		}
-		if (isFunction(ref)) {
-			pauseTracking();
-			try {
-				callWithErrorHandling(ref, owner, 12, [value, refs]);
-			} finally {
-				resetTracking();
-			}
-		} else {
+		if (isFunction(ref)) callWithErrorHandling(ref, owner, 12, [value, refs]);
+		else {
 			const _isString = isString(ref);
 			const _isRef = isRef(ref);
 			if (_isString || _isRef) {
@@ -10968,20 +10980,29 @@
 		if (cache) cache[index] = ret;
 		return ret;
 	}
-	function renderSlot(slots, name, props = {}, fallback, noSlotted) {
+	function renderSlot(slots, name, props = {}, fallback, noSlotted, branchKey) {
 		if (currentRenderingInstance.ce || currentRenderingInstance.parent && isAsyncWrapper(currentRenderingInstance.parent) && currentRenderingInstance.parent.ce) {
-			const hasProps = Object.keys(props).length > 0;
-			if (name !== "default") props.name = name;
-			return openBlock(), createBlock(Fragment, null, [createVNode("slot", props, fallback && fallback())], hasProps ? -2 : 64);
+			const slotProps = branchKey != null && props.key == null ? extend({}, props, { key: branchKey }) : props;
+			const hasProps = Object.keys(slotProps).length > 0;
+			if (name !== "default") slotProps.name = name;
+			return openBlock(), createBlock(Fragment, null, [createVNode("slot", slotProps, fallback && fallback())], hasProps ? -2 : 64);
 		}
 		let slot = slots[name];
 		if (slot && slot._c) slot._d = false;
+		const prevStackSize = blockStack.length;
 		openBlock();
-		const validSlotContent = slot && ensureValidVNode(slot(props));
-		const slotKey = props.key || validSlotContent && validSlotContent.key;
-		const rendered = createBlock(Fragment, { key: (slotKey && !isSymbol(slotKey) ? slotKey : `_${name}`) + (!validSlotContent && fallback ? "_fb" : "") }, validSlotContent || (fallback ? fallback() : []), validSlotContent && slots._ === 1 ? 64 : -2);
+		let rendered;
+		try {
+			const validSlotContent = slot && ensureValidVNode(slot(props));
+			const slotKey = props.key || branchKey || validSlotContent && validSlotContent.key;
+			rendered = createBlock(Fragment, { key: (slotKey && !isSymbol(slotKey) ? slotKey : `_${name}`) + (!validSlotContent && fallback ? "_fb" : "") }, validSlotContent || (fallback ? fallback() : []), validSlotContent && slots._ === 1 ? 64 : -2);
+		} catch (err) {
+			for (let i = blockStack.length; i > prevStackSize; i--) closeBlock();
+			throw err;
+		} finally {
+			if (slot && slot._c) slot._d = true;
+		}
 		if (!noSlotted && rendered.scopeId) rendered.slotScopeIds = [rendered.scopeId + "-s"];
-		if (slot && slot._c) slot._d = true;
 		return rendered;
 	}
 	function ensureValidVNode(vnodes) {
@@ -12965,7 +12986,7 @@
 			setBlockTracking(1);
 		}
 	}
-	var version = "3.5.39";
+	var version = "3.5.40";
 	var policy = void 0;
 	var tt = typeof window !== "undefined" && window.trustedTypes;
 	if (tt) try {
@@ -13977,12 +13998,6 @@ ul, ol {
 	function isPlainObject(o) {
 		return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
 	}
-	var MutationType;
-	(function(MutationType) {
-		MutationType["direct"] = "direct";
-		MutationType["patchObject"] = "patch object";
-		MutationType["patchFunction"] = "patch function";
-	})(MutationType || (MutationType = {}));
 	var _global = (() => typeof window === "object" && window.window === window ? window : typeof self === "object" && self.self === self ? self : typeof global === "object" && global.global === global ? global : typeof globalThis === "object" ? globalThis : { HTMLElement: null })();
 	function bom(blob, { autoBom = false } = {}) {
 		if (autoBom && /^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) return new Blob([String.fromCharCode(65279), blob], { type: blob.type });
@@ -14148,17 +14163,17 @@ ul, ol {
 		if (target instanceof Map && patchToApply instanceof Map) patchToApply.forEach((value, key) => target.set(key, value));
 		else if (target instanceof Set && patchToApply instanceof Set) patchToApply.forEach(target.add, target);
 		for (const key in patchToApply) {
-			if (!patchToApply.hasOwnProperty(key)) continue;
+			if (!Object.hasOwn(patchToApply, key)) continue;
 			const subPatch = patchToApply[key];
 			const targetValue = target[key];
-			if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) target[key] = mergeReactiveObjects(targetValue, subPatch);
+			if (isPlainObject(targetValue) && isPlainObject(subPatch) && Object.hasOwn(target, key) && !isRef(subPatch) && !isReactive(subPatch)) target[key] = mergeReactiveObjects(targetValue, subPatch);
 			else target[key] = subPatch;
 		}
 		return target;
 	}
 	var skipHydrateSymbol = Symbol();
 	function shouldHydrate(obj) {
-		return !isPlainObject(obj) || !Object.prototype.hasOwnProperty.call(obj, skipHydrateSymbol);
+		return !obj || typeof obj !== "object" || !Object.hasOwn(obj, skipHydrateSymbol);
 	}
 	var { assign } = Object;
 	function isComputed(o) {
@@ -14200,14 +14215,14 @@ ul, ol {
 			if (typeof partialStateOrMutator === "function") {
 				partialStateOrMutator(pinia.state.value[$id]);
 				subscriptionMutation = {
-					type: MutationType.patchFunction,
+					type: "patch function",
 					storeId: $id,
 					events: debuggerEvents
 				};
 			} else {
 				mergeReactiveObjects(pinia.state.value[$id], partialStateOrMutator);
 				subscriptionMutation = {
-					type: MutationType.patchObject,
+					type: "patch object",
 					payload: partialStateOrMutator,
 					storeId: $id,
 					events: debuggerEvents
@@ -14284,11 +14299,12 @@ ul, ol {
 			$patch,
 			$reset,
 			$subscribe(callback, options = {}) {
+				if (subscriptions.has(callback)) return noop;
 				const removeSubscription = addSubscription(subscriptions, callback, options.detached, () => stopWatcher());
 				const stopWatcher = scope.run(() => watch(() => pinia.state.value[$id], (state) => {
 					if (options.flush === "sync" ? isSyncListening : isListening) callback({
 						storeId: $id,
-						type: MutationType.direct,
+						type: "direct",
 						events: debuggerEvents
 					}, state);
 				}, assign({}, $subscribeOptions, options)));
@@ -14322,12 +14338,13 @@ ul, ol {
 			}
 		});
 		pinia._p.forEach((extender) => {
-			assign(store, scope.run(() => extender({
+			const extensions = scope.run(() => extender({
 				store,
 				app: pinia._a,
 				pinia,
 				options: optionsForPlugin
-			})));
+			}));
+			assign(store, extensions);
 		});
 		if (initialState && isOptionsStore && options.hydrate) options.hydrate(store.$state, initialState);
 		isListening = true;
