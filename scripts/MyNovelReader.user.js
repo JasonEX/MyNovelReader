@@ -17725,7 +17725,11 @@ ul, ol {
 	var PERSISTED_CACHE_MAX_AGE_MS = 30 * DAY_MS;
 	var PERSISTED_CACHE_GC_INTERVAL_MS = DAY_MS;
 	var PERSISTED_CACHE_TOUCH_INTERVAL_MS = DAY_MS;
+	var PERSISTED_CACHE_GC_IDLE_TIMEOUT_MS = 2e3;
+	var PERSISTED_CACHE_GC_SLICE_BUDGET_MS = 6;
+	var PERSISTED_CACHE_GC_SLICE_STEPS = 128;
 	var PERSISTED_CACHE_GC_LAST_RUN_KEY = "mnr_cache_v2_gc_last_run";
+	var scheduledCacheCleanup = null;
 	function generateBookId(indexUrl) {
 		try {
 			const url = new URL(indexUrl);
@@ -17739,6 +17743,22 @@ ul, ol {
 		let binary = "";
 		for (const b of bytes) binary += String.fromCharCode(b);
 		return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+	}
+	function decodeBase64UrlUtf8(value) {
+		try {
+			const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+			const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="));
+			let hasNonAsciiByte = false;
+			for (let index = 0; index < binary.length; index += 1) if (binary.charCodeAt(index) > 127) {
+				hasNonAsciiByte = true;
+				break;
+			}
+			if (!hasNonAsciiByte) return binary;
+			const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+			return new TextDecoder().decode(bytes);
+		} catch {
+			return null;
+		}
 	}
 	function parseStoredJson(stored) {
 		if (stored === null || stored === void 0) return null;
@@ -17766,6 +17786,26 @@ ul, ol {
 	}
 	function getIndexAccessTime(index) {
 		return normalizeTimestamp(index.lastAccessed) ?? normalizeTimestamp(index.lastUpdated);
+	}
+	function isPersistedCacheIndex(data) {
+		return data?.version === 2 && Array.isArray(data.urls);
+	}
+	function getCacheV2ChapterBookPrefix(bookId) {
+		return `${CACHE_V2_CHAPTER_PREFIX}${bookId}_`;
+	}
+	function isProtectedChapterKey(key, protectedBookIds) {
+		for (const bookId of protectedBookIds) if (key.startsWith(getCacheV2ChapterBookPrefix(bookId))) return true;
+		return false;
+	}
+	function getMonotonicTime() {
+		return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+	}
+	function scheduleCacheCleanupSlice(callback) {
+		if (typeof window !== "undefined" && typeof window.requestIdleCallback === "function") {
+			window.requestIdleCallback((deadline) => callback(deadline), { timeout: PERSISTED_CACHE_GC_IDLE_TIMEOUT_MS });
+			return;
+		}
+		setTimeout(() => callback(null), 0);
 	}
 	function getCurrentBookCacheKey(indexUrl) {
 		if (!indexUrl) return null;
@@ -17848,30 +17888,249 @@ ul, ol {
 			return false;
 		}
 	}
+	function shouldKeepOrphanedChapter(cached, now, protectedBookIds, indexStates) {
+		const indexUrl = cached.chapter?.indexUrl;
+		const chapterUrl = cached.chapter?.url;
+		if (typeof indexUrl !== "string" || typeof chapterUrl !== "string") return false;
+		const cacheBook = getCurrentBookCacheKey(indexUrl);
+		if (!cacheBook) return false;
+		if (protectedBookIds.has(cacheBook.bookId)) return true;
+		let state = indexStates.get(cacheBook.bookId);
+		if (!state) {
+			const index = parseStoredJson(GM_getValue(getCacheV2IndexKey(cacheBook.bookId), null));
+			const lastAccessed = isPersistedCacheIndex(index) ? getIndexAccessTime(index) : null;
+			state = {
+				recentlyAccessed: lastAccessed !== null && now - lastAccessed <= PERSISTED_CACHE_TOUCH_INTERVAL_MS,
+				urls: isPersistedCacheIndex(index) ? index.urls : []
+			};
+			indexStates.set(cacheBook.bookId, state);
+		}
+		return state.recentlyAccessed || state.urls.includes(chapterUrl);
+	}
+	function cleanupOrphanedChapter(key, now, maxAgeMs, protectedBookIds, indexStates) {
+		if (isProtectedChapterKey(key, protectedBookIds)) return;
+		const cached = parseStoredJson(GM_getValue(key, null));
+		if (cached?.chapter?.url) {
+			const cachedAt = normalizeTimestamp(cached.cachedAt);
+			if (cachedAt !== null && now - cachedAt <= maxAgeMs) return;
+			if (shouldKeepOrphanedChapter(cached, now, protectedBookIds, indexStates)) return;
+		}
+		GM_deleteValue(key);
+	}
+	function* createPersistedCacheCleanupSteps(now, maxAgeMs, protectedBookIds) {
+		const storageKeys = GM_listValues();
+		const chapterKeys = [];
+		const activeIndexes = [];
+		const expiredIndexes = [];
+		const invalidIndexes = [];
+		for (const key of storageKeys) {
+			if (key.startsWith(CACHE_V2_CHAPTER_PREFIX)) {
+				chapterKeys.push(key);
+				yield;
+				continue;
+			}
+			if (!key.startsWith(CACHE_V2_INDEX_PREFIX)) {
+				yield;
+				continue;
+			}
+			const bookId = key.slice(19);
+			const data = parseStoredJson(GM_getValue(key, null));
+			if (!bookId || !isPersistedCacheIndex(data)) {
+				invalidIndexes.push({
+					key,
+					bookId
+				});
+				yield;
+				continue;
+			}
+			const record = {
+				key,
+				bookId,
+				data
+			};
+			const lastAccessed = getIndexAccessTime(data);
+			if (!protectedBookIds.has(bookId) && lastAccessed !== null && now - lastAccessed > maxAgeMs) expiredIndexes.push(record);
+			else activeIndexes.push(record);
+			yield;
+		}
+		const indexGroups = [...activeIndexes, ...expiredIndexes].map((record) => ({
+			...record,
+			chapterKeys: [],
+			chapterPrefix: getCacheV2ChapterBookPrefix(record.bookId)
+		}));
+		const indexGroupsByPrefixLength = new Map();
+		for (const group of indexGroups) {
+			let groupsAtLength = indexGroupsByPrefixLength.get(group.chapterPrefix.length);
+			if (!groupsAtLength) {
+				groupsAtLength = new Map();
+				indexGroupsByPrefixLength.set(group.chapterPrefix.length, groupsAtLength);
+			}
+			groupsAtLength.set(group.chapterPrefix, group);
+		}
+		const indexPrefixLengths = Array.from(indexGroupsByPrefixLength.keys()).sort((a, b) => b - a);
+		const unindexedChapterKeys = [];
+		for (const key of chapterKeys) {
+			let group;
+			for (const prefixLength of indexPrefixLengths) {
+				if (prefixLength > key.length) continue;
+				group = indexGroupsByPrefixLength.get(prefixLength)?.get(key.slice(0, prefixLength));
+				if (group) break;
+			}
+			if (group) group.chapterKeys.push(key);
+			else unindexedChapterKeys.push(key);
+			yield;
+		}
+		const expiredIndexKeys = new Set(expiredIndexes.map((record) => record.key));
+		const activeIndexGroups = [];
+		for (const group of indexGroups) {
+			if (!expiredIndexKeys.has(group.key)) {
+				activeIndexGroups.push(group);
+				yield;
+				continue;
+			}
+			if (protectedBookIds.has(group.bookId)) {
+				activeIndexGroups.push(group);
+				yield;
+				continue;
+			}
+			const current = parseStoredJson(GM_getValue(group.key, null));
+			if (!isPersistedCacheIndex(current)) {
+				invalidIndexes.push({
+					key: group.key,
+					bookId: group.bookId
+				});
+				for (const key of group.chapterKeys) {
+					unindexedChapterKeys.push(key);
+					yield;
+				}
+				continue;
+			}
+			const lastAccessed = getIndexAccessTime(current);
+			if (protectedBookIds.has(group.bookId) || lastAccessed === null || now - lastAccessed <= maxAgeMs) {
+				activeIndexGroups.push({
+					...group,
+					data: current
+				});
+				yield;
+				continue;
+			}
+			const indexedUrls = new Set();
+			for (const url of current.urls) {
+				if (typeof url === "string") indexedUrls.add(url);
+				yield;
+			}
+			let deletionAborted = false;
+			for (const key of group.chapterKeys) {
+				if (protectedBookIds.has(group.bookId)) {
+					deletionAborted = true;
+					break;
+				}
+				const chapterUrl = decodeBase64UrlUtf8(key.slice(group.chapterPrefix.length));
+				if (chapterUrl !== null && indexedUrls.has(chapterUrl)) GM_deleteValue(key);
+				else unindexedChapterKeys.push(key);
+				yield;
+			}
+			if (deletionAborted) continue;
+			const latest = parseStoredJson(GM_getValue(group.key, null));
+			const latestAccessed = isPersistedCacheIndex(latest) ? getIndexAccessTime(latest) : null;
+			if (protectedBookIds.has(group.bookId)) {
+				yield;
+				continue;
+			}
+			if (isPersistedCacheIndex(latest) && (latestAccessed === null || now - latestAccessed <= maxAgeMs)) {
+				yield;
+				continue;
+			}
+			GM_deleteValue(group.key);
+			yield;
+		}
+		for (const { key, bookId } of invalidIndexes) {
+			if (!bookId || protectedBookIds.has(bookId)) {
+				yield;
+				continue;
+			}
+			GM_deleteValue(key);
+			yield;
+		}
+		const orphanIndexStates = new Map();
+		for (const key of unindexedChapterKeys) {
+			cleanupOrphanedChapter(key, now, maxAgeMs, protectedBookIds, orphanIndexStates);
+			yield;
+		}
+		for (const group of activeIndexGroups) {
+			const index = group.data;
+			if (group.chapterKeys.length === index.urls.length) {
+				yield;
+				continue;
+			}
+			const reachableUrls = new Set();
+			for (const url of index.urls) {
+				if (typeof url === "string") reachableUrls.add(url);
+				yield;
+			}
+			for (const key of group.chapterKeys) {
+				const chapterUrl = decodeBase64UrlUtf8(key.slice(group.chapterPrefix.length));
+				if (chapterUrl === null || !reachableUrls.has(chapterUrl)) cleanupOrphanedChapter(key, now, maxAgeMs, protectedBookIds, orphanIndexStates);
+				yield;
+			}
+		}
+	}
+	function runScheduledCacheCleanup(state) {
+		scheduleCacheCleanupSlice((deadline) => {
+			if (scheduledCacheCleanup !== state) return;
+			try {
+				state.iterator ??= createPersistedCacheCleanupSteps(state.now, state.maxAgeMs, state.protectedBookIds);
+				const startedAt = getMonotonicTime();
+				let steps = 0;
+				while (steps < PERSISTED_CACHE_GC_SLICE_STEPS) {
+					if (state.iterator.next().done) {
+						scheduledCacheCleanup = null;
+						return;
+					}
+					steps += 1;
+					const budgetExhausted = getMonotonicTime() - startedAt >= PERSISTED_CACHE_GC_SLICE_BUDGET_MS;
+					const idleTimeExhausted = deadline !== null && !deadline.didTimeout && deadline.timeRemaining() <= 1;
+					if (budgetExhausted || idleTimeExhausted) break;
+				}
+				runScheduledCacheCleanup(state);
+			} catch (e) {
+				scheduledCacheCleanup = null;
+				console.error("[MNR] Failed to cleanup expired caches:", e);
+			}
+		});
+	}
 	function cleanupExpiredCaches(options = {}) {
 		if (typeof GM_getValue === "undefined" || typeof GM_setValue === "undefined" || typeof GM_deleteValue === "undefined" || typeof GM_listValues !== "function") return;
 		const now = options.now ?? Date.now();
 		const gcIntervalMs = options.gcIntervalMs ?? PERSISTED_CACHE_GC_INTERVAL_MS;
 		const maxAgeMs = options.maxAgeMs ?? PERSISTED_CACHE_MAX_AGE_MS;
 		try {
+			if (!options.force && scheduledCacheCleanup) {
+				if (options.currentBookId) scheduledCacheCleanup.protectedBookIds.add(options.currentBookId);
+				return;
+			}
 			if (!options.force) {
 				const lastRun = normalizeTimestamp(GM_getValue(PERSISTED_CACHE_GC_LAST_RUN_KEY, 0));
 				if (lastRun !== null && now - lastRun < gcIntervalMs) return;
 			}
-			for (const key of GM_listValues()) {
-				if (!key.startsWith(CACHE_V2_INDEX_PREFIX)) continue;
-				const bookId = key.slice(19);
-				if (!bookId || bookId === options.currentBookId) continue;
-				const data = parseStoredJson(GM_getValue(key, null));
-				if (data?.version !== 2 || !Array.isArray(data.urls)) continue;
-				const lastAccessed = getIndexAccessTime(data);
-				if (lastAccessed === null || now - lastAccessed <= maxAgeMs) continue;
-				clearPersistedCache({
-					bookId,
-					indexUrl: typeof data.indexUrl === "string" ? data.indexUrl : ""
-				}, new Set(data.urls));
+			const protectedBookIds = new Set();
+			if (options.currentBookId) protectedBookIds.add(options.currentBookId);
+			if (options.force) {
+				scheduledCacheCleanup = null;
+				const iterator = createPersistedCacheCleanupSteps(now, maxAgeMs, protectedBookIds);
+				while (!iterator.next().done);
+				GM_setValue(PERSISTED_CACHE_GC_LAST_RUN_KEY, now);
+				return;
 			}
 			GM_setValue(PERSISTED_CACHE_GC_LAST_RUN_KEY, now);
+			const state = {
+				iterator: null,
+				maxAgeMs,
+				now,
+				protectedBookIds
+			};
+			scheduledCacheCleanup = state;
+			runScheduledCacheCleanup(state);
 		} catch (e) {
 			console.error("[MNR] Failed to cleanup expired caches:", e);
 		}

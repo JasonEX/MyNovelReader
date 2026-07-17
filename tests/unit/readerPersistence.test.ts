@@ -104,17 +104,18 @@ describe('persistence GM_* functions', () => {
   });
 
   afterEach(() => {
+    delete (window as unknown as Record<string, unknown>).requestIdleCallback;
     delete (globalThis as Record<string, unknown>).GM_setValue;
     delete (globalThis as Record<string, unknown>).GM_getValue;
     delete (globalThis as Record<string, unknown>).GM_deleteValue;
     delete (globalThis as Record<string, unknown>).GM_listValues;
   });
 
-  const makeCached = (url: string): CachedChapter =>
+  const makeCached = (url: string, cachedAt = Date.now(), indexUrl?: string): CachedChapter =>
     ({
-      chapter: { url, title: 'Test', content: '<p>test</p>', bookTitle: 'Book' },
+      chapter: { url, indexUrl, title: 'Test', content: '<p>test</p>', bookTitle: 'Book' },
       rule: null,
-      cachedAt: Date.now(),
+      cachedAt,
     }) as unknown as CachedChapter;
 
   const cacheBook = { bookId: 'test_book', indexUrl: 'https://example.com/book/1/' };
@@ -289,6 +290,57 @@ describe('persistence GM_* functions', () => {
     expect(storage.get(PERSISTED_CACHE_GC_LAST_RUN_KEY)).toBe(now);
   });
 
+  it('cleanupExpiredCaches rechecks an expired index before deleting it', () => {
+    const now = 10_000;
+    const maxAgeMs = 1_000;
+    const book = { bookId: 'touched_book', indexUrl: 'https://example.com/touched/' };
+    const url = `${book.indexUrl}1.html`;
+    persistCachedChapter(book, url, makeCached(url, now - maxAgeMs - 1, book.indexUrl));
+    persistCacheIndex(book, new Set([url]), now - maxAgeMs - 1);
+
+    const indexKey = getCacheV2IndexKey(book.bookId);
+    const getValue = globalThis.GM_getValue as ReturnType<typeof vi.fn>;
+    let indexReads = 0;
+    getValue.mockImplementation((key: string, defaultValue: unknown) => {
+      if (key === indexKey && ++indexReads === 2) {
+        persistCacheIndex(book, new Set([url]), now);
+      }
+      return storage.has(key) ? storage.get(key) : defaultValue;
+    });
+
+    cleanupExpiredCaches({ force: true, maxAgeMs, now });
+
+    expect(indexReads).toBeGreaterThanOrEqual(2);
+    expect(storage.has(indexKey)).toBe(true);
+    expect(storage.has(getCacheV2ChapterKey(book.bookId, url))).toBe(true);
+  });
+
+  it('cleanupExpiredCaches preserves an index touched while its chapters are being removed', () => {
+    const now = 10_000;
+    const maxAgeMs = 1_000;
+    const book = { bookId: 'concurrent_book', indexUrl: 'https://example.com/concurrent/' };
+    const urls = [`${book.indexUrl}1.html`, `${book.indexUrl}2.html`];
+    for (const url of urls) {
+      persistCachedChapter(book, url, makeCached(url, now - maxAgeMs - 1, book.indexUrl));
+    }
+    persistCacheIndex(book, new Set(urls), now - maxAgeMs - 1);
+
+    const deleteValue = globalThis.GM_deleteValue as ReturnType<typeof vi.fn>;
+    let touched = false;
+    deleteValue.mockImplementation((key: string) => {
+      storage.delete(key);
+      if (!touched && key.startsWith('mnr_cache_v2_chapter_')) {
+        touched = true;
+        persistCacheIndex(book, new Set(urls), now);
+      }
+    });
+
+    cleanupExpiredCaches({ force: true, maxAgeMs, now });
+
+    expect(touched).toBe(true);
+    expect(storage.has(getCacheV2IndexKey(book.bookId))).toBe(true);
+  });
+
   it('cleanupExpiredCaches respects the daily run interval', () => {
     const now = 10_000;
     const book = { bookId: 'old_book', indexUrl: 'https://example.com/old/' };
@@ -302,6 +354,168 @@ describe('persistence GM_* functions', () => {
     });
 
     expect(storage.has(getCacheV2IndexKey(book.bookId))).toBe(true);
+  });
+
+  it('cleanupExpiredCaches removes only old orphaned chapters', () => {
+    const now = 10_000;
+    const maxAgeMs = 1_000;
+    const oldBook = { bookId: 'old_orphan', indexUrl: 'https://example.com/old/index.html' };
+    const recentBook = {
+      bookId: 'recent_orphan',
+      indexUrl: 'https://example.com/recent/index.html',
+    };
+    const currentBook = {
+      bookId: 'current_orphan',
+      indexUrl: 'https://example.com/current/index.html',
+    };
+    const oldUrl = 'https://example.com/old/1.html';
+    const recentUrl = 'https://example.com/recent/1.html';
+    const currentUrl = 'https://example.com/current/1.html';
+
+    persistCachedChapter(oldBook, oldUrl, makeCached(oldUrl, now - maxAgeMs - 1, oldBook.indexUrl));
+    persistCachedChapter(
+      recentBook,
+      recentUrl,
+      makeCached(recentUrl, now - maxAgeMs + 1, recentBook.indexUrl)
+    );
+    persistCachedChapter(
+      currentBook,
+      currentUrl,
+      makeCached(currentUrl, now - maxAgeMs - 1, currentBook.indexUrl)
+    );
+
+    cleanupExpiredCaches({
+      currentBookId: currentBook.bookId,
+      force: true,
+      maxAgeMs,
+      now,
+    });
+
+    expect(storage.has(getCacheV2ChapterKey(oldBook.bookId, oldUrl))).toBe(false);
+    expect(storage.has(getCacheV2ChapterKey(recentBook.bookId, recentUrl))).toBe(true);
+    expect(storage.has(getCacheV2ChapterKey(currentBook.bookId, currentUrl))).toBe(true);
+  });
+
+  it('cleanupExpiredCaches removes old chapters left behind by a corrupt index', () => {
+    const now = 10_000;
+    const maxAgeMs = 1_000;
+    const indexUrl = 'https://example.com/corrupt/index.html';
+    const book = getCurrentBookCacheKey(indexUrl)!;
+    const url = 'https://example.com/corrupt/1.html';
+    persistCachedChapter(book, url, makeCached(url, now - maxAgeMs - 1, indexUrl));
+    storage.set(getCacheV2IndexKey(book.bookId), '{invalid json');
+
+    cleanupExpiredCaches({ force: true, maxAgeMs, now });
+
+    expect(storage.has(getCacheV2IndexKey(book.bookId))).toBe(false);
+    expect(storage.has(getCacheV2ChapterKey(book.bookId, url))).toBe(false);
+  });
+
+  it('cleanupExpiredCaches removes stale index extras without dropping Unicode URLs', () => {
+    const dayMs = 24 * 60 * 60 * 1_000;
+    const now = 40 * dayMs;
+    const maxAgeMs = 30 * dayMs;
+    const indexUrl = 'https://example.com/小说/index.html';
+    const book = getCurrentBookCacheKey(indexUrl)!;
+    const indexedUrl = 'https://example.com/小说/第一章.html';
+    const orphanUrl = 'https://example.com/小说/旧草稿.html';
+    persistCachedChapter(
+      book,
+      indexedUrl,
+      makeCached(indexedUrl, now - maxAgeMs - dayMs, indexUrl)
+    );
+    persistCachedChapter(book, orphanUrl, makeCached(orphanUrl, now - maxAgeMs - dayMs, indexUrl));
+    persistCacheIndex(book, new Set([indexedUrl]), now - 2 * dayMs);
+
+    cleanupExpiredCaches({ force: true, maxAgeMs, now });
+
+    expect(storage.has(getCacheV2ChapterKey(book.bookId, indexedUrl))).toBe(true);
+    expect(storage.has(getCacheV2ChapterKey(book.bookId, orphanUrl))).toBe(false);
+  });
+
+  it('cleanupExpiredCaches does not read healthy chapter payloads', () => {
+    const now = 10_000;
+    const urls = Array.from(
+      { length: 100 },
+      (_, index) => `https://example.com/book/healthy/${index}.html`
+    );
+    const book = {
+      bookId: 'healthy_book',
+      indexUrl: 'https://example.com/book/healthy/index.html',
+    };
+    for (const url of urls) {
+      persistCachedChapter(book, url, makeCached(url, now, book.indexUrl));
+    }
+    persistCacheIndex(book, new Set(urls), now);
+
+    const getValue = globalThis.GM_getValue as ReturnType<typeof vi.fn>;
+    const listValues = globalThis.GM_listValues as ReturnType<typeof vi.fn>;
+    getValue.mockClear();
+    listValues.mockClear();
+
+    cleanupExpiredCaches({ force: true, now });
+
+    expect(listValues).toHaveBeenCalledOnce();
+    expect(
+      getValue.mock.calls.some(([key]) =>
+        String(key).startsWith('mnr_cache_v2_chapter_healthy_book_')
+      )
+    ).toBe(false);
+  });
+
+  it('cleanupExpiredCaches matches overlapping book prefixes without reading chapter payloads', () => {
+    const now = 10_000;
+    const books = [
+      { bookId: 'nested', indexUrl: 'https://example.com/nested/' },
+      { bookId: 'nested_child', indexUrl: 'https://example.com/nested/child/' },
+    ];
+    for (const book of books) {
+      const url = `${book.indexUrl}1.html`;
+      persistCachedChapter(book, url, makeCached(url, now, book.indexUrl));
+      persistCacheIndex(book, new Set([url]), now);
+    }
+
+    const getValue = globalThis.GM_getValue as ReturnType<typeof vi.fn>;
+    getValue.mockClear();
+
+    cleanupExpiredCaches({ force: true, now });
+
+    expect(
+      getValue.mock.calls.some(([key]) => String(key).startsWith('mnr_cache_v2_chapter_'))
+    ).toBe(false);
+  });
+
+  it('cleanupExpiredCaches schedules and slices routine maintenance', () => {
+    const callbacks: IdleRequestCallback[] = [];
+    const requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    });
+    Object.defineProperty(window, 'requestIdleCallback', {
+      configurable: true,
+      value: requestIdleCallback,
+    });
+    for (let index = 0; index < 300; index += 1) {
+      storage.set(`unrelated_${index}`, index);
+    }
+
+    const listValues = globalThis.GM_listValues as ReturnType<typeof vi.fn>;
+    cleanupExpiredCaches({ gcIntervalMs: 0, now: 10_000 });
+
+    expect(requestIdleCallback).toHaveBeenCalledOnce();
+    expect(listValues).not.toHaveBeenCalled();
+
+    callbacks.shift()?.({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline);
+    expect(listValues).toHaveBeenCalledOnce();
+    expect(callbacks).toHaveLength(1);
+
+    let remainingSlices = 10;
+    while (callbacks.length > 0 && remainingSlices > 0) {
+      callbacks.shift()?.({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline);
+      remainingSlices -= 1;
+    }
+    expect(callbacks).toHaveLength(0);
+    expect(remainingSlices).toBeGreaterThan(0);
   });
 });
 
