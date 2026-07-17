@@ -4,7 +4,7 @@
 
 import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
-import { isVipChapterPage } from '@/ui/stores/reader/detection';
+import { isVipChapterPage } from '@/core/detection';
 import { JSDOM } from 'jsdom';
 import { useReaderStore } from '@/ui/stores/reader';
 

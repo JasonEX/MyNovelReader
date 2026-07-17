@@ -276,6 +276,19 @@ export function persistCacheIndex(
   }
 }
 
+/** Remove only the book index; chapter records are left for the idle orphan GC. */
+export function deletePersistedCacheIndex(cacheBook: CacheBookKey): boolean {
+  if (typeof GM_deleteValue === 'undefined') return false;
+
+  try {
+    GM_deleteValue(getCacheV2IndexKey(cacheBook.bookId));
+    return true;
+  } catch (e) {
+    console.error('[MNR] Failed to delete cache index:', e);
+    return false;
+  }
+}
+
 /**
  * Restore persisted URL set from GM storage.
  * Returns the set of URLs that are persisted, or null if nothing found.

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { detectTocPage, isInvalidChapterUrl, isVipChapterPage } from '@/ui/stores/reader/detection';
+import { detectTocPage, isInvalidChapterUrl } from '@/ui/stores/reader/detection';
+import { isVipChapterPage } from '@/core/detection';
 
 describe('isInvalidChapterUrl (extra coverage)', () => {
   it('rejects common non-chapter URL patterns', () => {

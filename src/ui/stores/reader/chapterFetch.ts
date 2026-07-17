@@ -3,8 +3,7 @@ import type { ParsedChapter, Parser } from '@/core/parser';
 
 import { fetchAndParseUrl } from '@/core/utils/network';
 import { fetchCiweimaoApiDocument } from '@/core/rules/sites/ciweimao';
-import { isCloudflareChallenge } from '@/core/protection';
-import { isVipChapterPage } from './detection';
+import { getChapterDocumentBlockReason } from '@/core/detection';
 import type { LoadSource } from './types';
 import type { NavigationContext } from './navigationContext';
 import { normalizeUrlForBlock } from './utils';
@@ -148,7 +147,8 @@ export async function parseCandidateDocument(
   _referer: string,
   source: LoadSource
 ): Promise<ParsedCandidateResult> {
-  if (isCloudflareChallenge(doc)) {
+  const blockReason = getChapterDocumentBlockReason(doc);
+  if (blockReason === 'cloudflare') {
     const count = recordNavFailure(ctx.navFailures, load.navKey, {
       maxFailures: MAX_NAV_FAILURES,
     });
@@ -158,7 +158,7 @@ export async function parseCandidateDocument(
     return 'blocked';
   }
 
-  if (isVipChapterPage(doc)) {
+  if (blockReason === 'vip') {
     ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(load.targetUrl));
     ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
     return 'blocked';

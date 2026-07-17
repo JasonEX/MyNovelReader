@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-import { detectTocPage, isInvalidChapterUrl, isVipChapterPage } from '@/ui/stores/reader/detection';
+import { detectTocPage, isInvalidChapterUrl } from '@/ui/stores/reader/detection';
+import { getChapterDocumentBlockReason, isVipChapterPage } from '@/core/detection';
 
 describe('Reader detection utilities', () => {
   let dom: JSDOM;
@@ -43,6 +44,21 @@ describe('Reader detection utilities', () => {
       '<!doctype html><html><body><div>VIP专区</div><a href="/buy">立即订阅</a></body></html>'
     ).window.document;
     expect(isVipChapterPage(doc)).toBe(true);
+  });
+
+  it('classifies a Qidian subscription preview without treating short free notes as VIP', () => {
+    const locked = new JSDOM(`<!doctype html><html><body>
+      <main id="c-711273151" class="lock-mask"><p>两三句预览正文……</p></main>
+      <p>登录订阅本章: 16点</p>
+      <script>{"chapterInfo":{"isVip":1,"isBuy":0,"price":16,"vipStatus":1}}</script>
+    </body></html>`).window.document;
+    const freeNote = new JSDOM(`<!doctype html><html><body>
+      <main id="c-713171483"><p>卷中感言，谢谢大家。</p></main>
+      <script>{"chapterInfo":{"isVip":1,"isBuy":1,"price":0,"vipStatus":1}}</script>
+    </body></html>`).window.document;
+
+    expect(getChapterDocumentBlockReason(locked)).toBe('vip');
+    expect(getChapterDocumentBlockReason(freeNote)).toBeNull();
   });
 
   it('detectTocPage detects TOC via URL patterns', () => {

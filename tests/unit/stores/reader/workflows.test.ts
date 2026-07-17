@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getCacheV2IndexKey, parseStoredJson } from '@/ui/stores/reader/persistence';
+import {
+  getCacheV2ChapterKey,
+  getCacheV2IndexKey,
+  parseStoredJson,
+} from '@/ui/stores/reader/persistence';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import { getParser } from '@/core/parser';
 import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
@@ -174,6 +178,164 @@ describe('ReaderStore - workflows', () => {
     expect(store.cacheProgress.done).toBe(1);
     expect(store.cachedContents.has('https://example.com/book/1/2.html')).toBe(true);
     expect(store.persistedUrls.has('https://example.com/book/1/2.html')).toBe(true);
+  });
+
+  it('skips VIP documents without parsing, persisting, or adding them to retry failures', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const vipUrl = 'https://example.com/book/1/2.html';
+    const readableUrl = 'https://example.com/book/1/3.html';
+    const vipDoc = new DOMParser().parseFromString(
+      '<html><body><main>预览正文</main><p>登录订阅本章: 16点</p></body></html>',
+      'text/html'
+    );
+    const readableDoc = new DOMParser().parseFromString(
+      '<html><body><main>完整正文</main></body></html>',
+      'text/html'
+    );
+    mockFetchAndParseUrl.mockImplementation((url: string) => ({
+      promise: Promise.resolve({
+        doc: url === vipUrl ? vipDoc : readableDoc,
+        status: 200,
+        finalUrl: url,
+        error: null,
+      }),
+      abort: vi.fn(),
+    }));
+    mockParseWithSectionMerge.mockImplementation(async (_parser, _doc, url: string) => ({
+      title: '第3章',
+      content: '<p>完整正文</p>',
+      rawContent: '<p>完整正文</p>',
+      url,
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+      nextUrl: null,
+    }));
+
+    await store.startCacheAll([vipUrl, readableUrl]);
+
+    expect(fetchAndParseUrl).toHaveBeenCalledTimes(2);
+    expect(parseWithSectionMerge).toHaveBeenCalledTimes(1);
+    expect(parseWithSectionMerge).toHaveBeenCalledWith(
+      expect.anything(),
+      readableDoc,
+      readableUrl,
+      expect.anything()
+    );
+    expect(store.cachedContents.has(vipUrl)).toBe(false);
+    expect(store.persistedUrls.has(vipUrl)).toBe(false);
+    expect(store.cachedContents.has(readableUrl)).toBe(true);
+    expect(store.persistedUrls.has(readableUrl)).toBe(true);
+    expect(store.cacheProgress).toMatchObject({ done: 2, total: 2, failed: 0, running: false });
+
+    await store.retryFailedCache();
+    expect(fetchAndParseUrl).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not request TOC entries already known to be locked', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const readableUrl = 'https://example.com/book/1/2.html';
+    const lockedUrl = 'https://example.com/book/1/3.html';
+    mockLoadTocEntriesPaged.mockResolvedValue([
+      { title: '第2章', url: readableUrl },
+      { title: '第3章', url: lockedUrl, access: 'locked' },
+    ]);
+    const doc = new DOMParser().parseFromString('<html><body>完整正文</body></html>', 'text/html');
+    mockFetchAndParseUrl.mockImplementation((url: string) => ({
+      promise: Promise.resolve({ doc, status: 200, finalUrl: url, error: null }),
+      abort: vi.fn(),
+    }));
+    mockParseWithSectionMerge.mockImplementation(async (_parser, _doc, url: string) => ({
+      title: '第2章',
+      content: '<p>完整正文</p>',
+      rawContent: '<p>完整正文</p>',
+      url,
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+      nextUrl: lockedUrl,
+    }));
+
+    await store.startCacheAll();
+
+    expect(fetchAndParseUrl).toHaveBeenCalledTimes(1);
+    expect(fetchAndParseUrl).toHaveBeenCalledWith(readableUrl, expect.any(String));
+    expect(store.cacheProgress).toMatchObject({ done: 1, total: 1, failed: 0, running: false });
+  });
+
+  it('drops previously persisted locked previews from the active cache index', async () => {
+    const gm = createGmStorageMock();
+    stubGmStorage(gm);
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+
+    const bookId = 'example.com_book_1_index.html';
+    const lockedUrl = 'https://example.com/book/1/2.html';
+    const indexKey = getCacheV2IndexKey(bookId);
+    const chapterKey = getCacheV2ChapterKey(bookId, lockedUrl);
+    gm.store.set(
+      indexKey,
+      JSON.stringify({
+        version: 2,
+        bookId,
+        indexUrl: 'https://example.com/book/1/index.html',
+        urls: [lockedUrl],
+        lastUpdated: Date.now(),
+      })
+    );
+    gm.store.set(
+      chapterKey,
+      JSON.stringify({
+        chapter: {
+          title: '第2章',
+          content: '<p>预览</p>',
+          rawContent: '<p>预览</p>',
+          url: lockedUrl,
+          indexUrl: 'https://example.com/book/1/index.html',
+          confidence: 1,
+          method: 'rule',
+        },
+        cachedAt: Date.now(),
+      })
+    );
+    mockLoadTocEntriesPaged.mockResolvedValue([
+      { title: '第2章', url: lockedUrl, access: 'locked' },
+    ]);
+
+    await store.startCacheAll();
+
+    expect(store.persistedUrls.has(lockedUrl)).toBe(false);
+    expect(gm.store.has(indexKey)).toBe(false);
+    expect(gm.store.has(chapterKey)).toBe(true);
+    expect(fetchAndParseUrl).not.toHaveBeenCalled();
   });
 
   it('startCacheAll checkpoints the v2 index after the first persisted chapter', async () => {

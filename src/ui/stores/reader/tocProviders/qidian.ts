@@ -8,6 +8,7 @@ type QidianCategoryChapter = {
   cN?: string;
   chapterName?: string;
   cU?: string;
+  sS?: number;
 };
 
 type QidianCategoryVolume = {
@@ -18,6 +19,7 @@ type QidianCategoryResponse = {
   code?: number;
   msg?: string;
   data?: {
+    loginStatus?: number;
     vs?: QidianCategoryVolume[];
   };
 };
@@ -209,6 +211,7 @@ function qidianCategoryToEntries(
 
   const entries: TocEntry[] = [];
   const volumes = response.data?.vs || [];
+  const isAnonymous = response.data?.loginStatus === 0;
 
   for (const volume of volumes) {
     for (const chapter of volume.cs || []) {
@@ -226,6 +229,7 @@ function qidianCategoryToEntries(
       entries.push({
         title,
         url: normalizeUrlForFetch(url),
+        ...(isAnonymous && chapter.sS === 0 ? { access: 'locked' as const } : {}),
       });
     }
   }

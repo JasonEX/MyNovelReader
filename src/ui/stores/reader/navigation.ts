@@ -17,11 +17,12 @@ import {
   insertParsedChapter,
   rebuildChaptersFromCache,
 } from './chapterListMutations';
-import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from './types';
-import { normalizeUrl, normalizeUrlForFetch } from './utils';
+import { MAX_NAV_FAILURES, MAX_SESSION_CACHE, VIP_BLOCK_TOAST } from './types';
+import { normalizeUrl, normalizeUrlForBlock, normalizeUrlForFetch } from './utils';
 import { prepareChapterLoad, validateTargetChapterUrl } from './chapterLoadGuards';
 import { detectTocPage } from './detection';
 import { fetchAndParseUrl } from '@/core/utils/network';
+import { getChapterDocumentBlockReason } from '@/core/detection';
 import type { NavigationContext } from './navigationContext';
 import { parseWithSectionMerge } from './section';
 import { shouldPersistNavigationBlock } from './navigationPolicy';
@@ -277,6 +278,17 @@ export function createNavigation(ctx: NavigationContext) {
     }
     if (!result.doc) {
       ctx.showToast('重新加载失败', 'error');
+      return;
+    }
+
+    const blockReason = getChapterDocumentBlockReason(result.doc);
+    if (blockReason === 'cloudflare') {
+      ctx.showToast('Cloudflare 验证页面，请完成验证后重试', 'info', 4000);
+      return;
+    }
+    if (blockReason === 'vip') {
+      ctx.vipBlockedUrls.value.add(normalizeUrlForBlock(url));
+      ctx.showToast(VIP_BLOCK_TOAST, 'info', 3000);
       return;
     }
 

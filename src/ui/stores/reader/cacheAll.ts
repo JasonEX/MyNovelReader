@@ -6,11 +6,13 @@
 import type { CachedChapter, CacheProgressState } from './types';
 import type { ComputedRef, Ref } from 'vue';
 import { fetchAndParseUrl } from '@/core/utils/network';
+import { getChapterDocumentBlockReason } from '@/core/detection';
 import { getParser } from '@/core/parser';
 import type { ParsedChapter } from '@/core/parser';
 import type { SiteRule } from '@/core/rules/types';
 
 import {
+  deletePersistedCacheIndex,
   getCurrentBookCacheKey,
   persistCachedChapter,
   persistCacheIndex,
@@ -63,6 +65,7 @@ export function createCacheAll(ctx: CacheAllContext) {
     if (ctx.cacheProgress.value.running) return;
 
     const seenUrls = new Set<string>();
+    const knownLockedUrls = new Set<string>();
     ctx.cacheFailedUrls.value = [];
 
     // Ensure we have the latest persistedUrls before building the task list.
@@ -92,7 +95,26 @@ export function createCacheAll(ctx: CacheAllContext) {
         if (ctx.runtime.isSessionStale(runId)) return;
         ctx.cacheAbort.value = null;
 
-        const tocLinks = tocEntries.map(e => normalizeUrlForFetch(e.url)).slice(0, 10000);
+        const tocLinks: string[] = [];
+        let removedPersistedLocked = false;
+        for (const entry of tocEntries.slice(0, 10000)) {
+          const url = normalizeUrlForFetch(entry.url);
+          if (entry.access === 'locked') {
+            knownLockedUrls.add(url);
+            ctx.cachedContents.value.delete(url);
+            removedPersistedLocked = persistedSet.delete(url) || removedPersistedLocked;
+          } else {
+            tocLinks.push(url);
+          }
+        }
+        if (removedPersistedLocked && cacheBook) {
+          ctx.persistedUrls.value = new Set(persistedSet);
+          if (persistedSet.size > 0) {
+            persistCacheIndex(cacheBook, persistedSet);
+          } else {
+            deletePersistedCacheIndex(cacheBook);
+          }
+        }
         // Cache entire book, filter already cached/persisted
         taskList = tocLinks.filter(
           u =>
@@ -156,6 +178,20 @@ export function createCacheAll(ctx: CacheAllContext) {
           ...ctx.cacheProgress.value,
           done: ctx.cacheProgress.value.done + 1,
           failed: ctx.cacheProgress.value.failed + 1,
+        };
+        nextUrl = taskList.shift() ?? null;
+        continue;
+      }
+
+      const blockReason = getChapterDocumentBlockReason(result.doc);
+      if (blockReason) {
+        if (blockReason === 'cloudflare') {
+          ctx.cacheFailedUrls.value.push(targetUrl);
+        }
+        ctx.cacheProgress.value = {
+          ...ctx.cacheProgress.value,
+          done: ctx.cacheProgress.value.done + 1,
+          failed: ctx.cacheProgress.value.failed + (blockReason === 'cloudflare' ? 1 : 0),
         };
         nextUrl = taskList.shift() ?? null;
         continue;
@@ -231,6 +267,9 @@ export function createCacheAll(ctx: CacheAllContext) {
       // 下一章 URL 优先：显式队列 > 检测器返回 nextUrl（分页合并后 nextUrl 已指向下一章）
       referer = parsed.url;
       nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
+      if (nextUrl && knownLockedUrls.has(normalizeUrlForFetch(nextUrl))) {
+        nextUrl = null;
+      }
 
       // If following nextUrl chain, update total estimate
       if (taskList.length === 0 && nextUrl) {

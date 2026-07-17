@@ -146,6 +146,7 @@ export class DetectionEngine {
 // Export all types and detectors
 export * from './types';
 export { ContentDetector } from './ContentDetector';
+export * from './ChapterDocumentClassifier';
 export { NavigationDetector } from './NavigationDetector';
 export { TitleDetector } from './TitleDetector';
 export { ConfidenceScorer } from './ConfidenceScorer';

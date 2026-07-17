@@ -81,6 +81,80 @@ describe('Qidian TOC loading', () => {
     ]);
   });
 
+  it('marks paid catalog entries as locked only for an anonymous Qidian session', async () => {
+    const response = {
+      ...qidianCategoryResponse,
+      data: {
+        loginStatus: 0,
+        vs: [
+          {
+            cs: [
+              { id: 850667574, cN: '免费章节', cU: '', sS: 1 },
+              { id: 850662591, cN: '付费章节', cU: '', sS: 0 },
+            ],
+          },
+        ],
+      },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, status: 200, json: async () => response }))
+    );
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const entries = await loadTocEntriesPaged(
+      'https://www.qidian.com/book/1045659200/',
+      'https://www.qidian.com/chapter/1045659200/850667574/',
+      qidianRule,
+      vi.fn()
+    );
+
+    expect(entries).toEqual([
+      {
+        title: '免费章节',
+        url: 'https://www.qidian.com/chapter/1045659200/850667574/',
+      },
+      {
+        title: '付费章节',
+        url: 'https://www.qidian.com/chapter/1045659200/850662591/',
+        access: 'locked',
+      },
+    ]);
+  });
+
+  it('does not pre-lock paid catalog entries when the Qidian session is logged in', async () => {
+    const response = {
+      ...qidianCategoryResponse,
+      data: {
+        loginStatus: 1,
+        vs: [
+          {
+            cs: [{ id: 850662591, cN: '可能已购章节', cU: '', sS: 0 }],
+          },
+        ],
+      },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, status: 200, json: async () => response }))
+    );
+    vi.stubGlobal('GM_xmlhttpRequest', undefined);
+
+    const entries = await loadTocEntriesPaged(
+      'https://www.qidian.com/book/1045659200/',
+      'https://www.qidian.com/chapter/1045659200/850667574/',
+      qidianRule,
+      vi.fn()
+    );
+
+    expect(entries).toEqual([
+      {
+        title: '可能已购章节',
+        url: 'https://www.qidian.com/chapter/1045659200/850662591/',
+      },
+    ]);
+  });
+
   it('falls back to GM_xmlhttpRequest when native fetch does not return a usable catalog', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true,

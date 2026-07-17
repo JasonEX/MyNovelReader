@@ -8,7 +8,6 @@ import {
   extractUrlPattern,
   isTocNextPageText,
   isValidTocPaginationUrl,
-  normalizeTextForVipDetection,
   normalizeTocPagerText,
   normalizeUrl,
   normalizeUrlForBlock,
@@ -17,8 +16,8 @@ import {
   resolveUrl,
 } from '@/ui/stores/reader/utils';
 import { clearNavFailure, recordNavFailure } from '@/ui/stores/reader/navFailure';
-
 import { MAX_NAV_FAILURES, MAX_SESSION_CACHE } from '@/ui/stores/reader/types';
+import { normalizeTextForVipDetection } from '@/core/detection';
 
 type NavFailureMap = Map<string, { count: number; nextRetryAt: number }>;
 

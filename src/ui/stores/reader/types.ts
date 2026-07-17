@@ -43,6 +43,8 @@ export interface ChapterEntry {
 export interface TocEntry {
   title: string;
   url: string;
+  /** Present only when the TOC provider can prove the chapter is unavailable to this session. */
+  access?: 'locked';
 }
 
 /** TOC entry with cache status for UI */

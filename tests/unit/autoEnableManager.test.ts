@@ -68,7 +68,8 @@ vi.mock('@/core/auto-enable/SectionMerger', () => ({
   createSectionMerger: () => mockedSectionMerger,
 }));
 
-vi.mock('@/core/detection', () => ({
+vi.mock('@/core/detection', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/detection')>()),
   DetectionEngine: MockDetectionEngine,
 }));
 
@@ -130,6 +131,23 @@ describe('AutoEnableManager', () => {
       method: 'user-disabled',
       showManualEntry: true,
     });
+  });
+
+  it('does not auto-enable on a locked chapter document', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager();
+    const doc = createDoc('https://example.com/chapter/2');
+    doc.body.innerHTML = '<main>预览正文</main><p>登录订阅本章: 16点</p>';
+
+    const decision = await manager.check(doc);
+
+    expect(decision).toMatchObject({
+      shouldEnable: false,
+      method: 'manual',
+      confidence: 0,
+    });
+    expect(decision.reasons.join(' ')).toContain('VIP/付费章节');
+    expect(mockedRuleManager.initialize).not.toHaveBeenCalled();
   });
 
   it('returns site-preference decision when user enabled auto-enable for the site', async () => {
@@ -487,6 +505,24 @@ describe('AutoEnableManager', () => {
     expect(mockedProtection.removeOverlays).toHaveBeenCalledTimes(1);
     expect(mockedSectionMerger.merge).toHaveBeenCalledTimes(1);
     expect(launchCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('manualEnable does not parse or launch a locked chapter document', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: true });
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+    const doc = createDoc('https://example.com/chapter/2');
+    doc.body.innerHTML = '<main>预览正文</main><p>登录订阅本章: 16点</p>';
+
+    await manager.manualEnable(doc);
+
+    expect(mockedProtection.activate).not.toHaveBeenCalled();
+    expect(mockedSectionMerger.merge).not.toHaveBeenCalled();
+    expect(launchCallback).not.toHaveBeenCalled();
+    expect(mockedProtection.deactivate).toHaveBeenCalledTimes(1);
+    expect(infoSpy).toHaveBeenCalledWith('[AutoEnableManager] Manual enable skipped: vip');
   });
 
   it('manualEnable passes the parsed rule to the launch callback', async () => {

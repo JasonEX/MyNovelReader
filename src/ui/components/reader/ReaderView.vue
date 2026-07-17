@@ -469,7 +469,9 @@ async function handleCacheAll() {
   }
 
   await readerStore.loadToc();
-  const remaining = readerStore.tocWithStatus.filter(entry => !entry.isPersisted).length;
+  const remaining = readerStore.tocWithStatus.filter(
+    entry => entry.access !== 'locked' && !entry.isPersisted
+  ).length;
   const message =
     remaining > 0
       ? `预计缓存 ${remaining} 章，过程可能需要一些时间。是否继续？`

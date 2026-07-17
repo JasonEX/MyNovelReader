@@ -7,13 +7,13 @@
  * 3. User confirms → optionally remember site preference → launch reader
  */
 
-import { DetectionEngine, type DetectionEngineResult } from '@/core/detection';
-import { getPageKind, getPageKindFromUrl } from '@/core/auto-enable/PageKind';
 import {
-  getSiteProtection,
-  isCloudflareChallenge,
-  type ProtectionOptions,
-} from '@/core/protection';
+  DetectionEngine,
+  type DetectionEngineResult,
+  getChapterDocumentBlockReason,
+} from '@/core/detection';
+import { getPageKind, getPageKindFromUrl } from '@/core/auto-enable/PageKind';
+import { getSiteProtection, type ProtectionOptions } from '@/core/protection';
 import { type ParsedChapter, Parser } from '@/core/parser';
 import { createSectionMerger } from '@/core/auto-enable/SectionMerger';
 import { getRuleManager } from '@/core/rules/RuleManager';
@@ -158,12 +158,21 @@ export class AutoEnableManager {
     const decide = (decision: AutoEnableDecision): AutoEnableDecision =>
       this.recordDecision(url, decision);
 
-    if (isCloudflareChallenge(doc)) {
+    const blockReason = getChapterDocumentBlockReason(doc);
+    if (blockReason === 'cloudflare') {
       return decide({
         shouldEnable: false,
         method: 'manual',
         confidence: 0,
         reasons: ['Cloudflare Challenge 页面，等待验证完成'],
+      });
+    }
+    if (blockReason === 'vip') {
+      return decide({
+        shouldEnable: false,
+        method: 'manual',
+        confidence: 0,
+        reasons: ['VIP/付费章节，跳过阅读器解析'],
       });
     }
 
@@ -431,6 +440,13 @@ export class AutoEnableManager {
    * Manual enable (force launch without detection)
    */
   async manualEnable(doc: Document = document): Promise<void> {
+    const blockReason = getChapterDocumentBlockReason(doc);
+    if (blockReason) {
+      console.info(`[AutoEnableManager] Manual enable skipped: ${blockReason}`);
+      this.deactivateProtection();
+      return;
+    }
+
     this.activateProtection();
 
     // Parse and launch
