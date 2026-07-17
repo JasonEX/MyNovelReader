@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.4
+// @version            9.3.5
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -8503,8 +8503,8 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.4";
-	var BUILD_DATE = "2026-07-13";
+	var VERSION = "9.3.5";
+	var BUILD_DATE = "2026-07-17";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
 		if (!url) return null;
@@ -13946,6 +13946,7 @@ ul, ol {
 		const globalState = getMnrGlobalState();
 		const host = document.createElement("div");
 		host.id = hostId;
+		host.lang = "zh-CN";
 		document.body.appendChild(host);
 		const shadowRoot = host.attachShadow({ mode: "open" });
 		getRegisteredShadowRoots(globalState).add(shadowRoot);

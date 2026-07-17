@@ -526,6 +526,12 @@ test('auto-starts TTKS and preloads through a short author-note chapter', async 
   await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
   const readerRoot = page.locator('#mnr-reader-root');
   await expect(readerRoot).toHaveCount(1);
+  await expect(readerRoot).toHaveAttribute('lang', 'zh-CN');
+  expect(
+    await readerRoot.evaluate(host =>
+      host.shadowRoot?.querySelector('.mnr-reader')?.matches(':lang(zh-CN)')
+    )
+  ).toBe(true);
   await expect(page.locator('#mnr-entry-root, #mnr-entry-prompt-root')).toHaveCount(0);
 
   const firstChapter = readerRoot.locator(`article[data-chapter-url="${firstUrl}"]`);

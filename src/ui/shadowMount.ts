@@ -191,6 +191,7 @@ export function createShadowMount(hostId: string): ShadowMountResult {
   // Create host element
   const host = document.createElement('div');
   host.id = hostId;
+  host.lang = 'zh-CN';
   document.body.appendChild(host);
 
   // Create Shadow DOM

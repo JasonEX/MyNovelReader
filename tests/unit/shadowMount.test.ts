@@ -12,7 +12,7 @@ describe('shadowMount', () => {
   let dom: JSDOM;
 
   beforeEach(() => {
-    dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+    dom = new JSDOM('<!doctype html><html lang="zh-TW"><head></head><body></body></html>', {
       url: 'https://example.com/',
       pretendToBeVisual: true,
     });
@@ -32,6 +32,7 @@ describe('shadowMount', () => {
     const { host, shadowRoot, mountPoint, cleanup } = createShadowMount('mnr-test-root');
 
     expect(host.id).toBe('mnr-test-root');
+    expect(host.lang).toBe('zh-CN');
     expect(document.getElementById('mnr-test-root')).toBe(host);
     expect(shadowRoot).toBe(host.shadowRoot);
     expect(mountPoint.id).toBe('mnr-test-root-mount');
