@@ -465,7 +465,7 @@ test('keeps normal Cloudflare JS Detection pages readable across previous naviga
   );
 });
 
-test('auto-starts TTKS and navigates through a short author-note chapter', async ({
+test('auto-starts TTKS and preloads through a short author-note chapter', async ({
   context,
   page,
 }) => {
@@ -537,22 +537,32 @@ test('auto-starts TTKS and navigates through a short author-note chapter', async
   await expect(firstChapter).not.toContainText('添加書籤');
   await expect(firstChapter).not.toContainText('福');
 
-  await readerRoot.locator('.mnr-reader-main').focus();
-  await page.keyboard.press('ArrowRight');
   const noteChapter = readerRoot.locator(`article[data-chapter-url="${noteUrl}"]`);
-  await expect(noteChapter.locator('.mnr-chapter-title')).toHaveText('求點月票！');
+  await expect(noteChapter.locator('.mnr-chapter-title')).toHaveText('求點月票！', {
+    timeout: 10_000,
+  });
   await expect(noteChapter).toContainText('雙倍月票最後一天');
   await expect(noteChapter).toContainText('問道在此跪求一波月票');
+  const thirdChapter = readerRoot.locator(`article[data-chapter-url="${thirdUrl}"]`);
+  await expect(thirdChapter.locator('.mnr-chapter-title')).toHaveText('第83章 大劫指對七絕旋風腿', {
+    timeout: 10_000,
+  });
+  await expect(thirdChapter).toContainText('下一章結尾正文。');
+  await expect.poll(() => page.url()).toBe(firstUrl);
+  expect(noteRequests).toBe(1);
+  expect(thirdRequests).toBe(1);
+
+  await readerRoot.locator('.mnr-reader-main').focus();
+  await page.keyboard.press('ArrowRight');
   await expect.poll(() => page.url()).toBe(noteUrl);
   expect(noteRequests).toBe(1);
+  expect(thirdRequests).toBe(1);
 
   await page.waitForTimeout(700);
   await readerRoot.locator('.mnr-reader-main').focus();
   await page.keyboard.press('ArrowRight');
-  const thirdChapter = readerRoot.locator(`article[data-chapter-url="${thirdUrl}"]`);
-  await expect(thirdChapter.locator('.mnr-chapter-title')).toHaveText('第83章 大劫指對七絕旋風腿');
-  await expect(thirdChapter).toContainText('下一章結尾正文。');
   await expect.poll(() => page.url()).toBe(thirdUrl);
+  expect(noteRequests).toBe(1);
   expect(thirdRequests).toBe(1);
 });
 

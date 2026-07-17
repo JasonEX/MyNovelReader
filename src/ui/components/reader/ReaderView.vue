@@ -206,6 +206,7 @@ const contentLang = computed(() => {
 // Auto-load composable (must be initialized before scroll composable)
 const { scheduleAutoLoadNext } = useReaderAutoLoad({
   mainRef,
+  chapterRefs,
   readerStore,
   configStore,
   hasNext,

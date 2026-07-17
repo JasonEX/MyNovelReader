@@ -22,7 +22,7 @@ function makeInput(overrides: Partial<AutoLoadPolicyInput> = {}): AutoLoadPolicy
     isNearBottom: true,
     now: 10_000,
     pageHidden: false,
-    unreadLoadedChapterCount: 0,
+    unreadBufferState: 'empty',
     ...overrides,
   };
 }
@@ -70,14 +70,31 @@ describe('autoLoadPolicy', () => {
     });
   });
 
-  it('clears pending timers when preload is disabled or a next chapter is already buffered', () => {
+  it('continues through short chapters but stops for a full-screen buffer or the hard cap', () => {
+    expect(decideAutoLoadNext('state', makeInput({ unreadBufferState: 'short' }))).toEqual({
+      type: 'start',
+    });
+    expect(decideAutoLoadNext('state', makeInput({ unreadBufferState: 'sufficient' }))).toEqual({
+      type: 'idle',
+      clearTimer: true,
+    });
+    expect(decideAutoLoadNext('state', makeInput({ unreadBufferState: 'capped' }))).toEqual({
+      type: 'idle',
+      clearTimer: true,
+    });
+  });
+
+  it('clears pending timers when preload is disabled', () => {
     expect(decideAutoLoadNext('state', makeInput({ enabled: false }))).toEqual({
       type: 'idle',
       clearTimer: true,
     });
-    expect(decideAutoLoadNext('state', makeInput({ unreadLoadedChapterCount: 1 }))).toEqual({
+  });
+
+  it('waits for unread chapter layout without clearing the active timer', () => {
+    expect(decideAutoLoadNext('state', makeInput({ unreadBufferState: 'pending' }))).toEqual({
       type: 'idle',
-      clearTimer: true,
+      clearTimer: false,
     });
   });
 

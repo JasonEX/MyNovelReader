@@ -5,6 +5,8 @@ import { JSDOM } from 'jsdom';
 
 import {
   INTERSECTION_ROOT_MARGIN_PX,
+  MAX_UNREAD_PRELOAD_CHAPTERS,
+  SHORT_CHAPTER_PRELOAD_DELAY_MS,
   useReaderAutoLoad,
 } from '@/ui/composables/reader/useReaderAutoLoad';
 
@@ -64,10 +66,39 @@ describe('useReaderAutoLoad', () => {
     Object.defineProperty(el, 'clientHeight', { value: metrics.clientHeight, configurable: true });
   }
 
+  function setChapterHeight(
+    chapterRefs: Map<string, HTMLElement>,
+    url: string,
+    height: number,
+    onRead?: () => void
+  ): void {
+    const element = document.createElement('article');
+    Object.defineProperty(element, 'offsetHeight', {
+      get: () => {
+        onRead?.();
+        return height;
+      },
+      configurable: true,
+    });
+    chapterRefs.set(url, element);
+  }
+
   function createAutoLoadOptions(overrides: Record<string, any> = {}) {
     const mainRef = ref<HTMLElement | null>(overrides.mainRef || null);
+    const chapters = overrides.chapters || [makeChapter('https://example.com/chapter/1')];
+    const chapterRefs = overrides.chapterRefs || new Map<string, HTMLElement>();
+    if (!overrides.chapterRefs) {
+      for (const entry of chapters) {
+        const element = document.createElement('article');
+        Object.defineProperty(element, 'offsetHeight', {
+          value: overrides.defaultChapterHeight ?? 1200,
+          configurable: true,
+        });
+        chapterRefs.set(entry.chapter.url, element);
+      }
+    }
     const readerStore = reactive({
-      chapters: overrides.chapters || [makeChapter('https://example.com/chapter/1')],
+      chapters,
       currentChapterIndex: overrides.currentChapterIndex ?? 0,
       loadNextChapter: vi.fn().mockResolvedValue(true),
       ...overrides.readerStore,
@@ -76,11 +107,23 @@ describe('useReaderAutoLoad', () => {
       behavior: {
         preloadNext: overrides.preloadNext ?? true,
       },
+      reading: {
+        fontFamily: 'sans-serif',
+        fontSize: 18,
+        lineHeight: 1.8,
+        letterSpacing: 0,
+        paragraphIndent: 2,
+        maxWidth: 800,
+        padding: 20,
+        textConversion: 'none',
+      },
+      customCSS: '',
       ...overrides.configStore,
     });
 
     return {
       mainRef,
+      chapterRefs,
       readerStore: readerStore as any,
       configStore: configStore as any,
       hasNext: computed(() => overrides.hasNext ?? true),
@@ -122,6 +165,20 @@ describe('useReaderAutoLoad', () => {
 
     vi.advanceTimersByTime(1);
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
+  });
+
+  it('does not spin when a successful preload appends no chapter', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+
+    useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+    vi.advanceTimersByTime(10_000);
+    await flushPromises();
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the 1600px fallback behind the same hard gate', () => {
@@ -181,6 +238,150 @@ describe('useReaderAutoLoad', () => {
     useReaderAutoLoad(opts);
     vi.advanceTimersByTime(5000);
 
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+  });
+
+  it('preloads through under-one-screen chapters until a full-screen chapter is buffered', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    const nextChapters = [
+      { url: 'https://example.com/chapter/2', height: 300 },
+      { url: 'https://example.com/chapter/3', height: 900 },
+    ];
+
+    opts.readerStore.loadNextChapter = vi.fn(async () => {
+      const next = nextChapters.shift();
+      if (!next) return false;
+      const entry = makeChapter(next.url, 'https://example.com/chapter/4');
+      opts.readerStore.chapters.push(entry);
+      setChapterHeight(opts.chapterRefs, next.url, next.height);
+      return true;
+    });
+
+    useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(SHORT_CHAPTER_PRELOAD_DELAY_MS - 1);
+    await flushPromises();
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(1);
+    await flushPromises();
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(SHORT_CHAPTER_PRELOAD_DELAY_MS * 2);
+    await flushPromises();
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(2);
+  });
+
+  it('caps an all-short unread buffer at ten chapters for the same visible chapter', async () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    let nextNumber = 2;
+
+    opts.readerStore.loadNextChapter = vi.fn(async () => {
+      const url = `https://example.com/chapter/${nextNumber++}`;
+      const entry = makeChapter(url, `https://example.com/chapter/${nextNumber}`);
+      opts.readerStore.chapters.push(entry);
+      setChapterHeight(opts.chapterRefs, url, 300);
+      return true;
+    });
+
+    const result = useReaderAutoLoad(opts);
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+
+    for (let count = 1; count < MAX_UNREAD_PRELOAD_CHAPTERS; count++) {
+      vi.advanceTimersByTime(SHORT_CHAPTER_PRELOAD_DELAY_MS);
+      await flushPromises();
+    }
+
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(MAX_UNREAD_PRELOAD_CHAPTERS);
+    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('sentinel');
+    vi.advanceTimersByTime(10_000);
+    await flushPromises();
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(MAX_UNREAD_PRELOAD_CHAPTERS);
+  });
+
+  it('caches chapter height checks across repeated scroll triggers', () => {
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
+    const chapters = [
+      makeChapter('https://example.com/chapter/1'),
+      makeChapter('https://example.com/chapter/2'),
+    ];
+    const chapterRefs = new Map<string, HTMLElement>();
+    let heightReads = 0;
+    setChapterHeight(chapterRefs, chapters[1].chapter.url, 900, () => {
+      heightReads += 1;
+    });
+    const opts = createAutoLoadOptions({ mainRef: mainEl, chapters, chapterRefs });
+    const result = useReaderAutoLoad(opts);
+
+    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('settled');
+
+    expect(heightReads).toBe(1);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+  });
+
+  it('invalidates cached chapter heights when reading layout settings change', async () => {
+    vi.stubGlobal('requestAnimationFrame', undefined);
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
+    const chapters = [
+      makeChapter('https://example.com/chapter/1'),
+      makeChapter('https://example.com/chapter/2'),
+    ];
+    const chapterRefs = new Map<string, HTMLElement>();
+    let heightReads = 0;
+    setChapterHeight(chapterRefs, chapters[1].chapter.url, 900, () => {
+      heightReads += 1;
+    });
+    const opts = createAutoLoadOptions({ mainRef: mainEl, chapters, chapterRefs });
+    useReaderAutoLoad(opts);
+    expect(heightReads).toBe(1);
+
+    opts.configStore.reading.fontSize = 20;
+    await nextTick();
+
+    expect(heightReads).toBe(2);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+  });
+
+  it('coalesces resize invalidations into one animation frame', () => {
+    const callbacks: FrameRequestCallback[] = [];
+    const requestFrame = vi.fn((callback: FrameRequestCallback) => {
+      callbacks.push(callback);
+      return 7;
+    });
+    vi.stubGlobal('requestAnimationFrame', requestFrame);
+    const mainEl = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
+    const chapters = [
+      makeChapter('https://example.com/chapter/1'),
+      makeChapter('https://example.com/chapter/2'),
+    ];
+    const chapterRefs = new Map<string, HTMLElement>();
+    let heightReads = 0;
+    setChapterHeight(chapterRefs, chapters[1].chapter.url, 900, () => {
+      heightReads += 1;
+    });
+    const opts = createAutoLoadOptions({ mainRef: mainEl, chapters, chapterRefs });
+    useReaderAutoLoad(opts);
+
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event('resize'));
+    expect(requestFrame).toHaveBeenCalledTimes(1);
+
+    callbacks[0]?.(0);
+    expect(heightReads).toBe(2);
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 

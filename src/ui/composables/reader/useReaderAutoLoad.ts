@@ -1,9 +1,8 @@
 /**
- * useReaderAutoLoad - one-chapter-ahead automatic preloading.
+ * useReaderAutoLoad - bounded automatic preloading.
  *
- * Automatic preloading is intentionally conservative: every visible chapter gets
- * a short reading grace period before the script may fetch the next chapter.
- * Explicit user navigation is handled outside this composable as manual loading.
+ * Every visible chapter gets a short reading grace period. The buffer may continue
+ * through under-one-screen chapters, but requests remain sequential and capped.
  */
 
 import {
@@ -11,16 +10,19 @@ import {
   decideAutoLoadNext,
   INTERSECTION_ROOT_MARGIN_PX,
   isViewportNearBottom,
+  MAX_UNREAD_PRELOAD_CHAPTERS,
+  type UnreadBufferState,
 } from './autoLoadPolicy';
-import { type ComputedRef, onUnmounted, type Ref, watch } from 'vue';
+import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
+import { type ComputedRef, nextTick, onUnmounted, type Ref, watch } from 'vue';
 import { recordDebugEvent } from '@/core/debug/events';
 import type { useConfigStore } from '@/ui/stores/config';
-import type { useReaderStore } from '@/ui/stores/reader';
 
-export { INTERSECTION_ROOT_MARGIN_PX };
+export { INTERSECTION_ROOT_MARGIN_PX, MAX_UNREAD_PRELOAD_CHAPTERS };
 
 const PRELOAD_DELAY_MIN_MS = 3000;
 const PRELOAD_DELAY_MAX_MS = 5000;
+export const SHORT_CHAPTER_PRELOAD_DELAY_MS = 300;
 const FAILURE_COOLDOWN_MIN_MS = 6000;
 const FAILURE_COOLDOWN_MAX_MS = 10000;
 
@@ -30,6 +32,7 @@ export type ScheduleAutoLoadNext = (reason?: AutoLoadReason) => void;
 
 export interface UseReaderAutoLoadOptions {
   mainRef: Ref<HTMLElement | null>;
+  chapterRefs: Map<string, HTMLElement>;
   readerStore: ReturnType<typeof useReaderStore>;
   configStore: ReturnType<typeof useConfigStore>;
   hasNext: ComputedRef<boolean>;
@@ -42,6 +45,7 @@ export interface UseReaderAutoLoadOptions {
 export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   const {
     mainRef,
+    chapterRefs,
     readerStore,
     configStore,
     hasNext,
@@ -57,6 +61,13 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   let sessionKey = '';
   let graceUntil = 0;
   let failureCooldownUntil = 0;
+  let layoutRevision = 0;
+  let layoutInvalidationFrame: number | null = null;
+  let lastBufferState: UnreadBufferState | '' = '';
+  const chapterScreenCache = new Map<
+    string,
+    { fillsViewport: boolean; layoutRevision: number; viewportHeight: number }
+  >();
 
   function getRandomDelayMs(min: number, max: number): number {
     const a = Math.min(min, max);
@@ -77,7 +88,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   function getCurrentSessionKey(): string {
     const entry = readerStore.chapters[getCurrentIndex()];
     if (!entry) return '';
-    return `${getCurrentIndex()}:${entry.chapter.url}`;
+    return `${entry.id}:${entry.chapter.url}`;
   }
 
   function ensureSession(): boolean {
@@ -88,6 +99,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       sessionKey = nextSessionKey;
       graceUntil = now() + getRandomDelayMs(PRELOAD_DELAY_MIN_MS, PRELOAD_DELAY_MAX_MS);
       failureCooldownUntil = 0;
+      lastBufferState = '';
       clearAutoLoadTimer();
       recordDebugEvent('autoload.session', {
         currentIndex: getCurrentIndex(),
@@ -100,6 +112,85 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
   function getUnreadLoadedChapterCount(): number {
     return Math.max(0, readerStore.chapters.length - getCurrentIndex() - 1);
+  }
+
+  function getChapterViewportState(
+    entry: ChapterEntry,
+    mainEl: HTMLElement
+  ): 'pending' | 'short' | 'sufficient' {
+    const viewportHeight = mainEl.clientHeight;
+    const chapterEl = chapterRefs.get(entry.chapter.url);
+    if (!chapterEl || viewportHeight <= 0) return 'pending';
+
+    const cached = chapterScreenCache.get(entry.id);
+    if (
+      cached &&
+      cached.layoutRevision === layoutRevision &&
+      cached.viewportHeight === viewportHeight
+    ) {
+      return cached.fillsViewport ? 'sufficient' : 'short';
+    }
+
+    const chapterHeight = chapterEl.offsetHeight;
+    if (chapterHeight <= 0) return 'pending';
+
+    const fillsViewport = chapterHeight >= viewportHeight;
+    chapterScreenCache.set(entry.id, { fillsViewport, layoutRevision, viewportHeight });
+    return fillsViewport ? 'sufficient' : 'short';
+  }
+
+  function getUnreadBufferState(mainEl: HTMLElement): UnreadBufferState {
+    const unreadEntries = readerStore.chapters.slice(getCurrentIndex() + 1);
+    if (unreadEntries.length === 0) return 'empty';
+    if (unreadEntries.length >= MAX_UNREAD_PRELOAD_CHAPTERS) return 'capped';
+
+    let hasPendingMeasurement = false;
+    for (const entry of unreadEntries) {
+      const state = getChapterViewportState(entry, mainEl);
+      if (state === 'sufficient') return 'sufficient';
+      if (state === 'pending') hasPendingMeasurement = true;
+    }
+
+    return hasPendingMeasurement ? 'pending' : 'short';
+  }
+
+  function recordBufferState(state: UnreadBufferState): void {
+    if (state === lastBufferState) return;
+    lastBufferState = state;
+    recordDebugEvent('autoload.buffer', {
+      state,
+      currentIndex: getCurrentIndex(),
+      unreadChapterCount: getUnreadLoadedChapterCount(),
+      limit: MAX_UNREAD_PRELOAD_CHAPTERS,
+    });
+  }
+
+  function pruneChapterScreenCache(activeIds: string[]): void {
+    const active = new Set(activeIds);
+    for (const id of chapterScreenCache.keys()) {
+      if (!active.has(id)) chapterScreenCache.delete(id);
+    }
+  }
+
+  function invalidateChapterScreenCache(): void {
+    layoutRevision += 1;
+    chapterScreenCache.clear();
+    lastBufferState = '';
+  }
+
+  function queueLayoutInvalidation(): void {
+    if (layoutInvalidationFrame !== null) return;
+    if (typeof globalThis.requestAnimationFrame !== 'function') {
+      invalidateChapterScreenCache();
+      scheduleAutoLoadNext('state');
+      return;
+    }
+
+    layoutInvalidationFrame = globalThis.requestAnimationFrame(() => {
+      layoutInvalidationFrame = null;
+      invalidateChapterScreenCache();
+      scheduleAutoLoadNext('state');
+    });
   }
 
   function isPageHidden(): boolean {
@@ -132,18 +223,47 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     );
   }
 
-  function finishLoad(ok: boolean): void {
-    autoLoadInFlight = false;
+  async function finishLoad(
+    ok: boolean,
+    startedSessionKey: string,
+    startedTailId: string | undefined
+  ): Promise<void> {
     recordDebugEvent('autoload.finish', {
       ok,
       chapterCount: readerStore.chapters.length,
       currentIndex: readerStore.currentChapterIndex,
     });
-    if (ok) {
-      failureCooldownUntil = 0;
+
+    if (getCurrentSessionKey() !== startedSessionKey) {
+      autoLoadInFlight = false;
+      ensureSession();
+      scheduleAutoLoadNext('state');
       return;
     }
 
+    if (ok) {
+      failureCooldownUntil = 0;
+      await nextTick();
+      autoLoadInFlight = false;
+      const mainEl = mainRef.value;
+      if (!mainEl) return;
+      if (getCurrentSessionKey() !== startedSessionKey) {
+        ensureSession();
+        scheduleAutoLoadNext('state');
+        return;
+      }
+      if (readerStore.chapters[readerStore.chapters.length - 1]?.id === startedTailId) return;
+
+      const bufferState = getUnreadBufferState(mainEl);
+      recordBufferState(bufferState);
+      if (bufferState === 'short') {
+        graceUntil = now() + SHORT_CHAPTER_PRELOAD_DELAY_MS;
+      }
+      scheduleAutoLoadNext('state');
+      return;
+    }
+
+    autoLoadInFlight = false;
     failureCooldownUntil =
       now() + getRandomDelayMs(FAILURE_COOLDOWN_MIN_MS, FAILURE_COOLDOWN_MAX_MS);
   }
@@ -153,12 +273,17 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
     clearAutoLoadTimer();
     autoLoadInFlight = true;
+    const startedSessionKey = sessionKey;
+    const startedTailId = readerStore.chapters[readerStore.chapters.length - 1]?.id;
     recordDebugEvent('autoload.start', {
       currentIndex: readerStore.currentChapterIndex,
       currentUrl: readerStore.chapter?.url,
       nextUrl: readerStore.chapters[readerStore.chapters.length - 1]?.chapter.nextUrl,
     });
-    void readerStore.loadNextChapter('auto').then(finishLoad, () => finishLoad(false));
+    void readerStore.loadNextChapter('auto').then(
+      ok => finishLoad(ok, startedSessionKey, startedTailId),
+      () => finishLoad(false, startedSessionKey, startedTailId)
+    );
   }
 
   function scheduleAutoLoadNext(reason: AutoLoadReason = 'state'): void {
@@ -166,6 +291,8 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     if (!mainEl || !ensureSession()) return;
 
     const currentTime = now();
+    const unreadBufferState = getUnreadBufferState(mainEl);
+    recordBufferState(unreadBufferState);
     const decision = decideAutoLoadNext(reason, {
       autoLoadInFlight,
       enabled: configStore.behavior.preloadNext,
@@ -180,7 +307,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       isNearBottom: isNearBottom(mainEl),
       now: currentTime,
       pageHidden: isPageHidden(),
-      unreadLoadedChapterCount: getUnreadLoadedChapterCount(),
+      unreadBufferState,
     });
 
     if (decision.type === 'schedule') {
@@ -193,10 +320,12 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   }
 
   watch(
-    () => readerStore.chapters.length,
-    () => {
+    () => readerStore.chapters.map(entry => entry.id),
+    activeIds => {
+      pruneChapterScreenCache(activeIds);
       scheduleAutoLoadNext('state');
-    }
+    },
+    { flush: 'post' }
   );
 
   watch(
@@ -237,23 +366,56 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     }
   );
 
+  watch(
+    () => [
+      configStore.reading?.fontFamily,
+      configStore.reading?.fontSize,
+      configStore.reading?.lineHeight,
+      configStore.reading?.letterSpacing,
+      configStore.reading?.paragraphIndent,
+      configStore.reading?.maxWidth,
+      configStore.reading?.padding,
+      configStore.reading?.textConversion,
+      configStore.customCSS,
+    ],
+    () => {
+      queueLayoutInvalidation();
+    },
+    { flush: 'post' }
+  );
+
   function handleVisibilityChange(): void {
     if (!isPageHidden()) {
       scheduleAutoLoadNext('visibility');
     }
   }
 
+  function handleResize(): void {
+    queueLayoutInvalidation();
+  }
+
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleResize, { passive: true });
   }
 
   scheduleAutoLoadNext('state');
 
   onUnmounted(() => {
     clearAutoLoadTimer();
+    if (layoutInvalidationFrame !== null) {
+      globalThis.cancelAnimationFrame?.(layoutInvalidationFrame);
+      layoutInvalidationFrame = null;
+    }
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', handleResize);
+    }
+    chapterScreenCache.clear();
   });
 
   return {

@@ -1,6 +1,9 @@
 export const INTERSECTION_ROOT_MARGIN_PX = 1600;
+export const MAX_UNREAD_PRELOAD_CHAPTERS = 10;
 
 export type AutoLoadReason = 'state' | 'scroll' | 'settled' | 'sentinel' | 'visibility' | 'timer';
+
+export type UnreadBufferState = 'empty' | 'pending' | 'short' | 'sufficient' | 'capped';
 
 type AutoLoadDecision =
   { type: 'start' } | { type: 'schedule'; dueAt: number } | { type: 'idle'; clearTimer: boolean };
@@ -19,7 +22,7 @@ export interface AutoLoadPolicyInput {
   isNearBottom: boolean;
   now: number;
   pageHidden: boolean;
-  unreadLoadedChapterCount: number;
+  unreadBufferState: UnreadBufferState;
 }
 
 export function isViewportNearBottom(
@@ -38,7 +41,10 @@ export function decideAutoLoadNext(
   if (!canAutoLoadBase(input)) {
     return {
       type: 'idle',
-      clearTimer: !input.enabled || input.unreadLoadedChapterCount > 0,
+      clearTimer:
+        !input.enabled ||
+        input.unreadBufferState === 'sufficient' ||
+        input.unreadBufferState === 'capped',
     };
   }
 
@@ -70,7 +76,7 @@ function canAutoLoadBase(input: AutoLoadPolicyInput): boolean {
     !input.isNavigating &&
     !input.autoLoadInFlight &&
     !input.pageHidden &&
-    input.unreadLoadedChapterCount === 0
+    (input.unreadBufferState === 'empty' || input.unreadBufferState === 'short')
   );
 }
 
