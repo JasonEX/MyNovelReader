@@ -240,6 +240,7 @@ const { navigateChapter, jumpToCachedChapter, scrollReader, turnReaderPage, hand
     isLoadingNext,
     hasPrev,
     hasNext,
+    onPageTurnSettled: handleScroll,
   });
 
 // Touch gestures composable

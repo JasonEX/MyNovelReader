@@ -40,6 +40,17 @@ describe('useChapterNavigation', () => {
     };
   }
 
+  function useFakeTimersWithImmediateAnimationFrame(): void {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      })
+    );
+  }
+
   function createNavigationOptions(overrides: Record<string, any> = {}) {
     const chapters = computed(() => overrides.chapters || []);
     const chapterRefs = overrides.chapterRefs || new Map();
@@ -65,6 +76,7 @@ describe('useChapterNavigation', () => {
 
     const setChapterHeight = vi.fn();
     const updateWindow = vi.fn();
+    const onPageTurnSettled = overrides.onPageTurnSettled || vi.fn();
 
     return {
       mainRef,
@@ -79,6 +91,7 @@ describe('useChapterNavigation', () => {
       topSpacer,
       setChapterHeight,
       updateWindow,
+      onPageTurnSettled,
     };
   }
 
@@ -732,11 +745,14 @@ describe('useChapterNavigation', () => {
       expect(opts.isNavigating.value).toBe(true);
       vi.advanceTimersByTime(650);
       expect(opts.isNavigating.value).toBe(false);
+      expect(opts.onPageTurnSettled).toHaveBeenCalledOnce();
     });
 
-    it('loads the next chapter at the bottom and lands on its title', async () => {
+    it('loads the next chapter at the bottom and continues by one reader page', async () => {
+      useFakeTimersWithImmediateAnimationFrame();
       const mainEl = document.createElement('div');
       mainEl.scrollTo = vi.fn();
+      mainEl.scrollBy = vi.fn();
       mainEl.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0 });
       Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
       Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
@@ -757,22 +773,69 @@ describe('useChapterNavigation', () => {
         showToast: vi.fn(),
         getVipBlockedToast: vi.fn().mockReturnValue(null),
       };
-      const target = document.createElement('article');
-      target.getBoundingClientRect = vi.fn().mockReturnValue({ top: 800 });
+      const currentElement = document.createElement('article');
+      currentElement.getBoundingClientRect = vi.fn().mockReturnValue({ top: -1_200 });
       const opts = createNavigationOptions({
         chapters: entries,
         mainRef: mainEl,
         hasNext: true,
         readerStore,
       });
-      opts.chapterRefs.set(next.chapter.url, target);
+      opts.chapterRefs.set(current.chapter.url, currentElement);
       const { turnReaderPage } = useChapterNavigation(opts);
 
       await turnReaderPage('next');
 
       expect(readerStore.loadNextChapter).toHaveBeenCalledWith('manual');
-      expect(mainEl.scrollTo).toHaveBeenCalledWith({ top: 2_000, behavior: 'auto' });
-      expect(readerStore.setCurrentChapter).toHaveBeenCalledWith(1);
+      expect(mainEl.scrollTo).not.toHaveBeenCalled();
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 720, behavior: 'smooth' });
+      expect(readerStore.setCurrentChapter).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(650);
+      expect(opts.onPageTurnSettled).toHaveBeenCalledOnce();
+    });
+
+    it('preserves the visible chapter anchor when appending trims earlier chapters', async () => {
+      useFakeTimersWithImmediateAnimationFrame();
+      const mainEl = document.createElement('div');
+      mainEl.scrollBy = vi.fn();
+      mainEl.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0 });
+      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
+      Object.defineProperty(mainEl, 'scrollTop', { value: 1_200, writable: true });
+
+      const current = makeChapterEntry('https://example.com/ch1');
+      const next = makeChapterEntry('https://example.com/ch2');
+      const entries = [current];
+      let currentTop = -1_200;
+      const currentElement = document.createElement('article');
+      currentElement.getBoundingClientRect = vi.fn(() => ({ top: currentTop }) as DOMRect);
+      const readerStore = {
+        chapters: entries,
+        currentChapterIndex: 0,
+        setCurrentChapter: vi.fn(),
+        loadNextChapter: vi.fn().mockImplementation(async () => {
+          currentTop -= 900;
+          entries.push(next);
+          return true;
+        }),
+        loadPrevChapter: vi.fn(),
+        showToast: vi.fn(),
+        getVipBlockedToast: vi.fn().mockReturnValue(null),
+      };
+      const opts = createNavigationOptions({
+        chapters: entries,
+        mainRef: mainEl,
+        hasNext: true,
+        readerStore,
+      });
+      opts.chapterRefs.set(current.chapter.url, currentElement);
+      const { turnReaderPage } = useChapterNavigation(opts);
+
+      await turnReaderPage('next');
+
+      expect(mainEl.scrollTop).toBe(300);
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 720, behavior: 'smooth' });
     });
 
     it('loads the previous chapter at the top and reveals its last screen', async () => {

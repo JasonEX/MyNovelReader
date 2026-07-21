@@ -714,7 +714,7 @@ test('shows the first Goboo section before rate-limited background merging compl
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test('keeps vertical scrolling native and turns one screen with horizontal swipes', async ({
+  test('keeps vertical scrolling native and preserves context across gesture page turns', async ({
     context,
     page,
   }) => {
@@ -806,10 +806,32 @@ test.describe('mobile gesture paging', () => {
           const main = shadow?.querySelector('.mnr-reader-main');
           const chapter = shadow?.querySelectorAll('.mnr-reader-content')[1];
           if (!main || !chapter) return Number.POSITIVE_INFINITY;
-          return Math.abs(chapter.getBoundingClientRect().top - main.getBoundingClientRect().top);
+          return (
+            (chapter.getBoundingClientRect().top - main.getBoundingClientRect().top) /
+            main.clientHeight
+          );
         })
       )
-      .toBeLessThan(2);
+      .toBeLessThan(0.25);
+    const boundaryPosition = await readerRoot.evaluate(host => {
+      const shadow = host.shadowRoot;
+      const main = shadow?.querySelector('.mnr-reader-main');
+      const visibleChapters = shadow?.querySelectorAll('.mnr-reader-content');
+      const previous = visibleChapters?.[0];
+      const next = visibleChapters?.[1];
+      if (!main || !previous || !next) throw new Error('reader chapters not found');
+
+      const mainTop = main.getBoundingClientRect().top;
+      return {
+        nextTop: next.getBoundingClientRect().top - mainTop,
+        previousBottom: previous.getBoundingClientRect().bottom - mainTop,
+        viewportHeight: main.clientHeight,
+      };
+    });
+    expect(boundaryPosition.nextTop).toBeGreaterThan(8);
+    expect(boundaryPosition.previousBottom).toBeGreaterThan(8);
+    expect(boundaryPosition.nextTop).toBeLessThan(boundaryPosition.viewportHeight * 0.25);
+    await expect.poll(() => page.url()).toBe(nextUrl);
     expect(logs.some(line => line.includes('pageerror'))).toBe(false);
   });
 });

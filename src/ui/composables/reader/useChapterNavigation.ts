@@ -18,6 +18,7 @@ export interface UseChapterNavigationOptions {
   isLoadingNext: ComputedRef<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
+  onPageTurnSettled: () => void;
 }
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
@@ -35,6 +36,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isLoadingNext,
     hasPrev,
     hasNext,
+    onPageTurnSettled,
   } = options;
 
   let isLoadingPrevLocal = false;
@@ -47,7 +49,41 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     });
     setTimeout(() => {
       isNavigating.value = false;
+      onPageTurnSettled();
     }, SMOOTH_NAVIGATION_LOCK_MS);
+  }
+
+  async function waitForLayout(): Promise<void> {
+    await nextTick();
+    await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
+  }
+
+  function captureChapterAnchor(
+    mainEl: HTMLElement,
+    url: string | undefined
+  ): { url: string; top: number } | null {
+    if (!url) return null;
+
+    const chapterEl = chapterRefs.get(url);
+    if (!chapterEl) return null;
+
+    return {
+      url,
+      top: chapterEl.getBoundingClientRect().top - mainEl.getBoundingClientRect().top,
+    };
+  }
+
+  function restoreChapterAnchor(
+    mainEl: HTMLElement,
+    anchor: { url: string; top: number } | null
+  ): void {
+    if (!anchor) return;
+
+    const chapterEl = chapterRefs.get(anchor.url);
+    if (!chapterEl) return;
+
+    const nextTop = chapterEl.getBoundingClientRect().top - mainEl.getBoundingClientRect().top;
+    mainEl.scrollTop += nextTop - anchor.top;
   }
 
   function isAtTop(mainEl: HTMLElement): boolean {
@@ -121,8 +157,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
     isNavigating.value = true;
 
-    await nextTick();
-    await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
+    await waitForLayout();
 
     const url = chapters.value[index]?.chapter.url;
     if (!url) {
@@ -177,8 +212,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
       const success = await readerStore.loadPrevChapter('manual');
 
       if (success) {
-        await nextTick();
-        await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
+        await waitForLayout();
 
         if (jumpToStart) {
           // When user explicitly wants to go to previous chapter, snap to its title
@@ -224,10 +258,14 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
       isNavigating.value = true;
       let loaded = false;
+      const tailUrl = chapters.value[chapters.value.length - 1]?.chapter.url;
+      const anchor = captureChapterAnchor(mainEl, tailUrl);
       try {
         loaded = await readerStore.loadNextChapter('manual');
         if (loaded) {
-          await jumpToChapter(readerStore.chapters.length - 1, 'auto');
+          await waitForLayout();
+          restoreChapterAnchor(mainEl, anchor);
+          scrollByPage(mainEl, direction);
         }
       } finally {
         if (!loaded) isNavigating.value = false;
