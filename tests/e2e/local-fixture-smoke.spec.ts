@@ -60,6 +60,34 @@ const nextFixtureHtml = `<!doctype html>
   </body>
 </html>`;
 
+function makeContinuousChapterFixture(chapterNumber: number): string {
+  const rowCount = 32 + (chapterNumber % 3) * 8;
+  const content = Array.from(
+    { length: rowCount },
+    (_, index) => `<p>第${chapterNumber}章第 ${index + 1} 段连续阅读窗口裁剪测试正文。</p>`
+  ).join('');
+
+  return `<!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>第${chapterNumber}章 连续阅读 - 测试小说</title>
+      </head>
+      <body>
+        <main>
+          <h1>第${chapterNumber}章 连续阅读</h1>
+          <div id="content">${content}</div>
+          <nav>
+            <a href="/chapter/${Math.max(1, chapterNumber - 1)}.html">上一章</a>
+            <a href="/book/1/index.html">目录</a>
+            <a href="/chapter/${chapterNumber + 1}.html">下一章</a>
+          </nav>
+        </main>
+      </body>
+    </html>`;
+}
+
 const hetushuFirstUrl = 'https://www.hetushu.com/book/9145/6567989.html';
 const hetushuSecondUrl = 'https://www.hetushu.com/book/9145/6567990.html';
 
@@ -152,6 +180,22 @@ async function dispatchReaderTouch(
     },
     { type, point }
   );
+}
+
+async function disableReaderPreload(readerRoot: Locator): Promise<void> {
+  await readerRoot.locator('[aria-label="打开设置"]').click();
+  const behaviorSettings = readerRoot.locator('details').filter({ hasText: '阅读行为' });
+  await behaviorSettings.locator('summary').click();
+  await expect(behaviorSettings).toHaveAttribute('open', '');
+
+  const gestureSetting = readerRoot.locator('.mnr-switch-row').filter({ hasText: '左右滑动翻屏' });
+  await expect(gestureSetting.locator('input')).toBeChecked();
+
+  const preloadSetting = readerRoot
+    .locator('.mnr-switch-row')
+    .filter({ hasText: '自动加载下一章' });
+  await preloadSetting.locator('input').uncheck();
+  await readerRoot.locator('.mnr-close-btn').click();
 }
 
 function makeGobooPage(pageNumber: number, nextHref: string, nextText = '下一页'): string {
@@ -714,7 +758,7 @@ test('shows the first Goboo section before rate-limited background merging compl
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test('keeps vertical scrolling native and preserves context across gesture page turns', async ({
+  test('keeps vertical boundary loads anchored while horizontal swipes turn a page', async ({
     context,
     page,
   }) => {
@@ -728,8 +772,9 @@ test.describe('mobile gesture paging', () => {
         status: 200,
       })
     );
-    await context.route(nextUrl, route => {
+    await context.route(nextUrl, async route => {
       nextRequests += 1;
+      await new Promise(resolve => setTimeout(resolve, 150));
       return route.fulfill({
         body: nextFixtureHtml,
         contentType: 'text/html; charset=utf-8',
@@ -746,21 +791,7 @@ test.describe('mobile gesture paging', () => {
     const readerMain = readerRoot.locator('.mnr-reader-main');
     await expect(readerMain).toHaveCSS('touch-action', 'pan-y pinch-zoom');
 
-    await readerRoot.locator('[aria-label="打开设置"]').click();
-    const behaviorSettings = readerRoot.locator('details').filter({ hasText: '阅读行为' });
-    await behaviorSettings.locator('summary').click();
-    await expect(behaviorSettings).toHaveAttribute('open', '');
-    const gestureSetting = readerRoot
-      .locator('.mnr-switch-row')
-      .filter({ hasText: '左右滑动翻屏' });
-    await expect(gestureSetting).toHaveCount(1);
-    await expect(gestureSetting.locator('input')).toBeChecked();
-
-    const preloadSetting = readerRoot
-      .locator('.mnr-switch-row')
-      .filter({ hasText: '自动加载下一章' });
-    await preloadSetting.locator('input').uncheck();
-    await readerRoot.locator('.mnr-close-btn').click();
+    await disableReaderPreload(readerRoot);
 
     const initialPosition = await readerMain.evaluate(main => ({
       scrollTop: main.scrollTop,
@@ -791,6 +822,20 @@ test.describe('mobile gesture paging', () => {
     await page.waitForTimeout(250);
     expect(nextRequests).toBe(0);
 
+    const boundaryBefore = await readerRoot.evaluate(host => {
+      const shadow = host.shadowRoot;
+      const main = shadow?.querySelector('.mnr-reader-main');
+      const previous = shadow?.querySelector('.mnr-reader-content');
+      if (!main || !previous) throw new Error('reader boundary not found');
+
+      const mainTop = main.getBoundingClientRect().top;
+      return {
+        scrollTop: main.scrollTop,
+        previousBottom: previous.getBoundingClientRect().bottom - mainTop,
+        viewportHeight: main.clientHeight,
+      };
+    });
+
     await dispatchReaderTouch(page, 'touchstart', { x: 195, y: 500 });
     await dispatchReaderTouch(page, 'touchmove', { x: 195, y: 430 });
     await expect(readerRoot.locator('.mnr-boundary-gesture-hint')).toHaveText('松手加载下一章');
@@ -799,20 +844,6 @@ test.describe('mobile gesture paging', () => {
     await expect.poll(() => nextRequests).toBe(1);
     await expect(readerRoot.locator('.mnr-chapter-title')).toHaveCount(2);
     await expect(readerRoot.locator('.mnr-chapter-title').nth(1)).toHaveText('第101章 手势续读');
-    await expect
-      .poll(() =>
-        readerRoot.evaluate(host => {
-          const shadow = host.shadowRoot;
-          const main = shadow?.querySelector('.mnr-reader-main');
-          const chapter = shadow?.querySelectorAll('.mnr-reader-content')[1];
-          if (!main || !chapter) return Number.POSITIVE_INFINITY;
-          return (
-            (chapter.getBoundingClientRect().top - main.getBoundingClientRect().top) /
-            main.clientHeight
-          );
-        })
-      )
-      .toBeLessThan(0.25);
     const boundaryPosition = await readerRoot.evaluate(host => {
       const shadow = host.shadowRoot;
       const main = shadow?.querySelector('.mnr-reader-main');
@@ -823,15 +854,139 @@ test.describe('mobile gesture paging', () => {
 
       const mainTop = main.getBoundingClientRect().top;
       return {
+        scrollTop: main.scrollTop,
         nextTop: next.getBoundingClientRect().top - mainTop,
         previousBottom: previous.getBoundingClientRect().bottom - mainTop,
         viewportHeight: main.clientHeight,
       };
     });
-    expect(boundaryPosition.nextTop).toBeGreaterThan(8);
-    expect(boundaryPosition.previousBottom).toBeGreaterThan(8);
-    expect(boundaryPosition.nextTop).toBeLessThan(boundaryPosition.viewportHeight * 0.25);
+    expect(Math.abs(boundaryPosition.scrollTop - boundaryBefore.scrollTop)).toBeLessThan(3);
+    expect(Math.abs(boundaryPosition.previousBottom - boundaryBefore.previousBottom)).toBeLessThan(
+      3
+    );
+    expect(Math.abs(boundaryPosition.nextTop - boundaryPosition.previousBottom)).toBeLessThan(3);
+    expect(boundaryPosition.nextTop).toBeGreaterThan(boundaryPosition.viewportHeight * 0.75);
+    expect(page.url()).toBe(targetUrl);
+
+    await page.waitForTimeout(750);
+    const settledPosition = await readerRoot.evaluate(host => {
+      const shadow = host.shadowRoot;
+      const main = shadow?.querySelector('.mnr-reader-main');
+      const next = shadow?.querySelectorAll('.mnr-reader-content')[1];
+      if (!main || !next) throw new Error('reader chapters not found');
+
+      return {
+        scrollTop: main.scrollTop,
+        nextTop: next.getBoundingClientRect().top - main.getBoundingClientRect().top,
+      };
+    });
+    expect(Math.abs(settledPosition.scrollTop - boundaryPosition.scrollTop)).toBeLessThan(3);
+    expect(Math.abs(settledPosition.nextTop - boundaryPosition.nextTop)).toBeLessThan(3);
+
+    await readerMain.evaluate(main => {
+      main.scrollBy({ top: main.clientHeight * 0.65, behavior: 'auto' });
+    });
     await expect.poll(() => page.url()).toBe(nextUrl);
+    expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+  });
+
+  test('preserves the visible chapter when a boundary load trims the display window', async ({
+    context,
+    page,
+  }) => {
+    const firstUrl = 'http://mnr.test/chapter/200.html';
+    const logs = createConsoleCollector(page);
+
+    await context.route('http://mnr.test/chapter/*.html', route => {
+      const chapterNumber = Number(
+        new URL(route.request().url()).pathname.match(/\/(\d+)\.html$/)?.[1] || 200
+      );
+      return route.fulfill({
+        body: makeContinuousChapterFixture(chapterNumber),
+        contentType: 'text/html; charset=utf-8',
+        status: 200,
+      });
+    });
+    await addMyNovelReaderUserscript(context);
+
+    await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
+    assertMnrSmokeState(await waitForMnrReader(page));
+
+    const readerRoot = page.locator('#mnr-reader-root');
+    const readerMain = readerRoot.locator('.mnr-reader-main');
+    await disableReaderPreload(readerRoot);
+
+    let finalAnchorBefore: { bottom: number; top: number; viewportHeight: number } | undefined;
+
+    for (let chapterNumber = 201; chapterNumber <= 206; chapterNumber += 1) {
+      await readerMain.evaluate(main => {
+        main.scrollTop = main.scrollHeight;
+      });
+      await page.waitForTimeout(80);
+
+      if (chapterNumber === 206) {
+        finalAnchorBefore = await readerRoot.evaluate(host => {
+          const shadow = host.shadowRoot;
+          const main = shadow?.querySelector('.mnr-reader-main');
+          const anchor = shadow?.querySelector(
+            '[data-chapter-url="http://mnr.test/chapter/205.html"]'
+          );
+          if (!main || !anchor) throw new Error('trim anchor not found');
+
+          const mainTop = main.getBoundingClientRect().top;
+          const rect = anchor.getBoundingClientRect();
+          return {
+            bottom: rect.bottom - mainTop,
+            top: rect.top - mainTop,
+            viewportHeight: main.clientHeight,
+          };
+        });
+      }
+
+      await dispatchReaderTouch(page, 'touchstart', { x: 195, y: 500 });
+      await dispatchReaderTouch(page, 'touchmove', { x: 195, y: 430 });
+      await dispatchReaderTouch(page, 'touchend', { x: 195, y: 430 });
+
+      await expect(readerRoot.locator('.mnr-chapter-title').last()).toHaveText(
+        `第${chapterNumber}章 连续阅读`
+      );
+      await expect(readerRoot.locator('.mnr-chapter-title')).toHaveCount(
+        Math.min(chapterNumber - 199, 6)
+      );
+    }
+
+    expect(finalAnchorBefore).toBeDefined();
+    await expect(readerRoot.locator('.mnr-chapter-title').first()).toHaveText('第201章 连续阅读');
+    const finalPosition = await readerRoot.evaluate(host => {
+      const shadow = host.shadowRoot;
+      const main = shadow?.querySelector('.mnr-reader-main');
+      const anchor = shadow?.querySelector('[data-chapter-url="http://mnr.test/chapter/205.html"]');
+      const next = shadow?.querySelector('[data-chapter-url="http://mnr.test/chapter/206.html"]');
+      if (!main || !anchor || !next) throw new Error('trimmed reader chapters not found');
+
+      const mainTop = main.getBoundingClientRect().top;
+      const anchorRect = anchor.getBoundingClientRect();
+      return {
+        anchorBottom: anchorRect.bottom - mainTop,
+        anchorTop: anchorRect.top - mainTop,
+        nextTop: next.getBoundingClientRect().top - mainTop,
+      };
+    });
+    expect(Math.abs(finalPosition.anchorTop - finalAnchorBefore!.top)).toBeLessThan(3);
+    expect(Math.abs(finalPosition.anchorBottom - finalAnchorBefore!.bottom)).toBeLessThan(3);
+    expect(Math.abs(finalPosition.nextTop - finalPosition.anchorBottom)).toBeLessThan(3);
+    expect(finalPosition.nextTop).toBeGreaterThan(finalAnchorBefore!.viewportHeight * 0.75);
+
+    await page.waitForTimeout(750);
+    const delayedAnchorTop = await readerRoot.evaluate(host => {
+      const main = host.shadowRoot?.querySelector('.mnr-reader-main');
+      const anchor = host.shadowRoot?.querySelector(
+        '[data-chapter-url="http://mnr.test/chapter/205.html"]'
+      );
+      if (!main || !anchor) throw new Error('delayed trim anchor not found');
+      return anchor.getBoundingClientRect().top - main.getBoundingClientRect().top;
+    });
+    expect(Math.abs(delayedAnchorTop - finalPosition.anchorTop)).toBeLessThan(3);
     expect(logs.some(line => line.includes('pageerror'))).toBe(false);
   });
 });

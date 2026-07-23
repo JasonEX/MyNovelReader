@@ -229,19 +229,25 @@ const { handleScroll } = useReaderScroll({
 });
 
 // Chapter navigation composable
-const { navigateChapter, jumpToCachedChapter, scrollReader, turnReaderPage, handleWheel } =
-  useChapterNavigation({
-    mainRef,
-    chapters,
-    chapterRefs,
-    readerStore,
-    isNavigating,
-    isLoadingPrev,
-    isLoadingNext,
-    hasPrev,
-    hasNext,
-    onPageTurnSettled: handleScroll,
-  });
+const {
+  navigateChapter,
+  jumpToCachedChapter,
+  scrollReader,
+  loadBoundaryChapter,
+  turnReaderPage,
+  handleWheel,
+} = useChapterNavigation({
+  mainRef,
+  chapters,
+  chapterRefs,
+  readerStore,
+  isNavigating,
+  isLoadingPrev,
+  isLoadingNext,
+  hasPrev,
+  hasNext,
+  onViewportSettled: handleScroll,
+});
 
 // Touch gestures composable
 const swipeEnabled = computed(
@@ -412,7 +418,10 @@ function handleReaderTouchEnd(event: Event): void {
   const boundaryDirection = boundaryPull?.ready ? boundaryPull.direction : null;
   clearBoundaryPull();
   handleTouchEnd(event);
-  if (boundaryDirection) void turnReaderPage(boundaryDirection);
+  if (boundaryDirection) {
+    void loadBoundaryChapter(boundaryDirection);
+    return;
+  }
   scheduleAutoLoadNext('settled');
 }
 

@@ -18,8 +18,15 @@ export interface UseChapterNavigationOptions {
   isLoadingNext: ComputedRef<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
-  onPageTurnSettled: () => void;
+  onViewportSettled: () => void;
 }
+
+type ChapterDirection = 'prev' | 'next';
+
+type ViewportAnchor = {
+  top: number;
+  url: string;
+};
 
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
 const SMOOTH_NAVIGATION_LOCK_MS = 650;
@@ -36,7 +43,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isLoadingNext,
     hasPrev,
     hasNext,
-    onPageTurnSettled,
+    onViewportSettled,
   } = options;
 
   let isLoadingPrevLocal = false;
@@ -49,7 +56,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     });
     setTimeout(() => {
       isNavigating.value = false;
-      onPageTurnSettled();
+      onViewportSettled();
     }, SMOOTH_NAVIGATION_LOCK_MS);
   }
 
@@ -58,25 +65,35 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     await new Promise<void>(resolve => globalThis.requestAnimationFrame(() => resolve()));
   }
 
-  function captureChapterAnchor(
+  function captureViewportAnchor(
     mainEl: HTMLElement,
-    url: string | undefined
-  ): { url: string; top: number } | null {
-    if (!url) return null;
+    direction: ChapterDirection
+  ): ViewportAnchor | null {
+    const entries = chapters.value;
+    const mainTop = mainEl.getBoundingClientRect().top;
+    const mainBottom = mainTop + mainEl.clientHeight;
+    const start = direction === 'next' ? entries.length - 1 : 0;
+    const step = direction === 'next' ? -1 : 1;
 
-    const chapterEl = chapterRefs.get(url);
-    if (!chapterEl) return null;
+    for (let index = start; index >= 0 && index < entries.length; index += step) {
+      const url = entries[index]?.chapter.url;
+      const chapterEl = url ? chapterRefs.get(url) : undefined;
+      if (!url || !chapterEl) continue;
 
-    return {
-      url,
-      top: chapterEl.getBoundingClientRect().top - mainEl.getBoundingClientRect().top,
-    };
+      const rect = chapterEl.getBoundingClientRect();
+      if (rect.bottom > mainTop && rect.top < mainBottom) {
+        return { url, top: rect.top - mainTop };
+      }
+    }
+
+    const fallbackUrl = entries[start]?.chapter.url;
+    const fallbackEl = fallbackUrl ? chapterRefs.get(fallbackUrl) : undefined;
+    if (!fallbackUrl || !fallbackEl) return null;
+
+    return { url: fallbackUrl, top: fallbackEl.getBoundingClientRect().top - mainTop };
   }
 
-  function restoreChapterAnchor(
-    mainEl: HTMLElement,
-    anchor: { url: string; top: number } | null
-  ): void {
+  function restoreViewportAnchor(mainEl: HTMLElement, anchor: ViewportAnchor | null): void {
     if (!anchor) return;
 
     const chapterEl = chapterRefs.get(anchor.url);
@@ -102,11 +119,43 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     e.preventDefault();
   }
 
-  function loadNextAtBoundary(): void {
-    if (!hasNext.value) return;
-    if (isLoadingNext.value || isLoadingPrev.value || isNavigating.value) return;
+  function showBoundaryEnd(direction: ChapterDirection): void {
+    const fallback = direction === 'next' ? '已经是最后一章了' : '已经是第一章了';
+    readerStore.showToast(readerStore.getVipBlockedToast(direction) || fallback, 'info');
+  }
 
-    void readerStore.loadNextChapter('manual');
+  async function loadBoundaryChapter(direction: ChapterDirection): Promise<boolean> {
+    const mainEl = mainRef.value;
+    if (!mainEl) return false;
+    if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return false;
+
+    const available = direction === 'next' ? hasNext.value : hasPrev.value;
+    if (!available) {
+      showBoundaryEnd(direction);
+      return false;
+    }
+
+    isNavigating.value = true;
+    const anchor = captureViewportAnchor(mainEl, direction);
+    let loaded = false;
+
+    try {
+      loaded =
+        direction === 'next'
+          ? await readerStore.loadNextChapter('manual')
+          : await readerStore.loadPrevChapter('manual');
+      if (!loaded) return false;
+
+      await waitForLayout();
+      restoreViewportAnchor(mainEl, anchor);
+      return true;
+    } catch (error) {
+      console.error(`[MNR] Failed to load ${direction} chapter at reader boundary:`, error);
+      return false;
+    } finally {
+      isNavigating.value = false;
+      if (loaded) onViewportSettled();
+    }
   }
 
   /**
@@ -252,19 +301,18 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
       }
 
       if (!hasNext.value) {
-        readerStore.showToast(readerStore.getVipBlockedToast('next') || '已经是最后一章了', 'info');
+        showBoundaryEnd('next');
         return;
       }
 
       isNavigating.value = true;
       let loaded = false;
-      const tailUrl = chapters.value[chapters.value.length - 1]?.chapter.url;
-      const anchor = captureChapterAnchor(mainEl, tailUrl);
+      const anchor = captureViewportAnchor(mainEl, direction);
       try {
         loaded = await readerStore.loadNextChapter('manual');
         if (loaded) {
           await waitForLayout();
-          restoreChapterAnchor(mainEl, anchor);
+          restoreViewportAnchor(mainEl, anchor);
           scrollByPage(mainEl, direction);
         }
       } finally {
@@ -279,7 +327,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     }
 
     if (!hasPrev.value) {
-      readerStore.showToast(readerStore.getVipBlockedToast('prev') || '已经是第一章了', 'info');
+      showBoundaryEnd('prev');
       return;
     }
 
@@ -305,14 +353,16 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     if (e.deltaY < 0 && isAtTop(mainEl)) {
       preventBoundaryDefault(e);
       if (hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-        loadPrevWithScrollAdjust();
+        void loadBoundaryChapter('prev');
       }
       return;
     }
 
     if (e.deltaY > 0 && isAtBottom(mainEl)) {
       preventBoundaryDefault(e);
-      loadNextAtBoundary();
+      if (hasNext.value && !isLoadingNext.value && !isNavigating.value) {
+        void loadBoundaryChapter('next');
+      }
     }
   }
 
@@ -410,6 +460,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     jumpToCachedChapter,
     scrollToChapter,
     loadPrevWithScrollAdjust,
+    loadBoundaryChapter,
     turnReaderPage,
     handleWheel,
     scrollReader,
