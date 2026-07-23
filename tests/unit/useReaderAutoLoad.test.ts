@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { computed, nextTick, reactive, ref } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
+import { nextTick, reactive, ref } from 'vue';
 import { JSDOM } from 'jsdom';
 
 import {
   INTERSECTION_ROOT_MARGIN_PX,
   MAX_UNREAD_PRELOAD_CHAPTERS,
+} from '@/ui/composables/reader/autoLoadPolicy';
+import {
   SHORT_CHAPTER_PRELOAD_DELAY_MS,
   useReaderAutoLoad,
 } from '@/ui/composables/reader/useReaderAutoLoad';
@@ -100,6 +102,10 @@ describe('useReaderAutoLoad', () => {
     const readerStore = reactive({
       chapters,
       currentChapterIndex: overrides.currentChapterIndex ?? 0,
+      hasNext: overrides.hasNext ?? true,
+      isLoadingNext: overrides.isLoadingNext ?? false,
+      isLoadingPrev: overrides.isLoadingPrev ?? false,
+      isLoading: overrides.isLoading ?? false,
       loadNextChapter: vi.fn().mockResolvedValue(true),
       ...overrides.readerStore,
     });
@@ -126,10 +132,6 @@ describe('useReaderAutoLoad', () => {
       chapterRefs,
       readerStore: readerStore as any,
       configStore: configStore as any,
-      hasNext: computed(() => overrides.hasNext ?? true),
-      isLoadingNext: computed(() => overrides.isLoadingNext ?? false),
-      isLoadingPrev: computed(() => overrides.isLoadingPrev ?? false),
-      isLoading: computed(() => overrides.isLoading ?? false),
       isNavigating: ref(overrides.isNavigating ?? false),
     };
   }
@@ -139,10 +141,6 @@ describe('useReaderAutoLoad', () => {
     await nextTick();
   }
 
-  it('exports INTERSECTION_ROOT_MARGIN_PX', () => {
-    expect(INTERSECTION_ROOT_MARGIN_PX).toBe(1600);
-  });
-
   it('does nothing when mainRef is null', () => {
     const opts = createAutoLoadOptions({ mainRef: null });
     const result = useReaderAutoLoad(opts);
@@ -151,6 +149,40 @@ describe('useReaderAutoLoad', () => {
     vi.advanceTimersByTime(5000);
 
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+  });
+
+  it('owns bottom-sentinel observation without changing the near-bottom policy', () => {
+    const mainEl = document.createElement('main');
+    const sentinel = document.createElement('div');
+    defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
+    let notifyIntersection: (entries: IntersectionObserverEntry[]) => void = () => undefined;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    const observer = vi.fn(function (nextCallback: IntersectionObserverCallback) {
+      notifyIntersection = entries => nextCallback(entries, {} as IntersectionObserver);
+      return { observe, disconnect };
+    });
+    vi.stubGlobal('IntersectionObserver', observer);
+    const opts = createAutoLoadOptions({ mainRef: mainEl });
+    const result = useReaderAutoLoad(opts);
+    result.clearAutoLoadTimer();
+    vi.advanceTimersByTime(3000);
+
+    result.observeBottomSentinel(sentinel);
+
+    expect(observer).toHaveBeenCalledWith(expect.any(Function), {
+      root: mainEl,
+      rootMargin: `${INTERSECTION_ROOT_MARGIN_PX}px`,
+      threshold: 0,
+    });
+    expect(observe).toHaveBeenCalledWith(sentinel);
+
+    notifyIntersection([{ isIntersecting: true } as IntersectionObserverEntry]);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    mainEl.scrollTop = 2900;
+    notifyIntersection([{ isIntersecting: true } as IntersectionObserverEntry]);
+    expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
   });
 
   it('does not auto preload before the 3s hard gate', () => {
@@ -425,15 +457,13 @@ describe('useReaderAutoLoad', () => {
   it('preloads when progressive section merging reveals the next chapter', async () => {
     const mainEl = document.createElement('div');
     defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
-    const nextAvailable = ref(false);
-    const opts = createAutoLoadOptions({ mainRef: mainEl });
-    opts.hasNext = computed(() => nextAvailable.value);
+    const opts = createAutoLoadOptions({ mainRef: mainEl, hasNext: false });
 
     useReaderAutoLoad(opts);
     vi.advanceTimersByTime(5000);
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
 
-    nextAvailable.value = true;
+    opts.readerStore.hasNext = true;
     await nextTick();
 
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');
@@ -443,19 +473,17 @@ describe('useReaderAutoLoad', () => {
     const mainEl = document.createElement('div');
     defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 0, clientHeight: 600 });
 
-    const loadingNext = ref(false);
     const opts = createAutoLoadOptions({ mainRef: mainEl });
-    opts.isLoadingNext = computed(() => loadingNext.value);
 
     const result = useReaderAutoLoad(opts);
     result.clearAutoLoadTimer();
 
-    loadingNext.value = true;
+    opts.readerStore.isLoadingNext = true;
     await nextTick();
     vi.advanceTimersByTime(5000);
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
 
-    loadingNext.value = false;
+    opts.readerStore.isLoadingNext = false;
     await nextTick();
     vi.advanceTimersByTime(3000);
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('auto');

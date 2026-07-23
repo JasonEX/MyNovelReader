@@ -46,6 +46,7 @@ describe('useReaderScroll', () => {
   function createOptions(overrides: Record<string, any> = {}) {
     const entries = overrides.chapters || [];
     const readerStore = {
+      chapters: entries,
       currentChapterIndex: overrides.currentChapterIndex ?? 0,
       setCurrentChapter: vi.fn(),
       updateScroll: vi.fn(),
@@ -53,7 +54,6 @@ describe('useReaderScroll', () => {
     };
     return {
       mainRef: ref<HTMLElement | null>(overrides.mainRef ?? null),
-      chapters: computed(() => entries),
       chapterRefs: overrides.chapterRefs || new Map<string, HTMLElement>(),
       readerStore: readerStore as any,
       autoHideHeader: computed(() => overrides.autoHideHeader ?? false),

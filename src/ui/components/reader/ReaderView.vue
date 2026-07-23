@@ -13,7 +13,11 @@
     @pointerup="shieldEvent"
   >
     <!-- Progress indicator -->
-    <ProgressIndicator v-if="showProgress" :percent="scrollPercent" :auto-hide="true" />
+    <ProgressIndicator
+      v-if="configStore.behavior.showProgress"
+      :percent="readerStore.scrollPercent"
+      :auto-hide="true"
+    />
 
     <div
       v-if="boundaryGestureHint"
@@ -35,10 +39,10 @@
     <!-- Chapter drawer -->
     <ChapterDrawer
       :is-open="drawerOpen"
-      :book-title="bookTitle"
+      :book-title="readerStore.bookTitle"
       :chapters="readerStore.tocWithStatus"
       :loading="readerStore.tocLoading"
-      :cache-progress="cacheProgress"
+      :cache-progress="readerStore.cacheProgress"
       :persisted-count="readerStore.persistedUrls.size"
       @close="closeDrawer"
       @select="handleChapterSelect"
@@ -50,12 +54,12 @@
     <!-- Main content with virtualized infinite scroll -->
     <main ref="mainRef" class="mnr-reader-main" tabindex="-1" :inert="hasOpenPanel">
       <!-- Loading previous indicator -->
-      <div v-if="isLoadingPrev" class="mnr-loading-prev">
+      <div v-if="readerStore.isLoadingPrev" class="mnr-loading-prev">
         <MnrSpinner size="small" />
         <span>加载上一章...</span>
       </div>
 
-      <template v-for="entry in chapters" :key="entry.id">
+      <template v-for="entry in readerStore.chapters" :key="entry.id">
         <article
           :ref="setChapterRef(entry.chapter.url)"
           class="mnr-reader-content"
@@ -72,13 +76,16 @@
       <div ref="bottomSentinel" class="mnr-sentinel"></div>
 
       <!-- Loading next chapter indicator -->
-      <div v-if="isLoadingNext" class="mnr-loading-next">
+      <div v-if="readerStore.isLoadingNext" class="mnr-loading-next">
         <MnrSpinner size="small" />
         <span>加载下一章...</span>
       </div>
 
       <!-- End of content (no more chapters) -->
-      <div v-if="chapters.length > 0 && !hasNext && !isLoadingNext" class="mnr-chapter-end">
+      <div
+        v-if="readerStore.chapters.length > 0 && !readerStore.hasNext && !readerStore.isLoadingNext"
+        class="mnr-chapter-end"
+      >
         <p class="mnr-chapter-end-text">— 已是最后一章 —</p>
         <div class="mnr-chapter-nav">
           <a
@@ -106,12 +113,17 @@
     />
 
     <!-- Loading overlay -->
-    <MnrLoadingOverlay v-if="isLoading">
+    <MnrLoadingOverlay v-if="readerStore.isLoading">
       <span>加载中...</span>
     </MnrLoadingOverlay>
 
     <!-- Toast message -->
-    <MnrToast :message="error ?? ''" :type="toastType" :visible="!!error" @dismiss="clearError" />
+    <MnrToast
+      :message="readerStore.error ?? ''"
+      :type="readerStore.toastType"
+      :visible="!!readerStore.error"
+      @dismiss="clearError"
+    />
   </div>
 </template>
 
@@ -121,10 +133,7 @@ import { useReaderStore, type TocEntryWithStatus } from '@/ui/stores/reader';
 import { useConfigStore } from '@/ui/stores/config';
 import { useKeyboardShortcuts } from '@/ui/composables/useKeyboardShortcuts';
 import { useReaderScroll } from '@/ui/composables/reader/useReaderScroll';
-import {
-  useReaderAutoLoad,
-  INTERSECTION_ROOT_MARGIN_PX,
-} from '@/ui/composables/reader/useReaderAutoLoad';
+import { useReaderAutoLoad } from '@/ui/composables/reader/useReaderAutoLoad';
 import { useTouchGestures } from '@/ui/composables/reader/useTouchGestures';
 import { useChapterNavigation } from '@/ui/composables/reader/useChapterNavigation';
 import { useReaderUIControls } from '@/ui/composables/reader/useReaderUIControls';
@@ -171,24 +180,8 @@ const {
   toggleSettings,
 } = useReaderUIControls({ readerStore, showControls });
 
-// IntersectionObserver instance
-let bottomObserver: globalThis.IntersectionObserver | null = null;
-
 // Computed
-const chapters = computed(() => readerStore.chapters);
-
-const bookTitle = computed(() => readerStore.bookTitle);
 const indexUrl = computed(() => readerStore.chapter?.indexUrl);
-const isLoading = computed(() => readerStore.isLoading);
-const isLoadingPrev = computed(() => readerStore.isLoadingPrev);
-const isLoadingNext = computed(() => readerStore.isLoadingNext);
-const hasNext = computed(() => readerStore.hasNext);
-const hasPrev = computed(() => readerStore.hasPrev);
-const error = computed(() => readerStore.error);
-const toastType = computed(() => readerStore.toastType);
-const scrollPercent = computed(() => readerStore.scrollPercent);
-const showProgress = computed(() => configStore.behavior.showProgress);
-const cacheProgress = computed(() => readerStore.cacheProgress);
 const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
 const contentLang = computed(() => {
   if (readerStore.currentConversionMode === 'sc') return 'zh-CN';
@@ -199,22 +192,17 @@ const contentLang = computed(() => {
 // === Composables ===
 
 // Auto-load composable (must be initialized before scroll composable)
-const { scheduleAutoLoadNext } = useReaderAutoLoad({
+const { scheduleAutoLoadNext, observeBottomSentinel } = useReaderAutoLoad({
   mainRef,
   chapterRefs,
   readerStore,
   configStore,
-  hasNext,
-  isLoadingNext,
-  isLoadingPrev,
-  isLoading,
   isNavigating,
 });
 
 // Scroll composable
 const { handleScroll } = useReaderScroll({
   mainRef,
-  chapters,
   chapterRefs,
   readerStore,
   autoHideHeader,
@@ -233,14 +221,9 @@ const {
   handleWheel,
 } = useChapterNavigation({
   mainRef,
-  chapters,
   chapterRefs,
   readerStore,
   isNavigating,
-  isLoadingPrev,
-  isLoadingNext,
-  hasPrev,
-  hasNext,
   onPageTurnSettled: handleScroll,
 });
 
@@ -249,9 +232,9 @@ const SCROLL_BOUNDARY_EPSILON_PX = 4;
 const gesturesIdle = computed(
   () =>
     !hasOpenPanel.value &&
-    !isLoading.value &&
-    !isLoadingPrev.value &&
-    !isLoadingNext.value &&
+    !readerStore.isLoading &&
+    !readerStore.isLoadingPrev &&
+    !readerStore.isLoadingNext &&
     !isNavigating.value
 );
 const swipeEnabled = computed(() => configStore.behavior.swipeGestures && gesturesIdle.value);
@@ -281,12 +264,12 @@ function getBoundaryDirection(): 'prev' | 'next' | null {
   if (!mainEl || !gesturesIdle.value) return null;
 
   const remaining = mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
-  if (remaining <= SCROLL_BOUNDARY_EPSILON_PX && hasNext.value) return 'next';
-  if (mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX && hasPrev.value) return 'prev';
+  if (remaining <= SCROLL_BOUNDARY_EPSILON_PX && readerStore.hasNext) return 'next';
+  if (mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX && readerStore.hasPrev) return 'prev';
   return null;
 }
 
-function handleReaderTouchEnd(event: Event): void {
+function handleReaderTouchEnd(event: globalThis.TouchEvent): void {
   if (!handleTouchEnd(event)) scheduleAutoLoadNext('settled');
 }
 
@@ -336,7 +319,7 @@ async function handleTextConversionChange(mode: 'none' | 'sc' | 'tc') {
 }
 
 async function handleCacheAll() {
-  if (cacheProgress.value.running) {
+  if (readerStore.cacheProgress.running) {
     readerStore.cancelCacheAll();
     readerStore.showToast('已取消离线缓存', 'info');
     return;
@@ -431,8 +414,6 @@ useKeyboardShortcuts(
 
 // === Lifecycle ===
 
-const INTERSECTION_ROOT_MARGIN = `${INTERSECTION_ROOT_MARGIN_PX}px`;
-
 async function restoreReadingPosition(): Promise<void> {
   const mainEl = mainRef.value;
   const currentUrl = readerStore.chapter?.url;
@@ -500,20 +481,7 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('pagehide', flushPersistentState);
 
-  const observerOptions = {
-    root: mainRef.value,
-    rootMargin: INTERSECTION_ROOT_MARGIN,
-    threshold: 0,
-  };
-
-  bottomObserver = new globalThis.IntersectionObserver(entries => {
-    if (!entries[0]?.isIntersecting) return;
-    scheduleAutoLoadNext('sentinel');
-  }, observerOptions);
-
-  if (bottomSentinel.value) {
-    bottomObserver.observe(bottomSentinel.value);
-  }
+  observeBottomSentinel(bottomSentinel.value);
 
   await nextTick();
   await restoreReadingPosition();
@@ -534,9 +502,6 @@ onUnmounted(() => {
     mainRef.value.removeEventListener('touchend', handleReaderTouchEnd);
     mainRef.value.removeEventListener('touchcancel', handleReaderTouchCancel);
   }
-
-  bottomObserver?.disconnect();
-  bottomObserver = null;
 
   chapterRefs.clear();
 });

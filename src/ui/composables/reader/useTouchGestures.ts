@@ -1,8 +1,7 @@
 /**
  * useTouchGestures - Composable for swipe gesture handling
  *
- * Detects horizontal swipe gestures for page turns
- * while properly filtering out vertical scrolls and interactive elements.
+ * Resolves horizontal page swipes and vertical boundary pulls as one gesture.
  */
 
 import { computed, type ComputedRef, ref } from 'vue';
@@ -22,18 +21,6 @@ type GestureStartState = {
   threshold: number;
 };
 
-type TouchPoint = {
-  identifier: number;
-  clientX: number;
-  clientY: number;
-};
-
-type TouchEventLike = {
-  touches: ArrayLike<TouchPoint>;
-  changedTouches: ArrayLike<TouchPoint>;
-  target: unknown;
-};
-
 // === Constants ===
 const SWIPE_MIN_THRESHOLD_PX = 72;
 const SWIPE_MAX_THRESHOLD_PX = 120;
@@ -44,11 +31,6 @@ const SWIPE_AXIS_RATIO = 1.5;
 const BOUNDARY_PULL_HINT_PX = 12;
 const BOUNDARY_PULL_TRIGGER_PX = 48;
 const BOUNDARY_AXIS_RATIO = 1.25;
-
-function isTouchEvent(e: Event): e is Event & TouchEventLike {
-  const candidate = e as unknown as Partial<TouchEventLike>;
-  return Boolean(candidate.touches && candidate.changedTouches);
-}
 
 function isInteractiveElement(target: unknown): boolean {
   if (!(target instanceof Element)) return false;
@@ -100,9 +82,8 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
     clearBoundaryFeedback();
   }
 
-  function handleTouchStart(e: Event) {
+  function handleTouchStart(e: TouchEvent) {
     clearGesture();
-    if (!isTouchEvent(e)) return;
     if (e.touches.length !== 1) return;
     if (isInteractiveElement(e.target)) return;
 
@@ -127,16 +108,15 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
     };
   }
 
-  function handleTouchMove(e: Event) {
+  function handleTouchMove(e: TouchEvent) {
     if (!gestureStart) return;
-    if (!isTouchEvent(e)) return;
     if (e.touches.length !== 1) {
       clearGesture();
       return;
     }
 
-    const touch = Array.from(e.touches).find(t => t.identifier === gestureStart?.id);
-    if (!touch) return;
+    const touch = e.touches[0];
+    if (touch.identifier !== gestureStart.id) return;
 
     const dx = touch.clientX - gestureStart.x;
     const dy = touch.clientY - gestureStart.y;
@@ -170,8 +150,8 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
     if (gestureStart.boundaryReady && e.cancelable) e.preventDefault();
   }
 
-  function handleTouchEnd(e: Event): boolean {
-    if (!gestureStart || !isTouchEvent(e)) return false;
+  function handleTouchEnd(e: TouchEvent): boolean {
+    if (!gestureStart) return false;
 
     const start = gestureStart;
     clearGesture();
@@ -204,7 +184,7 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
     } else {
       onSwipeRight();
     }
-    return false;
+    return true;
   }
 
   function handleTouchCancel() {

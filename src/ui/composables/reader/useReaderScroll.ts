@@ -1,9 +1,9 @@
 /** Reader scroll handling: chapter tracking, local progress and control visibility. */
 
-import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
 import { type ComputedRef, type Ref } from 'vue';
 import { saveReadingPosition } from '@/ui/stores/reader/readingPosition';
 import type { ScheduleAutoLoadNext } from './useReaderAutoLoad';
+import type { useReaderStore } from '@/ui/stores/reader';
 
 const SCROLL_THROTTLE_MS = 16;
 const SCROLL_SETTLE_CHECK_MS = 180;
@@ -35,7 +35,6 @@ function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number):
 
 export interface UseReaderScrollOptions {
   mainRef: Ref<HTMLElement | null>;
-  chapters: ComputedRef<ChapterEntry[]>;
   chapterRefs: Map<string, HTMLElement>;
   readerStore: ReturnType<typeof useReaderStore>;
   autoHideHeader: ComputedRef<boolean>;
@@ -47,7 +46,6 @@ export interface UseReaderScrollOptions {
 export function useReaderScroll(options: UseReaderScrollOptions) {
   const {
     mainRef,
-    chapters,
     chapterRefs,
     readerStore,
     autoHideHeader,
@@ -73,8 +71,8 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     const viewportCenter = mainRect.top + mainEl.clientHeight / 2;
     let nearest: { index: number; element: HTMLElement; distance: number } | null = null;
 
-    for (let index = 0; index < chapters.value.length; index++) {
-      const url = chapters.value[index]?.chapter.url;
+    for (let index = 0; index < readerStore.chapters.length; index++) {
+      const url = readerStore.chapters[index]?.chapter.url;
       const element = url ? chapterRefs.get(url) : undefined;
       if (!element) continue;
       const rect = element.getBoundingClientRect();
@@ -114,7 +112,7 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     const currentScrollTop = mainEl.scrollTop;
     if (isNavigating.value) {
       const currentIndex = Number(readerStore.currentChapterIndex ?? 0);
-      const currentUrl = chapters.value[currentIndex]?.chapter.url;
+      const currentUrl = readerStore.chapters[currentIndex]?.chapter.url;
       const currentElement = currentUrl ? chapterRefs.get(currentUrl) : undefined;
       const fallbackHeight = mainEl.scrollHeight - mainEl.clientHeight;
       const percent = currentElement
@@ -138,9 +136,9 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     const current = findCurrentChapter(mainEl);
     if (current) {
       const percent = getChapterPercent(mainEl, current.element);
-      if (!isNavigating.value) readerStore.setCurrentChapter(current.index);
+      readerStore.setCurrentChapter(current.index);
       readerStore.updateScroll(percent);
-      const url = chapters.value[current.index]?.chapter.url;
+      const url = readerStore.chapters[current.index]?.chapter.url;
       if (url) saveCurrentPosition(url, percent);
     } else {
       const scrollableHeight = mainEl.scrollHeight - mainEl.clientHeight;

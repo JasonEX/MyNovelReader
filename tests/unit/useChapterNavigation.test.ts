@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { computed, ref } from 'vue';
 import { JSDOM } from 'jsdom';
+import { ref } from 'vue';
 
 import { useChapterNavigation } from '@/ui/composables/reader/useChapterNavigation';
 
@@ -52,19 +52,17 @@ describe('useChapterNavigation', () => {
   }
 
   function createNavigationOptions(overrides: Record<string, any> = {}) {
-    const chapters = computed(() => overrides.chapters || []);
     const chapterRefs = overrides.chapterRefs || new Map();
     const mainRef = ref(overrides.mainRef || null);
     const isNavigating = ref(false);
-    const isLoadingPrev = computed(() => overrides.isLoadingPrev ?? false);
-    const isLoadingNext = computed(() => overrides.isLoadingNext ?? false);
-    const hasPrev = computed(() => overrides.hasPrev ?? false);
-    const hasNext = computed(() => overrides.hasNext ?? false);
-    const topSpacer = computed(() => overrides.topSpacer ?? 0);
 
     const readerStore = {
       chapters: overrides.chapters || [],
       currentChapterIndex: 0,
+      isLoadingPrev: overrides.isLoadingPrev ?? false,
+      isLoadingNext: overrides.isLoadingNext ?? false,
+      hasPrev: overrides.hasPrev ?? false,
+      hasNext: overrides.hasNext ?? false,
       setCurrentChapter: vi.fn(),
       loadPrevChapter: vi.fn().mockResolvedValue(true),
       loadNextChapter: vi.fn().mockResolvedValue(true),
@@ -74,23 +72,13 @@ describe('useChapterNavigation', () => {
       ...overrides.readerStore,
     };
 
-    const setChapterHeight = vi.fn();
-    const updateWindow = vi.fn();
     const onPageTurnSettled = overrides.onPageTurnSettled || vi.fn();
 
     return {
       mainRef,
-      chapters,
       chapterRefs,
       readerStore: readerStore as any,
       isNavigating,
-      isLoadingPrev,
-      isLoadingNext,
-      hasPrev,
-      hasNext,
-      topSpacer,
-      setChapterHeight,
-      updateWindow,
       onPageTurnSettled,
     };
   }

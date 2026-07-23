@@ -5,19 +5,14 @@
  * loading adjacent chapters while preserving context, and keyboard-driven scrolling.
  */
 
-import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
-import { type ComputedRef, nextTick, type Ref } from 'vue';
+import { nextTick, type Ref } from 'vue';
+import type { useReaderStore } from '@/ui/stores/reader';
 
 export interface UseChapterNavigationOptions {
   mainRef: Ref<HTMLElement | null>;
-  chapters: ComputedRef<ChapterEntry[]>;
   chapterRefs: Map<string, HTMLElement>;
   readerStore: ReturnType<typeof useReaderStore>;
   isNavigating: Ref<boolean>;
-  isLoadingPrev: ComputedRef<boolean>;
-  isLoadingNext: ComputedRef<boolean>;
-  hasPrev: ComputedRef<boolean>;
-  hasNext: ComputedRef<boolean>;
   onPageTurnSettled: () => void;
 }
 
@@ -33,18 +28,7 @@ const SMOOTH_NAVIGATION_LOCK_MS = 650;
 const PAGE_SCROLL_RATIO = 0.9;
 
 export function useChapterNavigation(options: UseChapterNavigationOptions) {
-  const {
-    mainRef,
-    chapters,
-    chapterRefs,
-    readerStore,
-    isNavigating,
-    isLoadingPrev,
-    isLoadingNext,
-    hasPrev,
-    hasNext,
-    onPageTurnSettled,
-  } = options;
+  const { mainRef, chapterRefs, readerStore, isNavigating, onPageTurnSettled } = options;
 
   function scrollByPage(mainEl: HTMLElement, direction: 'prev' | 'next'): void {
     isNavigating.value = true;
@@ -67,7 +51,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     mainEl: HTMLElement,
     direction: ChapterDirection
   ): ViewportAnchor | null {
-    const entries = chapters.value;
+    const entries = readerStore.chapters;
     const mainTop = mainEl.getBoundingClientRect().top;
     const mainBottom = mainTop + mainEl.clientHeight;
     const start = direction === 'next' ? entries.length - 1 : 0;
@@ -126,7 +110,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     mainEl: HTMLElement,
     direction: ChapterDirection
   ): Promise<boolean> {
-    const available = direction === 'next' ? hasNext.value : hasPrev.value;
+    const available = direction === 'next' ? readerStore.hasNext : readerStore.hasPrev;
     if (!available) {
       showBoundaryEnd(direction);
       return false;
@@ -153,7 +137,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   async function loadBoundaryChapter(direction: ChapterDirection): Promise<boolean> {
     const mainEl = mainRef.value;
     if (!mainEl) return false;
-    if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return false;
+    if (isNavigating.value || readerStore.isLoadingPrev || readerStore.isLoadingNext) return false;
 
     isNavigating.value = true;
     try {
@@ -167,7 +151,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
    * Scroll to a specific chapter in the view
    */
   function scrollToChapter(index: number) {
-    const url = chapters.value[index]?.chapter.url;
+    const url = readerStore.chapters[index]?.chapter.url;
     if (!url) return;
 
     const chapterEl = chapterRefs.get(url);
@@ -207,13 +191,13 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   async function jumpToChapter(index: number, behavior: 'auto' | 'smooth' = 'smooth') {
     const mainEl = mainRef.value;
     if (!mainEl) return;
-    if (index < 0 || index >= chapters.value.length) return;
+    if (index < 0 || index >= readerStore.chapters.length) return;
 
     isNavigating.value = true;
 
     await waitForLayout();
 
-    const url = chapters.value[index]?.chapter.url;
+    const url = readerStore.chapters[index]?.chapter.url;
     if (!url) {
       isNavigating.value = false;
       return;
@@ -256,7 +240,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   async function turnReaderPage(direction: ChapterDirection): Promise<void> {
     const mainEl = mainRef.value;
     if (!mainEl) return;
-    if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return;
+    if (isNavigating.value || readerStore.isLoadingPrev || readerStore.isLoadingNext) return;
 
     const atBoundary = direction === 'next' ? isAtBottom(mainEl) : isAtTop(mainEl);
     if (!atBoundary) {
@@ -285,13 +269,13 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
     if (e.deltaY < 0 && isAtTop(mainEl)) {
       preventBoundaryDefault(e);
-      if (hasPrev.value) void loadBoundaryChapter('prev');
+      if (readerStore.hasPrev) void loadBoundaryChapter('prev');
       return;
     }
 
     if (e.deltaY > 0 && isAtBottom(mainEl)) {
       preventBoundaryDefault(e);
-      if (hasNext.value) void loadBoundaryChapter('next');
+      if (readerStore.hasNext) void loadBoundaryChapter('next');
     }
   }
 
@@ -316,13 +300,13 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
       return;
     }
 
-    const available = direction === 'next' ? hasNext.value : hasPrev.value;
+    const available = direction === 'next' ? readerStore.hasNext : readerStore.hasPrev;
     if (!available) {
       showBoundaryEnd(direction);
       return;
     }
 
-    const loading = direction === 'next' ? isLoadingNext.value : isLoadingPrev.value;
+    const loading = direction === 'next' ? readerStore.isLoadingNext : readerStore.isLoadingPrev;
     if (loading) return;
 
     const success =
@@ -346,8 +330,8 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     if (
       (direction === 'up' || direction === 'pageup') &&
       isAtTop(mainEl) &&
-      hasPrev.value &&
-      !isLoadingPrev.value &&
+      readerStore.hasPrev &&
+      !readerStore.isLoadingPrev &&
       !isNavigating.value
     ) {
       void navigateChapter('prev');

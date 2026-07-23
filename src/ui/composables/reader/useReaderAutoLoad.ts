@@ -14,11 +14,9 @@ import {
   type UnreadBufferState,
 } from './autoLoadPolicy';
 import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
-import { type ComputedRef, nextTick, onUnmounted, type Ref, watch } from 'vue';
+import { nextTick, onUnmounted, type Ref, watch } from 'vue';
 import { recordDebugEvent } from '@/core/debug/events';
 import type { useConfigStore } from '@/ui/stores/config';
-
-export { INTERSECTION_ROOT_MARGIN_PX, MAX_UNREAD_PRELOAD_CHAPTERS };
 
 const PRELOAD_DELAY_MIN_MS = 3000;
 const PRELOAD_DELAY_MAX_MS = 5000;
@@ -35,25 +33,11 @@ export interface UseReaderAutoLoadOptions {
   chapterRefs: Map<string, HTMLElement>;
   readerStore: ReturnType<typeof useReaderStore>;
   configStore: ReturnType<typeof useConfigStore>;
-  hasNext: ComputedRef<boolean>;
-  isLoadingNext: ComputedRef<boolean>;
-  isLoadingPrev: ComputedRef<boolean>;
-  isLoading: ComputedRef<boolean>;
   isNavigating: Ref<boolean>;
 }
 
 export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
-  const {
-    mainRef,
-    chapterRefs,
-    readerStore,
-    configStore,
-    hasNext,
-    isLoadingNext,
-    isLoadingPrev,
-    isLoading,
-    isNavigating,
-  } = options;
+  const { mainRef, chapterRefs, readerStore, configStore, isNavigating } = options;
 
   let autoLoadTimer: ReturnType<typeof setTimeout> | null = null;
   let autoLoadTimerDueAt = 0;
@@ -63,6 +47,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   let failureCooldownUntil = 0;
   let layoutRevision = 0;
   let layoutInvalidationFrame: number | null = null;
+  let bottomObserver: globalThis.IntersectionObserver | null = null;
   let lastBufferState: UnreadBufferState | '' = '';
   const chapterScreenCache = new Map<
     string,
@@ -299,10 +284,10 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       failureCooldownUntil,
       graceUntil,
       hasChapter: readerStore.chapters.length > 0,
-      hasNext: hasNext.value,
-      isLoading: isLoading.value,
-      isLoadingNext: isLoadingNext.value,
-      isLoadingPrev: isLoadingPrev.value,
+      hasNext: readerStore.hasNext,
+      isLoading: readerStore.isLoading,
+      isLoadingNext: readerStore.isLoadingNext,
+      isLoadingPrev: readerStore.isLoadingPrev,
       isNavigating: isNavigating.value,
       isNearBottom: isNearBottom(mainEl),
       now: currentTime,
@@ -317,6 +302,24 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     } else if (decision.clearTimer) {
       clearAutoLoadTimer();
     }
+  }
+
+  function observeBottomSentinel(sentinel: HTMLElement | null): void {
+    const root = mainRef.value;
+    if (!root || !sentinel) return;
+
+    bottomObserver?.disconnect();
+    bottomObserver = new globalThis.IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) scheduleAutoLoadNext('sentinel');
+      },
+      {
+        root,
+        rootMargin: `${INTERSECTION_ROOT_MARGIN_PX}px`,
+        threshold: 0,
+      }
+    );
+    bottomObserver.observe(sentinel);
   }
 
   watch(
@@ -336,7 +339,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   );
 
   watch(
-    () => hasNext.value,
+    () => readerStore.hasNext,
     available => {
       if (!available) {
         clearAutoLoadTimer();
@@ -347,7 +350,12 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   );
 
   watch(
-    () => [isLoadingNext.value, isLoadingPrev.value, isLoading.value, isNavigating.value],
+    () => [
+      readerStore.isLoadingNext,
+      readerStore.isLoadingPrev,
+      readerStore.isLoading,
+      isNavigating.value,
+    ],
     ([loadingNext, loadingPrev, loading, navigating]) => {
       if (loadingNext || loadingPrev || loading || navigating) return;
       scheduleAutoLoadNext('state');
@@ -405,6 +413,8 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
   onUnmounted(() => {
     clearAutoLoadTimer();
+    bottomObserver?.disconnect();
+    bottomObserver = null;
     if (layoutInvalidationFrame !== null) {
       globalThis.cancelAnimationFrame?.(layoutInvalidationFrame);
       layoutInvalidationFrame = null;
@@ -421,5 +431,6 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   return {
     scheduleAutoLoadNext,
     clearAutoLoadTimer,
+    observeBottomSentinel,
   };
 }
