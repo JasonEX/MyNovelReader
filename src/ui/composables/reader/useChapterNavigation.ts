@@ -148,19 +148,6 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   }
 
   /**
-   * Scroll to a specific chapter in the view
-   */
-  function scrollToChapter(index: number) {
-    const url = readerStore.chapters[index]?.chapter.url;
-    if (!url) return;
-
-    const chapterEl = chapterRefs.get(url);
-    if (chapterEl) {
-      chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  /**
    * Jump to a cached chapter without page reload
    */
   async function jumpToCachedChapter(url: string) {
@@ -170,7 +157,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     if (existingIndex >= 0) {
       // Already in display list - just scroll to it
       readerStore.setCurrentChapter(existingIndex);
-      scrollToChapter(existingIndex);
+      chapterRefs.get(url)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
 
@@ -368,7 +355,6 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     navigateChapter,
     jumpToChapter,
     jumpToCachedChapter,
-    scrollToChapter,
     loadBoundaryChapter,
     turnReaderPage,
     handleWheel,

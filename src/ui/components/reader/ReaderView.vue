@@ -47,7 +47,7 @@
       @close="closeDrawer"
       @select="handleChapterSelect"
       @cache-all="handleCacheAll"
-      @retry-cache="handleRetryCache"
+      @retry-cache="readerStore.retryFailedCache"
       @clear-cache="handleClearCache"
     />
 
@@ -89,10 +89,9 @@
         <p class="mnr-chapter-end-text">— 已是最后一章 —</p>
         <div class="mnr-chapter-nav">
           <a
-            v-if="indexUrl"
-            :href="indexUrl"
+            v-if="readerStore.chapter?.indexUrl"
+            :href="readerStore.chapter.indexUrl"
             class="mnr-chapter-link index"
-            @click.prevent="navigate('index')"
           >
             返回目录
           </a>
@@ -105,7 +104,7 @@
       :visible="settingsVisible"
       :site-auto-enable="siteAutoEnableValue"
       @close="closeSettings"
-      @textConversionChange="handleTextConversionChange"
+      @textConversionChange="readerStore.applyTextConversion"
       @copyDiagnostics="emit('copyDiagnostics')"
       @siteAutoEnableChange="handleSiteAutoEnableChange"
       @protectionModeChange="handleProtectionModeChange"
@@ -122,7 +121,7 @@
       :message="readerStore.error ?? ''"
       :type="readerStore.toastType"
       :visible="!!readerStore.error"
-      @dismiss="clearError"
+      @dismiss="readerStore.clearError"
     />
   </div>
 </template>
@@ -181,7 +180,6 @@ const {
 } = useReaderUIControls({ readerStore, showControls });
 
 // Computed
-const indexUrl = computed(() => readerStore.chapter?.indexUrl);
 const autoHideHeader = computed(() => configStore.behavior.autoHideHeader);
 const contentLang = computed(() => {
   if (readerStore.currentConversionMode === 'sc') return 'zh-CN';
@@ -278,12 +276,6 @@ function handleReaderTouchCancel(): void {
   scheduleAutoLoadNext('settled');
 }
 
-function navigate(direction: 'index') {
-  if (direction === 'index' && indexUrl.value) {
-    window.location.href = indexUrl.value;
-  }
-}
-
 function handleChapterSelect(entry: TocEntryWithStatus) {
   if (entry.isCached) {
     jumpToCachedChapter(entry.url);
@@ -310,14 +302,6 @@ function handleContentClick(e: MouseEvent) {
   }
 }
 
-function clearError() {
-  readerStore.clearError();
-}
-
-async function handleTextConversionChange(mode: 'none' | 'sc' | 'tc') {
-  await readerStore.applyTextConversion(mode);
-}
-
 async function handleCacheAll() {
   if (readerStore.cacheProgress.running) {
     readerStore.cancelCacheAll();
@@ -335,10 +319,6 @@ async function handleCacheAll() {
       : '将从当前章节开始缓存后续内容，是否继续？';
   if (!window.confirm(message)) return;
   void readerStore.startCacheAll();
-}
-
-function handleRetryCache() {
-  void readerStore.retryFailedCache();
 }
 
 async function handleClearCache() {
@@ -383,7 +363,8 @@ useKeyboardShortcuts(
     {
       key: 'enter',
       handler: () => {
-        if (indexUrl.value) window.location.href = indexUrl.value;
+        const indexUrl = readerStore.chapter?.indexUrl;
+        if (indexUrl) window.location.href = indexUrl;
       },
       preventDefault: true,
     },
@@ -435,13 +416,6 @@ async function restoreReadingPosition(): Promise<void> {
   readerStore.updateScroll(percent);
   readerStore.showToast('已回到上次阅读位置', 'info', 1800);
 }
-
-watch(
-  () => props.siteAutoEnable,
-  value => {
-    siteAutoEnableValue.value = value;
-  }
-);
 
 watch(
   () => readerStore.currentChapterIndex,

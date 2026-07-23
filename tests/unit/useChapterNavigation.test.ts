@@ -83,38 +83,6 @@ describe('useChapterNavigation', () => {
     };
   }
 
-  describe('scrollToChapter', () => {
-    it('scrolls to the chapter element', () => {
-      const chapterRefs = new Map();
-      const scrollIntoViewMock = vi.fn();
-      const el = document.createElement('div');
-      el.scrollIntoView = scrollIntoViewMock;
-      chapterRefs.set('https://example.com/ch1', el);
-
-      const entry = makeChapterEntry('https://example.com/ch1');
-      const opts = createNavigationOptions({ chapters: [entry], chapterRefs });
-      const { scrollToChapter } = useChapterNavigation(opts);
-
-      scrollToChapter(0);
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
-    });
-
-    it('does nothing for invalid index', () => {
-      const opts = createNavigationOptions({ chapters: [] });
-      const { scrollToChapter } = useChapterNavigation(opts);
-      // Should not throw
-      scrollToChapter(5);
-    });
-
-    it('does nothing when element is not in refs', () => {
-      const entry = makeChapterEntry('https://example.com/ch1');
-      const opts = createNavigationOptions({ chapters: [entry] });
-      const { scrollToChapter } = useChapterNavigation(opts);
-      // Should not throw
-      scrollToChapter(0);
-    });
-  });
-
   describe('jumpToCachedChapter', () => {
     it('scrolls to existing chapter in display list', async () => {
       const entry = makeChapterEntry('https://example.com/ch1');
@@ -138,6 +106,7 @@ describe('useChapterNavigation', () => {
 
       await jumpToCachedChapter('https://example.com/ch1');
       expect(readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     });
 
     it('rebuilds from cache when chapter is not in display list', async () => {

@@ -45,8 +45,8 @@ describe('autoLoadPolicy', () => {
     expect(decideAutoLoadNext('state', makeInput())).toEqual({ type: 'start' });
   });
 
-  it('keeps scroll-driven triggers behind the distance gate', () => {
-    expect(decideAutoLoadNext('scroll', makeInput({ isNearBottom: false }))).toEqual({
+  it('keeps viewport-driven triggers behind the distance gate', () => {
+    expect(decideAutoLoadNext('settled', makeInput({ isNearBottom: false }))).toEqual({
       type: 'idle',
       clearTimer: false,
     });

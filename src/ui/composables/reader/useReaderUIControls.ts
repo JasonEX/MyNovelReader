@@ -51,11 +51,7 @@ export function useReaderUIControls(options: UseReaderUIControlsOptions) {
   }
 
   function toggleSettings() {
-    if (settingsVisible.value) {
-      closeSettings();
-    } else {
-      openSettings();
-    }
+    setActivePanel(settingsVisible.value ? null : 'settings');
   }
 
   return {

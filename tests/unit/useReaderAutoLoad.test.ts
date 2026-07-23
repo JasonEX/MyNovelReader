@@ -219,7 +219,7 @@ describe('useReaderAutoLoad', () => {
     const opts = createAutoLoadOptions({ mainRef: mainEl });
     const result = useReaderAutoLoad(opts);
 
-    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('settled');
     vi.advanceTimersByTime(2999);
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
 
@@ -236,7 +236,7 @@ describe('useReaderAutoLoad', () => {
     result.clearAutoLoadTimer();
     vi.advanceTimersByTime(3000);
 
-    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('settled');
 
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
@@ -333,14 +333,14 @@ describe('useReaderAutoLoad', () => {
     }
 
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(MAX_UNREAD_PRELOAD_CHAPTERS);
-    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('settled');
     result.scheduleAutoLoadNext('sentinel');
     vi.advanceTimersByTime(10_000);
     await flushPromises();
     expect(opts.readerStore.loadNextChapter).toHaveBeenCalledTimes(MAX_UNREAD_PRELOAD_CHAPTERS);
   });
 
-  it('caches chapter height checks across repeated scroll triggers', () => {
+  it('caches chapter height checks across repeated viewport triggers', () => {
     const mainEl = document.createElement('div');
     defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
     const chapters = [
@@ -355,8 +355,8 @@ describe('useReaderAutoLoad', () => {
     const opts = createAutoLoadOptions({ mainRef: mainEl, chapters, chapterRefs });
     const result = useReaderAutoLoad(opts);
 
-    result.scheduleAutoLoadNext('scroll');
-    result.scheduleAutoLoadNext('scroll');
+    result.scheduleAutoLoadNext('settled');
+    result.scheduleAutoLoadNext('sentinel');
     result.scheduleAutoLoadNext('settled');
 
     expect(heightReads).toBe(1);

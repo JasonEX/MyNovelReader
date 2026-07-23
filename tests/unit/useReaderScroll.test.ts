@@ -83,7 +83,7 @@ describe('useReaderScroll', () => {
     expect(options.readerStore.setCurrentChapter).toHaveBeenCalledWith(0);
     expect(options.readerStore.updateScroll).toHaveBeenCalledWith(expect.closeTo(22.22, 1));
     expect(saveReadingPosition).toHaveBeenCalledWith(entry.chapter.url, expect.closeTo(22.22, 1));
-    expect(options.scheduleAutoLoadNext).toHaveBeenCalledWith('scroll');
+    expect(options.scheduleAutoLoadNext).not.toHaveBeenCalled();
   });
 
   it('treats a chapter that fits in the viewport as fully read', () => {
@@ -160,15 +160,22 @@ describe('useReaderScroll', () => {
     expect(options.showControls.value).toBe(true);
   });
 
-  it('runs one scroll check and one settled check', () => {
+  it('runs no preload decisions during continuous scroll and one after settling', () => {
     vi.useFakeTimers();
     const main = createMain();
     const options = createOptions({ mainRef: main });
+    const { handleScroll } = useReaderScroll(options);
 
-    useReaderScroll(options).handleScroll();
+    for (let index = 0; index < 10; index++) {
+      handleScroll();
+      vi.advanceTimersByTime(20);
+    }
+
+    expect(options.scheduleAutoLoadNext).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(159);
+    expect(options.scheduleAutoLoadNext).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
     expect(options.scheduleAutoLoadNext).toHaveBeenCalledTimes(1);
-    vi.advanceTimersByTime(180);
-    expect(options.scheduleAutoLoadNext).toHaveBeenCalledTimes(2);
     expect(options.scheduleAutoLoadNext).toHaveBeenCalledWith('settled');
   });
 });

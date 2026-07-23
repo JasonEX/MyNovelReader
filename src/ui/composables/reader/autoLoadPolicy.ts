@@ -1,7 +1,7 @@
 export const INTERSECTION_ROOT_MARGIN_PX = 1600;
 export const MAX_UNREAD_PRELOAD_CHAPTERS = 10;
 
-export type AutoLoadReason = 'state' | 'scroll' | 'settled' | 'sentinel' | 'visibility' | 'timer';
+export type AutoLoadReason = 'state' | 'settled' | 'sentinel' | 'visibility' | 'timer';
 
 export type UnreadBufferState = 'empty' | 'pending' | 'short' | 'sufficient' | 'capped';
 
@@ -85,5 +85,5 @@ function shouldRetryAfterCooldown(reason: AutoLoadReason): boolean {
 }
 
 function requiresNearBottom(reason: AutoLoadReason): boolean {
-  return reason === 'scroll' || reason === 'settled' || reason === 'sentinel';
+  return reason === 'settled' || reason === 'sentinel';
 }

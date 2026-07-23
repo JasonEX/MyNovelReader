@@ -278,7 +278,7 @@ test('runs the built userscript and restores the host page after exit', async ({
 }) => {
   await context.route(targetUrl, route =>
     route.fulfill({
-      body: fixtureHtml,
+      body: fixtureHtml.replace('<a href="/chapter/101.html">下一章</a>', ''),
       contentType: 'text/html; charset=utf-8',
       status: 200,
     })
@@ -327,6 +327,23 @@ test('runs the built userscript and restores the host page after exit', async ({
   );
   expect(toolbarIconAlignment).toHaveLength(2);
   toolbarIconAlignment.forEach(expectCentered);
+
+  const indexLink = page.locator('#mnr-reader-root').locator('.mnr-chapter-link.index');
+  await expect(indexLink).toHaveAttribute('href', 'http://mnr.test/book/1/index.html');
+  const preventedBeforeTestGuard = await indexLink.evaluate(link => {
+    let prevented = true;
+    link.addEventListener(
+      'click',
+      event => {
+        prevented = event.defaultPrevented;
+        event.preventDefault();
+      },
+      { once: true }
+    );
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return prevented;
+  });
+  expect(preventedBeforeTestGuard).toBe(false);
 
   await page.locator('#mnr-reader-root').locator('[aria-label="打开目录"]').click();
   await expect
@@ -410,6 +427,25 @@ test('runs the built userscript and restores the host page after exit', async ({
       }))
     )
     .toEqual({ activeLabel: '关闭设置', drawerOpen: false });
+
+  await page.locator('#mnr-reader-root').getByRole('button', { name: '繁體' }).click();
+  await expect(
+    page.locator('#mnr-reader-root').locator('.mnr-reader-content').first()
+  ).toHaveAttribute('lang', 'zh-TW');
+  await page.locator('#mnr-reader-root').getByRole('button', { name: '原文' }).click();
+
+  const advancedSettings = page
+    .locator('#mnr-reader-root')
+    .locator('details')
+    .filter({ hasText: '本站与高级' });
+  await advancedSettings.locator('summary').click();
+  const siteAutoEnable = advancedSettings.locator('.mnr-switch-row').filter({
+    hasText: '在本站自动开启',
+  });
+  await siteAutoEnable.locator('input').uncheck();
+  await expect(siteAutoEnable.locator('input')).not.toBeChecked();
+  await siteAutoEnable.locator('input').check();
+  await expect(siteAutoEnable.locator('input')).toBeChecked();
 
   const typographyDetails = page
     .locator('#mnr-reader-root')

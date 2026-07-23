@@ -55,13 +55,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   >();
 
   function getRandomDelayMs(min: number, max: number): number {
-    const a = Math.min(min, max);
-    const b = Math.max(min, max);
-    return Math.floor(Math.random() * (b - a + 1)) + a;
-  }
-
-  function now(): number {
-    return Date.now();
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   function getCurrentIndex(): number {
@@ -82,21 +76,17 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
     if (nextSessionKey !== sessionKey) {
       sessionKey = nextSessionKey;
-      graceUntil = now() + getRandomDelayMs(PRELOAD_DELAY_MIN_MS, PRELOAD_DELAY_MAX_MS);
+      graceUntil = Date.now() + getRandomDelayMs(PRELOAD_DELAY_MIN_MS, PRELOAD_DELAY_MAX_MS);
       failureCooldownUntil = 0;
       lastBufferState = '';
       clearAutoLoadTimer();
       recordDebugEvent('autoload.session', {
         currentIndex: getCurrentIndex(),
         currentUrl: readerStore.chapters[getCurrentIndex()]?.chapter.url,
-        graceMs: Math.max(0, graceUntil - now()),
+        graceMs: Math.max(0, graceUntil - Date.now()),
       });
     }
     return true;
-  }
-
-  function getUnreadLoadedChapterCount(): number {
-    return Math.max(0, readerStore.chapters.length - getCurrentIndex() - 1);
   }
 
   function getChapterViewportState(
@@ -145,7 +135,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     recordDebugEvent('autoload.buffer', {
       state,
       currentIndex: getCurrentIndex(),
-      unreadChapterCount: getUnreadLoadedChapterCount(),
+      unreadChapterCount: Math.max(0, readerStore.chapters.length - getCurrentIndex() - 1),
       limit: MAX_UNREAD_PRELOAD_CHAPTERS,
     });
   }
@@ -204,7 +194,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
         autoLoadTimerDueAt = 0;
         scheduleAutoLoadNext('timer');
       },
-      Math.max(0, dueAt - now())
+      Math.max(0, dueAt - Date.now())
     );
   }
 
@@ -242,7 +232,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       const bufferState = getUnreadBufferState(mainEl);
       recordBufferState(bufferState);
       if (bufferState === 'short') {
-        graceUntil = now() + SHORT_CHAPTER_PRELOAD_DELAY_MS;
+        graceUntil = Date.now() + SHORT_CHAPTER_PRELOAD_DELAY_MS;
       }
       scheduleAutoLoadNext('state');
       return;
@@ -250,7 +240,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
 
     autoLoadInFlight = false;
     failureCooldownUntil =
-      now() + getRandomDelayMs(FAILURE_COOLDOWN_MIN_MS, FAILURE_COOLDOWN_MAX_MS);
+      Date.now() + getRandomDelayMs(FAILURE_COOLDOWN_MIN_MS, FAILURE_COOLDOWN_MAX_MS);
   }
 
   function startAutoLoad(): void {
@@ -275,7 +265,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     const mainEl = mainRef.value;
     if (!mainEl || !ensureSession()) return;
 
-    const currentTime = now();
+    const currentTime = Date.now();
     const unreadBufferState = getUnreadBufferState(mainEl);
     recordBufferState(unreadBufferState);
     const decision = decideAutoLoadNext(reason, {

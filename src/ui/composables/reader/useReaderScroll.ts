@@ -147,7 +147,6 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
       );
     }
 
-    scheduleAutoLoadNext('scroll');
     queueScrollSettledAutoLoadCheck();
   }
 
