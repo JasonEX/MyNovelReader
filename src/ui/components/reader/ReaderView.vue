@@ -59,18 +59,18 @@
         <span>加载上一章...</span>
       </div>
 
-      <template v-for="entry in readerStore.chapters" :key="entry.id">
-        <article
-          :ref="setChapterRef(entry.chapter.url)"
-          class="mnr-reader-content"
-          :data-chapter-url="entry.chapter.url"
-          :lang="contentLang"
-          @click="handleContentClick"
-        >
-          <h1 class="mnr-chapter-title">{{ entry.chapter.title }}</h1>
-          <div v-html="entry.chapter.content"></div>
-        </article>
-      </template>
+      <article
+        v-for="entry in readerStore.chapters"
+        :key="entry.id"
+        :ref="setChapterRef(entry.chapter.url)"
+        class="mnr-reader-content"
+        :data-chapter-url="entry.chapter.url"
+        :lang="contentLang"
+        @click="handleContentClick"
+      >
+        <h1 class="mnr-chapter-title">{{ entry.chapter.title }}</h1>
+        <div v-html="entry.chapter.content"></div>
+      </article>
 
       <!-- Bottom sentinel for IntersectionObserver -->
       <div ref="bottomSentinel" class="mnr-sentinel"></div>
@@ -107,7 +107,7 @@
       @textConversionChange="readerStore.applyTextConversion"
       @copyDiagnostics="emit('copyDiagnostics')"
       @siteAutoEnableChange="handleSiteAutoEnableChange"
-      @protectionModeChange="handleProtectionModeChange"
+      @protectionModeChange="emit('protectionModeChange', $event)"
       @exit="emit('exit')"
     />
 
@@ -331,10 +331,6 @@ function handleSiteAutoEnableChange(enabled: boolean) {
   siteAutoEnableValue.value = enabled;
   emit('siteAutoEnableChange', enabled);
   readerStore.showToast(enabled ? '已开启本站自动阅读' : '已关闭本站自动阅读', 'info');
-}
-
-function handleProtectionModeChange(mode: 'standard' | 'aggressive') {
-  emit('protectionModeChange', mode);
 }
 
 function setChapterRef(url: string) {

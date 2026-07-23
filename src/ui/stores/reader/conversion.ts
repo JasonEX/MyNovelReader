@@ -80,20 +80,3 @@ export async function applyTocConversion(
     }))
   );
 }
-
-/**
- * Apply text conversion to all loaded chapters and TOC.
- */
-export async function applyTextConversion(
-  chapters: ChapterEntry[],
-  originalContents: Map<string, string>,
-  originalTitles: Map<string, { title: string; bookTitle?: string }>,
-  tocOriginal: TocEntry[],
-  mode: ConversionMode
-): Promise<TocEntry[]> {
-  for (const entry of chapters) {
-    await applyConversionToChapterEntry(chapters, originalContents, originalTitles, entry.id, mode);
-  }
-
-  return applyTocConversion(tocOriginal, mode, chapters[0]?.chapter.sourceScript);
-}

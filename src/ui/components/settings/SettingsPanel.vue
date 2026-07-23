@@ -224,7 +224,7 @@
                     class="mnr-segment"
                     :class="{ active: configStore.protection.mode === 'standard' }"
                     :aria-pressed="configStore.protection.mode === 'standard'"
-                    @click="updateProtectionMode('standard')"
+                    @click="emit('protectionModeChange', 'standard')"
                   >
                     标准
                   </button>
@@ -232,7 +232,7 @@
                     class="mnr-segment"
                     :class="{ active: configStore.protection.mode === 'aggressive' }"
                     :aria-pressed="configStore.protection.mode === 'aggressive'"
-                    @click="updateProtectionMode('aggressive')"
+                    @click="emit('protectionModeChange', 'aggressive')"
                   >
                     强力
                   </button>
@@ -319,7 +319,6 @@ const fontOptions = [
 ] as const;
 
 function closePanel() {
-  void configStore.flushSave();
   emit('close');
 }
 
@@ -389,11 +388,6 @@ function updateBehavior(key: BooleanBehaviorKey, event: Event) {
 
 function updateSiteAutoEnable(event: Event) {
   emit('siteAutoEnableChange', (event.currentTarget as globalThis.HTMLInputElement).checked);
-}
-
-function updateProtectionMode(mode: 'standard' | 'aggressive') {
-  configStore.updateProtection({ mode });
-  emit('protectionModeChange', mode);
 }
 
 function updateCustomCSS(event: Event) {

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp, h, nextTick } from 'vue';
+import { createApp, h, nextTick, ref } from 'vue';
 
 import { ReaderEntryButton, ReaderEntryPrompt } from '@/ui/components/entry';
+import { THEMES, useConfigStore } from '@/ui/stores/config';
 import ChapterDrawer from '@/ui/components/reader/ChapterDrawer.vue';
 import FloatingToolbar from '@/ui/components/reader/FloatingToolbar.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import settingsPanelSource from '@/ui/components/settings/SettingsPanel.vue?raw';
-import { THEMES } from '@/ui/stores/config';
 
 import { createGmStorageMock, stubGmStorage } from '../../../testUtils/gmStorage';
 import { createDom } from '../../../testUtils/dom';
@@ -92,9 +92,13 @@ describe('UI component smoke', () => {
     mountEl.remove();
   });
 
-  it('SettingsPanel mounts and emits close on close button click', async () => {
-    const onClose = vi.fn();
+  it('SettingsPanel delegates protection changes and flushes pending settings on close', async () => {
+    const visible = ref(true);
+    const onClose = vi.fn(() => {
+      visible.value = false;
+    });
     const onProtectionModeChange = vi.fn();
+    const configStore = useConfigStore();
     injectSfcStyle(settingsPanelSource);
 
     const mountEl = document.createElement('div');
@@ -103,7 +107,7 @@ describe('UI component smoke', () => {
     const app = createApp({
       render: () =>
         h(SettingsPanel, {
-          visible: true,
+          visible: visible.value,
           onClose,
           onProtectionModeChange,
         }),
@@ -153,6 +157,9 @@ describe('UI component smoke', () => {
     aggressiveButton?.click();
     await nextTick();
     expect(onProtectionModeChange).toHaveBeenCalledWith('aggressive');
+    expect(configStore.protection.mode).toBe('standard');
+
+    document.querySelectorAll<HTMLButtonElement>('.mnr-theme-btn')[THEMES.length - 1]?.click();
 
     const closeBtn = document.querySelector('.mnr-close-btn') as HTMLButtonElement | null;
     expect(closeBtn).not.toBeNull();
@@ -160,6 +167,9 @@ describe('UI component smoke', () => {
     await nextTick();
 
     expect(onClose).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() =>
+      expect(GM_setValue).toHaveBeenCalledWith('mnr-config', expect.stringContaining('"dark"'))
+    );
 
     app.unmount();
     mountEl.remove();

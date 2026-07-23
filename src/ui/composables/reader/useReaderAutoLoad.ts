@@ -24,8 +24,6 @@ export const SHORT_CHAPTER_PRELOAD_DELAY_MS = 300;
 const FAILURE_COOLDOWN_MIN_MS = 6000;
 const FAILURE_COOLDOWN_MAX_MS = 10000;
 
-export type { AutoLoadReason };
-
 export type ScheduleAutoLoadNext = (reason?: AutoLoadReason) => void;
 
 export interface UseReaderAutoLoadOptions {
@@ -172,10 +170,6 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     return typeof document !== 'undefined' && document.visibilityState === 'hidden';
   }
 
-  function isNearBottom(mainEl: HTMLElement): boolean {
-    return isViewportNearBottom(mainEl.scrollHeight, mainEl.scrollTop, mainEl.clientHeight);
-  }
-
   function clearAutoLoadTimer(): void {
     if (!autoLoadTimer) return;
     clearTimeout(autoLoadTimer);
@@ -279,7 +273,11 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       isLoadingNext: readerStore.isLoadingNext,
       isLoadingPrev: readerStore.isLoadingPrev,
       isNavigating: isNavigating.value,
-      isNearBottom: isNearBottom(mainEl),
+      isNearBottom: isViewportNearBottom(
+        mainEl.scrollHeight,
+        mainEl.scrollTop,
+        mainEl.clientHeight
+      ),
       now: currentTime,
       pageHidden: isPageHidden(),
       unreadBufferState,
@@ -388,15 +386,11 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
     }
   }
 
-  function handleResize(): void {
-    queueLayoutInvalidation();
-  }
-
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', handleVisibilityChange);
   }
   if (typeof window !== 'undefined') {
-    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('resize', queueLayoutInvalidation, { passive: true });
   }
 
   scheduleAutoLoadNext('state');
@@ -413,7 +407,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
     if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', queueLayoutInvalidation);
     }
     chapterScreenCache.clear();
   });

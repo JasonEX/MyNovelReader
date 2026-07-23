@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  applyConversionToChapterEntry,
-  applyTextConversion,
-  applyTocConversion,
-} from '@/ui/stores/reader/conversion';
+import { applyConversionToChapterEntry, applyTocConversion } from '@/ui/stores/reader/conversion';
 import type { ChapterEntry, TocEntry } from '@/ui/stores/reader/types';
 import { type ChineseScript, convertHTML, convertText } from '@/core/converter';
 
@@ -175,29 +171,5 @@ describe('applyTocConversion', () => {
     const result = await applyTocConversion(toc, 'sc', 'hans');
     expect(result[0].title).toBe('坏话目录');
     expect(convertText).toHaveBeenCalledWith('坏话目录', 'sc', { sourceScript: 'hans' });
-  });
-});
-
-describe('applyTextConversion', () => {
-  it('converts all chapters and toc', async () => {
-    const chapters = [
-      makeEntry('a', '東京', '東京A', '東京BookA'),
-      makeEntry('b', '東京', '東京B'),
-    ];
-    const origContents = new Map([
-      ['a', '東京'],
-      ['b', '東京'],
-    ]);
-    const origTitles = new Map([
-      ['a', { title: '東京A', bookTitle: '東京BookA' }],
-      ['b', { title: '東京B' }],
-    ]);
-    const toc: TocEntry[] = [{ title: '東京目录', url: 'http://example.com' }];
-
-    const result = await applyTextConversion(chapters, origContents, origTitles, toc, 'sc');
-
-    expect(chapters[0].chapter.content).toBe('东京');
-    expect(chapters[1].chapter.content).toBe('东京');
-    expect(result[0].title).toBe('东京目录');
   });
 });
