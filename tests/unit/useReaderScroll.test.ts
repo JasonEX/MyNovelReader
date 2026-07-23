@@ -160,25 +160,15 @@ describe('useReaderScroll', () => {
     expect(options.showControls.value).toBe(true);
   });
 
-  it('queues post-layout and settled auto-load checks', () => {
+  it('runs one scroll check and one settled check', () => {
     vi.useFakeTimers();
-    const frames: FrameRequestCallback[] = [];
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      vi.fn((callback: FrameRequestCallback) => {
-        frames.push(callback);
-        return frames.length;
-      })
-    );
     const main = createMain();
     const options = createOptions({ mainRef: main });
 
     useReaderScroll(options).handleScroll();
     expect(options.scheduleAutoLoadNext).toHaveBeenCalledTimes(1);
-
-    frames[0](0);
-    expect(options.scheduleAutoLoadNext).toHaveBeenCalledTimes(2);
     vi.advanceTimersByTime(180);
+    expect(options.scheduleAutoLoadNext).toHaveBeenCalledTimes(2);
     expect(options.scheduleAutoLoadNext).toHaveBeenCalledWith('settled');
   });
 });

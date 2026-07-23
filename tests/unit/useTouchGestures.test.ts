@@ -34,7 +34,7 @@ describe('useTouchGestures', () => {
     changedTouches?: Array<{ identifier: number; clientX: number; clientY: number }>,
     target?: unknown
   ): Event {
-    const e = new dom.window.Event(type, { bubbles: true });
+    const e = new dom.window.Event(type, { bubbles: true, cancelable: true });
     Object.defineProperty(e, 'touches', { value: touches });
     Object.defineProperty(e, 'changedTouches', { value: changedTouches || touches });
     Object.defineProperty(e, 'target', { value: target || document.body, writable: false });
@@ -47,7 +47,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight,
     });
@@ -65,7 +65,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight,
     });
@@ -77,12 +77,89 @@ describe('useTouchGestures', () => {
     expect(onSwipeLeft).not.toHaveBeenCalled();
   });
 
+  it('commits a vertical boundary pull without requiring horizontal swipes', () => {
+    const onBoundaryPull = vi.fn();
+    const {
+      boundaryGestureDirection,
+      boundaryGestureHint,
+      handleTouchStart,
+      handleTouchMove,
+      handleTouchEnd,
+    } = useTouchGestures({
+      swipeEnabled: computed(() => false),
+      getBoundaryDirection: () => 'next',
+      onBoundaryPull,
+      onSwipeLeft: vi.fn(),
+      onSwipeRight: vi.fn(),
+    });
+
+    handleTouchStart(makeTouchEvent('touchstart', [{ identifier: 0, clientX: 195, clientY: 500 }]));
+    const move = makeTouchEvent('touchmove', [{ identifier: 0, clientX: 195, clientY: 430 }]);
+    handleTouchMove(move);
+
+    expect(boundaryGestureDirection.value).toBe('next');
+    expect(boundaryGestureHint.value).toBe('松手加载下一章');
+    expect(move.defaultPrevented).toBe(true);
+    expect(
+      handleTouchEnd(
+        makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 195, clientY: 430 }])
+      )
+    ).toBe(true);
+    expect(onBoundaryPull).toHaveBeenCalledWith('next');
+    expect(boundaryGestureHint.value).toBe('');
+  });
+
+  it('shows boundary progress without committing below the pull threshold', () => {
+    const onBoundaryPull = vi.fn();
+    const { boundaryGestureHint, handleTouchStart, handleTouchMove, handleTouchEnd } =
+      useTouchGestures({
+        swipeEnabled: computed(() => true),
+        getBoundaryDirection: () => 'prev',
+        onBoundaryPull,
+        onSwipeLeft: vi.fn(),
+        onSwipeRight: vi.fn(),
+      });
+
+    handleTouchStart(makeTouchEvent('touchstart', [{ identifier: 0, clientX: 195, clientY: 300 }]));
+    handleTouchMove(makeTouchEvent('touchmove', [{ identifier: 0, clientX: 195, clientY: 325 }]));
+
+    expect(boundaryGestureHint.value).toBe('继续下滑加载上一章');
+    expect(
+      handleTouchEnd(
+        makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 195, clientY: 325 }])
+      )
+    ).toBe(false);
+    expect(onBoundaryPull).not.toHaveBeenCalled();
+    expect(boundaryGestureHint.value).toBe('');
+  });
+
+  it('cancels boundary tracking when the gesture becomes a horizontal swipe', () => {
+    const onBoundaryPull = vi.fn();
+    const onSwipeLeft = vi.fn();
+    const { boundaryGestureDirection, handleTouchStart, handleTouchMove, handleTouchEnd } =
+      useTouchGestures({
+        swipeEnabled: computed(() => true),
+        getBoundaryDirection: () => 'next',
+        onBoundaryPull,
+        onSwipeLeft,
+        onSwipeRight: vi.fn(),
+      });
+
+    handleTouchStart(makeTouchEvent('touchstart', [{ identifier: 0, clientX: 300, clientY: 200 }]));
+    handleTouchMove(makeTouchEvent('touchmove', [{ identifier: 0, clientX: 200, clientY: 195 }]));
+    handleTouchEnd(makeTouchEvent('touchend', [], [{ identifier: 0, clientX: 100, clientY: 195 }]));
+
+    expect(boundaryGestureDirection.value).toBeNull();
+    expect(onBoundaryPull).not.toHaveBeenCalled();
+    expect(onSwipeLeft).toHaveBeenCalledOnce();
+  });
+
   it('ignores swipe when disabled', () => {
     const onSwipeLeft = vi.fn();
     const onSwipeRight = vi.fn();
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => false),
+      swipeEnabled: computed(() => false),
       onSwipeLeft,
       onSwipeRight,
     });
@@ -100,7 +177,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight,
     });
@@ -118,7 +195,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -135,7 +212,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchStart } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -157,7 +234,7 @@ describe('useTouchGestures', () => {
     } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -174,7 +251,7 @@ describe('useTouchGestures', () => {
     vi.useFakeTimers();
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -193,7 +270,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchStart, handleTouchMove } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -214,7 +291,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchCancel, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -230,7 +307,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchStart } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -245,7 +322,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -271,7 +348,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -301,7 +378,7 @@ describe('useTouchGestures', () => {
     Object.defineProperty(window, 'innerWidth', { value: 390, configurable: true });
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -321,7 +398,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -337,7 +414,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -351,7 +428,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchStart, handleTouchMove } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -366,7 +443,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -381,7 +458,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -398,7 +475,7 @@ describe('useTouchGestures', () => {
     const onSwipeLeft = vi.fn();
 
     const { handleTouchStart, handleTouchMove } = useTouchGestures({
-      enabled: computed(() => true),
+      swipeEnabled: computed(() => true),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });
@@ -415,7 +492,7 @@ describe('useTouchGestures', () => {
     vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => '' } as Selection);
 
     const { handleTouchStart, handleTouchEnd } = useTouchGestures({
-      enabled: computed(() => enabledRef.value),
+      swipeEnabled: computed(() => enabledRef.value),
       onSwipeLeft,
       onSwipeRight: vi.fn(),
     });

@@ -421,6 +421,5 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
   return {
     scheduleAutoLoadNext,
     clearAutoLoadTimer,
-    INTERSECTION_ROOT_MARGIN_PX,
   };
 }

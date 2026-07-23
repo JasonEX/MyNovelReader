@@ -58,21 +58,7 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
 
   let lastScrollTop = 0;
   let lastPositionSaveAt = 0;
-  let pendingAutoLoadCheckFrame: number | null = null;
   let pendingScrollSettleTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function queuePostLayoutAutoLoadCheck(): void {
-    if (pendingAutoLoadCheckFrame !== null) return;
-    if (typeof globalThis.requestAnimationFrame !== 'function') {
-      scheduleAutoLoadNext('scroll');
-      return;
-    }
-
-    pendingAutoLoadCheckFrame = globalThis.requestAnimationFrame(() => {
-      pendingAutoLoadCheckFrame = null;
-      scheduleAutoLoadNext('scroll');
-    });
-  }
 
   function queueScrollSettledAutoLoadCheck(): void {
     if (pendingScrollSettleTimer) clearTimeout(pendingScrollSettleTimer);
@@ -164,9 +150,8 @@ export function useReaderScroll(options: UseReaderScrollOptions) {
     }
 
     scheduleAutoLoadNext('scroll');
-    queuePostLayoutAutoLoadCheck();
     queueScrollSettledAutoLoadCheck();
   }
 
-  return { handleScroll: throttle(handleScrollCore, SCROLL_THROTTLE_MS), lastScrollTop };
+  return { handleScroll: throttle(handleScrollCore, SCROLL_THROTTLE_MS) };
 }

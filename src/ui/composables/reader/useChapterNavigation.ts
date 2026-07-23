@@ -2,7 +2,7 @@
  * useChapterNavigation - Composable for chapter navigation logic
  *
  * Handles navigating between chapters, jumping to specific chapters,
- * loading previous chapters with scroll adjustment, and keyboard-driven scrolling.
+ * loading adjacent chapters while preserving context, and keyboard-driven scrolling.
  */
 
 import type { ChapterEntry, useReaderStore } from '@/ui/stores/reader';
@@ -18,7 +18,7 @@ export interface UseChapterNavigationOptions {
   isLoadingNext: ComputedRef<boolean>;
   hasPrev: ComputedRef<boolean>;
   hasNext: ComputedRef<boolean>;
-  onViewportSettled: () => void;
+  onPageTurnSettled: () => void;
 }
 
 type ChapterDirection = 'prev' | 'next';
@@ -43,10 +43,8 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     isLoadingNext,
     hasPrev,
     hasNext,
-    onViewportSettled,
+    onPageTurnSettled,
   } = options;
-
-  let isLoadingPrevLocal = false;
 
   function scrollByPage(mainEl: HTMLElement, direction: 'prev' | 'next'): void {
     isNavigating.value = true;
@@ -56,7 +54,7 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     });
     setTimeout(() => {
       isNavigating.value = false;
-      onViewportSettled();
+      onPageTurnSettled();
     }, SMOOTH_NAVIGATION_LOCK_MS);
   }
 
@@ -124,23 +122,20 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     readerStore.showToast(readerStore.getVipBlockedToast(direction) || fallback, 'info');
   }
 
-  async function loadBoundaryChapter(direction: ChapterDirection): Promise<boolean> {
-    const mainEl = mainRef.value;
-    if (!mainEl) return false;
-    if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return false;
-
+  async function loadAtBoundary(
+    mainEl: HTMLElement,
+    direction: ChapterDirection
+  ): Promise<boolean> {
     const available = direction === 'next' ? hasNext.value : hasPrev.value;
     if (!available) {
       showBoundaryEnd(direction);
       return false;
     }
 
-    isNavigating.value = true;
     const anchor = captureViewportAnchor(mainEl, direction);
-    let loaded = false;
 
     try {
-      loaded =
+      const loaded =
         direction === 'next'
           ? await readerStore.loadNextChapter('manual')
           : await readerStore.loadPrevChapter('manual');
@@ -152,9 +147,19 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     } catch (error) {
       console.error(`[MNR] Failed to load ${direction} chapter at reader boundary:`, error);
       return false;
+    }
+  }
+
+  async function loadBoundaryChapter(direction: ChapterDirection): Promise<boolean> {
+    const mainEl = mainRef.value;
+    if (!mainEl) return false;
+    if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return false;
+
+    isNavigating.value = true;
+    try {
+      return await loadAtBoundary(mainEl, direction);
     } finally {
       isNavigating.value = false;
-      if (loaded) onViewportSettled();
     }
   }
 
@@ -245,96 +250,24 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   }
 
   /**
-   * Load previous chapter with scroll position adjustment
-   * jumpToStart: true => snap to the start (title) of the newly loaded chapter to avoid bounce
-   */
-  async function loadPrevWithScrollAdjust(jumpToStart = false): Promise<boolean> {
-    const mainEl = mainRef.value;
-    if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return false;
-
-    isLoadingPrevLocal = true;
-
-    try {
-      // Remember the current position so prepending a chapter does not move the visible text.
-      const oldScrollTop = mainEl.scrollTop;
-
-      const success = await readerStore.loadPrevChapter('manual');
-
-      if (success) {
-        await waitForLayout();
-
-        if (jumpToStart) {
-          // When user explicitly wants to go to previous chapter, snap to its title
-          await jumpToChapter(0, 'auto');
-          return true;
-        }
-
-        const chapterEls = mainEl.querySelectorAll('.mnr-reader-content');
-        if (chapterEls.length > 0) {
-          const newChapterEl = chapterEls[0] as HTMLElement;
-          const newChapterHeight = newChapterEl.offsetHeight;
-          mainEl.scrollTop = oldScrollTop + newChapterHeight;
-        }
-
-        return true;
-      }
-
-      return false;
-    } finally {
-      isLoadingPrevLocal = false;
-    }
-  }
-
-  /**
    * Turn one reader page while preserving a small overlap for reading continuity.
    * At content boundaries, continue into the adjacent chapter instead of clamping.
    */
-  async function turnReaderPage(direction: 'prev' | 'next'): Promise<void> {
+  async function turnReaderPage(direction: ChapterDirection): Promise<void> {
     const mainEl = mainRef.value;
     if (!mainEl) return;
     if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return;
 
-    if (direction === 'next') {
-      if (!isAtBottom(mainEl)) {
-        scrollByPage(mainEl, direction);
-        return;
-      }
-
-      if (!hasNext.value) {
-        showBoundaryEnd('next');
-        return;
-      }
-
-      isNavigating.value = true;
-      let loaded = false;
-      const anchor = captureViewportAnchor(mainEl, direction);
-      try {
-        loaded = await readerStore.loadNextChapter('manual');
-        if (loaded) {
-          await waitForLayout();
-          restoreViewportAnchor(mainEl, anchor);
-          scrollByPage(mainEl, direction);
-        }
-      } finally {
-        if (!loaded) isNavigating.value = false;
-      }
-      return;
-    }
-
-    if (!isAtTop(mainEl)) {
+    const atBoundary = direction === 'next' ? isAtBottom(mainEl) : isAtTop(mainEl);
+    if (!atBoundary) {
       scrollByPage(mainEl, direction);
-      return;
-    }
-
-    if (!hasPrev.value) {
-      showBoundaryEnd('prev');
       return;
     }
 
     isNavigating.value = true;
     let loaded = false;
     try {
-      loaded = await loadPrevWithScrollAdjust();
+      loaded = await loadAtBoundary(mainEl, direction);
       if (loaded) scrollByPage(mainEl, direction);
     } finally {
       if (!loaded) isNavigating.value = false;
@@ -352,24 +285,20 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
 
     if (e.deltaY < 0 && isAtTop(mainEl)) {
       preventBoundaryDefault(e);
-      if (hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-        void loadBoundaryChapter('prev');
-      }
+      if (hasPrev.value) void loadBoundaryChapter('prev');
       return;
     }
 
     if (e.deltaY > 0 && isAtBottom(mainEl)) {
       preventBoundaryDefault(e);
-      if (hasNext.value && !isLoadingNext.value && !isNavigating.value) {
-        void loadBoundaryChapter('next');
-      }
+      if (hasNext.value) void loadBoundaryChapter('next');
     }
   }
 
   /**
    * Navigate to previous or next chapter
    */
-  async function navigateChapter(direction: 'prev' | 'next') {
+  async function navigateChapter(direction: ChapterDirection) {
     const mainEl = mainRef.value;
     if (!mainEl) return;
 
@@ -381,32 +310,30 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
       return;
     }
 
-    if (direction === 'prev') {
-      if (currentIdx > 0) {
-        await jumpToChapter(currentIdx - 1);
-      } else if (hasPrev.value && !isLoadingPrev.value) {
-        const success = await readerStore.loadPrevChapter('manual');
-        if (success) {
-          // Use auto scroll to prevent bounce/race condition with top observer
-          globalThis.requestAnimationFrame(() => jumpToChapter(0, 'auto'));
-        }
-      } else if (!hasPrev.value) {
-        // Show toast when no previous chapter available
-        readerStore.showToast(readerStore.getVipBlockedToast('prev') || '已经是第一章了', 'info');
-      }
-    } else {
-      if (currentIdx < chaptersCount - 1) {
-        await jumpToChapter(currentIdx + 1);
-      } else if (hasNext.value && !isLoadingNext.value) {
-        const success = await readerStore.loadNextChapter('manual');
-        if (success) {
-          globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
-        }
-      } else if (!hasNext.value) {
-        // Show toast when no next chapter available
-        readerStore.showToast(readerStore.getVipBlockedToast('next') || '已经是最后一章了', 'info');
-      }
+    const targetIndex = currentIdx + (direction === 'next' ? 1 : -1);
+    if (targetIndex >= 0 && targetIndex < chaptersCount) {
+      await jumpToChapter(targetIndex);
+      return;
     }
+
+    const available = direction === 'next' ? hasNext.value : hasPrev.value;
+    if (!available) {
+      showBoundaryEnd(direction);
+      return;
+    }
+
+    const loading = direction === 'next' ? isLoadingNext.value : isLoadingPrev.value;
+    if (loading) return;
+
+    const success =
+      direction === 'next'
+        ? await readerStore.loadNextChapter('manual')
+        : await readerStore.loadPrevChapter('manual');
+    if (!success) return;
+
+    const loadedIndex = direction === 'next' ? readerStore.chapters.length - 1 : 0;
+    const behavior = direction === 'next' ? 'smooth' : 'auto';
+    globalThis.requestAnimationFrame(() => void jumpToChapter(loadedIndex, behavior));
   }
 
   /**
@@ -416,6 +343,17 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     const mainEl = mainRef.value;
     if (!mainEl) return;
 
+    if (
+      (direction === 'up' || direction === 'pageup') &&
+      isAtTop(mainEl) &&
+      hasPrev.value &&
+      !isLoadingPrev.value &&
+      !isNavigating.value
+    ) {
+      void navigateChapter('prev');
+      return;
+    }
+
     const step = 150; // slightly more than standard line height
     const pageHeight = mainEl.clientHeight * PAGE_SCROLL_RATIO;
 
@@ -423,28 +361,16 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     let behavior: 'auto' | 'smooth' = 'auto';
 
     switch (direction) {
-      case 'up': {
-        // If already at the very top, load previous chapter
-        if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-          loadPrevWithScrollAdjust(true);
-          return;
-        }
+      case 'up':
         top = -step;
         break;
-      }
       case 'down':
         top = step;
         break;
-      case 'pageup': {
-        // If already at the very top, directly load previous chapter and snap to its title
-        if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-          loadPrevWithScrollAdjust(true);
-          return;
-        }
+      case 'pageup':
         top = -pageHeight;
         behavior = 'smooth';
         break;
-      }
       case 'pagedown':
         top = pageHeight;
         behavior = 'smooth';
@@ -459,7 +385,6 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     jumpToChapter,
     jumpToCachedChapter,
     scrollToChapter,
-    loadPrevWithScrollAdjust,
     loadBoundaryChapter,
     turnReaderPage,
     handleWheel,

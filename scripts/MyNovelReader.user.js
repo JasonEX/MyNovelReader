@@ -20580,19 +20580,7 @@ ul, ol {
 		const { mainRef, chapters, chapterRefs, readerStore, autoHideHeader, showControls, isNavigating, scheduleAutoLoadNext } = options;
 		let lastScrollTop = 0;
 		let lastPositionSaveAt = 0;
-		let pendingAutoLoadCheckFrame = null;
 		let pendingScrollSettleTimer = null;
-		function queuePostLayoutAutoLoadCheck() {
-			if (pendingAutoLoadCheckFrame !== null) return;
-			if (typeof globalThis.requestAnimationFrame !== "function") {
-				scheduleAutoLoadNext("scroll");
-				return;
-			}
-			pendingAutoLoadCheckFrame = globalThis.requestAnimationFrame(() => {
-				pendingAutoLoadCheckFrame = null;
-				scheduleAutoLoadNext("scroll");
-			});
-		}
 		function queueScrollSettledAutoLoadCheck() {
 			if (pendingScrollSettleTimer) clearTimeout(pendingScrollSettleTimer);
 			pendingScrollSettleTimer = setTimeout(() => {
@@ -20669,13 +20657,9 @@ ul, ol {
 				readerStore.updateScroll(scrollableHeight > 0 ? currentScrollTop / scrollableHeight * 100 : 100);
 			}
 			scheduleAutoLoadNext("scroll");
-			queuePostLayoutAutoLoadCheck();
 			queueScrollSettledAutoLoadCheck();
 		}
-		return {
-			handleScroll: throttle(handleScrollCore, SCROLL_THROTTLE_MS),
-			lastScrollTop
-		};
+		return { handleScroll: throttle(handleScrollCore, SCROLL_THROTTLE_MS) };
 	}
 	var INTERSECTION_ROOT_MARGIN_PX = 1600;
 	function isViewportNearBottom(scrollHeight, scrollTop, clientHeight, marginPx = INTERSECTION_ROOT_MARGIN_PX) {
@@ -20984,8 +20968,7 @@ ul, ol {
 		});
 		return {
 			scheduleAutoLoadNext,
-			clearAutoLoadTimer,
-			INTERSECTION_ROOT_MARGIN_PX
+			clearAutoLoadTimer
 		};
 	}
 	var SWIPE_MIN_THRESHOLD_PX = 72;
@@ -20994,6 +20977,9 @@ ul, ol {
 	var SWIPE_MAX_DURATION_MS = 700;
 	var SWIPE_CANCEL_VERTICAL_PX = 28;
 	var SWIPE_AXIS_RATIO = 1.5;
+	var BOUNDARY_PULL_HINT_PX = 12;
+	var BOUNDARY_PULL_TRIGGER_PX = 48;
+	var BOUNDARY_AXIS_RATIO = 1.25;
 	function isTouchEvent(e) {
 		const candidate = e;
 		return Boolean(candidate.touches && candidate.changedTouches);
@@ -21006,59 +20992,101 @@ ul, ol {
 		return Math.min(SWIPE_MAX_THRESHOLD_PX, Math.max(SWIPE_MIN_THRESHOLD_PX, window.innerWidth * SWIPE_VIEWPORT_RATIO));
 	}
 	function useTouchGestures(options) {
-		const { enabled, onSwipeLeft, onSwipeRight } = options;
-		let swipeStart = null;
+		const { swipeEnabled, getBoundaryDirection, onBoundaryPull, onSwipeLeft, onSwipeRight } = options;
+		const boundaryGestureDirection = ref(null);
+		const boundaryGestureReady = ref(false);
+		const boundaryGestureHint = computed(() => {
+			const direction = boundaryGestureDirection.value;
+			if (!direction) return "";
+			if (direction === "next") return boundaryGestureReady.value ? "松手加载下一章" : "继续上滑加载下一章";
+			return boundaryGestureReady.value ? "松手加载上一章" : "继续下滑加载上一章";
+		});
+		let gestureStart = null;
+		function clearBoundaryFeedback() {
+			boundaryGestureDirection.value = null;
+			boundaryGestureReady.value = false;
+		}
+		function clearGesture() {
+			gestureStart = null;
+			clearBoundaryFeedback();
+		}
 		function handleTouchStart(e) {
-			if (!enabled.value) return;
+			clearGesture();
 			if (!isTouchEvent(e)) return;
 			if (e.touches.length !== 1) return;
 			if (isInteractiveElement(e.target)) return;
+			const selection = window.getSelection();
+			if (selection && selection.toString().length > 0) return;
+			const boundaryDirection = onBoundaryPull ? getBoundaryDirection?.() || null : null;
+			const canSwipe = swipeEnabled.value;
+			if (!canSwipe && !boundaryDirection) return;
 			const touch = e.touches[0];
-			swipeStart = {
+			gestureStart = {
+				boundaryDirection,
+				boundaryReady: false,
+				swipeCancelled: false,
+				swipeEnabled: canSwipe,
 				id: touch.identifier,
 				x: touch.clientX,
 				y: touch.clientY,
 				time: Date.now(),
-				threshold: getSwipeThreshold(),
-				cancelled: false
+				threshold: canSwipe ? getSwipeThreshold() : 0
 			};
 		}
 		function handleTouchMove(e) {
-			if (!swipeStart) return;
+			if (!gestureStart) return;
 			if (!isTouchEvent(e)) return;
 			if (e.touches.length !== 1) {
-				swipeStart = null;
+				clearGesture();
 				return;
 			}
-			const touch = Array.from(e.touches).find((t) => t.identifier === swipeStart?.id);
+			const touch = Array.from(e.touches).find((t) => t.identifier === gestureStart?.id);
 			if (!touch) return;
-			const dx = touch.clientX - swipeStart.x;
-			const dy = touch.clientY - swipeStart.y;
-			if (Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX && Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO) swipeStart.cancelled = true;
+			const dx = touch.clientX - gestureStart.x;
+			const dy = touch.clientY - gestureStart.y;
+			if (gestureStart.swipeEnabled && Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX && Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO) gestureStart.swipeCancelled = true;
+			if (!gestureStart.boundaryDirection) return;
+			if (Math.abs(dx) >= BOUNDARY_PULL_HINT_PX && Math.abs(dx) > Math.abs(dy) * BOUNDARY_AXIS_RATIO) {
+				gestureStart.boundaryDirection = null;
+				gestureStart.boundaryReady = false;
+				clearBoundaryFeedback();
+				return;
+			}
+			const pullDistance = gestureStart.boundaryDirection === "next" ? -dy : dy;
+			const showHint = pullDistance >= BOUNDARY_PULL_HINT_PX;
+			gestureStart.boundaryReady = pullDistance >= BOUNDARY_PULL_TRIGGER_PX;
+			boundaryGestureDirection.value = showHint ? gestureStart.boundaryDirection : null;
+			boundaryGestureReady.value = showHint && gestureStart.boundaryReady;
+			if (gestureStart.boundaryReady && e.cancelable) e.preventDefault();
 		}
 		function handleTouchEnd(e) {
-			if (!swipeStart) return;
-			if (!isTouchEvent(e)) return;
-			const start = swipeStart;
-			swipeStart = null;
-			if (start.cancelled) return;
-			if (!enabled.value) return;
+			if (!gestureStart || !isTouchEvent(e)) return false;
+			const start = gestureStart;
+			clearGesture();
+			if (start.boundaryDirection && start.boundaryReady && onBoundaryPull) {
+				onBoundaryPull(start.boundaryDirection);
+				return true;
+			}
+			if (!start.swipeEnabled || start.swipeCancelled || !swipeEnabled.value) return false;
 			const selection = window.getSelection();
-			if (selection && selection.toString().length > 0) return;
+			if (selection && selection.toString().length > 0) return false;
 			const touch = Array.from(e.changedTouches).find((t) => t.identifier === start.id);
-			if (!touch) return;
-			if (Date.now() - start.time > SWIPE_MAX_DURATION_MS) return;
+			if (!touch) return false;
+			if (Date.now() - start.time > SWIPE_MAX_DURATION_MS) return false;
 			const dx = touch.clientX - start.x;
 			const dy = touch.clientY - start.y;
-			if (Math.abs(dx) < start.threshold) return;
-			if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
+			if (Math.abs(dx) < start.threshold) return false;
+			if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return false;
 			if (dx < 0) onSwipeLeft();
 			else onSwipeRight();
+			return false;
 		}
 		function handleTouchCancel() {
-			swipeStart = null;
+			clearGesture();
 		}
 		return {
+			boundaryGestureDirection,
+			boundaryGestureHint,
 			handleTouchStart,
 			handleTouchMove,
 			handleTouchEnd,
@@ -21069,8 +21097,7 @@ ul, ol {
 	var SMOOTH_NAVIGATION_LOCK_MS = 650;
 	var PAGE_SCROLL_RATIO = .9;
 	function useChapterNavigation(options) {
-		const { mainRef, chapters, chapterRefs, readerStore, isNavigating, isLoadingPrev, isLoadingNext, hasPrev, hasNext, onViewportSettled } = options;
-		let isLoadingPrevLocal = false;
+		const { mainRef, chapters, chapterRefs, readerStore, isNavigating, isLoadingPrev, isLoadingNext, hasPrev, hasNext, onPageTurnSettled } = options;
 		function scrollByPage(mainEl, direction) {
 			isNavigating.value = true;
 			mainEl.scrollBy({
@@ -21079,7 +21106,7 @@ ul, ol {
 			});
 			setTimeout(() => {
 				isNavigating.value = false;
-				onViewportSettled();
+				onPageTurnSettled();
 			}, SMOOTH_NAVIGATION_LOCK_MS);
 		}
 		async function waitForLayout() {
@@ -21132,29 +21159,31 @@ ul, ol {
 			const fallback = direction === "next" ? "已经是最后一章了" : "已经是第一章了";
 			readerStore.showToast(readerStore.getVipBlockedToast(direction) || fallback, "info");
 		}
-		async function loadBoundaryChapter(direction) {
-			const mainEl = mainRef.value;
-			if (!mainEl) return false;
-			if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return false;
+		async function loadAtBoundary(mainEl, direction) {
 			if (!(direction === "next" ? hasNext.value : hasPrev.value)) {
 				showBoundaryEnd(direction);
 				return false;
 			}
-			isNavigating.value = true;
 			const anchor = captureViewportAnchor(mainEl, direction);
-			let loaded = false;
 			try {
-				loaded = direction === "next" ? await readerStore.loadNextChapter("manual") : await readerStore.loadPrevChapter("manual");
-				if (!loaded) return false;
+				if (!(direction === "next" ? await readerStore.loadNextChapter("manual") : await readerStore.loadPrevChapter("manual"))) return false;
 				await waitForLayout();
 				restoreViewportAnchor(mainEl, anchor);
 				return true;
 			} catch (error) {
 				console.error(`[MNR] Failed to load ${direction} chapter at reader boundary:`, error);
 				return false;
+			}
+		}
+		async function loadBoundaryChapter(direction) {
+			const mainEl = mainRef.value;
+			if (!mainEl) return false;
+			if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return false;
+			isNavigating.value = true;
+			try {
+				return await loadAtBoundary(mainEl, direction);
 			} finally {
 				isNavigating.value = false;
-				if (loaded) onViewportSettled();
 			}
 		}
 		function scrollToChapter(index) {
@@ -21209,67 +21238,18 @@ ul, ol {
 				isNavigating.value = false;
 			});
 		}
-		async function loadPrevWithScrollAdjust(jumpToStart = false) {
-			const mainEl = mainRef.value;
-			if (!mainEl || isLoadingPrev.value || isLoadingPrevLocal) return false;
-			isLoadingPrevLocal = true;
-			try {
-				const oldScrollTop = mainEl.scrollTop;
-				if (await readerStore.loadPrevChapter("manual")) {
-					await waitForLayout();
-					if (jumpToStart) {
-						await jumpToChapter(0, "auto");
-						return true;
-					}
-					const chapterEls = mainEl.querySelectorAll(".mnr-reader-content");
-					if (chapterEls.length > 0) mainEl.scrollTop = oldScrollTop + chapterEls[0].offsetHeight;
-					return true;
-				}
-				return false;
-			} finally {
-				isLoadingPrevLocal = false;
-			}
-		}
 		async function turnReaderPage(direction) {
 			const mainEl = mainRef.value;
 			if (!mainEl) return;
 			if (isNavigating.value || isLoadingPrev.value || isLoadingNext.value) return;
-			if (direction === "next") {
-				if (!isAtBottom(mainEl)) {
-					scrollByPage(mainEl, direction);
-					return;
-				}
-				if (!hasNext.value) {
-					showBoundaryEnd("next");
-					return;
-				}
-				isNavigating.value = true;
-				let loaded = false;
-				const anchor = captureViewportAnchor(mainEl, direction);
-				try {
-					loaded = await readerStore.loadNextChapter("manual");
-					if (loaded) {
-						await waitForLayout();
-						restoreViewportAnchor(mainEl, anchor);
-						scrollByPage(mainEl, direction);
-					}
-				} finally {
-					if (!loaded) isNavigating.value = false;
-				}
-				return;
-			}
-			if (!isAtTop(mainEl)) {
+			if (!(direction === "next" ? isAtBottom(mainEl) : isAtTop(mainEl))) {
 				scrollByPage(mainEl, direction);
-				return;
-			}
-			if (!hasPrev.value) {
-				showBoundaryEnd("prev");
 				return;
 			}
 			isNavigating.value = true;
 			let loaded = false;
 			try {
-				loaded = await loadPrevWithScrollAdjust();
+				loaded = await loadAtBoundary(mainEl, direction);
 				if (loaded) scrollByPage(mainEl, direction);
 			} finally {
 				if (!loaded) isNavigating.value = false;
@@ -21280,12 +21260,12 @@ ul, ol {
 			if (!mainEl) return;
 			if (e.deltaY < 0 && isAtTop(mainEl)) {
 				preventBoundaryDefault(e);
-				if (hasPrev.value && !isLoadingPrev.value && !isNavigating.value) loadBoundaryChapter("prev");
+				if (hasPrev.value) loadBoundaryChapter("prev");
 				return;
 			}
 			if (e.deltaY > 0 && isAtBottom(mainEl)) {
 				preventBoundaryDefault(e);
-				if (hasNext.value && !isLoadingNext.value && !isNavigating.value) loadBoundaryChapter("next");
+				if (hasNext.value) loadBoundaryChapter("next");
 			}
 		}
 		async function navigateChapter(direction) {
@@ -21293,39 +21273,40 @@ ul, ol {
 			const currentIdx = readerStore.currentChapterIndex;
 			const chaptersCount = readerStore.chapters.length;
 			if (isNavigating.value) return;
-			if (direction === "prev") {
-				if (currentIdx > 0) await jumpToChapter(currentIdx - 1);
-				else if (hasPrev.value && !isLoadingPrev.value) {
-					if (await readerStore.loadPrevChapter("manual")) globalThis.requestAnimationFrame(() => jumpToChapter(0, "auto"));
-				} else if (!hasPrev.value) readerStore.showToast(readerStore.getVipBlockedToast("prev") || "已经是第一章了", "info");
-			} else if (currentIdx < chaptersCount - 1) await jumpToChapter(currentIdx + 1);
-			else if (hasNext.value && !isLoadingNext.value) {
-				if (await readerStore.loadNextChapter("manual")) globalThis.requestAnimationFrame(() => jumpToChapter(readerStore.chapters.length - 1));
-			} else if (!hasNext.value) readerStore.showToast(readerStore.getVipBlockedToast("next") || "已经是最后一章了", "info");
+			const targetIndex = currentIdx + (direction === "next" ? 1 : -1);
+			if (targetIndex >= 0 && targetIndex < chaptersCount) {
+				await jumpToChapter(targetIndex);
+				return;
+			}
+			if (!(direction === "next" ? hasNext.value : hasPrev.value)) {
+				showBoundaryEnd(direction);
+				return;
+			}
+			if (direction === "next" ? isLoadingNext.value : isLoadingPrev.value) return;
+			if (!(direction === "next" ? await readerStore.loadNextChapter("manual") : await readerStore.loadPrevChapter("manual"))) return;
+			const loadedIndex = direction === "next" ? readerStore.chapters.length - 1 : 0;
+			const behavior = direction === "next" ? "smooth" : "auto";
+			globalThis.requestAnimationFrame(() => void jumpToChapter(loadedIndex, behavior));
 		}
 		function scrollReader(direction) {
 			const mainEl = mainRef.value;
 			if (!mainEl) return;
+			if ((direction === "up" || direction === "pageup") && isAtTop(mainEl) && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
+				navigateChapter("prev");
+				return;
+			}
 			const step = 150;
 			const pageHeight = mainEl.clientHeight * PAGE_SCROLL_RATIO;
 			let top = 0;
 			let behavior = "auto";
 			switch (direction) {
 				case "up":
-					if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-						loadPrevWithScrollAdjust(true);
-						return;
-					}
 					top = -150;
 					break;
 				case "down":
 					top = step;
 					break;
 				case "pageup":
-					if (mainEl.scrollTop <= 4 && hasPrev.value && !isLoadingPrev.value && !isNavigating.value) {
-						loadPrevWithScrollAdjust(true);
-						return;
-					}
 					top = -pageHeight;
 					behavior = "smooth";
 					break;
@@ -21344,7 +21325,6 @@ ul, ol {
 			jumpToChapter,
 			jumpToCachedChapter,
 			scrollToChapter,
-			loadPrevWithScrollAdjust,
 			loadBoundaryChapter,
 			turnReaderPage,
 			handleWheel,
@@ -22296,9 +22276,6 @@ ul, ol {
 	var _hoisted_8 = { class: "mnr-chapter-nav" };
 	var _hoisted_9 = ["href"];
 	var SCROLL_BOUNDARY_EPSILON_PX = 4;
-	var BOUNDARY_PULL_HINT_PX = 12;
-	var BOUNDARY_PULL_TRIGGER_PX = 48;
-	var BOUNDARY_AXIS_RATIO = 1.25;
 	var ReaderView_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "ReaderView",
 		props: { siteAutoEnable: {
@@ -22317,7 +22294,6 @@ ul, ol {
 			const readerStore = useReaderStore();
 			const configStore = useConfigStore();
 			const mainRef = ref(null);
-			const topSentinel = ref(null);
 			const bottomSentinel = ref(null);
 			const isNavigating = ref(false);
 			const showControls = ref(true);
@@ -22327,7 +22303,6 @@ ul, ol {
 				readerStore,
 				showControls
 			});
-			let topObserver = null;
 			let bottomObserver = null;
 			const chapters = computed(() => readerStore.chapters);
 			const bookTitle = computed(() => readerStore.bookTitle);
@@ -22378,102 +22353,30 @@ ul, ol {
 				isLoadingNext,
 				hasPrev,
 				hasNext,
-				onViewportSettled: handleScroll
+				onPageTurnSettled: handleScroll
 			});
-			const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
-				enabled: computed(() => configStore.behavior.swipeGestures && !hasOpenPanel.value && !isLoading.value && !isLoadingPrev.value && !isLoadingNext.value && !isNavigating.value),
+			const gesturesIdle = computed(() => !hasOpenPanel.value && !isLoading.value && !isLoadingPrev.value && !isLoadingNext.value && !isNavigating.value);
+			const { boundaryGestureDirection, boundaryGestureHint, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
+				swipeEnabled: computed(() => configStore.behavior.swipeGestures && gesturesIdle.value),
+				getBoundaryDirection,
+				onBoundaryPull: (direction) => void loadBoundaryChapter(direction),
 				onSwipeLeft: () => void turnReaderPage("next"),
 				onSwipeRight: () => void turnReaderPage("prev")
 			});
-			const boundaryGestureHint = ref("");
-			const boundaryGestureDirection = ref(null);
-			let boundaryPull = null;
 			function shieldEvent(event) {
 				event.stopPropagation();
 			}
-			function isSingleTouchEvent(event) {
-				const candidate = event;
-				return Boolean(candidate.touches && candidate.touches.length === 1);
-			}
-			function isAtTop(mainEl) {
-				return mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX;
-			}
-			function isAtBottom(mainEl) {
-				return mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= SCROLL_BOUNDARY_EPSILON_PX;
-			}
-			function preventIfCancelable(event) {
-				if (event.cancelable === false) return;
-				event.preventDefault();
-			}
-			function clearBoundaryPull() {
-				boundaryPull = null;
-				boundaryGestureHint.value = "";
-				boundaryGestureDirection.value = null;
-			}
-			function isGestureBlocked(event) {
-				if (hasOpenPanel.value || isLoading.value || isLoadingPrev.value || isLoadingNext.value || isNavigating.value) return true;
-				const selection = window.getSelection();
-				if (selection && selection.toString().length > 0) return true;
-				if (!(event.target instanceof Element)) return false;
-				return Boolean(event.target.closest("a, button, input, textarea, select, label, summary, [contenteditable], [role=\"button\"]"));
-			}
-			function handleReaderTouchStart(event) {
-				clearBoundaryPull();
+			function getBoundaryDirection() {
 				const mainEl = mainRef.value;
-				if (mainEl && isSingleTouchEvent(event) && !isGestureBlocked(event)) {
-					const direction = isAtBottom(mainEl) && hasNext.value ? "next" : isAtTop(mainEl) && hasPrev.value ? "prev" : null;
-					if (direction) {
-						const touch = event.touches[0];
-						boundaryPull = {
-							id: touch.identifier,
-							startX: touch.clientX,
-							startY: touch.clientY,
-							direction,
-							ready: false
-						};
-					}
-				}
-				handleTouchStart(event);
-			}
-			function guardTouchBoundary(event) {
-				if (!boundaryPull || !isSingleTouchEvent(event)) return;
-				const touch = Array.from(event.touches).find((point) => point.identifier === boundaryPull?.id);
-				if (!touch) return;
-				const deltaX = touch.clientX - boundaryPull.startX;
-				const deltaY = touch.clientY - boundaryPull.startY;
-				if (Math.abs(deltaX) >= BOUNDARY_PULL_HINT_PX && Math.abs(deltaX) > Math.abs(deltaY) * BOUNDARY_AXIS_RATIO) {
-					clearBoundaryPull();
-					return;
-				}
-				const pullDistance = boundaryPull.direction === "next" ? -deltaY : deltaY;
-				if (pullDistance < BOUNDARY_PULL_HINT_PX) {
-					boundaryPull.ready = false;
-					boundaryGestureHint.value = "";
-					boundaryGestureDirection.value = null;
-					return;
-				}
-				boundaryPull.ready = pullDistance >= BOUNDARY_PULL_TRIGGER_PX;
-				boundaryGestureDirection.value = boundaryPull.direction;
-				if (boundaryPull.direction === "next") boundaryGestureHint.value = boundaryPull.ready ? "松手加载下一章" : "继续上滑加载下一章";
-				else boundaryGestureHint.value = boundaryPull.ready ? "松手加载上一章" : "继续下滑加载上一章";
-				if (boundaryPull.ready) preventIfCancelable(event);
-			}
-			function handleReaderTouchMove(event) {
-				handleTouchMove(event);
-				guardTouchBoundary(event);
+				if (!mainEl || !gesturesIdle.value) return null;
+				if (mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= SCROLL_BOUNDARY_EPSILON_PX && hasNext.value) return "next";
+				if (mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX && hasPrev.value) return "prev";
+				return null;
 			}
 			function handleReaderTouchEnd(event) {
-				const boundaryDirection = boundaryPull?.ready ? boundaryPull.direction : null;
-				clearBoundaryPull();
-				handleTouchEnd(event);
-				if (boundaryDirection) {
-					loadBoundaryChapter(boundaryDirection);
-					return;
-				}
-				scheduleAutoLoadNext("settled");
+				if (!handleTouchEnd(event)) scheduleAutoLoadNext("settled");
 			}
 			function handleReaderTouchCancel() {
-				clearBoundaryPull();
 				handleTouchCancel();
 				scheduleAutoLoadNext("settled");
 			}
@@ -22634,8 +22537,8 @@ ul, ol {
 				if (mainRef.value) {
 					mainRef.value.addEventListener("scroll", handleScroll, { passive: true });
 					mainRef.value.addEventListener("wheel", handleWheel, { passive: false });
-					mainRef.value.addEventListener("touchstart", handleReaderTouchStart, { passive: true });
-					mainRef.value.addEventListener("touchmove", handleReaderTouchMove, { passive: false });
+					mainRef.value.addEventListener("touchstart", handleTouchStart, { passive: true });
+					mainRef.value.addEventListener("touchmove", handleTouchMove, { passive: false });
 					mainRef.value.addEventListener("touchend", handleReaderTouchEnd, { passive: true });
 					mainRef.value.addEventListener("touchcancel", handleReaderTouchCancel, { passive: true });
 				}
@@ -22650,9 +22553,7 @@ ul, ol {
 					if (!entries[0]?.isIntersecting) return;
 					scheduleAutoLoadNext("sentinel");
 				}, observerOptions);
-				topObserver = new globalThis.IntersectionObserver(() => {}, observerOptions);
 				if (bottomSentinel.value) bottomObserver.observe(bottomSentinel.value);
-				if (topSentinel.value) topObserver.observe(topSentinel.value);
 				await nextTick();
 				await restoreReadingPosition();
 				mainRef.value?.focus();
@@ -22665,14 +22566,12 @@ ul, ol {
 				if (mainRef.value) {
 					mainRef.value.removeEventListener("scroll", handleScroll);
 					mainRef.value.removeEventListener("wheel", handleWheel);
-					mainRef.value.removeEventListener("touchstart", handleReaderTouchStart);
-					mainRef.value.removeEventListener("touchmove", handleReaderTouchMove);
+					mainRef.value.removeEventListener("touchstart", handleTouchStart);
+					mainRef.value.removeEventListener("touchmove", handleTouchMove);
 					mainRef.value.removeEventListener("touchend", handleReaderTouchEnd);
 					mainRef.value.removeEventListener("touchcancel", handleReaderTouchCancel);
 				}
-				topObserver?.disconnect();
 				bottomObserver?.disconnect();
-				topObserver = null;
 				bottomObserver = null;
 				chapterRefs.clear();
 			});
@@ -22695,12 +22594,12 @@ ul, ol {
 						percent: scrollPercent.value,
 						"auto-hide": true
 					}, null, 8, ["percent"])) : createCommentVNode("", true),
-					boundaryGestureHint.value ? (openBlock(), createElementBlock("div", {
+					unref(boundaryGestureHint) ? (openBlock(), createElementBlock("div", {
 						key: 1,
-						class: normalizeClass(["mnr-boundary-gesture-hint", `is-${boundaryGestureDirection.value}`]),
+						class: normalizeClass(["mnr-boundary-gesture-hint", `is-${unref(boundaryGestureDirection)}`]),
 						role: "status",
 						"aria-live": "polite"
-					}, toDisplayString(boundaryGestureHint.value), 3)) : createCommentVNode("", true),
+					}, toDisplayString(unref(boundaryGestureHint)), 3)) : createCommentVNode("", true),
 					createVNode(FloatingToolbar_default, {
 						visible: showControls.value,
 						onToggleDrawer: unref(toggleDrawer),
@@ -22738,11 +22637,6 @@ ul, ol {
 						tabindex: "-1",
 						inert: unref(hasOpenPanel)
 					}, [
-						createBaseVNode("div", {
-							ref_key: "topSentinel",
-							ref: topSentinel,
-							class: "mnr-sentinel"
-						}, null, 512),
 						isLoadingPrev.value ? (openBlock(), createElementBlock("div", _hoisted_2, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[3] || (_cache[3] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
 						(openBlock(true), createElementBlock(Fragment, null, renderList(chapters.value, (entry) => {
 							return openBlock(), createElementBlock("article", {
@@ -22799,7 +22693,7 @@ ul, ol {
 				], 32);
 			};
 		}
-	}), [["__scopeId", "data-v-e80afdfa"]]);
+	}), [["__scopeId", "data-v-87afe1cf"]]);
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -23219,6 +23113,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-reader-entry[data-v-e6dad6e3]{right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));z-index:2147483646;background:var(--mnr-link,#1976d2);min-width:48px;height:48px;color:var(--mnr-on-link,#fff);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;border-radius:24px;justify-content:center;align-items:center;gap:8px;margin:0;padding:0 16px;font-size:14px;font-weight:600;line-height:1;transition:transform .18s,filter .18s,box-shadow .18s;animation:.2s ease-out mnr-entry-in-e6dad6e3;display:flex;position:fixed;box-shadow:0 6px 18px #0003}.mnr-reader-entry svg[data-v-e6dad6e3]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:0 0 24px;width:24px;height:24px}.mnr-reader-entry span[data-v-e6dad6e3]{white-space:nowrap}.mnr-reader-entry[data-v-e6dad6e3]:active{transform:scale(.96)}.mnr-reader-entry[data-v-e6dad6e3]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 48%, #fff);outline-offset:3px}@media (hover:hover){.mnr-reader-entry[data-v-e6dad6e3]:hover{filter:brightness(.94);transform:translateY(-2px);box-shadow:0 8px 22px #0000003d}}@media (width<=480px){.mnr-reader-entry[data-v-e6dad6e3]{width:48px;padding:0}.mnr-reader-entry span[data-v-e6dad6e3]{display:none}}@keyframes mnr-entry-in-e6dad6e3{0%{opacity:0;transform:translateY(8px)scale(.96)}}@media (prefers-reduced-motion:reduce){.mnr-reader-entry[data-v-e6dad6e3]{transition:none;animation:none}}.mnr-entry-prompt-overlay[data-v-2c14cbfa]{z-index:2147483647;padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));background:#00000085;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.mnr-entry-prompt-card[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:var(--mnr-bg,#fff);width:min(100%,400px);max-height:calc(100dvh - 32px);color:var(--mnr-text,#333);border-radius:14px;padding:24px;animation:.24s ease-out mnr-entry-prompt-in-2c14cbfa;overflow:auto;box-shadow:0 18px 50px #00000047}.mnr-entry-prompt-header[data-v-2c14cbfa]{align-items:flex-start;gap:14px;display:flex}.mnr-entry-prompt-icon[data-v-2c14cbfa]{background:color-mix(in srgb, var(--mnr-link,#1976d2) 12%, transparent);width:44px;height:44px;color:var(--mnr-link,#1976d2);border-radius:12px;flex:0 0 44px;place-items:center;display:grid}.mnr-entry-prompt-icon svg[data-v-2c14cbfa]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:26px;height:26px}.mnr-entry-prompt-header h3[data-v-2c14cbfa]{margin:1px 0 6px;font-size:18px;font-weight:700;line-height:1.4}.mnr-entry-prompt-header p[data-v-2c14cbfa]{opacity:.76;margin:0;font-size:14px;line-height:1.65}.mnr-entry-preference[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:color-mix(in srgb, var(--mnr-border,#e0e0e0) 34%, transparent);cursor:pointer;border-radius:10px;align-items:flex-start;gap:10px;margin:22px 0;padding:13px 14px;display:flex}.mnr-entry-preference input[data-v-2c14cbfa]{width:20px;height:20px;accent-color:var(--mnr-link,#1976d2);flex:0 0 20px;margin:1px 0 0}.mnr-entry-preference span[data-v-2c14cbfa],.mnr-entry-preference strong[data-v-2c14cbfa],.mnr-entry-preference small[data-v-2c14cbfa]{display:block}.mnr-entry-preference strong[data-v-2c14cbfa]{font-size:14px;font-weight:600}.mnr-entry-preference small[data-v-2c14cbfa]{opacity:.68;margin-top:3px;font-size:12px;line-height:1.5}.mnr-entry-prompt-actions[data-v-2c14cbfa]{grid-template-columns:1fr 1.25fr;gap:10px;display:grid}.mnr-entry-button[data-v-2c14cbfa]{cursor:pointer;border:1px solid #0000;border-radius:9px;min-height:44px;padding:10px 14px;font-size:14px;font-weight:600;transition:filter .18s,background .18s}.mnr-entry-button.secondary[data-v-2c14cbfa]{border-color:var(--mnr-border,#ddd);color:var(--mnr-text,#555);background:0 0}.mnr-entry-button.primary[data-v-2c14cbfa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-entry-button[data-v-2c14cbfa]:focus-visible,.mnr-entry-preference input[data-v-2c14cbfa]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}@media (hover:hover){.mnr-entry-button[data-v-2c14cbfa]:hover{filter:brightness(.94)}.mnr-entry-button.secondary[data-v-2c14cbfa]:hover{background:var(--mnr-border,#f0f0f0)}}.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:opacity .24s}.mnr-entry-prompt-fade-enter-from[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-to[data-v-2c14cbfa]{opacity:0}@keyframes mnr-entry-prompt-in-2c14cbfa{0%{opacity:0;transform:translateY(12px)scale(.98)}}@media (width<=480px){.mnr-entry-prompt-card[data-v-2c14cbfa]{padding:20px}.mnr-entry-prompt-header[data-v-2c14cbfa]{gap:12px}.mnr-entry-prompt-icon[data-v-2c14cbfa]{flex-basis:40px;width:40px;height:40px}}@media (prefers-reduced-motion:reduce){.mnr-entry-prompt-card[data-v-2c14cbfa],.mnr-entry-button[data-v-2c14cbfa],.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-aeddb985]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-aeddb985]{transform:translate(0)}.mnr-drawer-overlay[data-v-aeddb985]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-aeddb985]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-aeddb985]{min-width:0}.mnr-drawer-title[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-aeddb985]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-aeddb985]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-offline-section[data-v-aeddb985]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;padding:10px 12px 12px}.mnr-offline-main[data-v-aeddb985]{justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-offline-copy[data-v-aeddb985]{min-width:0}.mnr-offline-copy strong[data-v-aeddb985],.mnr-offline-copy span[data-v-aeddb985]{display:block}.mnr-offline-copy strong[data-v-aeddb985]{font-size:13px;font-weight:600}.mnr-offline-copy span[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.7;margin-top:2px;font-size:12px}.mnr-offline-action[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);min-height:36px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600}.mnr-offline-action.primary[data-v-aeddb985]{border-color:var(--mnr-link,#1976d2);background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);flex:none}.mnr-offline-action.danger[data-v-aeddb985]{color:var(--mnr-text,#555)}.mnr-offline-secondary[data-v-aeddb985]{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.mnr-drawer-state[data-v-aeddb985]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-aeddb985]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-aeddb985]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;margin-top:10px;overflow:hidden}.mnr-cache-progress-fill[data-v-aeddb985]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-chapter-list[data-v-aeddb985]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-aeddb985]{height:44px}.mnr-chapter-button[data-v-aeddb985]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-aeddb985]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.persisted[data-v-aeddb985],.mnr-cache-mark[data-v-aeddb985]{color:#388e3c}.mnr-cache-mark[data-v-aeddb985]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-aeddb985]:hover,.mnr-chapter-button[data-v-aeddb985]:hover,.mnr-offline-action[data-v-aeddb985]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-offline-action.primary[data-v-aeddb985]:hover{background:var(--mnr-link,#1976d2);filter:brightness(.94)}.mnr-drawer-close[data-v-aeddb985]:focus-visible,.mnr-drawer-search input[data-v-aeddb985]:focus-visible,.mnr-offline-action[data-v-aeddb985]:focus-visible,.mnr-chapter-button[data-v-aeddb985]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-aeddb985]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985]{transition:opacity .24s}.mnr-fade-enter-from[data-v-aeddb985],.mnr-fade-leave-to[data-v-aeddb985]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-aeddb985],.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985],.mnr-cache-progress-fill[data-v-aeddb985]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-32011bf9]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-32011bf9]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-32011bf9]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-32011bf9],.mnr-settings-section h4[data-v-32011bf9],.mnr-field-label[data-v-32011bf9]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-32011bf9]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-32011bf9]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-32011bf9]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-32011bf9]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-32011bf9],.mnr-field-label[data-v-32011bf9],.mnr-settings-fieldset legend[data-v-32011bf9]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-32011bf9]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-32011bf9]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-32011bf9]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-32011bf9]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-32011bf9]{margin-top:18px}.mnr-select[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-32011bf9]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-32011bf9]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-32011bf9]:last-child{border-right:0}.mnr-segment.active[data-v-32011bf9]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-32011bf9]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-32011bf9]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-32011bf9]{padding-bottom:4px}.mnr-settings-group-content[data-v-32011bf9]>:first-child{margin-top:0}.mnr-switch-row[data-v-32011bf9]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-32011bf9]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-32011bf9]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-settings-footer[data-v-32011bf9]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-32011bf9]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-32011bf9]:hover,.mnr-secondary-action[data-v-32011bf9]:hover,.mnr-segment[data-v-32011bf9]:hover,.mnr-exit-btn[data-v-32011bf9]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-32011bf9]:focus-visible,.mnr-close-btn[data-v-32011bf9]:focus-visible,.mnr-theme-btn[data-v-32011bf9]:focus-visible,.mnr-select[data-v-32011bf9]:focus-visible,.mnr-segment[data-v-32011bf9]:focus-visible,.mnr-secondary-action[data-v-32011bf9]:focus-visible,.mnr-settings-group summary[data-v-32011bf9]:focus-visible,.mnr-switch-row input[data-v-32011bf9]:focus-visible,.mnr-custom-css[data-v-32011bf9]:focus-visible,.mnr-exit-btn[data-v-32011bf9]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-32011bf9],.mnr-slide-leave-active[data-v-32011bf9],.mnr-settings-panel[data-v-32011bf9]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-32011bf9],.mnr-slide-leave-to[data-v-32011bf9]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-32011bf9],.mnr-slide-leave-to .mnr-settings-panel[data-v-32011bf9]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-32011bf9]{width:100%}.mnr-reading-preview[data-v-32011bf9]{display:block}.mnr-desktop-width[data-v-32011bf9]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-32011bf9],.mnr-slide-leave-active[data-v-32011bf9],.mnr-settings-panel[data-v-32011bf9]{transition:none}}.mnr-reader[data-v-e80afdfa]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-e80afdfa]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;touch-action:pan-y pinch-zoom;flex:1;overflow:auto}.mnr-boundary-gesture-hint[data-v-e80afdfa]{z-index:4;background:color-mix(in srgb, var(--mnr-text,#1a1a1a) 86%, transparent);max-width:calc(100vw - 32px);color:var(--mnr-bg,#fff);white-space:nowrap;pointer-events:none;border-radius:999px;padding:8px 14px;font-size:14px;line-height:1.4;position:fixed;left:50%;transform:translate(-50%)}.mnr-boundary-gesture-hint.is-prev[data-v-e80afdfa]{top:max(16px, env(safe-area-inset-top))}.mnr-boundary-gesture-hint.is-next[data-v-e80afdfa]{bottom:max(16px, env(safe-area-inset-bottom))}.mnr-reader-content[data-v-e80afdfa]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-e80afdfa] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-e80afdfa] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-e80afdfa] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-e80afdfa]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-e80afdfa]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-e80afdfa]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-e80afdfa]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-e80afdfa]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-e80afdfa]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-e80afdfa]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-e80afdfa]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-e80afdfa],.mnr-loading-next[data-v-e80afdfa]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-e80afdfa]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-e80afdfa]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-e80afdfa]{transition:none}}\n/*$vite$:1*/", {});
+		})(".mnr-reader-entry[data-v-e6dad6e3]{right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));z-index:2147483646;background:var(--mnr-link,#1976d2);min-width:48px;height:48px;color:var(--mnr-on-link,#fff);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;border-radius:24px;justify-content:center;align-items:center;gap:8px;margin:0;padding:0 16px;font-size:14px;font-weight:600;line-height:1;transition:transform .18s,filter .18s,box-shadow .18s;animation:.2s ease-out mnr-entry-in-e6dad6e3;display:flex;position:fixed;box-shadow:0 6px 18px #0003}.mnr-reader-entry svg[data-v-e6dad6e3]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:0 0 24px;width:24px;height:24px}.mnr-reader-entry span[data-v-e6dad6e3]{white-space:nowrap}.mnr-reader-entry[data-v-e6dad6e3]:active{transform:scale(.96)}.mnr-reader-entry[data-v-e6dad6e3]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 48%, #fff);outline-offset:3px}@media (hover:hover){.mnr-reader-entry[data-v-e6dad6e3]:hover{filter:brightness(.94);transform:translateY(-2px);box-shadow:0 8px 22px #0000003d}}@media (width<=480px){.mnr-reader-entry[data-v-e6dad6e3]{width:48px;padding:0}.mnr-reader-entry span[data-v-e6dad6e3]{display:none}}@keyframes mnr-entry-in-e6dad6e3{0%{opacity:0;transform:translateY(8px)scale(.96)}}@media (prefers-reduced-motion:reduce){.mnr-reader-entry[data-v-e6dad6e3]{transition:none;animation:none}}.mnr-entry-prompt-overlay[data-v-2c14cbfa]{z-index:2147483647;padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));background:#00000085;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.mnr-entry-prompt-card[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:var(--mnr-bg,#fff);width:min(100%,400px);max-height:calc(100dvh - 32px);color:var(--mnr-text,#333);border-radius:14px;padding:24px;animation:.24s ease-out mnr-entry-prompt-in-2c14cbfa;overflow:auto;box-shadow:0 18px 50px #00000047}.mnr-entry-prompt-header[data-v-2c14cbfa]{align-items:flex-start;gap:14px;display:flex}.mnr-entry-prompt-icon[data-v-2c14cbfa]{background:color-mix(in srgb, var(--mnr-link,#1976d2) 12%, transparent);width:44px;height:44px;color:var(--mnr-link,#1976d2);border-radius:12px;flex:0 0 44px;place-items:center;display:grid}.mnr-entry-prompt-icon svg[data-v-2c14cbfa]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:26px;height:26px}.mnr-entry-prompt-header h3[data-v-2c14cbfa]{margin:1px 0 6px;font-size:18px;font-weight:700;line-height:1.4}.mnr-entry-prompt-header p[data-v-2c14cbfa]{opacity:.76;margin:0;font-size:14px;line-height:1.65}.mnr-entry-preference[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:color-mix(in srgb, var(--mnr-border,#e0e0e0) 34%, transparent);cursor:pointer;border-radius:10px;align-items:flex-start;gap:10px;margin:22px 0;padding:13px 14px;display:flex}.mnr-entry-preference input[data-v-2c14cbfa]{width:20px;height:20px;accent-color:var(--mnr-link,#1976d2);flex:0 0 20px;margin:1px 0 0}.mnr-entry-preference span[data-v-2c14cbfa],.mnr-entry-preference strong[data-v-2c14cbfa],.mnr-entry-preference small[data-v-2c14cbfa]{display:block}.mnr-entry-preference strong[data-v-2c14cbfa]{font-size:14px;font-weight:600}.mnr-entry-preference small[data-v-2c14cbfa]{opacity:.68;margin-top:3px;font-size:12px;line-height:1.5}.mnr-entry-prompt-actions[data-v-2c14cbfa]{grid-template-columns:1fr 1.25fr;gap:10px;display:grid}.mnr-entry-button[data-v-2c14cbfa]{cursor:pointer;border:1px solid #0000;border-radius:9px;min-height:44px;padding:10px 14px;font-size:14px;font-weight:600;transition:filter .18s,background .18s}.mnr-entry-button.secondary[data-v-2c14cbfa]{border-color:var(--mnr-border,#ddd);color:var(--mnr-text,#555);background:0 0}.mnr-entry-button.primary[data-v-2c14cbfa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-entry-button[data-v-2c14cbfa]:focus-visible,.mnr-entry-preference input[data-v-2c14cbfa]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}@media (hover:hover){.mnr-entry-button[data-v-2c14cbfa]:hover{filter:brightness(.94)}.mnr-entry-button.secondary[data-v-2c14cbfa]:hover{background:var(--mnr-border,#f0f0f0)}}.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:opacity .24s}.mnr-entry-prompt-fade-enter-from[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-to[data-v-2c14cbfa]{opacity:0}@keyframes mnr-entry-prompt-in-2c14cbfa{0%{opacity:0;transform:translateY(12px)scale(.98)}}@media (width<=480px){.mnr-entry-prompt-card[data-v-2c14cbfa]{padding:20px}.mnr-entry-prompt-header[data-v-2c14cbfa]{gap:12px}.mnr-entry-prompt-icon[data-v-2c14cbfa]{flex-basis:40px;width:40px;height:40px}}@media (prefers-reduced-motion:reduce){.mnr-entry-prompt-card[data-v-2c14cbfa],.mnr-entry-button[data-v-2c14cbfa],.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-aeddb985]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-aeddb985]{transform:translate(0)}.mnr-drawer-overlay[data-v-aeddb985]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-aeddb985]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-aeddb985]{min-width:0}.mnr-drawer-title[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-aeddb985]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-aeddb985]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-offline-section[data-v-aeddb985]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;padding:10px 12px 12px}.mnr-offline-main[data-v-aeddb985]{justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-offline-copy[data-v-aeddb985]{min-width:0}.mnr-offline-copy strong[data-v-aeddb985],.mnr-offline-copy span[data-v-aeddb985]{display:block}.mnr-offline-copy strong[data-v-aeddb985]{font-size:13px;font-weight:600}.mnr-offline-copy span[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.7;margin-top:2px;font-size:12px}.mnr-offline-action[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);min-height:36px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600}.mnr-offline-action.primary[data-v-aeddb985]{border-color:var(--mnr-link,#1976d2);background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);flex:none}.mnr-offline-action.danger[data-v-aeddb985]{color:var(--mnr-text,#555)}.mnr-offline-secondary[data-v-aeddb985]{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.mnr-drawer-state[data-v-aeddb985]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-aeddb985]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-aeddb985]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;margin-top:10px;overflow:hidden}.mnr-cache-progress-fill[data-v-aeddb985]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-chapter-list[data-v-aeddb985]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-aeddb985]{height:44px}.mnr-chapter-button[data-v-aeddb985]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-aeddb985]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.persisted[data-v-aeddb985],.mnr-cache-mark[data-v-aeddb985]{color:#388e3c}.mnr-cache-mark[data-v-aeddb985]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-aeddb985]:hover,.mnr-chapter-button[data-v-aeddb985]:hover,.mnr-offline-action[data-v-aeddb985]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-offline-action.primary[data-v-aeddb985]:hover{background:var(--mnr-link,#1976d2);filter:brightness(.94)}.mnr-drawer-close[data-v-aeddb985]:focus-visible,.mnr-drawer-search input[data-v-aeddb985]:focus-visible,.mnr-offline-action[data-v-aeddb985]:focus-visible,.mnr-chapter-button[data-v-aeddb985]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-aeddb985]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985]{transition:opacity .24s}.mnr-fade-enter-from[data-v-aeddb985],.mnr-fade-leave-to[data-v-aeddb985]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-aeddb985],.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985],.mnr-cache-progress-fill[data-v-aeddb985]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-32011bf9]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-32011bf9]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-32011bf9]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-32011bf9],.mnr-settings-section h4[data-v-32011bf9],.mnr-field-label[data-v-32011bf9]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-32011bf9]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-32011bf9]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-32011bf9]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-32011bf9]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-32011bf9],.mnr-field-label[data-v-32011bf9],.mnr-settings-fieldset legend[data-v-32011bf9]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-32011bf9]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-32011bf9]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-32011bf9]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-32011bf9]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-32011bf9]{margin-top:18px}.mnr-select[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-32011bf9]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-32011bf9]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-32011bf9]:last-child{border-right:0}.mnr-segment.active[data-v-32011bf9]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-32011bf9]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-32011bf9]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-32011bf9]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-32011bf9]{padding-bottom:4px}.mnr-settings-group-content[data-v-32011bf9]>:first-child{margin-top:0}.mnr-switch-row[data-v-32011bf9]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-32011bf9]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-32011bf9]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-settings-footer[data-v-32011bf9]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-32011bf9]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-32011bf9]:hover,.mnr-secondary-action[data-v-32011bf9]:hover,.mnr-segment[data-v-32011bf9]:hover,.mnr-exit-btn[data-v-32011bf9]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-32011bf9]:focus-visible,.mnr-close-btn[data-v-32011bf9]:focus-visible,.mnr-theme-btn[data-v-32011bf9]:focus-visible,.mnr-select[data-v-32011bf9]:focus-visible,.mnr-segment[data-v-32011bf9]:focus-visible,.mnr-secondary-action[data-v-32011bf9]:focus-visible,.mnr-settings-group summary[data-v-32011bf9]:focus-visible,.mnr-switch-row input[data-v-32011bf9]:focus-visible,.mnr-custom-css[data-v-32011bf9]:focus-visible,.mnr-exit-btn[data-v-32011bf9]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-32011bf9],.mnr-slide-leave-active[data-v-32011bf9],.mnr-settings-panel[data-v-32011bf9]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-32011bf9],.mnr-slide-leave-to[data-v-32011bf9]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-32011bf9],.mnr-slide-leave-to .mnr-settings-panel[data-v-32011bf9]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-32011bf9]{width:100%}.mnr-reading-preview[data-v-32011bf9]{display:block}.mnr-desktop-width[data-v-32011bf9]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-32011bf9],.mnr-slide-leave-active[data-v-32011bf9],.mnr-settings-panel[data-v-32011bf9]{transition:none}}.mnr-reader[data-v-87afe1cf]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-87afe1cf]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;touch-action:pan-y pinch-zoom;flex:1;overflow:auto}.mnr-boundary-gesture-hint[data-v-87afe1cf]{z-index:4;background:color-mix(in srgb, var(--mnr-text,#1a1a1a) 86%, transparent);max-width:calc(100vw - 32px);color:var(--mnr-bg,#fff);white-space:nowrap;pointer-events:none;border-radius:999px;padding:8px 14px;font-size:14px;line-height:1.4;position:fixed;left:50%;transform:translate(-50%)}.mnr-boundary-gesture-hint.is-prev[data-v-87afe1cf]{top:max(16px, env(safe-area-inset-top))}.mnr-boundary-gesture-hint.is-next[data-v-87afe1cf]{bottom:max(16px, env(safe-area-inset-bottom))}.mnr-reader-content[data-v-87afe1cf]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-87afe1cf] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-87afe1cf] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-87afe1cf] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-87afe1cf]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-87afe1cf]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-87afe1cf]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-87afe1cf]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-87afe1cf]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-87afe1cf]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-87afe1cf]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-87afe1cf]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-87afe1cf],.mnr-loading-next[data-v-87afe1cf]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-87afe1cf]{padding:30px}}@media (width>=1024px){.mnr-reader-content[data-v-87afe1cf]{padding:40px}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-87afe1cf]{transition:none}}\n/*$vite$:1*/", {});
 	})();
 })();

@@ -49,9 +49,6 @@
 
     <!-- Main content with virtualized infinite scroll -->
     <main ref="mainRef" class="mnr-reader-main" tabindex="-1" :inert="hasOpenPanel">
-      <!-- Top sentinel for IntersectionObserver -->
-      <div ref="topSentinel" class="mnr-sentinel"></div>
-
       <!-- Loading previous indicator -->
       <div v-if="isLoadingPrev" class="mnr-loading-prev">
         <MnrSpinner size="small" />
@@ -156,7 +153,6 @@ const configStore = useConfigStore();
 
 // State
 const mainRef = ref<HTMLElement | null>(null);
-const topSentinel = ref<HTMLElement | null>(null);
 const bottomSentinel = ref<HTMLElement | null>(null);
 const isNavigating = ref(false);
 const showControls = ref(true);
@@ -175,8 +171,7 @@ const {
   toggleSettings,
 } = useReaderUIControls({ readerStore, showControls });
 
-// IntersectionObserver instances
-let topObserver: globalThis.IntersectionObserver | null = null;
+// IntersectionObserver instance
 let bottomObserver: globalThis.IntersectionObserver | null = null;
 
 // Computed
@@ -246,187 +241,56 @@ const {
   isLoadingNext,
   hasPrev,
   hasNext,
-  onViewportSettled: handleScroll,
+  onPageTurnSettled: handleScroll,
 });
 
 // Touch gestures composable
-const swipeEnabled = computed(
+const SCROLL_BOUNDARY_EPSILON_PX = 4;
+const gesturesIdle = computed(
   () =>
-    configStore.behavior.swipeGestures &&
     !hasOpenPanel.value &&
     !isLoading.value &&
     !isLoadingPrev.value &&
     !isLoadingNext.value &&
     !isNavigating.value
 );
-const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchGestures({
-  enabled: swipeEnabled,
+const swipeEnabled = computed(() => configStore.behavior.swipeGestures && gesturesIdle.value);
+const {
+  boundaryGestureDirection,
+  boundaryGestureHint,
+  handleTouchStart,
+  handleTouchMove,
+  handleTouchEnd,
+  handleTouchCancel,
+} = useTouchGestures({
+  swipeEnabled,
+  getBoundaryDirection,
+  onBoundaryPull: direction => void loadBoundaryChapter(direction),
   onSwipeLeft: () => void turnReaderPage('next'),
   onSwipeRight: () => void turnReaderPage('prev'),
 });
 
 // === UI event handlers ===
 
-type TouchPointLike = {
-  identifier: number;
-  clientX: number;
-  clientY: number;
-};
-
-type SingleTouchEventLike = Event & {
-  touches: ArrayLike<TouchPointLike>;
-};
-
-const SCROLL_BOUNDARY_EPSILON_PX = 4;
-const BOUNDARY_PULL_HINT_PX = 12;
-const BOUNDARY_PULL_TRIGGER_PX = 48;
-const BOUNDARY_AXIS_RATIO = 1.25;
-
-type BoundaryGestureDirection = 'prev' | 'next';
-type BoundaryPullState = {
-  id: number;
-  startX: number;
-  startY: number;
-  direction: BoundaryGestureDirection;
-  ready: boolean;
-};
-
-const boundaryGestureHint = ref('');
-const boundaryGestureDirection = ref<BoundaryGestureDirection | null>(null);
-let boundaryPull: BoundaryPullState | null = null;
-
 function shieldEvent(event: Event) {
   event.stopPropagation();
 }
 
-function isSingleTouchEvent(event: Event): event is SingleTouchEventLike {
-  const candidate = event as Partial<SingleTouchEventLike>;
-  return Boolean(candidate.touches && candidate.touches.length === 1);
-}
-
-function isAtTop(mainEl: HTMLElement): boolean {
-  return mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX;
-}
-
-function isAtBottom(mainEl: HTMLElement): boolean {
-  return (
-    mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight) <= SCROLL_BOUNDARY_EPSILON_PX
-  );
-}
-
-function preventIfCancelable(event: Event): void {
-  if (event.cancelable === false) return;
-  event.preventDefault();
-}
-
-function clearBoundaryPull(): void {
-  boundaryPull = null;
-  boundaryGestureHint.value = '';
-  boundaryGestureDirection.value = null;
-}
-
-function isGestureBlocked(event: Event): boolean {
-  if (
-    hasOpenPanel.value ||
-    isLoading.value ||
-    isLoadingPrev.value ||
-    isLoadingNext.value ||
-    isNavigating.value
-  ) {
-    return true;
-  }
-
-  const selection = window.getSelection();
-  if (selection && selection.toString().length > 0) return true;
-
-  if (!(event.target instanceof Element)) return false;
-  return Boolean(
-    event.target.closest(
-      'a, button, input, textarea, select, label, summary, [contenteditable], [role="button"]'
-    )
-  );
-}
-
-function handleReaderTouchStart(event: Event): void {
-  clearBoundaryPull();
-
+function getBoundaryDirection(): 'prev' | 'next' | null {
   const mainEl = mainRef.value;
-  if (mainEl && isSingleTouchEvent(event) && !isGestureBlocked(event)) {
-    const direction =
-      isAtBottom(mainEl) && hasNext.value
-        ? 'next'
-        : isAtTop(mainEl) && hasPrev.value
-          ? 'prev'
-          : null;
+  if (!mainEl || !gesturesIdle.value) return null;
 
-    if (direction) {
-      const touch = event.touches[0];
-      boundaryPull = {
-        id: touch.identifier,
-        startX: touch.clientX,
-        startY: touch.clientY,
-        direction,
-        ready: false,
-      };
-    }
-  }
-
-  handleTouchStart(event);
-}
-
-function guardTouchBoundary(event: Event): void {
-  if (!boundaryPull || !isSingleTouchEvent(event)) return;
-
-  const touch = Array.from(event.touches).find(point => point.identifier === boundaryPull?.id);
-  if (!touch) return;
-
-  const deltaX = touch.clientX - boundaryPull.startX;
-  const deltaY = touch.clientY - boundaryPull.startY;
-  if (
-    Math.abs(deltaX) >= BOUNDARY_PULL_HINT_PX &&
-    Math.abs(deltaX) > Math.abs(deltaY) * BOUNDARY_AXIS_RATIO
-  ) {
-    clearBoundaryPull();
-    return;
-  }
-
-  const pullDistance = boundaryPull.direction === 'next' ? -deltaY : deltaY;
-  if (pullDistance < BOUNDARY_PULL_HINT_PX) {
-    boundaryPull.ready = false;
-    boundaryGestureHint.value = '';
-    boundaryGestureDirection.value = null;
-    return;
-  }
-
-  boundaryPull.ready = pullDistance >= BOUNDARY_PULL_TRIGGER_PX;
-  boundaryGestureDirection.value = boundaryPull.direction;
-  if (boundaryPull.direction === 'next') {
-    boundaryGestureHint.value = boundaryPull.ready ? '松手加载下一章' : '继续上滑加载下一章';
-  } else {
-    boundaryGestureHint.value = boundaryPull.ready ? '松手加载上一章' : '继续下滑加载上一章';
-  }
-
-  if (boundaryPull.ready) preventIfCancelable(event);
-}
-
-function handleReaderTouchMove(event: Event): void {
-  handleTouchMove(event);
-  guardTouchBoundary(event);
+  const remaining = mainEl.scrollHeight - (mainEl.scrollTop + mainEl.clientHeight);
+  if (remaining <= SCROLL_BOUNDARY_EPSILON_PX && hasNext.value) return 'next';
+  if (mainEl.scrollTop <= SCROLL_BOUNDARY_EPSILON_PX && hasPrev.value) return 'prev';
+  return null;
 }
 
 function handleReaderTouchEnd(event: Event): void {
-  const boundaryDirection = boundaryPull?.ready ? boundaryPull.direction : null;
-  clearBoundaryPull();
-  handleTouchEnd(event);
-  if (boundaryDirection) {
-    void loadBoundaryChapter(boundaryDirection);
-    return;
-  }
-  scheduleAutoLoadNext('settled');
+  if (!handleTouchEnd(event)) scheduleAutoLoadNext('settled');
 }
 
 function handleReaderTouchCancel(): void {
-  clearBoundaryPull();
   handleTouchCancel();
   scheduleAutoLoadNext('settled');
 }
@@ -628,8 +492,8 @@ onMounted(async () => {
   if (mainRef.value) {
     mainRef.value.addEventListener('scroll', handleScroll, { passive: true });
     mainRef.value.addEventListener('wheel', handleWheel, { passive: false });
-    mainRef.value.addEventListener('touchstart', handleReaderTouchStart, { passive: true });
-    mainRef.value.addEventListener('touchmove', handleReaderTouchMove, { passive: false });
+    mainRef.value.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainRef.value.addEventListener('touchmove', handleTouchMove, { passive: false });
     mainRef.value.addEventListener('touchend', handleReaderTouchEnd, { passive: true });
     mainRef.value.addEventListener('touchcancel', handleReaderTouchCancel, { passive: true });
   }
@@ -647,15 +511,8 @@ onMounted(async () => {
     scheduleAutoLoadNext('sentinel');
   }, observerOptions);
 
-  topObserver = new globalThis.IntersectionObserver(() => {
-    // Intentionally empty - prev chapter loading is triggered by explicit user actions only
-  }, observerOptions);
-
   if (bottomSentinel.value) {
     bottomObserver.observe(bottomSentinel.value);
-  }
-  if (topSentinel.value) {
-    topObserver.observe(topSentinel.value);
   }
 
   await nextTick();
@@ -672,15 +529,13 @@ onUnmounted(() => {
   if (mainRef.value) {
     mainRef.value.removeEventListener('scroll', handleScroll);
     mainRef.value.removeEventListener('wheel', handleWheel);
-    mainRef.value.removeEventListener('touchstart', handleReaderTouchStart);
-    mainRef.value.removeEventListener('touchmove', handleReaderTouchMove);
+    mainRef.value.removeEventListener('touchstart', handleTouchStart);
+    mainRef.value.removeEventListener('touchmove', handleTouchMove);
     mainRef.value.removeEventListener('touchend', handleReaderTouchEnd);
     mainRef.value.removeEventListener('touchcancel', handleReaderTouchCancel);
   }
 
-  topObserver?.disconnect();
   bottomObserver?.disconnect();
-  topObserver = null;
   bottomObserver = null;
 
   chapterRefs.clear();

@@ -5,16 +5,21 @@
  * while properly filtering out vertical scrolls and interactive elements.
  */
 
-import type { ComputedRef } from 'vue';
+import { computed, type ComputedRef, ref } from 'vue';
 
 // === Types ===
-type SwipeStartState = {
+export type BoundaryGestureDirection = 'prev' | 'next';
+
+type GestureStartState = {
+  boundaryDirection: BoundaryGestureDirection | null;
+  boundaryReady: boolean;
+  swipeCancelled: boolean;
+  swipeEnabled: boolean;
   id: number;
   x: number;
   y: number;
   time: number;
   threshold: number;
-  cancelled: boolean;
 };
 
 type TouchPoint = {
@@ -36,6 +41,9 @@ const SWIPE_VIEWPORT_RATIO = 0.18;
 const SWIPE_MAX_DURATION_MS = 700;
 const SWIPE_CANCEL_VERTICAL_PX = 28;
 const SWIPE_AXIS_RATIO = 1.5;
+const BOUNDARY_PULL_HINT_PX = 12;
+const BOUNDARY_PULL_TRIGGER_PX = 48;
+const BOUNDARY_AXIS_RATIO = 1.25;
 
 function isTouchEvent(e: Event): e is Event & TouchEventLike {
   const candidate = e as unknown as Partial<TouchEventLike>;
@@ -59,80 +67,136 @@ function getSwipeThreshold(): number {
 }
 
 export interface UseTouchGesturesOptions {
-  enabled: ComputedRef<boolean>;
+  swipeEnabled: ComputedRef<boolean>;
+  getBoundaryDirection?: () => BoundaryGestureDirection | null;
+  onBoundaryPull?: (direction: BoundaryGestureDirection) => void;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
 }
 
 export function useTouchGestures(options: UseTouchGesturesOptions) {
-  const { enabled, onSwipeLeft, onSwipeRight } = options;
+  const { swipeEnabled, getBoundaryDirection, onBoundaryPull, onSwipeLeft, onSwipeRight } = options;
 
-  let swipeStart: SwipeStartState | null = null;
+  const boundaryGestureDirection = ref<BoundaryGestureDirection | null>(null);
+  const boundaryGestureReady = ref(false);
+  const boundaryGestureHint = computed(() => {
+    const direction = boundaryGestureDirection.value;
+    if (!direction) return '';
+    if (direction === 'next') {
+      return boundaryGestureReady.value ? '松手加载下一章' : '继续上滑加载下一章';
+    }
+    return boundaryGestureReady.value ? '松手加载上一章' : '继续下滑加载上一章';
+  });
+
+  let gestureStart: GestureStartState | null = null;
+
+  function clearBoundaryFeedback(): void {
+    boundaryGestureDirection.value = null;
+    boundaryGestureReady.value = false;
+  }
+
+  function clearGesture(): void {
+    gestureStart = null;
+    clearBoundaryFeedback();
+  }
 
   function handleTouchStart(e: Event) {
-    if (!enabled.value) return;
+    clearGesture();
     if (!isTouchEvent(e)) return;
     if (e.touches.length !== 1) return;
     if (isInteractiveElement(e.target)) return;
 
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+
+    const boundaryDirection = onBoundaryPull ? getBoundaryDirection?.() || null : null;
+    const canSwipe = swipeEnabled.value;
+    if (!canSwipe && !boundaryDirection) return;
+
     const touch = e.touches[0];
-    swipeStart = {
+    gestureStart = {
+      boundaryDirection,
+      boundaryReady: false,
+      swipeCancelled: false,
+      swipeEnabled: canSwipe,
       id: touch.identifier,
       x: touch.clientX,
       y: touch.clientY,
       time: Date.now(),
-      threshold: getSwipeThreshold(),
-      cancelled: false,
+      threshold: canSwipe ? getSwipeThreshold() : 0,
     };
   }
 
   function handleTouchMove(e: Event) {
-    if (!swipeStart) return;
+    if (!gestureStart) return;
     if (!isTouchEvent(e)) return;
     if (e.touches.length !== 1) {
-      swipeStart = null;
+      clearGesture();
       return;
     }
 
-    const touch = Array.from(e.touches).find(t => t.identifier === swipeStart?.id);
+    const touch = Array.from(e.touches).find(t => t.identifier === gestureStart?.id);
     if (!touch) return;
 
-    const dx = touch.clientX - swipeStart.x;
-    const dy = touch.clientY - swipeStart.y;
+    const dx = touch.clientX - gestureStart.x;
+    const dy = touch.clientY - gestureStart.y;
 
     // Cancel if it's clearly a vertical scroll gesture.
     if (
+      gestureStart.swipeEnabled &&
       Math.abs(dy) >= SWIPE_CANCEL_VERTICAL_PX &&
       Math.abs(dy) >= Math.abs(dx) * SWIPE_AXIS_RATIO
     ) {
-      swipeStart.cancelled = true;
+      gestureStart.swipeCancelled = true;
     }
+
+    if (!gestureStart.boundaryDirection) return;
+    if (
+      Math.abs(dx) >= BOUNDARY_PULL_HINT_PX &&
+      Math.abs(dx) > Math.abs(dy) * BOUNDARY_AXIS_RATIO
+    ) {
+      gestureStart.boundaryDirection = null;
+      gestureStart.boundaryReady = false;
+      clearBoundaryFeedback();
+      return;
+    }
+
+    const pullDistance = gestureStart.boundaryDirection === 'next' ? -dy : dy;
+    const showHint = pullDistance >= BOUNDARY_PULL_HINT_PX;
+    gestureStart.boundaryReady = pullDistance >= BOUNDARY_PULL_TRIGGER_PX;
+    boundaryGestureDirection.value = showHint ? gestureStart.boundaryDirection : null;
+    boundaryGestureReady.value = showHint && gestureStart.boundaryReady;
+
+    if (gestureStart.boundaryReady && e.cancelable) e.preventDefault();
   }
 
-  function handleTouchEnd(e: Event) {
-    if (!swipeStart) return;
-    if (!isTouchEvent(e)) return;
+  function handleTouchEnd(e: Event): boolean {
+    if (!gestureStart || !isTouchEvent(e)) return false;
 
-    const start = swipeStart;
-    swipeStart = null;
+    const start = gestureStart;
+    clearGesture();
 
-    if (start.cancelled) return;
-    if (!enabled.value) return;
+    if (start.boundaryDirection && start.boundaryReady && onBoundaryPull) {
+      onBoundaryPull(start.boundaryDirection);
+      return true;
+    }
+
+    if (!start.swipeEnabled || start.swipeCancelled || !swipeEnabled.value) return false;
 
     const selection = window.getSelection();
-    if (selection && selection.toString().length > 0) return;
+    if (selection && selection.toString().length > 0) return false;
 
     const touch = Array.from(e.changedTouches).find(t => t.identifier === start.id);
-    if (!touch) return;
+    if (!touch) return false;
 
     const dt = Date.now() - start.time;
-    if (dt > SWIPE_MAX_DURATION_MS) return;
+    if (dt > SWIPE_MAX_DURATION_MS) return false;
 
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
 
-    if (Math.abs(dx) < start.threshold) return;
-    if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
+    if (Math.abs(dx) < start.threshold) return false;
+    if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return false;
 
     // Reader UX: swipe left => page down, swipe right => page up.
     if (dx < 0) {
@@ -140,11 +204,19 @@ export function useTouchGestures(options: UseTouchGesturesOptions) {
     } else {
       onSwipeRight();
     }
+    return false;
   }
 
   function handleTouchCancel() {
-    swipeStart = null;
+    clearGesture();
   }
 
-  return { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel };
+  return {
+    boundaryGestureDirection,
+    boundaryGestureHint,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleTouchCancel,
+  };
 }
