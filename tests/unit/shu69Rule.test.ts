@@ -50,6 +50,8 @@ function makeDoc(): Document {
               <br>
               \u2003\u2003第二段正文，众人沿着长街向前推进。<br>
               <br>
+              \u2003\u2003如果伱再不给我一套能够保暖的衣服，我可能马上就要被冻死了。<br>
+              <br>
               请收藏本站，最新网址：www.69shuba.com
             </div>
             <div id="txtright">右侧广告</div>
@@ -102,6 +104,8 @@ describe('69shu rule', () => {
     const content = chapter?.content || '';
     expect(content).toContain('第一段正文');
     expect(content).toContain('第二段正文');
+    expect(content).toContain('如果你再不给我一套能够保暖的衣服');
+    expect(content).not.toContain('伱');
     expect(content).not.toContain('右侧广告');
     expect(content).not.toContain('底部广告');
     expect(content).not.toContain('最新网址');

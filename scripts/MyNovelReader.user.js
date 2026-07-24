@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.9
+// @version            9.3.10
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -2943,6 +2943,7 @@
 		/^\s*[）)]/gm,
 		/手机用户请到.*阅读/gi,
 		/请记住本书.*网址/gi,
+		/(?:[请請]?[记記]住首[发發][网網]站(?:域名)?|[请請][记記]住[网網]址)[^<\n]*/gi,
 		/百度搜索.*最新章节/gi,
 		/一秒记住.*为您提供/gi,
 		/天才一秒记住/gi,
@@ -4822,6 +4823,15 @@
 		if (script !== "unknown") return script;
 		return detectChineseScriptFromText(contentText || doc.body?.textContent || "");
 	}
+	var ANTI_COPY_GLYPH_REPAIRS = [{
+		source: "伱",
+		replacement: "你"
+	}];
+	function repairAntiCopyText(text) {
+		let repaired = text;
+		for (const { source, replacement } of ANTI_COPY_GLYPH_REPAIRS) if (repaired.includes(source)) repaired = repaired.split(source).join(replacement);
+		return repaired;
+	}
 	var REMOVE_SELECTOR_QUERY = REMOVE_SELECTORS.join(",");
 	var READER_UI_LABELS = new Set([
 		"投票推荐",
@@ -4940,13 +4950,13 @@
 			this.removeReaderUiNoise(clone);
 			if (this.options.stripInlineStyles) this.stripInlineStyles(clone);
 			const replaceRules = this.options.replaceRules?.length ? this.options.replaceRules : null;
-			if (this.options.removeAds && !replaceRules) this.removeAdPatternsFromTextNodes(clone, doc);
+			this.cleanTextNodes(clone, doc, !!this.options.removeAds && !replaceRules);
 			let html = clone.innerHTML;
 			if (replaceRules) html = this.applyReplaceRules(html, replaceRules);
 			if (this.options.removeAds && replaceRules) {
 				const temp = doc.createElement("div");
 				temp.innerHTML = html;
-				this.removeAdPatternsFromTextNodes(temp, doc);
+				this.cleanTextNodes(temp, doc, true);
 				html = temp.innerHTML;
 			}
 			if (this.options.normalizeWhitespace) html = this.normalizeWhitespace(html);
@@ -5006,7 +5016,7 @@
 		processToText(element) {
 			const clone = element.cloneNode(true);
 			this.removeUnwantedElements(clone);
-			let text = clone.textContent || "";
+			let text = repairAntiCopyText(clone.textContent || "");
 			if (this.options.removeAds) text = this.removeAdPatterns(text);
 			if (this.options.normalizeWhitespace) text = text.replace(/\s+/g, " ").trim();
 			return text;
@@ -5062,13 +5072,14 @@
 			for (const pattern of AD_PATTERNS) result = result.replace(pattern, "");
 			return result;
 		}
-		removeAdPatternsFromTextNodes(container, doc) {
+		cleanTextNodes(container, doc, removeAds) {
 			const showText = typeof NodeFilter !== "undefined" ? NodeFilter.SHOW_TEXT : 4;
 			const walker = doc.createTreeWalker(container, showText);
 			let node;
 			while (node = walker.nextNode()) {
 				const value = node.nodeValue || "";
-				const cleaned = this.removeAdPatterns(value);
+				const repaired = repairAntiCopyText(value);
+				const cleaned = removeAds ? this.removeAdPatterns(repaired) : repaired;
 				if (cleaned !== value) node.nodeValue = cleaned;
 			}
 		}
@@ -8560,7 +8571,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.9";
+	var VERSION = "9.3.10";
 	var BUILD_DATE = "2026-07-17";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {

@@ -39,6 +39,8 @@ function makeDoc(): Document {
               <br>
               （请记住臺湾小説网→𝓉𝓌𝓀𝒶𝓃.𝒸ℴ𝓂网站，观看最快的章节更新）<br>
               <br>
+              記住首發網站域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞<br>
+              <br>
               暴龍獸在光中抬起頭，力量湧上來了。
             </div>
           </div>
@@ -93,6 +95,7 @@ describe('Twkan rule', () => {
     expect(content).not.toContain('台湾好书');
     expect(content).not.toContain('章节更新');
     expect(content).not.toContain('域名');
+    expect(content).not.toContain('𝕥𝕨𝕜𝕒𝕟');
     expect(content).not.toContain('支持本站運營');
 
     const parsedContent = makeDoc();

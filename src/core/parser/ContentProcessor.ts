@@ -4,6 +4,7 @@
 
 import { AD_PATTERNS, REMOVE_SELECTORS } from '@/core/constants';
 import { sanitizeHtml, sanitizeUrl } from '@/core/utils';
+import { repairAntiCopyText } from '@/core/parser/antiCopyTextRepair';
 import { ReplaceRule } from '@/core/rules/types';
 
 const REMOVE_SELECTOR_QUERY = REMOVE_SELECTORS.join(',');
@@ -174,9 +175,7 @@ export class ContentProcessor {
     }
 
     const replaceRules = this.options.replaceRules?.length ? this.options.replaceRules : null;
-    if (this.options.removeAds && !replaceRules) {
-      this.removeAdPatternsFromTextNodes(clone, doc);
-    }
+    this.cleanTextNodes(clone, doc, !!this.options.removeAds && !replaceRules);
 
     // Get text content
     let html = clone.innerHTML;
@@ -190,7 +189,7 @@ export class ContentProcessor {
     if (this.options.removeAds && replaceRules) {
       const temp = doc.createElement('div');
       temp.innerHTML = html;
-      this.removeAdPatternsFromTextNodes(temp, doc);
+      this.cleanTextNodes(temp, doc, true);
       html = temp.innerHTML;
     }
 
@@ -301,7 +300,7 @@ export class ContentProcessor {
     const clone = element.cloneNode(true) as Element;
     this.removeUnwantedElements(clone);
 
-    let text = clone.textContent || '';
+    let text = repairAntiCopyText(clone.textContent || '');
 
     if (this.options.removeAds) {
       text = this.removeAdPatterns(text);
@@ -419,14 +418,15 @@ export class ContentProcessor {
     return result;
   }
 
-  private removeAdPatternsFromTextNodes(container: Element, doc: Document): void {
+  private cleanTextNodes(container: Element, doc: Document, removeAds: boolean): void {
     const showText = typeof NodeFilter !== 'undefined' ? NodeFilter.SHOW_TEXT : 4;
     const walker = doc.createTreeWalker(container, showText);
 
     let node: Node | null;
     while ((node = walker.nextNode())) {
       const value = node.nodeValue || '';
-      const cleaned = this.removeAdPatterns(value);
+      const repaired = repairAntiCopyText(value);
+      const cleaned = removeAds ? this.removeAdPatterns(repaired) : repaired;
       if (cleaned !== value) node.nodeValue = cleaned;
     }
   }

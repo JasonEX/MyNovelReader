@@ -606,6 +606,38 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('天才一秒记住');
     });
 
+    it('repairs confirmed anti-copy glyph substitutions without rewriting valid words', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = '<p>如果伱愿意，我们就继续往前走。</p><p>澹台去勐海看桉树和莪蒿。</p>';
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('如果你愿意，我们就继续往前走。');
+      expect(result).not.toContain('伱');
+      expect(result).toContain('澹台去勐海看桉树和莪蒿。');
+    });
+
+    it('removes styled domain ads by their cue without normalizing ordinary text', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = `
+        <p>第一段正文。</p>
+        <p>记住首发网站域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞</p>
+        <p>請記住網址：𝓉𝓌𝓀𝒶𝓃.𝒸ℴ𝓂，更新最快。</p>
+        <p>請記住網址：🆃🆆🅺🅰🅽.🅲🅾🅼，更新最快。</p>
+        <p>正文中的数学符号 𝕥 和示例域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞应保持原样。</p>
+      `;
+
+      const result = processor.process(element, doc);
+
+      expect(result).toContain('第一段正文。');
+      expect(result).toContain('数学符号 𝕥 和示例域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞应保持原样');
+      expect(result).not.toContain('首发网站域名');
+      expect(result).not.toContain('更新最快');
+      expect(result.match(/𝕥𝕨𝕜𝕒𝕟/g)).toHaveLength(1);
+      expect(result).not.toContain('𝓉𝓌𝓀𝒶𝓃');
+      expect(result).not.toContain('🆃🆆🅺🅰🅽');
+    });
+
     it('should remove URLs', () => {
       const element = doc.createElement('div');
       element.innerHTML = '<p>访问 https://example.com 或 www.test.com 获取更多</p>';

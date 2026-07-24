@@ -13,6 +13,11 @@ const paragraphs = Array.from(
   (_, index) =>
     `<p>这是第 ${index + 1} 段测试正文，用于验证本地固定页面的内容检测、阅读器渲染和退出恢复行为。</p>`
 ).join('');
+const textCleanupFixture = `
+  <p>如果伱愿意，我们就继续验证正文防盗字修复。</p>
+  <p>记住首发网站域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞</p>
+  <p>正文中的数学符号 𝕥 应保持原样。</p>
+`;
 const tocLinks = Array.from(
   { length: 1200 },
   (_, index) => `<a href="/chapter/${index + 1}.html">第 ${index + 1} 章</a>`
@@ -31,7 +36,7 @@ const fixtureHtml = `<!doctype html>
   <body>
     <main id="host-page">
       <h1>第100章 本地测试</h1>
-      <div id="content">${paragraphs}</div>
+      <div id="content">${paragraphs}${textCleanupFixture}</div>
       <nav>
         <a href="/chapter/99.html">上一章</a>
         <a href="/book/1/index.html">目录</a>
@@ -299,6 +304,11 @@ test('runs the built userscript and restores the host page after exit', async ({
   assertMnrSmokeState(state);
   expect(state.href).toBe(targetUrl);
   expect(state.shadowTitle).toContain('第100章');
+  const readerContent = page.locator('#mnr-reader-root').locator('.mnr-reader-content');
+  await expect(readerContent).toContainText('如果你愿意');
+  await expect(readerContent).toContainText('正文中的数学符号 𝕥 应保持原样');
+  await expect(readerContent).not.toContainText('伱');
+  await expect(readerContent).not.toContainText('首发网站域名');
 
   const primaryUi = await page.locator('#mnr-reader-root').evaluate(host => {
     const shadow = host.shadowRoot;
