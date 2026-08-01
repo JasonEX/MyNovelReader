@@ -43,6 +43,17 @@ function makeDoc(): Document {
   return dom.window.document;
 }
 
+const inlinePromotionVariants = [
+  '獲取最新章節更新，請訪問🎈sto9.com',
+  '看本書最新章節，請訪問sto9.c🎺om',
+  's🎤to9.com為您提供最快的小說更新',
+  'sto9.co☕️m最新最快的章節更新',
+  '觀看最新章節訪問s🌶️to9.com',
+  '最新小說章節盡在sto9.c🌠om',
+  'sto9🐾.com提醒你可以閱讀最新章節啦',
+  '實時更新，請訪問sto9.co💫m',
+];
+
 describe('Sto9 rule', () => {
   it('is auto-discovered as a site rule', () => {
     expect(builtInRules).toContain(sto9Rule);
@@ -85,4 +96,18 @@ describe('Sto9 rule', () => {
 
     expect(chapter?.nextUrl).toBeUndefined();
   });
+
+  it.each(inlinePromotionVariants)(
+    'removes an emoji-obfuscated inline promotion: %s',
+    async promotion => {
+      const doc = makeDoc();
+      doc.querySelector('.txtnav > h1')?.insertAdjacentText('afterend', promotion);
+
+      const chapter = await new Parser().parse(doc, sto9Rule.meta?.exampleUrl);
+      const normalized = (chapter?.content || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      expect(normalized).not.toContain('sto9com');
+      expect(chapter?.content).toContain('城樓上的兩人看得清清楚楚。');
+    }
+  );
 });

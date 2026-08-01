@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.12
+// @version            9.3.13
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -6758,10 +6758,18 @@
 		}
 	};
 	var sto9_exports$1 = __exportAll({ sto9Rule: () => sto9Rule });
+	var sto9BeforeParse = (doc) => {
+		const content = doc.querySelector(".txtnav");
+		if (!content) return;
+		const showText = doc.defaultView?.NodeFilter.SHOW_TEXT ?? 4;
+		const walker = doc.createTreeWalker(content, showText);
+		let node;
+		while (node = walker.nextNode()) if ((node.nodeValue || "").toLowerCase().replace(/[^a-z0-9]/g, "").includes("sto9com")) node.nodeValue = "";
+	};
 	var sto9Rule = {
 		id: "sto9",
 		name: "思兔阅读",
-		version: 1,
+		version: 2,
 		match: { pattern: "^https?://(?:www\\.)?sto9\\.com/txt/\\d+/\\d+\\.html(?:[?#].*)?$" },
 		content: {
 			selector: ".txtnav",
@@ -6781,6 +6789,7 @@
 			selector: ".txtnav > h1",
 			bookSelector: ".bread a[href*=\"/book/\"][href$=\"/index.html\"]"
 		},
+		hooks: { beforeParse: sto9BeforeParse },
 		meta: {
 			source: "builtin",
 			exampleUrl: "https://sto9.com/txt/7974/7627078.html"
@@ -8625,7 +8634,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.12";
+	var VERSION = "9.3.13";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
