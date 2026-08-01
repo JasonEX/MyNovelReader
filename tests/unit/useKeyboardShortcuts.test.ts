@@ -98,6 +98,57 @@ describe('useKeyboardShortcuts', () => {
     mountEl.remove();
   });
 
+  it('consumes ignored repeats for discrete shortcuts while keeping continuous repeats enabled', async () => {
+    const onPageTurn = vi.fn();
+    const onLineScroll = vi.fn();
+
+    const Comp = defineComponent({
+      setup() {
+        useKeyboardShortcuts([
+          {
+            key: ' ',
+            handler: onPageTurn,
+            preventDefault: true,
+            allowRepeat: false,
+          },
+          { key: 'arrowdown', handler: onLineScroll },
+        ]);
+        return () => null;
+      },
+    });
+
+    const mountEl = document.createElement('div');
+    document.body.appendChild(mountEl);
+    const app = createApp(Comp);
+    app.mount(mountEl);
+    await nextTick();
+
+    document.body.dispatchEvent(
+      new dom.window.KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true })
+    );
+    const repeatedPageTurn = new dom.window.KeyboardEvent('keydown', {
+      key: ' ',
+      bubbles: true,
+      cancelable: true,
+      repeat: true,
+    });
+    document.body.dispatchEvent(repeatedPageTurn);
+    document.body.dispatchEvent(
+      new dom.window.KeyboardEvent('keydown', {
+        key: 'ArrowDown',
+        bubbles: true,
+        repeat: true,
+      })
+    );
+
+    expect(onPageTurn).toHaveBeenCalledTimes(1);
+    expect(repeatedPageTurn.defaultPrevented).toBe(true);
+    expect(onLineScroll).toHaveBeenCalledTimes(1);
+
+    app.unmount();
+    mountEl.remove();
+  });
+
   it('ignores shortcuts in input elements by default (allowInInputs overrides)', async () => {
     const onNext = vi.fn();
 

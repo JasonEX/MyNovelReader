@@ -946,6 +946,58 @@ test('shows the first Goboo section before rate-limited background merging compl
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });
 
+test('treats Space as one locked page-turn command while the key is held', async ({
+  context,
+  page,
+}) => {
+  await context.route(targetUrl, route =>
+    route.fulfill({
+      body: fixtureHtml,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addMyNovelReaderUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+
+  const readerMain = page.locator('#mnr-reader-root').locator('.mnr-reader-main');
+  const initial = await readerMain.evaluate(main => {
+    const instrumented = main as HTMLElement & { mnrScrollByCalls: number };
+    const originalScrollBy = instrumented.scrollBy.bind(instrumented);
+    instrumented.mnrScrollByCalls = 0;
+    instrumented.scrollBy = (arg1?: number | ScrollToOptions, arg2?: number) => {
+      instrumented.mnrScrollByCalls += 1;
+      if (typeof arg1 === 'number') {
+        originalScrollBy(arg1, arg2 ?? 0);
+      } else {
+        originalScrollBy(arg1);
+      }
+    };
+    instrumented.focus();
+    return { clientHeight: instrumented.clientHeight, scrollTop: instrumented.scrollTop };
+  });
+
+  await page.keyboard.down('Space');
+  for (let index = 0; index < 12; index += 1) await page.keyboard.down('Space');
+  await page.keyboard.up('Space');
+  await page.waitForTimeout(750);
+
+  const afterHold = await readerMain.evaluate(main => ({
+    calls: (main as HTMLElement & { mnrScrollByCalls: number }).mnrScrollByCalls,
+    scrollTop: main.scrollTop,
+  }));
+  expect(afterHold.calls).toBe(1);
+  expect(
+    Math.abs(afterHold.scrollTop - initial.scrollTop - initial.clientHeight * 0.9)
+  ).toBeLessThan(3);
+
+  await page.keyboard.press('Shift+Space');
+  await page.waitForTimeout(750);
+  await expect.poll(() => readerMain.evaluate(main => main.scrollTop)).toBeLessThan(3);
+});
+
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 

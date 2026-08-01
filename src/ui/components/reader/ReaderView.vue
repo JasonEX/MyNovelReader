@@ -222,7 +222,7 @@ const {
   chapterRefs,
   readerStore,
   isNavigating,
-  onPageTurnSettled: handleScroll,
+  onViewportSettled: handleScroll,
 });
 
 // Touch gestures composable
@@ -355,7 +355,7 @@ const readerShortcutsEnabled = computed(
 
 useKeyboardShortcuts(
   [
-    { key: 'tab', handler: toggleDrawer, preventDefault: true },
+    { key: 'tab', handler: toggleDrawer, preventDefault: true, allowRepeat: false },
     {
       key: 'enter',
       handler: () => {
@@ -363,27 +363,53 @@ useKeyboardShortcuts(
         if (indexUrl) window.location.href = indexUrl;
       },
       preventDefault: true,
+      allowRepeat: false,
     },
-    { key: ['s', ','], handler: toggleSettings, preventDefault: true },
-    { key: 'q', handler: exitReader, preventDefault: true, stopPropagation: true },
+    {
+      key: ['s', ','],
+      handler: toggleSettings,
+      preventDefault: true,
+      allowRepeat: false,
+    },
+    {
+      key: 'q',
+      handler: exitReader,
+      preventDefault: true,
+      stopPropagation: true,
+      allowRepeat: false,
+    },
     {
       key: ['arrowleft', 'p'],
       handler: () => navigateChapter('prev'),
       preventDefault: true,
       stopPropagation: true,
+      allowRepeat: false,
     },
     {
       key: ['arrowright', 'n'],
       handler: () => navigateChapter('next'),
       preventDefault: true,
       stopPropagation: true,
+      allowRepeat: false,
     },
-    { key: 'arrowup', handler: () => scrollReader('up'), preventDefault: true },
-    { key: 'arrowdown', handler: () => scrollReader('down'), preventDefault: true },
+    {
+      key: 'arrowup',
+      handler: () => void scrollReader('up'),
+      preventDefault: true,
+      stopPropagation: true,
+    },
+    {
+      key: 'arrowdown',
+      handler: () => void scrollReader('down'),
+      preventDefault: true,
+      stopPropagation: true,
+    },
     {
       key: ' ',
-      handler: e => scrollReader(e.shiftKey ? 'pageup' : 'pagedown'),
+      handler: e => void turnReaderPage(e.shiftKey ? 'prev' : 'next'),
       preventDefault: true,
+      stopPropagation: true,
+      allowRepeat: false,
     },
   ],
   { enabled: readerShortcutsEnabled }

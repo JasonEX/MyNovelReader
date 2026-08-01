@@ -21,6 +21,8 @@ export interface ShortcutDefinition {
   preventDefault?: boolean;
   /** Whether to call e.stopPropagation(). Default: false */
   stopPropagation?: boolean;
+  /** Whether repeated keydown events may invoke the handler. Default: true */
+  allowRepeat?: boolean;
   /** Allow this shortcut to trigger even with modifier keys (Ctrl/Alt/Meta). Default: false */
   allowModifiers?: boolean;
   /** Allow this shortcut to trigger in input elements. Default: false */
@@ -107,6 +109,7 @@ export function useKeyboardShortcuts(
         e.stopPropagation();
         e.stopImmediatePropagation();
       }
+      if (e.repeat && shortcut.allowRepeat === false) return;
       shortcut.handler(e);
 
       // Only one shortcut per key event

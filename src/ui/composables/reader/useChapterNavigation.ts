@@ -13,10 +13,11 @@ export interface UseChapterNavigationOptions {
   chapterRefs: Map<string, HTMLElement>;
   readerStore: ReturnType<typeof useReaderStore>;
   isNavigating: Ref<boolean>;
-  onPageTurnSettled: () => void;
+  onViewportSettled: () => void;
 }
 
 type ChapterDirection = 'prev' | 'next';
+type ReaderMoveMode = 'line' | 'page';
 
 type ViewportAnchor = {
   top: number;
@@ -26,9 +27,10 @@ type ViewportAnchor = {
 const SCROLL_BOUNDARY_EPSILON_PX = 4;
 const SMOOTH_NAVIGATION_LOCK_MS = 650;
 const PAGE_SCROLL_RATIO = 0.9;
+const LINE_SCROLL_STEP_PX = 150;
 
 export function useChapterNavigation(options: UseChapterNavigationOptions) {
-  const { mainRef, chapterRefs, readerStore, isNavigating, onPageTurnSettled } = options;
+  const { mainRef, chapterRefs, readerStore, isNavigating, onViewportSettled } = options;
 
   function scrollByPage(mainEl: HTMLElement, direction: 'prev' | 'next'): void {
     isNavigating.value = true;
@@ -38,8 +40,15 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     });
     setTimeout(() => {
       isNavigating.value = false;
-      onPageTurnSettled();
+      onViewportSettled();
     }, SMOOTH_NAVIGATION_LOCK_MS);
+  }
+
+  function scrollByLine(mainEl: HTMLElement, direction: ChapterDirection): void {
+    mainEl.scrollBy({
+      top: LINE_SCROLL_STEP_PX * (direction === 'next' ? 1 : -1),
+      behavior: 'auto',
+    });
   }
 
   async function waitForLayout(): Promise<void> {
@@ -220,29 +229,54 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
     }
   }
 
-  /**
-   * Turn one reader page while preserving a small overlap for reading continuity.
-   * At content boundaries, continue into the adjacent chapter instead of clamping.
-   */
-  async function turnReaderPage(direction: ChapterDirection): Promise<void> {
+  /** Coordinate scrolling, boundary loading and the shared navigation lock. */
+  async function moveReader(direction: ChapterDirection, mode: ReaderMoveMode): Promise<void> {
     const mainEl = mainRef.value;
     if (!mainEl) return;
-    if (isNavigating.value || readerStore.isLoadingPrev || readerStore.isLoadingNext) return;
+    if (isNavigating.value) return;
 
     const atBoundary = direction === 'next' ? isAtBottom(mainEl) : isAtTop(mainEl);
     if (!atBoundary) {
-      scrollByPage(mainEl, direction);
+      if (mode === 'page') scrollByPage(mainEl, direction);
+      else scrollByLine(mainEl, direction);
+      return;
+    }
+
+    if (readerStore.isLoadingPrev || readerStore.isLoadingNext) return;
+
+    const available = direction === 'next' ? readerStore.hasNext : readerStore.hasPrev;
+    if (!available) {
+      if (mode === 'page') showBoundaryEnd(direction);
       return;
     }
 
     isNavigating.value = true;
     let loaded = false;
+    let pageScrollStarted = false;
     try {
       loaded = await loadAtBoundary(mainEl, direction);
-      if (loaded) scrollByPage(mainEl, direction);
+      if (!loaded) return;
+
+      if (mode === 'page') {
+        scrollByPage(mainEl, direction);
+        pageScrollStarted = true;
+      } else {
+        scrollByLine(mainEl, direction);
+      }
     } finally {
-      if (!loaded) isNavigating.value = false;
+      if (!pageScrollStarted) {
+        isNavigating.value = false;
+        if (loaded) onViewportSettled();
+      }
     }
+  }
+
+  /**
+   * Turn one reader page while preserving a small overlap for reading continuity.
+   * At content boundaries, continue into the adjacent chapter instead of clamping.
+   */
+  function turnReaderPage(direction: ChapterDirection): Promise<void> {
+    return moveReader(direction, 'page');
   }
 
   /**
@@ -308,47 +342,10 @@ export function useChapterNavigation(options: UseChapterNavigationOptions) {
   }
 
   /**
-   * Scroll content by keyboard
+   * Scroll one line while preserving continuous-reading semantics at chapter boundaries.
    */
-  function scrollReader(direction: 'up' | 'down' | 'pageup' | 'pagedown') {
-    const mainEl = mainRef.value;
-    if (!mainEl) return;
-
-    if (
-      (direction === 'up' || direction === 'pageup') &&
-      isAtTop(mainEl) &&
-      readerStore.hasPrev &&
-      !readerStore.isLoadingPrev &&
-      !isNavigating.value
-    ) {
-      void navigateChapter('prev');
-      return;
-    }
-
-    const step = 150; // slightly more than standard line height
-    const pageHeight = mainEl.clientHeight * PAGE_SCROLL_RATIO;
-
-    let top = 0;
-    let behavior: 'auto' | 'smooth' = 'auto';
-
-    switch (direction) {
-      case 'up':
-        top = -step;
-        break;
-      case 'down':
-        top = step;
-        break;
-      case 'pageup':
-        top = -pageHeight;
-        behavior = 'smooth';
-        break;
-      case 'pagedown':
-        top = pageHeight;
-        behavior = 'smooth';
-        break;
-    }
-
-    mainEl.scrollBy({ top, behavior });
+  function scrollReader(direction: 'up' | 'down'): Promise<void> {
+    return moveReader(direction === 'down' ? 'next' : 'prev', 'line');
   }
 
   return {

@@ -72,14 +72,14 @@ describe('useChapterNavigation', () => {
       ...overrides.readerStore,
     };
 
-    const onPageTurnSettled = overrides.onPageTurnSettled || vi.fn();
+    const onViewportSettled = overrides.onViewportSettled || vi.fn();
 
     return {
       mainRef,
       chapterRefs,
       readerStore: readerStore as any,
       isNavigating,
-      onPageTurnSettled,
+      onViewportSettled,
     };
   }
 
@@ -591,20 +591,21 @@ describe('useChapterNavigation', () => {
   });
 
   describe('scrollReader', () => {
-    it('scrolls down by step', () => {
+    it('scrolls down by step', async () => {
       const mainEl = document.createElement('div');
       mainEl.scrollBy = vi.fn();
       Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
       Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
 
       const opts = createNavigationOptions({ mainRef: mainEl });
       const { scrollReader } = useChapterNavigation(opts);
 
-      scrollReader('down');
+      await scrollReader('down');
       expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 150, behavior: 'auto' });
     });
 
-    it('scrolls up by step', () => {
+    it('scrolls up by step', async () => {
       const mainEl = document.createElement('div');
       mainEl.scrollBy = vi.fn();
       Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
@@ -613,37 +614,11 @@ describe('useChapterNavigation', () => {
       const opts = createNavigationOptions({ mainRef: mainEl });
       const { scrollReader } = useChapterNavigation(opts);
 
-      scrollReader('up');
+      await scrollReader('up');
       expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: -150, behavior: 'auto' });
     });
 
-    it('scrolls pagedown with smooth behavior', () => {
-      const mainEl = document.createElement('div');
-      mainEl.scrollBy = vi.fn();
-      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
-      Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
-
-      const opts = createNavigationOptions({ mainRef: mainEl });
-      const { scrollReader } = useChapterNavigation(opts);
-
-      scrollReader('pagedown');
-      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 720, behavior: 'smooth' });
-    });
-
-    it('scrolls pageup with smooth behavior', () => {
-      const mainEl = document.createElement('div');
-      mainEl.scrollBy = vi.fn();
-      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
-      Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
-
-      const opts = createNavigationOptions({ mainRef: mainEl });
-      const { scrollReader } = useChapterNavigation(opts);
-
-      scrollReader('pageup');
-      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: -720, behavior: 'smooth' });
-    });
-
-    it('loads prev chapter on up when at the very top', () => {
+    it('loads the previous chapter and continues one line at the top boundary', async () => {
       const mainEl = document.createElement('div');
       mainEl.scrollBy = vi.fn();
       Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
@@ -655,32 +630,53 @@ describe('useChapterNavigation', () => {
       });
       const { scrollReader } = useChapterNavigation(opts);
 
-      scrollReader('up');
-      expect(opts.readerStore.loadPrevChapter).toHaveBeenCalled();
-      expect(mainEl.scrollBy).not.toHaveBeenCalled();
+      await scrollReader('up');
+
+      expect(opts.readerStore.loadPrevChapter).toHaveBeenCalledWith('manual');
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: -150, behavior: 'auto' });
+      expect(opts.onViewportSettled).toHaveBeenCalledOnce();
+      expect(opts.isNavigating.value).toBe(false);
     });
 
-    it('loads prev chapter on pageup when at the very top', () => {
+    it('loads the next chapter and continues one line at the bottom boundary', async () => {
       const mainEl = document.createElement('div');
       mainEl.scrollBy = vi.fn();
       Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 800 });
       Object.defineProperty(mainEl, 'scrollTop', { value: 0, writable: true });
 
       const opts = createNavigationOptions({
         mainRef: mainEl,
-        hasPrev: true,
+        hasNext: true,
       });
       const { scrollReader } = useChapterNavigation(opts);
 
-      scrollReader('pageup');
-      expect(opts.readerStore.loadPrevChapter).toHaveBeenCalled();
+      await scrollReader('down');
+
+      expect(opts.readerStore.loadNextChapter).toHaveBeenCalledWith('manual');
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 150, behavior: 'auto' });
+      expect(opts.onViewportSettled).toHaveBeenCalledOnce();
+      expect(opts.isNavigating.value).toBe(false);
+    });
+
+    it('does not interfere with an active navigation', async () => {
+      const mainEl = document.createElement('div');
+      mainEl.scrollBy = vi.fn();
+      Object.defineProperty(mainEl, 'scrollTop', { value: 100, writable: true });
+
+      const opts = createNavigationOptions({ mainRef: mainEl });
+      opts.isNavigating.value = true;
+      const { scrollReader } = useChapterNavigation(opts);
+
+      await scrollReader('down');
+
       expect(mainEl.scrollBy).not.toHaveBeenCalled();
     });
 
-    it('does nothing when mainRef is null', () => {
+    it('does nothing when mainRef is null', async () => {
       const opts = createNavigationOptions({ mainRef: null });
       const { scrollReader } = useChapterNavigation(opts);
-      scrollReader('down'); // Should not throw
+      await expect(scrollReader('down')).resolves.toBeUndefined();
     });
   });
 
@@ -724,7 +720,7 @@ describe('useChapterNavigation', () => {
       expect(mainEl.scrollTop).toBe(1_200);
       expect(mainEl.scrollBy).not.toHaveBeenCalled();
       expect(opts.isNavigating.value).toBe(false);
-      expect(opts.onPageTurnSettled).not.toHaveBeenCalled();
+      expect(opts.onViewportSettled).not.toHaveBeenCalled();
     });
 
     it('restores the visible anchor when appending trims content above it', async () => {
@@ -768,7 +764,7 @@ describe('useChapterNavigation', () => {
 
       expect(mainEl.scrollTop).toBe(300);
       expect(mainEl.scrollBy).not.toHaveBeenCalled();
-      expect(opts.onPageTurnSettled).not.toHaveBeenCalled();
+      expect(opts.onViewportSettled).not.toHaveBeenCalled();
     });
 
     it('preserves the current chapter when prepending at the top boundary', async () => {
@@ -812,7 +808,7 @@ describe('useChapterNavigation', () => {
 
       expect(mainEl.scrollTop).toBe(900);
       expect(mainEl.scrollBy).not.toHaveBeenCalled();
-      expect(opts.onPageTurnSettled).not.toHaveBeenCalled();
+      expect(opts.onViewportSettled).not.toHaveBeenCalled();
     });
 
     it('releases the navigation lock without settling when loading fails', async () => {
@@ -835,7 +831,7 @@ describe('useChapterNavigation', () => {
       await expect(loadBoundaryChapter('next')).resolves.toBe(false);
 
       expect(opts.isNavigating.value).toBe(false);
-      expect(opts.onPageTurnSettled).not.toHaveBeenCalled();
+      expect(opts.onViewportSettled).not.toHaveBeenCalled();
     });
 
     it('holds the navigation lock until an in-flight boundary load settles', async () => {
@@ -896,7 +892,43 @@ describe('useChapterNavigation', () => {
       expect(opts.isNavigating.value).toBe(true);
       vi.advanceTimersByTime(650);
       expect(opts.isNavigating.value).toBe(false);
-      expect(opts.onPageTurnSettled).toHaveBeenCalledOnce();
+      expect(opts.onViewportSettled).toHaveBeenCalledOnce();
+    });
+
+    it('keeps scrolling current content while a background next preload is in flight', async () => {
+      vi.useFakeTimers();
+      const mainEl = document.createElement('div');
+      mainEl.scrollBy = vi.fn();
+      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
+      Object.defineProperty(mainEl, 'scrollTop', { value: 500, writable: true });
+
+      const opts = createNavigationOptions({ mainRef: mainEl, isLoadingNext: true });
+      const { turnReaderPage } = useChapterNavigation(opts);
+
+      await turnReaderPage('next');
+
+      expect(mainEl.scrollBy).toHaveBeenCalledWith({ top: 720, behavior: 'smooth' });
+      expect(opts.isNavigating.value).toBe(true);
+      vi.advanceTimersByTime(650);
+      expect(opts.isNavigating.value).toBe(false);
+    });
+
+    it('ignores another page command while the current animation is locked', async () => {
+      vi.useFakeTimers();
+      const mainEl = document.createElement('div');
+      mainEl.scrollBy = vi.fn();
+      Object.defineProperty(mainEl, 'clientHeight', { value: 800 });
+      Object.defineProperty(mainEl, 'scrollHeight', { value: 2_000 });
+      Object.defineProperty(mainEl, 'scrollTop', { value: 500, writable: true });
+
+      const opts = createNavigationOptions({ mainRef: mainEl });
+      const { turnReaderPage } = useChapterNavigation(opts);
+
+      await turnReaderPage('next');
+      await turnReaderPage('next');
+
+      expect(mainEl.scrollBy).toHaveBeenCalledOnce();
     });
 
     it('loads the next chapter at the bottom and continues by one reader page', async () => {
@@ -943,7 +975,7 @@ describe('useChapterNavigation', () => {
       expect(readerStore.setCurrentChapter).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(650);
-      expect(opts.onPageTurnSettled).toHaveBeenCalledOnce();
+      expect(opts.onViewportSettled).toHaveBeenCalledOnce();
     });
 
     it('preserves the visible chapter anchor when appending trims earlier chapters', async () => {
