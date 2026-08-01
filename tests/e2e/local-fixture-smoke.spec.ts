@@ -17,6 +17,11 @@ const textCleanupFixture = `
   <p>如果伱愿意，我们就继续验证正文防盗字修复。</p>
   <p>记住首发网站域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞</p>
   <p>正文中的数学符号 𝕥 应保持原样。</p>
+  <p class="br-delimited-prose">
+    &nbsp;&nbsp;&nbsp;&nbsp;换行正文第一段。<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;换行正文第二段。<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;换行正文第三段。
+  </p>
 `;
 const tocLinks = Array.from(
   { length: 1200 },
@@ -309,6 +314,8 @@ test('runs the built userscript and restores the host page after exit', async ({
   await expect(readerContent).toContainText('正文中的数学符号 𝕥 应保持原样');
   await expect(readerContent).not.toContainText('伱');
   await expect(readerContent).not.toContainText('首发网站域名');
+  await expect(readerContent.locator('p.br-delimited-prose')).toHaveCount(3);
+  await expect(readerContent.locator('p.br-delimited-prose').nth(1)).toHaveText('换行正文第二段。');
 
   const primaryUi = await page.locator('#mnr-reader-root').evaluate(host => {
     const shadow = host.shadowRoot;
@@ -426,6 +433,36 @@ test('runs the built userscript and restores the host page after exit', async ({
   await expect(fontSizeControl).toHaveAttribute('aria-labelledby', 'mnr-font-size-label');
   const fontSizeBox = await fontSizeControl.boundingBox();
   expect(fontSizeBox?.height).toBeGreaterThanOrEqual(32);
+
+  const setReadingRange = async (id: string, value: number) => {
+    await page
+      .locator('#mnr-reader-root')
+      .locator(`#${id}`)
+      .evaluate((input, nextValue) => {
+        const range = input as HTMLInputElement;
+        range.value = String(nextValue);
+        range.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+      }, value);
+  };
+  await setReadingRange('mnr-line-height', 2.4);
+  await setReadingRange('mnr-paragraph-indent', 3);
+  await setReadingRange('mnr-padding', 48);
+  await expect
+    .poll(() =>
+      readerContent.first().evaluate(article => {
+        const paragraph = article.querySelector('p.br-delimited-prose');
+        const articleStyle = getComputedStyle(article);
+        const paragraphStyle = paragraph ? getComputedStyle(paragraph) : null;
+        return {
+          lineHeight: articleStyle.lineHeight,
+          paddingLeft: articleStyle.paddingLeft,
+          textIndent: paragraphStyle?.textIndent ?? '',
+        };
+      })
+    )
+    .toEqual({ lineHeight: '43.2px', paddingLeft: '48px', textIndent: '54px' });
+  await page.locator('#mnr-reader-root').getByRole('button', { name: '恢复默认外观' }).click();
+  await page.locator('#mnr-reader-root').locator('#mnr-settings-title').focus();
 
   await page.keyboard.press('Tab');
   await expect

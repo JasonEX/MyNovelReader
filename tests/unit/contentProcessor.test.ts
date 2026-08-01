@@ -778,6 +778,45 @@ describe('ContentProcessor', () => {
       expect(content?.textContent).toContain('Second line');
     });
 
+    it('splits br-delimited prose already wrapped in a paragraph', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = [
+        '<p id="source-paragraph" class="chapter-prose">',
+        '\u00a0\u00a0\u00a0\u00a0First line<strong> with emphasis</strong><br>',
+        '\u00a0\u00a0\u00a0\u00a0Second line<br>',
+        '\u3000\u3000Third line',
+        '</p>',
+      ].join('');
+
+      const result = processor.process(element, doc);
+      const container = doc.createElement('div');
+      container.innerHTML = result;
+      const paragraphs = Array.from(container.querySelectorAll('p.chapter-prose'));
+
+      expect(paragraphs.map(paragraph => paragraph.textContent)).toEqual([
+        'First line with emphasis',
+        'Second line',
+        'Third line',
+      ]);
+      expect(paragraphs.every(paragraph => !paragraph.querySelector('br'))).toBe(true);
+      expect(paragraphs[0].querySelector('strong')?.textContent).toBe(' with emphasis');
+      expect(paragraphs.map(paragraph => paragraph.id)).toEqual(['source-paragraph', '', '']);
+    });
+
+    it('preserves intentional line breaks without prose indentation', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = '<p class="verse">First verse<br><em>Second verse</em></p>';
+
+      const result = processor.process(element, doc);
+      const container = doc.createElement('div');
+      container.innerHTML = result;
+      const paragraph = container.querySelector('p.verse');
+
+      expect(container.querySelectorAll('p.verse')).toHaveLength(1);
+      expect(paragraph?.querySelector('br')).not.toBeNull();
+      expect(paragraph?.querySelector('em')?.textContent).toBe('Second verse');
+    });
+
     it('preserves list structure while normalizing surrounding prose', () => {
       const element = doc.createElement('div');
       element.innerHTML = 'Intro<br><br><ul><li>One</li><li>Two</li></ul>';

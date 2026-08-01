@@ -631,13 +631,13 @@ onUnmounted(() => {
 /* Mobile first - base styles are mobile */
 @media (min-width: 768px) {
   .mnr-reader-content {
-    padding: 30px;
+    padding: var(--mnr-padding, 30px);
   }
 }
 
 @media (min-width: 1024px) {
   .mnr-reader-content {
-    padding: 40px;
+    padding: var(--mnr-padding, 40px);
   }
 }
 

@@ -538,6 +538,51 @@ export class ContentProcessor {
       }
     };
 
+    const splitWrappedParagraph = (paragraph: HTMLParagraphElement): void => {
+      const nodes = Array.from(paragraph.childNodes);
+      const hasDirectBreak = nodes.some(
+        node => node.nodeType === 1 && (node as Element).tagName === 'BR'
+      );
+      if (!hasDirectBreak) return;
+
+      const segments: Node[][] = [];
+      let segment: Node[] = [];
+
+      const flushSegment = () => {
+        if (segment.some(hasVisibleContent)) segments.push(segment);
+        segment = [];
+      };
+
+      for (const node of nodes) {
+        if (node.nodeType === 1 && (node as Element).tagName === 'BR') {
+          flushSegment();
+        } else {
+          segment.push(node);
+        }
+      }
+      flushSegment();
+
+      // Existing paragraphs may use <br> for poetry or addresses. Split only when the
+      // following lines carry explicit source indentation, which identifies prose paragraphs.
+      const sourceIndent = /^[\t\r\n ]*[\u00a0\u2000-\u200b\u202f\u205f\u3000]{2,}/u;
+      const followingSegments = segments.slice(1);
+      const indentedSegments = followingSegments.filter(nodes =>
+        sourceIndent.test(nodes.map(node => node.textContent || '').join(''))
+      ).length;
+      if (segments.length < 2 || indentedSegments < Math.ceil(followingSegments.length * 0.8)) {
+        return;
+      }
+
+      const replacements = segments.map((nodes, index) => {
+        const replacement = paragraph.cloneNode(false) as HTMLParagraphElement;
+        if (index > 0) replacement.removeAttribute('id');
+        nodes.forEach(node => replacement.appendChild(node));
+        stripSourceIndent(replacement);
+        return replacement;
+      });
+      paragraph.replaceWith(...replacements);
+    };
+
     const normalizeContainer = (parent: Element): void => {
       for (const child of Array.from(parent.children)) {
         if (PARAGRAPH_CONTAINER_TAGS.has(child.tagName)) {
@@ -599,6 +644,9 @@ export class ContentProcessor {
       parent.replaceChildren(fragment);
     };
 
+    Array.from(container.querySelectorAll<HTMLParagraphElement>('p')).forEach(
+      splitWrappedParagraph
+    );
     normalizeContainer(container);
     container.querySelectorAll('p').forEach(stripSourceIndent);
 
