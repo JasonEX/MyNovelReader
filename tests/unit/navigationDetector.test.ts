@@ -66,6 +66,29 @@ describe('NavigationDetector', () => {
       expect(result.index?.text).toBe('目录');
     });
 
+    it('should detect traditional Chinese navigation and prefer the real catalog', () => {
+      const dom = createDom(
+        `
+          <!DOCTYPE html>
+          <html>
+            <body>
+              <a href="/txt/7974/1.html">上一頁</a>
+              <a href="/book/7974.html">書頁</a>
+              <a href="/book/7974/index.html">目錄</a>
+              <a href="/txt/7974/3.html">下一頁</a>
+            </body>
+          </html>
+        `,
+        'https://sto9.com/txt/7974/2.html'
+      );
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.prev?.text).toBe('上一頁');
+      expect(result.index?.url).toBe('https://sto9.com/book/7974/index.html');
+      expect(result.next?.text).toBe('下一頁');
+    });
+
     it('should detect short navigation text', () => {
       const dom = createDom(`
         <!DOCTYPE html>

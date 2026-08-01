@@ -14,6 +14,6 @@ export const SECTION_TEXT_PATTERNS = [
 /** Chapter link text patterns - indicates real chapter navigation */
 export const CHAPTER_TEXT_PATTERNS = [
   /[下上]一?章/, // 下一章, 上一章
-  /[下上]一?节/, // 下一节
-  /第.+章/, // 第X章
+  /[下上]一?[节節]/, // 下一节 / 下一節
+  /第.+[章节節]/, // 第X章 / 第X节 / 第X節
 ];

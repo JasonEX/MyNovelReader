@@ -5,7 +5,7 @@
  * Uses simplified @match rules since we now have intelligent auto-detection.
  */
 
-import { VERSION } from './version';
+import { VERSION } from './version.ts';
 
 // This userscript supports many sites via auto-detection.
 // Keep @connect permissive so GM_xmlhttpRequest works on any supported host.

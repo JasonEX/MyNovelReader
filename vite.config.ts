@@ -1,4 +1,4 @@
-import { createMeta, toUserscriptConfig } from './src/meta';
+import { createMeta, toUserscriptConfig } from './src/meta.ts';
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'url';
 

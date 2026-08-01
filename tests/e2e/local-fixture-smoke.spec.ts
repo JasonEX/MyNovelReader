@@ -51,6 +51,56 @@ const fixtureHtml = `<!doctype html>
   </body>
 </html>`;
 
+const sto9FixtureUrl = 'https://sto9.com/txt/7974/7627078.html';
+const sto9ChapterListUrl = 'https://sto9.com/ajax_novels/chapterlist/7974.html';
+
+function makeSto9Fixture(options: {
+  chapterTitle: string;
+  nextChapterId: string;
+  prevChapterId: string;
+}): string {
+  const content = Array.from(
+    { length: 42 },
+    (_, index) =>
+      `&emsp;&emsp;${options.chapterTitle}第 ${index + 1} 段正文，用於驗證思兔站點解析與完整目錄。<br><br>`
+  ).join('');
+
+  return `<!doctype html>
+    <html lang="zh-Hant">
+      <head>
+        <meta charset="utf-8">
+        <title>測試小說_${options.chapterTitle}|思兔sto9</title>
+      </head>
+      <body>
+        <div class="bread">
+          <a href="/">首頁</a>
+          <a href="/book/7974/index.html">測試小說</a>
+        </div>
+        <div class="txtnav">
+          <h1>${options.chapterTitle}</h1>
+          <div class="txtright">右側文字廣告</div>
+          <div class="txtad">正文頂部廣告</div>
+          ${content}
+          <div class="txtcenter">章中廣告</div>
+          &emsp;&emsp;（還有更新耶）
+        </div>
+        <div class="page1">
+          <a href="/txt/7974/${options.prevChapterId}.html">上一章</a>
+          <a href="/book/7974/index.html">目錄</a>
+          <a href="/txt/7974/${options.nextChapterId}.html">下一章</a>
+        </div>
+      </body>
+    </html>`;
+}
+
+const sto9ChapterListHtml = `
+  <ul>
+    <li data-num="764"><a href="/txt/7974/7626167.html">第764章 前一章</a></li>
+    <li data-num="765"><a href="/txt/7974/7627078.html">第765章 生死存亡！</a></li>
+    <li data-num="766"><a href="/txt/7974/7628065.html">第766章 援軍到了！</a></li>
+  </ul>
+`;
+
 const nextFixtureHtml = `<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -542,6 +592,59 @@ test('runs the built userscript and restores the host page after exit', async ({
   expect(Math.abs(entryAlignment?.y ?? Infinity)).toBeLessThanOrEqual(0.5);
   await expect(page).toHaveTitle('第100章 本地测试 - 测试小说');
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});
+
+test('applies the Sto9 adapter and loads its complete dynamic catalog', async ({
+  context,
+  page,
+}) => {
+  await context.route(/https:\/\/sto9\.com\/txt\/7974\/\d+\.html/, route => {
+    const chapterId = new URL(route.request().url()).pathname.match(/\/(\d+)\.html$/)?.[1];
+    const isCurrent = chapterId === '7627078';
+    return route.fulfill({
+      body: makeSto9Fixture({
+        chapterTitle: isCurrent ? '第765章 生死存亡！' : '第766章 援軍到了！',
+        nextChapterId: isCurrent ? '7628065' : '7629000',
+        prevChapterId: isCurrent ? '7626167' : '7627078',
+      }),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    });
+  });
+  await context.route(sto9ChapterListUrl, route =>
+    route.fulfill({
+      body: sto9ChapterListHtml,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addMyNovelReaderUserscript(context);
+
+  await page.goto(sto9FixtureUrl, { waitUntil: 'domcontentloaded' });
+  const state = await waitForMnrReader(page);
+  assertMnrSmokeState(state);
+  expect(state.shadowTitle).toBe('第765章 生死存亡！');
+
+  const readerRoot = page.locator('#mnr-reader-root');
+  const readerContent = readerRoot.locator('.mnr-reader-content');
+  await expect(readerContent).toContainText('用於驗證思兔站點解析與完整目錄');
+  await expect(readerContent).not.toContainText('文字廣告');
+  await expect(readerContent).not.toContainText('章中廣告');
+  await expect(readerContent).not.toContainText('還有更新耶');
+
+  await readerRoot.locator('[aria-label="打开目录"]').click();
+  await expect
+    .poll(() =>
+      readerRoot.evaluate(host => {
+        const shadow = host.shadowRoot;
+        return {
+          rows: shadow?.querySelectorAll('.mnr-chapter-button').length || 0,
+          position: shadow?.querySelector('.mnr-drawer-position')?.textContent?.trim() || '',
+        };
+      })
+    )
+    .toEqual({ rows: 3, position: '第 2 / 3 章' });
+  await expect(readerRoot.locator('.mnr-chapter-button.active')).toContainText('第765章');
 });
 
 test('keeps normal Cloudflare JS Detection pages readable across previous navigation', async ({

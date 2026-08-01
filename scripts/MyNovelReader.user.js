@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.11
+// @version            9.3.12
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -238,37 +238,35 @@
 	];
 	var NAV_PATTERNS = {
 		next: [
-			/下一[页章节篇话]/,
-			/下[页章话]/,
+			/下一[页頁章节節篇话話]/,
+			/下[页頁章节節话話]/,
 			/next/i,
 			/^\s*>\s*$/,
-			/翻下页/,
-			/后一章/,
-			/继续阅读/,
+			/翻下[页頁]/,
+			/[后後]一章/,
+			/[继繼][续續][阅閱][读讀]/,
 			/下篇/,
-			/后篇/,
-			/下一话/
+			/[后後]篇/
 		],
 		prev: [
-			/上一[页章节篇话]/,
-			/上[页章话]/,
+			/上一[页頁章节節篇话話]/,
+			/上[页頁章节節话話]/,
 			/prev/i,
 			/^\s*<\s*$/,
-			/翻上页/,
+			/翻上[页頁]/,
 			/前一章/,
 			/上篇/,
-			/前篇/,
-			/上一话/
+			/前篇/
 		],
 		index: [
-			/^目录$/,
-			/章节目录/,
-			/章节列表/,
-			/返回目录/,
-			/回目录/,
-			/回书目/,
-			/书目/,
-			/书页/,
+			/^目[录錄]$/,
+			/章[节節]目[录錄]/,
+			/章[节節]列表/,
+			/返回目[录錄]/,
+			/回目[录錄]/,
+			/回[书書]目/,
+			/[书書]目/,
+			/[书書][页頁]/,
 			/index/i,
 			/catalog/i
 		]
@@ -2890,8 +2888,8 @@
 	];
 	var CHAPTER_TEXT_PATTERNS = [
 		/[下上]一?章/,
-		/[下上]一?节/,
-		/第.+章/
+		/[下上]一?[节節]/,
+		/第.+[章节節]/
 	];
 	var REMOVE_SELECTORS = [
 		"script",
@@ -6759,6 +6757,35 @@
 			exampleUrl: "https://www.69shuba.com/txt/58672/38147713"
 		}
 	};
+	var sto9_exports$1 = __exportAll({ sto9Rule: () => sto9Rule });
+	var sto9Rule = {
+		id: "sto9",
+		name: "思兔阅读",
+		version: 1,
+		match: { pattern: "^https?://(?:www\\.)?sto9\\.com/txt/\\d+/\\d+\\.html(?:[?#].*)?$" },
+		content: {
+			selector: ".txtnav",
+			remove: "script, style, iframe, ins, .txtright, .txtad, .txtcenter",
+			replace: [{
+				pattern: "[（(]\\s*還有更新耶\\s*[）)]",
+				replacement: "",
+				flags: "g"
+			}]
+		},
+		navigation: {
+			prev: ".page1 a:contains(\"上一章\")",
+			index: ".page1 a:contains(\"目錄\"), .page1 a:contains(\"目录\")",
+			next: ".page1 a:not([href$=\"/end.html\"]):contains(\"下一章\")"
+		},
+		title: {
+			selector: ".txtnav > h1",
+			bookSelector: ".bread a[href*=\"/book/\"][href$=\"/index.html\"]"
+		},
+		meta: {
+			source: "builtin",
+			exampleUrl: "https://sto9.com/txt/7974/7627078.html"
+		}
+	};
 	var sudugu_exports = __exportAll({ suduguRule: () => suduguRule });
 	var suduguRule = {
 		id: "sudugu",
@@ -6935,6 +6962,7 @@
 		"./hetushu.ts": hetushu_exports,
 		"./qidian.ts": qidian_exports$1,
 		"./shu69.ts": shu69_exports,
+		"./sto9.ts": sto9_exports$1,
 		"./sudugu.ts": sudugu_exports,
 		"./ttks.ts": ttks_exports,
 		"./twkan.ts": twkan_exports$1,
@@ -8597,7 +8625,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.11";
+	var VERSION = "9.3.12";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
@@ -9552,9 +9580,7 @@
 							if (isMap(target)) run(depsMap.get(MAP_KEY_ITERATE_KEY));
 						}
 						break;
-					case "set":
-						if (isMap(target)) run(depsMap.get(ITERATE_KEY));
-						break;
+					case "set": if (isMap(target)) run(depsMap.get(ITERATE_KEY));
 				}
 			}
 		}
@@ -17807,7 +17833,7 @@ ul, ol {
 	}
 	var CACHE_V2_INDEX_PREFIX = "mnr_cache_v2_index_";
 	var CACHE_V2_CHAPTER_PREFIX = "mnr_cache_v2_chapter_";
-	var DAY_MS = 1440 * 60 * 1e3;
+	var DAY_MS = 864e5;
 	var PERSISTED_CACHE_MAX_AGE_MS = 30 * DAY_MS;
 	var PERSISTED_CACHE_GC_INTERVAL_MS = DAY_MS;
 	var PERSISTED_CACHE_TOUCH_INTERVAL_MS = DAY_MS;
@@ -18286,7 +18312,7 @@ ul, ol {
 			return url.replace(/\d+/g, "{N}");
 		}
 	}
-	function extractBookId(url) {
+	function extractBookId$1(url) {
 		try {
 			const u = new URL(url);
 			for (const p of [
@@ -18353,6 +18379,155 @@ ul, ol {
 	function calculateBackoff(failureCount, baseMs = 1500, maxMs = 3e4) {
 		return Math.min(baseMs * Math.pow(2, failureCount - 1), maxMs);
 	}
+	var ajaxChapterList_exports = __exportAll({ createAjaxChapterListLoader: () => createAjaxChapterListLoader });
+	function resolvePageUrl(indexUrl, currentUrl, options) {
+		const fallbackBase = typeof location !== "undefined" && typeof location.href === "string" && location.href || "https://example.invalid/";
+		for (const candidate of [currentUrl, indexUrl]) {
+			const absolute = resolveUrl(candidate, fallbackBase);
+			if (!absolute) continue;
+			try {
+				const url = new URL(absolute);
+				if (options.matchesHost(url.hostname)) return url;
+			} catch {}
+		}
+		return null;
+	}
+	function extractBookId(indexUrl, currentUrl, pageUrl, options) {
+		for (const candidate of [currentUrl, indexUrl]) {
+			const absolute = resolveUrl(candidate, pageUrl.href);
+			if (!absolute) continue;
+			try {
+				const url = new URL(absolute);
+				if (!options.matchesHost(url.hostname)) continue;
+				const match = url.pathname.match(/^\/(?:txt|book)\/(\d+)(?:\/|\.html?$)/);
+				if (match) return match[1];
+			} catch {}
+		}
+		return null;
+	}
+	function buildChapterListUrl(indexUrl, currentUrl, options) {
+		const pageUrl = resolvePageUrl(indexUrl, currentUrl, options);
+		if (!pageUrl) return null;
+		const bookId = extractBookId(indexUrl, currentUrl, pageUrl, options);
+		if (!bookId) return null;
+		return new URL(`/ajax_novels/chapterlist/${bookId}.html`, pageUrl.origin).toString();
+	}
+	function getNativeFetch$1() {
+		if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") return unsafeWindow.fetch.bind(unsafeWindow);
+		if (typeof window !== "undefined" && typeof window.fetch === "function") return window.fetch.bind(window);
+		if (typeof fetch === "function") return fetch;
+		return null;
+	}
+	async function requestChapterListNative(apiUrl, setAbort) {
+		const fetcher = getNativeFetch$1();
+		if (!fetcher) return null;
+		const controller = new AbortController();
+		setAbort(() => controller.abort());
+		try {
+			const response = await fetcher(apiUrl, {
+				credentials: "include",
+				headers: {
+					Accept: "text/html, */*; q=0.01",
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				signal: controller.signal
+			});
+			if (!response.ok) return null;
+			return await response.text();
+		} catch {
+			return null;
+		} finally {
+			setAbort(null);
+		}
+	}
+	async function requestChapterListGm(apiUrl, referer, setAbort) {
+		const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
+		if (!gmXhr) return null;
+		return new Promise((resolve) => {
+			let settled = false;
+			const finish = (value) => {
+				if (settled) return;
+				settled = true;
+				setAbort(null);
+				resolve(value);
+			};
+			const headers = {
+				Accept: "text/html, */*; q=0.01",
+				"X-Requested-With": "XMLHttpRequest"
+			};
+			if (referer) headers.Referer = referer;
+			const request = gmXhr({
+				method: "GET",
+				url: apiUrl,
+				headers,
+				timeout: 1e4,
+				withCredentials: true,
+				onload: (response) => {
+					if (response.status < 200 || response.status >= 300) {
+						finish(null);
+						return;
+					}
+					finish(response.responseText);
+				},
+				onerror: () => finish(null),
+				onabort: () => finish(null),
+				ontimeout: () => finish(null)
+			});
+			setAbort(() => {
+				try {
+					request.abort();
+				} catch {}
+				finish(null);
+			});
+		});
+	}
+	function parseChapterList(html, apiUrl, options) {
+		if (!html.trim() || typeof DOMParser === "undefined") return [];
+		const doc = new DOMParser().parseFromString(html, "text/html");
+		const anchors = Array.from(doc.querySelectorAll("ul li a[href], a[href*=\"/txt/\"]"));
+		const seen = new Set();
+		const entries = [];
+		for (const anchor of anchors) {
+			const rawHref = anchor.getAttribute("href")?.trim();
+			if (!rawHref) continue;
+			const absolute = resolveUrl(rawHref, apiUrl);
+			if (!absolute) continue;
+			let url;
+			try {
+				url = new URL(absolute);
+			} catch {
+				continue;
+			}
+			if (!options.matchesHost(url.hostname) || !options.matchesChapterPath(url.pathname)) continue;
+			const normalizedUrl = normalizeUrlForFetch(url.toString());
+			if (seen.has(normalizedUrl)) continue;
+			const rawTitle = (anchor.textContent || "").trim();
+			const title = (options.cleanTitle?.(rawTitle) || rawTitle).trim();
+			seen.add(normalizedUrl);
+			entries.push({
+				title: title || `章节 ${entries.length + 1}`,
+				url: normalizedUrl
+			});
+		}
+		return entries;
+	}
+	async function loadChapterList(context, options) {
+		const apiUrl = buildChapterListUrl(context.indexUrl, context.currentUrl, options);
+		if (!apiUrl) return [];
+		const nativeHtml = await requestChapterListNative(apiUrl, context.setAbort);
+		let entries = nativeHtml ? parseChapterList(nativeHtml, apiUrl, options) : [];
+		if (entries.length > 0) return entries;
+		const gmHtml = await requestChapterListGm(apiUrl, context.currentUrl || context.indexUrl, context.setAbort);
+		entries = gmHtml ? parseChapterList(gmHtml, apiUrl, options) : [];
+		return entries;
+	}
+	function createAjaxChapterListLoader(options) {
+		return {
+			id: options.id,
+			matches: (context) => options.ruleIds.includes(context.rule?.id || "") || resolvePageUrl(context.indexUrl, context.currentUrl, options) !== null,
+			load: (context) => loadChapterList(context, options)
+		};
+	}
 	var goboo_exports = __exportAll({ gobooTocTitleCleaner: () => gobooTocTitleCleaner });
 	function cleanGobooTocTitleForUrl(title, url) {
 		const trimmed = title.trim();
@@ -18403,7 +18578,7 @@ ul, ol {
 		return !!resolveQidianPageUrl(indexUrl, currentUrl);
 	}
 	function buildQidianCategoryUrl(indexUrl, currentUrl) {
-		const bookId = extractBookId(currentUrl) || extractBookId(indexUrl);
+		const bookId = extractBookId$1(currentUrl) || extractBookId$1(indexUrl);
 		const pageUrl = resolveQidianPageUrl(indexUrl, currentUrl);
 		if (!bookId || !pageUrl) return null;
 		const apiUrl = new URL("/webcommon/book/category", pageUrl.origin);
@@ -18412,14 +18587,14 @@ ul, ol {
 		apiUrl.searchParams.set("bookId", bookId);
 		return apiUrl.toString();
 	}
-	function getNativeFetch$1() {
+	function getNativeFetch() {
 		if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") return unsafeWindow.fetch.bind(unsafeWindow);
 		if (typeof window !== "undefined" && typeof window.fetch === "function") return window.fetch.bind(window);
 		if (typeof fetch === "function") return fetch;
 		return null;
 	}
 	async function requestQidianCategoryNative(apiUrl, setAbort) {
-		const fetcher = getNativeFetch$1();
+		const fetcher = getNativeFetch();
 		if (!fetcher) return null;
 		const controller = new AbortController();
 		setAbort(() => controller.abort());
@@ -18498,7 +18673,7 @@ ul, ol {
 	}
 	function qidianCategoryToEntries(response, indexUrl, currentUrl) {
 		if (!response || response.code !== 0) return [];
-		const bookId = extractBookId(currentUrl) || extractBookId(indexUrl);
+		const bookId = extractBookId$1(currentUrl) || extractBookId$1(indexUrl);
 		const pageUrl = resolveQidianPageUrl(indexUrl, currentUrl);
 		if (!bookId || !pageUrl) return [];
 		const entries = [];
@@ -18531,160 +18706,26 @@ ul, ol {
 		matches: (context) => isQidianTocRequest(context.indexUrl, context.currentUrl, context.rule),
 		load: (context) => loadQidianTocEntries(context.indexUrl, context.currentUrl, context.setAbort)
 	};
+	var sto9_exports = __exportAll({ sto9TocLoader: () => sto9TocLoader });
+	var sto9TocLoader = createAjaxChapterListLoader({
+		id: "sto9",
+		ruleIds: ["sto9"],
+		matchesHost: (hostname) => /^(?:www\.)?sto9\.com$/i.test(hostname),
+		matchesChapterPath: (pathname) => /^\/txt\/\d+\/\d+\.html?$/i.test(pathname)
+	});
 	var twkan_exports = __exportAll({ twkanTocLoader: () => twkanTocLoader });
-	function isTwkanHost(hostname) {
-		return /^twkan\.com$/i.test(hostname);
-	}
-	function resolveTwkanPageUrl(indexUrl, currentUrl) {
-		const fallbackBase = typeof location !== "undefined" && typeof location.href === "string" && location.href || "https://twkan.com/";
-		for (const candidate of [currentUrl, indexUrl]) {
-			const abs = resolveUrl(candidate, fallbackBase);
-			if (!abs) continue;
-			try {
-				const url = new URL(abs);
-				if (isTwkanHost(url.hostname)) return url;
-			} catch {}
-		}
-		return null;
-	}
-	function extractTwkanBookId(indexUrl, currentUrl) {
-		for (const candidate of [currentUrl, indexUrl]) {
-			const pageUrl = resolveTwkanPageUrl(candidate, currentUrl);
-			if (!pageUrl) continue;
-			const match = pageUrl.pathname.match(/^\/(?:txt|book)\/(\d+)(?:\/|$)/);
-			if (match) return match[1];
-		}
-		return null;
-	}
-	function isTwkanTocRequest(indexUrl, currentUrl, rule) {
-		if (rule?.id === "twkan") return true;
-		return !!resolveTwkanPageUrl(indexUrl, currentUrl);
-	}
-	function buildTwkanChapterListUrl(indexUrl, currentUrl) {
-		const pageUrl = resolveTwkanPageUrl(indexUrl, currentUrl);
-		const bookId = extractTwkanBookId(indexUrl, currentUrl);
-		if (!pageUrl || !bookId) return null;
-		return new URL(`/ajax_novels/chapterlist/${bookId}.html`, pageUrl.origin).toString();
-	}
-	function getNativeFetch() {
-		if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") return unsafeWindow.fetch.bind(unsafeWindow);
-		if (typeof window !== "undefined" && typeof window.fetch === "function") return window.fetch.bind(window);
-		if (typeof fetch === "function") return fetch;
-		return null;
-	}
-	async function requestTwkanChapterListNative(apiUrl, setAbort) {
-		const fetcher = getNativeFetch();
-		if (!fetcher) return null;
-		const controller = new AbortController();
-		setAbort(() => controller.abort());
-		try {
-			const response = await fetcher(apiUrl, {
-				credentials: "include",
-				headers: {
-					Accept: "text/html, */*; q=0.01",
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				signal: controller.signal
-			});
-			if (!response.ok) return null;
-			return await response.text();
-		} catch {
-			return null;
-		} finally {
-			setAbort(null);
-		}
-	}
-	async function requestTwkanChapterListGm(apiUrl, referer, setAbort) {
-		const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
-		if (!gmXhr) return null;
-		return new Promise((resolve) => {
-			let settled = false;
-			const finish = (value) => {
-				if (settled) return;
-				settled = true;
-				setAbort(null);
-				resolve(value);
-			};
-			const headers = {
-				Accept: "text/html, */*; q=0.01",
-				"X-Requested-With": "XMLHttpRequest"
-			};
-			if (referer) headers.Referer = referer;
-			const request = gmXhr({
-				method: "GET",
-				url: apiUrl,
-				headers,
-				timeout: 1e4,
-				withCredentials: true,
-				onload: (response) => {
-					if (response.status < 200 || response.status >= 300) {
-						finish(null);
-						return;
-					}
-					finish(response.responseText);
-				},
-				onerror: () => finish(null),
-				onabort: () => finish(null),
-				ontimeout: () => finish(null)
-			});
-			setAbort(() => {
-				try {
-					request.abort();
-				} catch {}
-				finish(null);
-			});
-		});
-	}
-	function cleanTwkanTocTitle(title) {
-		return title.replace(/^\s*\d+[.、\s]+/, "").trim();
-	}
-	function parseTwkanChapterList(html, apiUrl) {
-		if (!html.trim() || typeof DOMParser === "undefined") return [];
-		const doc = new DOMParser().parseFromString(html, "text/html");
-		const anchors = Array.from(doc.querySelectorAll("ul li a[href], a[href*=\"/txt/\"]"));
-		const seen = new Set();
-		const entries = [];
-		for (const anchor of anchors) {
-			const rawHref = anchor.getAttribute("href")?.trim();
-			if (!rawHref) continue;
-			const url = resolveUrl(rawHref, apiUrl);
-			if (!url) continue;
-			let parsed;
-			try {
-				parsed = new URL(url);
-			} catch {
-				continue;
-			}
-			if (!isTwkanHost(parsed.hostname) || !/^\/txt\/\d+\/\d+\/?$/.test(parsed.pathname)) continue;
-			const normalizedUrl = normalizeUrlForFetch(parsed.toString());
-			if (seen.has(normalizedUrl)) continue;
-			const title = cleanTwkanTocTitle(anchor.textContent || "") || `章节 ${entries.length + 1}`;
-			seen.add(normalizedUrl);
-			entries.push({
-				title,
-				url: normalizedUrl
-			});
-		}
-		return entries;
-	}
-	async function loadTwkanTocEntries(indexUrl, currentUrl, setAbort) {
-		const apiUrl = buildTwkanChapterListUrl(indexUrl, currentUrl);
-		if (!apiUrl) return [];
-		const nativeHtml = await requestTwkanChapterListNative(apiUrl, setAbort);
-		let entries = nativeHtml ? parseTwkanChapterList(nativeHtml, apiUrl) : [];
-		if (entries.length > 0) return entries;
-		const gmHtml = await requestTwkanChapterListGm(apiUrl, currentUrl || indexUrl, setAbort);
-		entries = gmHtml ? parseTwkanChapterList(gmHtml, apiUrl) : [];
-		return entries;
-	}
-	var twkanTocLoader = {
+	var twkanTocLoader = createAjaxChapterListLoader({
 		id: "twkan",
-		matches: (context) => isTwkanTocRequest(context.indexUrl, context.currentUrl, context.rule),
-		load: (context) => loadTwkanTocEntries(context.indexUrl, context.currentUrl, context.setAbort)
-	};
+		ruleIds: ["twkan"],
+		matchesHost: (hostname) => /^twkan\.com$/i.test(hostname),
+		matchesChapterPath: (pathname) => /^\/txt\/\d+\/\d+\/?$/i.test(pathname),
+		cleanTitle: (title) => title.replace(/^\s*\d+[.、\s]+/, "").trim()
+	});
 	var modules = Object.assign({
+		"./ajaxChapterList.ts": ajaxChapterList_exports,
 		"./goboo.ts": goboo_exports,
 		"./qidian.ts": qidian_exports,
+		"./sto9.ts": sto9_exports,
 		"./twkan.ts": twkan_exports
 	});
 	function isSpecialTocLoader(value) {
@@ -18779,7 +18820,7 @@ ul, ol {
 		if (entries.length < 5) return entries;
 		const bookIdCounts = new Map();
 		for (const entry of entries) {
-			const bookId = extractBookId(entry.url);
+			const bookId = extractBookId$1(entry.url);
 			if (bookId) bookIdCounts.set(bookId, (bookIdCounts.get(bookId) || 0) + 1);
 		}
 		let dominantBookId = null;
@@ -18789,7 +18830,7 @@ ul, ol {
 			dominantBookId = bookId;
 		}
 		const sameBookEntries = dominantBookId && maxCount >= 5 ? entries.filter((entry) => {
-			const bookId = extractBookId(entry.url);
+			const bookId = extractBookId$1(entry.url);
 			return !bookId || bookId === dominantBookId;
 		}) : entries;
 		const patternCounts = new Map();
@@ -21341,7 +21382,6 @@ ul, ol {
 				case "pagedown":
 					top = pageHeight;
 					behavior = "smooth";
-					break;
 			}
 			mainEl.scrollBy({
 				top,
@@ -21660,7 +21700,7 @@ ul, ol {
 				return Math.min(100, props.cacheProgress.done / props.cacheProgress.total * 100);
 			});
 			const startIndex = computed(() => Math.max(0, Math.floor(scrollTop.value / ROW_HEIGHT) - OVERSCAN));
-			const visibleCount = computed(() => Math.ceil(viewportHeight.value / ROW_HEIGHT) + OVERSCAN * 2);
+			const visibleCount = computed(() => Math.ceil(viewportHeight.value / ROW_HEIGHT) + 16);
 			const endIndex = computed(() => Math.min(filteredChapters.value.length, startIndex.value + visibleCount.value));
 			const visibleChapters = computed(() => filteredChapters.value.slice(startIndex.value, endIndex.value));
 			const topSpacer = computed(() => startIndex.value * ROW_HEIGHT);
