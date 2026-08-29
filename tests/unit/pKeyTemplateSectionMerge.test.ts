@@ -43,7 +43,11 @@ describe('p_key template + extensionless section merge', () => {
     const page3Url = 'https://m.1qxs.test/xs_bkt9oo/89812/1358/3';
     const nextChapterUrl = 'https://m.1qxs.test/xs_bkt9oo/89812/1359/1';
 
-    const hidden = `<p>${'隐藏内容甲。'.repeat(50)}</p><p>${'隐藏内容乙。'.repeat(50)}</p>`;
+    const hidden = [
+      `<p>${'隐藏内容甲。'.repeat(50)}</p>`,
+      '<p>测试书名第一章 测试</p>',
+      `<p>${'隐藏内容乙。'.repeat(50)}</p>`,
+    ].join('');
     const pKey = encodeBase64Utf8(hidden, dom.window.btoa.bind(dom.window));
 
     const page1Html = `
@@ -54,6 +58,7 @@ describe('p_key template + extensionless section merge', () => {
           <a href="/xs_bkt9oo/89812/1358/2">下一页</a>
         </div>
         <h1>第一章 测试(1/3)</h1>
+        <div id="bookname">测试书名</div>
         <div class="content">
           <p>开头正文。</p>
           <p>阅|读|模|式|下，无|法|显|示|本|章|节|全|部|内|容，请|返|回|原|网|页阅|读。</p>
@@ -140,6 +145,7 @@ describe('p_key template + extensionless section merge', () => {
     expect(loaded.content).toContain('隐藏内容甲');
     expect(loaded.content).toContain('第二页正文');
     expect(loaded.content).toContain('第三页正文');
+    expect(loaded.content).not.toContain('测试书名第一章 测试');
     expect(loaded.content).not.toContain('加载更多');
   }, 15000);
 });

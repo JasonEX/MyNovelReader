@@ -145,6 +145,32 @@ describe('TitleDetector', () => {
       expect(result.bookTitle).toBe('元婴修仙传');
     });
 
+    it.each([
+      '第6章 你说你要废我双腿？区区加速，就这啊？',
+      '第75章 一切的幕后黑手就是白辰！林家之危！成为丧家之犬的林家继承人！',
+    ])('prefers a book keyword corroborated by title and description for %s', chapterTitle => {
+      const bookTitle = '放下血仇？那我逢魔时王白当了？';
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${chapterTitle} - ${bookTitle}小说 - 一七小说</title>
+            <meta name="keywords" content="${chapterTitle},${bookTitle}" />
+            <meta
+              name="description"
+              content="${bookTitle}最新章节(${chapterTitle})由一七小说提供免费阅读"
+            />
+          </head>
+          <body><h1>${chapterTitle}(1/4)</h1></body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.chapterTitle).toBe(chapterTitle);
+      expect(result.bookTitle).toBe(bookTitle);
+    });
+
     it('should prefer repeated book title candidates', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

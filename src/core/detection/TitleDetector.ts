@@ -508,6 +508,7 @@ export class TitleDetector {
 
   private collectBookTitleFromMeta(doc: Document, candidates: BookTitleCandidates): void {
     const metaContents = this.collectMetaContents(doc);
+    const metaDescription = metaContents.get('description');
 
     for (const name of EXPLICIT_BOOK_META_NAMES) {
       this.addBookTitleCandidate(candidates, metaContents.get(name.toLowerCase()), 4);
@@ -523,12 +524,24 @@ export class TitleDetector {
         .split(/[，,|｜]/)
         .map(s => s.trim())
         .filter(Boolean);
-      if (keywords.length > 0) {
+      const descriptionStart = (metaDescription || '').trim().replace(/^[《【]/, '');
+
+      const corroboratedKeyword = keywords.find(keyword => {
+        const cleaned = this.cleanBookTitle(keyword);
+        return (
+          this.isValidBookTitle(cleaned) &&
+          doc.title.includes(cleaned) &&
+          descriptionStart.startsWith(cleaned)
+        );
+      });
+
+      if (corroboratedKeyword) {
+        this.addBookTitleCandidate(candidates, corroboratedKeyword, 3);
+      } else if (keywords.length > 0) {
         this.addBookTitleCandidate(candidates, keywords[0], 1);
       }
     }
 
-    const metaDescription = metaContents.get('description');
     if (metaDescription) {
       const bracket = metaDescription.match(/《([^》]+)》/);
       if (bracket) {
@@ -717,7 +730,7 @@ export class TitleDetector {
 
     cleaned = cleaned
       .replace(/^[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+/, '')
-      .replace(/[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+$/, '')
+      .replace(/[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~★☆⚡]+$/, '')
       .trim();
 
     const chapterMatch = cleaned.match(TITLE_PATTERN);

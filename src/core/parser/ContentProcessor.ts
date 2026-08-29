@@ -665,7 +665,7 @@ export class ContentProcessor {
    * Clean duplicate book/chapter/author info at start and end of content
    */
   private cleanDuplicateInfo(html: string, doc: Document): string {
-    const { chapterTitle } = this.options;
+    const { chapterTitle, bookTitle } = this.options;
 
     let result = html;
 
@@ -719,6 +719,10 @@ export class ContentProcessor {
     // Strategy 2: Remove elements containing only chapter/book title
     const tempDiv = doc.createElement('div');
     tempDiv.innerHTML = result;
+    const combinedTitleFingerprint =
+      chapterTitle && bookTitle
+        ? `${bookTitle}${chapterTitle}`.replace(/\s+/g, '').toLowerCase()
+        : '';
 
     const isRemovableEmptyNode = (node: Node): boolean => {
       if (node.nodeType === Node.TEXT_NODE) return true;
@@ -764,12 +768,15 @@ export class ContentProcessor {
       break;
     }
 
-    // Remove standalone garbage marker blocks anywhere in the extracted content.
-    // Keep this stricter than title de-duplication so ordinary short正文 is preserved.
+    // Remove exact combined book/chapter fingerprints and standalone garbage markers anywhere.
+    // Keep this stricter than title de-duplication so ordinary later title mentions are preserved.
     for (const child of Array.from(tempDiv.children)) {
       if (child.children.length > 0) continue;
       const text = (child.textContent || '').trim();
-      if (/^>+$/.test(text)) {
+      const isCombinedTitleFingerprint =
+        !!combinedTitleFingerprint &&
+        text.replace(/\s+/g, '').toLowerCase() === combinedTitleFingerprint;
+      if (isCombinedTitleFingerprint || /^>+$/.test(text)) {
         child.remove();
       }
     }

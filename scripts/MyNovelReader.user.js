@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.15
+// @version            9.3.16
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -3799,14 +3799,20 @@
 		}
 		collectBookTitleFromMeta(doc, candidates) {
 			const metaContents = this.collectMetaContents(doc);
+			const metaDescription = metaContents.get("description");
 			for (const name of EXPLICIT_BOOK_META_NAMES) this.addBookTitleCandidate(candidates, metaContents.get(name.toLowerCase()), 4);
 			for (const name of GENERIC_TITLE_META_NAMES) this.addBookTitleCandidate(candidates, metaContents.get(name.toLowerCase()), 2);
 			const keywordsContent = metaContents.get("keywords");
 			if (keywordsContent) {
 				const keywords = keywordsContent.split(/[，,|｜]/).map((s) => s.trim()).filter(Boolean);
-				if (keywords.length > 0) this.addBookTitleCandidate(candidates, keywords[0], 1);
+				const descriptionStart = (metaDescription || "").trim().replace(/^[《【]/, "");
+				const corroboratedKeyword = keywords.find((keyword) => {
+					const cleaned = this.cleanBookTitle(keyword);
+					return this.isValidBookTitle(cleaned) && doc.title.includes(cleaned) && descriptionStart.startsWith(cleaned);
+				});
+				if (corroboratedKeyword) this.addBookTitleCandidate(candidates, corroboratedKeyword, 3);
+				else if (keywords.length > 0) this.addBookTitleCandidate(candidates, keywords[0], 1);
 			}
-			const metaDescription = metaContents.get("description");
 			if (metaDescription) {
 				const bracket = metaDescription.match(/《([^》]+)》/);
 				if (bracket) this.addBookTitleCandidate(candidates, bracket[1], 2);
@@ -3923,7 +3929,7 @@
 			let cleaned = text.trim();
 			const bracketMatch = cleaned.match(/《([^》]+)》/);
 			if (bracketMatch) cleaned = bracketMatch[1].trim();
-			cleaned = cleaned.replace(/^[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+/, "").replace(/[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+$/, "").trim();
+			cleaned = cleaned.replace(/^[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~!！?？★☆⚡]+/, "").replace(/[\]\s"'“”‘’【】[（）()<>《》·•\-—–_~★☆⚡]+$/, "").trim();
 			const chapterMatch = cleaned.match(TITLE_PATTERN);
 			if (chapterMatch?.index !== void 0 && chapterMatch.index > 0) cleaned = cleaned.slice(0, chapterMatch.index).trim();
 			for (const pattern of [
@@ -5274,7 +5280,7 @@
 			this.regexCache.clear();
 		}
 		cleanDuplicateInfo(html, doc) {
-			const { chapterTitle } = this.options;
+			const { chapterTitle, bookTitle } = this.options;
 			let result = html;
 			if (chapterTitle && chapterTitle.length > 2) {
 				const chapterNumMatch = chapterTitle.match(/^(第[一二三四五六七八九十百千\d]+[章节回话篇集卷])/);
@@ -5301,6 +5307,7 @@
 			}
 			const tempDiv = doc.createElement("div");
 			tempDiv.innerHTML = result;
+			const combinedTitleFingerprint = chapterTitle && bookTitle ? `${bookTitle}${chapterTitle}`.replace(/\s+/g, "").toLowerCase() : "";
 			const isRemovableEmptyNode = (node) => {
 				if (node.nodeType === Node.TEXT_NODE) return true;
 				if (node.nodeType !== Node.ELEMENT_NODE) return true;
@@ -5337,7 +5344,7 @@
 			for (const child of Array.from(tempDiv.children)) {
 				if (child.children.length > 0) continue;
 				const text = (child.textContent || "").trim();
-				if (/^>+$/.test(text)) child.remove();
+				if (!!combinedTitleFingerprint && text.replace(/\s+/g, "").toLowerCase() === combinedTitleFingerprint || /^>+$/.test(text)) child.remove();
 			}
 			const tailNodes = Array.from(tempDiv.childNodes);
 			let tailRemoved = 0;
@@ -8697,7 +8704,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.15";
+	var VERSION = "9.3.16";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {

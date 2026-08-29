@@ -902,6 +902,25 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('元婴修仙傳');
     });
 
+    it('removes an exact combined book/chapter fingerprint without deleting later prose', () => {
+      const bookTitle = '放下血仇？那我逢魔时王白当了？';
+      const chapterTitle = '第75章 一切的幕后黑手就是白辰！';
+      processor.setOptions({ bookTitle, chapterTitle });
+      const element = doc.createElement('div');
+      element.innerHTML = [
+        '<p>第一段正文。</p>',
+        `<p>${bookTitle}${chapterTitle}</p>`,
+        `<p>众人正在追查“${chapterTitle}”所说的幕后黑手。</p>`,
+        `<p>书架上仍然写着《${bookTitle}》。</p>`,
+      ].join('');
+
+      const result = processor.process(element, doc);
+
+      expect(result).not.toContain(`${bookTitle}${chapterTitle}`);
+      expect(result).toContain(`“${chapterTitle}”所说的幕后黑手`);
+      expect(result).toContain(`《${bookTitle}》`);
+    });
+
     it('keeps later正文 paragraphs that mention the chapter title core', () => {
       processor.setOptions({ chapterTitle: '第49章 通天箓' });
       const element = doc.createElement('div');
