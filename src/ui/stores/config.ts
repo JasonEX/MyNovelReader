@@ -179,6 +179,7 @@ export const useConfigStore = defineStore('config', () => {
   const behavior = ref<BehaviorSettings>({ ...DEFAULT_BEHAVIOR });
   const protection = ref<ProtectionSettings>({ ...DEFAULT_PROTECTION });
   const customCSS = ref('');
+  const customCleanupRegex = ref('');
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let savePending = false;
   let saveQueue = Promise.resolve();
@@ -220,6 +221,10 @@ export const useConfigStore = defineStore('config', () => {
   function setCustomCSS(css: string) {
     customCSS.value = css;
     applyCustomCSS();
+  }
+
+  function setCustomCleanupRegex(source: string) {
+    customCleanupRegex.value = source;
   }
 
   function applyTheme() {
@@ -332,6 +337,9 @@ export const useConfigStore = defineStore('config', () => {
           if (typeof config.customCSS === 'string') {
             customCSS.value = config.customCSS;
           }
+          if (typeof config.customCleanupRegex === 'string') {
+            customCleanupRegex.value = config.customCleanupRegex;
+          }
         }
       }
 
@@ -356,6 +364,7 @@ export const useConfigStore = defineStore('config', () => {
       behavior: behavior.value,
       protection: protection.value,
       customCSS: customCSS.value,
+      customCleanupRegex: customCleanupRegex.value,
     });
   }
 
@@ -395,7 +404,7 @@ export const useConfigStore = defineStore('config', () => {
 
   // Auto-save on changes
   watch(
-    [themeId, reading, behavior, protection, customCSS],
+    [themeId, reading, behavior, protection, customCSS, customCleanupRegex],
     () => {
       if (!isHydrating) scheduleSave();
     },
@@ -415,6 +424,7 @@ export const useConfigStore = defineStore('config', () => {
     behavior.value = { ...DEFAULT_BEHAVIOR };
     protection.value = { ...DEFAULT_PROTECTION };
     customCSS.value = '';
+    customCleanupRegex.value = '';
     applyAll();
     void save();
   }
@@ -431,6 +441,7 @@ export const useConfigStore = defineStore('config', () => {
     behavior,
     protection,
     customCSS,
+    customCleanupRegex,
 
     // Getters
     theme,
@@ -441,6 +452,7 @@ export const useConfigStore = defineStore('config', () => {
     updateBehavior,
     updateProtection,
     setCustomCSS,
+    setCustomCleanupRegex,
     resetReading,
     applyTheme,
     applyReading,

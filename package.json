@@ -1,6 +1,6 @@
 {
   "name": "my-novel-reader",
-  "version": "9.3.14",
+  "version": "9.3.15",
   "buildDate": "2026-07-31",
   "type": "module",
   "description": "小说阅读脚本 - 统一阅读样式，智能内容检测，自动翻页",
@@ -56,7 +56,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
-    "@types/jsdom": "^28.0.3",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^24.13.3",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",

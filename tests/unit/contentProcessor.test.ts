@@ -606,6 +606,20 @@ describe('ContentProcessor', () => {
       expect(result).not.toContain('天才一秒记住');
     });
 
+    it('removes the 1qxs collection banner without matching ordinary prose', () => {
+      const element = doc.createElement('div');
+      element.innerHTML = `
+        <p>【放下血仇？那我逢魔时王白当了？】小说免费阅读，请收藏\u3000一七小说【1qxs.com】</p>
+        <p>她把“请收藏”写进留言，然后继续阅读这本小说。</p>
+      `;
+
+      const result = processor.process(element, doc);
+
+      expect(result).not.toContain('一七小说');
+      expect(result).not.toContain('1qxs.com');
+      expect(result).toContain('她把“请收藏”写进留言，然后继续阅读这本小说。');
+    });
+
     it('repairs confirmed anti-copy glyph substitutions without rewriting valid words', () => {
       const element = doc.createElement('div');
       element.innerHTML = '<p>如果伱愿意，我们就继续往前走。</p><p>澹台去勐海看桉树和莪蒿。</p>';

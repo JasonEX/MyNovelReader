@@ -45,6 +45,7 @@ describe('ConfigStore (extra coverage)', () => {
       },
       protection: { blockVisibility: true, blockRedirect: true, blockTimer: true },
       customCSS: '.test { color: red; }',
+      customCleanupRegex: '测试广告$',
     };
     const gmGetValue = vi.fn(async () => JSON.stringify(config));
     const gmSetValue = vi.fn(async () => {});
@@ -57,6 +58,7 @@ describe('ConfigStore (extra coverage)', () => {
     expect(store.themeId).toBe('dark');
     expect(store.reading.fontSize).toBe(20);
     expect(store.customCSS).toBe('.test { color: red; }');
+    expect(store.customCleanupRegex).toBe('测试广告$');
   });
 
   it('loads config from GM_getValue when data is already an object (not string)', async () => {
@@ -121,13 +123,15 @@ describe('ConfigStore (extra coverage)', () => {
   });
 
   it('save writes to GM_setValue', async () => {
-    const gmSetValue = vi.fn(async () => {});
+    const gmSetValue = vi.fn(async (_key: string, _value: string) => {});
     vi.stubGlobal('GM_setValue', gmSetValue);
 
     const store = useConfigStore();
+    store.setCustomCleanupRegex('测试广告$');
     await store.save();
 
     expect(gmSetValue).toHaveBeenCalledWith('mnr-config', expect.any(String));
+    expect(JSON.parse(gmSetValue.mock.calls[0]![1] as string).customCleanupRegex).toBe('测试广告$');
   });
 
   it('save falls back to localStorage when GM_setValue is not available', async () => {
@@ -152,10 +156,12 @@ describe('ConfigStore (extra coverage)', () => {
 
     const store = useConfigStore();
     store.themeId = 'dark';
+    store.setCustomCleanupRegex('测试广告$');
     store.$reset();
 
     expect(store.themeId).toBe('system');
     expect(store.customCSS).toBe('');
+    expect(store.customCleanupRegex).toBe('');
   });
 
   it('updateProtection merges settings', () => {

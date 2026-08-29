@@ -60,7 +60,7 @@
       </div>
 
       <article
-        v-for="entry in readerStore.chapters"
+        v-for="entry in displayChapters"
         :key="entry.id"
         :ref="setChapterRef(entry.chapter.url)"
         class="mnr-reader-content"
@@ -69,7 +69,7 @@
         @click="handleContentClick"
       >
         <h1 class="mnr-chapter-title">{{ entry.chapter.title }}</h1>
-        <div v-html="entry.chapter.content"></div>
+        <div v-html="entry.displayContent"></div>
       </article>
 
       <!-- Bottom sentinel for IntersectionObserver -->
@@ -146,6 +146,7 @@ import FloatingToolbar from './FloatingToolbar.vue';
 import ChapterDrawer from './ChapterDrawer.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import { MnrSpinner, MnrToast, MnrLoadingOverlay } from '@/ui/components/common';
+import { compileCustomParagraphFilters, filterCustomParagraphs } from '@/ui/contentFilters';
 
 const props = withDefaults(defineProps<{ siteAutoEnable?: boolean }>(), { siteAutoEnable: true });
 const emit = defineEmits<{
@@ -185,6 +186,16 @@ const contentLang = computed(() => {
   if (readerStore.currentConversionMode === 'sc') return 'zh-CN';
   if (readerStore.currentConversionMode === 'tc') return 'zh-TW';
   return undefined;
+});
+const compiledCustomParagraphFilters = computed(
+  () => compileCustomParagraphFilters(configStore.customCleanupRegex).patterns
+);
+const displayChapters = computed(() => {
+  const patterns = compiledCustomParagraphFilters.value;
+  return readerStore.chapters.map(entry => ({
+    ...entry,
+    displayContent: filterCustomParagraphs(entry.chapter.content, patterns),
+  }));
 });
 
 // === Composables ===

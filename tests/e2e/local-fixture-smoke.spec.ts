@@ -17,6 +17,9 @@ const textCleanupFixture = `
   <p>如果伱愿意，我们就继续验证正文防盗字修复。</p>
   <p>记住首发网站域名𝕥𝕨𝕜𝕒𝕟.𝕔𝕠𝕞</p>
   <p>正文中的数学符号 𝕥 应保持原样。</p>
+  <p>【放下血仇？那我逢魔时王白当了？】小说免费阅读，请收藏\u3000一七小说【1qxs.com】</p>
+  <p><span>仅供自定义过滤</span>的测试尾注 CODE-REMOVE-42</p>
+  <p>正文里提到 CODE-KEEP-42，不应被默认规则删除。</p>
   <p class="br-delimited-prose">
     &nbsp;&nbsp;&nbsp;&nbsp;换行正文第一段。<br>
     &nbsp;&nbsp;&nbsp;&nbsp;换行正文第二段。<br>
@@ -365,6 +368,9 @@ test('runs the built userscript and restores the host page after exit', async ({
   await expect(readerContent).toContainText('正文中的数学符号 𝕥 应保持原样');
   await expect(readerContent).not.toContainText('伱');
   await expect(readerContent).not.toContainText('首发网站域名');
+  await expect(readerContent).not.toContainText('一七小说');
+  await expect(readerContent).toContainText('仅供自定义过滤的测试尾注 CODE-REMOVE-42');
+  await expect(readerContent).toContainText('正文里提到 CODE-KEEP-42');
   await expect(readerContent.locator('p.br-delimited-prose')).toHaveCount(3);
   await expect(readerContent.locator('p.br-delimited-prose').nth(1)).toHaveText('换行正文第二段。');
 
@@ -544,6 +550,60 @@ test('runs the built userscript and restores the host page after exit', async ({
   await expect(siteAutoEnable.locator('input')).not.toBeChecked();
   await siteAutoEnable.locator('input').check();
   await expect(siteAutoEnable.locator('input')).toBeChecked();
+
+  const customCss = advancedSettings.locator('textarea#mnr-custom-css');
+  const customCleanup = advancedSettings.locator('#mnr-custom-cleanup-regex');
+  const editorStyles = await Promise.all(
+    [customCss, customCleanup].map(editor =>
+      editor.evaluate(element => {
+        const style = getComputedStyle(element);
+        return {
+          backgroundColor: style.backgroundColor,
+          borderColor: style.borderColor,
+          borderRadius: style.borderRadius,
+          color: style.color,
+          fontFamily: style.fontFamily,
+          fontSize: style.fontSize,
+          lineHeight: style.lineHeight,
+          padding: style.padding,
+          resize: style.resize,
+        };
+      })
+    )
+  );
+  expect(editorStyles[1]).toEqual(editorStyles[0]);
+  const customCssBox = await customCss.boundingBox();
+  const customCleanupBox = await customCleanup.boundingBox();
+  expect(customCleanupBox!.y).toBeGreaterThan(customCssBox!.y + customCssBox!.height);
+  const settingsLayout = await page.locator('#mnr-reader-root').evaluate(host => {
+    const root = host.shadowRoot;
+    const content = root?.querySelector('.mnr-settings-content');
+    const footer = root?.querySelector('.mnr-settings-footer');
+    return {
+      contentClientHeight: content?.clientHeight ?? 0,
+      contentScrollHeight: content?.scrollHeight ?? 0,
+      footerBottom: footer?.getBoundingClientRect().bottom ?? 0,
+    };
+  });
+  expect(settingsLayout.contentScrollHeight).toBeGreaterThan(settingsLayout.contentClientHeight);
+  expect(settingsLayout.footerBottom).toBe(page.viewportSize()?.height);
+
+  await customCleanup.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(customCss).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(customCleanup).toBeFocused();
+
+  await customCleanup.fill('^仅供自定义过滤的测试尾注 CODE-REMOVE-42$');
+  await expect(readerContent).not.toContainText('仅供自定义过滤的测试尾注 CODE-REMOVE-42');
+  await expect(readerContent).toContainText('正文里提到 CODE-KEEP-42');
+
+  await customCleanup.fill('[');
+  await expect(readerContent).toContainText('仅供自定义过滤的测试尾注 CODE-REMOVE-42');
+  await expect(advancedSettings.locator('#mnr-custom-cleanup-error')).toContainText('第 1 行');
+
+  await customCleanup.fill('');
+  await expect(advancedSettings.locator('#mnr-custom-cleanup-error')).toHaveCount(0);
 
   const typographyDetails = page
     .locator('#mnr-reader-root')

@@ -250,6 +250,34 @@
                 @input="updateCustomCSS"
               ></textarea>
 
+              <label class="mnr-field-label" for="mnr-custom-cleanup-regex">自定义正则清理</label>
+              <p id="mnr-custom-cleanup-help" class="mnr-field-help">
+                每行一条，匹配段落文本后删除整段；无需填写 /.../ 标记。最多 20 条，每条 256 字符。
+              </p>
+              <textarea
+                id="mnr-custom-cleanup-regex"
+                class="mnr-custom-css"
+                rows="4"
+                spellcheck="false"
+                :aria-describedby="
+                  customCleanupErrors.length > 0
+                    ? 'mnr-custom-cleanup-help mnr-custom-cleanup-error'
+                    : 'mnr-custom-cleanup-help'
+                "
+                :aria-invalid="customCleanupErrors.length > 0"
+                placeholder="小说免费阅读，请收藏.*【1qxs\.com】"
+                :value="configStore.customCleanupRegex"
+                @input="updateCustomCleanupRegex"
+              ></textarea>
+              <p
+                v-if="customCleanupErrors.length > 0"
+                id="mnr-custom-cleanup-error"
+                class="mnr-field-error"
+                role="status"
+              >
+                {{ customCleanupErrorMessage }}
+              </p>
+
               <button class="mnr-secondary-action" @click="emit('copyDiagnostics')">
                 复制诊断信息
               </button>
@@ -266,7 +294,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useEventListener } from '@/ui/composables/useEventListener';
 import { getDeepActiveElement } from '@/ui/focus';
 import {
@@ -276,6 +304,7 @@ import {
   useConfigStore,
 } from '@/ui/stores/config';
 import ReadingSlider from './ReadingSlider.vue';
+import { compileCustomParagraphFilters } from '@/ui/contentFilters';
 
 type NumericReadingKey =
   'fontSize' | 'lineHeight' | 'letterSpacing' | 'paragraphIndent' | 'maxWidth' | 'padding';
@@ -301,6 +330,12 @@ const emit = defineEmits<{
 const configStore = useConfigStore();
 const panelRef = ref<HTMLElement | null>(null);
 const titleRef = ref<HTMLElement | null>(null);
+const customCleanupErrors = computed(
+  () => compileCustomParagraphFilters(configStore.customCleanupRegex).errors
+);
+const customCleanupErrorMessage = computed(() =>
+  customCleanupErrors.value.map(error => `第 ${error.line} 行：${error.message}`).join('；')
+);
 
 const themes = THEMES;
 const conversionOptions = [
@@ -392,6 +427,10 @@ function updateSiteAutoEnable(event: Event) {
 
 function updateCustomCSS(event: Event) {
   configStore.setCustomCSS((event.currentTarget as globalThis.HTMLTextAreaElement).value);
+}
+
+function updateCustomCleanupRegex(event: Event) {
+  configStore.setCustomCleanupRegex((event.currentTarget as globalThis.HTMLTextAreaElement).value);
 }
 
 function resetAppearance() {
@@ -653,6 +692,22 @@ watch(
     SFMono-Regular,
     Consolas,
     monospace;
+}
+
+.mnr-field-help,
+.mnr-field-error {
+  margin: -4px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mnr-field-help {
+  opacity: 0.72;
+}
+
+.mnr-field-error {
+  margin-top: 6px;
+  color: #c93f49;
 }
 
 .mnr-settings-footer {

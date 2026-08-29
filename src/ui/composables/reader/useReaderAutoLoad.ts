@@ -373,6 +373,7 @@ export function useReaderAutoLoad(options: UseReaderAutoLoadOptions) {
       configStore.reading?.padding,
       configStore.reading?.textConversion,
       configStore.customCSS,
+      configStore.customCleanupRegex,
     ],
     () => {
       queueLayoutInvalidation();

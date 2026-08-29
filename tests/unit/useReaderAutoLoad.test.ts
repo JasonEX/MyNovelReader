@@ -124,6 +124,7 @@ describe('useReaderAutoLoad', () => {
         textConversion: 'none',
       },
       customCSS: '',
+      customCleanupRegex: '',
       ...overrides.configStore,
     });
 
@@ -363,7 +364,7 @@ describe('useReaderAutoLoad', () => {
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 
-  it('invalidates cached chapter heights when reading layout settings change', async () => {
+  it('invalidates cached chapter heights when display layout settings change', async () => {
     vi.stubGlobal('requestAnimationFrame', undefined);
     const mainEl = document.createElement('div');
     defineScrollMetrics(mainEl, { scrollHeight: 5000, scrollTop: 2900, clientHeight: 600 });
@@ -384,6 +385,12 @@ describe('useReaderAutoLoad', () => {
     await nextTick();
 
     expect(heightReads).toBe(2);
+    expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
+
+    opts.configStore.customCleanupRegex = '测试广告$';
+    await nextTick();
+
+    expect(heightReads).toBe(3);
     expect(opts.readerStore.loadNextChapter).not.toHaveBeenCalled();
   });
 

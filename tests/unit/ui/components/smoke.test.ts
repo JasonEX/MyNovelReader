@@ -142,6 +142,8 @@ describe('UI component smoke', () => {
         summary.textContent?.trim()
       )
     ).toEqual(['排版细节', '阅读行为', '本站与高级']);
+    const customCleanup = document.querySelector<HTMLTextAreaElement>('#mnr-custom-cleanup-regex');
+    expect(customCleanup).not.toBeNull();
     expect(document.querySelector('#mnr-custom-css')).not.toBeNull();
     expect(document.querySelector('.mnr-cache-action')).toBeNull();
     expect(document.querySelector('.mnr-settings-footer .mnr-exit-btn')?.textContent).toContain(
@@ -149,6 +151,17 @@ describe('UI component smoke', () => {
     );
     const fontSelect = document.querySelector<HTMLSelectElement>('#mnr-font-family');
     expect(fontSelect?.selectedOptions[0]?.textContent?.trim()).toBe('系统默认');
+
+    customCleanup!.value = '[';
+    customCleanup!.dispatchEvent(new window.Event('input', { bubbles: true }));
+    await nextTick();
+    expect(configStore.customCleanupRegex).toBe('[');
+    expect(document.querySelector('#mnr-custom-cleanup-error')?.textContent).toContain('第 1 行');
+
+    customCleanup!.value = '测试广告$';
+    customCleanup!.dispatchEvent(new window.Event('input', { bubbles: true }));
+    await nextTick();
+    expect(document.querySelector('#mnr-custom-cleanup-error')).toBeNull();
 
     const aggressiveButton = Array.from(
       document.querySelectorAll<HTMLButtonElement>('.mnr-segment')

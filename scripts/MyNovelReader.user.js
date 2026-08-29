@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.14
+// @version            9.3.15
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -696,9 +696,11 @@
 			var _ref3 = _slicedToArray(_ref2, 2);
 			const property = _ref3[0];
 			const value = _ref3[1];
-			if (objectHasOwnProperty(object, property)) if (arrayIsArray(value)) newObject[property] = cleanArray(value);
-			else if (value && typeof value === "object" && value.constructor === Object) newObject[property] = clone(value);
-			else newObject[property] = value;
+			if (objectHasOwnProperty(object, property)) {
+				if (arrayIsArray(value)) newObject[property] = cleanArray(value);
+				else if (value && typeof value === "object" && value.constructor === Object) newObject[property] = clone(value);
+				else newObject[property] = value;
+			}
 		}
 		return newObject;
 	}
@@ -1253,6 +1255,7 @@
 		"patterncontentunits",
 		"patterntransform",
 		"patternunits",
+		"pointer-events",
 		"points",
 		"preservealpha",
 		"preserveaspectratio",
@@ -1307,6 +1310,7 @@
 		"u2",
 		"unicode",
 		"values",
+		"vector-effect",
 		"viewbox",
 		"visibility",
 		"version",
@@ -1420,6 +1424,24 @@
 		documentFragment: 11,
 		notation: 12
 	};
+	var LITERAL_TEXT_ELEMENT_NAMES = [
+		"style",
+		"script",
+		"xmp",
+		"iframe",
+		"noembed",
+		"noframes",
+		"plaintext",
+		"noscript"
+	];
+	var LITERAL_TEXT_ELEMENTS = freeze(addToSet({}, LITERAL_TEXT_ELEMENT_NAMES));
+	var LITERAL_TEXT_CLOSE = function() {
+		const map = {};
+		arrayForEach(LITERAL_TEXT_ELEMENT_NAMES, (name) => {
+			map[name] = seal(new RegExp("</" + name + "(?=[\\t\\n\\f\\r />])", "i"));
+		});
+		return freeze(map);
+	}();
 	var getGlobal = function getGlobal() {
 		return typeof window === "undefined" ? null : window;
 	};
@@ -1459,10 +1481,14 @@
 	var _resolveSetOption = function _resolveSetOption(cfg, key, fallback, options) {
 		return objectHasOwnProperty(cfg, key) && arrayIsArray(cfg[key]) ? addToSet(options.base ? clone(options.base) : {}, cfg[key], options.transform) : fallback;
 	};
+	var _resolveObjectOption = function _resolveObjectOption(cfg, key, makeFallback) {
+		const value = objectHasOwnProperty(cfg, key) ? cfg[key] : void 0;
+		return value && typeof value === "object" ? clone(value) : makeFallback();
+	};
 	function createDOMPurify() {
 		let window = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : getGlobal();
 		const DOMPurify = (root) => createDOMPurify(root);
-		DOMPurify.version = "3.4.12";
+		DOMPurify.version = "3.4.14";
 		DOMPurify.removed = [];
 		if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document || !window.Element) {
 			DOMPurify.isSupported = false;
@@ -1486,6 +1512,13 @@
 		const getAttributes = lookupGetter(ElementPrototype, "attributes");
 		const getNodeType = Node && Node.prototype ? lookupGetter(Node.prototype, "nodeType") : null;
 		const getNodeName = Node && Node.prototype ? lookupGetter(Node.prototype, "nodeName") : null;
+		const getOwnerDocument = Node && Node.prototype ? lookupGetter(Node.prototype, "ownerDocument") : null;
+		const _readNodeType = function _readNodeType(node) {
+			return getNodeType ? getNodeType(node) : node.nodeType;
+		};
+		const _readNodeName = function _readNodeName(node) {
+			return getNodeName ? getNodeName(node) : node.nodeName;
+		};
 		if (typeof HTMLTemplateElement === "function") {
 			const template = document.createElement("template");
 			if (template.content && template.content.ownerDocument) document = template.content.ownerDocument;
@@ -1731,9 +1764,9 @@
 			IN_PLACE = cfg.IN_PLACE || false;
 			IS_ALLOWED_URI$1 = isRegex(cfg.ALLOWED_URI_REGEXP) ? cfg.ALLOWED_URI_REGEXP : IS_ALLOWED_URI;
 			NAMESPACE = typeof cfg.NAMESPACE === "string" ? cfg.NAMESPACE : HTML_NAMESPACE;
-			MATHML_TEXT_INTEGRATION_POINTS = objectHasOwnProperty(cfg, "MATHML_TEXT_INTEGRATION_POINTS") && cfg.MATHML_TEXT_INTEGRATION_POINTS && typeof cfg.MATHML_TEXT_INTEGRATION_POINTS === "object" ? clone(cfg.MATHML_TEXT_INTEGRATION_POINTS) : addToSet({}, DEFAULT_MATHML_TEXT_INTEGRATION_POINTS);
-			HTML_INTEGRATION_POINTS = objectHasOwnProperty(cfg, "HTML_INTEGRATION_POINTS") && cfg.HTML_INTEGRATION_POINTS && typeof cfg.HTML_INTEGRATION_POINTS === "object" ? clone(cfg.HTML_INTEGRATION_POINTS) : addToSet({}, DEFAULT_HTML_INTEGRATION_POINTS);
-			const customElementHandling = objectHasOwnProperty(cfg, "CUSTOM_ELEMENT_HANDLING") && cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING === "object" ? clone(cfg.CUSTOM_ELEMENT_HANDLING) : create(null);
+			MATHML_TEXT_INTEGRATION_POINTS = _resolveObjectOption(cfg, "MATHML_TEXT_INTEGRATION_POINTS", () => addToSet({}, DEFAULT_MATHML_TEXT_INTEGRATION_POINTS));
+			HTML_INTEGRATION_POINTS = _resolveObjectOption(cfg, "HTML_INTEGRATION_POINTS", () => addToSet({}, DEFAULT_HTML_INTEGRATION_POINTS));
+			const customElementHandling = _resolveObjectOption(cfg, "CUSTOM_ELEMENT_HANDLING", () => create(null));
 			CUSTOM_ELEMENT_HANDLING = create(null);
 			if (objectHasOwnProperty(customElementHandling, "tagNameCheck") && isRegexOrFunction(customElementHandling.tagNameCheck)) CUSTOM_ELEMENT_HANDLING.tagNameCheck = customElementHandling.tagNameCheck;
 			if (objectHasOwnProperty(customElementHandling, "attributeNameCheck") && isRegexOrFunction(customElementHandling.attributeNameCheck)) CUSTOM_ELEMENT_HANDLING.attributeNameCheck = customElementHandling.attributeNameCheck;
@@ -1779,11 +1812,6 @@
 					if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) ALLOWED_ATTR = clone(ALLOWED_ATTR);
 					addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
 				}
-			}
-			if (objectHasOwnProperty(cfg, "ADD_URI_SAFE_ATTR") && arrayIsArray(cfg.ADD_URI_SAFE_ATTR)) addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
-			if (objectHasOwnProperty(cfg, "FORBID_CONTENTS") && arrayIsArray(cfg.FORBID_CONTENTS)) {
-				if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) FORBID_CONTENTS = clone(FORBID_CONTENTS);
-				addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
 			}
 			if (objectHasOwnProperty(cfg, "ADD_FORBID_CONTENTS") && arrayIsArray(cfg.ADD_FORBID_CONTENTS)) {
 				if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) FORBID_CONTENTS = clone(FORBID_CONTENTS);
@@ -1865,6 +1893,15 @@
 				if (!getParentNode(node)) throw typeErrorCreate("a node selected for removal could not be detached from its tree and cannot be safely returned; refusing to sanitize in place");
 			}
 		};
+		const _stripAttributeNode = function _stripAttributeNode(element, attribute, name) {
+			try {
+				element.removeAttributeNode(attribute);
+			} catch (_) {
+				try {
+					element.removeAttribute(name);
+				} catch (_) {}
+			}
+		};
 		const _neutralizeRoot = function _neutralizeRoot(root) {
 			_neutralizeSubtree(root);
 			const childNodes = getChildNodes(root);
@@ -1883,30 +1920,35 @@
 			if (attributes) for (let i = attributes.length - 1; i >= 0; --i) {
 				const attribute = attributes[i];
 				const name = attribute && attribute.name;
-				if (typeof name === "string") try {
-					root.removeAttribute(name);
-				} catch (_) {}
+				if (typeof name === "string") _stripAttributeNode(root, attribute, name);
 			}
 		};
-		const _removeAttribute = function _removeAttribute(name, element) {
-			try {
-				arrayPush(DOMPurify.removed, {
-					attribute: element.getAttributeNode(name),
-					from: element
-				});
+		const _removeAttribute = function _removeAttribute(name, element, attr) {
+			if (!attr) try {
+				attr = element.getAttributeNode(name);
 			} catch (_) {
-				arrayPush(DOMPurify.removed, {
-					attribute: null,
-					from: element
-				});
+				attr = null;
 			}
-			element.removeAttribute(name);
-			if (name === "is") if (RETURN_DOM || RETURN_DOM_FRAGMENT) try {
-				_forceRemove(element);
-			} catch (_) {}
-			else try {
-				element.setAttribute(name, "");
-			} catch (_) {}
+			arrayPush(DOMPurify.removed, {
+				attribute: attr || null,
+				from: element
+			});
+			try {
+				if (attr) element.removeAttributeNode(attr);
+				else element.removeAttribute(name);
+			} catch (_) {
+				try {
+					element.removeAttribute(name);
+				} catch (_) {}
+			}
+			if (name === "is") {
+				if (RETURN_DOM || RETURN_DOM_FRAGMENT) try {
+					_forceRemove(element);
+				} catch (_) {}
+				else try {
+					element.setAttribute(name, "");
+				} catch (_) {}
+			}
 		};
 		const _stripDisallowedAttributes = function _stripDisallowedAttributes(element) {
 			const attributes = getAttributes(element);
@@ -1915,26 +1957,29 @@
 				const attribute = attributes[i];
 				const name = attribute && attribute.name;
 				if (typeof name !== "string" || ALLOWED_ATTR[transformCaseFunc(name)]) continue;
-				try {
-					element.removeAttribute(name);
-				} catch (_) {}
+				_stripAttributeNode(element, attribute, name);
 			}
 		};
 		const _neutralizeSubtree = function _neutralizeSubtree(root) {
 			const stack = [root];
 			while (stack.length > 0) {
 				const node = stack.pop();
-				if ((getNodeType ? getNodeType(node) : node.nodeType) === NODE_TYPE.element) _stripDisallowedAttributes(node);
+				if (_readNodeType(node) === NODE_TYPE.element) _stripDisallowedAttributes(node);
 				const childNodes = getChildNodes(node);
 				if (childNodes) for (let i = childNodes.length - 1; i >= 0; --i) stack.push(childNodes[i]);
 			}
+		};
+		const _isPatchLinkageAttribute = function _isPatchLinkageAttribute(lcName, lcTag) {
+			if (!SAFE_FOR_XML) return false;
+			if (lcName === "patchsrc") return true;
+			return lcName === "for" && lcTag !== "label" && lcTag !== "output";
 		};
 		const _neutralizePatchLinkage = function _neutralizePatchLinkage(root) {
 			if (!SAFE_FOR_XML) return;
 			const stack = [root];
 			while (stack.length > 0) {
 				const node = stack.pop();
-				const nodeType = getNodeType ? getNodeType(node) : node.nodeType;
+				const nodeType = _readNodeType(node);
 				if (nodeType === NODE_TYPE.processingInstruction || nodeType === NODE_TYPE.comment && regExpTest(COMMENT_MARKUP_PROBE, node.data)) {
 					try {
 						remove(node);
@@ -1943,10 +1988,10 @@
 				}
 				if (nodeType === NODE_TYPE.element) {
 					const element = node;
-					const lcTag = transformCaseFunc(getNodeName ? getNodeName(node) : node.nodeName);
+					const lcTag = transformCaseFunc(_readNodeName(node));
 					try {
 						if (element.hasAttribute && element.hasAttribute("patchsrc")) element.removeAttribute("patchsrc");
-						if (element.hasAttribute && element.hasAttribute("for") && lcTag !== "label" && lcTag !== "output") element.removeAttribute("for");
+						if (element.hasAttribute && element.hasAttribute("for") && _isPatchLinkageAttribute("for", lcTag)) element.removeAttribute("for");
 					} catch (_) {}
 				}
 				const childNodes = getChildNodes(node);
@@ -1978,7 +2023,8 @@
 			return WHOLE_DOCUMENT ? doc.documentElement : body;
 		};
 		const _createNodeIterator = function _createNodeIterator(root) {
-			return createNodeIterator.call(root.ownerDocument || root, root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
+			const doc = getOwnerDocument ? getOwnerDocument(root) : root.ownerDocument;
+			return createNodeIterator.call(doc || root, root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
 		};
 		const _stripTemplateExpressions = function _stripTemplateExpressions(value) {
 			value = stringReplace(value, MUSTACHE_EXPR$1, " ");
@@ -1989,7 +2035,8 @@
 		const _scrubTemplateExpressions2 = function _scrubTemplateExpressions(node) {
 			var _node$querySelectorAl;
 			node.normalize();
-			const walker = createNodeIterator.call(node.ownerDocument || node, node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_CDATA_SECTION | NodeFilter.SHOW_PROCESSING_INSTRUCTION, null);
+			const doc = getOwnerDocument ? getOwnerDocument(node) : node.ownerDocument;
+			const walker = createNodeIterator.call(doc || node, node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_CDATA_SECTION | NodeFilter.SHOW_PROCESSING_INSTRUCTION, null);
 			let currentNode = walker.nextNode();
 			while (currentNode) {
 				currentNode.data = _stripTemplateExpressions(currentNode.data);
@@ -2030,23 +2077,28 @@
 		}
 		const _isUnsafeNode = function _isUnsafeNode(currentNode, tagName) {
 			if (SAFE_FOR_XML && currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(ELEMENT_MARKUP_PROBE, currentNode.textContent) && regExpTest(ELEMENT_MARKUP_PROBE, currentNode.innerHTML)) return true;
-			if (SAFE_FOR_XML && currentNode.namespaceURI === HTML_NAMESPACE && tagName === "style" && _isNode(currentNode.firstElementChild)) return true;
+			if (SAFE_FOR_XML && currentNode.namespaceURI === HTML_NAMESPACE && LITERAL_TEXT_ELEMENTS[tagName] && (_isNode(currentNode.firstElementChild) || typeof currentNode.textContent === "string" && regExpTest(LITERAL_TEXT_CLOSE[tagName], currentNode.textContent))) return true;
 			if (currentNode.nodeType === NODE_TYPE.processingInstruction) return true;
 			if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(COMMENT_MARKUP_PROBE, currentNode.data)) return true;
 			return false;
 		};
-		const _sanitizeDisallowedNode = function _sanitizeDisallowedNode(currentNode, tagName) {
-			if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
-				if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) return false;
-				if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) return false;
+		const _matchesNameCheck = function _matchesNameCheck(check, name) {
+			if (check instanceof RegExp) return regExpTest(check, name);
+			if (check instanceof Function) {
+				for (var _len = arguments.length, args = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) args[_key - 2] = arguments[_key];
+				return Boolean(check(name, ...args));
 			}
+			return false;
+		};
+		const _sanitizeDisallowedNode = function _sanitizeDisallowedNode(currentNode, tagName, root) {
+			if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName) && _matchesNameCheck(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) return false;
 			if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
 				const parentNode = getParentNode(currentNode);
 				const childNodes = getChildNodes(currentNode);
 				if (childNodes && parentNode) {
 					const childCount = childNodes.length;
 					for (let i = childCount - 1; i >= 0; --i) {
-						const hoisted = IN_PLACE ? childNodes[i] : cloneNode(childNodes[i], true);
+						const hoisted = currentNode === root ? cloneNode(childNodes[i], true) : childNodes[i];
 						parentNode.insertBefore(hoisted, getNextSibling(currentNode));
 					}
 				}
@@ -2054,29 +2106,39 @@
 			_forceRemove(currentNode);
 			return true;
 		};
+		const _forkSharedAllowlist = function _forkSharedAllowlist(hookList, set, defaultSet, setConfigSet) {
+			if (hookList.length === 0) return set;
+			return set === defaultSet || set === setConfigSet ? clone(set) : set;
+		};
+		const _handleHookDetachedNode = function _handleHookDetachedNode(currentNode, root) {
+			if (currentNode === root || getParentNode(currentNode) !== null) return false;
+			if (IN_PLACE) _neutralizeSubtree(currentNode);
+			return true;
+		};
 		const _sanitizeElements = function _sanitizeElements(currentNode, root) {
 			_executeHooks(hooks.beforeSanitizeElements, currentNode, null);
-			if (currentNode !== root && getParentNode(currentNode) === null) return true;
+			if (_handleHookDetachedNode(currentNode, root)) return true;
 			if (_isClobbered(currentNode)) {
 				_forceRemove(currentNode);
 				return true;
 			}
-			const tagName = transformCaseFunc(getNodeName ? getNodeName(currentNode) : currentNode.nodeName);
+			const tagName = transformCaseFunc(_readNodeName(currentNode));
+			ALLOWED_TAGS = _forkSharedAllowlist(hooks.uponSanitizeElement, ALLOWED_TAGS, DEFAULT_ALLOWED_TAGS, SET_CONFIG_ALLOWED_TAGS);
 			_executeHooks(hooks.uponSanitizeElement, currentNode, {
 				tagName,
 				allowedTags: ALLOWED_TAGS
 			});
-			if (currentNode !== root && getParentNode(currentNode) === null) return true;
+			if (_handleHookDetachedNode(currentNode, root)) return true;
 			if (_isUnsafeNode(currentNode, tagName)) {
 				_forceRemove(currentNode);
 				return true;
 			}
 			if (FORBID_TAGS[tagName] || !(EXTRA_ELEMENT_HANDLING.tagCheck instanceof Function && EXTRA_ELEMENT_HANDLING.tagCheck(tagName)) && !ALLOWED_TAGS[tagName]) {
-				const removed = _sanitizeDisallowedNode(currentNode, tagName);
+				const removed = _sanitizeDisallowedNode(currentNode, tagName, root);
 				if (removed === false) _executeHooks(hooks.afterSanitizeElements, currentNode, null);
 				return removed;
 			}
-			if ((getNodeType ? getNodeType(currentNode) : currentNode.nodeType) === NODE_TYPE.element && !_checkValidNamespace(currentNode)) {
+			if (_readNodeType(currentNode) === NODE_TYPE.element && !_checkValidNamespace(currentNode)) {
 				_forceRemove(currentNode);
 				return true;
 			}
@@ -2096,20 +2158,17 @@
 		};
 		const _isValidAttribute = function _isValidAttribute(lcTag, lcName, value) {
 			if (FORBID_ATTR[lcName]) return false;
-			if (SAFE_FOR_XML && lcName === "patchsrc") return false;
-			if (SAFE_FOR_XML && lcName === "for" && lcTag !== "label" && lcTag !== "output") return false;
+			if (_isPatchLinkageAttribute(lcName, lcTag)) return false;
 			if (SANITIZE_DOM && (lcName === "id" || lcName === "name") && (value in document || value in formElement)) return false;
 			const nameIsPermitted = ALLOWED_ATTR[lcName] || EXTRA_ELEMENT_HANDLING.attributeCheck instanceof Function && EXTRA_ELEMENT_HANDLING.attributeCheck(lcName, lcTag);
-			if (ALLOW_DATA_ATTR && regExpTest(DATA_ATTR$1, lcName));
-			else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR$1, lcName));
-			else if (!nameIsPermitted) if (_isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName, lcTag)) || lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value)));
-			else return false;
-			else if (URI_SAFE_ATTRIBUTES[lcName]);
-			else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE$1, "")));
-			else if ((lcName === "src" || lcName === "xlink:href" || lcName === "href") && lcTag !== "script" && stringIndexOf(value, "data:") === 0 && DATA_URI_TAGS[lcTag]);
-			else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA$1, stringReplace(value, ATTR_WHITESPACE$1, "")));
-			else if (value) return false;
-			return true;
+			if (ALLOW_DATA_ATTR && regExpTest(DATA_ATTR$1, lcName)) return true;
+			if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR$1, lcName)) return true;
+			if (!nameIsPermitted) return _isBasicCustomElement(lcTag) && _matchesNameCheck(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) && _matchesNameCheck(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName, lcTag) || lcName === "is" && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && _matchesNameCheck(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value);
+			if (URI_SAFE_ATTRIBUTES[lcName]) return true;
+			if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE$1, ""))) return true;
+			if ((lcName === "src" || lcName === "xlink:href" || lcName === "href") && lcTag !== "script" && stringIndexOf(value, "data:") === 0 && DATA_URI_TAGS[lcTag]) return true;
+			if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA$1, stringReplace(value, ATTR_WHITESPACE$1, ""))) return true;
+			return !value;
 		};
 		const RESERVED_CUSTOM_ELEMENT_NAMES = addToSet({}, [
 			"annotation-xml",
@@ -2145,6 +2204,7 @@
 			_executeHooks(hooks.beforeSanitizeAttributes, currentNode, null);
 			const attributes = currentNode.attributes;
 			if (!attributes || _isClobbered(currentNode)) return;
+			ALLOWED_ATTR = _forkSharedAllowlist(hooks.uponSanitizeAttribute, ALLOWED_ATTR, DEFAULT_ALLOWED_ATTR, SET_CONFIG_ALLOWED_ATTR);
 			const hookEvent = {
 				attrName: "",
 				attrValue: "",
@@ -2167,29 +2227,29 @@
 				_executeHooks(hooks.uponSanitizeAttribute, currentNode, hookEvent);
 				value = hookEvent.attrValue;
 				if (SANITIZE_NAMED_PROPS && (lcName === "id" || lcName === "name") && stringIndexOf(value, SANITIZE_NAMED_PROPS_PREFIX) !== 0) {
-					_removeAttribute(name, currentNode);
+					_removeAttribute(name, currentNode, attr);
 					value = SANITIZE_NAMED_PROPS_PREFIX + value;
 				}
 				if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|script|title|xmp|textarea|noscript|iframe|noembed|noframes)/i, value)) {
-					_removeAttribute(name, currentNode);
+					_removeAttribute(name, currentNode, attr);
 					continue;
 				}
 				if (lcName === "attributename" && stringMatch(value, "href")) {
-					_removeAttribute(name, currentNode);
+					_removeAttribute(name, currentNode, attr);
 					continue;
 				}
 				if (hookEvent.forceKeepAttr) continue;
 				if (!hookEvent.keepAttr) {
-					_removeAttribute(name, currentNode);
+					_removeAttribute(name, currentNode, attr);
 					continue;
 				}
 				if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(SELF_CLOSING_TAG, value)) {
-					_removeAttribute(name, currentNode);
+					_removeAttribute(name, currentNode, attr);
 					continue;
 				}
 				if (SAFE_FOR_TEMPLATES) value = _stripTemplateExpressions(value);
 				if (!_isValidAttribute(lcTag, lcName, value)) {
-					_removeAttribute(name, currentNode);
+					_removeAttribute(name, currentNode, attr);
 					continue;
 				}
 				value = _applyTrustedTypesToAttribute(lcTag, lcName, namespaceURI, value);
@@ -2206,7 +2266,7 @@
 				_sanitizeElements(shadowNode, fragment);
 				_sanitizeAttributes(shadowNode);
 				if (_isDocumentFragment(shadowNode.content)) _sanitizeShadowDOM2(shadowNode.content);
-				if ((getNodeType ? getNodeType(shadowNode) : shadowNode.nodeType) === NODE_TYPE.element) {
+				if (_readNodeType(shadowNode) === NODE_TYPE.element) {
 					const innerSr = getShadowRoot(shadowNode);
 					if (_isDocumentFragment(innerSr)) {
 						_sanitizeAttachedShadowRoots(innerSr);
@@ -2228,7 +2288,7 @@
 					continue;
 				}
 				const node = item.node;
-				const isElement = (getNodeType ? getNodeType(node) : node.nodeType) === NODE_TYPE.element;
+				const isElement = _readNodeType(node) === NODE_TYPE.element;
 				const childNodes = getChildNodes(node);
 				if (childNodes) for (let i = childNodes.length - 1; i >= 0; --i) stack.push({
 					node: childNodes[i],
@@ -2279,7 +2339,7 @@
 			const inPlace = IN_PLACE && typeof dirty !== "string" && _isNode(dirty);
 			if (inPlace) {
 				_neutralizePatchLinkage(dirty);
-				const nn = getNodeName ? getNodeName(dirty) : dirty.nodeName;
+				const nn = _readNodeName(dirty);
 				if (typeof nn === "string") {
 					const tagName = transformCaseFunc(nn);
 					if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
@@ -2311,8 +2371,8 @@
 			}
 			if (body && FORCE_BODY) _forceRemove(body.firstChild);
 			const walkRoot = inPlace ? dirty : body;
-			const nodeIterator = _createNodeIterator(walkRoot);
 			try {
+				const nodeIterator = _createNodeIterator(walkRoot);
 				while (currentNode = nodeIterator.nextNode()) {
 					_sanitizeElements(currentNode, walkRoot);
 					_sanitizeAttributes(currentNode);
@@ -2941,6 +3001,7 @@
 		/^\s*[）)]/gm,
 		/手机用户请到.*阅读/gi,
 		/请记住本书.*网址/gi,
+		/【[^】\r\n]{1,120}】(?:小说|小說)(?:免费|免費)(?:阅读|閱讀)[，,][ \t\u3000]*(?:请|請)收藏[ \t\u3000]*[^【】\r\n]{1,32}【1qxs\.com】/giu,
 		/(?:[请請]?[记記]住首[发發][网網]站(?:域名)?|[请請][记記]住[网網]址)[^<\n]*/gi,
 		/百度搜索.*最新章节/gi,
 		/一秒记住.*为您提供/gi,
@@ -6834,8 +6895,10 @@
 		for (const paragraph of paragraphs) {
 			const text = paragraph.textContent || "";
 			const cleaned = text.replace(WATERMARK_TAIL_PATTERN, "").trimEnd();
-			if (cleaned !== text) if (cleaned) paragraph.textContent = cleaned;
-			else paragraph.remove();
+			if (cleaned !== text) {
+				if (cleaned) paragraph.textContent = cleaned;
+				else paragraph.remove();
+			}
 		}
 		const trailingParagraphs = Array.from(content.querySelectorAll(":scope > p"));
 		for (let index = trailingParagraphs.length - 1; index >= 0; index--) {
@@ -8634,7 +8697,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.14";
+	var VERSION = "9.3.15";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
@@ -9071,6 +9134,21 @@
 		for (let i = 0; equal && i < a.length; i++) equal = looseEqual(a[i], b[i]);
 		return equal;
 	}
+	function looseCompareCollections(a, b) {
+		if (a.size !== b.size) return false;
+		const candidates = Array.from(b);
+		const matched = new Uint8Array(candidates.length);
+		for (const item of a) {
+			let index = -1;
+			for (let i = 0; i < candidates.length; i++) if (!matched[i] && looseEqual(item, candidates[i])) {
+				index = i;
+				break;
+			}
+			if (index < 0) return false;
+			matched[index] = 1;
+		}
+		return true;
+	}
 	function looseEqual(a, b) {
 		if (a === b) return true;
 		let aValidType = isDate(a);
@@ -9086,6 +9164,12 @@
 		bValidType = isObject(b);
 		if (aValidType || bValidType) {
 			if (!aValidType || !bValidType) return false;
+			aValidType = isMap(a);
+			bValidType = isMap(b);
+			if (aValidType || bValidType) return aValidType && bValidType ? looseCompareCollections(a, b) : false;
+			aValidType = isSet(a);
+			bValidType = isSet(b);
+			if (aValidType || bValidType) return aValidType && bValidType ? looseCompareCollections(a, b) : false;
 			if (Object.keys(a).length !== Object.keys(b).length) return false;
 			for (const key in a) {
 				const aHasKey = a.hasOwnProperty(key);
@@ -9130,12 +9214,14 @@
 			this._isPaused = false;
 			this._warnOnRun = true;
 			this.__v_skip = true;
-			if (!detached && activeEffectScope) if (activeEffectScope.active) {
-				this.parent = activeEffectScope;
-				this.index = (activeEffectScope.scopes || (activeEffectScope.scopes = [])).push(this) - 1;
-			} else {
-				this._active = false;
-				this._warnOnRun = false;
+			if (!detached && activeEffectScope) {
+				if (activeEffectScope.active) {
+					this.parent = activeEffectScope;
+					this.index = (activeEffectScope.scopes || (activeEffectScope.scopes = [])).push(this) - 1;
+				} else {
+					this._active = false;
+					this._warnOnRun = false;
+				}
 			}
 		}
 		get active() {
@@ -9243,8 +9329,10 @@
 			this.next = void 0;
 			this.cleanup = void 0;
 			this.scheduler = void 0;
-			if (activeEffectScope) if (activeEffectScope.active) activeEffectScope.effects.push(this);
-			else this.flags &= -2;
+			if (activeEffectScope) {
+				if (activeEffectScope.active) activeEffectScope.effects.push(this);
+				else this.flags &= -2;
+			}
 		}
 		pause() {
 			this.flags |= 64;
@@ -9828,10 +9916,12 @@
 					oldValue = toRaw(oldValue);
 					value = toRaw(value);
 				}
-				if (!isArrayWithIntegerKey && isRef(oldValue) && !isRef(value)) if (isOldValueReadonly) return true;
-				else {
-					oldValue.value = value;
-					return true;
+				if (!isArrayWithIntegerKey && isRef(oldValue) && !isRef(value)) {
+					if (isOldValueReadonly) return true;
+					else {
+						oldValue.value = value;
+						return true;
+					}
 				}
 			}
 			const hadKey = isArrayWithIntegerKey ? Number(key) < target.length : hasOwn(target, key);
@@ -10252,25 +10342,26 @@
 				else if (isReactive(s)) return reactiveGetter(s);
 				else if (isFunction(s)) return call ? call(s, 2) : s();
 			});
-		} else if (isFunction(source)) if (cb) getter = call ? () => call(source, 2) : source;
-		else getter = () => {
-			if (cleanup) {
-				pauseTracking();
-				try {
-					cleanup();
-				} finally {
-					resetTracking();
+		} else if (isFunction(source)) {
+			if (cb) getter = call ? () => call(source, 2) : source;
+			else getter = () => {
+				if (cleanup) {
+					pauseTracking();
+					try {
+						cleanup();
+					} finally {
+						resetTracking();
+					}
 				}
-			}
-			const currentEffect = activeWatcher;
-			activeWatcher = effect;
-			try {
-				return call ? call(source, 3, [boundCleanup]) : source(boundCleanup);
-			} finally {
-				activeWatcher = currentEffect;
-			}
-		};
-		else getter = NOOP;
+				const currentEffect = activeWatcher;
+				activeWatcher = effect;
+				try {
+					return call ? call(source, 3, [boundCleanup]) : source(boundCleanup);
+				} finally {
+					activeWatcher = currentEffect;
+				}
+			};
+		} else getter = NOOP;
 		if (cb && deep) {
 			const baseGetter = getter;
 			const depth = deep === true ? Infinity : deep;
@@ -10324,9 +10415,10 @@
 				cleanupMap.delete(effect);
 			}
 		};
-		if (cb) if (immediate) job(true);
-		else oldValue = effect.run();
-		else if (scheduler) scheduler(job.bind(null, true), true);
+		if (cb) {
+			if (immediate) job(true);
+			else oldValue = effect.run();
+		} else if (scheduler) scheduler(job.bind(null, true), true);
 		else effect.run();
 		watchHandle.pause = effect.pause.bind(effect);
 		watchHandle.resume = effect.resume.bind(effect);
@@ -10445,7 +10537,7 @@
 				pendingPostFlushCbs.push(cb);
 				cb.flags |= 1;
 			}
-		} else pendingPostFlushCbs.push(...cb);
+		} else for (let i = 0; i < cb.length; i++) pendingPostFlushCbs.push(cb[i]);
 		queueFlush();
 	}
 	function flushPreFlushCbs(instance, seen, i = flushIndex + 1) {
@@ -10466,7 +10558,7 @@
 			const deduped = [...new Set(pendingPostFlushCbs)].sort((a, b) => getId(a) - getId(b));
 			pendingPostFlushCbs.length = 0;
 			if (activePostFlushCbs) {
-				activePostFlushCbs.push(...deduped);
+				for (let i = 0; i < deduped.length; i++) activePostFlushCbs.push(deduped[i]);
 				return;
 			}
 			activePostFlushCbs = deduped;
@@ -10806,8 +10898,10 @@
 			persisted,
 			beforeEnter(el) {
 				let hook = onBeforeEnter;
-				if (!state.isMounted) if (appear) hook = onBeforeAppear || onBeforeEnter;
-				else return;
+				if (!state.isMounted) {
+					if (appear) hook = onBeforeAppear || onBeforeEnter;
+					else return;
+				}
 				if (el[leaveCbKey]) el[leaveCbKey](true);
 				const leavingVNode = leavingVNodesCache[key];
 				if (leavingVNode && isSameVNodeType(vnode, leavingVNode) && leavingVNode.el[leaveCbKey]) leavingVNode.el[leaveCbKey]();
@@ -10818,11 +10912,13 @@
 				let hook = onEnter;
 				let afterHook = onAfterEnter;
 				let cancelHook = onEnterCancelled;
-				if (!state.isMounted) if (appear) {
-					hook = onAppear || onEnter;
-					afterHook = onAfterAppear || onAfterEnter;
-					cancelHook = onAppearCancelled || onEnterCancelled;
-				} else return;
+				if (!state.isMounted) {
+					if (appear) {
+						hook = onAppear || onEnter;
+						afterHook = onAfterAppear || onAfterEnter;
+						cancelHook = onAppearCancelled || onEnterCancelled;
+					} else return;
+				}
 				let called = false;
 				el[enterCbKey] = (cancelled) => {
 					if (called) return;
@@ -10886,7 +10982,8 @@
 	function setTransitionHooks(vnode, hooks) {
 		if (vnode.shapeFlag & 6 && vnode.component) {
 			vnode.transition = hooks;
-			setTransitionHooks(vnode.component.subTree, hooks);
+			const subTree = vnode.component.subTree;
+			setTransitionHooks(isTeleport(subTree.type) ? getInnerChild$1(subTree) || subTree : subTree, hooks);
 		} else if (vnode.shapeFlag & 128) {
 			vnode.ssContent.transition = hooks.clone(vnode.ssContent);
 			vnode.ssFallback.transition = hooks.clone(vnode.ssFallback);
@@ -10965,15 +11062,16 @@
 					if (rawRef.f) {
 						const existing = _isString ? canSetSetupRef(ref) ? setupState[ref] : refs[ref] : canSetRef(ref) || !rawRef.k ? ref.value : refs[rawRef.k];
 						if (isUnmount) isArray(existing) && remove(existing, refValue);
-						else if (!isArray(existing)) if (_isString) {
-							refs[ref] = [refValue];
-							if (canSetSetupRef(ref)) setupState[ref] = refs[ref];
-						} else {
-							const newVal = [refValue];
-							if (canSetRef(ref, rawRef.k)) ref.value = newVal;
-							if (rawRef.k) refs[rawRef.k] = newVal;
-						}
-						else if (!existing.includes(refValue)) existing.push(refValue);
+						else if (!isArray(existing)) {
+							if (_isString) {
+								refs[ref] = [refValue];
+								if (canSetSetupRef(ref)) setupState[ref] = refs[ref];
+							} else {
+								const newVal = [refValue];
+								if (canSetRef(ref, rawRef.k)) ref.value = newVal;
+								if (rawRef.k) refs[rawRef.k] = newVal;
+							}
+						} else if (!existing.includes(refValue)) existing.push(refValue);
 					} else if (_isString) {
 						refs[ref] = value;
 						if (canSetSetupRef(ref)) setupState[ref] = value;
@@ -11088,20 +11186,22 @@
 		} else if (typeof source === "number") {
 			ret = new Array(source);
 			for (let i = 0; i < source; i++) ret[i] = renderItem(i + 1, i, void 0, cached && cached[i]);
-		} else if (isObject(source)) if (source[Symbol.iterator]) ret = Array.from(source, (item, i) => renderItem(item, i, void 0, cached && cached[i]));
-		else {
-			const keys = Object.keys(source);
-			ret = new Array(keys.length);
-			for (let i = 0, l = keys.length; i < l; i++) {
-				const key = keys[i];
-				ret[i] = renderItem(source[key], key, i, cached && cached[i]);
+		} else if (isObject(source)) {
+			if (source[Symbol.iterator]) ret = Array.from(source, (item, i) => renderItem(item, i, void 0, cached && cached[i]));
+			else {
+				const keys = Object.keys(source);
+				ret = new Array(keys.length);
+				for (let i = 0, l = keys.length; i < l; i++) {
+					const key = keys[i];
+					ret[i] = renderItem(source[key], key, i, cached && cached[i]);
+				}
 			}
-		}
-		else ret = [];
+		} else ret = [];
 		if (cache) cache[index] = ret;
 		return ret;
 	}
-	function renderSlot(slots, name, props = {}, fallback, noSlotted, branchKey) {
+	function renderSlot(slots, name, props, fallback, noSlotted, branchKey) {
+		if (props == null) props = {};
 		if (currentRenderingInstance.ce || currentRenderingInstance.parent && isAsyncWrapper(currentRenderingInstance.parent) && currentRenderingInstance.parent.ce) {
 			const slotProps = branchKey != null && props.key == null ? extend({}, props, { key: branchKey }) : props;
 			const hasProps = Object.keys(slotProps).length > 0;
@@ -11301,9 +11401,10 @@
 		for (const key in injectOptions) {
 			const opt = injectOptions[key];
 			let injected;
-			if (isObject(opt)) if ("default" in opt) injected = inject(opt.from || key, opt.default, true);
-			else injected = inject(opt.from || key);
-			else injected = inject(opt);
+			if (isObject(opt)) {
+				if ("default" in opt) injected = inject(opt.from || key, opt.default, true);
+				else injected = inject(opt.from || key);
+			} else injected = inject(opt);
 			if (isRef(injected)) Object.defineProperty(ctx, key, {
 				enumerable: true,
 				configurable: true,
@@ -11322,10 +11423,12 @@
 			const handler = ctx[raw];
 			if (isFunction(handler)) watch(getter, handler);
 		} else if (isFunction(raw)) watch(getter, raw.bind(publicThis));
-		else if (isObject(raw)) if (isArray(raw)) raw.forEach((r) => createWatcher(r, ctx, publicThis, key));
-		else {
-			const handler = isFunction(raw.handler) ? raw.handler.bind(publicThis) : ctx[raw.handler];
-			if (isFunction(handler)) watch(getter, handler, raw);
+		else if (isObject(raw)) {
+			if (isArray(raw)) raw.forEach((r) => createWatcher(r, ctx, publicThis, key));
+			else {
+				const handler = isFunction(raw.handler) ? raw.handler.bind(publicThis) : ctx[raw.handler];
+				if (isFunction(handler)) watch(getter, handler, raw);
+			}
 		}
 	}
 	function resolveMergedOptions(instance) {
@@ -11536,7 +11639,7 @@
 		const modifiers = isModelListener && getModelModifiers(props, event.slice(7));
 		if (modifiers) {
 			if (modifiers.trim) args = rawArgs.map((a) => isString(a) ? a.trim() : a);
-			if (modifiers.number) args = rawArgs.map(looseToNumber);
+			if (modifiers.number) args = args.map(looseToNumber);
 		}
 		let handlerName;
 		let handler = props[handlerName = toHandlerKey(event)] || props[handlerName = toHandlerKey(camelize(event))];
@@ -11625,7 +11728,7 @@
 			root = cloneVNode(root, null, false, true);
 			root.dirs = root.dirs ? root.dirs.concat(vnode.dirs) : vnode.dirs;
 		}
-		if (vnode.transition) setTransitionHooks(root, vnode.transition);
+		if (vnode.transition) setTransitionHooks(isTeleport(root.type) ? getInnerChild$1(root) || root : root, vnode.transition);
 		result = root;
 		setCurrentRenderingInstance(prev);
 		return result;
@@ -11723,16 +11826,17 @@
 					let key = propsToUpdate[i];
 					if (isEmitListener(instance.emitsOptions, key)) continue;
 					const value = rawProps[key];
-					if (options) if (hasOwn(attrs, key)) {
-						if (value !== attrs[key]) {
-							attrs[key] = value;
-							hasAttrsChanged = true;
+					if (options) {
+						if (hasOwn(attrs, key)) {
+							if (value !== attrs[key]) {
+								attrs[key] = value;
+								hasAttrsChanged = true;
+							}
+						} else {
+							const camelizedKey = camelize(key);
+							props[camelizedKey] = resolvePropValue(options, rawCurrentProps, camelizedKey, value, instance, false);
 						}
-					} else {
-						const camelizedKey = camelize(key);
-						props[camelizedKey] = resolvePropValue(options, rawCurrentProps, camelizedKey, value, instance, false);
-					}
-					else if (value !== attrs[key]) {
+					} else if (value !== attrs[key]) {
 						attrs[key] = value;
 						hasAttrsChanged = true;
 					}
@@ -11741,9 +11845,11 @@
 		} else {
 			if (setFullProps(instance, rawProps, props, attrs)) hasAttrsChanged = true;
 			let kebabKey;
-			for (const key in rawCurrentProps) if (!rawProps || !hasOwn(rawProps, key) && ((kebabKey = hyphenate(key)) === key || !hasOwn(rawProps, kebabKey))) if (options) {
-				if (rawPrevProps && (rawPrevProps[key] !== void 0 || rawPrevProps[kebabKey] !== void 0)) props[key] = resolvePropValue(options, rawCurrentProps, key, void 0, instance, true);
-			} else delete props[key];
+			for (const key in rawCurrentProps) if (!rawProps || !hasOwn(rawProps, key) && ((kebabKey = hyphenate(key)) === key || !hasOwn(rawProps, kebabKey))) {
+				if (options) {
+					if (rawPrevProps && (rawPrevProps[key] !== void 0 || rawPrevProps[kebabKey] !== void 0)) props[key] = resolvePropValue(options, rawCurrentProps, key, void 0, instance, true);
+				} else delete props[key];
+			}
 			if (attrs !== rawCurrentProps) {
 				for (const key in attrs) if (!rawProps || !hasOwn(rawProps, key) && true) {
 					delete attrs[key];
@@ -11761,9 +11867,10 @@
 			if (isReservedProp(key)) continue;
 			const value = rawProps[key];
 			let camelKey;
-			if (options && hasOwn(options, camelKey = camelize(key))) if (!needCastKeys || !needCastKeys.includes(camelKey)) props[camelKey] = value;
-			else (rawCastValues || (rawCastValues = {}))[camelKey] = value;
-			else if (!isEmitListener(instance.emitsOptions, key)) {
+			if (options && hasOwn(options, camelKey = camelize(key))) {
+				if (!needCastKeys || !needCastKeys.includes(camelKey)) props[camelKey] = value;
+				else (rawCastValues || (rawCastValues = {}))[camelKey] = value;
+			} else if (!isEmitListener(instance.emitsOptions, key)) {
 				if (!(key in attrs) || value !== attrs[key]) {
 					attrs[key] = value;
 					hasAttrsChanged = true;
@@ -11907,9 +12014,10 @@
 		let deletionComparisonTarget = EMPTY_OBJ;
 		if (vnode.shapeFlag & 32) {
 			const type = children._;
-			if (type) if (optimized && type === 1) needDeletionCheck = false;
-			else assignSlots(slots, children, optimized);
-			else {
+			if (type) {
+				if (optimized && type === 1) needDeletionCheck = false;
+				else assignSlots(slots, children, optimized);
+			} else {
 				needDeletionCheck = !children.$stable;
 				normalizeObjectSlots(children, slots);
 			}
@@ -12135,9 +12243,10 @@
 		};
 		const processComponent = (n1, n2, container, anchor, parentComponent, parentSuspense, namespace, slotScopeIds, optimized) => {
 			n2.slotScopeIds = slotScopeIds;
-			if (n1 == null) if (n2.shapeFlag & 512) parentComponent.ctx.activate(n2, container, anchor, namespace, optimized);
-			else mountComponent(n2, container, anchor, parentComponent, parentSuspense, namespace, optimized);
-			else updateComponent(n1, n2, optimized);
+			if (n1 == null) {
+				if (n2.shapeFlag & 512) parentComponent.ctx.activate(n2, container, anchor, namespace, optimized);
+				else mountComponent(n2, container, anchor, parentComponent, parentSuspense, namespace, optimized);
+			} else updateComponent(n1, n2, optimized);
 		};
 		const mountComponent = (initialVNode, container, anchor, parentComponent, parentSuspense, namespace, optimized) => {
 			const instance = initialVNode.component = createComponentInstance(initialVNode, parentComponent, parentSuspense);
@@ -12154,14 +12263,15 @@
 		};
 		const updateComponent = (n1, n2, optimized) => {
 			const instance = n2.component = n1.component;
-			if (shouldUpdateComponent(n1, n2, optimized)) if (instance.asyncDep && !instance.asyncResolved) {
-				updateComponentPreRender(instance, n2, optimized);
-				return;
+			if (shouldUpdateComponent(n1, n2, optimized)) {
+				if (instance.asyncDep && !instance.asyncResolved) {
+					updateComponentPreRender(instance, n2, optimized);
+					return;
+				} else {
+					instance.next = n2;
+					instance.update();
+				}
 			} else {
-				instance.next = n2;
-				instance.update();
-			}
-			else {
 				n2.el = n1.el;
 				instance.vnode = n2;
 			}
@@ -12274,9 +12384,10 @@
 			if (shapeFlag & 8) {
 				if (prevShapeFlag & 16) unmountChildren(c1, parentComponent, parentSuspense);
 				if (c2 !== c1) hostSetElementText(container, c2);
-			} else if (prevShapeFlag & 16) if (shapeFlag & 16) patchKeyedChildren(c1, c2, container, anchor, parentComponent, parentSuspense, namespace, slotScopeIds, optimized);
-			else unmountChildren(c1, parentComponent, parentSuspense, true);
-			else {
+			} else if (prevShapeFlag & 16) {
+				if (shapeFlag & 16) patchKeyedChildren(c1, c2, container, anchor, parentComponent, parentSuspense, namespace, slotScopeIds, optimized);
+				else unmountChildren(c1, parentComponent, parentSuspense, true);
+			} else {
 				if (prevShapeFlag & 8) hostSetElementText(container, "");
 				if (shapeFlag & 16) mountChildren(c2, container, anchor, parentComponent, parentSuspense, namespace, slotScopeIds, optimized);
 			}
@@ -12372,8 +12483,10 @@
 					const anchorVNode = c2[nextIndex + 1];
 					const anchor = nextIndex + 1 < l2 ? anchorVNode.el || resolveAsyncComponentPlaceholder(anchorVNode) : parentAnchor;
 					if (newIndexToOldIndexMap[i] === 0) patch(null, nextChild, container, anchor, parentComponent, parentSuspense, namespace, slotScopeIds, optimized);
-					else if (moved) if (j < 0 || i !== increasingNewIndexSequence[j]) move(nextChild, container, anchor, 2);
-					else j--;
+					else if (moved) {
+						if (j < 0 || i !== increasingNewIndexSequence[j]) move(nextChild, container, anchor, 2);
+						else j--;
+					}
 				}
 			}
 		};
@@ -12401,31 +12514,33 @@
 				moveStaticNode(vnode, container, anchor);
 				return;
 			}
-			if (moveType !== 2 && shapeFlag & 1 && transition) if (moveType === 0) if (transition.persisted && !el[leaveCbKey]) hostInsert(el, container, anchor);
-			else {
-				transition.beforeEnter(el);
-				hostInsert(el, container, anchor);
-				queuePostRenderEffect(() => transition.enter(el), parentSuspense);
-			}
-			else {
-				const { leave, delayLeave, afterLeave } = transition;
-				const remove2 = () => {
-					if (vnode.ctx.isUnmounted) hostRemove(el);
-					else hostInsert(el, container, anchor);
-				};
-				const performLeave = () => {
-					const wasLeaving = el._isLeaving || !!el[leaveCbKey];
-					if (el._isLeaving) el[leaveCbKey](true);
-					if (transition.persisted && !wasLeaving) remove2();
-					else leave(el, () => {
-						remove2();
-						afterLeave && afterLeave();
-					});
-				};
-				if (delayLeave) delayLeave(el, remove2, performLeave);
-				else performLeave();
-			}
-			else hostInsert(el, container, anchor);
+			if (moveType !== 2 && shapeFlag & 1 && transition) {
+				if (moveType === 0) {
+					if (transition.persisted && !el[leaveCbKey]) hostInsert(el, container, anchor);
+					else {
+						transition.beforeEnter(el);
+						hostInsert(el, container, anchor);
+						queuePostRenderEffect(() => transition.enter(el), parentSuspense);
+					}
+				} else {
+					const { leave, delayLeave, afterLeave } = transition;
+					const remove2 = () => {
+						if (vnode.ctx.isUnmounted) hostRemove(el);
+						else hostInsert(el, container, anchor);
+					};
+					const performLeave = () => {
+						const wasLeaving = el._isLeaving || !!el[leaveCbKey];
+						if (el._isLeaving) el[leaveCbKey](true);
+						if (transition.persisted && !wasLeaving) remove2();
+						else leave(el, () => {
+							remove2();
+							afterLeave && afterLeave();
+						});
+					};
+					if (delayLeave) delayLeave(el, remove2, performLeave);
+					else performLeave();
+				}
+			} else hostInsert(el, container, anchor);
 		};
 		const unmount = (vnode, parentComponent, parentSuspense, doRemove = false, optimized = false) => {
 			const { type, props, ref, children, dynamicChildren, shapeFlag, patchFlag, dirs, cacheIndex, memo } = vnode;
@@ -12628,8 +12743,10 @@
 	}
 	function locateNonHydratedAsyncRoot(instance) {
 		const subComponent = instance.subTree.component;
-		if (subComponent) if (subComponent.asyncDep && !subComponent.asyncResolved) return subComponent;
-		else return locateNonHydratedAsyncRoot(subComponent);
+		if (subComponent) {
+			if (subComponent.asyncDep && !subComponent.asyncResolved) return subComponent;
+			else return locateNonHydratedAsyncRoot(subComponent);
+		}
 	}
 	function invalidateMount(hooks) {
 		if (hooks) for (let i = 0; i < hooks.length; i++) hooks[i].flags |= 8;
@@ -12642,9 +12759,10 @@
 	}
 	var isSuspense = (type) => type.__isSuspense;
 	function queueEffectWithSuspense(fn, suspense) {
-		if (suspense && suspense.pendingBranch) if (isArray(fn)) suspense.effects.push(...fn);
-		else suspense.effects.push(fn);
-		else queuePostFlushCb(fn);
+		if (suspense && suspense.pendingBranch) {
+			if (isArray(fn)) suspense.effects.push(...fn);
+			else suspense.effects.push(fn);
+		} else queuePostFlushCb(fn);
 	}
 	var Fragment = Symbol.for("v-fgt");
 	var Text = Symbol.for("v-txt");
@@ -12735,8 +12853,10 @@
 		if (isVNode(type)) {
 			const cloned = cloneVNode(type, props, true);
 			if (children) normalizeChildren(cloned, children);
-			if (isBlockTreeEnabled > 0 && !isBlockNode && currentBlock) if (cloned.shapeFlag & 6) currentBlock[currentBlock.indexOf(type)] = cloned;
-			else currentBlock.push(cloned);
+			if (isBlockTreeEnabled > 0 && !isBlockNode && currentBlock) {
+				if (cloned.shapeFlag & 6) currentBlock[currentBlock.indexOf(type)] = cloned;
+				else currentBlock.push(cloned);
+			}
 			cloned.patchFlag = -2;
 			return cloned;
 		}
@@ -12819,25 +12939,28 @@
 		const { shapeFlag } = vnode;
 		if (children == null) children = null;
 		else if (isArray(children)) type = 16;
-		else if (typeof children === "object") if (shapeFlag & 65) {
-			const slot = children.default;
-			if (slot) {
-				slot._c && (slot._d = false);
-				normalizeChildren(vnode, slot());
-				slot._c && (slot._d = true);
+		else if (typeof children === "object") {
+			if (shapeFlag & 65) {
+				const slot = children.default;
+				if (slot) {
+					slot._c && (slot._d = false);
+					normalizeChildren(vnode, slot());
+					slot._c && (slot._d = true);
+				}
+				return;
+			} else {
+				type = 32;
+				const slotFlag = children._;
+				if (!slotFlag && !isInternalObject(children)) children._ctx = currentRenderingInstance;
+				else if (slotFlag === 3 && currentRenderingInstance) {
+					if (currentRenderingInstance.slots._ === 1) children._ = 1;
+					else {
+						children._ = 2;
+						vnode.patchFlag |= 1024;
+					}
+				}
 			}
-			return;
-		} else {
-			type = 32;
-			const slotFlag = children._;
-			if (!slotFlag && !isInternalObject(children)) children._ctx = currentRenderingInstance;
-			else if (slotFlag === 3 && currentRenderingInstance) if (currentRenderingInstance.slots._ === 1) children._ = 1;
-			else {
-				children._ = 2;
-				vnode.patchFlag |= 1024;
-			}
-		}
-		else if (isFunction(children)) {
+		} else if (isFunction(children)) {
 			if (shapeFlag & 65) {
 				normalizeChildren(vnode, { default: children });
 				return;
@@ -13013,7 +13136,12 @@
 			if (isAsyncSetup) {
 				setupResult.then(unsetCurrentInstance, unsetCurrentInstance);
 				if (isSSR) return setupResult.then((resolvedResult) => {
-					handleSetupResult(instance, resolvedResult, isSSR);
+					setInSSRSetupState(true);
+					try {
+						handleSetupResult(instance, resolvedResult, isSSR);
+					} finally {
+						setInSSRSetupState(false);
+					}
 				}).catch((e) => {
 					handleError(e, instance, 0);
 				});
@@ -13022,30 +13150,15 @@
 		} else finishComponentSetup(instance, isSSR);
 	}
 	function handleSetupResult(instance, setupResult, isSSR) {
-		if (isFunction(setupResult)) if (instance.type.__ssrInlineRender) instance.ssrRender = setupResult;
-		else instance.render = setupResult;
-		else if (isObject(setupResult)) instance.setupState = proxyRefs(setupResult);
+		if (isFunction(setupResult)) {
+			if (instance.type.__ssrInlineRender) instance.ssrRender = setupResult;
+			else instance.render = setupResult;
+		} else if (isObject(setupResult)) instance.setupState = proxyRefs(setupResult);
 		finishComponentSetup(instance, isSSR);
 	}
-	var compile;
-	var installWithProxy;
 	function finishComponentSetup(instance, isSSR, skipOptions) {
 		const Component = instance.type;
-		if (!instance.render) {
-			if (!isSSR && compile && !Component.render) {
-				const template = Component.template || resolveMergedOptions(instance).template;
-				if (template) {
-					const { isCustomElement, compilerOptions } = instance.appContext.config;
-					const { delimiters, compilerOptions: componentCompilerOptions } = Component;
-					Component.render = compile(template, extend(extend({
-						isCustomElement,
-						delimiters
-					}, compilerOptions), componentCompilerOptions));
-				}
-			}
-			instance.render = Component.render || NOOP;
-			if (installWithProxy) installWithProxy(instance);
-		}
+		if (!instance.render) instance.render = Component.render || NOOP;
 		{
 			const reset = setCurrentInstance(instance);
 			pauseTracking();
@@ -13094,11 +13207,12 @@
 		try {
 			setBlockTracking(-1);
 			const l = arguments.length;
-			if (l === 2) if (isObject(propsOrChildren) && !isArray(propsOrChildren)) {
-				if (isVNode(propsOrChildren)) return createVNode(type, null, [propsOrChildren]);
-				return createVNode(type, propsOrChildren);
-			} else return createVNode(type, null, propsOrChildren);
-			else {
+			if (l === 2) {
+				if (isObject(propsOrChildren) && !isArray(propsOrChildren)) {
+					if (isVNode(propsOrChildren)) return createVNode(type, null, [propsOrChildren]);
+					return createVNode(type, propsOrChildren);
+				} else return createVNode(type, null, propsOrChildren);
+			} else {
 				if (l > 3) children = Array.prototype.slice.call(arguments, 2);
 				else if (l === 3 && isVNode(children)) children = [children];
 				return createVNode(type, propsOrChildren, children);
@@ -13107,7 +13221,7 @@
 			setBlockTracking(1);
 		}
 	}
-	var version = "3.5.40";
+	var version = "3.5.42";
 	var policy = void 0;
 	var tt = typeof window !== "undefined" && window.trustedTypes;
 	if (tt) try {
@@ -13403,14 +13517,15 @@
 		},
 		updated(el, { value, oldValue }, { transition }) {
 			if (!value === !oldValue) return;
-			if (transition) if (value) {
-				transition.beforeEnter(el);
-				setDisplay(el, true);
-				transition.enter(el);
-			} else transition.leave(el, () => {
-				setDisplay(el, false);
-			});
-			else setDisplay(el, value);
+			if (transition) {
+				if (value) {
+					transition.beforeEnter(el);
+					setDisplay(el, true);
+					transition.enter(el);
+				} else transition.leave(el, () => {
+					setDisplay(el, false);
+				});
+			} else setDisplay(el, value);
 		},
 		beforeUnmount(el, { value }) {
 			setDisplay(el, value);
@@ -13427,11 +13542,13 @@
 		const isCssString = isString(next);
 		let hasControlledDisplay = false;
 		if (next && !isCssString) {
-			if (prev) if (!isString(prev)) {
-				for (const key in prev) if (next[key] == null) setStyle(style, key, "");
-			} else for (const prevStyle of prev.split(";")) {
-				const key = prevStyle.slice(0, prevStyle.indexOf(":")).trim();
-				if (next[key] == null) setStyle(style, key, "");
+			if (prev) {
+				if (!isString(prev)) {
+					for (const key in prev) if (next[key] == null) setStyle(style, key, "");
+				} else for (const prevStyle of prev.split(";")) {
+					const key = prevStyle.slice(0, prevStyle.indexOf(":")).trim();
+					if (next[key] == null) setStyle(style, key, "");
+				}
 			}
 			for (const key in next) {
 				if (key === "display") hasControlledDisplay = true;
@@ -13458,8 +13575,10 @@
 		if (isArray(val)) val.forEach((v) => setStyle(style, name, v));
 		else {
 			if (val == null) val = "";
-			if (name.startsWith("--")) style.setProperty(name, val);
-			else {
+			if (name.startsWith("--")) {
+				if (importantRE.test(val)) style.setProperty(name, val.replace(importantRE, ""), "important");
+				else style.setProperty(name, val);
+			} else {
 				const prefixed = autoPrefix(style, name);
 				if (importantRE.test(val)) style.setProperty(hyphenate(prefixed), val.replace(importantRE, ""), "important");
 				else style[prefixed] = val;
@@ -13489,9 +13608,10 @@
 	}
 	var xlinkNS = "http://www.w3.org/1999/xlink";
 	function patchAttr(el, key, value, isSVG, instance, isBoolean = isSpecialBooleanAttr(key)) {
-		if (isSVG && key.startsWith("xlink:")) if (value == null) el.removeAttributeNS(xlinkNS, key.slice(6, key.length));
-		else el.setAttributeNS(xlinkNS, key, value);
-		else if (value == null || isBoolean && !includeBooleanAttr(value)) el.removeAttribute(key);
+		if (isSVG && key.startsWith("xlink:")) {
+			if (value == null) el.removeAttributeNS(xlinkNS, key.slice(6, key.length));
+			else el.setAttributeNS(xlinkNS, key, value);
+		} else if (value == null || isBoolean && !includeBooleanAttr(value)) el.removeAttribute(key);
 		else el.setAttribute(key, isBoolean ? "" : isSymbol(value) ? String(value) : value);
 	}
 	function patchDOMProp(el, key, value, parentComponent, attrName) {
@@ -13640,6 +13760,7 @@
 		}
 	}
 	var assignKey = Symbol("_assign");
+	var initialValueKey = Symbol("_initialValue");
 	function castValue(value, trim, number) {
 		if (trim) value = value.trim();
 		if (number) value = looseToNumber(value);
@@ -13647,6 +13768,10 @@
 	}
 	var vModelText = {
 		created(el, { modifiers: { lazy, trim, number } }, vnode) {
+			if (el.parentNode) {
+				if (el.type === "text") el[initialValueKey] = el.defaultValue.replace(/[\r\n]/g, "");
+				else if (el.type === "textarea") el[initialValueKey] = el.defaultValue.replace(/\r\n?/g, "\n");
+			}
 			el[assignKey] = getModelAssigner(vnode);
 			const castToNumber = number || vnode.props && vnode.props.type === "number";
 			addEventListener(el, lazy ? "change" : "input", (e) => {
@@ -13662,8 +13787,12 @@
 				addEventListener(el, "change", onCompositionEnd);
 			}
 		},
-		mounted(el, { value }) {
-			el.value = value == null ? "" : value;
+		mounted(el, { value, modifiers: { trim, number } }) {
+			const newValue = value == null ? "" : value;
+			const initialValue = el[initialValueKey];
+			delete el[initialValueKey];
+			if (initialValue !== void 0 && (el.type === "text" || el.type === "textarea") && el.value !== initialValue) el[assignKey](castValue(el.value, trim, number));
+			else el.value = newValue;
 		},
 		beforeUpdate(el, { value, oldValue, modifiers: { lazy, trim, number } }, vnode) {
 			el[assignKey] = getModelAssigner(vnode);
@@ -14440,7 +14569,10 @@ ul, ol {
 			if (isRef(prop) && !isComputed(prop) || isReactive(prop)) {
 				if (!isOptionsStore) {
 					if (initialState && shouldHydrate(prop)) if (isRef(prop)) prop.value = initialState[key];
-					else mergeReactiveObjects(prop, initialState[key]);
+					else {
+						if (prop instanceof Set || prop instanceof Map) prop.clear();
+						mergeReactiveObjects(prop, initialState[key]);
+					}
 					pinia.state.value[$id][key] = prop;
 				}
 			} else if (typeof prop === "function") {
@@ -14481,8 +14613,10 @@ ul, ol {
 			pinia = pinia || (hasContext ? inject(piniaSymbol, null) : null);
 			if (pinia) setActivePinia(pinia);
 			pinia = activePinia;
-			if (!pinia._s.has(id)) if (isSetupStore) createSetupStore(id, setup, options, pinia);
-			else createOptionsStore(id, options, pinia);
+			if (!pinia._s.has(id)) {
+				if (isSetupStore) createSetupStore(id, setup, options, pinia);
+				else createOptionsStore(id, options, pinia);
+			}
 			return pinia._s.get(id);
 		}
 		useStore.$id = id;
@@ -14588,6 +14722,7 @@ ul, ol {
 		const behavior = ref({ ...DEFAULT_BEHAVIOR });
 		const protection = ref({ ...DEFAULT_PROTECTION });
 		const customCSS = ref("");
+		const customCleanupRegex = ref("");
 		let saveTimer = null;
 		let savePending = false;
 		let saveQueue = Promise.resolve();
@@ -14618,6 +14753,9 @@ ul, ol {
 		function setCustomCSS(css) {
 			customCSS.value = css;
 			applyCustomCSS();
+		}
+		function setCustomCleanupRegex(source) {
+			customCleanupRegex.value = source;
 		}
 		function applyTheme() {
 			const t = theme();
@@ -14685,6 +14823,7 @@ ul, ol {
 							...config.protection
 						};
 						if (typeof config.customCSS === "string") customCSS.value = config.customCSS;
+						if (typeof config.customCleanupRegex === "string") customCleanupRegex.value = config.customCleanupRegex;
 					}
 				}
 				applyAll();
@@ -14704,7 +14843,8 @@ ul, ol {
 				reading: reading.value,
 				behavior: behavior.value,
 				protection: protection.value,
-				customCSS: customCSS.value
+				customCSS: customCSS.value,
+				customCleanupRegex: customCleanupRegex.value
 			});
 		}
 		function save() {
@@ -14736,7 +14876,8 @@ ul, ol {
 			reading,
 			behavior,
 			protection,
-			customCSS
+			customCSS,
+			customCleanupRegex
 		], () => {
 			if (!isHydrating) scheduleSave();
 		}, {
@@ -14752,6 +14893,7 @@ ul, ol {
 			behavior.value = { ...DEFAULT_BEHAVIOR };
 			protection.value = { ...DEFAULT_PROTECTION };
 			customCSS.value = "";
+			customCleanupRegex.value = "";
 			applyAll();
 			save();
 		}
@@ -14765,12 +14907,14 @@ ul, ol {
 			behavior,
 			protection,
 			customCSS,
+			customCleanupRegex,
 			theme,
 			setTheme,
 			updateReading,
 			updateBehavior,
 			updateProtection,
 			setCustomCSS,
+			setCustomCleanupRegex,
 			resetReading,
 			applyTheme,
 			applyReading,
@@ -14785,23 +14929,23 @@ ul, ol {
 	var HKVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一針 一針|一針見血 一針見血|三針 三針|丟巧針 丟巧針|丹稜 丹稜|九針 九針|亂針繡 亂針繡|仙台 仙台|倒扣針兒 倒扣針兒|做針線 做針線|八字方針 八字方針|刀割針扎 刀割針扎|分針 分針|別針 別針|刺胳針 刺胳針|刺針 刺針|北港島綫 北港島線|十針 十針|南港島綫 南港島線|南針 南針|反時針 反時針|口吃 口吃|台山 台山|台山市 台山市|台州 台州|台州地區 台州地區|台州市 台州市|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|向風針 向風針|唱針 唱針|啄針兒 啄針兒|嗎啡針 嗎啡針|大政方針 大政方針|大海撈針 大海撈針|大頭針 大頭針|天台 天台|天台女 天台女|天台宗 天台宗|天台山 天台山|天台縣 天台縣|太乙神針 太乙神針|奇台 奇台|女人心海底針 女人心海底針|定南針 定南針|定風針 定風針|將軍澳綫 將軍澳線|對針 對針|小針 小針|小針美容 小針美容|屯馬綫 屯馬線|平針縫 平針縫|幾針 幾針|引線穿針 引線穿針|張口 張口|張柏芝 張柏芝|張栢芝 張栢芝|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|懸針 懸針|懸針垂露 懸針垂露|手腕式指北針 手腕式指北針|扎針 扎針|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|指北針 指北針|指南針 指南針|指揮台 指揮台|指針 指針|指針式 指針式|探針 探針|控制台 控制台|插針 插針|搖針 搖針|搗針 搗針|撞針 撞針|擺針 擺針|收針 收針|教育方針 教育方針|敹一針 敹一針|方針 方針|時針 時針|暈針 暈針|曲別針 曲別針|東九龍綫 東九龍線|東海撈針 東海撈針|東涌綫 東涌線|東鐵綫 東鐵線|松針 松針|枝針 枝針|桑針 桑針|棒針 棒針|棒針衫 棒針衫|棘針 棘針|棘針科 棘針科|棘針門 棘針門|機場快綫 機場快線|步線行針 步線行針|毒針 毒針|毛線針 毛線針|毫針 毫針|水底撈針 水底撈針|沙中綫 沙中線|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|浙江天台縣 浙江天台縣|海底撈針 海底撈針|港島綫 港島線|漏針 漏針|炮台山循道衛理中學 炮台山循道衛理中學|無線新聞台 無線新聞台|無針不引線 無針不引線|無針注射器 無針注射器|燔針 燔針|留針 留針|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|短針 短針|石針 石針|硬肥皂 硬肥皂|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|秒針 秒針|秧針 秧針|穆稜 穆稜|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|紋光針 紋光針|細針密縷 細針密縷|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美白針 美白針|耳針 耳針|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|胃口 胃口|胸針 胸針|臺灣台 臺灣台|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|茅針 茅針|荃灣綫 荃灣線|葉針 葉針|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|補血針 補血針|補針 補針|見縫插針 見縫插針|觀塘綫 觀塘線|討針線 討針線|象牙針尖 象牙針尖|賀爾蒙針 賀爾蒙針|跳針 跳針|蹇吃 蹇吃|軟肥皂 軟肥皂|迪士尼綫 迪士尼線|迴紋針 迴紋針|退針 退針|逆時針 逆時針|避雷針 避雷針|郭台成 郭台成|郭台銘 郭台銘|鄧艾吃 鄧艾吃|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉤針 鉤針|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|長針 長針|開口 開口|防疫針 防疫針|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|面皂 面皂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|風向針 風向針|飛針走線 飛針走線|香皂 香皂|骨針 骨針|髮針 髮針|鬼針草 鬼針草|鳳台 鳳台|鹽水針 鹽水針|麻醉針 麻醉針|黃成 黃成|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針|龍應台 龍應台";
 	var HKVariantsRev_default = "偽 僞|兑 兌|卧 臥|叁 叄|台 臺|吃 喫|唇 脣|啟 啓|囱 囪|媪 媼|媯 嬀|悦 悅|愠 慍|户 戶|捝 挩|揾 搵|敍 敘|敚 敓|枱 檯|枴 柺|棁 梲|榅 榲|氲 氳|涚 涗|温 溫|溈 潙|潀 潨|濕 溼|灶 竈|為 爲|煴 熅|痴 癡|皂 皁|眾 衆|秘 祕|税 稅|稜 棱|粧 妝|粽 糉|糭 糉|綫 線|緼 縕|缽 鉢|脱 脫|腽 膃|葱 蔥|蒀 蒕|蒍 蔿|藴 蘊|蜕 蛻|衞 衛|衹 只|説 說|踴 踊|輼 轀|醖 醞|針 鍼|鈎 鉤|鋭 銳|閲 閱|鰛 鰮";
 	var hk_default = [[HKVariantsRevPhrases_default, HKVariantsRev_default]];
-	var HKPhrasesRev_default = "伊利諾 伊利諾伊|伊利諾州 伊利諾伊州|伺服器 服務器|作業系統 操作系統|北卡羅萊納 北卡羅來納|北卡羅萊納州 北卡羅來納州|南卡羅萊納 南卡羅來納|南卡羅萊納州 南卡羅來納州|奧克拉荷馬 俄克拉何馬|奧克拉荷馬州 俄克拉何馬州|密芝根 密歇根|密芝根州 密歇根州|寬頻 寬帶|德薩斯 得克薩斯|德薩斯州 得克薩斯州|搜尋 搜索|梳芙厘 舒芙蕾|概率 概率|機會率 概率|機率 幾率|游標 光標|滑鼠 鼠標|硬碟 硬盤|私隱權 隱私權|程式語言 編程語言|維珍尼亞 弗吉尼亞|維珍尼亞州 弗吉尼亞州|羅德島 羅得島|羅德島州 羅得島州|西維珍尼亞 西弗吉尼亞|西維珍尼亞州 西弗吉尼亞州|資料夾 文件夾|賓夕凡尼亞 賓夕法尼亞|賓夕凡尼亞州 賓夕法尼亞州|馬利蘭 馬里蘭|馬利蘭州 馬里蘭州";
+	var HKPhrasesRev_default = "丹尼·波爾 丹尼·博伊爾|伊利諾 伊利諾伊|伊利諾州 伊利諾伊州|伊力·卡山 伊利亞·卡贊|伺服器 服務器|佐治·古尼 喬治·克魯尼|作業系統 操作系統|保羅·夏傑斯 保羅·哈吉斯|保羅·湯馬士·安德遜 保羅·托馬斯·安德森|北卡羅萊納 北卡羅來納|北卡羅萊納州 北卡羅來納州|南卡羅萊納 南卡羅來納|南卡羅萊納州 南卡羅來納州|占士·金馬倫 詹姆斯·卡梅隆|古利姆·迪托路 吉列爾莫·德爾托羅|史提夫·麥昆 史蒂夫·麥奎因|史提芬·史匹堡 斯蒂芬·斯皮爾伯格|嘉芙蓮·碧格露 凱瑟琳·畢格羅|基斯杜化·路蘭 克里斯托弗·諾蘭|大衛·連 大衛·利恩|奇連·伊士活 克林特·伊斯特伍德|奇雲·高士拿 凱文·科斯特納|奧克拉荷馬 俄克拉何馬|奧克拉荷馬州 俄克拉何馬州|奧利華·史東 奧利弗·斯通|威廉·佛烈金 威廉·弗萊德金|密芝根 密歇根|密芝根州 密歇根州|寬頻 寬帶|彼德·積遜 彼得·傑克遜|德薩斯 得克薩斯|德薩斯州 得克薩斯州|愛瑪·湯馬士 艾瑪·托馬斯|愛黛兒·羅曼斯基 阿黛爾·羅曼斯基|搜尋 搜索|朗·侯活 朗·霍華德|查理士·路雲 查爾斯·羅文|梳芙厘 舒芙蕾|森·曼特斯 山姆·曼德斯|概率 概率|機會率 概率|機率 幾率|法蘭絲·麥杜雯 弗朗西絲·麥克多曼德|活地·亞倫 伍迪·艾倫|游標 光標|湯賀柏 湯姆·霍伯|滑鼠 鼠標|珍·甘比茵 簡·坎皮恩|畢·彼特 布拉德·皮特|硬碟 硬盤|私隱權 隱私權|程式語言 編程語言|米克·尼高斯 邁克·尼科爾斯|米路·吉遜 梅爾·吉布森|米高·哈薩拿維斯 米歇爾·阿扎納維西於斯|米高·德格拉斯 邁克爾·道格拉斯|約瑟·曼基威士 約瑟夫·曼凱維奇|維珍尼亞 弗吉尼亞|維珍尼亞州 弗吉尼亞州|羅德島 羅得島|羅德島州 羅得島州|羅拔·淮斯 羅伯特·懷斯|羅拔·湛米基斯 羅伯特·澤米吉斯|羅拔·烈福 羅伯特·雷德福|艾力謝路·高沙里斯·依拿力圖 亞歷杭德羅·岡薩雷斯·伊納裏圖|華倫·比提 沃倫·比蒂|西維珍尼亞 西弗吉尼亞|西維珍尼亞州 西弗吉尼亞州|記憶體模組 內存條|資料夾 文件夾|賓·艾佛力 本·阿弗萊克|賓夕凡尼亞 賓夕法尼亞|賓夕凡尼亞州 賓夕法尼亞州|路蘭 諾蘭|辛·貝克 肖恩·貝克|馬利蘭 馬里蘭|馬利蘭州 馬里蘭州|馬田·史高西斯 馬丁·斯科塞斯|高安兄弟 科恩兄弟";
 	var hkp_default = [[
 		HKPhrasesRev_default,
 		HKVariantsRevPhrases_default,
 		HKVariantsRev_default
 	]];
-	var TWVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一展長才 一展長才|一流人才 一流人才|一表人才 一表人才|一針 一針|一針見血 一針見血|七步之才 七步之才|七步奇才 七步奇才|三才 三才|三才圖會 三才圖會|三針 三針|下才 下才|不成才 不成才|不才 不才|不打不成才 不打不成才|不良才 不良才|丟巧針 丟巧針|中才 中才|中核 中核|丹稜 丹稜|之核 之核|九針 九針|乾奴才 乾奴才|亂針繡 亂針繡|二流人才 二流人才|亞核 亞核|人才 人才|人才出衆 人才出衆|人才外流 人才外流|人才庫 人才庫|人才流失 人才流失|人才濟濟 人才濟濟|人才輩出 人才輩出|人才難得 人才難得|人盡其才 人盡其才|仙才 仙才|伊核 伊核|作育英才 作育英才|佳人才子 佳人才子|個核 個核|倒了核桃車子 倒了核桃車子|倒扣針兒 倒扣針兒|偏才 偏才|做針線 做針線|傲世輕才 傲世輕才|僅作參考 僅作參考|僅供參考 僅供參考|儲訓人才 儲訓人才|免參 免參|內參 內參|內核 內核|全才 全才|全程參加 全程參加|全面禁止核試驗條約 全面禁止核試驗條約|八字方針 八字方針|八斗之才 八斗之才|八斗才 八斗才|公才公望 公才公望|公衆參與 公衆參與|六才子書 六才子書|其核 其核|冠世之才 冠世之才|冰核 冰核|几案之才 几案之才|凡才 凡才|出倫之才 出倫之才|刀割針扎 刀割針扎|分針 分針|初露才華 初露才華|別針 別針|利弊參半 利弊參半|刺胳針 刺胳針|刺針 刺針|剋核 剋核|前核 前核|力薄才疏 力薄才疏|功過參半 功過參半|動如參商 動如參商|匡濟之才 匡濟之才|十針 十針|千噸級核武器 千噸級核武器|南針 南針|博學多才 博學多才|卯酉參辰 卯酉參辰|印核 印核|卵核 卵核|原子核 原子核|原核 原核|去核 去核|參予 參予|參事 參事|參伍 參伍|參佐 參佐|參假 參假|參兩院 參兩院|參前落後 參前落後|參加 參加|參加人 參加人|參加國 參加國|參加完 參加完|參加爲 參加爲|參加獎 參加獎|參加者 參加者|參劾 參劾|參半 參半|參合 參合|參同契 參同契|參商 參商|參團 參團|參堂 參堂|參場 參場|參天 參天|參奏 參奏|參孫 參孫|參宿 參宿|參宿七 參宿七|參將 參將|參展 參展|參展商 參展商|參展團 參展團|參差 參差|參差不齊 參差不齊|參差錯落 參差錯落|參度 參度|參悟 參悟|參戰 參戰|參戰國 參戰國|參拜 參拜|參拾壹 參拾壹|參拾陸 參拾陸|參政 參政|參政權 參政權|參數 參數|參數表 參數表|參會 參會|參朝 參朝|參本 參本|參校 參校|參演 參演|參照 參照|參照卡 參照卡|參照物 參照物|參照系 參照系|參看 參看|參知政事 參知政事|參破 參破|參禪 參禪|參綜 參綜|參考 參考|參考值 參考值|參考價 參考價|參考價值 參考價值|參考參考 參考參考|參考座標 參考座標|參考性 參考性|參考手冊 參考手冊|參考文獻 參考文獻|參考書 參考書|參考書目 參考書目|參考材料 參考材料|參考法 參考法|參考消息 參考消息|參考特藏 參考特藏|參考系 參考系|參考資料 參考資料|參股 參股|參與 參與|參與人員 參與人員|參與制 參與制|參與度 參與度|參與感 參與感|參與權 參與權|參與率 參與率|參與者 參與者|參衆兩院 參衆兩院|參見 參見|參見互照 參見互照|參見注 參見注|參觀 參觀|參觀券 參觀券|參觀參觀 參觀參觀|參觀團 參觀團|參觀團體 參觀團體|參觀完 參觀完|參觀者 參觀者|參訂 參訂|參訓 參訓|參訪 參訪|參訪團 參訪團|參評 參評|參話頭 參話頭|參請 參請|參謀 參謀|參謀總部 參謀總部|參謀總長 參謀總長|參謀長 參謀長|參謁 參謁|參譚 參譚|參議 參議|參議員 參議員|參議會 參議會|參議院 參議院|參賽 參賽|參賽國 參賽國|參賽權 參賽權|參賽片 參賽片|參賽者 參賽者|參贊 參贊|參軍 參軍|參辰 參辰|參辰卯酉 參辰卯酉|參辰日月 參辰日月|參透 參透|參道 參道|參選 參選|參選人 參選人|參酌 參酌|參量 參量|參量空間 參量空間|參錯 參錯|參閱 參閱|參院 參院|參雜 參雜|參靈 參靈|參革 參革|參預 參預|參頭 參頭|參驗 參驗|反時針 反時針|反核 反核|取才 取才|口吃 口吃|口才 口才|口才好 口才好|口才辨給 口才辨給|可供參考 可供參考|可憎才 可憎才|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|合著 合著|合著者 合著者|同參 同參|名著 名著|向風針 向風針|命世之才 命世之才|命世才 命世才|和核 和核|唐才常 唐才常|唱針 唱針|啄針兒 啄針兒|善才 善才|善才童子 善才童子|喜憂參半 喜憂參半|喝參 喝參|喫敲才 喫敲才|喬才 喬才|單核 單核|單核細胞增多症 單核細胞增多症|嗎啡針 嗎啡針|四才子 四才子|四核 四核|土參 土參|地核 地核|地面核爆炸 地面核爆炸|埋沒人才 埋沒人才|增量參數 增量參數|外才 外才|外核 外核|多事逞才 多事逞才|多才 多才|多才多藝 多才多藝|多核 多核|大才 大才|大才小用 大才小用|大才槃槃 大才槃槃|大政方針 大政方針|大曆十才子 大曆十才子|大核 大核|大海撈針 大海撈針|大頭針 大頭針|天妒英才 天妒英才|天才 天才|天才兒童 天才兒童|天才出自勤奮 天才出自勤奮|天才型 天才型|天才教育 天才教育|天才橫溢 天才橫溢|天才論 天才論|天縱之才 天縱之才|太乙神針 太乙神針|奇才 奇才|奇才異能 奇才異能|女人心海底針 女人心海底針|女子參政主義 女子參政主義|女子參政權 女子參政權|女秀才 女秀才|女貌郎才 女貌郎才|奴才 奴才|妙才 妙才|學優才贍 學優才贍|學淺才疏 學淺才疏|學疏才淺 學疏才淺|宏內核 宏內核|定南針 定南針|定風針 定風針|實才 實才|將才 將才|將遇良才 將遇良才|專才 專才|專業人才 專業人才|專門人才 專門人才|對針 對針|小才大用 小才大用|小才子 小才子|小秀才 小秀才|小秀才學堂 小秀才學堂|小針 小針|小針美容 小針美容|少年才俊 少年才俊|尺二秀才 尺二秀才|屈才 屈才|展才 展才|岑參 岑參|巨著 巨著|帶團參加 帶團參加|常用參考書 常用參考書|平針縫 平針縫|幹才 幹才|幾針 幾針|庸才 庸才|廩膳秀才 廩膳秀才|引線穿針 引線穿針|張口 張口|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|彗核 彗核|形名參同 形名參同|待著 待着|得失參半 得失參半|微核 微核|徵才 徵才|德才 德才|德才兼備 德才兼備|德薄才疏 德薄才疏|志大才疏 志大才疏|志大才短 志大才短|志廣才疏 志廣才疏|恃才傲物 恃才傲物|恃才矜己 恃才矜己|恃才自專 恃才自專|惡名昭著 惡名昭著|意廣才疏 意廣才疏|愛才 愛才|愛才好士 愛才好士|愛才如命 愛才如命|愛才若渴 愛才若渴|憂喜參半 憂喜參半|憐才 憐才|懷才不遇 懷才不遇|懷才抱德 懷才抱德|懸針 懸針|懸針垂露 懸針垂露|成兆才 成兆才|成核 成核|戰術核武器 戰術核武器|手腕式指北針 手腕式指北針|才人 才人|才俊 才俊|才儲八斗 才儲八斗|才具 才具|才兼文武 才兼文武|才分 才分|才力 才力|才勇兼優 才勇兼優|才名 才名|才器 才器|才士 才士|才大難用 才大難用|才女 才女|才如史遷 才如史遷|才媛 才媛|才子 才子|才子佳人 才子佳人|才子書 才子書|才學 才學|才學兼優 才學兼優|才守 才守|才定 才定|才幹 才幹|才廣妨身 才廣妨身|才微智淺 才微智淺|才德 才德|才德兼備 才德兼備|才思 才思|才思敏捷 才思敏捷|才悟 才悟|才情 才情|才智 才智|才望 才望|才氣 才氣|才氣無雙 才氣無雙|才氣縱橫 才氣縱橫|才氣過人 才氣過人|才爲世出 才爲世出|才用 才用|才略 才略|才略過人 才略過人|才當曹斗 才當曹斗|才疏學淺 才疏學淺|才疏德薄 才疏德薄|才疏志大 才疏志大|才疏意廣 才疏意廣|才疏計拙 才疏計拙|才短氣粗 才短氣粗|才秀人微 才秀人微|才能 才能|才能幹濟 才能幹濟|才色 才色|才華 才華|才華出衆 才華出衆|才華橫溢 才華橫溢|才華洋溢 才華洋溢|才華蓋世 才華蓋世|才蔽識淺 才蔽識淺|才藝 才藝|才藝卓絕 才藝卓絕|才藝技能 才藝技能|才藝班 才藝班|才藝秀 才藝秀|才藻 才藻|才語 才語|才識 才識|才識過人 才識過人|才貌 才貌|才貌出衆 才貌出衆|才貌雙全 才貌雙全|才貫二酉 才貫二酉|才資 才資|才輕德薄 才輕德薄|才過子建 才過子建|才過屈宋 才過屈宋|才非玉潤 才非玉潤|才高八斗 才高八斗|才高意廣 才高意廣|才高氣傲 才高氣傲|才高行厚 才高行厚|才高行潔 才高行潔|扎針 扎針|打參 打參|打完針 打完針|打針 打針|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|拔地參天 拔地參天|指北針 指北針|指南針 指南針|指針 指針|指針式 指針式|捫參歷井 捫參歷井|捷才 捷才|掃眉才子 掃眉才子|探針 探針|插針 插針|揚己露才 揚己露才|搖針 搖針|搗針 搗針|撞針 撞針|撥亂之才 撥亂之才|擬核 擬核|擺針 擺針|收針 收針|放參 放參|教育方針 教育方針|敹一針 敹一針|文才 文才|文武全才 文武全才|文選爛秀才半 文選爛秀才半|斗筲之才 斗筲之才|斗轉參橫 斗轉參橫|方針 方針|日月參辰 日月參辰|早參 早參|昭著 昭著|時針 時針|晚參 晚參|晨參暮省 晨參暮省|晨參暮禮 晨參暮禮|晶核 晶核|暈針 暈針|暮禮晨參 暮禮晨參|曠世之才 曠世之才|曠世奇才 曠世奇才|曠世逸才 曠世逸才|曲別針 曲別針|曹參 曹參|曾參 曾參|曾參殺人 曾參殺人|月核 月核|月落參橫 月落參橫|有才 有才|有才幹 有才幹|有才無命 有才無命|有核 有核|朝參暮禮 朝參暮禮|朝核 朝核|未易才 未易才|朽木之才 朽木之才|杏核 杏核|東海撈針 東海撈針|松針 松針|林木參天 林木參天|果核 果核|枝針 枝針|核下 核下|核二廠 核二廠|核人 核人|核仁 核仁|核以 核以|核僵持 核僵持|核兒 核兒|核冬天 核冬天|核出口控制 核出口控制|核力 核力|核化 核化|核區 核區|核可 核可|核合成 核合成|核和 核和|核四 核四|核型 核型|核子 核子|核子廠 核子廠|核孔 核孔|核島 核島|核工 核工|核彈 核彈|核心 核心|核戰 核戰|核戰鬥部 核戰鬥部|核技術 核技術|核數 核數|核是 核是|核有 核有|核果 核果|核桃 核桃|核武 核武|核火箭發動機 核火箭發動機|核炫 核炫|核燃料後處理 核燃料後處理|核爆 核爆|核爆炸煙雲 核爆炸煙雲|核狀 核狀|核球 核球|核甘 核甘|核當量 核當量|核發 核發|核發電 核發電|核發電廠 核發電廠|核的 核的|核磁 核磁|核種 核種|核突 核突|核粒 核粒|核糖 核糖|核糖核酸 核糖核酸|核素 核素|核線 核線|核能 核能|核能技術 核能技術|核能發電 核能發電|核能發電廠 核能發電廠|核能電廠 核能電廠|核膜 核膜|核苷 核苷|核菌 核菌|核融合 核融合|核融合發電 核融合發電|核解 核解|核計劃 核計劃|核試 核試|核談 核談|核質 核質|核載 核載|核辦 核辦|核配 核配|核酪 核酪|核酶 核酶|核酸 核酸|核防禦 核防禦|核電 核電|核電廠 核電廠|核電磁脈衝 核電磁脈衝|核體 核體|核點 核點|桃核 桃核|桃核雕 桃核雕|桑針 桑針|梅核 梅核|棄核 棄核|棋逢對手將遇良才 棋逢對手將遇良才|棒針 棒針|棒針衫 棒針衫|棗核 棗核|棘針 棘針|棘針科 棘針科|棘針門 棘針門|極核 極核|槃才 槃才|槃槃大才 槃槃大才|橘核 橘核|檢核 檢核|檢核表 檢核表|正則參數 正則參數|步線行針 步線行針|歪才 歪才|歷練之才 歷練之才|殺才 殺才|毒針 毒針|比才 比才|毛線針 毛線針|毫針 毫針|氘核 氘核|水底撈針 水底撈針|求才 求才|求才若渴 求才若渴|江南四大才子 江南四大才子|江參 江參|江淹才盡 江淹才盡|江郎才盡 江郎才盡|沿才授職 沿才授職|注射針 注射針|注射針頭 注射針頭|洗面皂 洗面皂|洗髮皂 洗髮皂|洛陽才子 洛陽才子|派團參加 派團參加|海參威 海參威|海參崴 海參崴|海底撈針 海底撈針|滿腹才學 滿腹才學|漏針 漏針|潑才 潑才|濟世之才 濟世之才|無核 無核|無針不引線 無針不引線|無針注射器 無針注射器|煤核 煤核|熔核 熔核|熱核 熱核|燔針 燔針|片善小才 片善小才|物色人才 物色人才|特殊才能 特殊才能|狀態參數 狀態參數|狗才 狗才|率團參加 率團參加|玉參差 玉參差|玉尺量才 玉尺量才|王佐之才 王佐之才|瑣才 瑣才|甄才品能 甄才品能|甄選人才 甄選人才|男才女貌 男才女貌|畎畝下才 畎畝下才|留針 留針|略無參商 略無參商|異才 異才|當世才度 當世才度|疑信參半 疑信參半|疑核 疑核|痔核 痔核|痛失英才 痛失英才|登庸人才 登庸人才|發展核武器 發展核武器|白鶴秀才 白鶴秀才|百萬噸級核武器 百萬噸級核武器|百里之才 百里之才|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|的核 的核|直接參與 直接參與|真才實學 真才實學|真核 真核|矜才使氣 矜才使氣|矜能負才 矜能負才|短針 短針|石針 石針|硬核 硬核|硬肥皂 硬肥皂|碌碌庸才 碌碌庸才|磁核 磁核|磁針 磁針|磨杵成針 磨杵成針|磨針溪 磨針溪|磨鐵成針 磨鐵成針|社交才能 社交才能|禁核 禁核|秀才 秀才|秀才不出門能知天下事 秀才不出門能知天下事|秀才人情 秀才人情|秀才作醫如菜作虀 秀才作醫如菜作虀|秀才造反 秀才造反|秒針 秒針|秧針 秧針|穆稜 穆稜|積極參加 積極參加|積極參與 積極參與|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|筆參造化 筆參造化|管理人才 管理人才|精核 精核|約核 約核|約翰參書 約翰參書|紋光針 紋光針|細針密縷 細針密縷|結核 結核|結核桿菌 結核桿菌|絕對參照 絕對參照|絕才 絕才|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|經世之才 經世之才|經國之才 經國之才|經濟之才 經濟之才|網羅人才 網羅人才|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|總參謀部 總參謀部|總參謀長 總參謀長|總方針 總方針|繃針 繃針|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美國參議院 美國參議院|美才 美才|美白針 美白針|老奴才 老奴才|耐多藥結核病 耐多藥結核病|耳針 耳針|聯合參謀 聯合參謀|聰明才智 聰明才智|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|育才 育才|胃口 胃口|胡才勇 胡才勇|胸針 胸針|自學成才 自學成才|自核 自核|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|花旗參 花旗參|英才 英才|英才俊偉 英才俊偉|茂才 茂才|茂才異等 茂才異等|茅針 茅針|茲核 茲核|菌核 菌核|菲才寡學 菲才寡學|葉針 葉針|著作 著作|著名 著名|著式 著式|著志 著志|著於 著於|著書 著書|著白 著白|著稱 著稱|著稱於世 著稱於世|著者 著者|著述 著述|著錄 著錄|蓋世之才 蓋世之才|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蘋果核 蘋果核|蛇口蜂針 蛇口蜂針|螫針 螫針|蠻針瞎灸 蠻針瞎灸|行短才喬 行短才喬|行短才高 行短才高|補血針 補血針|補針 補針|製麵 製麪|西洋參 西洋參|見縫插針 見縫插針|討針線 討針線|詠雪之才 詠雪之才|詩才 詩才|誇才賣智 誇才賣智|說參請 說參請|請參閱 請參閱|謊敲才 謊敲才|謝絕參觀 謝絕參觀|識多才廣 識多才廣|識才 識才|識才尊賢 識才尊賢|譭譽參半 譭譽參半|象牙針尖 象牙針尖|豬八戒喫人參果 豬八戒喫人參果|負才 負才|負才任氣 負才任氣|負才使氣 負才使氣|賀爾蒙針 賀爾蒙針|賢才 賢才|賤才 賤才|超世之才 超世之才|趫才 趫才|跳針 跳針|蹇吃 蹇吃|身才 身才|軟肥皂 軟肥皂|輇才 輇才|輕核 輕核|辯才 辯才|辯才天 辯才天|辯才無礙 辯才無礙|迴紋針 迴紋針|退針 退針|逆時針 逆時針|通人達才 通人達才|通才 通才|通才教育 通才教育|通才練識 通才練識|造就人才 造就人才|逸才 逸才|逸羣之才 逸羣之才|過人才略 過人才略|違紀參選 違紀參選|適才 適才|選才 選才|選民參加率 選民參加率|遺才 遺才|避雷針 避雷針|邊核 邊核|郎才女姿 郎才女姿|郎才女貌 郎才女貌|鄧艾吃 鄧艾吃|野無遺才 野無遺才|量才錄用 量才錄用|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉅著 鉅著|鉤針 鉤針|銀核 銀核|銀針 銀針|鋼針 鋼針|錶針 錶針|鐵針 鐵針|鑑核備查 鑑核備查|長才 長才|長針 長針|開口 開口|防疫針 防疫針|陰核 陰核|隨才器使 隨才器使|雄才 雄才|雄才大略 雄才大略|雌核 雌核|雙核 雙核|雙鏈核酸 雙鏈核酸|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|需才孔亟 需才孔亟|露才 露才|露才揚己 露才揚己|霸才 霸才|非才 非才|非核 非核|面皂 面皂|頂核 頂核|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|顯著 顯著|顯著標志 顯著標志|風向針 風向針|風流才子 風流才子|飛針走線 飛針走線|飽學秀才 飽學秀才|香皂 香皂|馮驥才 馮驥才|驚才絕豔 驚才絕豔|骨針 骨針|高參 高參|高才 高才|高才生 高才生|高級管理人才 高級管理人才|髮針 髮針|鬼才 鬼才|鬼針草 鬼針草|魚頭參政 魚頭參政|鴻篇鉅著 鴻篇鉅著|鹽水針 鹽水針|麴秀才 麴秀才|麻醉針 麻醉針|黃有才 黃有才|點核 點核|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針";
+	var TWVariantsRevPhrases_default = "一口吃個 一口喫個|一口吃成 一口喫成|一家三口 一家三口|一家五口 一家五口|一家六口 一家六口|一家四口 一家四口|一展長才 一展長才|一流人才 一流人才|一表人才 一表人才|一針 一針|一針見血 一針見血|七步之才 七步之才|七步奇才 七步奇才|三才 三才|三才圖會 三才圖會|三針 三針|上梁 上樑|上梁不正 上樑不正|上梁不正下梁歪 上樑不正下樑歪|上梁文 上樑文|下才 下才|下梁 下樑|不成才 不成才|不才 不才|不打不成才 不打不成才|不良才 不良才|丟巧針 丟巧針|中才 中才|中核 中核|丹稜 丹稜|主梁 主樑|之核 之核|九針 九針|乾奴才 乾奴才|亂針繡 亂針繡|二流人才 二流人才|亞核 亞核|人才 人才|人才出衆 人才出衆|人才外流 人才外流|人才庫 人才庫|人才流失 人才流失|人才濟濟 人才濟濟|人才輩出 人才輩出|人才難得 人才難得|人盡其才 人盡其才|什么 什麼|仙才 仙才|伊核 伊核|作育英才 作育英才|佳人才子 佳人才子|個核 個核|倒了核桃車子 倒了核桃車子|倒扣針兒 倒扣針兒|偏才 偏才|做針線 做針線|偷梁換柱 偷樑換柱|傲世輕才 傲世輕才|僅作參考 僅作參考|僅供參考 僅供參考|儲訓人才 儲訓人才|光脊梁 光脊樑|免參 免參|內參 內參|內核 內核|全才 全才|全程參加 全程參加|全面禁止核試驗條約 全面禁止核試驗條約|八字方針 八字方針|八斗之才 八斗之才|八斗才 八斗才|公才公望 公才公望|公衆參與 公衆參與|六才子書 六才子書|其核 其核|冠世之才 冠世之才|冰核 冰核|几案之才 几案之才|凡才 凡才|出倫之才 出倫之才|刀割針扎 刀割針扎|分針 分針|初露才華 初露才華|別針 別針|利弊參半 利弊參半|刺股懸梁 刺股懸樑|刺胳針 刺胳針|刺針 刺針|刺骨懸梁 刺骨懸樑|剋核 剋核|前核 前核|力薄才疏 力薄才疏|功過參半 功過參半|動如參商 動如參商|匡濟之才 匡濟之才|十針 十針|千噸級核武器 千噸級核武器|南針 南針|博學多才 博學多才|卯酉參辰 卯酉參辰|印核 印核|卵核 卵核|原子核 原子核|原核 原核|去核 去核|參予 參予|參事 參事|參伍 參伍|參佐 參佐|參假 參假|參兩院 參兩院|參前落後 參前落後|參加 參加|參加人 參加人|參加國 參加國|參加完 參加完|參加爲 參加爲|參加獎 參加獎|參加者 參加者|參劾 參劾|參半 參半|參合 參合|參同契 參同契|參商 參商|參團 參團|參堂 參堂|參場 參場|參天 參天|參奏 參奏|參孫 參孫|參宿 參宿|參宿七 參宿七|參將 參將|參展 參展|參展商 參展商|參展團 參展團|參差 參差|參差不齊 參差不齊|參差錯落 參差錯落|參度 參度|參悟 參悟|參戰 參戰|參戰國 參戰國|參拜 參拜|參拾壹 參拾壹|參拾陸 參拾陸|參政 參政|參政權 參政權|參數 參數|參數表 參數表|參會 參會|參朝 參朝|參本 參本|參校 參校|參演 參演|參照 參照|參照卡 參照卡|參照物 參照物|參照系 參照系|參看 參看|參知政事 參知政事|參破 參破|參禪 參禪|參綜 參綜|參考 參考|參考值 參考值|參考價 參考價|參考價值 參考價值|參考參考 參考參考|參考座標 參考座標|參考性 參考性|參考手冊 參考手冊|參考文獻 參考文獻|參考書 參考書|參考書目 參考書目|參考材料 參考材料|參考法 參考法|參考消息 參考消息|參考特藏 參考特藏|參考系 參考系|參考資料 參考資料|參股 參股|參與 參與|參與人員 參與人員|參與制 參與制|參與度 參與度|參與感 參與感|參與權 參與權|參與率 參與率|參與者 參與者|參衆兩院 參衆兩院|參見 參見|參見互照 參見互照|參見注 參見注|參觀 參觀|參觀券 參觀券|參觀參觀 參觀參觀|參觀團 參觀團|參觀團體 參觀團體|參觀完 參觀完|參觀者 參觀者|參訂 參訂|參訓 參訓|參訪 參訪|參訪團 參訪團|參評 參評|參話頭 參話頭|參請 參請|參謀 參謀|參謀總部 參謀總部|參謀總長 參謀總長|參謀長 參謀長|參謁 參謁|參譚 參譚|參議 參議|參議員 參議員|參議會 參議會|參議院 參議院|參賽 參賽|參賽國 參賽國|參賽權 參賽權|參賽片 參賽片|參賽者 參賽者|參贊 參贊|參軍 參軍|參辰 參辰|參辰卯酉 參辰卯酉|參辰日月 參辰日月|參透 參透|參道 參道|參選 參選|參選人 參選人|參酌 參酌|參量 參量|參量空間 參量空間|參錯 參錯|參閱 參閱|參院 參院|參雜 參雜|參靈 參靈|參革 參革|參預 參預|參頭 參頭|參驗 參驗|反時針 反時針|反核 反核|取才 取才|口吃 口吃|口才 口才|口才好 口才好|口才辨給 口才辨給|可供參考 可供參考|可憎才 可憎才|吃口 喫口|吃口令 吃口令|吃口飯 喫口飯|吃吃 喫喫|吃子 喫子|合著 合著|合著者 合著者|同參 同參|名著 名著|向風針 向風針|命世之才 命世之才|命世才 命世才|和核 和核|唐才常 唐才常|唱針 唱針|啄針兒 啄針兒|善才 善才|善才童子 善才童子|喜憂參半 喜憂參半|喝參 喝參|喫敲才 喫敲才|喬才 喬才|單核 單核|單核細胞增多症 單核細胞增多症|嗎啡針 嗎啡針|四才子 四才子|四核 四核|圈梁 圈樑|國家棟梁 國家棟樑|土參 土參|在橋梁工地上 在橋樑工地上|地核 地核|地面核爆炸 地面核爆炸|埋沒人才 埋沒人才|增量參數 增量參數|外才 外才|外核 外核|多么 多麼|多事逞才 多事逞才|多才 多才|多才多藝 多才多藝|多核 多核|大廈棟梁 大廈棟樑|大才 大才|大才小用 大才小用|大才槃槃 大才槃槃|大政方針 大政方針|大曆十才子 大曆十才子|大核 大核|大梁 大梁|大海撈針 大海撈針|大頭針 大頭針|天妒英才 天妒英才|天才 天才|天才兒童 天才兒童|天才出自勤奮 天才出自勤奮|天才型 天才型|天才教育 天才教育|天才橫溢 天才橫溢|天才論 天才論|天縱之才 天縱之才|太乙神針 太乙神針|奇才 奇才|奇才異能 奇才異能|女人心海底針 女人心海底針|女子參政主義 女子參政主義|女子參政權 女子參政權|女秀才 女秀才|女貌郎才 女貌郎才|奴才 奴才|好么 好麼|妙才 妙才|學優才贍 學優才贍|學淺才疏 學淺才疏|學疏才淺 學疏才淺|宏內核 宏內核|定南針 定南針|定風針 定風針|實才 實才|將才 將才|將遇良才 將遇良才|專才 專才|專業人才 專業人才|專門人才 專門人才|對針 對針|小丑跳梁 小丑跳樑|小才大用 小才大用|小才子 小才子|小秀才 小秀才|小秀才學堂 小秀才學堂|小醜跳梁 小醜跳樑|小針 小針|小針美容 小針美容|少年才俊 少年才俊|尺二秀才 尺二秀才|屈才 屈才|屋梁 屋樑|展才 展才|山梁 山樑|岑參 岑參|巨著 巨著|帶團參加 帶團參加|常用參考書 常用參考書|平梁 平樑|平針縫 平針縫|幹才 幹才|幾針 幾針|庸才 庸才|廩膳秀才 廩膳秀才|引線穿針 引線穿針|張口 張口|張飛穿針 張飛穿針|強心針 強心針|弼針 弼針|彈針 彈針|彗核 彗核|形名參同 形名參同|待著 待着|得失參半 得失參半|微核 微核|徵才 徵才|德才 德才|德才兼備 德才兼備|德薄才疏 德薄才疏|志大才疏 志大才疏|志大才短 志大才短|志廣才疏 志廣才疏|怎么 怎麼|恃才傲物 恃才傲物|恃才矜己 恃才矜己|恃才自專 恃才自專|惡名昭著 惡名昭著|意廣才疏 意廣才疏|愛才 愛才|愛才好士 愛才好士|愛才如命 愛才如命|愛才若渴 愛才若渴|憂喜參半 憂喜參半|憐才 憐才|懷才不遇 懷才不遇|懷才抱德 懷才抱德|懸梁 懸樑|懸梁刺股 懸樑刺股|懸梁自盡 懸樑自盡|懸臂梁 懸臂樑|懸針 懸針|懸針垂露 懸針垂露|成兆才 成兆才|成核 成核|戰術核武器 戰術核武器|戳脊梁 戳脊樑|戳脊梁骨 戳脊樑骨|手腕式指北針 手腕式指北針|才人 才人|才俊 才俊|才儲八斗 才儲八斗|才具 才具|才兼文武 才兼文武|才分 才分|才力 才力|才勇兼優 才勇兼優|才名 才名|才器 才器|才士 才士|才大難用 才大難用|才女 才女|才如史遷 才如史遷|才媛 才媛|才子 才子|才子佳人 才子佳人|才子書 才子書|才學 才學|才學兼優 才學兼優|才守 才守|才定 才定|才幹 才幹|才廣妨身 才廣妨身|才微智淺 才微智淺|才德 才德|才德兼備 才德兼備|才思 才思|才思敏捷 才思敏捷|才悟 才悟|才情 才情|才智 才智|才望 才望|才氣 才氣|才氣無雙 才氣無雙|才氣縱橫 才氣縱橫|才氣過人 才氣過人|才爲世出 才爲世出|才用 才用|才略 才略|才略過人 才略過人|才當曹斗 才當曹斗|才疏學淺 才疏學淺|才疏德薄 才疏德薄|才疏志大 才疏志大|才疏意廣 才疏意廣|才疏計拙 才疏計拙|才短氣粗 才短氣粗|才秀人微 才秀人微|才能 才能|才能幹濟 才能幹濟|才色 才色|才華 才華|才華出衆 才華出衆|才華橫溢 才華橫溢|才華洋溢 才華洋溢|才華蓋世 才華蓋世|才蔽識淺 才蔽識淺|才藝 才藝|才藝卓絕 才藝卓絕|才藝技能 才藝技能|才藝班 才藝班|才藝秀 才藝秀|才藻 才藻|才語 才語|才識 才識|才識過人 才識過人|才貌 才貌|才貌出衆 才貌出衆|才貌雙全 才貌雙全|才貫二酉 才貫二酉|才資 才資|才輕德薄 才輕德薄|才過子建 才過子建|才過屈宋 才過屈宋|才非玉潤 才非玉潤|才高八斗 才高八斗|才高意廣 才高意廣|才高氣傲 才高氣傲|才高行厚 才高行厚|才高行潔 才高行潔|扎針 扎針|打參 打參|打完針 打完針|打針 打針|扛大梁 扛大樑|披針形葉 披針形葉|抵針 抵針|拈針指 拈針指|拔地參天 拔地參天|指北針 指北針|指南針 指南針|指針 指針|指針式 指針式|挑大梁 挑大樑|挑正梁 挑正樑|捫參歷井 捫參歷井|捷才 捷才|掃眉才子 掃眉才子|探針 探針|提梁 提樑|插針 插針|揚己露才 揚己露才|搖針 搖針|搗針 搗針|撞針 撞針|撥亂之才 撥亂之才|撫梁易柱 撫樑易柱|擬核 擬核|擺針 擺針|收針 收針|放參 放參|教育方針 教育方針|敹一針 敹一針|文才 文才|文武全才 文武全才|文選爛秀才半 文選爛秀才半|斗筲之才 斗筲之才|斗轉參橫 斗轉參橫|方針 方針|日月參辰 日月參辰|早參 早參|昭著 昭著|時針 時針|晚參 晚參|晨參暮省 晨參暮省|晨參暮禮 晨參暮禮|晶核 晶核|暈針 暈針|暮禮晨參 暮禮晨參|曠世之才 曠世之才|曠世奇才 曠世奇才|曠世逸才 曠世逸才|曲別針 曲別針|曹參 曹參|曾參 曾參|曾參殺人 曾參殺人|月核 月核|月落參橫 月落參橫|有才 有才|有才幹 有才幹|有才無命 有才無命|有核 有核|朝參暮禮 朝參暮禮|朝核 朝核|木梁 木樑|未易才 未易才|朽木之才 朽木之才|杏核 杏核|東海撈針 東海撈針|松針 松針|板梁橋 板樑橋|林木參天 林木參天|果核 果核|枝針 枝針|架梁 架樑|架海金梁 架海金樑|柱梁 柱樑|核下 核下|核二廠 核二廠|核人 核人|核仁 核仁|核以 核以|核僵持 核僵持|核兒 核兒|核冬天 核冬天|核出口控制 核出口控制|核力 核力|核化 核化|核區 核區|核可 核可|核合成 核合成|核和 核和|核四 核四|核型 核型|核子 核子|核子廠 核子廠|核孔 核孔|核島 核島|核工 核工|核彈 核彈|核心 核心|核戰 核戰|核戰鬥部 核戰鬥部|核技術 核技術|核數 核數|核是 核是|核有 核有|核果 核果|核桃 核桃|核武 核武|核火箭發動機 核火箭發動機|核炫 核炫|核燃料後處理 核燃料後處理|核爆 核爆|核爆炸煙雲 核爆炸煙雲|核狀 核狀|核球 核球|核甘 核甘|核當量 核當量|核發 核發|核發電 核發電|核發電廠 核發電廠|核的 核的|核磁 核磁|核種 核種|核突 核突|核粒 核粒|核糖 核糖|核糖核酸 核糖核酸|核素 核素|核線 核線|核能 核能|核能技術 核能技術|核能發電 核能發電|核能發電廠 核能發電廠|核能電廠 核能電廠|核膜 核膜|核苷 核苷|核菌 核菌|核融合 核融合|核融合發電 核融合發電|核解 核解|核計劃 核計劃|核試 核試|核談 核談|核質 核質|核載 核載|核辦 核辦|核配 核配|核酪 核酪|核酶 核酶|核酸 核酸|核防禦 核防禦|核電 核電|核電廠 核電廠|核電磁脈衝 核電磁脈衝|核體 核體|核點 核點|桃核 桃核|桃核雕 桃核雕|桑針 桑針|梁上 樑上|梁上君子 樑上君子|梁子 樑子|梁木 梁木|梁木其壞 樑木其壞|梁架 樑架|梁柱 樑柱|梁棟 樑棟|梁龍 梁龍|梅核 梅核|棄核 棄核|棋逢對手將遇良才 棋逢對手將遇良才|棒針 棒針|棒針衫 棒針衫|棗核 棗核|棘針 棘針|棘針科 棘針科|棘針門 棘針門|棟梁 棟樑|棟梁之任 棟樑之任|棟梁之材 棟樑之材|棟梁之臣 棟樑之臣|椽梁 椽樑|極核 極核|槃才 槃才|槃槃大才 槃槃大才|樹梁 樹樑|橋梁 橋樑|橋梁工事 橋樑工事|橋梁工程 橋樑工程|橘核 橘核|橫打鼻梁兒 橫打鼻樑兒|橫梁 橫樑|檢核 檢核|檢核表 檢核表|歌聲繞梁 歌聲繞樑|正則參數 正則參數|正梁 正樑|步線行針 步線行針|歪才 歪才|歷練之才 歷練之才|殺才 殺才|毒針 毒針|比才 比才|毛線針 毛線針|毫針 毫針|氘核 氘核|水底撈針 水底撈針|求才 求才|求才若渴 求才若渴|江南四大才子 江南四大才子|江參 江參|江淹才盡 江淹才盡|江郎才盡 江郎才盡|沒梁桶 沒樑桶|沒脊梁 沒脊樑|河梁 河樑|沿才授職 沿才授職|注射針 注射針|注射針頭 注射針頭|泰山梁木 泰山樑木|洗面皂 洗面皂|洗髮皂 洗髮皂|洛陽才子 洛陽才子|津梁 津樑|派團參加 派團參加|海參威 海參威|海參崴 海參崴|海底撈針 海底撈針|滿腹才學 滿腹才學|漁梁 漁樑|漏針 漏針|潑才 潑才|澤梁 澤樑|濟世之才 濟世之才|濠梁 濠樑|無核 無核|無梁 無樑|無梁斗 無樑斗|無梁樓蓋 無樑樓蓋|無針不引線 無針不引線|無針注射器 無針注射器|煤核 煤核|熔核 熔核|熱核 熱核|燔針 燔針|片善小才 片善小才|物色人才 物色人才|特殊才能 特殊才能|狀態參數 狀態參數|狗才 狗才|獨挑大梁 獨挑大樑|率團參加 率團參加|玉參差 玉參差|玉尺量才 玉尺量才|王佐之才 王佐之才|玳梁 玳樑|玳瑁梁 玳瑁樑|瑣才 瑣才|甄才品能 甄才品能|甄選人才 甄選人才|甚么 甚麼|男才女貌 男才女貌|畎畝下才 畎畝下才|留針 留針|略無參商 略無參商|畫梁雕棟 畫樑雕棟|畫棟雕梁 畫棟雕樑|異才 異才|當世才度 當世才度|疑信參半 疑信參半|疑核 疑核|痔核 痔核|痛失英才 痛失英才|登庸人才 登庸人才|發展核武器 發展核武器|白鶴梁 白鶴梁|白鶴秀才 白鶴秀才|百萬噸級核武器 百萬噸級核武器|百里之才 百里之才|皂化 皂化|皂莢 皂莢|皂莢樹 皂莢樹|皂角 皂角|的核 的核|直接參與 直接參與|真才實學 真才實學|真核 真核|矜才使氣 矜才使氣|矜能負才 矜能負才|短針 短針|石梁 石樑|石針 石針|硬核 硬核|硬肥皂 硬肥皂|碌碌庸才 碌碌庸才|磁核 磁核|磁針 磁針|磨杵成針 磨杵成針|磨脊梁 磨脊樑|磨針溪 磨針溪|磨鐵成針 磨鐵成針|社交才能 社交才能|禁核 禁核|秀才 秀才|秀才不出門能知天下事 秀才不出門能知天下事|秀才人情 秀才人情|秀才作醫如菜作虀 秀才作醫如菜作虀|秀才造反 秀才造反|秒針 秒針|秧針 秧針|穆稜 穆稜|積極參加 積極參加|積極參與 積極參與|空梁落燕泥 空樑落燕泥|穿針 穿針|穿針引線 穿針引線|穿針走線 穿針走線|筆參造化 筆參造化|管理人才 管理人才|箱梁 箱樑|精核 精核|約核 約核|約翰參書 約翰參書|紋光針 紋光針|細針密縷 細針密縷|結核 結核|結核桿菌 結核桿菌|結梁子 結樑子|絕對參照 絕對參照|絕才 絕才|絞包針 絞包針|給個棒錘當針認 給個棒錘當針認|綏稜 綏稜|經世之才 經世之才|經國之才 經國之才|經濟之才 經濟之才|網羅人才 網羅人才|綿裏藏針 綿裏藏針|綿裏針 綿裏針|縫衣針 縫衣針|縫針 縫針|縫針補線 縫針補線|縫針跡 縫針跡|縱梁 縱樑|總參謀部 總參謀部|總參謀長 總參謀長|總方針 總方針|繃針 繃針|繞梁 繞樑|繞梁三日 繞樑三日|繞梁之音 繞樑之音|繞梁韻永 繞樑韻永|繡花針 繡花針|繡花針兒 繡花針兒|繡針 繡針|羅盤針 羅盤針|美國參議院 美國參議院|美才 美才|美白針 美白針|老奴才 老奴才|耐多藥結核病 耐多藥結核病|耳針 耳針|聯合參謀 聯合參謀|聰明才智 聰明才智|肥皂 肥皂|肥皂劇 肥皂劇|肥皂泡 肥皂泡|肥皂粉 肥皂粉|肥皂絲 肥皂絲|肥皂莢 肥皂莢|育才 育才|胃口 胃口|背梁骨 背樑骨|胡才勇 胡才勇|胸針 胸針|脊梁 脊樑|脊梁背 脊樑背|脊梁骨 脊樑骨|自學成才 自學成才|自核 自核|船不漏針漏針沒外人 船不漏針漏針沒外人|花兒針 花兒針|花旗參 花旗參|英才 英才|英才俊偉 英才俊偉|茂才 茂才|茂才異等 茂才異等|茅針 茅針|茲核 茲核|菌核 菌核|菲才寡學 菲才寡學|落月屋梁 落月屋樑|葉針 葉針|著作 著作|著名 著名|著式 著式|著志 著志|著於 著於|著書 著書|著白 著白|著稱 著稱|著稱於世 著稱於世|著者 著者|著述 著述|著錄 著錄|蓋世之才 蓋世之才|藏針縫 藏針縫|藥皂 藥皂|藥針 藥針|蘋果核 蘋果核|蛇口蜂針 蛇口蜂針|螫針 螫針|蠹啄剖梁柱 蠹啄剖樑柱|蠻針瞎灸 蠻針瞎灸|行短才喬 行短才喬|行短才高 行短才高|補血針 補血針|補針 補針|製麵 製麪|西洋參 西洋參|要么 要麼|見縫插針 見縫插針|討針線 討針線|詠雪之才 詠雪之才|詩才 詩才|誇才賣智 誇才賣智|說參請 說參請|請參閱 請參閱|謊敲才 謊敲才|謝絕參觀 謝絕參觀|識多才廣 識多才廣|識才 識才|識才尊賢 識才尊賢|譭譽參半 譭譽參半|豎柱上梁 豎柱上樑|豎起脊梁 豎起脊樑|象牙針尖 象牙針尖|豬八戒喫人參果 豬八戒喫人參果|負才 負才|負才任氣 負才任氣|負才使氣 負才使氣|賀爾蒙針 賀爾蒙針|賢才 賢才|賤才 賤才|超世之才 超世之才|趫才 趫才|跳梁 跳樑|跳梁小丑 跳樑小丑|跳梁小醜 跳樑小醜|跳梁猖獗之小丑 跳樑猖獗之小丑|跳梁猖獗之小醜 跳樑猖獗之小醜|跳針 跳針|蹇吃 蹇吃|身才 身才|軟肥皂 軟肥皂|輇才 輇才|輕核 輕核|辯才 辯才|辯才天 辯才天|辯才無礙 辯才無礙|这么 这麼|迴紋針 迴紋針|退針 退針|逆時針 逆時針|這么 這麼|通人達才 通人達才|通才 通才|通才教育 通才教育|通才練識 通才練識|造就人才 造就人才|逸才 逸才|逸羣之才 逸羣之才|過人才略 過人才略|過梁 過樑|違紀參選 違紀參選|適才 適才|選才 選才|選民參加率 選民參加率|遺才 遺才|避雷針 避雷針|邊核 邊核|那么 那麼|郎才女姿 郎才女姿|郎才女貌 郎才女貌|鄧艾吃 鄧艾吃|野無遺才 野無遺才|量才錄用 量才錄用|金針 金針|金針山 金針山|金針度人 金針度人|金針花 金針花|金針菇 金針菇|金針菜 金針菜|釘書針 釘書針|針具 針具|針刺 針刺|針刺麻醉 針刺麻醉|針劑 針劑|針孔 針孔|針孔攝影機 針孔攝影機|針孔照像 針孔照像|針孔照像機 針孔照像機|針孔現象 針孔現象|針對 針對|針對性 針對性|針對於 針對於|針尖 針尖|針尖兒 針尖兒|針工 針工|針布 針布|針形葉 針形葉|針指 針指|針挑刀挖 針挑刀挖|針梳機 針梳機|針氈 針氈|針法 針法|針炙 針炙|針狀 針狀|針狀物 針狀物|針盤 針盤|針眼 針眼|針眼子 針眼子|針神 針神|針筆 針筆|針筆匠 針筆匠|針筒 針筒|針箍 針箍|針箍兒 針箍兒|針線 針線|針線包 針線包|針線娘 針線娘|針線活 針線活|針線活計 針線活計|針線盒 針線盒|針線箔籬 針線箔籬|針織 針織|針織品 針織品|針織廠 針織廠|針織料 針織料|針腳 針腳|針葉 針葉|針葉林 針葉林|針葉植物 針葉植物|針葉樹 針葉樹|針針見血 針針見血|針釦 針釦|針鋒 針鋒|針鋒相對 針鋒相對|針鋒相投 針鋒相投|針鋩 針鋩|針頭 針頭|針餌莫減 針餌莫減|針骨 針骨|針魚 針魚|針黹 針黹|針黹紡績 針黹紡績|針鼴 針鼴|針鼻 針鼻|針鼻兒 針鼻兒|釦針 釦針|鉅著 鉅著|鉤針 鉤針|銀核 銀核|銀針 銀針|鋼梁 鋼樑|鋼針 鋼針|錶針 錶針|鐵針 鐵針|鑑核備查 鑑核備查|鑿壁懸梁 鑿壁懸樑|長才 長才|長針 長針|開口 開口|防疫針 防疫針|陰核 陰核|隨才器使 隨才器使|雄才 雄才|雄才大略 雄才大略|雌核 雌核|雕梁 雕樑|雕梁畫柱 雕樑畫柱|雕梁畫棟 雕樑畫棟|雙核 雙核|雙鏈核酸 雙鏈核酸|電唱針 電唱針|電針 電針|電針麻醉 電針麻醉|需才孔亟 需才孔亟|露才 露才|露才揚己 露才揚己|霸才 霸才|非才 非才|非核 非核|面皂 面皂|頂核 頂核|頂梁柱 頂樑柱|頂梁骨走了真魂 頂樑骨走了真魂|頂針 頂針|頂針兒 頂針兒|頂針捱住 頂針捱住|頂門針 頂門針|順時針 順時針|預防針 預防針|領帶針 領帶針|頭懸梁錐刺股 頭懸樑錐刺股|顯著 顯著|顯著標志 顯著標志|風向針 風向針|風流才子 風流才子|飛梁 飛樑|飛針走線 飛針走線|飽學秀才 飽學秀才|餘音繞梁 餘音繞樑|餘響繞梁 餘響繞樑|香皂 香皂|馮驥才 馮驥才|驚才絕豔 驚才絕豔|骨針 骨針|高參 高參|高才 高才|高才生 高才生|高級管理人才 高級管理人才|髮針 髮針|鬼才 鬼才|鬼針草 鬼針草|魚梁 魚樑|魚頭參政 魚頭參政|鴻篇鉅著 鴻篇鉅著|鹽水針 鹽水針|麴秀才 麴秀才|麻醉針 麻醉針|黃有才 黃有才|點核 點核|鼻梁 鼻樑|鼻梁兒 鼻樑兒|鼻梁骨 鼻樑骨|鼻無梁柱 鼻無樑柱|鼻針療法 鼻針療法|齧蘗吞針 齧蘗吞針";
 	var TWVariantsRev_default = "么 幺|偽 僞|參 蔘|吃 喫|唇 脣|啟 啓|媯 嬀|嫻 嫺|峰 峯|床 牀|才 纔|核 覈|汙 污|洩 泄|溈 潙|潀 潨|灶 竈|為 爲|痴 癡|痺 痹|皂 皁|眾 衆|睪 睾|秘 祕|稜 棱|簷 檐|粽 糉|缽 鉢|群 羣|著 着|蒍 蔿|裡 裏|踴 踊|針 鍼|韁 繮|顎 齶|鯰 鮎|麵 麪";
 	var tw_default = [[TWVariantsRevPhrases_default, TWVariantsRev_default]];
-	var TWPhrasesRev_default = "A型肝炎 甲型肝炎|A肝 甲肝|BMW集團 寶馬集團|B型肝炎 乙型肝炎|B肝 乙肝|C型肝炎 丙型肝炎|C肝 丙肝|D型肝炎 丁型肝炎|D肝 丁肝|E型肝炎 戊型肝炎|E肝 戊肝|PN接面 PN結|SQL隱碼攻擊 SQL注入|三極體 三極管|下拉式清單 下拉列表|丙胺酸 丙氨酸|丟擲 拋出|中介軟體 中間件|主機板 主板|主開機記錄 主引導記錄|乙太網 以太網|乙太網路 以太網|乙太網路由器 以太網路由器|乙太網路路由器 以太網路由器|乙醯胺酚 對乙酰氨基酚|乳酪 奶酪|二極體 二極管|互動 交互|互動式 交互式|亞塞拜然 阿塞拜疆|亮胺酸 亮氨酸|人工智慧 人工智能|介面 界面|介面卡 適配器|代碼 代碼|代謝症候群 代謝綜合徵|伊利諾 伊利諾伊|伊利諾州 伊利諾伊州|伺服器 服務器|佇列 隊列|位元 比特|位元率 比特率|位元組 字節|位元速率 碼率|位址 地址|位址列 地址欄|低級 低級|低階 低級|佛漢·威廉斯 沃恩·威廉斯|佛瑞 福雷|作業系統 操作系統|使用者 用戶|使用者名稱 用戶名|來電轉接 呼叫轉移|例項 實例|信號 信號|停用 禁用|偵錯 調試|偵錯程式 調試器|傅立葉 傅里葉|傳送 發送|傷心小棧 紅心大戰|價效比 性價比|優先順序 優先級|儲存 保存|元件 組件|光碟 光盤|光碟機 光驅|克羅埃西亞 克羅地亞|克萊門第 克萊門蒂|入口網站 門戶網站|內建 內置|內碼表 代碼頁|全域性 全局|全形 全角|全球資訊網 萬維網|公元紀年 公元紀年|冰棒 冰棍|冷盤 涼菜|凱吉 凱奇|函式 函數|函數語言程式設計 函數式編程|刀鋒伺服器 刀片服務器|分割槽 分區|分散式 分佈式|分時多工 時分複用|分時多重進接 時分多址|分碼多重進接 碼分多址|分空間多重進接 空分多址|分頻多工 頻分複用|分頻多重進接 頻分多址|列印 打印|列支敦斯登 列支敦士登|列舉 枚舉|利蓋悌 利蓋蒂|前處理器 預處理器|剪下 剪切|剪貼簿 剪貼板|副檔名 擴展名|加彭 加蓬|包羅定 鮑羅丁|北卡羅萊納 北卡羅來納|北卡羅萊納州 北卡羅來納州|北馬利安納 北馬里亞納|北馬利安納群島 北馬里亞納羣島|匯入 導入|匯出 導出|匯流排 總線|區域性 局部|區域網 局域網|千里達及托巴哥 特立尼達和多巴哥|半形 半角|南卡羅萊納 南卡羅來納|南卡羅萊納州 南卡羅來納州|卡達 卡塔爾|印表機 打印機|即時 實時|厄利垂亞 厄立特里亞|厄瓜多 厄瓜多爾|原始檔 源文件|原始碼 源代碼|原生代碼 本地代碼|參數列 參數表|取樣 採樣|取樣率 採樣率|叢集 集羣|叮叮噹 丁丁當|叮叮噹噹 丁丁當當|叮噹 丁當|台積公司 臺積公司|台積電 臺積電|史他汀類 他汀類|史克里亞賓 斯克里亞賓|史卡拉第 斯卡拉蒂|史托克豪森 施托克豪森|史特勞斯 施特勞斯|史特拉汶斯基 斯特拉文斯基|史瓦濟蘭 斯威士蘭|史麥塔納 斯美塔那|司法程序 司法程序|吉布地 吉布堤|吉里巴斯 基里巴斯|名字空間 命名空間|名稱空間 命名空間|吐瓦魯 圖瓦盧|向量 矢量|呼叫 調用|命令列 命令行|咖哩 咖喱|哈薩克 哈薩克斯坦|哥斯大黎加 哥斯達黎加|唐氏症 唐氏綜合徵|啟用 激活|喬治亞 喬治亞|喬治亞共和國 格魯吉亞共和國|喬治亞州 佐治亞州|單核心 宏內核|回撥 回調|圖示 圖標|土庫曼 土庫曼斯坦|地址 地址|坦尚尼亞 坦桑尼亞|型別 類型|埠 端口|執行 運行|執行檔 可執行文件|執行緒 線程|執行長 首席執行官|堆疊 堆棧|場效電晶體 場效應管|塑膠 塑料|塔吉克 塔吉克斯坦|塞席爾 塞舌爾|塞普勒斯 塞浦路斯|壁紙 壁紙|夏農 香農|外掛 插件|外接 外置|外部索引鍵 外鍵|多囊性卵巢症候群 多囊卵巢綜合徵|多型 多態|多執行緒 多線程|多尼采第 多尼采蒂|多工 多任務|多明尼加 多米尼加|大數據 大數據|大腸激躁症 腸易激綜合徵|天冬胺酸 天冬氨酸|天冬醯胺 天冬酰胺|天門冬胺酸 天門冬氨酸|天門冬醯胺 天門冬酰胺|太空梭 航天飛機|失智症 癡呆症|奈及利亞 尼日利亞|奈米 納米|奧克拉荷馬 俄克拉何馬|奧克拉荷馬城 俄克拉何馬城|奧克拉荷馬州 俄克拉何馬州|奧克拉荷馬市 俄克拉何馬市|奧勒岡 俄勒岡|奧勒岡州 俄勒岡州|奧福 奧爾夫|好市多 開市客|好市多公司 開市客公司|妥瑞氏症 抽動穢語綜合徵|妥瑞症 抽動穢語綜合徵|威斯康辛 威斯康星|威斯康辛州 威斯康星州|嬌生公司 強生公司|子音 輔音|字串 字符串|字元 字符|字元集 字符集|字型 字體|字型檔 字庫|字尾 後綴|字節跳動 字節跳動|字首 前綴|存取 訪問|存檔 存盤|孟德爾頌 門德爾松|安地卡及巴布達 安提瓜和巴布達|安比西林 氨苄西林|安莫西林 阿莫西林|宏都拉斯 洪都拉斯|宕機 死機|定址 尋址|宣告 聲明|密西根 密歇根|密西根州 密歇根州|實例 實例|實體地址 物理地址|實體記憶體 物理內存|寬頻 寬帶|寮國 老撾|寶僑 寶潔|寶僑公司 寶潔公司|專案 項目|對乙醯胺基酚 對乙酰氨基酚|對映 映射|對話方塊 對話框|對象 對象|尚比亞 贊比亞|尤拉 歐拉|尼日 尼日爾|巢狀 嵌套|工作列 任務欄|工作管理員 任務管理器|巨集 宏|巨集函式 宏函數|巨集呼叫 宏調用|巨集命令 宏命令|巨集定義 宏定義|巨集展開 宏展開|巨集指令 宏指令|巨集替換 宏替換|巨集程式設計 宏編程|巨集處理 宏處理|巨集語言 宏語言|巴布亞紐幾內亞 巴布亞新幾內亞|巴貝多 巴巴多斯|巴金森氏症 帕金森病|市場行銷 市場營銷|布列敦 布雷頓|布列敦森林 布雷頓森林|布列敦森林制度 布雷頓森林體系|布吉納法索 布基納法索|布拉姆斯 勃拉姆斯|布林 布爾|布瑞頓 布里頓|布萊茲 布列茲|帕金森氏症 帕金森病|帛琉 帕勞|平行計算 並行計算|幾內亞比索 幾內亞比紹|序列 串行|序列埠 串口|序號產生器 註冊機|庫欣氏症候群 庫欣綜合徵|康乃狄克 康涅狄格|康乃狄克州 康涅狄格州|建構函式 構造函數|建構子 構造器|建立 創建|引數 參數|彙編 彙編|彩色超音波 彩超|影像 圖像|影印 複印|影片 視頻|後天免疫缺乏症候群 獲得性免疫缺陷綜合徵|後設資料 元數據|循環 循環|微控制器 單片機|德布西 德彪西|德弗札克 德沃夏克|德拉瓦 特拉華|德拉瓦州 特拉華州|心室顫動 心室顫動|心房撲動 心房撲動|心房顫動 心房顫動|心肌梗塞 心肌梗死|快取 緩存|快取記憶體 高速緩存|快捷半導體 仙童半導體|快閃記憶體 閃存|急性呼吸窘迫症候群 急性呼吸窘迫綜合徵|愛滋病 艾滋病|愛滋病患 艾滋病人|愛滋病毒 艾滋病毒|愛荷華 艾奧瓦|愛荷華州 艾奧瓦州|感測 傳感|慢性疲勞症候群 慢性疲勞綜合徵|憂鬱症 抑鬱症|戒斷症候群 戒斷綜合徵|截圖 截屏|戴奧辛 二噁英|戴流士 戴留斯|打開 打開|批次 批量|技術長 首席技術官|拉摩 拉莫|拉羅 拉洛|拉赫曼尼諾夫 拉赫瑪尼諾夫|指令式程式設計 命令式編程|指令碼 腳本|指標 指針|捲軸 滾動條|掃描器 掃描儀|排程 調度|控制代碼 句柄|控制元件 控件|提佩特 蒂佩特|搜尋 搜索|摩爾線程 摩爾線程|摺積 捲積|撥出 呼出|擴充套件 擴展|擴音 免提|擷取 截取|攜帶型 便攜式|攝護腺 前列腺|支持者 支持者|支援 支持|效能 性能|整合 集成|數位 數字|數位印刷 數字印刷|數位電子 數字電子|數位電路 數字電路|數字 數字|數據 數據|數據機 調製解調器|文件 文檔|文書處理 文字處理|斯洛維尼亞 斯洛文尼亞|新增 添加|新罕布夏 新罕布什爾|新罕布夏州 新罕布什爾州|方程式 方程式|映象 鏡像|映象管 顯像管|時脈頻率 時鐘頻率|普羅高菲夫 普羅科菲耶夫|普賽爾 珀塞爾|晶片 芯片|智慧 智能|智慧財產權 知識產權|暫存器 寄存器|最佳化 優化|有失真壓縮 有損壓縮|林姆斯基-高沙可夫 里姆斯基-科薩科夫|查德 乍得|查詢 查找|柯普蘭 科普蘭|柯雷利 科雷利|核取按鈕 複選按鈕|核取方塊 複選框|核心 內核|格瑞那達 格林納達|桌上型 桌面型|桌上型電腦 臺式機|桌布 壁紙|梅湘 梅西安|楊納傑克 雅納切克|榴槤 榴蓮|標頭檔案 頭文件|模擬 模擬|模組 模塊|模里西斯 毛里求斯|機率 概率|檔名 文件名|檔案 文件|檢視 查看|欄位 字段|歐巴馬 奧巴馬|正子 正電子|正子斷層造影 正電子發射計算機斷層|正當程序 正當程序|正規化 範式|正規表示式 正則表達式|母音 元音|比特幣 比特幣|氣泡排序 冒泡排序|永珍 萬象|永續性 持久性|汶萊 文萊|沙烏地阿拉伯 沙特阿拉伯|沙烏地阿美 沙特阿美|沙烏地阿美公司 沙特阿美公司|泡麵 方便麪|波克夏海瑟威 伯克希爾哈撒韋|波克夏海瑟威公司 伯克希爾哈撒韋公司|波凱里尼 博凱里尼|波士尼亞赫塞哥維納 波斯尼亞黑塞哥維那|波札那 博茨瓦納|波長分波多工 波分複用|海內存知己 海內存知己|海飛茲 海菲茨|消息 消息|游標 光標|溢位 溢出|滑鼠 鼠標|演算法 算法|漢他病毒 漢坦病毒|潘德列茲基 潘德列茨基|烏茲別克 烏茲別克斯坦|無失真壓縮 無損壓縮|燒錄 刻錄|營運長 首席運營官|片語 詞組|物件 對象|物件導向 面向對象|狀態列 狀態欄|獅子山 塞拉利昂|瓜地馬拉 危地馬拉|甘比亞 岡比亞|甘胺酸 甘氨酸|甲硫胺酸 甲硫氨酸|畫素 像素|異亮胺酸 異亮氨酸|異白胺酸 異亮氨酸|登入 登錄|登出 註銷|登錄檔 註冊表|白胺酸 亮氨酸|白血球 白細胞|白遼士 柏遼茲|盧安達 盧旺達|目的碼 目標代碼|直譯器 解釋器|相容 兼容|相簿 相冊|真實模式 實模式|睡眠呼吸中止症 睡眠呼吸暫停綜合徵|矽 硅|砈 砹|破圖 花屏|硬碟 硬盤|硬體 硬件|碟片 盤片|磁碟 磁盤|磁碟機代號 盤符|磁軌 磁道|社區 社區|社群 社區|福斯汽車 大衆汽車|福斯汽車集團 大衆汽車集團|福斯集團 大衆集團|程序 進程|程序不正義 程序不正義|程序導向 面向過程|程序式程式設計 過程式編程|程序正義 程序正義|程式 程序|程式碼 代碼|程式設計 編程|程式設計師 程序員|程式語言 編程語言|稽核 審覈|穀氨醯胺 穀氨酰胺|穀胺酸 穀氨酸|穆索斯基 穆索爾斯基|積體電路 集成電路|空氣清淨機 空氣淨化器|空間多工 空分複用|突尼西亞 突尼斯|筆記型電腦 筆記本電腦|範式 範式|簡報 演示文稿|簡訊 短信|簽帳金融卡 借記卡|粘貼 粘貼|精胺酸 精氨酸|紅血球 紅細胞|納米比亞 納米比亞|紐澤西 新澤西|紐澤西州 新澤西州|紐西蘭 新西蘭|索羅門群島 所羅門羣島|索馬利亞 索馬里|終端使用者 最終用戶|組合語言 彙編語言|組胺酸 組氨酸|組譯 彙編|組譯器 彙編器|結束通話 掛斷|絲胺酸 絲氨酸|綁架丁丁當 綁架丁丁當|經前症候群 經前期綜合徵|維吉尼亞 弗吉尼亞|維吉尼亞州 弗吉尼亞州|維德角 佛得角|網咖 網吧|網絡卡 網卡|網路 網絡|網路上的芳鄰 網上鄰居|網際網路 互聯網|線上 在線|縮圖 縮略圖|縮排 縮進|繫結 綁定|纈胺酸 纈氨酸|羅德島 羅得島|羅德島州 羅得島州|美屬維京群島 美屬維爾京羣島|義大利 意大利|老年失智症 老年癡呆症|聖克里斯多福及尼維斯 聖基茨和尼維斯|聖文森及格瑞那丁 聖文森特和格林納丁斯|聖露西亞 聖盧西亞|聖馬利諾 聖馬力諾|聯結器 連接器|聯絡 聯繫|肯亞 肯尼亞|胰臟 胰腺|胱胺酸 胱氨酸|胺基酸 氨基酸|脯胺酸 脯氨酸|腎病症候群 腎病綜合徵|腕隧道症候群 腕管綜合徵|腦梗塞 腦梗死|腳踏車 自行車|自動旋轉螢幕 自動轉屏|自閉症 孤獨症|興德密特 欣德米特|色胺酸 色氨酸|艾克森美孚 埃克森美孚|艾爾加 埃爾加|苯丙胺酸 苯丙氨酸|茅利塔尼亞 毛里塔尼亞|荀白克 勳伯格|莫三比克 莫桑比克|莫札特 莫扎特|菜單 菜單|華格納 瓦格納|華爾頓 沃爾頓|萊許 賴希|萊雅 歐萊雅|萊雅集團 歐萊雅集團|萬用字元 通配符|萬那杜 瓦努阿圖|葉門 也門|葛令卡 格林卡|葛利格 格里格|葛拉斯 格拉斯|葛摩 科摩羅|蒲隆地 布隆迪|蓋亞那 圭亞那|蓋希文 格什溫|蕭士塔高維契 肖斯塔科維奇|蕭邦 肖邦|薩拉沙泰 薩拉薩蒂|薩提 薩蒂|藍色畫面 藍屏|蘇利南 蘇里南|蘇胺酸 蘇氨酸|處理程序 處理程序|虛擬函式 虛函數|虛擬機器 虛擬機|虛擬碼 僞代碼|螢幕 屏幕|血紅素 血紅蛋白|行內函數 內聯函數|行動式 便攜式|行動數據 移動數據|行動硬碟 移動硬盤|行動網路 移動網絡|行動通訊 移動通信|行動電話 移動電話|行程 進程|衣索比亞 埃塞俄比亞|表示式 表達式|裝置 設備|複製 拷貝|西元 公元|西維吉尼亞 西弗吉尼亞|西維吉尼亞州 西弗吉尼亞州|西貝流士 西貝柳斯|視窗 窗口|視覺化 可視化|視訊 視頻|視訊會議 視頻會議|視訊記憶體 顯存|視訊通話 視頻通話|解析度 分辨率|解構函式 析構函數|解構子 析構函數|解除安裝 卸載|觸控 觸摸|觸控式螢幕 觸摸屏|計程車 出租車|訊息 消息|訊號 信號|訊雜比 信噪比|記憶體 內存|訪問 訪問|設定 設置|許可權 權限|訴訟程序 訴訟程序|調色盤 調色盤|調變 調製|諾魯 瑙魯|識別符號 標識符|變數 變量|象牙海岸 科特迪瓦|貝南 貝寧|貝里尼 貝利尼|貝里斯 伯利茲|貼上 粘貼|資料 數據|資料來源 數據源|資料倉儲 數據倉庫|資料包 數據報|資料夾 文件夾|資料庫 數據庫|資料探勘 數據挖掘|資訊 信息|資訊安全 信息安全|資訊理論 信息論|資訊科技 信息技術|資訊長 首席信息官|賓士 奔馳|賴比瑞亞 利比里亞|賴索托 萊索托|超程式設計 元編程|超音波 超聲波|跳脫字元 轉義字符|軟碟機 軟驅|軟體 軟件|軟體動物 軟體動物|載入 加載|載入程式 引導程序|輝達 英偉達|辛巴威 津巴布韋|迦納 加納|迴圈 循環|通訊 通信|通話卡 通訊卡|通話記錄 聯繫歷史|通道 通道|速食麵 方便麪|連結 鏈接|連結串列 鏈表|連線 連接|進位制 進制|進程 進程|進階 高級|進階設定 高級設置|進階選項 高級選項|運算元 操作數|運算子 操作符|運算式 表達式|過動症 多動症|過載 重載|遞迴 遞歸|遠端 遠程|遮蔽 屏蔽|選單 菜單|邏輯閘 邏輯門|那杜 溫納圖萬|部落格 博客|都會網路 城域網|酪胺酸 酪氨酸|醯 酰|釋出 發佈|重新命名 重命名|重新整理 刷新|重灌 重裝|金氧半導體 金屬氧化物半導體|金鑰 密鑰|鈽 鈈|鉲 鐦|鉳 錇|鋂 鎇|錄影 錄像|錼 鎿|鍅 鈁|鎝 鍀|鎦 鑥|鑀 鎄|開啟 打開|閘流體 晶閘管|閘道器 網關|閘電路 門電路|關聯式資料庫 關係數據庫|防寫 寫保護|防毒 殺毒|阻斷劑 阻滯劑|阿拉伯聯合大公國 阿拉伯聯合酋長國|阿斯匹靈 阿司匹林|阿斯特捷利康 阿斯利康|阿斯特捷利康公司 阿斯利康公司|阿茲海默氏症 阿爾茨海默氏症|阿茲海默症 阿爾茨海默症|阿莫西林 阿莫西林|陣列 數組|除錯 調試|隨身碟 U盤|雜湊 哈希|離線 脫機|離胺酸 賴氨酸|雲端儲存 雲存儲|雲端計算 雲計算|雷射 激光|雷諾氏症候群 雷諾綜合徵|電晶體 晶體管|電腦保安 計算機安全|電腦斷層 計算機斷層|電腦科學 計算機科學|霍洛維茲 霍洛維茨|非同步 異步|韋本 韋伯恩|韋瓦第 維瓦爾第|韌體 固件|韓德爾 亨德爾|音效卡 聲卡|音訊 音頻|頁尾 頁腳|頁首 頁眉|預設 預設|預設值 默認值|頻寬 帶寬|類别範本 類模板|類比 模擬|類比電子 模擬電子|類比電路 模擬電路|顧爾德 古爾德|顯示卡 顯卡|飛航模式 飛行模式|馬凡氏症 馬方綜合徵|馬凡氏症候群 馬方綜合徵|馬利共和國 馬里共和國|馬爾地夫 馬爾代夫|駭客 黑客|高效能運算 高性能計算|高畫質 高清|高空彈跳 蹦極|高級 高級|高階 高級|麩胺酸 穀氨酸|麩醯胺酸 穀氨酰胺|麻薩諸塞 馬薩諸塞|麻薩諸塞州 馬薩諸塞州|黃體素 孕酮|點選 點擊|點陣圖 位圖";
+	var TWPhrasesRev_default = "A型肝炎 甲型肝炎|A肝 甲肝|BMW集團 寶馬集團|B型肝炎 乙型肝炎|B肝 乙肝|C型肝炎 丙型肝炎|C肝 丙肝|D型肝炎 丁型肝炎|D肝 丁肝|E型肝炎 戊型肝炎|E肝 戊肝|PN接面 PN結|SQL隱碼攻擊 SQL注入|三極體 三極管|下拉式清單 下拉列表|丙胺酸 丙氨酸|丟擲 拋出|中介軟體 中間件|丹尼·鮑伊 丹尼·博伊爾|主機板 主板|主開機記錄 主引導記錄|乙太網 以太網|乙太網路 以太網|乙太網路由器 以太網路由器|乙太網路路由器 以太網路由器|乙醯胺酚 對乙酰氨基酚|乳酪 奶酪|二極體 二極管|互動 交互|互動式 交互式|亞塞拜然 阿塞拜疆|亮胺酸 亮氨酸|人工智慧 人工智能|介面 界面|介面卡 適配器|代碼 代碼|代謝症候群 代謝綜合徵|伊利諾 伊利諾伊|伊利諾州 伊利諾伊州|伊力·卡山 伊利亞·卡贊|伺服器 服務器|佇列 隊列|位元 比特|位元率 比特率|位元組 字節|位元速率 碼率|位址 地址|位址列 地址欄|低級 低級|低階 低級|佛漢·威廉斯 沃恩·威廉斯|佛瑞 福雷|作業系統 操作系統|使用者 用戶|使用者名稱 用戶名|來電轉接 呼叫轉移|例項 實例|保羅·海吉斯 保羅·哈吉斯|信號 信號|停用 禁用|偵錯 調試|偵錯程式 調試器|傅立葉 傅里葉|傳送 發送|傷心小棧 紅心大戰|價效比 性價比|優先順序 優先級|儲存 保存|元件 組件|光碟 光盤|光碟機 光驅|克林·伊斯威特 克林特·伊斯特伍德|克羅埃西亞 克羅地亞|克萊門第 克萊門蒂|克里斯多福·諾蘭 克里斯托弗·諾蘭|入口網站 門戶網站|內建 內置|內碼表 代碼頁|全域性 全局|全形 全角|全球資訊網 萬維網|公元紀年 公元紀年|冰棒 冰棍|冷盤 涼菜|凱吉 凱奇|凱文·科斯納 凱文·科斯特納|凱薩琳·畢格羅 凱瑟琳·畢格羅|函式 函數|函數語言程式設計 函數式編程|刀鋒伺服器 刀片服務器|分割槽 分區|分散式 分佈式|分時多工 時分複用|分時多重進接 時分多址|分碼多重進接 碼分多址|分空間多重進接 空分多址|分頻多工 頻分複用|分頻多重進接 頻分多址|列印 打印|列支敦斯登 列支敦士登|列舉 枚舉|利蓋悌 利蓋蒂|前處理器 預處理器|剪下 剪切|剪貼簿 剪貼板|副檔名 擴展名|加彭 加蓬|勞勃·懷斯 羅伯特·懷斯|勞勃·班頓 羅伯特·本頓|勞勃·瑞福 羅伯特·雷德福|包羅定 鮑羅丁|北卡羅萊納 北卡羅來納|北卡羅萊納州 北卡羅來納州|北馬利安納 北馬里亞納|北馬利安納群島 北馬里亞納羣島|匯入 導入|匯出 導出|匯流排 總線|區域性 局部|區域網 局域網|千里達及托巴哥 特立尼達和多巴哥|半形 半角|南卡羅萊納 南卡羅來納|南卡羅萊納州 南卡羅來納州|卡達 卡塔爾|印表機 打印機|即時 實時|厄利垂亞 厄立特里亞|厄瓜多 厄瓜多爾|原始檔 源文件|原始碼 源代碼|原生代碼 本地代碼|參數列 參數表|取樣 採樣|取樣率 採樣率|叢集 集羣|叮叮噹 丁丁當|叮叮噹噹 丁丁當當|叮噹 丁當|台積公司 臺積公司|台積電 臺積電|史他汀類 他汀類|史克里亞賓 斯克里亞賓|史卡拉第 斯卡拉蒂|史托克豪森 施托克豪森|史提夫·麥昆 史蒂夫·麥奎因|史特勞斯 施特勞斯|史特拉汶斯基 斯特拉文斯基|史瓦濟蘭 斯威士蘭|史蒂芬·史匹柏 斯蒂芬·斯皮爾伯格|史麥塔納 斯美塔那|司法程序 司法程序|吉勒摩·戴托羅 吉列爾莫·德爾托羅|吉布地 吉布堤|吉里巴斯 基里巴斯|名字空間 命名空間|名稱空間 命名空間|吐瓦魯 圖瓦盧|向量 矢量|呼叫 調用|命令列 命令行|咖哩 咖喱|哈薩克 哈薩克斯坦|哥斯大黎加 哥斯達黎加|唐氏症 唐氏綜合徵|啟用 激活|喬治·克隆尼 喬治·克魯尼|喬治亞 喬治亞|喬治亞共和國 格魯吉亞共和國|喬治亞州 佐治亞州|單核心 宏內核|回撥 回調|圖示 圖標|土庫曼 土庫曼斯坦|地址 地址|坦尚尼亞 坦桑尼亞|型別 類型|埠 端口|執行 運行|執行檔 可執行文件|執行緒 線程|執行長 首席執行官|堆疊 堆棧|場效電晶體 場效應管|塑膠 塑料|塔吉克 塔吉克斯坦|塞席爾 塞舌爾|塞普勒斯 塞浦路斯|壁紙 壁紙|夏農 香農|外掛 插件|外接 外置|外部索引鍵 外鍵|多囊性卵巢症候群 多囊卵巢綜合徵|多型 多態|多執行緒 多線程|多尼采第 多尼采蒂|多工 多任務|多明尼加 多米尼加|大數據 大數據|大腸激躁症 腸易激綜合徵|天冬胺酸 天冬氨酸|天冬醯胺 天冬酰胺|天門冬胺酸 天門冬氨酸|天門冬醯胺 天門冬酰胺|太空梭 航天飛機|失智症 癡呆症|奈及利亞 尼日利亞|奈米 納米|奧克拉荷馬 俄克拉何馬|奧克拉荷馬城 俄克拉何馬城|奧克拉荷馬州 俄克拉何馬州|奧克拉荷馬市 俄克拉何馬市|奧利佛·史東 奧利弗·斯通|奧勒岡 俄勒岡|奧勒岡州 俄勒岡州|奧福 奧爾夫|好市多 開市客|好市多公司 開市客公司|妥瑞氏症 抽動穢語綜合徵|妥瑞症 抽動穢語綜合徵|威廉·佛雷金 威廉·弗萊德金|威斯康辛 威斯康星|威斯康辛州 威斯康星州|嬌生公司 強生公司|子音 輔音|字串 字符串|字元 字符|字元集 字符集|字型 字體|字型檔 字庫|字尾 後綴|字節跳動 字節跳動|字首 前綴|存取 訪問|存檔 存盤|孟德爾頌 門德爾松|安地卡及巴布達 安提瓜和巴布達|安比西林 氨苄西林|安莫西林 阿莫西林|宏都拉斯 洪都拉斯|宕機 死機|定址 尋址|宣告 聲明|密西根 密歇根|密西根州 密歇根州|實例 實例|實體地址 物理地址|實體記憶體 物理內存|寬頻 寬帶|寮人民民主共和國 老撾人民民主共和國|寮國 老撾|寶僑 寶潔|寶僑公司 寶潔公司|專案 項目|對乙醯胺基酚 對乙酰氨基酚|對映 映射|對話方塊 對話框|對象 對象|尚比亞 贊比亞|尤拉 歐拉|尼日 尼日爾|巢狀 嵌套|工作列 任務欄|工作管理員 任務管理器|巨集 宏|巨集函式 宏函數|巨集呼叫 宏調用|巨集命令 宏命令|巨集定義 宏定義|巨集展開 宏展開|巨集指令 宏指令|巨集替換 宏替換|巨集程式設計 宏編程|巨集處理 宏處理|巨集語言 宏語言|巴布亞紐幾內亞 巴布亞新幾內亞|巴貝多 巴巴多斯|巴金森氏症 帕金森病|市場行銷 市場營銷|布列敦 布雷頓|布列敦森林 布雷頓森林|布列敦森林制度 布雷頓森林體系|布吉納法索 布基納法索|布拉姆斯 勃拉姆斯|布林 布爾|布瑞頓 布里頓|布萊德·彼特 布拉德·皮特|布萊茲 布列茲|帕金森氏症 帕金森病|帛琉 帕勞|平行計算 並行計算|幾內亞比索 幾內亞比紹|序列 串行|序列埠 串口|序號產生器 註冊機|庫欣氏症候群 庫欣綜合徵|康乃狄克 康涅狄格|康乃狄克州 康涅狄格州|建構函式 構造函數|建構子 構造器|建立 創建|引數 參數|彙編 彙編|彩色超音波 彩超|影像 圖像|影印 複印|影片 視頻|彼得·傑克森 彼得·傑克遜|後天免疫缺乏症候群 獲得性免疫缺陷綜合徵|後設資料 元數據|循環 循環|微控制器 單片機|德布西 德彪西|德弗札克 德沃夏克|德拉瓦 特拉華|德拉瓦州 特拉華州|心室顫動 心室顫動|心房撲動 心房撲動|心房顫動 心房顫動|心肌梗塞 心肌梗死|快取 緩存|快取記憶體 高速緩存|快捷半導體 仙童半導體|快閃記憶體 閃存|急性呼吸窘迫症候群 急性呼吸窘迫綜合徵|愛滋病 艾滋病|愛滋病患 艾滋病人|愛滋病毒 艾滋病毒|愛荷華 艾奧瓦|愛荷華州 艾奧瓦州|愛黛兒·羅曼斯基 阿黛爾·羅曼斯基|感測 傳感|慢性疲勞症候群 慢性疲勞綜合徵|憂鬱症 抑鬱症|戒斷症候群 戒斷綜合徵|截圖 截屏|戴奧辛 二噁英|戴流士 戴留斯|打開 打開|批次 批量|技術長 首席技術官|拉摩 拉莫|拉羅 拉洛|拉赫曼尼諾夫 拉赫瑪尼諾夫|指令式程式設計 命令式編程|指令碼 腳本|指標 指針|捲軸 滾動條|掃描器 掃描儀|排程 調度|控制代碼 句柄|控制元件 控件|提佩特 蒂佩特|搜尋 搜索|摩爾線程 摩爾線程|摺積 捲積|撥出 呼出|擴充套件 擴展|擴音 免提|擷取 截取|攜帶型 便攜式|攝護腺 前列腺|支持者 支持者|支援 支持|效能 性能|整合 集成|數位 數字|數位人文 數字人文|數位印刷 數字印刷|數位電子 數字電子|數位電路 數字電路|數字 數字|數據 數據|數據機 調製解調器|文件 文檔|文書處理 文字處理|斯洛維尼亞 斯洛文尼亞|新增 添加|新罕布夏 新罕布什爾|新罕布夏州 新罕布什爾州|方程式 方程式|映象 鏡像|映象管 顯像管|時脈頻率 時鐘頻率|普羅高菲夫 普羅科菲耶夫|普賽爾 珀塞爾|晶片 芯片|智慧 智能|智慧財產權 知識產權|暫存器 寄存器|最佳化 優化|有失真壓縮 有損壓縮|朗·霍華 朗·霍華德|林姆斯基-高沙可夫 里姆斯基-科薩科夫|查德 乍得|查詢 查找|柯恩兄弟 科恩兄弟|柯普蘭 科普蘭|柯雷利 科雷利|核取按鈕 複選按鈕|核取方塊 複選框|核心 內核|格瑞那達 格林納達|桌上型 桌面型|桌上型電腦 臺式機|桌布 壁紙|梅湘 梅西安|梅爾·吉勃遜 梅爾·吉布森|楊納傑克 雅納切克|榴槤 榴蓮|標頭檔案 頭文件|模擬 模擬|模組 模塊|模里西斯 毛里求斯|機率 概率|檔名 文件名|檔案 文件|檢視 查看|欄位 字段|歐巴馬 奧巴馬|正子 正電子|正子斷層造影 正電子發射計算機斷層|正當程序 正當程序|正規化 範式|正規表示式 正則表達式|母音 元音|比特幣 比特幣|氣泡排序 冒泡排序|永珍 萬象|永續性 持久性|汶萊 文萊|沙烏地阿拉伯 沙特阿拉伯|沙烏地阿美 沙特阿美|沙烏地阿美公司 沙特阿美公司|法蘭西絲·麥朵曼 弗朗西絲·麥克多曼德|泡麵 方便麪|波克夏海瑟威 伯克希爾哈撒韋|波克夏海瑟威公司 伯克希爾哈撒韋公司|波凱里尼 博凱里尼|波士尼亞赫塞哥維納 波斯尼亞黑塞哥維那|波札那 博茨瓦納|波長分波多工 波分複用|海內存知己 海內存知己|海飛茲 海菲茨|消息 消息|游標 光標|溢位 溢出|滑鼠 鼠標|演算法 算法|漢他病毒 漢坦病毒|潘德列茲基 潘德列茨基|烏茲別克 烏茲別克斯坦|無失真壓縮 無損壓縮|燒錄 刻錄|營運長 首席運營官|片語 詞組|物件 對象|物件導向 面向對象|狀態列 狀態欄|獅子山 塞拉利昂|珍·康萍 簡·坎皮恩|班·艾佛列克 本·阿弗萊克|瓜地馬拉 危地馬拉|甘比亞 岡比亞|甘胺酸 甘氨酸|甲硫胺酸 甲硫氨酸|畫素 像素|異亮胺酸 異亮氨酸|異白胺酸 異亮氨酸|登入 登錄|登出 註銷|登錄檔 註冊表|白胺酸 亮氨酸|白血球 白細胞|白遼士 柏遼茲|盧安達 盧旺達|目的碼 目標代碼|直譯器 解釋器|相容 兼容|相簿 相冊|真實模式 實模式|睡眠呼吸中止症 睡眠呼吸暫停綜合徵|矽 硅|砈 砹|破圖 花屏|硬碟 硬盤|硬體 硬件|碟片 盤片|磁碟 磁盤|磁碟機代號 盤符|磁軌 磁道|社區 社區|社群 社區|福斯汽車 大衆汽車|福斯汽車集團 大衆汽車集團|福斯集團 大衆集團|程序 進程|程序不正義 程序不正義|程序導向 面向過程|程序式程式設計 過程式編程|程序正義 程序正義|程式 程序|程式碼 代碼|程式設計 編程|程式設計師 程序員|程式語言 編程語言|稽核 審覈|穀氨醯胺 穀氨酰胺|穀胺酸 穀氨酸|穆索斯基 穆索爾斯基|積體電路 集成電路|空氣清淨機 空氣淨化器|空間多工 空分複用|突尼西亞 突尼斯|筆記型電腦 筆記本電腦|範式 範式|簡報 演示文稿|簡訊 短信|簽帳金融卡 借記卡|米歇爾·哈札納維西斯 米歇爾·阿扎納維西於斯|粘貼 粘貼|精胺酸 精氨酸|約瑟夫·孟威茲 約瑟夫·曼凱維奇|紅血球 紅細胞|納米比亞 納米比亞|紐澤西 新澤西|紐澤西州 新澤西州|紐西蘭 新西蘭|索羅門群島 所羅門羣島|索馬利亞 索馬里|終端使用者 最終用戶|組合語言 彙編語言|組胺酸 組氨酸|組譯 彙編|組譯器 彙編器|結束通話 掛斷|絲胺酸 絲氨酸|綁架丁丁當 綁架丁丁當|經前症候群 經前期綜合徵|維吉尼亞 弗吉尼亞|維吉尼亞州 弗吉尼亞州|維德角 佛得角|網咖 網吧|網絡卡 網卡|網路 網絡|網路上的芳鄰 網上鄰居|網際網路 互聯網|線上 在線|縮圖 縮略圖|縮排 縮進|繫結 綁定|纈胺酸 纈氨酸|羅勃·辛密克斯 羅伯特·澤米吉斯|羅德島 羅得島|羅德島州 羅得島州|美屬維京群島 美屬維爾京羣島|義大利 意大利|老年失智症 老年癡呆症|聖克里斯多福及尼維斯 聖基茨和尼維斯|聖文森及格瑞那丁 聖文森特和格林納丁斯|聖露西亞 聖盧西亞|聖馬利諾 聖馬力諾|聯結器 連接器|聯絡 聯繫|肯亞 肯尼亞|胰臟 胰腺|胱胺酸 胱氨酸|胺基酸 氨基酸|脯胺酸 脯氨酸|腎病症候群 腎病綜合徵|腕隧道症候群 腕管綜合徵|腦梗塞 腦梗死|腳踏車 自行車|自動旋轉螢幕 自動轉屏|自閉症 孤獨症|興德密特 欣德米特|色胺酸 色氨酸|艾克森美孚 埃克森美孚|艾爾加 埃爾加|艾瑪·湯瑪斯 艾瑪·托馬斯|苯丙胺酸 苯丙氨酸|茅利塔尼亞 毛里塔尼亞|荀白克 勳伯格|莫三比克 莫桑比克|莫札特 莫扎特|菜單 菜單|華倫·比提 沃倫·比蒂|華格納 瓦格納|華爾頓 沃爾頓|萊許 賴希|萊雅 歐萊雅|萊雅集團 歐萊雅集團|萬用字元 通配符|萬那杜 瓦努阿圖|葉門 也門|葛令卡 格林卡|葛利格 格里格|葛拉斯 格拉斯|葛摩 科摩羅|蒲隆地 布隆迪|蓋亞那 圭亞那|蓋希文 格什溫|蕭士塔高維契 肖斯塔科維奇|蕭邦 肖邦|薛尼·波拉克 西德尼·波拉克|薩拉沙泰 薩拉薩蒂|薩提 薩蒂|藍色畫面 藍屏|蘇利南 蘇里南|蘇胺酸 蘇氨酸|處理程序 處理程序|虛擬函式 虛函數|虛擬機器 虛擬機|虛擬碼 僞代碼|螢幕 屏幕|血紅素 血紅蛋白|行內函數 內聯函數|行動式 便攜式|行動數據 移動數據|行動硬碟 移動硬盤|行動網路 移動網絡|行動通訊 移動通信|行動電話 移動電話|行程 進程|衣索比亞 埃塞俄比亞|表示式 表達式|裝置 設備|複製 拷貝|西元 公元|西恩·貝克 肖恩·貝克|西維吉尼亞 西弗吉尼亞|西維吉尼亞州 西弗吉尼亞州|西貝流士 西貝柳斯|視窗 窗口|視覺化 可視化|視訊 視頻|視訊會議 視頻會議|視訊記憶體 顯存|視訊通話 視頻通話|解析度 分辨率|解構函式 析構函數|解構子 析構函數|解除安裝 卸載|觸控 觸摸|觸控式螢幕 觸摸屏|計程車 出租車|訊息 消息|訊號 信號|訊雜比 信噪比|記憶體 內存|記憶體模組 內存條|訪問 訪問|設定 設置|許可權 權限|訴訟程序 訴訟程序|詹姆斯·卡麥隆 詹姆斯·卡梅隆|調色盤 調色盤|調變 調製|諾蘭 諾蘭|諾魯 瑙魯|識別符號 標識符|變數 變量|象牙海岸 科特迪瓦|貝南 貝寧|貝里尼 貝利尼|貝里斯 伯利茲|貼上 粘貼|資料 數據|資料來源 數據源|資料倉儲 數據倉庫|資料包 數據報|資料夾 文件夾|資料庫 數據庫|資料探勘 數據挖掘|資訊 信息|資訊安全 信息安全|資訊理論 信息論|資訊科技 信息技術|資訊長 首席信息官|賓士 奔馳|賴比瑞亞 利比里亞|賴索托 萊索托|超程式設計 元編程|超音波 超聲波|跳脫字元 轉義字符|軟碟機 軟驅|軟體 軟件|軟體動物 軟體動物|載入 加載|載入程式 引導程序|輝達 英偉達|辛巴威 津巴布韋|迦納 加納|迴圈 循環|通訊 通信|通話卡 通訊卡|通話記錄 聯繫歷史|通道 通道|速食麵 方便麪|連結 鏈接|連結串列 鏈表|連線 連接|進位制 進制|進程 進程|進階 高級|進階設定 高級設置|進階選項 高級選項|運算元 操作數|運算子 操作符|運算式 表達式|過動症 多動症|過載 重載|遞迴 遞歸|遠端 遠程|遮蔽 屏蔽|選單 菜單|邏輯閘 邏輯門|那杜 溫納圖萬|部落格 博客|都會網路 城域網|酪胺酸 酪氨酸|醯 酰|釋出 發佈|重新命名 重命名|重新整理 刷新|重灌 重裝|金氧半導體 金屬氧化物半導體|金鑰 密鑰|鈽 鈈|鉲 鐦|鉳 錇|鋂 鎇|錄影 錄像|錼 鎿|鍅 鈁|鎝 鍀|鎦 鑥|鑀 鎄|開啟 打開|閘流體 晶閘管|閘道器 網關|閘電路 門電路|關聯式資料庫 關係數據庫|防寫 寫保護|防毒 殺毒|阻斷劑 阻滯劑|阿利安卓·崗札雷·伊納利圖 亞歷杭德羅·岡薩雷斯·伊納裏圖|阿拉伯聯合大公國 阿拉伯聯合酋長國|阿斯匹靈 阿司匹林|阿斯特捷利康 阿斯利康|阿斯特捷利康公司 阿斯利康公司|阿茲海默氏症 阿爾茨海默氏症|阿茲海默症 阿爾茨海默症|阿莫西林 阿莫西林|陣列 數組|除錯 調試|隨身碟 U盤|雜湊 哈希|離線 脫機|離胺酸 賴氨酸|雲端儲存 雲存儲|雲端計算 雲計算|雷射 激光|雷諾氏症候群 雷諾綜合徵|電晶體 晶體管|電腦保安 計算機安全|電腦斷層 計算機斷層|電腦科學 計算機科學|霍洛維茲 霍洛維茨|非同步 異步|韋本 韋伯恩|韋瓦第 維瓦爾第|韌體 固件|韓德爾 亨德爾|音效卡 聲卡|音訊 音頻|頁尾 頁腳|頁首 頁眉|預設 預設|預設值 默認值|頻寬 帶寬|類别範本 類模板|類比 模擬|類比電子 模擬電子|類比電路 模擬電路|顧爾德 古爾德|顯示卡 顯卡|飛航模式 飛行模式|馬丁·史柯西斯 馬丁·斯科塞斯|馬凡氏症 馬方綜合徵|馬凡氏症候群 馬方綜合徵|馬利共和國 馬里共和國|馬爾地夫 馬爾代夫|駭客 黑客|高效能運算 高性能計算|高畫質 高清|高空彈跳 蹦極|高級 高級|高階 高級|麥克·尼可斯 邁克·尼科爾斯|麥克·道格拉斯 邁克爾·道格拉斯|麩胺酸 穀氨酸|麩醯胺酸 穀氨酰胺|麻薩諸塞 馬薩諸塞|麻薩諸塞州 馬薩諸塞州|黃體素 孕酮|點選 點擊|點陣圖 位圖";
 	var twp_default = [[
 		TWPhrasesRev_default,
 		TWVariantsRevPhrases_default,
 		TWVariantsRev_default
 	]];
 	var jp_default = [["一獲千金 一攫千金|丁寧 叮嚀|丁重 鄭重|三差路 三叉路|世論 輿論|予備 預備|予告 預告|予定 預定|予感 預感|予測 預測|予算 預算|予約 預約|予習 預習|予言 預言|予防 預防|亜鈴 啞鈴|交差 交叉|代弁 代辯|供宴 饗宴|俊馬 駿馬|保塁 堡壘|個条書 箇条書|偏平 扁平|停泊 碇泊|優俊 優駿|先兵 尖兵|先端 尖端|先鋭 尖銳|共役 共軛|冗舌 饒舌|凶器 兇器|削岩 鑿岩|包丁 庖丁|包帯 繃帶|区画 區劃|厳然 儼然|友宜 友誼|反乱 叛亂|収集 蒐集|叙情 抒情|台頭 擡頭|合弁 合辦|喜遊曲 嬉遊曲|嘆願 歎願|回転 廻転|回遊 回游|国際連盟 國際聯盟|奉持 捧持|委縮 萎縮|安全弁 安全瓣|展転 輾轉|希少 稀少|幻惑 眩惑|広範 廣泛|広野 曠野|廃虚 廢墟|建坪率 建蔽率|弁別 辨別|弁当 辨當|弁才 辯才|弁明 辯明|弁膜 瓣膜|弁解 辯解|弁証 辯證|弁論 辯論|弁論家 辯論家|弁護 辯護|弁護士 辯護士|弁財天 辯財天|弁駁 辯駁|弁髪 辮髮|弦歌 絃歌|恩義 恩誼|意向 意嚮|慰謝料 慰藉料|憶断 臆斷|憶病 臆病|戦没 戰歿|扇情 煽情|手帳 手帖|技量 伎倆|抜粋 抜萃|披歴 披瀝|抵触 牴觸|抽選 抽籤|拘引 勾引|拠出 醵出|拠金 醵金|掘削 掘鑿|控除 扣除|援護 掩護|放棄 抛棄|散水 撒水|敬謙 敬虔|敷延 敷衍|断固 斷乎|族生 簇生|昇叙 陞敘|暖房 煖房|暗唱 暗誦|暗夜 闇夜|暴露 曝露|枯渇 涸渴|格好 恰好|格幅 恰幅|棄損 毀損|模索 摸索|橋頭保 橋頭堡|欠缺 欠缺|欧州 歐洲|欧州連合 歐洲聯盟|死体 屍體|殿部 臀部|母指 拇指|気迫 氣魄|決別 訣別|決壊 決潰|沈殿 沈澱|油送船 油槽船|波乱 波瀾|注釈 註釋|洗浄 洗滌|活発 活潑|浸透 滲透|浸食 浸蝕|消却 銷卻|混然 渾然|湾曲 彎曲|溶接 熔接|漁労 漁撈|漂然 飄然|激高 激昂|火炎 火焰|焦燥 焦躁|猶予 猶豫|班点 斑點|留飲 溜飲|略奪 掠奪|疎通 疏通|発酵 醱酵|白亜 白堊|相克 相剋|知恵 智慧|破棄 破毀|確固 確乎|禁固 禁錮|符丁 符牒|粉装 扮裝|紫班 紫斑|終息 終熄|総合 綜合|編集 編輯|義援 義捐|耕運機 耕耘機|肝心 肝腎|肩甲骨 肩胛骨|背徳 悖德|脈拍 脈搏|膨張 膨脹|花弁 花瓣|芳純 芳醇|英知 叡智|蒸留 蒸溜|薫蒸 燻蒸|薫製 燻製|衣装 衣裳|衰退 衰退|裕然 悠然|補佐 輔佐|訓戒 訓誡|試練 試煉|詭弁 詭辯|講和 媾和|象眼 象嵌|貫録 貫祿|買弁 買辦|賛辞 讚辭|踏襲 蹈襲|車両 車輛|転倒 顛倒|輪郭 輪廓|退色 褪色|途絶 杜絕|連係 連繫|連合 聯合|連合会 聯合會|連合国 聯合國|連合艦隊 聯合艦隊|連合軍 聯合軍|連名 聯名|連想 聯想|連携 聯攜|連盟 聯盟|連立 聯立|連結 聯結|連結器 聯結器|連結性 聯結性|連絡 聯絡|連絡員 聯絡員|連絡網 聯絡網|連絡線 聯絡線|連絡船 聯絡船|連邦 聯邦|連邦共和国 聯邦共和國|連邦制 聯邦制|連邦国 聯邦國|連邦国家 聯邦國家|連邦政府 聯邦政府|連邦議会 聯邦議會|連邦軍 聯邦軍|連隊 聯隊|選考 銓衡|酢酸 醋酸|野卑 野鄙|鉱石 礦石|間欠 間歇|関数 函數|関連 關聯|関連図 關聯圖|関連性 關聯性|関連語 關聯語|防御 防禦|険阻 嶮岨|障壁 牆壁|障害 障礙|隠滅 湮滅|雄弁 雄辯|集落 聚落|雇用 僱傭|風諭 諷喩|飛語 蜚語|香典 香奠|骨格 骨骼|高進 亢進|鳥観 鳥瞰", "万 萬|与 與|両 兩|並 竝|乗 乘|乱 亂|亀 龜|予 豫|争 爭|亘 亙|亜 亞|仏 佛|仮 假|会 會|伝 傳|体 體|余 餘|併 倂|価 價|倹 儉|偽 僞|児 兒|党 黨|円 圓|写 寫|凜 凛|処 處|剣 劍|剤 劑|剰 剩|励 勵|労 勞|効 效|勅 敕|勧 勸|勲 勳|区 區|医 醫|単 單|即 卽|厳 嚴|参 參|双 雙|収 收|叙 敍|台 臺|号 號|唖 啞|営 營|嘱 囑|噛 嚙|団 團|囲 圍|図 圖|国 國|圏 圈|圧 壓|堕 墮|塁 壘|塩 鹽|増 增|壊 壞|壌 壤|壮 壯|声 聲|壱 壹|売 賣|変 變|奥 奧|奨 奬|嬢 孃|学 學|宝 寶|実 實|寛 寬|寝 寢|対 對|寿 壽|専 專|将 將|尭 堯|尽 盡|届 屆|属 屬|岳 嶽|峡 峽|巌 巖|巣 巢|巻 卷|帯 帶|帰 歸|庁 廳|広 廣|廃 廢|弁 辨|弐 貳|弥 彌|弯 彎|弾 彈|当 當|径 徑|従 從|徳 德|徴 徵|応 應|恋 戀|恒 恆|恵 惠|悩 惱|悪 惡|惨 慘|慎 愼|懐 懷|戦 戰|戯 戲|戻 戾|払 拂|抜 拔|択 擇|担 擔|拝 拜|拠 據|拡 擴|挙 擧|挟 挾|挿 插|捜 搜|掲 揭|掻 搔|揺 搖|摂 攝|撃 擊|撹 攪|数 數|斉 齊|斎 齋|断 斷|旧 舊|昼 晝|晃 晄|晩 晚|暁 曉|暦 曆|曽 曾|条 條|来 來|枢 樞|栄 榮|桜 櫻|桝 枡|桟 棧|桧 檜|検 檢|楼 樓|楽 樂|概 槪|様 樣|槙 槇|権 權|横 橫|欠 缺|欧 歐|歓 歡|歩 步|歯 齒|歳 歲|歴 歷|残 殘|殴 毆|殻 殼|毎 每|気 氣|沢 澤|沪 濾|浄 淨|浅 淺|浜 濱|涙 淚|渇 渴|済 濟|渉 涉|渋 澁|渓 溪|温 溫|湾 灣|湿 濕|満 滿|滝 瀧|滞 滯|潜 潛|瀬 瀨|灯 燈|炉 爐|点 點|為 爲|焼 燒|犠 犧|状 狀|独 獨|狭 狹|猟 獵|献 獻|獣 獸|瓶 甁|画 畫|畳 疊|痩 瘦|痴 癡|発 發|盗 盜|県 縣|真 眞|研 硏|砕 碎|礼 禮|祢 禰|祷 禱|禄 祿|禅 禪|秘 祕|称 稱|稲 稻|穂 穗|穏 穩|穣 穰|窃 竊|竜 龍|粋 粹|粛 肅|糸 絲|経 經|絵 繪|継 繼|続 續|総 總|緑 綠|緒 緖|縁 緣|縄 繩|縦 縱|繊 纖|繍 繡|缶 罐|翻 飜|聴 聽|胆 膽|脚 腳|脱 脫|脳 腦|臓 臟|艶 艷|芦 蘆|芸 藝|茎 莖|荘 莊|萌 萠|蒋 蔣|蔵 藏|薫 薰|薬 藥|虚 虛|虫 蟲|蚕 蠶|蛍 螢|蛮 蠻|蝋 蠟|衛 衞|装 裝|褒 襃|覇 霸|覚 覺|覧 覽|観 觀|触 觸|訳 譯|証 證|誉 譽|説 說|読 讀|謡 謠|譲 讓|豊 豐|賛 贊|践 踐|転 轉|軽 輕|辞 辭|辺 邊|逓 遞|遅 遲|遥 遙|郎 郞|郷 鄕|酔 醉|醤 醬|醸 釀|釈 釋|鉄 鐵|鉱 鑛|銭 錢|鋳 鑄|錬 鍊|録 錄|鎮 鎭|関 關|閲 閱|闘 鬭|陥 陷|険 險|随 隨|隠 隱|雑 雜|霊 靈|静 靜|頴 穎|頼 賴|顔 顏|顕 顯|餅 餠|駅 驛|駆 驅|騒 騷|験 驗|髄 髓|髪 髮|鴎 鷗|鶏 鷄|鹸 鹼|麦 麥|麹 麴|麺 麵|黄 黃|黒 黑|黙 默|齢 齡"]];
-	var TSPhrases_default = "一坏 一坯|一目瞭然 一目了然|七逕 七迳|上逕 上迳|上鍊 上链|不可貲計 不可赀計|不瞭解 不了解|么麼 幺麽|么麽 幺麽|九逕山 九迳山|乾乾淨淨 干干净净|乾乾脆脆 干干脆脆|乾佑縣 乾佑县|乾元 乾元|乾卦 乾卦|乾嘉 乾嘉|乾圖 乾图|乾坤 乾坤|乾坤一擲 乾坤一掷|乾坤再造 乾坤再造|乾坤大挪移 乾坤大挪移|乾宅 乾宅|乾安縣 乾安县|乾安鎮 乾安镇|乾州 乾州|乾斷 乾断|乾旦 乾旦|乾曜 乾曜|乾清宮 乾清宫|乾盛世 乾盛世|乾紅 乾红|乾綱 乾纲|乾縣 乾县|乾象 乾象|乾造 乾造|乾道 乾道|乾闥婆 乾闼婆|乾陵 乾陵|乾隆 乾隆|乾隆年間 乾隆年间|乾隆皇帝 乾隆皇帝|二噁英 二𫫇英|仇讎 仇雠|以免藉口 以免借口|以功覆過 以功覆过|任筆沈詩 任笔沈诗|侔德覆載 侔德覆载|傢俱 家具|傷亡枕藉 伤亡枕藉|允祕 允祕|八濛山 八濛山|其陰多蒐 其阴多蒐|凌藉 凌借|出醜狼藉 出丑狼藉|函覆 函复|剋架 剋架|剋毒 剋毒|千鍾粟 千锺粟|南氾 南氾|南逕 南迳|反反覆覆 反反复复|反覆 反复|反覆思維 反复思维|反覆思量 反复思量|反覆性 反复性|名覆金甌 名复金瓯|吳祕 吴祕|吳育昇 吴育昇|哪吒 哪吒|回覆 回复|土坏 土坯|坏土 坯土|坏子 坯子|坏布 坯布|坏戶 坯户|墨沈沈 墨沉沉|壺裏乾坤 壶里乾坤|大目乾連冥間救母變文 大目乾连冥间救母变文|宫商角徵羽 宫商角徵羽|射覆 射覆|尼乾子 尼乾子|尼乾陀 尼乾陀|年釐 年釐|幺麼 幺麽|幺麼小丑 幺麽小丑|幺麼小醜 幺麽小丑|康乾 康乾|張昇 张昇|張法乾 张法乾|彷彿 仿佛|彷徨 彷徨|徐胤昇 徐胤昇|復甦 复苏|徵弦 徵弦|徵絃 徵弦|徵羽摩柯 徵羽摩柯|徵聲 徵声|徵調 徵调|徵音 徵音|情有獨鍾 情有独钟|想像 想像|意志消沈 意志消沉|慰藉 慰藉|慰藉着 慰藉着|憑藉 凭借|憑藉着 凭借着|懷釐 怀釐|成甦 成甦|所費不貲 所费不赀|手鍊 手链|打坏 打坯|扞格 扞格|扭轉乾坤 扭转乾坤|批覆 批复|找藉口 找借口|折戟沈沙 折戟沉沙|折戟沈河 折戟沉河|拉坏 拉坯|拉鍊 拉链|拉鍊工程 拉链工程|拜覆 拜复|挨剋 挨剋|捏坏 捏坯|擊沈 击沉|據瞭解 据了解|文錦覆阱 文锦覆阱|於世成 於世成|於乎 於乎|於仲完 於仲完|於倫 於伦|於其一 於其一|於則 於则|於勇明 於勇明|於呼哀哉 於呼哀哉|於單 於单|於坦 於坦|於崇文 於崇文|於忠祥 於忠祥|於惟一 於惟一|於戲 於戏|於敖 於敖|於梨華 於梨华|於清言 於清言|於潛 於潜|於琳 於琳|於穆 於穆|於竹屋 於竹屋|於菟 於菟|於邑 於邑|於陵子 於陵子|旋乾轉坤 旋乾转坤|旋轉乾坤 旋转乾坤|旋轉乾坤之力 旋转乾坤之力|明瞭 明了|明覆 明复|昏沈 昏沉|春蒐 春蒐|春釐 春釐|暗沈沈 暗沉沉|書中自有千鍾粟 书中自有千锺粟|有序 有序|朝乾夕惕 朝乾夕惕|木吒 木吒|李乾德 李乾德|李昇 李昇|李昇勳 李昇勋|李澤鉅 李泽钜|李祕 李祕|李鍊福 李链福|李鍾郁 李锺郁|束脩 束脩|東氾 东氾|林甦 林甦|校讎 校雠|梁昇卿 梁昇卿|梁章鉅 梁章钜|楊甦棣 杨甦棣|楊聯陞 杨联陞|樊於期 樊於期|橡椀 橡椀|死氣沈沈 死气沉沉|段脩 段脩|毛坏 毛坯|水逕 水迳|氾勝之 氾胜之|氾南 氾南|氾國 氾国|氾水 氾水|沈下 沉下|沈不住氣 沉不住气|沈住氣 沉住气|沈冤 沉冤|沈厚 沉厚|沈吟 沉吟|沈寂 沉寂|沈得住氣 沉得住气|沈思 沉思|沈思往事 沉思往事|沈悶 沉闷|沈沒 沉没|沈沒成本 沉没成本|沈浮 沉浮|沈浸 沉浸|沈浸於 沉浸于|沈淪 沉沦|沈湎 沉湎|沈湎酒色 沉湎酒色|沈溺 沉溺|沈滯 沉滞|沈滯性 沉滞性|沈澱 沉淀|沈澱出來 沉淀出来|沈澱劑 沉淀剂|沈澱法 沉淀法|沈澱物 沉淀物|沈濁 沉浊|沈甸甸 沉甸甸|沈痛 沉痛|沈痼 沉痼|沈痾 沉疴|沈睡 沉睡|沈睡不醒 沉睡不醒|沈砂池 沉砂池|沈積 沉积|沈積岩 沉积岩|沈積石 沉积石|沈筒 沉筒|沈船 沉船|沈落 沉落|沈詩任筆 沈诗任笔|沈迷 沉迷|沈迷不醒 沉迷不醒|沈醉 沉醉|沈重 沉重|沈降 沉降|沈陷 沉陷|沈靜 沉静|沈靜下來 沉静下来|沈香 沉香|沈鬱 沉郁|沈魚落雁 沉鱼落雁|沈默 沉默|沈默不語 沉默不语|沈默寡言 沉默寡言|沙逕 沙迳|河逕 河迳|流徵 流徵|浪蕩乾坤 浪荡乾坤|浮沈 浮沉|海哩 海里|深沈 深沉|深沈不露 深沉不露|溫昇豪 温昇豪|滑藉 滑借|烏昇 乌昇|烏沈沈 乌沉沉|烏逕 乌迳|無序 无序|狐藉虎威 狐借虎威|王彥昇 王彦昇|珍珠項鍊 珍珠项链|甚鉅 甚钜|甦生 苏生|甦醒 苏醒|申昇勳 申昇勋|申覆 申复|畢昇 毕昇|發覆 发覆|盧象昇 卢象昇|目劄 目劄|瞭哨 瞭哨|瞭如 了如|瞭如指掌 了如指掌|瞭望 瞭望|瞭然 了然|瞭然於心 了然于心|瞭若指掌 了若指掌|瞭解 了解|瞭解到 了解到|破釜沈舟 破釜沉舟|磚坏 砖坯|示覆 示复|社逕 社迳|祕丕笈 祕丕笈|祕彭祖 祕彭祖|祕瓊 祕琼|祝釐 祝釐|神祇 神祇|稟覆 禀复|竺乾 竺乾|答覆 答复|篤麼 笃麽|簡單明瞭 简单明了|籌畫 筹划|素藉 素借|老態龍鍾 老态龙钟|耳沈 耳沉|肉脩 肉脩|肘手鍊足 肘手链足|胤祕 胤祕|脩敬 脩敬|脩炳 脩炳|脩脡 脩脡|脩脯 脩脯|脩金 脩金|脫坏 脱坯|腶脩 腶脩|英哩 英里|茅蒐 茅蒐|茵藉 茵借|萬鍾 万锺|落雁沈魚 落雁沉鱼|蒐于紅 蒐于红|蒐於紅 蒐于红|蒐狩 蒐狩|蒐獮 蒐狝|蒐獵 蒐猎|蒐田 蒐田|蒐畋 蒐畋|蒐苗 蒐苗|蒜薹 蒜薹|蔣昇 蒋昇|蕓薹 芸薹|蕩覆 荡覆|蕭乾 萧乾|藉代 借代|藉以 借以|藉助 借助|藉助於 借助于|藉卉 借卉|藉口 借口|藉喻 借喻|藉寇兵 借寇兵|藉寇兵齎盜糧 借寇兵赍盗粮|藉手 借手|藉據 借据|藉故 借故|藉故推辭 借故推辞|藉方 借方|藉條 借条|藉槁 借槁|藉機 借机|藉此 借此|藉此機會 借此机会|藉甚 借甚|藉由 借由|藉着 借着|藉端 借端|藉端生事 借端生事|藉箸代籌 借箸代筹|藉草枕塊 借草枕块|藉藉 藉藉|藉藉无名 藉藉无名|藉詞 借词|藉讀 借读|藉資 借资|衹得 只得|衹見樹木 只见树木|衹見樹木不見森林 只见树木不见森林|袁祕 袁祕|袖裏乾坤 袖里乾坤|袷袢 袷袢|製坏 制坯|覆上 覆上|覆住 覆住|覆信 复信|覆冒 覆冒|覆呈 复呈|覆命 复命|覆墓 复墓|覆宗 覆宗|覆帳 复帐|覆幬 覆帱|覆成 覆成|覆按 复按|覆文 复文|覆杯 覆杯|覆校 复校|覆瓿 覆瓿|覆盂 覆盂|覆盆 覆盆|覆盆子 覆盆子|覆盤 覆盘|覆育 覆育|覆蕉尋鹿 覆蕉寻鹿|覆逆 覆逆|覆醢 覆醢|覆醬瓿 覆酱瓿|覆電 复电|覆露 覆露|覆鹿尋蕉 覆鹿寻蕉|覆鹿遺蕉 覆鹿遗蕉|覆鼎 覆鼎|見覆 见复|角徵 角徵|角徵羽 角徵羽|計畫 计划|許甦魂 许甦魂|變徵 变徵|變徵之聲 变徵之声|變徵之音 变徵之音|讎定 雠定|谿工 谿工|貂覆額 貂覆额|買臣覆水 买臣覆水|赤石逕 赤石迳|踅門瞭戶 踅门了户|躪藉 躏借|載沈載浮 载沉载浮|載浮載沈 载浮载沉|辛祕 辛祕|逆釐 逆釐|逕口 迳口|逕聯 迳联|逕頭 迳头|郭子乾 郭子乾|酒逢知己千鍾少 酒逢知己千锺少|醞藉 酝借|重覆 重复|金吒 金吒|金昇玟 金昇玟|金鍊 金链|鈞覆 钧复|鉅子 钜子|鉅萬 钜万|鉅防 钜防|鉸鍊 铰链|銀鍊 银链|鋼坏 钢坯|錢鍾書 钱锺书|鍊墜 链坠|鍊子 链子|鍊形 链形|鍊條 链条|鍊錘 链锤|鍊鎖 链锁|鍛鍾 锻锺|鍾繇 锺繇|鍾萬梅 锺万梅|鍾重發 锺重发|鍾鍛 锺锻|鍾馗 锺馗|鎖鍊 锁链|鐵鍊 铁链|鑽石項鍊 钻石项链|鑿坏 凿坯|閻鶴昇 阎鹤昇|陰沈 阴沉|陰沈沈 阴沉沉|陰陰沈沈 阴阴沉沉|陳志昇 陈志昇|陳昇 陈昇|陳甦 陈甦|陶坏 陶坯|雁杳魚沈 雁杳鱼沉|雖覆能復 虽覆能复|電覆 电复|露覆 露覆|韓昇延 韩昇延|韓甦 韩甦|項鍊 项链|頗覆 颇覆|頸鍊 颈链|顛乾倒坤 颠乾倒坤|顛倒乾坤 颠倒乾坤|顧藉 顾借|馮甦 冯甦|魏徵 魏徵|魚沈雁杳 鱼沉雁杳|麪坏兒 面坯儿|麼些族 麽些族|黃甦 黄甦|黃鍾公 黄锺公|黑沈沈 黑沉沉|龍鍾 龙钟|龔昇 龚昇";
+	var TSPhrases_default = "一坏 一坯|一目瞭然 一目了然|七逕 七迳|上逕 上迳|上鍊 上链|不可貲計 不可赀計|不瞭解 不了解|么麼 幺麽|么麽 幺麽|九逕山 九迳山|乾乾淨淨 干干净净|乾乾脆脆 干干脆脆|乾佑縣 乾佑县|乾元 乾元|乾卦 乾卦|乾嘉 乾嘉|乾圖 乾图|乾坤 乾坤|乾坤一擲 乾坤一掷|乾坤再造 乾坤再造|乾坤大挪移 乾坤大挪移|乾宅 乾宅|乾安縣 乾安县|乾安鎮 乾安镇|乾州 乾州|乾斷 乾断|乾斷食 干断食|乾旦 乾旦|乾曜 乾曜|乾清宮 乾清宫|乾盛世 乾盛世|乾紅 干红|乾綱 乾纲|乾縣 乾县|乾象 乾象|乾造 乾造|乾道 乾道|乾闥婆 乾闼婆|乾陵 乾陵|乾隆 乾隆|乾隆年間 乾隆年间|乾隆皇帝 乾隆皇帝|二噁英 二𫫇英|仇讎 仇雠|以免藉口 以免借口|以功覆過 以功覆过|任筆沈詩 任笔沈诗|侔德覆載 侔德覆载|傢俱 家具|傷亡枕藉 伤亡枕藉|允祕 允祕|八濛山 八濛山|其陰多蒐 其阴多蒐|凌藉 凌借|出醜狼藉 出丑狼藉|函覆 函复|剋架 剋架|剋毒 剋毒|千鍾粟 千锺粟|南氾 南氾|南逕 南迳|反反覆覆 反反复复|反覆 反复|反覆思維 反复思维|反覆思量 反复思量|反覆性 反复性|名覆金甌 名复金瓯|吳祕 吴祕|吳育昇 吴育昇|哪吒 哪吒|回覆 回复|土坏 土坯|坏土 坯土|坏子 坯子|坏布 坯布|坏戶 坯户|墨沈沈 墨沉沉|壺裏乾坤 壶里乾坤|大目乾連冥間救母變文 大目乾连冥间救母变文|宫商角徵羽 宫商角徵羽|射覆 射覆|尼乾子 尼乾子|尼乾陀 尼乾陀|年釐 年釐|幺麼 幺麽|幺麼小丑 幺麽小丑|幺麼小醜 幺麽小丑|康乾 康乾|張昇 张昇|張法乾 张法乾|彷彿 仿佛|彷徨 彷徨|徐胤昇 徐胤昇|復甦 复苏|徵弦 徵弦|徵絃 徵弦|徵羽摩柯 徵羽摩柯|徵聲 徵声|徵調 徵调|徵音 徵音|情有獨鍾 情有独钟|想像 想像|意志消沈 意志消沉|慰藉 慰藉|慰藉着 慰藉着|憑藉 凭借|憑藉着 凭借着|懷釐 怀釐|成甦 成甦|所費不貲 所费不赀|手鍊 手链|打坏 打坯|扞格 扞格|扭轉乾坤 扭转乾坤|批覆 批复|找藉口 找借口|折戟沈沙 折戟沉沙|折戟沈河 折戟沉河|拉坏 拉坯|拉鍊 拉链|拉鍊工程 拉链工程|拜覆 拜复|挨剋 挨剋|捏坏 捏坯|擊沈 击沉|據瞭解 据了解|文錦覆阱 文锦覆阱|於世成 於世成|於乎 於乎|於仲完 於仲完|於倫 於伦|於其一 於其一|於則 於则|於勇明 於勇明|於呼哀哉 於呼哀哉|於單 於单|於坦 於坦|於崇文 於崇文|於忠祥 於忠祥|於惟一 於惟一|於戲 於戏|於敖 於敖|於梨華 於梨华|於清言 於清言|於潛 於潜|於琳 於琳|於穆 於穆|於竹屋 於竹屋|於菟 於菟|於邑 於邑|於陵子 於陵子|旋乾轉坤 旋乾转坤|旋轉乾坤 旋转乾坤|旋轉乾坤之力 旋转乾坤之力|明瞭 明了|明覆 明复|昏沈 昏沉|春蒐 春蒐|春釐 春釐|暗沈沈 暗沉沉|書中自有千鍾粟 书中自有千锺粟|有序 有序|朝乾夕惕 朝乾夕惕|木吒 木吒|李乾德 李乾德|李昇 李昇|李昇勳 李昇勋|李澤鉅 李泽钜|李祕 李祕|李鍊福 李链福|李鍾郁 李锺郁|束脩 束脩|東氾 东氾|林甦 林甦|校讎 校雠|梁昇卿 梁昇卿|梁章鉅 梁章钜|楊甦棣 杨甦棣|楊聯陞 杨联陞|樊於期 樊於期|橡椀 橡椀|死氣沈沈 死气沉沉|段脩 段脩|毛坏 毛坯|水逕 水迳|氾勝之 氾胜之|氾南 氾南|氾國 氾国|氾水 氾水|沈下 沉下|沈不住氣 沉不住气|沈住氣 沉住气|沈冤 沉冤|沈厚 沉厚|沈吟 沉吟|沈寂 沉寂|沈得住氣 沉得住气|沈思 沉思|沈思往事 沉思往事|沈悶 沉闷|沈沒 沉没|沈沒成本 沉没成本|沈浮 沉浮|沈浸 沉浸|沈浸於 沉浸于|沈淪 沉沦|沈湎 沉湎|沈湎酒色 沉湎酒色|沈溺 沉溺|沈滯 沉滞|沈滯性 沉滞性|沈澱 沉淀|沈澱出來 沉淀出来|沈澱劑 沉淀剂|沈澱法 沉淀法|沈澱物 沉淀物|沈濁 沉浊|沈甸甸 沉甸甸|沈痛 沉痛|沈痼 沉痼|沈痾 沉疴|沈睡 沉睡|沈睡不醒 沉睡不醒|沈砂池 沉砂池|沈積 沉积|沈積岩 沉积岩|沈積石 沉积石|沈筒 沉筒|沈船 沉船|沈落 沉落|沈詩任筆 沈诗任笔|沈迷 沉迷|沈迷不醒 沉迷不醒|沈醉 沉醉|沈重 沉重|沈降 沉降|沈陷 沉陷|沈靜 沉静|沈靜下來 沉静下来|沈香 沉香|沈鬱 沉郁|沈魚落雁 沉鱼落雁|沈默 沉默|沈默不語 沉默不语|沈默寡言 沉默寡言|沙逕 沙迳|河逕 河迳|流徵 流徵|浪蕩乾坤 浪荡乾坤|浮沈 浮沉|海哩 海里|深沈 深沉|深沈不露 深沉不露|溫昇豪 温昇豪|滑藉 滑借|烏昇 乌昇|烏沈沈 乌沉沉|烏逕 乌迳|無序 无序|狐藉虎威 狐借虎威|王彥昇 王彦昇|珍珠項鍊 珍珠项链|甚鉅 甚钜|甦生 苏生|甦醒 苏醒|申昇勳 申昇勋|申覆 申复|畢昇 毕昇|發覆 发覆|盧象昇 卢象昇|目劄 目劄|瞭哨 瞭哨|瞭如 了如|瞭如指掌 了如指掌|瞭望 瞭望|瞭然 了然|瞭然於心 了然于心|瞭若指掌 了若指掌|瞭解 了解|瞭解到 了解到|破釜沈舟 破釜沉舟|磚坏 砖坯|示覆 示复|社逕 社迳|祕丕笈 祕丕笈|祕彭祖 祕彭祖|祕瓊 祕琼|祝釐 祝釐|神祇 神祇|稟覆 禀复|竺乾 竺乾|答覆 答复|篤麼 笃麽|簡單明瞭 简单明了|籌畫 筹划|素藉 素借|老態龍鍾 老态龙钟|耳沈 耳沉|肉脩 肉脩|肘手鍊足 肘手链足|胤祕 胤祕|脩敬 脩敬|脩炳 脩炳|脩脡 脩脡|脩脯 脩脯|脩金 脩金|脫坏 脱坯|腶脩 腶脩|英哩 英里|茅蒐 茅蒐|茵藉 茵借|萬鍾 万锺|落雁沈魚 落雁沉鱼|蒐于紅 蒐于红|蒐於紅 蒐于红|蒐狩 蒐狩|蒐獮 蒐狝|蒐獵 蒐猎|蒐田 蒐田|蒐畋 蒐畋|蒐苗 蒐苗|蒜薹 蒜薹|蔣昇 蒋昇|蕓薹 芸薹|蕩覆 荡覆|蕭乾 萧乾|藉代 借代|藉以 借以|藉助 借助|藉助於 借助于|藉卉 借卉|藉口 借口|藉喻 借喻|藉寇兵 借寇兵|藉寇兵齎盜糧 借寇兵赍盗粮|藉手 借手|藉據 借据|藉故 借故|藉故推辭 借故推辞|藉方 借方|藉條 借条|藉槁 借槁|藉機 借机|藉此 借此|藉此機會 借此机会|藉甚 借甚|藉由 借由|藉着 借着|藉端 借端|藉端生事 借端生事|藉箸代籌 借箸代筹|藉草枕塊 借草枕块|藉藉 藉藉|藉藉无名 藉藉无名|藉詞 借词|藉讀 借读|藉資 借资|衹得 只得|衹見樹木 只见树木|衹見樹木不見森林 只见树木不见森林|袁祕 袁祕|袖裏乾坤 袖里乾坤|袷袢 袷袢|製坏 制坯|覆上 覆上|覆住 覆住|覆信 复信|覆冒 覆冒|覆呈 复呈|覆命 复命|覆墓 复墓|覆宗 覆宗|覆帳 复帐|覆幬 覆帱|覆成 覆成|覆按 复按|覆文 复文|覆杯 覆杯|覆校 复校|覆瓿 覆瓿|覆盂 覆盂|覆盆 覆盆|覆盆子 覆盆子|覆盤 覆盘|覆育 覆育|覆蕉尋鹿 覆蕉寻鹿|覆逆 覆逆|覆醢 覆醢|覆醬瓿 覆酱瓿|覆電 复电|覆露 覆露|覆鹿尋蕉 覆鹿寻蕉|覆鹿遺蕉 覆鹿遗蕉|覆鼎 覆鼎|見覆 见复|角徵 角徵|角徵羽 角徵羽|計畫 计划|許甦魂 许甦魂|變徵 变徵|變徵之聲 变徵之声|變徵之音 变徵之音|讎定 雠定|谿工 谿工|貂覆額 貂覆额|買臣覆水 买臣覆水|赤石逕 赤石迳|踅門瞭戶 踅门了户|躪藉 躏借|載沈載浮 载沉载浮|載浮載沈 载浮载沉|辛祕 辛祕|逆釐 逆釐|逕口 迳口|逕聯 迳联|逕頭 迳头|郭子乾 郭子乾|酒逢知己千鍾少 酒逢知己千锺少|醞藉 酝借|重覆 重复|金吒 金吒|金昇玟 金昇玟|金鍊 金链|鈞覆 钧复|鉅子 钜子|鉅萬 钜万|鉅防 钜防|鉸鍊 铰链|銀鍊 银链|鋼坏 钢坯|錢鍾書 钱锺书|鍊墜 链坠|鍊子 链子|鍊形 链形|鍊條 链条|鍊錘 链锤|鍊鎖 链锁|鍛鍾 锻锺|鍾繇 锺繇|鍾萬梅 锺万梅|鍾重發 锺重发|鍾鍛 锺锻|鍾馗 锺馗|鎖鍊 锁链|鐵鍊 铁链|鑽石項鍊 钻石项链|鑿坏 凿坯|閻鶴昇 阎鹤昇|陰沈 阴沉|陰沈沈 阴沉沉|陰陰沈沈 阴阴沉沉|陳志昇 陈志昇|陳昇 陈昇|陳甦 陈甦|陶坏 陶坯|雁杳魚沈 雁杳鱼沉|雖覆能復 虽覆能复|電覆 电复|露覆 露覆|韓昇延 韩昇延|韓甦 韩甦|項鍊 项链|頗覆 颇覆|頸鍊 颈链|顛乾倒坤 颠乾倒坤|顛倒乾坤 颠倒乾坤|顧藉 顾借|馮甦 冯甦|魏徵 魏徵|魚沈雁杳 鱼沉雁杳|麪坏兒 面坯儿|麼些族 麽些族|黃甦 黄甦|黃鍾公 黄锺公|黑沈沈 黑沉沉|龍鍾 龙钟|龔昇 龚昇";
 	var TSCharacters_default = "㑯 㑔|㑳 㑇|㑶 㐹|㓨 刾|㗲 𠵾|㘚 㘎|㜄 㚯|㜏 㛣|㜢 𡞱|㠏 㟆|㠣 𫵷|㥮 㤘|㩜 㨫|㩳 㧐|㩵 擜|㺏 𤠋|䁪 𥇢|䁻 䀥|䃮 鿎|䊷 䌶|䋙 䌺|䋚 䌻|䋹 䌿|䋻 䌾|䍦 䍠|䎱 䎬|䓣 𬜯|䙡 䙌|䜀 䜧|䝼 䞍|䡵 𫟦|䥇 䦂|䥑 鿏|䥕 𬭯|䥱 䥾|䦛 䦶|䦟 䦷|䧢 𨸟|䮄 𫠊|䯀 䯅|䰾 鲃|䱷 䲣|䱽 䲝|䲁 鳚|䲘 鳤|䴉 鹮|丟 丢|並 并|乾 干|亂 乱|亙 亘|亞 亚|佇 伫|佈 布|佔 占|併 并|來 来|侖 仑|侶 侣|侷 局|俁 俣|係 系|俔 伣|俠 侠|俥 伡|俬 私|倀 伥|倆 俩|倈 俫|倉 仓|個 个|們 们|倖 幸|倫 伦|倲 㑈|偉 伟|偑 㐽|側 侧|偵 侦|偽 伪|傌 㐷|傑 杰|傖 伧|傘 伞|備 备|傢 家|傭 佣|傯 偬|傳 传|傴 伛|債 债|傷 伤|傾 倾|僂 偻|僅 仅|僉 佥|僑 侨|僕 仆|僞 伪|僤 𫢸|僥 侥|僨 偾|僱 雇|價 价|儀 仪|儁 俊|儂 侬|億 亿|儈 侩|儉 俭|儎 傤|儐 傧|儔 俦|儕 侪|儘 尽|償 偿|優 优|儲 储|儷 俪|儸 㑩|儺 傩|儻 傥|儼 俨|兇 凶|兌 兑|兒 儿|兗 兖|內 内|兩 两|冊 册|冑 胄|冪 幂|凈 净|凍 冻|凜 凛|凱 凯|別 别|刪 删|剄 刭|則 则|剋 克|剎 刹|剗 刬|剛 刚|剝 剥|剮 剐|剴 剀|創 创|剷 铲|劃 划|劄 札|劇 剧|劉 刘|劊 刽|劌 刿|劍 剑|劏 㓥|劑 剂|劚 㔉|勁 劲|動 动|務 务|勛 勋|勝 胜|勞 劳|勢 势|勣 𪟝|勩 勚|勱 劢|勳 勋|勵 励|勸 劝|勻 匀|匭 匦|匯 汇|匱 匮|區 区|協 协|卹 恤|卻 却|卽 即|厙 厍|厠 厕|厤 历|厭 厌|厲 厉|厴 厣|參 参|叄 叁|叢 丛|吒 咤|吳 吴|吶 呐|呂 吕|咼 呙|員 员|唄 呗|唸 念|問 问|啓 启|啞 哑|啟 启|啢 唡|喎 㖞|喚 唤|喪 丧|喫 吃|喬 乔|單 单|喲 哟|嗆 呛|嗇 啬|嗊 唝|嗎 吗|嗚 呜|嗩 唢|嗰 𠮶|嗶 哔|嘆 叹|嘍 喽|嘓 啯|嘔 呕|嘖 啧|嘗 尝|嘜 唛|嘩 哗|嘮 唠|嘯 啸|嘰 叽|嘵 哓|嘸 呒|嘽 啴|噁 恶|噓 嘘|噚 㖊|噝 咝|噠 哒|噥 哝|噦 哕|噯 嗳|噲 哙|噴 喷|噸 吨|噹 当|嚀 咛|嚇 吓|嚌 哜|嚐 尝|嚕 噜|嚙 啮|嚥 咽|嚦 呖|嚧 𠰷|嚨 咙|嚮 向|嚲 亸|嚳 喾|嚴 严|嚶 嘤|囀 啭|囁 嗫|囂 嚣|囅 冁|囈 呓|囉 啰|囌 苏|囑 嘱|囪 囱|圇 囵|國 国|圍 围|園 园|圓 圆|圖 图|團 团|垻 坝|埡 垭|埨 𫭢|埰 采|執 执|堅 坚|堊 垩|堖 垴|堝 埚|堯 尧|報 报|場 场|塊 块|塋 茔|塏 垲|塒 埘|塗 涂|塚 冢|塢 坞|塤 埙|塵 尘|塸 𫭟|塹 堑|塿 𪣻|墊 垫|墜 坠|墠 𫮃|墮 堕|墰 坛|墳 坟|墶 垯|墻 墙|墾 垦|壇 坛|壋 垱|壎 埙|壓 压|壗 𡋤|壘 垒|壙 圹|壚 垆|壜 坛|壞 坏|壟 垄|壠 垅|壢 坜|壩 坝|壪 塆|壯 壮|壺 壶|壼 壸|壽 寿|夠 够|夢 梦|夥 伙|夾 夹|奐 奂|奧 奥|奩 奁|奪 夺|奬 奖|奮 奋|奼 姹|妝 妆|姍 姗|姦 奸|娙 𫰛|娛 娱|婁 娄|婦 妇|婭 娅|媧 娲|媯 妫|媰 㛀|媼 媪|媽 妈|嫋 袅|嫗 妪|嫵 妩|嫺 娴|嫻 娴|嫿 婳|嬀 妫|嬃 媭|嬈 娆|嬋 婵|嬌 娇|嬙 嫱|嬡 嫒|嬤 嬷|嬪 嫔|嬰 婴|嬸 婶|孃 娘|孋 㛤|孌 娈|孫 孙|學 学|孻 𡥧|孿 孪|宮 宫|寀 采|寢 寝|實 实|寧 宁|審 审|寫 写|寬 宽|寵 宠|寶 宝|將 将|專 专|尋 寻|對 对|導 导|尷 尴|屆 届|屍 尸|屓 屃|屜 屉|屢 屡|層 层|屨 屦|屬 属|岡 冈|峯 峰|峴 岘|島 岛|峽 峡|崍 崃|崑 昆|崗 岗|崙 仑|崢 峥|崬 岽|嵐 岚|嵗 岁|嵽 𫶇|嵾 㟥|嶁 嵝|嶄 崭|嶇 岖|嶔 嵚|嶗 崂|嶠 峤|嶢 峣|嶧 峄|嶨 峃|嶮 崄|嶸 嵘|嶺 岭|嶼 屿|嶽 岳|巋 岿|巒 峦|巔 巅|巖 岩|巘 𪩘|巰 巯|巹 卺|帥 帅|師 师|帳 帐|帶 带|幀 帧|幃 帏|幓 㡎|幗 帼|幘 帻|幟 帜|幣 币|幫 帮|幬 帱|幷 并|幹 干|幾 几|庫 库|廁 厕|廂 厢|廄 厩|廈 厦|廎 庼|廕 荫|廚 厨|廝 厮|廞 𫷷|廟 庙|廠 厂|廡 庑|廢 废|廣 广|廩 廪|廬 庐|廳 厅|弒 弑|弔 吊|弳 弪|張 张|強 强|彄 𫸩|彆 别|彈 弹|彌 弥|彎 弯|彔 录|彙 汇|彠 彟|彥 彦|彫 雕|彲 彨|彿 佛|後 后|徑 径|從 从|徠 徕|復 复|徵 征|徹 彻|恆 恒|恥 耻|悅 悦|悞 悮|悵 怅|悶 闷|悽 凄|惡 恶|惱 恼|惲 恽|惻 恻|愛 爱|愜 惬|愨 悫|愴 怆|愷 恺|愾 忾|慄 栗|態 态|慍 愠|慘 惨|慚 惭|慟 恸|慣 惯|慤 悫|慪 怄|慫 怂|慮 虑|慳 悭|慶 庆|慺 㥪|慼 戚|慾 欲|憂 忧|憊 惫|憐 怜|憑 凭|憒 愦|憖 慭|憚 惮|憤 愤|憫 悯|憮 怃|憲 宪|憶 忆|懇 恳|應 应|懌 怿|懍 懔|懞 蒙|懟 怼|懣 懑|懤 㤽|懨 恹|懲 惩|懶 懒|懷 怀|懸 悬|懺 忏|懼 惧|懾 慑|戀 恋|戇 戆|戔 戋|戧 戗|戩 戬|戰 战|戱 戯|戲 戏|戶 户|扞 捍|拋 抛|拚 拼|挩 捝|挱 挲|挾 挟|捨 舍|捫 扪|捱 挨|捲 卷|掃 扫|掄 抡|掆 㧏|掗 挜|掙 挣|掛 挂|採 采|揀 拣|揚 扬|換 换|揮 挥|揯 搄|損 损|搖 摇|搗 捣|搧 扇|搵 揾|搶 抢|摑 掴|摜 掼|摟 搂|摯 挚|摳 抠|摶 抟|摺 折|摻 掺|撈 捞|撏 挦|撐 撑|撓 挠|撝 㧑|撟 挢|撣 掸|撥 拨|撫 抚|撲 扑|撳 揿|撻 挞|撾 挝|撿 捡|擁 拥|擄 掳|擇 择|擊 击|擋 挡|擓 㧟|擔 担|據 据|擠 挤|擡 抬|擣 捣|擬 拟|擯 摈|擰 拧|擱 搁|擲 掷|擴 扩|擷 撷|擺 摆|擻 擞|擼 撸|擽 㧰|擾 扰|攄 摅|攆 撵|攏 拢|攔 拦|攖 撄|攙 搀|攛 撺|攜 携|攝 摄|攢 攒|攣 挛|攤 摊|攪 搅|攬 揽|敎 教|敓 敚|敗 败|敘 叙|敵 敌|數 数|斂 敛|斃 毙|斆 敩|斕 斓|斬 斩|斷 断|於 于|旂 旗|旣 既|昇 升|時 时|晉 晋|晛 𬀪|晝 昼|暈 晕|暉 晖|暐 𬀩|暘 旸|暢 畅|暫 暂|曄 晔|曆 历|曇 昙|曉 晓|曏 向|曖 暧|曠 旷|曥 𣆐|曨 昽|曬 晒|書 书|會 会|朥 𦛨|朧 胧|朮 术|東 东|枴 拐|柵 栅|柺 拐|査 查|桱 𣐕|桿 杆|梔 栀|梘 枧|梜 𬂩|條 条|梟 枭|梲 棁|棄 弃|棊 棋|棖 枨|棗 枣|棟 栋|棡 㭎|棧 栈|棲 栖|棶 梾|椏 桠|椲 㭏|楊 杨|楓 枫|楨 桢|業 业|極 极|榘 矩|榦 干|榪 杩|榮 荣|榲 榅|榿 桤|構 构|槍 枪|槓 杠|槤 梿|槧 椠|槨 椁|槮 椮|槳 桨|槶 椢|槼 椝|樁 桩|樂 乐|樅 枞|樑 梁|樓 楼|標 标|樞 枢|樢 㭤|樣 样|樧 榝|樫 㭴|樳 桪|樸 朴|樹 树|樺 桦|樿 椫|橈 桡|橋 桥|機 机|橢 椭|橫 横|橯 𣓿|檁 檩|檉 柽|檔 档|檜 桧|檟 槚|檢 检|檣 樯|檮 梼|檯 台|檳 槟|檸 柠|檻 槛|櫃 柜|櫍 𬃊|櫓 橹|櫚 榈|櫛 栉|櫝 椟|櫞 橼|櫟 栎|櫥 橱|櫧 槠|櫨 栌|櫪 枥|櫫 橥|櫬 榇|櫱 蘖|櫳 栊|櫸 榉|櫻 樱|欄 栏|欅 榉|權 权|欏 椤|欒 栾|欓 𣗋|欖 榄|欞 棂|欽 钦|歎 叹|歐 欧|歟 欤|歡 欢|歲 岁|歷 历|歸 归|歿 殁|殘 残|殞 殒|殤 殇|殨 㱮|殫 殚|殭 僵|殮 殓|殯 殡|殰 㱩|殲 歼|殺 杀|殻 壳|殼 壳|毀 毁|毆 殴|毿 毵|氂 牦|氈 毡|氌 氇|氣 气|氫 氢|氬 氩|氳 氲|氾 泛|汎 泛|汙 污|決 决|沒 没|沖 冲|況 况|泝 溯|洩 泄|洶 汹|浹 浃|浿 𬇙|涇 泾|涗 涚|涼 凉|淒 凄|淚 泪|淥 渌|淨 净|淩 凌|淪 沦|淵 渊|淶 涞|淺 浅|渙 涣|減 减|渢 沨|渦 涡|測 测|渾 浑|湊 凑|湋 𣲗|湞 浈|湧 涌|湯 汤|溈 沩|準 准|溝 沟|溫 温|溮 浉|溳 涢|溼 湿|滄 沧|滅 灭|滌 涤|滎 荥|滙 汇|滬 沪|滯 滞|滲 渗|滷 卤|滸 浒|滻 浐|滾 滚|滿 满|漁 渔|漊 溇|漍 𬇹|漚 沤|漢 汉|漣 涟|漬 渍|漲 涨|漵 溆|漸 渐|漿 浆|潁 颍|潑 泼|潔 洁|潕 𣲘|潙 沩|潚 㴋|潛 潜|潤 润|潯 浔|潰 溃|潷 滗|潿 涠|澀 涩|澆 浇|澇 涝|澐 沄|澗 涧|澠 渑|澤 泽|澦 滪|澩 泶|澫 𬇕|澮 浍|澱 淀|澾 㳠|濁 浊|濃 浓|濄 㳡|濆 𣸣|濕 湿|濘 泞|濚 溁|濛 蒙|濜 浕|濟 济|濤 涛|濧 㳔|濫 滥|濰 潍|濱 滨|濺 溅|濼 泺|濾 滤|瀂 澛|瀅 滢|瀆 渎|瀇 㲿|瀉 泻|瀋 沈|瀏 浏|瀕 濒|瀘 泸|瀝 沥|瀟 潇|瀠 潆|瀦 潴|瀧 泷|瀨 濑|瀰 弥|瀲 潋|瀾 澜|灃 沣|灄 滠|灑 洒|灒 𪷽|灕 漓|灘 滩|灙 𣺼|灝 灏|灡 㳕|灣 湾|灤 滦|灧 滟|灩 滟|災 灾|為 为|烏 乌|烴 烃|無 无|煉 炼|煒 炜|煙 烟|煢 茕|煥 焕|煩 烦|煬 炀|煱 㶽|熅 煴|熒 荧|熗 炝|熰 𬉼|熱 热|熲 颎|熾 炽|燀 𬊤|燁 烨|燈 灯|燉 炖|燒 烧|燖 𬊈|燙 烫|燜 焖|營 营|燦 灿|燬 毁|燭 烛|燴 烩|燶 㶶|燻 熏|燼 烬|燾 焘|爍 烁|爐 炉|爛 烂|爭 争|爲 为|爺 爷|爾 尔|牀 床|牆 墙|牘 牍|牴 抵|牽 牵|犖 荦|犛 牦|犢 犊|犧 牺|狀 状|狹 狭|狽 狈|猙 狰|猶 犹|猻 狲|獁 犸|獃 呆|獄 狱|獅 狮|獎 奖|獨 独|獪 狯|獫 猃|獮 狝|獰 狞|獱 㺍|獲 获|獵 猎|獷 犷|獸 兽|獺 獭|獻 献|獼 猕|玀 猡|現 现|琱 雕|琺 珐|琿 珲|瑋 玮|瑒 玚|瑣 琐|瑤 瑶|瑩 莹|瑪 玛|瑲 玱|璉 琏|璊 𫞩|璕 𬍤|璗 𬍡|璡 琎|璣 玑|璦 瑷|璫 珰|璯 㻅|環 环|璵 玙|璸 瑸|璽 玺|璿 璇|瓅 𬍛|瓊 琼|瓏 珑|瓔 璎|瓚 瓒|瓛 𤩽|甌 瓯|甕 瓮|產 产|産 产|畝 亩|畢 毕|畫 画|異 异|畵 画|當 当|疇 畴|疊 叠|痙 痉|痠 酸|痾 疴|瘂 痖|瘋 疯|瘍 疡|瘓 痪|瘞 瘗|瘡 疮|瘧 疟|瘮 瘆|瘲 疭|瘺 瘘|瘻 瘘|療 疗|癆 痨|癇 痫|癉 瘅|癒 愈|癘 疠|癟 瘪|癡 痴|癢 痒|癤 疖|癥 症|癧 疬|癩 癞|癬 癣|癭 瘿|癮 瘾|癰 痈|癱 瘫|癲 癫|發 发|皁 皂|皚 皑|皰 疱|皸 皲|皺 皱|盃 杯|盜 盗|盞 盏|盡 尽|監 监|盤 盘|盧 卢|盪 荡|眞 真|眥 眦|眾 众|睍 𪾢|睏 困|睜 睁|睞 睐|瞘 眍|瞜 䁖|瞞 瞒|瞶 瞆|瞼 睑|矇 蒙|矓 眬|矚 瞩|矯 矫|硃 朱|硜 硁|硤 硖|硨 砗|硯 砚|碕 埼|碩 硕|碭 砀|碸 砜|確 确|碼 码|碽 䂵|磑 硙|磚 砖|磠 硵|磣 碜|磧 碛|磯 矶|磽 硗|磾 䃅|礄 硚|礎 础|礐 𬒈|礙 碍|礦 矿|礪 砺|礫 砾|礬 矾|礱 砻|祕 秘|祿 禄|禍 祸|禎 祯|禕 祎|禡 祃|禦 御|禪 禅|禮 礼|禰 祢|禱 祷|禿 秃|秈 籼|稅 税|稈 秆|稏 䅉|稜 棱|稟 禀|種 种|稱 称|穀 谷|穇 䅟|穌 稣|積 积|穎 颖|穠 秾|穡 穑|穢 秽|穩 稳|穫 获|穭 穞|窩 窝|窪 洼|窮 穷|窯 窑|窵 窎|窶 窭|窺 窥|竄 窜|竅 窍|竇 窦|竈 灶|竊 窃|竪 竖|競 竞|筆 笔|筍 笋|筧 笕|筴 䇲|箇 个|箋 笺|箏 筝|箚 札|節 节|範 范|築 筑|篋 箧|篔 筼|篠 筿|篢 𬕂|篤 笃|篩 筛|篳 筚|篸 𥮾|簀 箦|簍 篓|簑 蓑|簞 箪|簡 简|簣 篑|簫 箫|簹 筜|簽 签|簾 帘|籃 篮|籅 𥫣|籌 筹|籔 䉤|籙 箓|籛 篯|籜 箨|籟 籁|籠 笼|籤 签|籩 笾|籪 簖|籬 篱|籮 箩|籲 吁|粵 粤|糉 粽|糝 糁|糞 粪|糧 粮|糰 团|糲 粝|糴 籴|糶 粜|糹 纟|糾 纠|紀 纪|紂 纣|紃 𬘓|約 约|紅 红|紆 纡|紇 纥|紈 纨|紉 纫|紋 纹|納 纳|紐 纽|紓 纾|純 纯|紕 纰|紖 纼|紗 纱|紘 纮|紙 纸|級 级|紛 纷|紜 纭|紝 纴|紞 𬘘|紡 纺|紬 䌷|紮 扎|細 细|紱 绂|紲 绁|紳 绅|紵 纻|紹 绍|紺 绀|紼 绋|紿 绐|絀 绌|終 终|絃 弦|組 组|絅 䌹|絆 绊|絎 绗|結 结|絕 绝|絛 绦|絝 绔|絞 绞|絡 络|絢 绚|給 给|絨 绒|絪 𬘡|絰 绖|統 统|絲 丝|絳 绛|絶 绝|絹 绢|絺 𫄨|綁 绑|綃 绡|綄 𬘫|綆 绠|綈 绨|綉 绣|綌 绤|綎 𬘩|綏 绥|綐 䌼|綑 捆|經 经|綖 𫄧|綜 综|綝 𬘭|綞 缍|綠 绿|綡 𫟅|綢 绸|綣 绻|綧 𬘯|綪 𬘬|綫 线|綬 绶|維 维|綯 绹|綰 绾|綱 纲|網 网|綳 绷|綴 缀|綵 彩|綸 纶|綹 绺|綺 绮|綻 绽|綽 绰|綾 绫|綿 绵|緄 绲|緇 缁|緊 紧|緋 绯|緑 绿|緒 绪|緓 绬|緔 绱|緗 缃|緘 缄|緙 缂|線 线|緝 缉|緞 缎|締 缔|緡 缗|緣 缘|緦 缌|編 编|緩 缓|緬 缅|緯 纬|緱 缑|緲 缈|練 练|緶 缏|緹 缇|緻 致|緼 缊|縈 萦|縉 缙|縊 缢|縋 缒|縐 绉|縑 缣|縕 缊|縗 缞|縛 缚|縝 缜|縞 缟|縟 缛|縣 县|縧 绦|縫 缝|縭 缡|縮 缩|縯 𬙂|縱 纵|縲 缧|縳 䌸|縴 纤|縵 缦|縶 絷|縷 缕|縹 缥|總 总|績 绩|繃 绷|繅 缫|繆 缪|繒 缯|織 织|繕 缮|繚 缭|繞 绕|繡 绣|繢 缋|繩 绳|繪 绘|繫 系|繭 茧|繮 缰|繯 缳|繰 缲|繳 缴|繶 𫄷|繸 䍁|繹 绎|繻 𦈡|繼 继|繽 缤|繾 缱|繿 䍀|纁 𫄸|纆 𬙊|纇 颣|纈 缬|纊 纩|續 续|纍 累|纏 缠|纓 缨|纔 才|纕 𬙋|纖 纤|纘 缵|纜 缆|缽 钵|罃 䓨|罈 坛|罌 罂|罎 坛|罰 罚|罵 骂|罷 罢|羅 罗|羆 罴|羈 羁|羋 芈|羣 群|羥 羟|羨 羡|義 义|羶 膻|習 习|翫 玩|翬 翚|翹 翘|翽 翙|耬 耧|耮 耢|聖 圣|聞 闻|聯 联|聰 聪|聲 声|聳 耸|聵 聩|聶 聂|職 职|聹 聍|聽 听|聾 聋|肅 肃|脅 胁|脈 脉|脛 胫|脣 唇|脩 修|脫 脱|脹 胀|腎 肾|腖 胨|腡 脶|腦 脑|腫 肿|腳 脚|腸 肠|膃 腽|膕 腘|膚 肤|膞 䏝|膠 胶|膢 𦝼|膩 腻|膽 胆|膾 脍|膿 脓|臉 脸|臍 脐|臏 膑|臘 腊|臚 胪|臟 脏|臠 脔|臢 臜|臥 卧|臨 临|臺 台|與 与|興 兴|舉 举|舊 旧|舖 铺|舘 馆|艙 舱|艤 舣|艦 舰|艫 舻|艱 艰|艷 艳|芻 刍|苧 苎|茲 兹|荊 荆|莊 庄|莖 茎|莢 荚|莧 苋|華 华|菴 庵|菸 烟|萇 苌|萊 莱|萬 万|萴 荝|萵 莴|葉 叶|葒 荭|葤 荮|葦 苇|葯 药|葷 荤|蒍 𫇭|蒐 搜|蒓 莼|蒔 莳|蒕 蒀|蒞 莅|蒼 苍|蓀 荪|蓆 席|蓋 盖|蓮 莲|蓯 苁|蓴 莼|蓽 荜|蔄 𬜬|蔔 卜|蔘 参|蔞 蒌|蔣 蒋|蔥 葱|蔦 茑|蔭 荫|蔯 𫈟|蔿 𫇭|蕁 荨|蕆 蒇|蕎 荞|蕒 荬|蕓 芸|蕕 莸|蕘 荛|蕢 蒉|蕩 荡|蕪 芜|蕭 萧|蕷 蓣|薀 蕰|薈 荟|薊 蓟|薌 芗|薑 姜|薔 蔷|薘 荙|薟 莶|薦 荐|薩 萨|薳 䓕|薴 苧|薵 䓓|薹 苔|薺 荠|藍 蓝|藎 荩|藝 艺|藥 药|藪 薮|藭 䓖|藴 蕴|藶 苈|藹 蔼|藺 蔺|蘀 萚|蘄 蕲|蘆 芦|蘇 苏|蘊 蕴|蘋 苹|蘚 藓|蘞 蔹|蘟 𦻕|蘢 茏|蘭 兰|蘺 蓠|蘿 萝|虆 蔂|虉 𬟁|處 处|虛 虚|虜 虏|號 号|虧 亏|虯 虬|蛺 蛱|蛻 蜕|蜆 蚬|蝀 𬟽|蝕 蚀|蝟 猬|蝦 虾|蝨 虱|蝸 蜗|螄 蛳|螞 蚂|螢 萤|螮 䗖|螻 蝼|螿 螀|蟄 蛰|蟈 蝈|蟎 螨|蟣 虮|蟬 蝉|蟯 蛲|蟲 虫|蟳 𫊻|蟶 蛏|蟻 蚁|蠁 蚃|蠅 蝇|蠆 虿|蠍 蝎|蠐 蛴|蠑 蝾|蠔 蚝|蠟 蜡|蠣 蛎|蠨 蟏|蠱 蛊|蠶 蚕|蠻 蛮|衆 众|衊 蔑|術 术|衕 同|衚 胡|衛 卫|衝 冲|袞 衮|袷 夹|裊 袅|裏 里|補 补|裝 装|裡 里|製 制|複 复|褌 裈|褘 袆|褲 裤|褳 裢|褸 褛|褻 亵|襀 𫌀|襇 裥|襉 裥|襏 袯|襖 袄|襝 裣|襠 裆|襤 褴|襪 袜|襬 摆|襯 衬|襲 袭|襴 襕|覈 核|見 见|覎 觃|規 规|覓 觅|視 视|覘 觇|覡 觋|覥 觍|覦 觎|親 亲|覬 觊|覯 觏|覲 觐|覷 觑|覺 觉|覽 览|覿 觌|觀 观|觴 觞|觶 觯|觸 触|訁 讠|訂 订|訃 讣|計 计|訊 讯|訌 讧|討 讨|訏 𬣙|訐 讦|訒 讱|訓 训|訕 讪|訖 讫|託 托|記 记|訛 讹|訝 讶|訟 讼|訢 䜣|訣 诀|訥 讷|訩 讻|訪 访|設 设|許 许|訴 诉|訶 诃|診 诊|註 注|証 证|詀 𧮪|詁 诂|詆 诋|詎 讵|詐 诈|詒 诒|詔 诏|評 评|詖 诐|詗 诇|詘 诎|詛 诅|詝 𬣞|詞 词|詠 咏|詡 诩|詢 询|詣 诣|試 试|詩 诗|詪 𬣳|詫 诧|詬 诟|詭 诡|詮 诠|詰 诘|話 话|該 该|詳 详|詵 诜|詷 𫍣|詼 诙|詿 诖|誄 诔|誅 诛|誆 诓|誇 夸|誌 志|認 认|誑 诳|誒 诶|誕 诞|誘 诱|誚 诮|語 语|誠 诚|誡 诫|誣 诬|誤 误|誥 诰|誦 诵|誨 诲|說 说|説 说|誰 谁|課 课|誶 谇|誹 诽|誼 谊|誾 訚|調 调|諂 谄|諄 谆|談 谈|諉 诿|請 请|諍 诤|諏 诹|諑 诼|諒 谅|諓 𬣡|論 论|諗 谂|諛 谀|諜 谍|諝 谞|諞 谝|諟 𬤊|諡 谥|諢 诨|諤 谔|諦 谛|諧 谐|諫 谏|諭 谕|諮 咨|諱 讳|諲 𬤇|諳 谙|諴 𫍯|諶 谌|諷 讽|諸 诸|諺 谚|諼 谖|諾 诺|謀 谋|謁 谒|謂 谓|謄 誊|謅 诌|謊 谎|謎 谜|謏 𫍲|謐 谧|謔 谑|謖 谡|謗 谤|謙 谦|謚 谥|講 讲|謝 谢|謠 谣|謡 谣|謨 谟|謫 谪|謬 谬|謭 谫|謳 讴|謹 谨|謾 谩|譁 哗|證 证|譎 谲|譏 讥|譓 𬤝|譖 谮|識 识|譙 谯|譚 谭|譜 谱|譞 𫍽|譟 噪|譫 谵|譭 毁|譯 译|議 议|譴 谴|護 护|譸 诪|譽 誉|譾 谫|讀 读|讅 谉|變 变|讋 詟|讌 䜩|讎 雠|讒 谗|讓 让|讕 谰|讖 谶|讚 赞|讜 谠|讞 谳|谿 溪|豈 岂|豎 竖|豐 丰|豔 艳|豬 猪|豶 豮|貍 狸|貓 猫|貙 䝙|貝 贝|貞 贞|貟 贠|負 负|財 财|貢 贡|貧 贫|貨 货|販 贩|貪 贪|貫 贯|責 责|貯 贮|貰 贳|貲 赀|貳 贰|貴 贵|貶 贬|買 买|貸 贷|貺 贶|費 费|貼 贴|貽 贻|貿 贸|賀 贺|賁 贲|賂 赂|賃 赁|賄 贿|賅 赅|資 资|賈 贾|賊 贼|賑 赈|賒 赊|賓 宾|賕 赇|賙 赒|賚 赉|賜 赐|賞 赏|賠 赔|賡 赓|賢 贤|賣 卖|賤 贱|賦 赋|賧 赕|質 质|賫 赍|賬 账|賭 赌|賰 䞐|賴 赖|賵 赗|賺 赚|賻 赙|購 购|賽 赛|賾 赜|贄 贽|贅 赘|贇 赟|贈 赠|贊 赞|贋 赝|贍 赡|贏 赢|贐 赆|贓 赃|贔 赑|贖 赎|贗 赝|贛 赣|贜 赃|赬 赪|趕 赶|趙 赵|趨 趋|趲 趱|跡 迹|踐 践|踰 逾|踴 踊|蹌 跄|蹕 跸|蹟 迹|蹠 跖|蹣 蹒|蹤 踪|蹺 跷|躂 跶|躉 趸|躊 踌|躋 跻|躍 跃|躎 䟢|躑 踯|躒 跞|躓 踬|躕 蹰|躚 跹|躡 蹑|躥 蹿|躦 躜|躪 躏|軀 躯|車 车|軋 轧|軌 轨|軍 军|軏 𫐄|軑 轪|軒 轩|軔 轫|軛 轭|軝 𬨂|軟 软|軤 轷|軫 轸|軲 轱|軸 轴|軹 轵|軺 轺|軻 轲|軼 轶|軾 轼|較 较|輄 𨐈|輅 辂|輇 辁|輈 辀|載 载|輊 轾|輋 𪨶|輒 辄|輓 挽|輔 辅|輕 轻|輗 𫐐|輛 辆|輜 辎|輝 辉|輞 辋|輟 辍|輥 辊|輦 辇|輩 辈|輪 轮|輬 辌|輮 𫐓|輯 辑|輳 辏|輶 𬨎|輸 输|輻 辐|輼 辒|輾 辗|輿 舆|轀 辒|轂 毂|轄 辖|轅 辕|轆 辘|轉 转|轍 辙|轎 轿|轔 辚|轟 轰|轡 辔|轢 轹|轤 轳|辦 办|辭 辞|辮 辫|辯 辩|農 农|迴 回|逕 径|這 这|連 连|週 周|進 进|遊 游|運 运|過 过|達 达|違 违|遙 遥|遜 逊|遞 递|遠 远|遡 溯|適 适|遲 迟|遶 绕|遷 迁|選 选|遺 遗|遼 辽|邁 迈|還 还|邇 迩|邊 边|邏 逻|邐 逦|郟 郏|郵 邮|鄆 郓|鄉 乡|鄒 邹|鄔 邬|鄖 郧|鄧 邓|鄩 𬩽|鄭 郑|鄰 邻|鄲 郸|鄳 𫑡|鄴 邺|鄶 郐|鄺 邝|酇 酂|酈 郦|醃 腌|醖 酝|醜 丑|醞 酝|醟 蒏|醣 糖|醫 医|醬 酱|醱 酦|醲 𬪩|釀 酿|釁 衅|釃 酾|釅 酽|釋 释|釐 厘|釒 钅|釓 钆|釔 钇|釕 钌|釗 钊|釘 钉|釙 钋|針 针|釣 钓|釤 钐|釦 扣|釧 钏|釩 钒|釴 𬬩|釵 钗|釷 钍|釹 钕|釺 钎|釾 䥺|釿 𬬱|鈀 钯|鈁 钫|鈃 钘|鈄 钭|鈅 钥|鈇 𫓧|鈈 钚|鈉 钠|鈍 钝|鈎 钩|鈐 钤|鈑 钣|鈒 钑|鈔 钞|鈕 钮|鈞 钧|鈡 钟|鈣 钙|鈥 钬|鈦 钛|鈧 钪|鈮 铌|鈰 铈|鈳 钶|鈴 铃|鈷 钴|鈸 钹|鈹 铍|鈺 钰|鈽 钸|鈾 铀|鈿 钿|鉀 钾|鉅 巨|鉆 钻|鉈 铊|鉉 铉|鉊 𬬿|鉋 铇|鉍 铋|鉑 铂|鉕 钷|鉗 钳|鉚 铆|鉛 铅|鉝 𫟷|鉞 钺|鉢 钵|鉤 钩|鉥 𬬸|鉦 钲|鉧 𬭁|鉬 钼|鉭 钽|鉮 𬬹|鉳 锫|鉶 铏|鉷 𫟹|鉸 铰|鉺 铒|鉻 铬|鉿 铪|銀 银|銃 铳|銅 铜|銈 𫓯|銍 铚|銑 铣|銓 铨|銖 铢|銘 铭|銚 铫|銛 铦|銜 衔|銠 铑|銣 铷|銥 铱|銦 铟|銨 铵|銩 铥|銪 铕|銫 铯|銬 铐|銱 铞|銳 锐|銶 𨱇|銷 销|銹 锈|銻 锑|銼 锉|鋁 铝|鋃 锒|鋅 锌|鋇 钡|鋌 铤|鋏 铗|鋐 𬭎|鋒 锋|鋗 𫓶|鋙 铻|鋝 锊|鋟 锓|鋣 铘|鋤 锄|鋥 锃|鋦 锔|鋨 锇|鋩 铓|鋪 铺|鋭 锐|鋮 铖|鋯 锆|鋰 锂|鋱 铽|鋶 锍|鋸 锯|鋹 𬬮|鋼 钢|錀 𬬭|錁 锞|錄 录|錆 锖|錇 锫|錈 锩|錏 铔|錐 锥|錒 锕|錕 锟|錘 锤|錙 锱|錚 铮|錛 锛|錞 𬭚|錟 锬|錠 锭|錡 锜|錢 钱|錤 𫓹|錦 锦|錨 锚|錩 锠|錫 锡|錮 锢|錯 错|録 录|錳 锰|錶 表|錸 铼|錼 镎|鍀 锝|鍁 锨|鍃 锪|鍅 钫|鍆 钔|鍇 锴|鍈 锳|鍊 炼|鍋 锅|鍍 镀|鍔 锷|鍘 铡|鍚 钖|鍛 锻|鍠 锽|鍤 锸|鍥 锲|鍩 锘|鍬 锹|鍭 𬭤|鍰 锾|鍵 键|鍶 锶|鍺 锗|鍼 针|鍾 钟|鎂 镁|鎄 锿|鎇 镅|鎊 镑|鎌 镰|鎓 𬭩|鎔 镕|鎖 锁|鎘 镉|鎚 锤|鎛 镈|鎝 𨱏|鎡 镃|鎢 钨|鎣 蓥|鎦 镏|鎧 铠|鎩 铩|鎪 锼|鎬 镐|鎭 镇|鎮 镇|鎰 镒|鎲 镋|鎳 镍|鎵 镓|鎶 鿔|鎸 镌|鎿 镎|鏃 镞|鏇 旋|鏈 链|鏌 镆|鏍 镙|鏏 𬭬|鏐 镠|鏑 镝|鏗 铿|鏘 锵|鏜 镗|鏝 镘|鏞 镛|鏟 铲|鏡 镜|鏢 镖|鏤 镂|鏨 錾|鏰 镚|鏵 铧|鏷 镤|鏹 镪|鏺 䥽|鏻 𬭸|鏽 锈|鐃 铙|鐄 𨱑|鐇 𫔍|鐋 铴|鐍 𫔎|鐏 𨱔|鐐 镣|鐒 铹|鐓 镦|鐔 镡|鐘 钟|鐙 镫|鐝 镢|鐠 镨|鐥 䦅|鐦 锎|鐧 锏|鐨 镄|鐩 𬭼|鐫 镌|鐮 镰|鐯 䦃|鐲 镯|鐳 镭|鐵 铁|鐶 镮|鐸 铎|鐺 铛|鐽 𫟼|鐿 镱|鑄 铸|鑊 镬|鑌 镔|鑑 鉴|鑒 鉴|鑔 镲|鑕 锧|鑞 镴|鑠 铄|鑣 镳|鑥 镥|鑪 𬬻|鑭 镧|鑰 钥|鑱 镵|鑲 镶|鑷 镊|鑹 镩|鑼 锣|鑽 钻|鑾 銮|鑿 凿|钁 镢|钂 镋|長 长|門 门|閂 闩|閃 闪|閆 闫|閈 闬|閉 闭|開 开|閌 闶|閎 闳|閏 闰|閑 闲|閒 闲|間 间|閔 闵|閘 闸|閡 阂|閣 阁|閤 合|閥 阀|閨 闺|閩 闽|閫 阃|閬 阆|閭 闾|閱 阅|閲 阅|閶 阊|閹 阉|閻 阎|閼 阏|閽 阍|閾 阈|閿 阌|闃 阒|闆 板|闇 暗|闈 闱|闉 𬮱|闊 阔|闋 阕|闌 阑|闍 阇|闐 阗|闑 𫔶|闒 阘|闓 闿|闔 阖|闕 阙|闖 闯|關 关|闞 阚|闠 阓|闡 阐|闢 辟|闤 阛|闥 闼|陘 陉|陝 陕|陞 升|陣 阵|陰 阴|陳 陈|陸 陆|陽 阳|隉 陧|隊 队|階 阶|隑 𬮿|隕 陨|際 际|隤 𬯎|隨 随|險 险|隮 𬯀|隯 陦|隱 隐|隴 陇|隸 隶|隻 只|雋 隽|雖 虽|雙 双|雛 雏|雜 杂|雞 鸡|離 离|難 难|雲 云|電 电|霑 沾|霢 霡|霧 雾|霽 霁|靂 雳|靄 霭|靆 叇|靈 灵|靉 叆|靚 靓|靜 静|靝 靔|靦 腼|靨 靥|鞏 巩|鞝 绱|鞦 秋|鞽 鞒|韁 缰|韃 鞑|韆 千|韉 鞯|韋 韦|韌 韧|韍 韨|韓 韩|韙 韪|韜 韬|韝 鞲|韞 韫|韻 韵|響 响|頁 页|頂 顶|頃 顷|項 项|順 顺|頇 顸|須 须|頊 顼|頌 颂|頍 𫠆|頎 颀|頏 颃|預 预|頑 顽|頒 颁|頓 顿|頔 𬱖|頗 颇|領 领|頜 颌|頠 𬱟|頡 颉|頤 颐|頦 颏|頫 𫖯|頭 头|頮 颒|頰 颊|頲 颋|頴 颕|頵 𫖳|頷 颔|頸 颈|頹 颓|頻 频|頽 颓|顆 颗|題 题|額 额|顎 颚|顏 颜|顒 颙|顓 颛|顔 颜|顗 𫖮|願 愿|顙 颡|顛 颠|類 类|顢 颟|顥 颢|顧 顾|顫 颤|顬 颥|顯 显|顰 颦|顱 颅|顳 颞|顴 颧|風 风|颭 飐|颮 飑|颯 飒|颱 台|颳 刮|颶 飓|颸 飔|颺 飏|颻 飖|颼 飕|飀 飗|飄 飘|飆 飙|飈 飚|飛 飞|飠 饣|飢 饥|飣 饤|飥 饦|飩 饨|飪 饪|飫 饫|飭 饬|飯 饭|飱 飧|飲 饮|飴 饴|飼 饲|飽 饱|飾 饰|飿 饳|餃 饺|餄 饸|餅 饼|餈 糍|餉 饷|養 养|餌 饵|餎 饹|餏 饻|餑 饽|餒 馁|餓 饿|餕 馂|餖 饾|餗 𫗧|餘 余|餚 肴|餛 馄|餜 馃|餞 饯|餡 馅|館 馆|餬 糊|餱 糇|餳 饧|餵 喂|餶 馉|餷 馇|餸 𩠌|餺 馎|餼 饩|餾 馏|餿 馊|饁 馌|饃 馍|饅 馒|饈 馐|饉 馑|饊 馓|饋 馈|饌 馔|饑 饥|饒 饶|饗 飨|饘 𫗴|饜 餍|饞 馋|饢 馕|馬 马|馭 驭|馮 冯|馱 驮|馳 驰|馴 驯|馹 驲|馼 𫘜|駁 驳|駃 𫘝|駉 𬳶|駐 驻|駑 驽|駒 驹|駓 𬳵|駔 驵|駕 驾|駘 骀|駙 驸|駛 驶|駝 驼|駟 驷|駡 骂|駢 骈|駪 𬳽|駭 骇|駰 骃|駱 骆|駸 骎|駼 𬳿|駿 骏|騁 骋|騂 骍|騄 𫘧|騅 骓|騊 𫘦|騌 骔|騍 骒|騎 骑|騏 骐|騑 𬴂|騖 骛|騙 骗|騞 𬴃|騠 𫘨|騤 骙|騧 䯄|騫 骞|騭 骘|騮 骝|騰 腾|騱 𫘬|騵 𫘪|騶 驺|騷 骚|騸 骟|騾 骡|驀 蓦|驁 骜|驂 骖|驃 骠|驄 骢|驅 驱|驊 骅|驌 骕|驍 骁|驎 𬴊|驏 骣|驕 骄|驗 验|驚 惊|驛 驿|驟 骤|驢 驴|驤 骧|驥 骥|驦 骦|驪 骊|驫 骉|骯 肮|髏 髅|髒 脏|體 体|髕 髌|髖 髋|髮 发|鬆 松|鬍 胡|鬚 须|鬢 鬓|鬥 斗|鬧 闹|鬨 哄|鬩 阋|鬮 阄|鬱 郁|鬹 鬶|魎 魉|魘 魇|魚 鱼|魛 鱽|魟 𫚉|魢 鱾|魨 鲀|魯 鲁|魴 鲂|魷 鱿|魺 鲄|鮀 𬶍|鮁 鲅|鮃 鲆|鮆 𫚖|鮈 𬶋|鮊 鲌|鮋 鲉|鮍 鲏|鮎 鲇|鮐 鲐|鮑 鲍|鮒 鲋|鮓 鲊|鮚 鲒|鮜 鲘|鮝 鲞|鮞 鲕|鮟 𩽾|鮠 𬶏|鮡 𬶐|鮣 䲟|鮦 鲖|鮪 鲔|鮫 鲛|鮭 鲑|鮮 鲜|鮳 鲓|鮶 鲪|鮸 𩾃|鮺 鲝|鯀 鲧|鯁 鲠|鯇 鲩|鯉 鲤|鯊 鲨|鯒 鲬|鯔 鲻|鯕 鲯|鯖 鲭|鯗 鲞|鯛 鲷|鯝 鲴|鯡 鲱|鯢 鲵|鯤 鲲|鯧 鲳|鯨 鲸|鯪 鲮|鯫 鲰|鯰 鲶|鯴 鲺|鯷 鳀|鯻 𬶟|鯽 鲫|鯿 鳊|鰁 鳈|鰂 鲗|鰃 鳂|鰆 䲠|鰈 鲽|鰉 鳇|鰊 𬶠|鰌 䲡|鰍 鳅|鰏 鲾|鰐 鳄|鰒 鳆|鰓 鳃|鰛 鳁|鰜 鳒|鰟 鳑|鰠 鳋|鰣 鲥|鰤 𫚕|鰥 鳏|鰧 䲢|鰨 鳎|鰩 鳐|鰭 鳍|鰮 鳁|鰱 鲢|鰲 鳌|鰳 鳓|鰵 鳘|鰶 𬶭|鰷 鲦|鰹 鲣|鰺 鲹|鰻 鳗|鰼 鳛|鰾 鳔|鱀 𬶨|鱂 鳉|鱅 鳙|鱇 𩾌|鱈 鳕|鱉 鳖|鱒 鳟|鱔 鳝|鱖 鳜|鱗 鳞|鱘 鲟|鱚 𬶮|鱝 鲼|鱟 鲎|鱠 鲙|鱣 鳣|鱤 鳡|鱧 鳢|鱨 鲿|鱭 鲚|鱯 鳠|鱲 𫚭|鱷 鳄|鱸 鲈|鱺 鲡|鳥 鸟|鳧 凫|鳩 鸠|鳬 凫|鳲 鸤|鳳 凤|鳴 鸣|鳶 鸢|鳾 䴓|鴆 鸩|鴇 鸨|鴉 鸦|鴒 鸰|鴕 鸵|鴛 鸳|鴝 鸲|鴞 鸮|鴟 鸱|鴣 鸪|鴦 鸯|鴨 鸭|鴯 鸸|鴰 鸹|鴴 鸻|鴷 䴕|鴻 鸿|鴿 鸽|鵁 䴔|鵂 鸺|鵃 鸼|鵏 𬷕|鵐 鹀|鵑 鹃|鵒 鹆|鵓 鹁|鵜 鹈|鵝 鹅|鵟 𫛭|鵠 鹄|鵡 鹉|鵪 鹌|鵬 鹏|鵮 鹐|鵯 鹎|鵰 雕|鵲 鹊|鵷 鹓|鵾 鹍|鶄 䴖|鶇 鸫|鶉 鹑|鶊 鹒|鶓 鹋|鶖 鹙|鶘 鹕|鶚 鹗|鶠 𬸘|鶡 鹖|鶥 鹛|鶩 鹜|鶪 䴗|鶬 鸧|鶯 莺|鶱 𬸣|鶲 鹟|鶴 鹤|鶹 鹠|鶺 鹡|鶻 鹘|鶼 鹣|鶿 鹚|鷀 鹚|鷁 鹢|鷂 鹞|鷄 鸡|鷉 䴘|鷊 鹝|鷓 鹧|鷖 鹥|鷗 鸥|鷙 鸷|鷚 鹨|鷟 𬸦|鷥 鸶|鷦 鹪|鷫 鹔|鷭 𬸪|鷯 鹩|鷲 鹫|鷳 鹇|鷴 鹇|鷸 鹬|鷹 鹰|鷺 鹭|鷽 鸴|鸂 㶉|鸇 鹯|鸊 䴙|鸌 鹱|鸏 鹲|鸑 𬸚|鸕 鸬|鸘 鹴|鸚 鹦|鸛 鹳|鸝 鹂|鸞 鸾|鹵 卤|鹹 咸|鹺 鹾|鹼 碱|鹽 盐|麗 丽|麥 麦|麩 麸|麪 面|麫 面|麬 𤿲|麯 曲|麳 𪎌|麴 曲|麵 面|麼 么|麽 么|黃 黄|黌 黉|點 点|黨 党|黲 黪|黴 霉|黶 黡|黷 黩|黽 黾|黿 鼋|鼂 鼌|鼉 鼍|鼕 冬|鼴 鼹|齊 齐|齋 斋|齎 赍|齏 齑|齒 齿|齔 龀|齕 龁|齗 龂|齘 𬹼|齙 龅|齜 龇|齟 龃|齠 龆|齡 龄|齣 出|齦 龈|齧 啮|齪 龊|齬 龉|齮 𬺈|齯 𫠜|齲 龋|齶 腭|齷 龌|齼 𬺓|龍 龙|龎 厐|龐 庞|龑 䶮|龔 龚|龕 龛|龜 龟|鿁 䜤|鿓 鿒|𠁞 𠀾|𠌥 𠌥|𠏢 𠏢|𠐊 𠐊|𠗣 㓆|𠞆 𠞆|𠠎 𠠎|𠬙 𠬙|𠼤 𠼤|𠽃 𠽃|𠿕 𠿕|𡂡 𡂡|𡃄 𡃄|𡃕 𠴛|𡃤 𡃤|𡄔 𡄔|𡄣 𡄣|𡅏 𠲥|𡅯 𡅯|𡑍 𫭼|𡑭 𡋗|𡓁 𡓁|𡓾 𡋀|𡔖 𡍣|𡞵 㛟|𡟫 𡟫|𡠹 㛿|𡢃 㛠|𡮉 𡭜|𡮣 𡭬|𡳳 𡳃|𡸗 𡸗|𡹬 𡹬|𡻕 岁|𡽗 𡽗|𡾱 㟜|𡿖 𡿖|𢍰 𢍰|𢠼 𢠼|𢣐 𢣐|𢣚 𢘝|𢣭 𢣭|𢤩 𢤩|𢤱 𢤱|𢤿 𢤿|𢯷 𢯷|𢶒 𢶒|𢶫 𢫞|𢷮 𢷮|𢹿 𢬦|𢺳 𢺳|𣈶 暅|𣋋 𣋋|𣍐 𣍐|𣙎 㭣|𣜬 𣜬|𣝕 𣝕|𣞻 𣘓|𣠩 𣞎|𣠲 𣑶|𣯩 𣯩|𣯴 𣯴|𣯶 毶|𣽏 𣽏|𣾷 㳢|𣿉 𣿉|𤁣 𣺽|𤄷 𤄷|𤅶 𣷷|𤑳 𤑳|𤑹 𤑹|𤒎 𤒎|𤒻 𤒻|𤓌 𤓌|𤓎 𤓎|𤓩 𤊰|𤘀 𤘀|𤛮 𤛮|𤛱 𤛱|𤜆 𤜆|𤠮 𤠮|𤢟 𤢟|𤢻 𤢻|𤩂 𤩂|𤪺 㻘|𤫩 㻏|𤬅 𤬅|𤳷 𤳷|𤳸 𤳄|𤷃 𤷃|𤸫 𤸫|𤺔 𤺔|𥊝 𥅿|𥌃 𥅘|𥏝 𥏝|𥕥 𥐰|𥖅 𥐯|𥖲 𥖲|𥗇 𥗇|𥗽 𬒗|𥜐 𥜐|𥜰 𥜰|𥞵 𥞵|𥢢 䅪|𥢶 𥢶|𥢷 𥢷|𥨐 𥨐|𥪂 𥪂|𥯤 𥯤|𥴨 𥴨|𥴼 𥴼|𥵃 𥵃|𥵊 𥵊|𥶽 𥶽|𥸠 𥮋|𥻦 𥻦|𥼽 𥹥|𥽖 𥽖|𥾯 𥾯|𥿊 𥿊|𦀖 𦀖|𦂅 𦂅|𦃄 𦃄|𦃩 𦃩|𦅇 𦅇|𦅈 𦅈|𦆲 𦆲|𦒀 𦒀|𦔖 𦔖|𦘧 𡳒|𦟼 𦟼|𦠅 𦠅|𦡝 𦡝|𦢈 𦢈|𦣎 𦟗|𦧺 𦧺|𦪙 䑽|𦪽 𦪽|𦱌 𦱌|𦾟 𦾟|𧎈 𧎈|𧒯 𧒯|𧔥 𧔥|𧕟 𧕟|𧜗 䘞|𧜵 䙊|𧝞 䘛|𧞫 𧞫|𧟀 𧝧|𧡴 𧡴|𧢄 𧢄|𧦝 𧦝|𧦧 𧦧|𧩕 𧩕|𧩙 䜥|𧩼 𧩼|𧫝 𧫝|𧬤 𧬤|𧭈 𧭈|𧭹 𧭹|𧳟 𧳟|𧵳 䞌|𧶔 𧶔|𧶧 䞎|𧷎 𧷎|𧸘 𧸘|𧹈 𧹈|𧽯 𧽯|𨂐 𨂐|𨄣 𨄣|𨅍 𨅍|𨆪 𨆪|𨇁 𨇁|𨇞 𨇞|𨇤 𨇤|𨇰 𨇰|𨇽 𨇽|𨈊 𨈊|𨈌 𨈌|𨊰 䢀|𨊸 䢁|𨊻 𨊻|𨋢 䢂|𨌈 𨌈|𨍰 𨍰|𨎌 𨎌|𨎮 𨎮|𨏠 𨏠|𨏥 𨏥|𨞺 𨞺|𨟊 𨟊|𨢿 𨢿|𨣈 𨣈|𨣞 𨣞|𨣧 𨣧|𨤻 𨤰|𨥛 𨥛|𨥟 𨥟|𨦫 䦀|𨧀 𬭊|𨧜 䦁|𨧰 𨧰|𨧱 𨧱|𨨏 𬭛|𨨛 𨨛|𨨢 𨨢|𨩰 𨩰|𨪕 𨪕|𨫒 𨫒|𨬖 𨬖|𨭆 𬭶|𨭎 𬭳|𨭖 𨭖|𨭸 𨭸|𨮂 𨮂|𨮳 𨮳|𨯅 䥿|𨯟 𨯟|𨰃 𨰃|𨰋 𨰋|𨰥 𨰥|𨰲 𨰲|𨲳 𨲳|𨳑 𨳑|𨳕 𨳕|𨴗 𨴗|𨴹 𨴹|𨵩 𨵩|𨵸 𨵸|𨶀 𨶀|𨶏 𨶏|𨶮 𨶮|𨶲 𨶲|𨷲 𨷲|𨼳 𨼳|𨽏 𨽏|𩀨 𩀨|𩅙 𩅙|𩎖 𩎖|𩎢 𩎢|𩏂 𩏂|𩏠 𩏠|𩏪 𩏪|𩏷 𩏷|𩑔 𩑔|𩒎 𩒎|𩓣 𩓣|𩓥 𩓥|𩔑 𩔑|𩔳 𩔳|𩖰 𩖰|𩗀 𩗀|𩗓 𩗓|𩗴 𩗴|𩘀 𩘀|𩘝 𩘝|𩘹 𩘹|𩘺 𩘺|𩙈 𩙈|𩚛 𩚛|𩚥 𩚥|𩚩 𩚩|𩚵 𩚵|𩛆 𩛆|𩛌 𩛌|𩛡 𩛡|𩛩 𩛩|𩜇 𩜇|𩜦 𩜦|𩜵 𩜵|𩝔 𩝔|𩝽 𩝽|𩞄 𩞄|𩞦 𩞦|𩞯 䭪|𩟐 𩟐|𩟗 𩟗|𩠴 𩠠|𩡣 𩡣|𩡺 𩡺|𩢡 𩢡|𩢴 𩢴|𩢸 𩢸|𩢾 𩢾|𩣏 𩣏|𩣑 䯃|𩣫 𩣫|𩣵 𩣵|𩣺 𩣺|𩤊 𩤊|𩤙 𩤙|𩤲 𩤲|𩤸 𩤸|𩥄 𩥄|𩥇 𩥇|𩥉 𩥉|𩥑 𩥑|𩦠 𩦠|𩧆 𩧆|𩭙 𩭙|𩯁 𩯁|𩯳 𩯳|𩰀 𩰀|𩰹 𩰹|𩳤 𩳤|𩴵 𩴵|𩵦 𩵦|𩵩 𩵩|𩵹 𩵹|𩶁 𩶁|𩶘 䲞|𩶰 𩶰|𩶱 𩶱|𩷰 𩷰|𩸃 𩸃|𩸄 𩸄|𩸡 𩸡|𩸦 𩸦|𩻗 𩻗|𩻬 𩻬|𩻮 𩻮|𩼶 𩼶|𩽇 𩽇|𩿅 𩿅|𩿤 𩿤|𩿪 𩿪|𪀖 𪀖|𪀦 𪀦|𪀾 𪀾|𪁈 𪁈|𪁖 𪁖|𪂆 𪂆|𪃍 𪃍|𪃏 𪃏|𪃒 𪃒|𪃧 𪃧|𪄆 𪄆|𪄕 𪄕|𪅂 𪅂|𪆷 𪆷|𪇳 𪇳|𪈼 𪈼|𪉸 𪉸|𪋿 𪋿|𪌭 𪌭|𪍠 𪍠|𪓰 𪓰|𪔵 𪔵|𪘀 𪘀|𪘯 𪘯|𪙏 𪙏|𪟖 𪟖|𪷓 𪷓|𫒡 𫒡|𫜦 𫜦|𰻞 𰻝";
 	var cn_default = [[TSPhrases_default, TSCharacters_default]];
 	var CJK_Compatibility_Ideographs_default = "豈 豈|更 更|車 車|賈 賈|滑 滑|串 串|句 句|龜 龜|龜 龜|契 契|金 金|喇 喇|奈 奈|懶 懶|癩 癩|羅 羅|蘿 蘿|螺 螺|裸 裸|邏 邏|樂 樂|洛 洛|烙 烙|珞 珞|落 落|酪 酪|駱 駱|亂 亂|卵 卵|欄 欄|爛 爛|蘭 蘭|鸞 鸞|嵐 嵐|濫 濫|藍 藍|襤 襤|拉 拉|臘 臘|蠟 蠟|廊 廊|朗 朗|浪 浪|狼 狼|郎 郎|來 來|冷 冷|勞 勞|擄 擄|櫓 櫓|爐 爐|盧 盧|老 老|蘆 蘆|虜 虜|路 路|露 露|魯 魯|鷺 鷺|碌 碌|祿 祿|綠 綠|菉 菉|錄 錄|鹿 鹿|論 論|壟 壟|弄 弄|籠 籠|聾 聾|牢 牢|磊 磊|賂 賂|雷 雷|壘 壘|屢 屢|樓 樓|淚 淚|漏 漏|累 累|縷 縷|陋 陋|勒 勒|肋 肋|凜 凜|凌 凌|稜 稜|綾 綾|菱 菱|陵 陵|讀 讀|拏 拏|樂 樂|諾 諾|丹 丹|寧 寧|怒 怒|率 率|異 異|北 北|磻 磻|便 便|復 復|不 不|泌 泌|數 數|索 索|參 參|塞 塞|省 省|葉 葉|說 說|殺 殺|辰 辰|沈 沈|拾 拾|若 若|掠 掠|略 略|亮 亮|兩 兩|凉 凉|梁 梁|糧 糧|良 良|諒 諒|量 量|勵 勵|呂 呂|女 女|廬 廬|旅 旅|濾 濾|礪 礪|閭 閭|驪 驪|麗 麗|黎 黎|力 力|曆 曆|歷 歷|轢 轢|年 年|憐 憐|戀 戀|撚 撚|漣 漣|煉 煉|璉 璉|秊 秊|練 練|聯 聯|輦 輦|蓮 蓮|連 連|鍊 鍊|列 列|劣 劣|咽 咽|烈 烈|裂 裂|說 說|廉 廉|念 念|捻 捻|殮 殮|簾 簾|獵 獵|令 令|囹 囹|寧 寧|嶺 嶺|怜 怜|玲 玲|瑩 瑩|羚 羚|聆 聆|鈴 鈴|零 零|靈 靈|領 領|例 例|禮 禮|醴 醴|隸 隸|惡 惡|了 了|僚 僚|寮 寮|尿 尿|料 料|樂 樂|燎 燎|療 療|蓼 蓼|遼 遼|龍 龍|暈 暈|阮 阮|劉 劉|杻 杻|柳 柳|流 流|溜 溜|琉 琉|留 留|硫 硫|紐 紐|類 類|六 六|戮 戮|陸 陸|倫 倫|崙 崙|淪 淪|輪 輪|律 律|慄 慄|栗 栗|率 率|隆 隆|利 利|吏 吏|履 履|易 易|李 李|梨 梨|泥 泥|理 理|痢 痢|罹 罹|裏 裏|裡 裡|里 里|離 離|匿 匿|溺 溺|吝 吝|燐 燐|璘 璘|藺 藺|隣 隣|鱗 鱗|麟 麟|林 林|淋 淋|臨 臨|立 立|笠 笠|粒 粒|狀 狀|炙 炙|識 識|什 什|茶 茶|刺 刺|切 切|度 度|拓 拓|糖 糖|宅 宅|洞 洞|暴 暴|輻 輻|行 行|降 降|見 見|廓 廓|兀 兀|嗀 嗀|塚 塚|晴 晴|凞 凞|猪 猪|益 益|礼 礼|神 神|祥 祥|福 福|靖 靖|精 精|羽 羽|蘒 蘒|諸 諸|逸 逸|都 都|飯 飯|飼 飼|館 館|鶴 鶴|郞 郞|隷 隷|侮 侮|僧 僧|免 免|勉 勉|勤 勤|卑 卑|喝 喝|嘆 嘆|器 器|塀 塀|墨 墨|層 層|屮 屮|悔 悔|慨 慨|憎 憎|懲 懲|敏 敏|既 既|暑 暑|梅 梅|海 海|渚 渚|漢 漢|煮 煮|爫 爫|琢 琢|碑 碑|社 社|祉 祉|祈 祈|祐 祐|祖 祖|祝 祝|禍 禍|禎 禎|穀 穀|突 突|節 節|練 練|縉 縉|繁 繁|署 署|者 者|臭 臭|艹 艹|艹 艹|著 著|褐 褐|視 視|謁 謁|謹 謹|賓 賓|贈 贈|辶 辶|逸 逸|難 難|響 響|頻 頻|恵 恵|𤋮 𤋮|舘 舘|並 並|况 况|全 全|侀 侀|充 充|冀 冀|勇 勇|勺 勺|喝 喝|啕 啕|喙 喙|嗢 嗢|塚 塚|墳 墳|奄 奄|奔 奔|婢 婢|嬨 嬨|廒 廒|廙 廙|彩 彩|徭 徭|惘 惘|慎 慎|愈 愈|憎 憎|慠 慠|懲 懲|戴 戴|揄 揄|搜 搜|摒 摒|敖 敖|晴 晴|朗 朗|望 望|杖 杖|歹 歹|殺 殺|流 流|滛 滛|滋 滋|漢 漢|瀞 瀞|煮 煮|瞧 瞧|爵 爵|犯 犯|猪 猪|瑱 瑱|甆 甆|画 画|瘝 瘝|瘟 瘟|益 益|盛 盛|直 直|睊 睊|着 着|磌 磌|窱 窱|節 節|类 类|絛 絛|練 練|缾 缾|者 者|荒 荒|華 華|蝹 蝹|襁 襁|覆 覆|視 視|調 調|諸 諸|請 請|謁 謁|諾 諾|諭 諭|謹 謹|變 變|贈 贈|輸 輸|遲 遲|醙 醙|鉶 鉶|陼 陼|難 難|靖 靖|韛 韛|響 響|頋 頋|頻 頻|鬒 鬒|龜 龜|𢡊 𢡊|𢡄 𢡄|𣏕 𣏕|㮝 㮝|䀘 䀘|䀹 䀹|𥉉 𥉉|𥳐 𥳐|𧻓 𧻓|齃 齃|龎 龎|丽 丽|丸 丸|乁 乁|𠄢 𠄢|你 你|侮 侮|侻 侻|倂 倂|偺 偺|備 備|僧 僧|像 像|㒞 㒞|𠘺 𠘺|免 免|兔 兔|兤 兤|具 具|𠔜 𠔜|㒹 㒹|內 內|再 再|𠕋 𠕋|冗 冗|冤 冤|仌 仌|冬 冬|况 况|𩇟 𩇟|凵 凵|刃 刃|㓟 㓟|刻 刻|剆 剆|割 割|剷 剷|㔕 㔕|勇 勇|勉 勉|勤 勤|勺 勺|包 包|匆 匆|北 北|卉 卉|卑 卑|博 博|即 即|卽 卽|卿 卿|卿 卿|卿 卿|𠨬 𠨬|灰 灰|及 及|叟 叟|𠭣 𠭣|叫 叫|叱 叱|吆 吆|咞 咞|吸 吸|呈 呈|周 周|咢 咢|哶 哶|唐 唐|啓 啓|啣 啣|善 善|善 善|喙 喙|喫 喫|喳 喳|嗂 嗂|圖 圖|嘆 嘆|圗 圗|噑 噑|噴 噴|切 切|壮 壮|城 城|埴 埴|堍 堍|型 型|堲 堲|報 報|墬 墬|𡓤 𡓤|売 売|壷 壷|夆 夆|多 多|夢 夢|奢 奢|𡚨 𡚨|𡛪 𡛪|姬 姬|娛 娛|娧 娧|姘 姘|婦 婦|㛮 㛮|㛼 㛼|嬈 嬈|嬾 嬾|嬾 嬾|𡧈 𡧈|寃 寃|寘 寘|寧 寧|寳 寳|𡬘 𡬘|寿 寿|将 将|当 当|尢 尢|㞁 㞁|屠 屠|屮 屮|峀 峀|岍 岍|𡷤 𡷤|嵃 嵃|𡷦 𡷦|嵮 嵮|嵫 嵫|嵼 嵼|巡 巡|巢 巢|㠯 㠯|巽 巽|帨 帨|帽 帽|幩 幩|㡢 㡢|𢆃 𢆃|㡼 㡼|庰 庰|庳 庳|庶 庶|廊 廊|𪎒 𪎒|廾 廾|𢌱 𢌱|𢌱 𢌱|舁 舁|弢 弢|弢 弢|㣇 㣇|𣊸 𣊸|𦇚 𦇚|形 形|彫 彫|㣣 㣣|徚 徚|忍 忍|志 志|忹 忹|悁 悁|㤺 㤺|㤜 㤜|悔 悔|𢛔 𢛔|惇 惇|慈 慈|慌 慌|慎 慎|慌 慌|慺 慺|憎 憎|憲 憲|憤 憤|憯 憯|懞 懞|懲 懲|懶 懶|成 成|戛 戛|扝 扝|抱 抱|拔 拔|捐 捐|𢬌 𢬌|挽 挽|拼 拼|捨 捨|掃 掃|揤 揤|𢯱 𢯱|搢 搢|揅 揅|掩 掩|㨮 㨮|摩 摩|摾 摾|撝 撝|摷 摷|㩬 㩬|敏 敏|敬 敬|𣀊 𣀊|旣 旣|書 書|晉 晉|㬙 㬙|暑 暑|㬈 㬈|㫤 㫤|冒 冒|冕 冕|最 最|暜 暜|肭 肭|䏙 䏙|朗 朗|望 望|朡 朡|杞 杞|杓 杓|𣏃 𣏃|㭉 㭉|柺 柺|枅 枅|桒 桒|梅 梅|𣑭 𣑭|梎 梎|栟 栟|椔 椔|㮝 㮝|楂 楂|榣 榣|槪 槪|檨 檨|𣚣 𣚣|櫛 櫛|㰘 㰘|次 次|𣢧 𣢧|歔 歔|㱎 㱎|歲 歲|殟 殟|殺 殺|殻 殻|𣪍 𣪍|𡴋 𡴋|𣫺 𣫺|汎 汎|𣲼 𣲼|沿 沿|泍 泍|汧 汧|洖 洖|派 派|海 海|流 流|浩 浩|浸 浸|涅 涅|𣴞 𣴞|洴 洴|港 港|湮 湮|㴳 㴳|滋 滋|滇 滇|𣻑 𣻑|淹 淹|潮 潮|𣽞 𣽞|𣾎 𣾎|濆 濆|瀹 瀹|瀞 瀞|瀛 瀛|㶖 㶖|灊 灊|災 災|灷 灷|炭 炭|𠔥 𠔥|煅 煅|𤉣 𤉣|熜 熜|𤎫 𤎫|爨 爨|爵 爵|牐 牐|𤘈 𤘈|犀 犀|犕 犕|𤜵 𤜵|𤠔 𤠔|獺 獺|王 王|㺬 㺬|玥 玥|㺸 㺸|㺸 㺸|瑇 瑇|瑜 瑜|瑱 瑱|璅 璅|瓊 瓊|㼛 㼛|甤 甤|𤰶 𤰶|甾 甾|𤲒 𤲒|異 異|𢆟 𢆟|瘐 瘐|𤾡 𤾡|𤾸 𤾸|𥁄 𥁄|㿼 㿼|䀈 䀈|直 直|𥃳 𥃳|𥃲 𥃲|𥄙 𥄙|𥄳 𥄳|眞 眞|真 真|真 真|睊 睊|䀹 䀹|瞋 瞋|䁆 䁆|䂖 䂖|𥐝 𥐝|硎 硎|碌 碌|磌 磌|䃣 䃣|𥘦 𥘦|祖 祖|𥚚 𥚚|𥛅 𥛅|福 福|秫 秫|䄯 䄯|穀 穀|穊 穊|穏 穏|𥥼 𥥼|𥪧 𥪧|𥪧 𥪧|竮 竮|䈂 䈂|𥮫 𥮫|篆 篆|築 築|䈧 䈧|𥲀 𥲀|糒 糒|䊠 䊠|糨 糨|糣 糣|紀 紀|𥾆 𥾆|絣 絣|䌁 䌁|緇 緇|縂 縂|繅 繅|䌴 䌴|𦈨 𦈨|𦉇 𦉇|䍙 䍙|𦋙 𦋙|罺 罺|𦌾 𦌾|羕 羕|翺 翺|者 者|𦓚 𦓚|𦔣 𦔣|聠 聠|𦖨 𦖨|聰 聰|𣍟 𣍟|䏕 䏕|育 育|脃 脃|䐋 䐋|脾 脾|媵 媵|𦞧 𦞧|𦞵 𦞵|𣎓 𣎓|𣎜 𣎜|舁 舁|舄 舄|辞 辞|䑫 䑫|芑 芑|芋 芋|芝 芝|劳 劳|花 花|芳 芳|芽 芽|苦 苦|𦬼 𦬼|若 若|茝 茝|荣 荣|莭 莭|茣 茣|莽 莽|菧 菧|著 著|荓 荓|菊 菊|菌 菌|菜 菜|𦰶 𦰶|𦵫 𦵫|𦳕 𦳕|䔫 䔫|蓱 蓱|蓳 蓳|蔖 蔖|𧏊 𧏊|蕤 蕤|𦼬 𦼬|䕝 䕝|䕡 䕡|𦾱 𦾱|𧃒 𧃒|䕫 䕫|虐 虐|虜 虜|虧 虧|虩 虩|蚩 蚩|蚈 蚈|蜎 蜎|蛢 蛢|蝹 蝹|蜨 蜨|蝫 蝫|螆 螆|䗗 䗗|蟡 蟡|蠁 蠁|䗹 䗹|衠 衠|衣 衣|𧙧 𧙧|裗 裗|裞 裞|䘵 䘵|裺 裺|㒻 㒻|𧢮 𧢮|𧥦 𧥦|䚾 䚾|䛇 䛇|誠 誠|諭 諭|變 變|豕 豕|𧲨 𧲨|貫 貫|賁 賁|贛 贛|起 起|𧼯 𧼯|𠠄 𠠄|跋 跋|趼 趼|跰 跰|𠣞 𠣞|軔 軔|輸 輸|𨗒 𨗒|𨗭 𨗭|邔 邔|郱 郱|鄑 鄑|𨜮 𨜮|鄛 鄛|鈸 鈸|鋗 鋗|鋘 鋘|鉼 鉼|鏹 鏹|鐕 鐕|𨯺 𨯺|開 開|䦕 䦕|閷 閷|𨵷 𨵷|䧦 䧦|雃 雃|嶲 嶲|霣 霣|𩅅 𩅅|𩈚 𩈚|䩮 䩮|䩶 䩶|韠 韠|𩐊 𩐊|䪲 䪲|𩒖 𩒖|頋 頋|頋 頋|頩 頩|𩖶 𩖶|飢 飢|䬳 䬳|餩 餩|馧 馧|駂 駂|駾 駾|䯎 䯎|𩬰 𩬰|鬒 鬒|鱀 鱀|鳽 鳽|䳎 䳎|䳭 䳭|鵧 鵧|𪃎 𪃎|䳸 䳸|𪄅 𪄅|𪈎 𪈎|𪊑 𪊑|麻 麻|䵖 䵖|黹 黹|黾 黾|鼅 鼅|鼏 鼏|鼖 鼖|鼻 鼻|𪘀 𪘀";
@@ -19499,8 +19643,10 @@ ul, ol {
 		});
 		trimCachedContents(ctx.cachedContents.value, 500);
 		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-		if (!ctx.history.value.includes(parsed.url)) if (load.isNext) ctx.history.value.push(parsed.url);
-		else ctx.history.value.unshift(parsed.url);
+		if (!ctx.history.value.includes(parsed.url)) {
+			if (load.isNext) ctx.history.value.push(parsed.url);
+			else ctx.history.value.unshift(parsed.url);
+		}
 		trimDisplayChapters(ctx, load.isNext);
 		return true;
 	}
@@ -19665,8 +19811,10 @@ ul, ol {
 			return null;
 		}
 		const targetUrl = normalizeUrlForFetch(rawTargetUrl);
-		if (targetUrl !== rawTargetUrl) if (isNext) refChapter.chapter.nextUrl = targetUrl;
-		else refChapter.chapter.prevUrl = targetUrl;
+		if (targetUrl !== rawTargetUrl) {
+			if (isNext) refChapter.chapter.nextUrl = targetUrl;
+			else refChapter.chapter.prevUrl = targetUrl;
+		}
 		if (refChapter.chapter.indexUrl && normalizeUrl(targetUrl) === normalizeUrl(refChapter.chapter.indexUrl)) {
 			if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(normalizeUrlForBlock(targetUrl));
 			if (source === "manual") ctx.showToast(endMessage, "info");
@@ -21034,7 +21182,8 @@ ul, ol {
 			configStore.reading?.maxWidth,
 			configStore.reading?.padding,
 			configStore.reading?.textConversion,
-			configStore.customCSS
+			configStore.customCSS,
+			configStore.customCleanupRegex
 		], () => {
 			queueLayoutInvalidation();
 		}, { flush: "post" });
@@ -21940,6 +22089,52 @@ ul, ol {
 			};
 		}
 	}), [["__scopeId", "data-v-e6745e69"]]);
+	function compileCustomParagraphFilters(source) {
+		const patterns = [];
+		const errors = [];
+		let ruleCount = 0;
+		for (const [index, rawLine] of source.split(/\r?\n/u).entries()) {
+			const patternSource = rawLine.trim();
+			if (!patternSource) continue;
+			ruleCount += 1;
+			if (ruleCount > 20) {
+				errors.push({
+					line: index + 1,
+					message: `最多支持 20 条规则`
+				});
+				break;
+			}
+			if (patternSource.length > 256) {
+				errors.push({
+					line: index + 1,
+					message: `单条规则不能超过 256 个字符`
+				});
+				continue;
+			}
+			try {
+				patterns.push(new RegExp(patternSource, "iu"));
+			} catch {
+				errors.push({
+					line: index + 1,
+					message: "不是有效的正则表达式"
+				});
+			}
+		}
+		return {
+			patterns,
+			errors
+		};
+	}
+	function filterCustomParagraphs(html, patterns) {
+		if (!html || patterns.length === 0) return html;
+		const template = document.createElement("template");
+		template.innerHTML = html;
+		for (const paragraph of template.content.querySelectorAll("p")) {
+			const text = (paragraph.textContent || "").replace(/\s+/gu, " ").trim();
+			if (patterns.some((pattern) => pattern.test(text))) paragraph.remove();
+		}
+		return template.innerHTML;
+	}
 	var _hoisted_1$1 = { class: "mnr-settings-header" };
 	var _hoisted_2$1 = { class: "mnr-settings-content" };
 	var _hoisted_3$1 = {
@@ -21979,7 +22174,18 @@ ul, ol {
 	var _hoisted_31 = ["aria-pressed"];
 	var _hoisted_32 = ["aria-pressed"];
 	var _hoisted_33 = ["value"];
-	var _hoisted_34 = { class: "mnr-settings-footer" };
+	var _hoisted_34 = [
+		"aria-describedby",
+		"aria-invalid",
+		"value"
+	];
+	var _hoisted_35 = {
+		key: 0,
+		id: "mnr-custom-cleanup-error",
+		class: "mnr-field-error",
+		role: "status"
+	};
+	var _hoisted_36 = { class: "mnr-settings-footer" };
 	var SettingsPanel_default = _plugin_vue_export_helper_default(defineComponent({
 		__name: "SettingsPanel",
 		props: {
@@ -22003,6 +22209,8 @@ ul, ol {
 			const configStore = useConfigStore();
 			const panelRef = ref(null);
 			const titleRef = ref(null);
+			const customCleanupErrors = computed(() => compileCustomParagraphFilters(configStore.customCleanupRegex).errors);
+			const customCleanupErrorMessage = computed(() => customCleanupErrors.value.map((error) => `第 ${error.line} 行：${error.message}`).join("；"));
 			const themes = THEMES;
 			const conversionOptions = [
 				{
@@ -22090,6 +22298,9 @@ ul, ol {
 			}
 			function updateCustomCSS(event) {
 				configStore.setCustomCSS(event.currentTarget.value);
+			}
+			function updateCustomCleanupRegex(event) {
+				configStore.setCustomCleanupRegex(event.currentTarget.value);
 			}
 			function resetAppearance() {
 				configStore.setTheme("system");
@@ -22280,7 +22491,7 @@ ul, ol {
 									onChange: _cache[10] || (_cache[10] = ($event) => updateBehavior("swipeGestures", $event))
 								}, null, 40, _hoisted_24)])
 							])]),
-							createBaseVNode("details", _hoisted_25, [_cache[30] || (_cache[30] = createBaseVNode("summary", null, "本站与高级", -1)), createBaseVNode("div", _hoisted_26, [
+							createBaseVNode("details", _hoisted_25, [_cache[32] || (_cache[32] = createBaseVNode("summary", null, "本站与高级", -1)), createBaseVNode("div", _hoisted_26, [
 								createBaseVNode("label", _hoisted_27, [_cache[27] || (_cache[27] = createBaseVNode("span", null, "在本站自动开启", -1)), createBaseVNode("input", {
 									type: "checkbox",
 									checked: __props.siteAutoEnable,
@@ -22308,13 +22519,33 @@ ul, ol {
 									value: unref(configStore).customCSS,
 									onInput: updateCustomCSS
 								}, null, 40, _hoisted_33),
+								_cache[30] || (_cache[30] = createBaseVNode("label", {
+									class: "mnr-field-label",
+									for: "mnr-custom-cleanup-regex"
+								}, "自定义正则清理", -1)),
+								_cache[31] || (_cache[31] = createBaseVNode("p", {
+									id: "mnr-custom-cleanup-help",
+									class: "mnr-field-help"
+								}, " 每行一条，匹配段落文本后删除整段；无需填写 /.../ 标记。最多 20 条，每条 256 字符。 ", -1)),
+								createBaseVNode("textarea", {
+									id: "mnr-custom-cleanup-regex",
+									class: "mnr-custom-css",
+									rows: "4",
+									spellcheck: "false",
+									"aria-describedby": customCleanupErrors.value.length > 0 ? "mnr-custom-cleanup-help mnr-custom-cleanup-error" : "mnr-custom-cleanup-help",
+									"aria-invalid": customCleanupErrors.value.length > 0,
+									placeholder: "小说免费阅读，请收藏.*【1qxs\\.com】",
+									value: unref(configStore).customCleanupRegex,
+									onInput: updateCustomCleanupRegex
+								}, null, 40, _hoisted_34),
+								customCleanupErrors.value.length > 0 ? (openBlock(), createElementBlock("p", _hoisted_35, toDisplayString(customCleanupErrorMessage.value), 1)) : createCommentVNode("", true),
 								createBaseVNode("button", {
 									class: "mnr-secondary-action",
 									onClick: _cache[13] || (_cache[13] = ($event) => emit("copyDiagnostics"))
 								}, " 复制诊断信息 ")
 							])])
 						]),
-						createBaseVNode("footer", _hoisted_34, [createBaseVNode("button", {
+						createBaseVNode("footer", _hoisted_36, [createBaseVNode("button", {
 							class: "mnr-exit-btn",
 							onClick: _cache[14] || (_cache[14] = ($event) => emit("exit"))
 						}, "退出阅读模式")])
@@ -22323,7 +22554,7 @@ ul, ol {
 				});
 			};
 		}
-	}), [["__scopeId", "data-v-b6f5c36f"]]);
+	}), [["__scopeId", "data-v-3c6f7934"]]);
 	var _hoisted_1 = ["inert"];
 	var _hoisted_2 = {
 		key: 0,
@@ -22374,6 +22605,14 @@ ul, ol {
 			const contentLang = computed(() => {
 				if (readerStore.currentConversionMode === "sc") return "zh-CN";
 				if (readerStore.currentConversionMode === "tc") return "zh-TW";
+			});
+			const compiledCustomParagraphFilters = computed(() => compileCustomParagraphFilters(configStore.customCleanupRegex).patterns);
+			const displayChapters = computed(() => {
+				const patterns = compiledCustomParagraphFilters.value;
+				return readerStore.chapters.map((entry) => ({
+					...entry,
+					displayContent: filterCustomParagraphs(entry.chapter.content, patterns)
+				}));
 			});
 			const { scheduleAutoLoadNext, observeBottomSentinel } = useReaderAutoLoad({
 				mainRef,
@@ -22663,7 +22902,7 @@ ul, ol {
 						inert: unref(hasOpenPanel)
 					}, [
 						unref(readerStore).isLoadingPrev ? (openBlock(), createElementBlock("div", _hoisted_2, [createVNode(unref(MnrSpinner_default), { size: "small" }), _cache[3] || (_cache[3] = createBaseVNode("span", null, "加载上一章...", -1))])) : createCommentVNode("", true),
-						(openBlock(true), createElementBlock(Fragment, null, renderList(unref(readerStore).chapters, (entry) => {
+						(openBlock(true), createElementBlock(Fragment, null, renderList(displayChapters.value, (entry) => {
 							return openBlock(), createElementBlock("article", {
 								key: entry.id,
 								ref_for: true,
@@ -22672,7 +22911,7 @@ ul, ol {
 								"data-chapter-url": entry.chapter.url,
 								lang: contentLang.value,
 								onClick: handleContentClick
-							}, [createBaseVNode("h1", _hoisted_4, toDisplayString(entry.chapter.title), 1), createBaseVNode("div", { innerHTML: entry.chapter.content }, null, 8, _hoisted_5)], 8, _hoisted_3);
+							}, [createBaseVNode("h1", _hoisted_4, toDisplayString(entry.chapter.title), 1), createBaseVNode("div", { innerHTML: entry.displayContent }, null, 8, _hoisted_5)], 8, _hoisted_3);
 						}), 128)),
 						createBaseVNode("div", {
 							ref_key: "bottomSentinel",
@@ -22719,7 +22958,7 @@ ul, ol {
 				], 32);
 			};
 		}
-	}), [["__scopeId", "data-v-29397740"]]);
+	}), [["__scopeId", "data-v-5e07b464"]]);
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -23139,6 +23378,6 @@ ul, ol {
 			} catch (e) {
 				console.error("[MNR] CSS injection error:", e);
 			}
-		})(".mnr-reader-entry[data-v-e6dad6e3]{right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));z-index:2147483646;background:var(--mnr-link,#1976d2);min-width:48px;height:48px;color:var(--mnr-on-link,#fff);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;border-radius:24px;justify-content:center;align-items:center;gap:8px;margin:0;padding:0 16px;font-size:14px;font-weight:600;line-height:1;transition:transform .18s,filter .18s,box-shadow .18s;animation:.2s ease-out mnr-entry-in-e6dad6e3;display:flex;position:fixed;box-shadow:0 6px 18px #0003}.mnr-reader-entry svg[data-v-e6dad6e3]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:0 0 24px;width:24px;height:24px}.mnr-reader-entry span[data-v-e6dad6e3]{white-space:nowrap}.mnr-reader-entry[data-v-e6dad6e3]:active{transform:scale(.96)}.mnr-reader-entry[data-v-e6dad6e3]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 48%, #fff);outline-offset:3px}@media (hover:hover){.mnr-reader-entry[data-v-e6dad6e3]:hover{filter:brightness(.94);transform:translateY(-2px);box-shadow:0 8px 22px #0000003d}}@media (width<=480px){.mnr-reader-entry[data-v-e6dad6e3]{width:48px;padding:0}.mnr-reader-entry span[data-v-e6dad6e3]{display:none}}@keyframes mnr-entry-in-e6dad6e3{0%{opacity:0;transform:translateY(8px)scale(.96)}}@media (prefers-reduced-motion:reduce){.mnr-reader-entry[data-v-e6dad6e3]{transition:none;animation:none}}.mnr-entry-prompt-overlay[data-v-2c14cbfa]{z-index:2147483647;padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));background:#00000085;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.mnr-entry-prompt-card[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:var(--mnr-bg,#fff);width:min(100%,400px);max-height:calc(100dvh - 32px);color:var(--mnr-text,#333);border-radius:14px;padding:24px;animation:.24s ease-out mnr-entry-prompt-in-2c14cbfa;overflow:auto;box-shadow:0 18px 50px #00000047}.mnr-entry-prompt-header[data-v-2c14cbfa]{align-items:flex-start;gap:14px;display:flex}.mnr-entry-prompt-icon[data-v-2c14cbfa]{background:color-mix(in srgb, var(--mnr-link,#1976d2) 12%, transparent);width:44px;height:44px;color:var(--mnr-link,#1976d2);border-radius:12px;flex:0 0 44px;place-items:center;display:grid}.mnr-entry-prompt-icon svg[data-v-2c14cbfa]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:26px;height:26px}.mnr-entry-prompt-header h3[data-v-2c14cbfa]{margin:1px 0 6px;font-size:18px;font-weight:700;line-height:1.4}.mnr-entry-prompt-header p[data-v-2c14cbfa]{opacity:.76;margin:0;font-size:14px;line-height:1.65}.mnr-entry-preference[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:color-mix(in srgb, var(--mnr-border,#e0e0e0) 34%, transparent);cursor:pointer;border-radius:10px;align-items:flex-start;gap:10px;margin:22px 0;padding:13px 14px;display:flex}.mnr-entry-preference input[data-v-2c14cbfa]{width:20px;height:20px;accent-color:var(--mnr-link,#1976d2);flex:0 0 20px;margin:1px 0 0}.mnr-entry-preference span[data-v-2c14cbfa],.mnr-entry-preference strong[data-v-2c14cbfa],.mnr-entry-preference small[data-v-2c14cbfa]{display:block}.mnr-entry-preference strong[data-v-2c14cbfa]{font-size:14px;font-weight:600}.mnr-entry-preference small[data-v-2c14cbfa]{opacity:.68;margin-top:3px;font-size:12px;line-height:1.5}.mnr-entry-prompt-actions[data-v-2c14cbfa]{grid-template-columns:1fr 1.25fr;gap:10px;display:grid}.mnr-entry-button[data-v-2c14cbfa]{cursor:pointer;border:1px solid #0000;border-radius:9px;min-height:44px;padding:10px 14px;font-size:14px;font-weight:600;transition:filter .18s,background .18s}.mnr-entry-button.secondary[data-v-2c14cbfa]{border-color:var(--mnr-border,#ddd);color:var(--mnr-text,#555);background:0 0}.mnr-entry-button.primary[data-v-2c14cbfa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-entry-button[data-v-2c14cbfa]:focus-visible,.mnr-entry-preference input[data-v-2c14cbfa]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}@media (hover:hover){.mnr-entry-button[data-v-2c14cbfa]:hover{filter:brightness(.94)}.mnr-entry-button.secondary[data-v-2c14cbfa]:hover{background:var(--mnr-border,#f0f0f0)}}.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:opacity .24s}.mnr-entry-prompt-fade-enter-from[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-to[data-v-2c14cbfa]{opacity:0}@keyframes mnr-entry-prompt-in-2c14cbfa{0%{opacity:0;transform:translateY(12px)scale(.98)}}@media (width<=480px){.mnr-entry-prompt-card[data-v-2c14cbfa]{padding:20px}.mnr-entry-prompt-header[data-v-2c14cbfa]{gap:12px}.mnr-entry-prompt-icon[data-v-2c14cbfa]{flex-basis:40px;width:40px;height:40px}}@media (prefers-reduced-motion:reduce){.mnr-entry-prompt-card[data-v-2c14cbfa],.mnr-entry-button[data-v-2c14cbfa],.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-aeddb985]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-aeddb985]{transform:translate(0)}.mnr-drawer-overlay[data-v-aeddb985]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-aeddb985]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-aeddb985]{min-width:0}.mnr-drawer-title[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-aeddb985]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-aeddb985]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-offline-section[data-v-aeddb985]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;padding:10px 12px 12px}.mnr-offline-main[data-v-aeddb985]{justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-offline-copy[data-v-aeddb985]{min-width:0}.mnr-offline-copy strong[data-v-aeddb985],.mnr-offline-copy span[data-v-aeddb985]{display:block}.mnr-offline-copy strong[data-v-aeddb985]{font-size:13px;font-weight:600}.mnr-offline-copy span[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.7;margin-top:2px;font-size:12px}.mnr-offline-action[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);min-height:36px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600}.mnr-offline-action.primary[data-v-aeddb985]{border-color:var(--mnr-link,#1976d2);background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);flex:none}.mnr-offline-action.danger[data-v-aeddb985]{color:var(--mnr-text,#555)}.mnr-offline-secondary[data-v-aeddb985]{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.mnr-drawer-state[data-v-aeddb985]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-aeddb985]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-aeddb985]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;margin-top:10px;overflow:hidden}.mnr-cache-progress-fill[data-v-aeddb985]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-chapter-list[data-v-aeddb985]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-aeddb985]{height:44px}.mnr-chapter-button[data-v-aeddb985]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-aeddb985]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.persisted[data-v-aeddb985],.mnr-cache-mark[data-v-aeddb985]{color:#388e3c}.mnr-cache-mark[data-v-aeddb985]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-aeddb985]:hover,.mnr-chapter-button[data-v-aeddb985]:hover,.mnr-offline-action[data-v-aeddb985]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-offline-action.primary[data-v-aeddb985]:hover{background:var(--mnr-link,#1976d2);filter:brightness(.94)}.mnr-drawer-close[data-v-aeddb985]:focus-visible,.mnr-drawer-search input[data-v-aeddb985]:focus-visible,.mnr-offline-action[data-v-aeddb985]:focus-visible,.mnr-chapter-button[data-v-aeddb985]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-aeddb985]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985]{transition:opacity .24s}.mnr-fade-enter-from[data-v-aeddb985],.mnr-fade-leave-to[data-v-aeddb985]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-aeddb985],.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985],.mnr-cache-progress-fill[data-v-aeddb985]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-b6f5c36f]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-b6f5c36f]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-b6f5c36f]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-b6f5c36f],.mnr-settings-section h4[data-v-b6f5c36f],.mnr-field-label[data-v-b6f5c36f]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-b6f5c36f]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-b6f5c36f]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-b6f5c36f]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-b6f5c36f]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-b6f5c36f],.mnr-field-label[data-v-b6f5c36f],.mnr-settings-fieldset legend[data-v-b6f5c36f]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-b6f5c36f]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-b6f5c36f]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-b6f5c36f]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-b6f5c36f]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-b6f5c36f]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-b6f5c36f]{margin-top:18px}.mnr-select[data-v-b6f5c36f]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-b6f5c36f]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-b6f5c36f]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-b6f5c36f]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-b6f5c36f]:last-child{border-right:0}.mnr-segment.active[data-v-b6f5c36f]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-b6f5c36f]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-b6f5c36f]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-b6f5c36f]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-b6f5c36f]{padding-bottom:4px}.mnr-settings-group-content[data-v-b6f5c36f]>:first-child{margin-top:0}.mnr-switch-row[data-v-b6f5c36f]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-b6f5c36f]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-b6f5c36f]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-settings-footer[data-v-b6f5c36f]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-b6f5c36f]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-b6f5c36f]:hover,.mnr-secondary-action[data-v-b6f5c36f]:hover,.mnr-segment[data-v-b6f5c36f]:hover,.mnr-exit-btn[data-v-b6f5c36f]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-b6f5c36f]:focus-visible,.mnr-close-btn[data-v-b6f5c36f]:focus-visible,.mnr-theme-btn[data-v-b6f5c36f]:focus-visible,.mnr-select[data-v-b6f5c36f]:focus-visible,.mnr-segment[data-v-b6f5c36f]:focus-visible,.mnr-secondary-action[data-v-b6f5c36f]:focus-visible,.mnr-settings-group summary[data-v-b6f5c36f]:focus-visible,.mnr-switch-row input[data-v-b6f5c36f]:focus-visible,.mnr-custom-css[data-v-b6f5c36f]:focus-visible,.mnr-exit-btn[data-v-b6f5c36f]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-b6f5c36f],.mnr-slide-leave-active[data-v-b6f5c36f],.mnr-settings-panel[data-v-b6f5c36f]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-b6f5c36f],.mnr-slide-leave-to[data-v-b6f5c36f]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-b6f5c36f],.mnr-slide-leave-to .mnr-settings-panel[data-v-b6f5c36f]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-b6f5c36f]{width:100%}.mnr-reading-preview[data-v-b6f5c36f]{display:block}.mnr-desktop-width[data-v-b6f5c36f]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-b6f5c36f],.mnr-slide-leave-active[data-v-b6f5c36f],.mnr-settings-panel[data-v-b6f5c36f]{transition:none}}.mnr-reader[data-v-29397740]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-29397740]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;touch-action:pan-y pinch-zoom;flex:1;overflow:auto}.mnr-boundary-gesture-hint[data-v-29397740]{z-index:4;background:color-mix(in srgb, var(--mnr-text,#1a1a1a) 86%, transparent);max-width:calc(100vw - 32px);color:var(--mnr-bg,#fff);white-space:nowrap;pointer-events:none;border-radius:999px;padding:8px 14px;font-size:14px;line-height:1.4;position:fixed;left:50%;transform:translate(-50%)}.mnr-boundary-gesture-hint.is-prev[data-v-29397740]{top:max(16px, env(safe-area-inset-top))}.mnr-boundary-gesture-hint.is-next[data-v-29397740]{bottom:max(16px, env(safe-area-inset-bottom))}.mnr-reader-content[data-v-29397740]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-29397740] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-29397740] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-29397740] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-29397740]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-29397740]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-29397740]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-29397740]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-29397740]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-29397740]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-29397740]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-29397740]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-29397740],.mnr-loading-next[data-v-29397740]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-29397740]{padding:var(--mnr-padding,30px)}}@media (width>=1024px){.mnr-reader-content[data-v-29397740]{padding:var(--mnr-padding,40px)}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-29397740]{transition:none}}\n/*$vite$:1*/", {});
+		})(".mnr-reader-entry[data-v-e6dad6e3]{right:max(20px, env(safe-area-inset-right));bottom:max(20px, env(safe-area-inset-bottom));z-index:2147483646;background:var(--mnr-link,#1976d2);min-width:48px;height:48px;color:var(--mnr-on-link,#fff);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;border-radius:24px;justify-content:center;align-items:center;gap:8px;margin:0;padding:0 16px;font-size:14px;font-weight:600;line-height:1;transition:transform .18s,filter .18s,box-shadow .18s;animation:.2s ease-out mnr-entry-in-e6dad6e3;display:flex;position:fixed;box-shadow:0 6px 18px #0003}.mnr-reader-entry svg[data-v-e6dad6e3]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:0 0 24px;width:24px;height:24px}.mnr-reader-entry span[data-v-e6dad6e3]{white-space:nowrap}.mnr-reader-entry[data-v-e6dad6e3]:active{transform:scale(.96)}.mnr-reader-entry[data-v-e6dad6e3]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 48%, #fff);outline-offset:3px}@media (hover:hover){.mnr-reader-entry[data-v-e6dad6e3]:hover{filter:brightness(.94);transform:translateY(-2px);box-shadow:0 8px 22px #0000003d}}@media (width<=480px){.mnr-reader-entry[data-v-e6dad6e3]{width:48px;padding:0}.mnr-reader-entry span[data-v-e6dad6e3]{display:none}}@keyframes mnr-entry-in-e6dad6e3{0%{opacity:0;transform:translateY(8px)scale(.96)}}@media (prefers-reduced-motion:reduce){.mnr-reader-entry[data-v-e6dad6e3]{transition:none;animation:none}}.mnr-entry-prompt-overlay[data-v-2c14cbfa]{z-index:2147483647;padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));background:#00000085;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.mnr-entry-prompt-card[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:var(--mnr-bg,#fff);width:min(100%,400px);max-height:calc(100dvh - 32px);color:var(--mnr-text,#333);border-radius:14px;padding:24px;animation:.24s ease-out mnr-entry-prompt-in-2c14cbfa;overflow:auto;box-shadow:0 18px 50px #00000047}.mnr-entry-prompt-header[data-v-2c14cbfa]{align-items:flex-start;gap:14px;display:flex}.mnr-entry-prompt-icon[data-v-2c14cbfa]{background:color-mix(in srgb, var(--mnr-link,#1976d2) 12%, transparent);width:44px;height:44px;color:var(--mnr-link,#1976d2);border-radius:12px;flex:0 0 44px;place-items:center;display:grid}.mnr-entry-prompt-icon svg[data-v-2c14cbfa]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;width:26px;height:26px}.mnr-entry-prompt-header h3[data-v-2c14cbfa]{margin:1px 0 6px;font-size:18px;font-weight:700;line-height:1.4}.mnr-entry-prompt-header p[data-v-2c14cbfa]{opacity:.76;margin:0;font-size:14px;line-height:1.65}.mnr-entry-preference[data-v-2c14cbfa]{border:1px solid var(--mnr-border,#e0e0e0);background:color-mix(in srgb, var(--mnr-border,#e0e0e0) 34%, transparent);cursor:pointer;border-radius:10px;align-items:flex-start;gap:10px;margin:22px 0;padding:13px 14px;display:flex}.mnr-entry-preference input[data-v-2c14cbfa]{width:20px;height:20px;accent-color:var(--mnr-link,#1976d2);flex:0 0 20px;margin:1px 0 0}.mnr-entry-preference span[data-v-2c14cbfa],.mnr-entry-preference strong[data-v-2c14cbfa],.mnr-entry-preference small[data-v-2c14cbfa]{display:block}.mnr-entry-preference strong[data-v-2c14cbfa]{font-size:14px;font-weight:600}.mnr-entry-preference small[data-v-2c14cbfa]{opacity:.68;margin-top:3px;font-size:12px;line-height:1.5}.mnr-entry-prompt-actions[data-v-2c14cbfa]{grid-template-columns:1fr 1.25fr;gap:10px;display:grid}.mnr-entry-button[data-v-2c14cbfa]{cursor:pointer;border:1px solid #0000;border-radius:9px;min-height:44px;padding:10px 14px;font-size:14px;font-weight:600;transition:filter .18s,background .18s}.mnr-entry-button.secondary[data-v-2c14cbfa]{border-color:var(--mnr-border,#ddd);color:var(--mnr-text,#555);background:0 0}.mnr-entry-button.primary[data-v-2c14cbfa]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-entry-button[data-v-2c14cbfa]:focus-visible,.mnr-entry-preference input[data-v-2c14cbfa]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}@media (hover:hover){.mnr-entry-button[data-v-2c14cbfa]:hover{filter:brightness(.94)}.mnr-entry-button.secondary[data-v-2c14cbfa]:hover{background:var(--mnr-border,#f0f0f0)}}.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:opacity .24s}.mnr-entry-prompt-fade-enter-from[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-to[data-v-2c14cbfa]{opacity:0}@keyframes mnr-entry-prompt-in-2c14cbfa{0%{opacity:0;transform:translateY(12px)scale(.98)}}@media (width<=480px){.mnr-entry-prompt-card[data-v-2c14cbfa]{padding:20px}.mnr-entry-prompt-header[data-v-2c14cbfa]{gap:12px}.mnr-entry-prompt-icon[data-v-2c14cbfa]{flex-basis:40px;width:40px;height:40px}}@media (prefers-reduced-motion:reduce){.mnr-entry-prompt-card[data-v-2c14cbfa],.mnr-entry-button[data-v-2c14cbfa],.mnr-entry-prompt-fade-enter-active[data-v-2c14cbfa],.mnr-entry-prompt-fade-leave-active[data-v-2c14cbfa]{transition:none;animation:none}}.mnr-progress[data-v-fb6f172c]{z-index:1000;height:3px;transition:opacity .3s;position:fixed;top:0;left:0;right:0}.mnr-progress.hidden[data-v-fb6f172c]{opacity:0}.mnr-progress-bar[data-v-fb6f172c]{background:var(--mnr-link,#1976d2);height:100%;transition:width .1s ease-out}.mnr-progress-text[data-v-fb6f172c]{color:#fff;background:#000000b3;border-radius:4px;padding:4px 8px;font-size:12px;position:absolute;top:8px;right:8px}@media (prefers-reduced-motion:reduce){.mnr-progress[data-v-fb6f172c],.mnr-progress-bar[data-v-fb6f172c]{transition:none}}.mnr-floating-toolbar[data-v-99e4013e]{top:max(12px, env(safe-area-inset-top));left:max(12px, env(safe-area-inset-left));right:max(12px, env(safe-area-inset-right));pointer-events:none;z-index:100;justify-content:space-between;display:flex;position:fixed}.mnr-fab[data-v-99e4013e]{pointer-events:auto;background:var(--mnr-bg,#fff);width:44px;height:44px;color:var(--mnr-text,#333);border:1px solid var(--mnr-border,#e5e5e5);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:50%;justify-content:center;align-items:center;padding:0;font-size:18px;transition:all .2s cubic-bezier(.25,.8,.25,1);display:flex;position:relative;box-shadow:0 4px 12px #00000026}.mnr-fab[data-v-99e4013e]:hover{background:var(--mnr-border,#f0f0f0);transform:translateY(-2px);box-shadow:0 6px 16px #0003}.mnr-fab[data-v-99e4013e]:active{transform:scale(.95)}.mnr-fab[data-v-99e4013e]:disabled{opacity:.6;cursor:not-allowed;box-shadow:none;transform:none}.mnr-icon[data-v-99e4013e]{fill:none;stroke:currentColor;stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:round;flex:none;width:22px;height:22px;display:block}.mnr-fab[data-v-99e4013e]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:opacity .3s,transform .3s}.mnr-fade-slide-enter-from[data-v-99e4013e],.mnr-fade-slide-leave-to[data-v-99e4013e]{opacity:0;transform:translateY(-20px)}@media (prefers-reduced-motion:reduce){.mnr-fab[data-v-99e4013e],.mnr-fade-slide-enter-active[data-v-99e4013e],.mnr-fade-slide-leave-active[data-v-99e4013e]{transition:none}}.mnr-spinner[data-v-c925c262]{border-radius:50%;animation:.8s cubic-bezier(.4,0,.2,1) infinite mnr-spin-c925c262}.mnr-spinner.small[data-v-c925c262]{border:2px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:24px;height:24px;animation-duration:1s;animation-timing-function:linear}.mnr-spinner.medium[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:48px;height:48px}.mnr-spinner.large[data-v-c925c262]{border:4px solid var(--mnr-border,#e0e0e0);border-top-color:var(--mnr-link,#1976d2);width:64px;height:64px}@keyframes mnr-spin-c925c262{to{transform:rotate(360deg)}}.mnr-toast[data-v-baea3e69]{bottom:max(32px, env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer;z-index:1001;white-space:nowrap;text-overflow:ellipsis;background:#1e1e1ee6;border-radius:50px;align-items:center;gap:8px;max-width:90vw;padding:14px 28px;font-size:15px;font-weight:500;display:flex;position:fixed;left:50%;overflow:hidden;transform:translate(-50%);box-shadow:0 8px 24px #0003}.mnr-toast--error[data-v-baea3e69]{background:#d32f2ff2}.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:all .4s cubic-bezier(.175,.885,.32,1.275)}.mnr-toast-enter-from[data-v-baea3e69],.mnr-toast-leave-to[data-v-baea3e69]{opacity:0;transform:translate(-50%)translateY(40px)scale(.9)}@media (prefers-reduced-motion:reduce){.mnr-toast-enter-active[data-v-baea3e69],.mnr-toast-leave-active[data-v-baea3e69]{transition:none}}.mnr-loading-overlay[data-v-01971069]{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);color:#333;z-index:1000;background:#fffc;flex-direction:column;justify-content:center;align-items:center;gap:16px;transition:opacity .3s;display:flex;position:fixed;inset:0}@media (prefers-color-scheme:dark){.mnr-loading-overlay[data-v-01971069]{color:#fff;background:#0009}}.mnr-loading-overlay--inline[data-v-01971069]{color:#333;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:40px 20px;display:flex}.mnr-drawer[data-v-aeddb985]{z-index:1001;width:min(88%,340px);padding-left:env(safe-area-inset-left);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;transition:transform .24s;display:flex;position:fixed;inset:0 auto 0 0;transform:translate(-105%);box-shadow:4px 0 20px #00000026}.mnr-drawer.open[data-v-aeddb985]{transform:translate(0)}.mnr-drawer-overlay[data-v-aeddb985]{z-index:1000;background:#00000080;position:fixed;inset:0}.mnr-drawer-header[data-v-aeddb985]{padding:max(16px, env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-drawer-heading[data-v-aeddb985]{min-width:0}.mnr-drawer-title[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:16px;font-weight:600;overflow:hidden}.mnr-drawer-position[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.72;margin-top:3px;font-size:12px;display:block}.mnr-drawer-close[data-v-aeddb985]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;flex:0 0 36px;place-items:center;padding:0;display:grid}.mnr-drawer-close svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-drawer-search[data-v-aeddb985]{flex-shrink:0;padding:10px 12px 6px}.mnr-drawer-search input[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-offline-section[data-v-aeddb985]{border-bottom:1px solid var(--mnr-border,#e5e5e5);flex-shrink:0;padding:10px 12px 12px}.mnr-offline-main[data-v-aeddb985]{justify-content:space-between;align-items:center;gap:12px;display:flex}.mnr-offline-copy[data-v-aeddb985]{min-width:0}.mnr-offline-copy strong[data-v-aeddb985],.mnr-offline-copy span[data-v-aeddb985]{display:block}.mnr-offline-copy strong[data-v-aeddb985]{font-size:13px;font-weight:600}.mnr-offline-copy span[data-v-aeddb985]{color:var(--mnr-text,#666);opacity:.7;margin-top:2px;font-size:12px}.mnr-offline-action[data-v-aeddb985]{border:1px solid var(--mnr-border,#ddd);min-height:36px;color:var(--mnr-link,#1976d2);cursor:pointer;background:0 0;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600}.mnr-offline-action.primary[data-v-aeddb985]{border-color:var(--mnr-link,#1976d2);background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff);flex:none}.mnr-offline-action.danger[data-v-aeddb985]{color:var(--mnr-text,#555)}.mnr-offline-secondary[data-v-aeddb985]{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.mnr-drawer-state[data-v-aeddb985]{color:var(--mnr-text,#666);text-align:center;opacity:.78;flex:1;justify-content:center;align-items:center;gap:10px;padding:40px 20px;display:flex}.mnr-drawer-content[data-v-aeddb985]{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;position:relative;overflow-y:auto}.mnr-cache-progress-track[data-v-aeddb985]{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px;margin-top:10px;overflow:hidden}.mnr-cache-progress-fill[data-v-aeddb985]{background:var(--mnr-link,#1976d2);height:100%;transition:width .2s}.mnr-chapter-list[data-v-aeddb985]{margin:0;padding-left:0;padding-right:0;list-style:none}.mnr-chapter-list li[data-v-aeddb985]{height:44px}.mnr-chapter-button[data-v-aeddb985]{width:100%;height:44px;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-left:3px solid #0000;align-items:center;gap:6px;padding:0 14px;font-size:14px;display:flex;overflow:hidden}.mnr-chapter-title-text[data-v-aeddb985]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mnr-chapter-button.active[data-v-aeddb985]{border-left-color:var(--mnr-link,#1976d2);background:color-mix(in srgb, var(--mnr-link,#1976d2) 10%, transparent);color:var(--mnr-link,#1976d2);font-weight:600}.mnr-chapter-button.persisted[data-v-aeddb985],.mnr-cache-mark[data-v-aeddb985]{color:#388e3c}.mnr-cache-mark[data-v-aeddb985]{flex:none;width:14px;height:14px}.mnr-cache-mark svg[data-v-aeddb985]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;width:100%;height:100%;display:block}.mnr-drawer-close[data-v-aeddb985]:hover,.mnr-chapter-button[data-v-aeddb985]:hover,.mnr-offline-action[data-v-aeddb985]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-offline-action.primary[data-v-aeddb985]:hover{background:var(--mnr-link,#1976d2);filter:brightness(.94)}.mnr-drawer-close[data-v-aeddb985]:focus-visible,.mnr-drawer-search input[data-v-aeddb985]:focus-visible,.mnr-offline-action[data-v-aeddb985]:focus-visible,.mnr-chapter-button[data-v-aeddb985]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:-3px}.mnr-visually-hidden[data-v-aeddb985]{clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%);width:1px;height:1px;position:absolute;overflow:hidden}.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985]{transition:opacity .24s}.mnr-fade-enter-from[data-v-aeddb985],.mnr-fade-leave-to[data-v-aeddb985]{opacity:0}@media (prefers-reduced-motion:reduce){.mnr-drawer[data-v-aeddb985],.mnr-fade-enter-active[data-v-aeddb985],.mnr-fade-leave-active[data-v-aeddb985],.mnr-cache-progress-fill[data-v-aeddb985]{transition:none}}.mnr-reading-control[data-v-e6745e69]{margin-top:18px}.mnr-reading-control-header[data-v-e6745e69]{justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px;display:flex}.mnr-reading-control-header label[data-v-e6745e69]{color:var(--mnr-text,#333);font-size:14px;font-weight:600}.mnr-reading-control-header output[data-v-e6745e69]{color:var(--mnr-text,#666);opacity:.78;font-size:13px}.mnr-reading-slider-row[data-v-e6745e69]{align-items:center;gap:10px;display:flex}.mnr-reading-slider-row span[data-v-e6745e69]{color:var(--mnr-text,#666);text-align:center;flex:0 0 24px;font-size:13px}.mnr-reading-slider-row input[data-v-e6745e69]{appearance:none;cursor:pointer;touch-action:pan-y;background:0 0;flex:1;min-width:0;height:32px;margin:0}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-runnable-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-webkit-slider-thumb{appearance:none;background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px;margin-top:-10px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-track{background:var(--mnr-border,#e0e0e0);border-radius:2px;height:4px}.mnr-reading-slider-row input[data-v-e6745e69]::-moz-range-thumb{background:var(--mnr-link,#1976d2);border:0;border-radius:50%;width:24px;height:24px}.mnr-reading-slider-row input[data-v-e6745e69]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-settings-overlay[data-v-3c6f7934]{z-index:1000;background:#00000080;justify-content:flex-end;display:flex;position:fixed;inset:0}.mnr-settings-panel[data-v-3c6f7934]{width:min(100%,380px);height:100%;padding-right:env(safe-area-inset-right);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);flex-direction:column;display:flex;box-shadow:-4px 0 20px #00000026}.mnr-settings-header[data-v-3c6f7934]{padding:max(16px, env(safe-area-inset-top)) 16px 16px;border-bottom:1px solid var(--mnr-border,#e0e0e0);flex-shrink:0;justify-content:space-between;align-items:center;display:flex}.mnr-settings-header h3[data-v-3c6f7934],.mnr-settings-section h4[data-v-3c6f7934],.mnr-field-label[data-v-3c6f7934]{color:var(--mnr-text,#333);margin:0}.mnr-settings-header h3[data-v-3c6f7934]{border-radius:4px;font-size:18px}.mnr-close-btn[data-v-3c6f7934]{width:36px;height:36px;color:inherit;cursor:pointer;background:0 0;border:0;border-radius:50%;place-items:center;padding:0;display:grid}.mnr-close-btn svg[data-v-3c6f7934]{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round;width:20px;height:20px}.mnr-settings-content[data-v-3c6f7934]{overscroll-behavior:contain;flex:1;padding:18px 16px 24px;overflow:auto}.mnr-settings-section h4[data-v-3c6f7934],.mnr-field-label[data-v-3c6f7934],.mnr-settings-fieldset legend[data-v-3c6f7934]{margin-bottom:10px;font-size:14px;font-weight:600;display:block}.mnr-theme-grid[data-v-3c6f7934]{grid-template-columns:repeat(3,1fr);gap:8px;display:grid}.mnr-theme-btn[data-v-3c6f7934]{cursor:pointer;border:2px solid #0000;border-radius:8px;min-width:0;min-height:42px;padding:8px 4px;font-size:12px}.mnr-reading-preview[data-v-3c6f7934]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);color:var(--mnr-text,#333);border-radius:8px;margin-top:16px;padding:12px 14px;display:none}.mnr-reading-preview span[data-v-3c6f7934]{opacity:.65;margin-bottom:4px;font-size:12px;display:block}.mnr-reading-preview p[data-v-3c6f7934]{font-family:var(--mnr-font-family,system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0);text-indent:var(--mnr-paragraph-indent,2em);margin:0}.mnr-field-label[data-v-3c6f7934]{margin-top:18px}.mnr-select[data-v-3c6f7934]{border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:42px;color:var(--mnr-text,#333);border-radius:8px;padding:9px 12px;font-size:14px}.mnr-settings-fieldset[data-v-3c6f7934]{border:0;min-width:0;margin:18px 0 0;padding:0}.mnr-segmented-control[data-v-3c6f7934]{border:1px solid var(--mnr-border,#ddd);border-radius:8px;display:flex;overflow:hidden}.mnr-segment[data-v-3c6f7934]{border:0;border-right:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);min-height:42px;color:var(--mnr-text,#666);cursor:pointer;flex:1;padding:9px 12px;font-size:14px}.mnr-segment[data-v-3c6f7934]:last-child{border-right:0}.mnr-segment.active[data-v-3c6f7934]{background:var(--mnr-link,#1976d2);color:var(--mnr-on-link,#fff)}.mnr-secondary-action[data-v-3c6f7934]{border:1px solid var(--mnr-border,#ddd);width:100%;min-height:42px;color:var(--mnr-text,#333);cursor:pointer;background:0 0;border-radius:8px;margin-top:16px;padding:9px 12px;font-size:14px}.mnr-settings-group[data-v-3c6f7934]{border-top:1px solid var(--mnr-border,#ddd);margin-top:18px}.mnr-settings-group summary[data-v-3c6f7934]{min-height:48px;color:var(--mnr-text,#333);cursor:pointer;padding:14px 0;font-size:14px;font-weight:600}.mnr-settings-group-content[data-v-3c6f7934]{padding-bottom:4px}.mnr-settings-group-content[data-v-3c6f7934]>:first-child{margin-top:0}.mnr-switch-row[data-v-3c6f7934]{min-height:44px;color:var(--mnr-text,#333);cursor:pointer;justify-content:space-between;align-items:center;gap:16px;display:flex}.mnr-switch-row input[data-v-3c6f7934]{width:22px;height:22px;accent-color:var(--mnr-link,#1976d2);flex:none}.mnr-custom-css[data-v-3c6f7934]{box-sizing:border-box;resize:vertical;border:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);width:100%;min-height:110px;color:var(--mnr-text,#333);border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.mnr-field-help[data-v-3c6f7934],.mnr-field-error[data-v-3c6f7934]{margin:-4px 0 8px;font-size:12px;line-height:1.5}.mnr-field-help[data-v-3c6f7934]{opacity:.72}.mnr-field-error[data-v-3c6f7934]{color:#c93f49;margin-top:6px}.mnr-settings-footer[data-v-3c6f7934]{padding:10px 16px max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--mnr-border,#ddd);background:var(--mnr-bg,#fff);flex-shrink:0}.mnr-exit-btn[data-v-3c6f7934]{color:#c93f49;cursor:pointer;background:0 0;border:1px solid #c93f49;border-radius:8px;width:100%;min-height:42px;padding:9px 12px;font-size:14px}.mnr-close-btn[data-v-3c6f7934]:hover,.mnr-secondary-action[data-v-3c6f7934]:hover,.mnr-segment[data-v-3c6f7934]:hover,.mnr-exit-btn[data-v-3c6f7934]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-settings-header h3[data-v-3c6f7934]:focus-visible,.mnr-close-btn[data-v-3c6f7934]:focus-visible,.mnr-theme-btn[data-v-3c6f7934]:focus-visible,.mnr-select[data-v-3c6f7934]:focus-visible,.mnr-segment[data-v-3c6f7934]:focus-visible,.mnr-secondary-action[data-v-3c6f7934]:focus-visible,.mnr-settings-group summary[data-v-3c6f7934]:focus-visible,.mnr-switch-row input[data-v-3c6f7934]:focus-visible,.mnr-custom-css[data-v-3c6f7934]:focus-visible,.mnr-exit-btn[data-v-3c6f7934]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-slide-enter-active[data-v-3c6f7934],.mnr-slide-leave-active[data-v-3c6f7934],.mnr-settings-panel[data-v-3c6f7934]{transition:opacity .22s,transform .22s}.mnr-slide-enter-from[data-v-3c6f7934],.mnr-slide-leave-to[data-v-3c6f7934]{opacity:0}.mnr-slide-enter-from .mnr-settings-panel[data-v-3c6f7934],.mnr-slide-leave-to .mnr-settings-panel[data-v-3c6f7934]{transform:translate(100%)}@media (width<=600px){.mnr-settings-panel[data-v-3c6f7934]{width:100%}.mnr-reading-preview[data-v-3c6f7934]{display:block}.mnr-desktop-width[data-v-3c6f7934]{display:none}}@media (prefers-reduced-motion:reduce){.mnr-slide-enter-active[data-v-3c6f7934],.mnr-slide-leave-active[data-v-3c6f7934],.mnr-settings-panel[data-v-3c6f7934]{transition:none}}.mnr-reader[data-v-5e07b464]{z-index:2147483647;background:var(--mnr-bg,#fff);color:var(--mnr-text,#1a1a1a);overscroll-behavior:none;flex-direction:column;display:flex;position:fixed;inset:0;overflow:hidden}.mnr-reader-main[data-v-5e07b464]{padding-top:68px;padding-bottom:max(40px, env(safe-area-inset-bottom));overscroll-behavior:none;-webkit-overflow-scrolling:touch;touch-action:pan-y pinch-zoom;flex:1;overflow:auto}.mnr-boundary-gesture-hint[data-v-5e07b464]{z-index:4;background:color-mix(in srgb, var(--mnr-text,#1a1a1a) 86%, transparent);max-width:calc(100vw - 32px);color:var(--mnr-bg,#fff);white-space:nowrap;pointer-events:none;border-radius:999px;padding:8px 14px;font-size:14px;line-height:1.4;position:fixed;left:50%;transform:translate(-50%)}.mnr-boundary-gesture-hint.is-prev[data-v-5e07b464]{top:max(16px, env(safe-area-inset-top))}.mnr-boundary-gesture-hint.is-next[data-v-5e07b464]{bottom:max(16px, env(safe-area-inset-bottom))}.mnr-reader-content[data-v-5e07b464]{max-width:var(--mnr-max-width,800px);padding:var(--mnr-padding,20px);font-family:var(--mnr-font-family,\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", system-ui, sans-serif);font-size:var(--mnr-font-size,18px);line-height:var(--mnr-line-height,1.8);letter-spacing:var(--mnr-letter-spacing,0em);margin:0 auto}.mnr-reader-content[data-v-5e07b464] p{text-indent:var(--mnr-paragraph-indent,2em);margin:0 0 1em}.mnr-reader-content[data-v-5e07b464] img{max-width:100%;height:auto;margin:1em auto;display:block}.mnr-reader-content[data-v-5e07b464] a{color:var(--mnr-link,#1976d2)}.mnr-reader-main[data-v-5e07b464]:focus-visible{outline:3px solid color-mix(in srgb, var(--mnr-link,#1976d2) 55%, transparent);outline-offset:2px}.mnr-chapter-title[data-v-5e07b464]{color:var(--mnr-text,#1a1a1a);text-align:center;margin:0 0 1em;font-size:1.5em;font-weight:700;line-height:1.4}.mnr-chapter-end[data-v-5e07b464]{max-width:var(--mnr-max-width,800px);text-align:center;margin:0 auto;padding:40px 20px}.mnr-chapter-end-text[data-v-5e07b464]{color:var(--mnr-text,#666);opacity:.7;margin-bottom:16px}.mnr-chapter-nav[data-v-5e07b464]{flex-wrap:wrap;justify-content:center;gap:24px;display:flex}.mnr-chapter-link[data-v-5e07b464]{color:var(--mnr-link,#1976d2);border:1px solid var(--mnr-border,#e0e0e0);border-radius:8px;padding:12px 24px;text-decoration:none;transition:all .2s}.mnr-chapter-link[data-v-5e07b464]:hover{background:var(--mnr-border,#f0f0f0)}.mnr-sentinel[data-v-5e07b464]{visibility:hidden;width:100%;height:1px}.mnr-loading-prev[data-v-5e07b464],.mnr-loading-next[data-v-5e07b464]{color:var(--mnr-text,#666);justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}@media (width>=768px){.mnr-reader-content[data-v-5e07b464]{padding:var(--mnr-padding,30px)}}@media (width>=1024px){.mnr-reader-content[data-v-5e07b464]{padding:var(--mnr-padding,40px)}}@media (prefers-reduced-motion:reduce){.mnr-chapter-link[data-v-5e07b464]{transition:none}}\n/*$vite$:1*/", {});
 	})();
 })();
