@@ -63,6 +63,66 @@ describe('ContentDetector', () => {
       expect(result.method).toBe('heuristic');
     });
 
+    it('does not apply host computed styles to detached parsed documents', () => {
+      const hostGetComputedStyle = vi.fn(() => ({
+        display: 'none',
+        visibility: 'hidden',
+      }));
+      vi.stubGlobal('getComputedStyle', hostGetComputedStyle);
+
+      const host = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+      const parsed = new host.window.DOMParser().parseFromString(
+        `
+          <!DOCTYPE html>
+          <html>
+            <body>
+              <main id="main">
+                <div class="content">
+                  <p>${'这是后台解析的小说正文，主角继续向前。'.repeat(120)}</p>
+                </div>
+              </main>
+            </body>
+          </html>
+        `,
+        'text/html'
+      );
+
+      expect(parsed.defaultView).toBeNull();
+
+      const result = detector.detect(parsed);
+
+      expect(result.selector).toBe('.content');
+      expect(result.method).toBe('selector');
+      expect(hostGetComputedStyle).not.toHaveBeenCalled();
+    });
+
+    it('respects inline visibility in detached parsed documents', () => {
+      const host = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+      const parsed = new host.window.DOMParser().parseFromString(
+        `
+          <!DOCTYPE html>
+          <html>
+            <body>
+              <div class="content" style="display: none">
+                ${'这是隐藏正文内容，不能作为阅读正文。'.repeat(120)}
+              </div>
+              <main id="main-story">
+                <p>${'这是可见小说正文内容，主角继续向前。'.repeat(120)}</p>
+              </main>
+            </body>
+          </html>
+        `,
+        'text/html'
+      );
+
+      expect(parsed.defaultView).toBeNull();
+
+      const result = detector.detect(parsed);
+
+      expect(result.element?.id).toBe('main-story');
+      expect(result.method).toBe('heuristic');
+    });
+
     it('should detect content by known selector (.noveltext)', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

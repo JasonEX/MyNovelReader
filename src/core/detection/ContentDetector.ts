@@ -262,18 +262,15 @@ export class ContentDetector {
   private isVisibleContentElement(element: Element, checkAncestors = false): boolean {
     const doc = element.ownerDocument;
     const win = doc.defaultView;
-    const canReadGlobalStyle = typeof getComputedStyle === 'function';
     let current: Element | null = element;
 
     while (current) {
       if ((current as HTMLElement).hidden) return false;
 
       try {
-        const style = win
-          ? win.getComputedStyle(current)
-          : canReadGlobalStyle
-            ? getComputedStyle(current)
-            : null;
+        // Detached DOMParser documents have no browsing context. Their elements must not inherit
+        // computed styles from the host page; only styles intrinsic to the parsed document apply.
+        const style = win ? win.getComputedStyle(current) : (current as HTMLElement).style;
         if (style?.display === 'none') return false;
         if (style?.visibility === 'hidden' || style?.visibility === 'collapse') return false;
       } catch {
