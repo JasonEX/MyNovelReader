@@ -165,6 +165,43 @@ describe('ContentDetector', () => {
       expect(result.confidence).toBeGreaterThan(0.7);
     });
 
+    it('keeps an empty p_key terminal page on its known content selector', () => {
+      const recommendationNoise = '随机推荐书名与作者信息。'.repeat(80);
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <main id="main">
+              <div class="template-01">
+                <a href="/book/other">
+                  <div class="book">
+                    <img alt="随机推荐书名">
+                    <div class="name">随机推荐书名</div>
+                    <div class="author">随机作者</div>
+                    <div>${recommendationNoise}</div>
+                  </div>
+                </a>
+              </div>
+              <div class="content">
+                <p>这是末页仅剩的一句正文。</p>
+                <p>阅|读|模|式|下，无|法|显|示|本|章|节|全|部|内|容，请|返|回|原|网|页阅|读。</p>
+                <p><button>加|载|更|多</button></p>
+              </div>
+            </main>
+            <script>const p_key='';</script>
+          </body>
+        </html>
+      `);
+
+      const result = detector.detect(dom.window.document);
+
+      expect(result.element).not.toBeNull();
+      expect(result.selector).toBe('.content');
+      expect(result.method).toBe('selector');
+      expect(result.element?.textContent).toContain('末页仅剩的一句正文');
+      expect(result.element?.textContent).not.toContain('随机推荐书名');
+    });
+
     it('should use heuristic detection when no known selector matches', () => {
       const dom = new JSDOM(`
         <!DOCTYPE html>

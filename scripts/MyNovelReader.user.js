@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.4.0
+// @version            9.4.1
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -2822,13 +2822,13 @@
 			const hasLoadMore = normalized.includes("加载更多");
 			const hasBlockedHint = normalized.includes("无法显示本章节全部内容") || normalized.includes("阅读模式") && normalized.includes("无法显示");
 			if (!hasLoadMore && !hasBlockedHint) return false;
-			return this.hasInlinePKey(doc);
+			return this.hasInlinePKeyDeclaration(doc);
 		}
-		hasInlinePKey(doc) {
+		hasInlinePKeyDeclaration(doc) {
 			for (const script of doc.querySelectorAll("script")) {
 				const text = script.textContent || "";
 				if (!text || !text.includes("p_key")) continue;
-				if (/p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(text)) return true;
+				if (/\bp_key\s*=\s*(['"])[A-Za-z0-9+/=]*\1/.test(text)) return true;
 			}
 			return false;
 		}
@@ -8703,7 +8703,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.4.0";
+	var VERSION = "9.4.1";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {

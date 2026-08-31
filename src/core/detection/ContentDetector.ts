@@ -138,7 +138,8 @@ export class ContentDetector {
 
   /**
    * Some templates intentionally truncate正文 in HTML and hide the rest in an encoded `p_key` blob,
-   * only revealing it after clicking "加载更多".
+   * only revealing it after clicking "加载更多". Their terminal page can keep the same template
+   * while declaring an empty `p_key`, so template identity must not depend on payload length.
    *
    * In this case the visible `.content` is often <500 chars (fails MIN_TEXT_LENGTH), so treat it as
    * valid content when we can reliably detect the pattern.
@@ -154,14 +155,14 @@ export class ContentDetector {
       (normalized.includes('阅读模式') && normalized.includes('无法显示'));
     if (!hasLoadMore && !hasBlockedHint) return false;
 
-    return this.hasInlinePKey(doc);
+    return this.hasInlinePKeyDeclaration(doc);
   }
 
-  private hasInlinePKey(doc: Document): boolean {
+  private hasInlinePKeyDeclaration(doc: Document): boolean {
     for (const script of doc.querySelectorAll('script')) {
       const text = script.textContent || '';
       if (!text || !text.includes('p_key')) continue;
-      if (/p_key\s*=\s*['"][A-Za-z0-9+/=]{80,}['"]/.test(text)) return true;
+      if (/\bp_key\s*=\s*(['"])[A-Za-z0-9+/=]*\1/.test(text)) return true;
     }
     return false;
   }
