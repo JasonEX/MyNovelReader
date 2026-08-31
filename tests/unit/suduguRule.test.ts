@@ -7,13 +7,13 @@ import { loadTocEntriesPaged } from '@/ui/stores/reader/toc';
 import { Parser } from '@/core/parser';
 import { suduguRule } from '@/core/rules/sites/sudugu';
 
-const page1Url = 'https://www.sudugu.org/109/1226047.html';
-const page2Url = 'https://www.sudugu.org/109/1226047-2.html';
-const page3Url = 'https://www.sudugu.org/109/1226047-3.html';
-const page4Url = 'https://www.sudugu.org/109/1226047-4.html';
-const prevChapterUrl = 'https://www.sudugu.org/109/1226046.html';
-const nextChapterUrl = 'https://www.sudugu.org/109/1236002.html';
-const indexUrl = 'https://www.sudugu.org/109/#dir';
+const page1Url = 'https://www.shudugu.org/109/1226047.html';
+const page2Url = 'https://www.shudugu.org/109/1226047-2.html';
+const page3Url = 'https://www.shudugu.org/109/1226047-3.html';
+const page4Url = 'https://www.shudugu.org/109/1226047-4.html';
+const prevChapterUrl = 'https://www.shudugu.org/109/1226046.html';
+const nextChapterUrl = 'https://www.shudugu.org/109/1236002.html';
+const indexUrl = 'https://www.shudugu.org/109/#dir';
 
 function chapterHtml(options: {
   body: string;

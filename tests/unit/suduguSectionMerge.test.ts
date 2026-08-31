@@ -19,12 +19,12 @@ type MockGmXhrOpts = {
 
 describe('sudugu section merge', () => {
   it('should normalize to first page and merge -2/-3/-4 into one chapter, with correct prev/next', async () => {
-    const page1Url = 'https://www.sudugu.org/2/1512467.html';
-    const page2Url = 'https://www.sudugu.org/2/1512467-2.html';
-    const page3Url = 'https://www.sudugu.org/2/1512467-3.html';
-    const page4Url = 'https://www.sudugu.org/2/1512467-4.html';
-    const prevChapterUrl = 'https://www.sudugu.org/2/1512466.html';
-    const nextChapterUrl = 'https://www.sudugu.org/2/1570962.html';
+    const page1Url = 'https://www.shudugu.org/2/1512467.html';
+    const page2Url = 'https://www.shudugu.org/2/1512467-2.html';
+    const page3Url = 'https://www.shudugu.org/2/1512467-3.html';
+    const page4Url = 'https://www.shudugu.org/2/1512467-4.html';
+    const prevChapterUrl = 'https://www.shudugu.org/2/1512466.html';
+    const nextChapterUrl = 'https://www.shudugu.org/2/1570962.html';
 
     // Start on a later section page (common when user opens from search result / reading history).
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: page2Url });

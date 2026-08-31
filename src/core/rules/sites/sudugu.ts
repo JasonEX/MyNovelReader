@@ -9,7 +9,7 @@ export const suduguRule: SiteRule = {
   name: '速读谷',
   version: 1,
   match: {
-    pattern: '^https?://www\\.sudugu\\.org/\\d+/\\d+(?:-\\d+)?\\.html(?:[?#].*)?$',
+    pattern: '^https?://www\\.shudugu\\.org/\\d+/\\d+(?:-\\d+)?\\.html(?:[?#].*)?$',
   },
   content: {
     selector: '.con',
@@ -34,6 +34,6 @@ export const suduguRule: SiteRule = {
   },
   meta: {
     source: 'builtin',
-    exampleUrl: 'https://www.sudugu.org/109/1226047.html',
+    exampleUrl: 'https://www.shudugu.org/109/1226047.html',
   },
 };

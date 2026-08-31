@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.3.17
+// @version            9.3.18
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -6867,7 +6867,7 @@
 		id: "sudugu",
 		name: "速读谷",
 		version: 1,
-		match: { pattern: "^https?://www\\.sudugu\\.org/\\d+/\\d+(?:-\\d+)?\\.html(?:[?#].*)?$" },
+		match: { pattern: "^https?://www\\.shudugu\\.org/\\d+/\\d+(?:-\\d+)?\\.html(?:[?#].*)?$" },
 		content: {
 			selector: ".con",
 			remove: "script, style, iframe, ins"
@@ -6889,7 +6889,7 @@
 		},
 		meta: {
 			source: "builtin",
-			exampleUrl: "https://www.sudugu.org/109/1226047.html"
+			exampleUrl: "https://www.shudugu.org/109/1226047.html"
 		}
 	};
 	var ttks_exports = __exportAll({ ttksRule: () => ttksRule });
@@ -8703,7 +8703,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.3.17";
+	var VERSION = "9.3.18";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
