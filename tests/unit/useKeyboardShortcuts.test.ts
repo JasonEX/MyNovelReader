@@ -182,6 +182,78 @@ describe('useKeyboardShortcuts', () => {
     mountEl.remove();
   });
 
+  it('ignores shortcuts owned by editable controls inside Shadow DOM', async () => {
+    const onIndex = vi.fn();
+
+    const Comp = defineComponent({
+      setup() {
+        useKeyboardShortcuts([{ key: 'enter', handler: onIndex, preventDefault: true }]);
+        return () => null;
+      },
+    });
+
+    const host = document.createElement('div');
+    const shadowRoot = host.attachShadow({ mode: 'open' });
+    const textarea = document.createElement('textarea');
+    shadowRoot.appendChild(textarea);
+    document.body.appendChild(host);
+
+    const mountEl = document.createElement('div');
+    document.body.appendChild(mountEl);
+    const app = createApp(Comp);
+    app.mount(mountEl);
+    await nextTick();
+
+    textarea.focus();
+    const enter = new dom.window.KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+    textarea.dispatchEvent(enter);
+
+    expect(document.activeElement).toBe(host);
+    expect(shadowRoot.activeElement).toBe(textarea);
+    expect(onIndex).not.toHaveBeenCalled();
+    expect(enter.defaultPrevented).toBe(false);
+
+    app.unmount();
+    host.remove();
+    mountEl.remove();
+  });
+
+  it('ignores IME composition events before shortcut matching', async () => {
+    const onIndex = vi.fn();
+
+    const Comp = defineComponent({
+      setup() {
+        useKeyboardShortcuts([{ key: 'enter', handler: onIndex, preventDefault: true }]);
+        return () => null;
+      },
+    });
+
+    const mountEl = document.createElement('div');
+    document.body.appendChild(mountEl);
+    const app = createApp(Comp);
+    app.mount(mountEl);
+    await nextTick();
+
+    const enter = new dom.window.KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true,
+      isComposing: true,
+    });
+    document.body.dispatchEvent(enter);
+
+    expect(onIndex).not.toHaveBeenCalled();
+    expect(enter.defaultPrevented).toBe(false);
+
+    app.unmount();
+    mountEl.remove();
+  });
+
   it('ignores modifier keys by default (allowModifiers overrides)', async () => {
     const onNext = vi.fn();
 

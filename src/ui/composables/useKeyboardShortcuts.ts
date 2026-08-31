@@ -10,6 +10,7 @@
  */
 
 import { computed, type MaybeRef, unref } from 'vue';
+import { getDeepActiveElement } from '@/ui/focus';
 import { useEventListener } from './useEventListener';
 
 export interface ShortcutDefinition {
@@ -41,11 +42,26 @@ export interface UseKeyboardShortcutsOptions {
 /**
  * Check if an element is an input-like element where shortcuts should be ignored.
  */
-function isInputElement(el: HTMLElement): boolean {
-  const tagName = el.tagName;
+function isInputElement(target: EventTarget | null): boolean {
+  const element = target as Partial<HTMLElement> | null;
+  const tagName = element?.tagName;
   return (
-    tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || el.isContentEditable
+    tagName === 'INPUT' ||
+    tagName === 'TEXTAREA' ||
+    tagName === 'SELECT' ||
+    element?.isContentEditable === true
   );
+}
+
+/**
+ * Check whether the event is owned by an editable control.
+ * Window listeners see a Shadow DOM host as event.target, so inspect the composed path first.
+ */
+function isEditableEvent(e: KeyboardEvent): boolean {
+  const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+  if (path.some(isInputElement)) return true;
+  if (path.length === 0 && isInputElement(e.target)) return true;
+  return isInputElement(getDeepActiveElement());
 }
 
 /**
@@ -84,8 +100,11 @@ export function useKeyboardShortcuts(
     // Check global enabled state
     if (!isEnabled.value) return;
 
-    const target = e.target as HTMLElement;
+    // IME key events never belong to reader navigation, even when the browser retargets them.
+    if (e.isComposing) return;
+
     const key = e.key.toLowerCase();
+    const editableEvent = isEditableEvent(e);
 
     // Try to match a shortcut
     for (const shortcut of shortcuts) {
@@ -97,7 +116,7 @@ export function useKeyboardShortcuts(
 
       // Check input element restriction
       const shouldIgnoreInput = ignoreInputs && !shortcut.allowInInputs;
-      if (shouldIgnoreInput && isInputElement(target)) continue;
+      if (shouldIgnoreInput && editableEvent) continue;
 
       // Check modifier key restriction
       const shouldIgnoreModifier = ignoreModifiers && !shortcut.allowModifiers;

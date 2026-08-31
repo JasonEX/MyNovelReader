@@ -108,6 +108,7 @@ describe('UI component smoke', () => {
       render: () =>
         h(SettingsPanel, {
           visible: visible.value,
+          customCleanupHostname: 'm.1qxs.com',
           onClose,
           onProtectionModeChange,
         }),
@@ -143,7 +144,12 @@ describe('UI component smoke', () => {
       )
     ).toEqual(['排版细节', '阅读行为', '本站与高级']);
     const customCleanup = document.querySelector<HTMLTextAreaElement>('#mnr-custom-cleanup-regex');
+    const customCleanupDraft = document.querySelector<HTMLInputElement>(
+      '#mnr-custom-cleanup-draft'
+    );
     expect(customCleanup).not.toBeNull();
+    expect(customCleanupDraft).not.toBeNull();
+    expect(document.querySelector('#mnr-custom-cleanup-site')?.textContent).toContain('m.1qxs.com');
     expect(document.querySelector('#mnr-custom-css')).not.toBeNull();
     expect(document.querySelector('.mnr-cache-action')).toBeNull();
     expect(document.querySelector('.mnr-settings-footer .mnr-exit-btn')?.textContent).toContain(
@@ -151,6 +157,14 @@ describe('UI component smoke', () => {
     );
     const fontSelect = document.querySelector<HTMLSelectElement>('#mnr-font-family');
     expect(fontSelect?.selectedOptions[0]?.textContent?.trim()).toBe('系统默认');
+
+    customCleanupDraft!.value = '测试广告$';
+    customCleanupDraft!.dispatchEvent(new window.Event('input', { bubbles: true }));
+    await nextTick();
+    document.querySelector<HTMLButtonElement>('.mnr-cleanup-add-button')?.click();
+    await nextTick();
+    expect(configStore.customCleanupRegex).toBe('@host=m.1qxs.com 测试广告$');
+    expect(customCleanupDraft!.value).toBe('');
 
     customCleanup!.value = '[';
     customCleanup!.dispatchEvent(new window.Event('input', { bubbles: true }));

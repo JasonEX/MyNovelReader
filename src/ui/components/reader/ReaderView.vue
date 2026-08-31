@@ -103,6 +103,7 @@
     <SettingsPanel
       :visible="settingsVisible"
       :site-auto-enable="siteAutoEnableValue"
+      :custom-cleanup-hostname="customCleanupHostname"
       @close="closeSettings"
       @textConversionChange="readerStore.applyTextConversion"
       @copyDiagnostics="emit('copyDiagnostics')"
@@ -146,7 +147,12 @@ import FloatingToolbar from './FloatingToolbar.vue';
 import ChapterDrawer from './ChapterDrawer.vue';
 import SettingsPanel from '@/ui/components/settings/SettingsPanel.vue';
 import { MnrSpinner, MnrToast, MnrLoadingOverlay } from '@/ui/components/common';
-import { compileCustomParagraphFilters, filterCustomParagraphs } from '@/ui/contentFilters';
+import {
+  compileCustomParagraphFilters,
+  filterCustomParagraphs,
+  getCustomParagraphFilterHostname,
+  getCustomParagraphFiltersForUrl,
+} from '@/ui/contentFilters';
 
 const props = withDefaults(defineProps<{ siteAutoEnable?: boolean }>(), { siteAutoEnable: true });
 const emit = defineEmits<{
@@ -187,14 +193,20 @@ const contentLang = computed(() => {
   if (readerStore.currentConversionMode === 'tc') return 'zh-TW';
   return undefined;
 });
-const compiledCustomParagraphFilters = computed(
-  () => compileCustomParagraphFilters(configStore.customCleanupRegex).patterns
+const compiledCustomParagraphFilters = computed(() =>
+  compileCustomParagraphFilters(configStore.customCleanupRegex)
+);
+const customCleanupHostname = computed(
+  () => getCustomParagraphFilterHostname(readerStore.chapter?.url) || ''
 );
 const displayChapters = computed(() => {
-  const patterns = compiledCustomParagraphFilters.value;
+  const compiled = compiledCustomParagraphFilters.value;
   return readerStore.chapters.map(entry => ({
     ...entry,
-    displayContent: filterCustomParagraphs(entry.chapter.content, patterns),
+    displayContent: filterCustomParagraphs(
+      entry.chapter.content,
+      getCustomParagraphFiltersForUrl(compiled, entry.chapter.url)
+    ),
   }));
 });
 

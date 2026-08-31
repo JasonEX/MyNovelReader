@@ -252,7 +252,48 @@
 
               <label class="mnr-field-label" for="mnr-custom-cleanup-regex">自定义正则清理</label>
               <p id="mnr-custom-cleanup-help" class="mnr-field-help">
-                每行一条，匹配段落文本后删除整段；无需填写 /.../ 标记。最多 20 条，每条 256 字符。
+                每行一条，匹配段落文本后删除整段；无前缀规则对所有网站生效，@host=域名
+                规则仅对对应网站生效。全局最多 {{ MAX_CUSTOM_PARAGRAPH_GLOBAL_FILTERS }} 条，
+                每站最多 {{ MAX_CUSTOM_PARAGRAPH_SITE_FILTERS }} 条，全部最多
+                {{ MAX_CUSTOM_PARAGRAPH_FILTERS }} 条，每条
+                {{ MAX_CUSTOM_PARAGRAPH_FILTER_LENGTH }} 字符。
+              </p>
+              <div class="mnr-cleanup-add">
+                <input
+                  id="mnr-custom-cleanup-draft"
+                  class="mnr-cleanup-input"
+                  type="text"
+                  spellcheck="false"
+                  aria-label="本站清理正则"
+                  :aria-describedby="
+                    customCleanupDraftError
+                      ? 'mnr-custom-cleanup-site mnr-custom-cleanup-draft-error'
+                      : 'mnr-custom-cleanup-site'
+                  "
+                  :aria-invalid="!!customCleanupDraftError"
+                  placeholder="输入本站正则"
+                  :value="customCleanupDraft"
+                  @input="updateCustomCleanupDraft"
+                />
+                <button
+                  type="button"
+                  class="mnr-secondary-action mnr-cleanup-add-button"
+                  :disabled="!customCleanupHostname || !customCleanupDraft.trim()"
+                  @click="addCurrentSiteCleanupRule"
+                >
+                  添加到本站
+                </button>
+              </div>
+              <p id="mnr-custom-cleanup-site" class="mnr-field-help mnr-cleanup-site">
+                当前网站：{{ customCleanupHostname || '无法识别' }}
+              </p>
+              <p
+                v-if="customCleanupDraftError"
+                id="mnr-custom-cleanup-draft-error"
+                class="mnr-field-error"
+                role="status"
+              >
+                {{ customCleanupDraftError }}
               </p>
               <textarea
                 id="mnr-custom-cleanup-regex"
@@ -304,7 +345,14 @@ import {
   useConfigStore,
 } from '@/ui/stores/config';
 import ReadingSlider from './ReadingSlider.vue';
-import { compileCustomParagraphFilters } from '@/ui/contentFilters';
+import {
+  appendScopedCustomParagraphFilter,
+  compileCustomParagraphFilters,
+  MAX_CUSTOM_PARAGRAPH_FILTER_LENGTH,
+  MAX_CUSTOM_PARAGRAPH_FILTERS,
+  MAX_CUSTOM_PARAGRAPH_GLOBAL_FILTERS,
+  MAX_CUSTOM_PARAGRAPH_SITE_FILTERS,
+} from '@/ui/contentFilters';
 
 type NumericReadingKey =
   'fontSize' | 'lineHeight' | 'letterSpacing' | 'paragraphIndent' | 'maxWidth' | 'padding';
@@ -314,8 +362,9 @@ const props = withDefaults(
   defineProps<{
     visible: boolean;
     siteAutoEnable?: boolean;
+    customCleanupHostname?: string;
   }>(),
-  { siteAutoEnable: true }
+  { siteAutoEnable: true, customCleanupHostname: '' }
 );
 
 const emit = defineEmits<{
@@ -330,9 +379,12 @@ const emit = defineEmits<{
 const configStore = useConfigStore();
 const panelRef = ref<HTMLElement | null>(null);
 const titleRef = ref<HTMLElement | null>(null);
-const customCleanupErrors = computed(
-  () => compileCustomParagraphFilters(configStore.customCleanupRegex).errors
+const customCleanupDraft = ref('');
+const customCleanupDraftError = ref('');
+const compiledCustomCleanup = computed(() =>
+  compileCustomParagraphFilters(configStore.customCleanupRegex)
 );
+const customCleanupErrors = computed(() => compiledCustomCleanup.value.errors);
 const customCleanupErrorMessage = computed(() =>
   customCleanupErrors.value.map(error => `第 ${error.line} 行：${error.message}`).join('；')
 );
@@ -433,6 +485,27 @@ function updateCustomCleanupRegex(event: Event) {
   configStore.setCustomCleanupRegex((event.currentTarget as globalThis.HTMLTextAreaElement).value);
 }
 
+function updateCustomCleanupDraft(event: Event) {
+  customCleanupDraft.value = (event.currentTarget as globalThis.HTMLInputElement).value;
+  customCleanupDraftError.value = '';
+}
+
+function addCurrentSiteCleanupRule() {
+  const result = appendScopedCustomParagraphFilter(
+    configStore.customCleanupRegex,
+    props.customCleanupHostname,
+    customCleanupDraft.value
+  );
+  if (result.error) {
+    customCleanupDraftError.value = result.error;
+    return;
+  }
+
+  configStore.setCustomCleanupRegex(result.source);
+  customCleanupDraft.value = '';
+  customCleanupDraftError.value = '';
+}
+
 function resetAppearance() {
   configStore.setTheme('system');
   configStore.resetReading();
@@ -448,6 +521,8 @@ watch(
       return;
     }
 
+    customCleanupDraft.value = '';
+    customCleanupDraftError.value = '';
     void configStore.flushSave();
   }
 );
@@ -694,6 +769,44 @@ watch(
     monospace;
 }
 
+.mnr-cleanup-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.mnr-cleanup-input {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--mnr-border, #ddd);
+  border-radius: 8px;
+  background: var(--mnr-bg, #fff);
+  color: var(--mnr-text, #333);
+  font:
+    12px/1.5 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+}
+
+.mnr-cleanup-add-button {
+  width: auto;
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.mnr-cleanup-add-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.mnr-cleanup-site {
+  margin: 6px 0 8px;
+  overflow-wrap: anywhere;
+}
+
 .mnr-field-help,
 .mnr-field-error {
   margin: -4px 0 8px;
@@ -744,6 +857,7 @@ watch(
 .mnr-secondary-action:focus-visible,
 .mnr-settings-group summary:focus-visible,
 .mnr-switch-row input:focus-visible,
+.mnr-cleanup-input:focus-visible,
 .mnr-custom-css:focus-visible,
 .mnr-exit-btn:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--mnr-link, #1976d2) 55%, transparent);

@@ -552,7 +552,10 @@ test('runs the built userscript and restores the host page after exit', async ({
   await expect(siteAutoEnable.locator('input')).toBeChecked();
 
   const customCss = advancedSettings.locator('textarea#mnr-custom-css');
+  const customCleanupDraft = advancedSettings.locator('#mnr-custom-cleanup-draft');
+  const addCustomCleanup = advancedSettings.getByRole('button', { name: '添加到本站' });
   const customCleanup = advancedSettings.locator('#mnr-custom-cleanup-regex');
+  await expect(advancedSettings.locator('#mnr-custom-cleanup-site')).toContainText('mnr.test');
   const editorStyles = await Promise.all(
     [customCss, customCleanup].map(editor =>
       editor.evaluate(element => {
@@ -590,9 +593,31 @@ test('runs the built userscript and restores the host page after exit', async ({
 
   await customCleanup.focus();
   await page.keyboard.press('Shift+Tab');
+  await expect(customCleanupDraft).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
   await expect(customCss).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(customCleanup).toBeFocused();
+  await expect(customCleanupDraft).toBeFocused();
+
+  await customCleanup.fill('第一条');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('第二条');
+  await expect(customCleanup).toHaveValue('第一条\n第二条');
+  expect(page.url()).toBe(targetUrl);
+  await expect(page.locator('#mnr-reader-root').locator('.mnr-settings-panel')).toBeVisible();
+
+  await customCleanup.fill('');
+  await customCleanupDraft.fill('^仅供自定义过滤的测试尾注 CODE-REMOVE-42$');
+  await addCustomCleanup.click();
+  await expect(customCleanup).toHaveValue(
+    '@host=mnr.test ^仅供自定义过滤的测试尾注 CODE-REMOVE-42$'
+  );
+  await expect(customCleanupDraft).toHaveValue('');
+  await expect(readerContent).not.toContainText('仅供自定义过滤的测试尾注 CODE-REMOVE-42');
+  await expect(readerContent).toContainText('正文里提到 CODE-KEEP-42');
+
+  await customCleanup.fill('');
+  await customCleanup.focus();
 
   await customCleanup.fill('^仅供自定义过滤的测试尾注 CODE-REMOVE-42$');
   await expect(readerContent).not.toContainText('仅供自定义过滤的测试尾注 CODE-REMOVE-42');
