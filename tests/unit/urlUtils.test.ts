@@ -95,6 +95,9 @@ describe('normalizeRedundantFirstPageParam', () => {
     expect(normalizeRedundantFirstPageParam('https://example.com/read.php?page=1')).toBe(
       'https://example.com/read.php?page=1'
     );
+    expect(normalizeRedundantFirstPageParam('https://example.com/chapter/123?page=1')).toBe(
+      'https://example.com/chapter/123?page=1'
+    );
     expect(normalizeRedundantFirstPageParam('not-a-url?page=1')).toBe('not-a-url?page=1');
   });
 });

@@ -290,9 +290,13 @@ export async function waitForMnrReader(page: Page): Promise<MnrPageState> {
   return collectMnrPageState(page);
 }
 
-export async function saveStableScreenshot(page: Page, prefix: string): Promise<string> {
+export async function saveStableScreenshot(
+  page: Page,
+  prefix: string,
+  targetUrl?: string
+): Promise<string> {
   const config = getMnrE2eConfig();
-  const url = new URL(config.targetUrl);
+  const url = new URL(targetUrl ?? config.targetUrl);
   const name = `${prefix}-${url.hostname.replace(/[^a-z0-9.-]+/gi, '-')}.png`;
   const screenshotPath = path.join(config.artifactDir, name);
   await page.screenshot({ fullPage: true, path: screenshotPath });
@@ -352,6 +356,7 @@ export function printRunSummary<TState>(
     screenshotPath?: string;
     state: TState;
     status?: number | null;
+    targetUrl?: string;
   }
 ): void {
   const config = getMnrE2eConfig();
@@ -362,7 +367,7 @@ export function printRunSummary<TState>(
         proxyServer: config.proxyServer,
         screenshot: details.screenshotPath,
         status: details.status ?? null,
-        targetUrl: config.targetUrl,
+        targetUrl: details.targetUrl ?? config.targetUrl,
         result: details.state,
         logs: details.logs?.slice(-30) || [],
       },

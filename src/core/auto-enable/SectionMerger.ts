@@ -46,13 +46,14 @@ type SectionMergeState =
   | { kind: 'done'; chapter: ParsedChapter }
   | {
       kind: 'merge';
+      chapterUrl: string;
       nextSectionUrl: string | null;
       nextChapterUrl: string | null;
       sectionDelayMs: number;
     };
 
 interface MergeCursor {
-  startUrl: string;
+  chapterUrl: string;
   lastUrl: string;
   mergedContent: string;
   mergedRaw: string;
@@ -94,7 +95,6 @@ export class SectionMerger {
     url: string,
     options: SectionMergeOptions = {}
   ): Promise<ParsedChapter | null> {
-    const maxPages = Math.max(1, options.maxPages ?? 10);
     const confidenceThreshold = options.confidenceThreshold ?? 0.8;
 
     if (options.signal?.aborted) return null;
@@ -114,9 +114,12 @@ export class SectionMerger {
     const state = this.decideSectionMerge(startPage, first, confidenceThreshold, !!options.fetcher);
     if (state.kind === 'done') return state.chapter;
 
-    if (first.rule?.advanced?.progressiveSectionMerge) {
+    const maxPages = Math.max(1, options.maxPages ?? first.rule?.advanced?.sectionMaxPages ?? 10);
+
+    if (state.nextSectionUrl && first.rule?.advanced?.progressiveSectionMerge) {
       options.onFirstPage?.({
         ...first,
+        url: state.chapterUrl,
         nextUrl: state.nextChapterUrl || undefined,
       });
     }
@@ -180,10 +183,38 @@ export class SectionMerger {
 
     return {
       kind: 'merge',
+      chapterUrl: this.getChapterUrl(startPage.url, nextSectionUrl),
       nextSectionUrl,
       nextChapterUrl: section?.nextChapterUrl || null,
       sectionDelayMs: hasCustomFetcher ? 0 : Math.max(0, first.rule?.advanced?.sectionDelayMs ?? 0),
     };
+  }
+
+  /** Keep a canonical chapter identity separate from the URL used to fetch each section. */
+  private getChapterUrl(startUrl: string, nextSectionUrl: string | null): string {
+    if (!nextSectionUrl || !isSectionLikeUrl(startUrl, nextSectionUrl)) return startUrl;
+
+    try {
+      const start = new URL(startUrl);
+      const next = new URL(nextSectionUrl, startUrl);
+      const startParams = Array.from(start.searchParams.entries());
+      const nextParams = Array.from(next.searchParams.entries());
+
+      if (
+        startParams.length === 1 &&
+        nextParams.length === 1 &&
+        startParams[0][0].toLowerCase() === nextParams[0][0].toLowerCase() &&
+        startParams[0][1] === '1' &&
+        nextParams[0][1] === '2'
+      ) {
+        start.search = '';
+        return start.toString();
+      }
+    } catch {
+      // Keep the original URL when the section pair cannot be parsed safely.
+    }
+
+    return startUrl;
   }
 
   /**
@@ -234,7 +265,7 @@ export class SectionMerger {
     maxPages: number
   ): MergeCursor {
     return {
-      startUrl: startPage.url,
+      chapterUrl: state.chapterUrl,
       lastUrl: startPage.url,
       mergedContent: first.content,
       mergedRaw: first.rawContent,
@@ -315,7 +346,7 @@ export class SectionMerger {
   private buildMergedChapter(first: ParsedChapter, cursor: MergeCursor): ParsedChapter {
     return {
       ...first,
-      url: cursor.startUrl,
+      url: cursor.chapterUrl,
       content: cursor.mergedContent,
       rawContent: cursor.mergedRaw,
       nextUrl: cursor.nextChapterUrl || first.nextUrl,

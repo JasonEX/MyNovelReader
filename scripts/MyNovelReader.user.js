@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.4.1
+// @version            9.4.2
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -44,6 +44,8 @@
 // @match              *://www.deqixs.org/*
 // @match              *://deqixs.co/*
 // @match              *://www.deqixs.co/*
+// @match              *://xszj.org/*
+// @match              *://m.xszj.org/*
 // @match              *://*/*.php?*
 // @match              *://*/*_*.html
 // @match              *://*/book/*/*.html
@@ -7032,6 +7034,37 @@
 			exampleUrl: "https://www.uuread.tw/chapter/1880014/2545609.html"
 		}
 	};
+	var xszj_exports = __exportAll({ xszjRule: () => xszjRule });
+	var xszjRule = {
+		id: "xszj",
+		name: "小说之家",
+		version: 1,
+		match: { pattern: "^https?://(?:m\\.)?xszj\\.org/b/\\d+/c/\\d+(?:[?#].*)?$" },
+		content: {
+			selector: "#booktxt",
+			remove: "script, style, iframe, ins"
+		},
+		navigation: {
+			prev: ".bottem1 a:contains(\"上一章\"), .bottem1 a:contains(\"上一页\"), .bottem1 a:contains(\"上一頁\")",
+			index: ".bottem1 a[href*=\"/cs/\"], .bottem1 a:contains(\"目录\"), .bottem1 a:contains(\"目錄\")",
+			next: ".bottem1 a:contains(\"下一章\"), .bottem1 a:contains(\"下一页\"), .bottem1 a:contains(\"下一頁\")"
+		},
+		title: {
+			selector: "h1.bookname",
+			replace: "\\s*[（(]\\d+/\\d+[)）]\\s*$",
+			bookSelector: ".con_top a[href^=\"/b/\"]"
+		},
+		advanced: {
+			checkSection: true,
+			sectionMaxPages: 99,
+			sectionDelayMs: 800,
+			progressiveSectionMerge: true
+		},
+		meta: {
+			source: "builtin",
+			exampleUrl: "https://xszj.org/b/490346/c/1534359"
+		}
+	};
 	var modules$1 = Object.assign({
 		"./ciweimao.ts": ciweimao_exports,
 		"./deqixs.ts": deqixs_exports,
@@ -7044,7 +7077,8 @@
 		"./sudugu.ts": sudugu_exports,
 		"./ttks.ts": ttks_exports,
 		"./twkan.ts": twkan_exports$1,
-		"./uuread.ts": uuread_exports
+		"./uuread.ts": uuread_exports,
+		"./xszj.ts": xszj_exports
 	});
 	function isSiteRule(value) {
 		if (!value || typeof value !== "object") return false;
@@ -8155,7 +8189,6 @@
 			this.parser = parser;
 		}
 		async merge(doc, url, options = {}) {
-			const maxPages = Math.max(1, options.maxPages ?? 10);
 			const confidenceThreshold = options.confidenceThreshold ?? .8;
 			if (options.signal?.aborted) return null;
 			const qidianBookPreviewUrl = resolveQidianMobileBookPreviewChapterUrl(doc, url);
@@ -8169,8 +8202,10 @@
 			if (!first) return null;
 			const state = this.decideSectionMerge(startPage, first, confidenceThreshold, !!options.fetcher);
 			if (state.kind === "done") return state.chapter;
-			if (first.rule?.advanced?.progressiveSectionMerge) options.onFirstPage?.({
+			const maxPages = Math.max(1, options.maxPages ?? first.rule?.advanced?.sectionMaxPages ?? 10);
+			if (state.nextSectionUrl && first.rule?.advanced?.progressiveSectionMerge) options.onFirstPage?.({
 				...first,
+				url: state.chapterUrl,
 				nextUrl: state.nextChapterUrl || void 0
 			});
 			return this.mergeSections(startPage, first, state, maxPages, options.fetcher, options.signal);
@@ -8220,12 +8255,28 @@
 					chapter: first
 				};
 			}
+			const nextSectionUrl = section?.nextSectionUrl || (first.nextUrl && isSectionLikeUrl(startPage.url, first.nextUrl) ? first.nextUrl : null);
 			return {
 				kind: "merge",
-				nextSectionUrl: section?.nextSectionUrl || (first.nextUrl && isSectionLikeUrl(startPage.url, first.nextUrl) ? first.nextUrl : null),
+				chapterUrl: this.getChapterUrl(startPage.url, nextSectionUrl),
+				nextSectionUrl,
 				nextChapterUrl: section?.nextChapterUrl || null,
 				sectionDelayMs: hasCustomFetcher ? 0 : Math.max(0, first.rule?.advanced?.sectionDelayMs ?? 0)
 			};
+		}
+		getChapterUrl(startUrl, nextSectionUrl) {
+			if (!nextSectionUrl || !isSectionLikeUrl(startUrl, nextSectionUrl)) return startUrl;
+			try {
+				const start = new URL(startUrl);
+				const next = new URL(nextSectionUrl, startUrl);
+				const startParams = Array.from(start.searchParams.entries());
+				const nextParams = Array.from(next.searchParams.entries());
+				if (startParams.length === 1 && nextParams.length === 1 && startParams[0][0].toLowerCase() === nextParams[0][0].toLowerCase() && startParams[0][1] === "1" && nextParams[0][1] === "2") {
+					start.search = "";
+					return start.toString();
+				}
+			} catch {}
+			return startUrl;
 		}
 		async mergeSections(startPage, first, state, maxPages, fetcher, signal) {
 			const cursor = this.createMergeCursor(startPage, first, state, maxPages);
@@ -8247,7 +8298,7 @@
 		}
 		createMergeCursor(startPage, first, state, maxPages) {
 			return {
-				startUrl: startPage.url,
+				chapterUrl: state.chapterUrl,
 				lastUrl: startPage.url,
 				mergedContent: first.content,
 				mergedRaw: first.rawContent,
@@ -8302,7 +8353,7 @@
 		buildMergedChapter(first, cursor) {
 			return {
 				...first,
-				url: cursor.startUrl,
+				url: cursor.chapterUrl,
 				content: cursor.mergedContent,
 				rawContent: cursor.mergedRaw,
 				nextUrl: cursor.nextChapterUrl || first.nextUrl,
@@ -8703,7 +8754,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.4.1";
+	var VERSION = "9.4.2";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {

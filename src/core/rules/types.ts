@@ -102,6 +102,8 @@ interface AdvancedConfig {
    * and merges consecutive section pages into a single chapter
    */
   checkSection?: boolean;
+  /** Maximum total section pages to merge for this site (default: 10) */
+  sectionMaxPages?: number;
   /**
    * Delay between fetching consecutive section pages.
    * Useful for sites with aggressive request-frequency limits.
