@@ -1,6 +1,8 @@
 export const novel543Origin = 'https://www.novel543.com';
 export const novel543BookPath = '/1019622989';
 export const novel543BookTitle = '測試修仙小說';
+export const novel543VipPromotion =
+  '<div><p><img src="/images/vip.png" style="display: block; max-width: 100%; margin: 10px auto;"><a href="https://www.novel543.com/auth/govip.html"></a></p><p><a href="https://www.novel543.com/auth/govip.html">应广大读者的要求, 现推出VIP会员免广告功能</a></p><a href="https://www.novel543.com/auth/govip.html">点击查看</a></div>';
 
 export function novel543ChapterPath(chapter: number, page = 1): string {
   return `${novel543BookPath}/8096_${chapter}${page > 1 ? `_${page}` : ''}.html`;
@@ -24,6 +26,7 @@ export function makeNovel543Chapter(chapter: number, page = 1): string {
       <div class="adBlock">廣告干擾</div>
       <div><p><span>溫馨提示: </span>登錄用戶的「站內信」功能已經優化，請到用戶中心查看！</p></div>
       <div><p><span>溫馨提示: </span>搜書名找不到, 可以試試搜作者哦, 也許只是改名了!</p></div>
+      ${page === 2 ? novel543VipPromotion : ''}
     </div></div></div><div class="foot-nav">
     <a href="${novel543ChapterPath(page === 1 ? chapter - 1 : chapter)}">上一章</a>
     <a href="${novel543BookPath}/dir">目錄</a>

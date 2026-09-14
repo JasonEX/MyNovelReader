@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.4.4
+// @version            9.4.5
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -421,7 +421,7 @@
 		match: { pattern: CHAPTER_URL.source },
 		content: {
 			selector: ".chapter-content > .content",
-			remove: ".adBlock, .gadBlock, [id^=div-onead-]"
+			remove: ".adBlock, .gadBlock, [id^=div-onead-], div:has(> p img[src=\"/images/vip.png\"]):has(> a[href$=\"/auth/govip.html\"])"
 		},
 		navigation: {
 			prev: ".foot-nav a:contains(上一章)",
@@ -8096,19 +8096,19 @@
 			return resolveAndValidateHttpUrl(url, window.location.href);
 		}
 		smartSelect(doc, selector) {
+			let nativeError;
 			try {
 				const native = doc.querySelector(selector);
 				if (native) return native;
 			} catch (e) {
-				console.debug("[Parser] Native selector failed, trying custom parsing:", selector, e);
+				nativeError = e;
 			}
 			const eqMatch = selector.match(/^(.*):eq\(([-]?\d+)\)$/);
 			if (eqMatch) {
 				const baseSel = eqMatch[1] || "*";
 				const index = parseInt(eqMatch[2], 10);
 				try {
-					const nodes = Array.from(doc.querySelectorAll(baseSel));
-					if (nodes.length === 0) return null;
+					const nodes = doc.querySelectorAll(baseSel);
 					return nodes[index >= 0 ? index : nodes.length + index] || null;
 				} catch (e) {
 					console.debug("[Parser] :eq selector failed:", baseSel, e);
@@ -8119,8 +8119,8 @@
 			if (lastMatch) {
 				const baseSel = lastMatch[1] || "*";
 				try {
-					const nodes = Array.from(doc.querySelectorAll(baseSel));
-					return nodes.length ? nodes[nodes.length - 1] : null;
+					const nodes = doc.querySelectorAll(baseSel);
+					return nodes[nodes.length - 1] || null;
 				} catch (e) {
 					console.debug("[Parser] :last selector failed:", baseSel, e);
 					return null;
@@ -8130,8 +8130,7 @@
 			if (firstMatch) {
 				const baseSel = firstMatch[1] || "*";
 				try {
-					const nodes = Array.from(doc.querySelectorAll(baseSel));
-					return nodes.length ? nodes[0] : null;
+					return doc.querySelectorAll(baseSel)[0] || null;
 				} catch (e) {
 					console.debug("[Parser] :first selector failed:", baseSel, e);
 					return null;
@@ -8157,6 +8156,7 @@
 					return null;
 				}
 			}
+			if (nativeError) console.debug("[Parser] Invalid selector:", selector, nativeError);
 			return null;
 		}
 		async runBeforeParseHook(rule, doc, url) {
@@ -8803,7 +8803,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.4.4";
+	var VERSION = "9.4.5";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {

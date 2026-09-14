@@ -595,16 +595,15 @@ export class Parser {
   }
 
   /**
-   * Minimal jQuery-like selector support (:contains, :eq, :last)
+   * Resolve native CSS or supported jQuery-like selectors.
    */
   private smartSelect(doc: Document, selector: string): Element | null {
-    // Try native selector first
+    let nativeError: unknown;
     try {
       const native = doc.querySelector(selector);
       if (native) return native;
     } catch (e) {
-      // Invalid selector, try custom parsing
-      console.debug('[Parser] Native selector failed, trying custom parsing:', selector, e);
+      nativeError = e;
     }
 
     // Handle :eq(n)
@@ -613,8 +612,7 @@ export class Parser {
       const baseSel = eqMatch[1] || '*';
       const index = parseInt(eqMatch[2], 10);
       try {
-        const nodes = Array.from(doc.querySelectorAll(baseSel));
-        if (nodes.length === 0) return null;
+        const nodes = doc.querySelectorAll(baseSel);
         const idx = index >= 0 ? index : nodes.length + index;
         return nodes[idx] || null;
       } catch (e) {
@@ -628,8 +626,8 @@ export class Parser {
     if (lastMatch) {
       const baseSel = lastMatch[1] || '*';
       try {
-        const nodes = Array.from(doc.querySelectorAll(baseSel));
-        return nodes.length ? nodes[nodes.length - 1] : null;
+        const nodes = doc.querySelectorAll(baseSel);
+        return nodes[nodes.length - 1] || null;
       } catch (e) {
         console.debug('[Parser] :last selector failed:', baseSel, e);
         return null;
@@ -641,8 +639,8 @@ export class Parser {
     if (firstMatch) {
       const baseSel = firstMatch[1] || '*';
       try {
-        const nodes = Array.from(doc.querySelectorAll(baseSel));
-        return nodes.length ? nodes[0] : null;
+        const nodes = doc.querySelectorAll(baseSel);
+        return nodes[0] || null;
       } catch (e) {
         console.debug('[Parser] :first selector failed:', baseSel, e);
         return null;
@@ -675,6 +673,7 @@ export class Parser {
       }
     }
 
+    if (nativeError) console.debug('[Parser] Invalid selector:', selector, nativeError);
     return null;
   }
 

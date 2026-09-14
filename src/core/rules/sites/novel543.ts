@@ -20,7 +20,8 @@ export const novel543Rule: SiteRule = {
   match: { pattern: CHAPTER_URL.source },
   content: {
     selector: '.chapter-content > .content',
-    remove: '.adBlock, .gadBlock, [id^=div-onead-]',
+    remove:
+      '.adBlock, .gadBlock, [id^=div-onead-], div:has(> p img[src="/images/vip.png"]):has(> a[href$="/auth/govip.html"])',
   },
   navigation: {
     prev: '.foot-nav a:contains(上一章)',

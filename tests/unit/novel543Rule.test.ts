@@ -5,6 +5,7 @@ import {
   novel543BookTitle,
   novel543ChapterPath,
   novel543Origin,
+  novel543VipPromotion,
 } from '../testUtils/novel543';
 
 import { getSectionBaseUrl, isSectionLikeUrl } from '@/core/utils';
@@ -63,11 +64,36 @@ describe('Novel543 rule', () => {
     expect(parsed?.content).toContain('第2頁末句');
     expect(parsed?.content).not.toContain('站內信');
     expect(parsed?.content).not.toContain('廣告干擾');
+    expect(parsed?.content).not.toContain('现推出VIP会员免广告功能');
+    expect(parsed?.content).not.toContain('/images/vip.png');
     expect(parsed?.content).toContain('他看到一張紙');
     expect(parsed?.nextUrl).toBe(url(942));
     expect(parsed?.prevUrl).toBe(url(940));
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['https://www.novel543.com', ''])(
+    'removes the VIP promotion with %s links while preserving narrative content',
+    async origin => {
+      const parsedDoc = doc(makeNovel543Chapter(559));
+      const content = parsedDoc.querySelector('.chapter-content > .content')!;
+      content.insertAdjacentHTML(
+        'beforeend',
+        novel543VipPromotion.replaceAll('https://www.novel543.com', origin) +
+          '<div><p>她說：「VIP会员免广告功能聽起來不錯。」</p>' +
+          '<p><a href="/auth/govip.html">他打開會員頁面，繼續閱讀。</a></p></div>' +
+          '<div><p><img src="/images/vip.png" alt="故事中的會員徽章"></p>' +
+          '<p>她收起了故事中的會員徽章。</p></div>'
+      );
+      const parsed = await new Parser().parse(parsedDoc, url(559));
+      expect(parsed?.content).not.toContain('应广大读者的要求');
+      expect(parsed?.content).not.toContain('点击查看');
+      expect(parsed?.content).toContain('VIP会员免广告功能聽起來不錯');
+      expect(parsed?.content).toContain('他打開會員頁面，繼續閱讀');
+      expect(parsed?.content).toContain('故事中的會員徽章');
+      expect(parsed?.nextUrl).toBe(url(559, 2));
+    }
+  );
 
   it.each([
     '如果覺得本書不錯, 避免下次找不到, 請記得加入書架哦',

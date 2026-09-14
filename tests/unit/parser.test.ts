@@ -72,6 +72,7 @@ describe('Parser', () => {
   });
 
   it('supports jQuery-like selectors in smartSelect', () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
     dom.window.document.body.innerHTML = `
       <div class="box">
         <p>one</p>
@@ -94,7 +95,18 @@ describe('Parser', () => {
     expect(smartSelect(doc, 'p:last')?.textContent).toBe('alpha');
     expect(smartSelect(doc, 'div.box p:contains(two)')?.textContent).toBe('two');
     expect(smartSelect(doc, 'div:contains(one):contains(two)')?.className).toBe('box');
+    expect(smartSelect(doc, 'p:first-child')?.textContent).toBe('one');
+    doc.querySelector('p')!.setAttribute('data-label', ':contains(two)');
+    expect(doc.querySelector('p:is([data-label=":contains(two)"])')?.textContent).toBe('one');
+    expect(smartSelect(doc, 'p:is([data-label=":contains(two)"])')?.textContent).toBe('one');
+    expect(smartSelect(doc, '.missing')).toBeNull();
+    expect(debug).not.toHaveBeenCalled();
     expect(smartSelect(doc, 'p>>')).toBeNull();
+    expect(debug).toHaveBeenCalledWith(
+      '[Parser] Invalid selector:',
+      'p>>',
+      expect.objectContaining({ name: 'SyntaxError' })
+    );
   });
 
   it('returns null for invalid base selectors in :eq/:first/:last/:contains', () => {

@@ -1522,6 +1522,10 @@ for (const startPage of [1, 2]) {
     });
     await addMyNovelReaderUserscript(context);
     const logs = createConsoleCollector(page);
+    const parserLogs: string[] = [];
+    page.on('console', message => {
+      if (message.text().includes('[Parser]')) parserLogs.push(message.text());
+    });
     await page.goto(novel543Origin + novel543ChapterPath(941, startPage));
     await waitForMnrReader(page);
     const root = page.locator('#mnr-reader-root');
@@ -1532,10 +1536,13 @@ for (const startPage of [1, 2]) {
     await expect(first).not.toContainText('站內信');
     await expect(first).not.toContainText('可以試試搜作者哦');
     await expect(first).not.toContainText('廣告干擾');
+    await expect(first).not.toContainText('现推出VIP会员免广告功能');
+    await expect(first.locator('img[src$="/images/vip.png"]')).toHaveCount(0);
     await expect(page).toHaveTitle(`第941章 百倍獎勵 - ${novel543BookTitle}`);
-    await expect(root.locator('article[data-chapter-url$="/8096_942.html"]')).toContainText(
-      '第2頁末句'
-    );
+    const next = root.locator('article[data-chapter-url$="/8096_942.html"]');
+    await expect(next).toContainText('第2頁末句');
+    await expect(next).not.toContainText('现推出VIP会员免广告功能');
+    await expect(next.locator('img[src$="/images/vip.png"]')).toHaveCount(0);
     await root.getByRole('button', { name: '打开目录' }).click();
     await expect(root.locator('.mnr-chapter-list li')).toHaveCount(4);
     await root.getByRole('button', { name: '第942章 百倍獎勵', exact: true }).click();
@@ -1544,5 +1551,6 @@ for (const startPage of [1, 2]) {
     expect(documentNavigations).toBe(1);
     expect(requests.some(url => url.endsWith('/8096.html'))).toBe(false);
     expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+    expect(parserLogs).toEqual([]);
   });
 }
