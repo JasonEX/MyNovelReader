@@ -7406,8 +7406,9 @@
 			return false;
 		}
 	}
-	function hasPageNativeFetch() {
-		return typeof window !== "undefined" && typeof window.fetch === "function" && typeof fetch === "function" && window.fetch === fetch;
+	function getPageNativeFetch() {
+		if (typeof window === "undefined" || typeof window.fetch !== "function") return null;
+		return window.fetch.bind(window);
 	}
 	function normalizeCharset(charset) {
 		const normalized = (charset || "").trim().replace(/^["']|["']$/g, "").toLowerCase();
@@ -7521,8 +7522,8 @@
 		const doRequest = () => {
 			const headers = { Accept: "text/html,application/xhtml+xml,application/xml" };
 			const normalizedReferer = referer ? resolveAndValidateHttpUrl(referer) : void 0;
-			const preferNativeFetch = hasPageNativeFetch() && isCurrentOriginRequest(requestUrl);
-			if (gmXhr && !preferNativeFetch) {
+			const pageFetch = isCurrentOriginRequest(requestUrl) ? getPageNativeFetch() : null;
+			if (gmXhr && !pageFetch) {
 				headers["Accept-Language"] = "zh-CN,zh;q=0.9";
 				if (normalizedReferer) headers["Referer"] = normalizedReferer;
 				return new Promise((resolve) => {
@@ -7578,7 +7579,8 @@
 					});
 				});
 			}
-			if (typeof fetch !== "function") {
+			const fetchRequest = pageFetch ?? (typeof fetch === "function" ? fetch : null);
+			if (!fetchRequest) {
 				console.error("[MNR] GM_xmlhttpRequest not available and fetch is missing");
 				return Promise.resolve({
 					doc: null,
@@ -7607,7 +7609,7 @@
 			if (normalizedReferer) try {
 				fetchInit.referrer = normalizedReferer;
 			} catch {}
-			return fetch(requestUrl, fetchInit).then(async (response) => {
+			return fetchRequest(requestUrl, fetchInit).then(async (response) => {
 				const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
 				const status = response.status;
 				if (status >= 200 && status < 300) {

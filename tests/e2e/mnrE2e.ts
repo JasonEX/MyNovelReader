@@ -377,7 +377,7 @@ export function printRunSummary<TState>(
   );
 }
 
-function createGmMockScript(): string {
+export function createGmMockScript(): string {
   return `
 (() => {
   const store = new Map();

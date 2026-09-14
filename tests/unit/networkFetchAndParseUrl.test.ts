@@ -101,4 +101,28 @@ describe('fetchAndParseUrl (url validation)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(gm).not.toHaveBeenCalled();
   });
+  it('uses the page fetch when a userscript window returns a fresh bound wrapper', async () => {
+    createDom('https://example.com/chapter/1');
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.(makeXhrResponse(opts, { status: 403 }));
+      return { abort: vi.fn() };
+    });
+    const nativeFetch = vi.fn(async function (this: Window) {
+      expect(this).toBe(window);
+      return new Response('<p>session chapter</p>', { status: 200 });
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+    vi.stubGlobal('fetch', nativeFetch.bind(window));
+    Object.defineProperty(window, 'fetch', {
+      configurable: true,
+      get: () => nativeFetch.bind(window),
+    });
+    expect(window.fetch).not.toBe(fetch);
+
+    const result = await fetchAndParseUrl('https://example.com/chapter/2').promise;
+    expect(result.error).toBeNull();
+    expect(result.doc?.body.textContent).toContain('session chapter');
+    expect(nativeFetch).toHaveBeenCalledTimes(1);
+    expect(gm).not.toHaveBeenCalled();
+  });
 });

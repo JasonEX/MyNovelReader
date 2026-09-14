@@ -1,9 +1,12 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import fs from 'node:fs';
 
 import {
   addMyNovelReaderUserscript,
   assertMnrSmokeState,
   createConsoleCollector,
+  createGmMockScript,
+  getMnrE2eConfig,
   waitForMnrReader,
 } from './mnrE2e';
 
@@ -1433,5 +1436,58 @@ test('caches script-rendered rule chapters through an iframe and removes it afte
   await expect(page).toHaveURL(cachedUrl);
   await expect(root.locator('.mnr-reader-content')).toContainText('动态缓存章节 501');
   expect(cachedRequests).toBe(1);
+  expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});
+
+test('keeps same-origin chapter requests in the page session with bound fetch wrappers', async ({
+  context,
+  page,
+}) => {
+  const nextUrl = 'http://mnr.test/chapter/101.html';
+  let nextRequests = 0;
+  await context.route('http://mnr.test/**', route => {
+    const isNext = route.request().url() === nextUrl;
+    if (isNext) nextRequests++;
+    return route.fulfill({
+      body: isNext ? nextFixtureHtml : fixtureHtml,
+      contentType: 'text/html; charset=utf-8',
+    });
+  });
+  const script = fs.readFileSync(getMnrE2eConfig().userScriptPath, 'utf8');
+  await context.addInitScript({
+    content: `${createGmMockScript()}
+    // Tampermonkey 5.5.0's Window proxy binds fetch on each property access.
+    const pageWindow = window;
+    const pageFetch = window.fetch;
+    window.__gmChapterRequests = 0;
+    window.GM_xmlhttpRequest = options => {
+      window.__gmChapterRequests++;
+      queueMicrotask(() => options.onload({ status: 403, responseText: '', finalUrl: options.url }));
+      return { abort() {} };
+    };
+    const proxyWindow = new Proxy(window, { set(target, key, value) { return Reflect.set(target, key, value, target); }, get(target, key) {
+      const value = Reflect.get(target, key, target);
+      return typeof value === 'function' && /^[a-z]/.test(String(key)) ? value.bind(target) : value;
+    } });
+    window.__fetchWrapperMismatch = proxyWindow.fetch !== pageFetch;
+    (function(window, fetch) { ${script} })(proxyWindow, pageFetch.bind(pageWindow));
+  `,
+  });
+  const logs = createConsoleCollector(page);
+  await page.goto(targetUrl);
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+  await expect(root.locator('article[data-chapter-url$="/101.html"]')).toContainText('手势续读');
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __fetchWrapperMismatch?: boolean }).__fetchWrapperMismatch
+    )
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __gmChapterRequests?: number }).__gmChapterRequests
+    )
+  ).toBe(0);
+  expect(nextRequests).toBe(1);
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });

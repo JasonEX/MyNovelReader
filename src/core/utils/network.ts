@@ -110,13 +110,11 @@ function isCurrentOriginRequest(url: string): boolean {
   }
 }
 
-function hasPageNativeFetch(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof window.fetch === 'function' &&
-    typeof fetch === 'function' &&
-    window.fetch === fetch
-  );
+function getPageNativeFetch(): typeof fetch | null {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') return null;
+  // Userscript window proxies can return a new bound function on each access.
+  // Function identity does not tell us whether this is the page's fetch.
+  return window.fetch.bind(window);
 }
 
 function normalizeCharset(charset: string | null | undefined): string | null {
@@ -302,10 +300,10 @@ export function fetchAndParseUrl(
 
     // Prefer native fetch for same-origin requests. It uses the page's live browser session,
     // which is more reliable on sites with active anti-bot probes.
-    const preferNativeFetch = hasPageNativeFetch() && isCurrentOriginRequest(requestUrl);
+    const pageFetch = isCurrentOriginRequest(requestUrl) ? getPageNativeFetch() : null;
 
     // Prefer GM_xmlhttpRequest for cross-origin requests when available (bypasses CORS and supports legacy encodings).
-    if (gmXhr && !preferNativeFetch) {
+    if (gmXhr && !pageFetch) {
       headers['Accept-Language'] = 'zh-CN,zh;q=0.9';
       if (normalizedReferer) {
         headers['Referer'] = normalizedReferer;
@@ -354,7 +352,8 @@ export function fetchAndParseUrl(
       });
     }
 
-    if (typeof fetch !== 'function') {
+    const fetchRequest = pageFetch ?? (typeof fetch === 'function' ? fetch : null);
+    if (!fetchRequest) {
       console.error('[MNR] GM_xmlhttpRequest not available and fetch is missing');
       return Promise.resolve({
         doc: null,
@@ -393,7 +392,7 @@ export function fetchAndParseUrl(
       }
     }
 
-    return fetch(requestUrl, fetchInit)
+    return fetchRequest(requestUrl, fetchInit)
       .then(async response => {
         const finalUrl = response.url ? resolveAndValidateHttpUrl(response.url, requestUrl) : null;
         const status = response.status;
