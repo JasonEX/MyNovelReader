@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.4.2
+// @version            9.4.3
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -163,6 +163,7 @@
 		"#BookContent",
 		"#read-content",
 		"#article_content",
+		"#article-content",
 		"#BookTextRead",
 		"#booktext",
 		"#book_text",
@@ -3343,6 +3344,10 @@
 				};
 				const currentPath = current.pathname;
 				const nextPath = next.pathname;
+				if (currentPath === nextPath && current.search === next.search) return {
+					isSection: false,
+					confidence: 0
+				};
 				if (isSectionLikeUrl(currentUrl, nextUrl)) {
 					const currentInfo = parseChapterSectionFromPathname(currentPath);
 					const nextInfo = parseChapterSectionFromPathname(nextPath);
@@ -3355,17 +3360,6 @@
 						confidence: .85
 					};
 				}
-				const currentInfo = parseChapterSectionFromPathname(currentPath);
-				const nextInfo = parseChapterSectionFromPathname(nextPath);
-				if (currentInfo && nextInfo && currentInfo.chapterKey !== nextInfo.chapterKey) return {
-					isSection: false,
-					confidence: 0
-				};
-				const similarity = this.calculateUrlSimilarity(currentPath, nextPath);
-				if (similarity > .8) return {
-					isSection: true,
-					confidence: similarity * .7
-				};
 				return {
 					isSection: false,
 					confidence: 0
@@ -3376,18 +3370,6 @@
 					confidence: 0
 				};
 			}
-		}
-		calculateUrlSimilarity(path1, path2) {
-			const normalize = (p) => p.replace(/\d+/g, "#");
-			const n1 = normalize(path1);
-			const n2 = normalize(path2);
-			if (n1 === n2) return 1;
-			if (n1.length === 0 || n2.length === 0) return 0;
-			const longer = n1.length > n2.length ? n1 : n2;
-			const shorter = n1.length > n2.length ? n2 : n1;
-			let matches = 0;
-			for (let i = 0; i < shorter.length; i++) if (shorter[i] === longer[i]) matches++;
-			return matches / longer.length;
 		}
 		findNextSectionUrl(signals, currentUrl) {
 			const isNextSectionText = (normalizedText) => {
@@ -3833,7 +3815,7 @@
 			const docTitle = doc.title;
 			const bracketMatch = docTitle.match(/《([^》]+)》/);
 			if (bracketMatch) this.addBookTitleCandidate(candidates, bracketMatch[1], 1);
-			const parts = docTitle.split(/[-_|,，]/).map((s) => s.trim()).filter(Boolean);
+			const parts = docTitle.split(/[-_|]/.test(docTitle) ? /[-_|]/ : /[,，]/).map((s) => s.trim()).filter(Boolean);
 			if (parts.length > 0) {
 				const firstPart = parts[0];
 				this.addBookTitleCandidate(candidates, firstPart.replace(TITLE_PATTERN, "").replace(/《|》/g, ""), 1);
@@ -8754,7 +8736,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.4.2";
+	var VERSION = "9.4.3";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
@@ -19112,34 +19094,40 @@ ul, ol {
 		return results;
 	}
 	function collectTocCandidates(doc, base, rule) {
-		const links = Array.from(doc.querySelectorAll("a[href]"));
 		const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
 		const urlPattern = /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
 		const excludeAncestors = (rule?.toc?.excludeAncestors || "").split(",").map((s) => s.trim()).filter(Boolean);
 		const candidates = [];
-		for (const a of links) {
-			if (excludeAncestors.length > 0) {
-				let excluded = false;
-				for (const sel of excludeAncestors) try {
-					if (a.closest(sel)) {
-						excluded = true;
-						break;
-					}
-				} catch {}
-				if (excluded) continue;
+		const collect = (root) => {
+			for (const a of root.querySelectorAll("a[href], template")) {
+				if (excludeAncestors.length > 0) {
+					let excluded = false;
+					for (const sel of excludeAncestors) try {
+						if (a.closest(sel)) {
+							excluded = true;
+							break;
+						}
+					} catch {}
+					if (excluded) continue;
+				}
+				if (a.tagName === "TEMPLATE") {
+					collect(a.content);
+					continue;
+				}
+				const text = extractTocLinkTitle(a);
+				const href = a.getAttribute("href") || "";
+				const abs = resolveUrl(href, base);
+				if (!abs) continue;
+				const url = normalizeUrlForFetch(abs);
+				if (!(textPattern.test(text) || urlPattern.test(href))) continue;
+				const title = cleanTocTitleForUrl(text || `章节 ${candidates.length + 1}`, url);
+				candidates.push({
+					title,
+					url
+				});
 			}
-			const text = extractTocLinkTitle(a);
-			const href = a.getAttribute("href") || "";
-			const abs = resolveUrl(href, base);
-			if (!abs) continue;
-			const url = normalizeUrlForFetch(abs);
-			if (!(textPattern.test(text) || urlPattern.test(href))) continue;
-			const title = cleanTocTitleForUrl(text || `章节 ${candidates.length + 1}`, url);
-			candidates.push({
-				title,
-				url
-			});
-		}
+		};
+		collect(doc);
 		return candidates;
 	}
 	function findNextTocPageUrl(doc, currentPageUrl, indexUrl) {

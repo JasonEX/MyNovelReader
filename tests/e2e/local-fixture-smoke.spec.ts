@@ -1318,3 +1318,71 @@ test.describe('mobile gesture paging', () => {
     expect(logs.some(line => line.includes('pageerror'))).toBe(false);
   });
 });
+
+test('keeps generic chapter extraction, template TOC and cached navigation in the reader', async ({
+  context,
+  page,
+}) => {
+  const startUrl = 'http://mnr.test/read/123/500.html';
+  const requests: string[] = [];
+  let documentNavigations = 0;
+  await context.route('http://mnr.test/**', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    requests.push(url.href);
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      documentNavigations++;
+    }
+    const id = Number(url.pathname.match(/\/(\d+)\.html$/)?.[1]);
+    const link = (chapter: number) =>
+      `<a href="/read/123/${chapter}.html">第${chapter}章 风起，云涌</a>`;
+    const body = url.pathname.startsWith('/book/')
+      ? `<title>山海归途</title>${link(500)}<template>${[501, 502, 503, 504].map(link).join('')}</template>${link(505)}`
+      : `<title>第${id}章 风起，云涌 - 山海归途 - 小说网</title>
+         <a href="${url.pathname}?lang=zh">简体中文</a>
+         <article>
+           <h1>第${id}章 风起，云涌</h1>
+           <p>山海归途</p>
+           <div id="article-content">${paragraphs}</div>
+           <div>分享 Facebook 下载 App</div>
+           ${id > 500 ? `<a href="/read/123/${id - 1}.html">上一章</a>` : ''}
+           <a href="/book/123.html">返回目录</a>
+           ${id < 505 ? `<a href="/read/123/${id + 1}.html">下一章</a>` : ''}
+         </article>`;
+    await route.fulfill({ body, contentType: 'text/html; charset=utf-8' });
+  });
+  await addMyNovelReaderUserscript(context);
+  await page.goto(startUrl);
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+  const first = root.locator('article[data-chapter-url$="/500.html"]');
+  await expect(first).toContainText('这是第 72 段测试正文');
+  await expect(first).not.toContainText('Facebook');
+  await expect(first).not.toContainText('下载 App');
+  await expect(page).toHaveTitle('第500章 风起，云涌 - 山海归途');
+
+  // Wait for the shared preloader so the TOC jump exercises the cached path.
+  await expect(root.locator('article[data-chapter-url$="/501.html"]')).toContainText(
+    '这是第 72 段测试正文'
+  );
+  await root.getByRole('button', { name: '打开目录' }).click();
+  await expect(root.locator('.mnr-drawer-position')).toContainText('/ 6');
+  await expect(root.locator('.mnr-chapter-list li')).toHaveCount(6);
+  await root.getByRole('button', { name: '第501章 风起，云涌', exact: true }).click();
+  await expect(page).toHaveURL('http://mnr.test/read/123/501.html');
+  await expect(root.locator('.mnr-reader')).toBeVisible();
+
+  // Respect the shared smooth-navigation lock before the next keyboard command.
+  await page.waitForTimeout(800);
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL('http://mnr.test/read/123/502.html');
+  await expect(root.locator('article[data-chapter-url$="/502.html"]')).toContainText(
+    '这是第 72 段测试正文'
+  );
+  await page.waitForTimeout(800);
+  await page.keyboard.press('ArrowLeft');
+  await expect(page).toHaveURL('http://mnr.test/read/123/501.html');
+  await expect(root.locator('.mnr-reader')).toBeVisible();
+  expect(documentNavigations).toBe(1);
+  expect(requests.some(url => url.includes('?lang='))).toBe(false);
+});

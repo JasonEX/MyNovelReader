@@ -290,7 +290,6 @@ export function dedupeTocEntries(candidates: TocEntry[]): TocEntry[] {
  * Collect TOC candidates from a document
  */
 export function collectTocCandidates(doc: Document, base: string, rule?: SiteRule): TocEntry[] {
-  const links = Array.from(doc.querySelectorAll('a[href]'));
   const textPattern = /(第.{1,20}[章节回话篇集卷幕]|[章回节話幕]|chapter|\d+)/i;
   const urlPattern =
     /(chapter|read|book|novel|txt|\/\d+)[/_-]\d+|\/\d+\.html?$|\/xs_[^/]+\/\d+\/\d+(?:\/\d+)?/i;
@@ -300,35 +299,45 @@ export function collectTocCandidates(doc: Document, base: string, rule?: SiteRul
     .filter(Boolean);
 
   const candidates: TocEntry[] = [];
-  for (const a of links) {
-    if (excludeAncestors.length > 0) {
-      let excluded = false;
-      for (const sel of excludeAncestors) {
-        try {
-          if (a.closest(sel)) {
-            excluded = true;
-            break;
+  const collect = (root: ParentNode): void => {
+    for (const a of root.querySelectorAll('a[href], template')) {
+      if (excludeAncestors.length > 0) {
+        let excluded = false;
+        for (const sel of excludeAncestors) {
+          try {
+            if (a.closest(sel)) {
+              excluded = true;
+              break;
+            }
+          } catch {
+            // Ignore invalid selectors
           }
-        } catch {
-          // Ignore invalid selectors
         }
+        if (excluded) continue;
       }
-      if (excluded) continue;
+
+      // Collapsed server-rendered lists can live in inert templates. Read their
+      // links in place without executing scripts or mounting site components.
+      if (a.tagName === 'TEMPLATE') {
+        collect((a as HTMLTemplateElement).content);
+        continue;
+      }
+
+      const text = extractTocLinkTitle(a);
+      const href = a.getAttribute('href') || '';
+      const abs = resolveUrl(href, base);
+      if (!abs) continue;
+      const url = normalizeUrlForFetch(abs);
+
+      if (!(textPattern.test(text) || urlPattern.test(href))) {
+        continue;
+      }
+
+      const title = cleanTocTitleForUrl(text || `章节 ${candidates.length + 1}`, url);
+      candidates.push({ title, url });
     }
-
-    const text = extractTocLinkTitle(a);
-    const href = a.getAttribute('href') || '';
-    const abs = resolveUrl(href, base);
-    if (!abs) continue;
-    const url = normalizeUrlForFetch(abs);
-
-    if (!(textPattern.test(text) || urlPattern.test(href))) {
-      continue;
-    }
-
-    const title = cleanTocTitleForUrl(text || `章节 ${candidates.length + 1}`, url);
-    candidates.push({ title, url });
-  }
+  };
+  collect(doc);
 
   return candidates;
 }

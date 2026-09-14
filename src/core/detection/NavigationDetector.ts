@@ -585,6 +585,11 @@ export class NavigationDetector {
       const currentPath = current.pathname;
       const nextPath = next.pathname;
 
+      // A self-link (including a different fragment) cannot advance a section.
+      if (currentPath === nextPath && current.search === next.search) {
+        return { isSection: false, confidence: 0 };
+      }
+
       // Fast path: strict section-like detection (includes query-based pagination).
       if (isSectionLikeUrl(currentUrl, nextUrl)) {
         const currentInfo = parseChapterSectionFromPathname(currentPath);
@@ -603,47 +608,10 @@ export class NavigationDetector {
         return { isSection: true, confidence: 0.85 };
       }
 
-      const currentInfo = parseChapterSectionFromPathname(currentPath);
-      const nextInfo = parseChapterSectionFromPathname(nextPath);
-      if (currentInfo && nextInfo && currentInfo.chapterKey !== nextInfo.chapterKey) {
-        // Different chapter => not a section transition; avoid similarity false positives like /123.html -> /999.html.
-        return { isSection: false, confidence: 0 };
-      }
-
-      // Pattern 3: URLs are very similar except for a number
-      const similarity = this.calculateUrlSimilarity(currentPath, nextPath);
-      if (similarity > 0.8) {
-        return { isSection: true, confidence: similarity * 0.7 };
-      }
-
       return { isSection: false, confidence: 0 };
     } catch {
       return { isSection: false, confidence: 0 };
     }
-  }
-
-  /**
-   * Calculate similarity between two URL paths
-   */
-  private calculateUrlSimilarity(path1: string, path2: string): number {
-    // Remove numbers and compare structure
-    const normalize = (p: string) => p.replace(/\d+/g, '#');
-    const n1 = normalize(path1);
-    const n2 = normalize(path2);
-
-    if (n1 === n2) return 1.0;
-    if (n1.length === 0 || n2.length === 0) return 0;
-
-    // Simple character-based similarity
-    const longer = n1.length > n2.length ? n1 : n2;
-    const shorter = n1.length > n2.length ? n2 : n1;
-
-    let matches = 0;
-    for (let i = 0; i < shorter.length; i++) {
-      if (shorter[i] === longer[i]) matches++;
-    }
-
-    return matches / longer.length;
   }
 
   private findNextSectionUrl(signals: LinkSignal[], currentUrl: string): string | null {

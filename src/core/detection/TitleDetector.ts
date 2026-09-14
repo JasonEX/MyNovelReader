@@ -573,8 +573,9 @@ export class TitleDetector {
       this.addBookTitleCandidate(candidates, bracketMatch[1], 1);
     }
 
+    // Preserve punctuation inside chapter/book names when layout separators exist.
     const parts = docTitle
-      .split(/[-_|,，]/)
+      .split(/[-_|]/.test(docTitle) ? /[-_|]/ : /[,，]/)
       .map(s => s.trim())
       .filter(Boolean);
     if (parts.length > 0) {

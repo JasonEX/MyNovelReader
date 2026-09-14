@@ -110,6 +110,7 @@ export const KNOWN_CONTENT_SELECTORS = [
   '#BookContent',
   '#read-content',
   '#article_content',
+  '#article-content',
   '#BookTextRead',
   '#booktext',
   '#book_text',
