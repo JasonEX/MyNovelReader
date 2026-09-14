@@ -17,13 +17,13 @@ describe('useTouchGestures', () => {
     });
 
     // test env
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('window', dom.window);
     // test env
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('document', dom.window.document);
     // test env
-    globalThis.HTMLElement = dom.window.HTMLElement;
+    vi.stubGlobal('HTMLElement', dom.window.HTMLElement);
     // test env
-    globalThis.Element = dom.window.Element;
+    vi.stubGlobal('Element', dom.window.Element);
   });
 
   afterEach(() => {

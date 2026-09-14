@@ -13,8 +13,8 @@ describe('DetectionEngine', () => {
       pretendToBeVisual: true,
     });
     doc = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = doc;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', doc);
   });
 
   afterEach(() => {
@@ -74,8 +74,8 @@ describe('DetectionEngine', () => {
       pretendToBeVisual: true,
     });
 
-    globalThis.window = hostDom.window as unknown as Window & typeof globalThis;
-    globalThis.document = hostDom.window.document;
+    vi.stubGlobal('window', hostDom.window);
+    vi.stubGlobal('document', hostDom.window.document);
 
     const targetDoc = chaptersDom.window.document;
     targetDoc.body.innerHTML = `<a href="/chapters/124">下一章</a><div>${'x'.repeat(1500)}</div>`;

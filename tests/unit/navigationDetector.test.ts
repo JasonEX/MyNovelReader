@@ -20,8 +20,8 @@ describe('NavigationDetector', () => {
 
   const createDom = (html: string, url = 'http://example.com/chapter/1.html') => {
     const dom = new JSDOM(html, { url, pretendToBeVisual: true });
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
     return dom;
   };
 

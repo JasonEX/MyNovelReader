@@ -1,4 +1,5 @@
 import { JSDOM } from 'jsdom';
+import { vi } from 'vitest';
 
 export function createDom(
   url: string = 'https://example.com/',
@@ -6,24 +7,15 @@ export function createDom(
 ): JSDOM {
   const dom = new JSDOM(html, { url, pretendToBeVisual: true });
 
-  // @ts-expect-error - test env: assigning jsdom window to globalThis
-  globalThis.window = dom.window;
-  // test env: assigning jsdom document to globalThis
-  globalThis.document = dom.window.document;
-  // test env: assigning jsdom location to globalThis
-  globalThis.location = dom.window.location;
-  // test env: assigning jsdom navigator to globalThis
-  globalThis.navigator = dom.window.navigator;
-  // test env: assigning jsdom localStorage to globalThis
-  globalThis.localStorage = dom.window.localStorage;
-  // test env: assigning jsdom sessionStorage to globalThis
-  globalThis.sessionStorage = dom.window.sessionStorage;
-  // test env: assigning jsdom DOMParser to globalThis
-  globalThis.DOMParser = dom.window.DOMParser;
-  // test env: assigning jsdom Node to globalThis
-  globalThis.Node = dom.window.Node;
-  // test env: assigning jsdom HTMLElement to globalThis
-  globalThis.HTMLElement = dom.window.HTMLElement;
+  vi.stubGlobal('window', dom.window);
+  vi.stubGlobal('document', dom.window.document);
+  vi.stubGlobal('location', dom.window.location);
+  vi.stubGlobal('navigator', dom.window.navigator);
+  vi.stubGlobal('localStorage', dom.window.localStorage);
+  vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
+  vi.stubGlobal('DOMParser', dom.window.DOMParser);
+  vi.stubGlobal('Node', dom.window.Node);
+  vi.stubGlobal('HTMLElement', dom.window.HTMLElement);
 
   return dom;
 }

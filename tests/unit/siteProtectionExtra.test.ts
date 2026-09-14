@@ -26,7 +26,7 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('filters location.assign/replace when override is possible', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('document', dom.window.document);
 
     const assign = vi.fn();
     const replace = vi.fn();
@@ -51,7 +51,7 @@ describe('SiteProtection (extra coverage)', () => {
       DocumentFragment: dom.window.DocumentFragment,
     } as unknown as Window & typeof globalThis;
 
-    globalThis.window = win;
+    vi.stubGlobal('window', win);
 
     protection = new SiteProtection({
       blockRedirects: true,
@@ -82,8 +82,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blocks suspicious string callbacks for setTimeout/setInterval', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     const originalSetTimeout = vi.fn(() => 123);
     const originalSetInterval = vi.fn(() => 456);
@@ -119,8 +119,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blocks dynamic injection of iframes, fragments, and aggressive same-origin ad scripts', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       blockRedirects: true,
@@ -167,8 +167,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('allows trusted same-origin popups but blocks others', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     const originalOpen = vi.fn(() => ({}) as unknown as Window);
     Object.defineProperty(dom.window, 'open', { value: originalOpen, configurable: true });
@@ -200,11 +200,11 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('unlockKeyboard blocks non-MNR events but allows MNR events', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
     // Ensure instanceof checks in isMnrEvent use the same realm as the JSDOM we created.
-    globalThis.Element = dom.window.Element as unknown as typeof Element;
-    globalThis.ShadowRoot = dom.window.ShadowRoot as unknown as typeof ShadowRoot;
+    vi.stubGlobal('Element', dom.window.Element);
+    vi.stubGlobal('ShadowRoot', dom.window.ShadowRoot);
 
     protection = new SiteProtection({
       unlockKeyboard: true,
@@ -240,8 +240,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blockVisibilityDetection overrides document visibility and stops listeners', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       blockVisibilityDetection: true,
@@ -272,8 +272,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blockVisibilityDetection restores original descriptors on deactivate', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     // Capture the original descriptor from the prototype before activation
     const proto = Object.getPrototypeOf(dom.window.document) as object;
@@ -313,8 +313,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blockVisibilityDetection restores instance-level descriptors on deactivate', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     // Set a custom own-property descriptor on document before activation
     const customGetter = () => true;
@@ -350,8 +350,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('repeated activate/deactivate cycles do not leak visibility overrides', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     const proto = Object.getPrototypeOf(dom.window.document) as object;
     const originalHiddenDesc = Object.getOwnPropertyDescriptor(proto, 'hidden');
@@ -388,8 +388,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('re-applies options when activate(options) is called while active', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     dom.window.document.body.setAttribute('oncopy', 'return false');
 
@@ -427,7 +427,7 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('handles invalid navigation URLs in location.assign (URL parsing failure)', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('document', dom.window.document);
 
     const assign = vi.fn();
     const replace = vi.fn();
@@ -463,7 +463,7 @@ describe('SiteProtection (extra coverage)', () => {
       innerHeight: dom.window.innerHeight,
     } as unknown as Window & typeof globalThis;
 
-    globalThis.window = win;
+    vi.stubGlobal('window', win);
 
     protection = new SiteProtection({
       blockRedirects: true,
@@ -485,7 +485,7 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('guards location.href setter when an overridable prototype exists', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('document', dom.window.document);
 
     const hrefSet = vi.fn();
     const locationProto = Object.create(null) as unknown as Partial<FakeLocation>;
@@ -522,7 +522,7 @@ describe('SiteProtection (extra coverage)', () => {
       innerHeight: dom.window.innerHeight,
     } as unknown as Window & typeof globalThis;
 
-    globalThis.window = win;
+    vi.stubGlobal('window', win);
 
     protection = new SiteProtection({
       blockRedirects: true,
@@ -551,8 +551,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('tolerates read-only location overrides (defineProperty fails)', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       blockRedirects: true,
@@ -572,8 +572,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('does not block same-origin iframes and tolerates invalid src URLs', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       blockRedirects: true,
@@ -607,8 +607,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blocks insertBefore injection and document.write passthrough/flush cases in aggressive mode', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     const doc = dom.window.document as unknown as Document & {
       write: (...args: unknown[]) => void;
@@ -653,8 +653,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('removeOverlays hides invisible click-layers with transparent background and nested click targets', () => {
     dom = createDom('<!doctype html><html><body></body></html>');
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection();
 
@@ -718,8 +718,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('cleanupScripts ignores invalid src and removes obvious ad scripts', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection();
 
@@ -741,8 +741,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('removeEventHijacking blocks body clicks and allows real links', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       removeEventHijacking: true,
@@ -771,8 +771,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('enableRightClick/enableSelection/enableCopy remove inline blockers and stop propagation', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     const el = dom.window.document.createElement('div');
     el.setAttribute('oncontextmenu', 'return false');
@@ -807,10 +807,10 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('unlockKeyboard allows ShadowRoot/class-based MNR events but blocks others', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.Element = dom.window.Element as unknown as typeof Element;
-    globalThis.ShadowRoot = dom.window.ShadowRoot as unknown as typeof ShadowRoot;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('Element', dom.window.Element);
+    vi.stubGlobal('ShadowRoot', dom.window.ShadowRoot);
 
     protection = new SiteProtection({
       unlockKeyboard: true,
@@ -861,10 +861,10 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('unlockKeyboard shields MNR reader shortcuts but keeps editable MNR fields usable', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.Element = dom.window.Element as unknown as typeof Element;
-    globalThis.ShadowRoot = dom.window.ShadowRoot as unknown as typeof ShadowRoot;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('Element', dom.window.Element);
+    vi.stubGlobal('ShadowRoot', dom.window.ShadowRoot);
 
     protection = new SiteProtection({
       unlockKeyboard: true,
@@ -911,8 +911,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blockPopups returns null on invalid URLs even when event is trusted', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     const originalOpen = vi.fn(() => ({}) as unknown as Window);
     Object.defineProperty(dom.window, 'open', { value: originalOpen, configurable: true });
@@ -938,8 +938,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('blockVisibilityDetection: document.hidden returns false even after real visibility change', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       blockVisibilityDetection: true,
@@ -962,8 +962,8 @@ describe('SiteProtection (extra coverage)', () => {
 
   it('repeated activate/deactivate does not leak event listeners', () => {
     dom = createDom();
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection({
       blockVisibilityDetection: true,
@@ -1002,8 +1002,8 @@ describe('SiteProtection (extra coverage)', () => {
     const doc = dom.window.document;
     Object.defineProperty(doc, 'body', { value: null, configurable: true });
 
-    globalThis.document = doc;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', doc);
+    vi.stubGlobal('window', dom.window);
 
     const el = doc.createElement('div');
     el.setAttribute('onkeydown', 'return false');

@@ -16,7 +16,7 @@ describe('ContentProcessor', () => {
     dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
     doc = dom.window.document;
     // Set global document for tests that need it
-    globalThis.document = doc;
+    vi.stubGlobal('document', doc);
   });
 
   afterEach(() => {
@@ -200,7 +200,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html);
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const element = doc.querySelector('.content')!;
       const result = processor.process(element, doc);
@@ -232,7 +232,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const element = doc.querySelector('.content')!;
       const result = processor.process(element, doc);
@@ -262,7 +262,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const insertSpy = vi
         .spyOn(dom.window.Element.prototype, 'insertAdjacentHTML')
@@ -300,7 +300,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const element = doc.querySelector('.content')!;
       const result = processor.process(element, doc);
@@ -324,7 +324,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const element = doc.querySelector('.content')!;
       const result = processor.process(element, doc);
@@ -356,7 +356,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const element = doc.querySelector('.content')!;
       const result = processor.process(element, doc);
@@ -392,7 +392,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       const element = doc.querySelector('.content')!;
       const result = processor.process(element, doc);
@@ -419,7 +419,7 @@ describe('ContentProcessor', () => {
 
       dom = new JSDOM(html, { url: 'https://example.com/ch/1' });
       doc = dom.window.document;
-      globalThis.document = doc;
+      vi.stubGlobal('document', doc);
 
       vi.stubGlobal('atob', undefined);
       vi.stubGlobal('Buffer', undefined);

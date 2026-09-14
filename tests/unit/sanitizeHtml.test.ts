@@ -50,7 +50,7 @@ describe('sanitizeHtml (basicSanitize fallback)', () => {
     vi.stubGlobal('window', undefined);
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
     doc = dom.window.document;
-    globalThis.document = doc;
+    vi.stubGlobal('document', doc);
   });
 
   afterEach(() => {

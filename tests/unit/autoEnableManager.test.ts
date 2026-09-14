@@ -112,8 +112,8 @@ describe('AutoEnableManager', () => {
 
   const createDoc = (url = 'https://example.com/chapter/1') => {
     const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', { url });
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
     return dom.window.document;
   };
 
@@ -616,8 +616,8 @@ describe('getAutoEnableManager', () => {
     const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/chapter/1',
     });
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
 
     await manager.manualEnable(dom.window.document);
     expect(mockedProtection.activate).toHaveBeenLastCalledWith(options1);

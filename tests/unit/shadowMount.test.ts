@@ -17,10 +17,8 @@ describe('shadowMount', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
   });
 
   afterEach(() => {

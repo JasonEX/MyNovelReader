@@ -3,7 +3,7 @@
  * The script must use the real TOC (/shu/{bookId}/) as indexUrl.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getParser } from '@/core/parser';
 import { JSDOM } from 'jsdom';
 
@@ -39,16 +39,12 @@ describe('ilwxs navigation index', () => {
       { url }
     );
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom DOMParser to globalThis
-    globalThis.DOMParser = dom.window.DOMParser;
-    // test env: assigning jsdom Node to globalThis
-    globalThis.Node = dom.window.Node;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('DOMParser', dom.window.DOMParser);
+    vi.stubGlobal('Node', dom.window.Node);
     // test env: align DOM constructors for instanceof checks
-    globalThis.HTMLAnchorElement = dom.window.HTMLAnchorElement;
+    vi.stubGlobal('HTMLAnchorElement', dom.window.HTMLAnchorElement);
 
     // Stub GM_* storage APIs used by RuleStorage / RuleManager
     // userscript global stub

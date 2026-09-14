@@ -12,8 +12,8 @@ describe('Reader detection utilities', () => {
       url: 'https://example.com/',
       pretendToBeVisual: true,
     });
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
   });
 
   afterEach(() => {

@@ -22,8 +22,8 @@ describe('SiteProtection', () => {
     });
 
     // Set up global environment
-    globalThis.document = dom.window.document;
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('window', dom.window);
 
     protection = new SiteProtection();
   });
@@ -546,8 +546,8 @@ describe('SiteProtection', () => {
     it('should handle document without head element', () => {
       // Create a minimal DOM without head
       const minimalDom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-      globalThis.document = minimalDom.window.document;
-      globalThis.window = minimalDom.window as unknown as Window & typeof globalThis;
+      vi.stubGlobal('document', minimalDom.window.document);
+      vi.stubGlobal('window', minimalDom.window);
 
       const p = new SiteProtection();
       // Should not throw
@@ -558,8 +558,8 @@ describe('SiteProtection', () => {
     it('should handle document without body element', () => {
       // Create a document without body
       const minimalDom = new JSDOM('<!DOCTYPE html><html></html>');
-      globalThis.document = minimalDom.window.document;
-      globalThis.window = minimalDom.window as unknown as Window & typeof globalThis;
+      vi.stubGlobal('document', minimalDom.window.document);
+      vi.stubGlobal('window', minimalDom.window);
 
       const p = new SiteProtection();
       // Should not throw even without body

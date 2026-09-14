@@ -36,14 +36,10 @@ describe('VIP chapter block', () => {
 
   it('blocks VIP page on loadNextChapter and shows toast', async () => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
-    // @ts-expect-error - test env: assign jsdom window
-    globalThis.window = dom.window;
-    // test env: assign jsdom document
-    globalThis.document = dom.window.document;
-    // test env: assign jsdom DOMParser
-    globalThis.DOMParser = dom.window.DOMParser;
-    // test env: assign jsdom Node
-    globalThis.Node = dom.window.Node;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('DOMParser', dom.window.DOMParser);
+    vi.stubGlobal('Node', dom.window.Node);
 
     setActivePinia(createPinia());
 

@@ -28,14 +28,10 @@ describe('sudugu section merge', () => {
 
     // Start on a later section page (common when user opens from search result / reading history).
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: page2Url });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom DOMParser to globalThis
-    globalThis.DOMParser = dom.window.DOMParser;
-    // test env: assigning jsdom Node to globalThis
-    globalThis.Node = dom.window.Node;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('DOMParser', dom.window.DOMParser);
+    vi.stubGlobal('Node', dom.window.Node);
 
     // Stub GM_* storage APIs used by RuleManager/RuleStorage.
     // userscript global stub

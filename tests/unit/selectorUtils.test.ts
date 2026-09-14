@@ -14,10 +14,8 @@ describe('generateCssSelector', () => {
     });
     doc = dom.window.document;
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = doc;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', doc);
   });
 
   afterEach(() => {

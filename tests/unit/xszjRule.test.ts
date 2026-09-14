@@ -309,14 +309,10 @@ describe('xszj rule', () => {
 describe('xszj section merge from a middle page', () => {
   it('should normalize to first page and merge ?page=2..4 into one chapter', async () => {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: page2Url });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom DOMParser to globalThis
-    globalThis.DOMParser = dom.window.DOMParser;
-    // test env: assigning jsdom Node to globalThis
-    globalThis.Node = dom.window.Node;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('DOMParser', dom.window.DOMParser);
+    vi.stubGlobal('Node', dom.window.Node);
     stubGmStorage();
 
     const pages = new Map<string, string>([

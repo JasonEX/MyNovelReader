@@ -22,14 +22,10 @@ describe('ldks section merge', () => {
   it('should merge /42509750.html + /42509750_2.html and set nextUrl to next chapter', async () => {
     // Pinia store requires a DOM; create jsdom global.
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom DOMParser to globalThis
-    globalThis.DOMParser = dom.window.DOMParser;
-    // test env: assigning jsdom Node to globalThis
-    globalThis.Node = dom.window.Node;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('DOMParser', dom.window.DOMParser);
+    vi.stubGlobal('Node', dom.window.Node);
 
     // Pinia store setup
     setActivePinia(createPinia());
@@ -139,14 +135,10 @@ describe('ldks section merge', () => {
   it('should merge /id.html + /id_2.html and set nextUrl to next chapter', async () => {
     // Pinia store requires a DOM; create jsdom global.
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://x.test/' });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom DOMParser to globalThis
-    globalThis.DOMParser = dom.window.DOMParser;
-    // test env: assigning jsdom Node to globalThis
-    globalThis.Node = dom.window.Node;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('DOMParser', dom.window.DOMParser);
+    vi.stubGlobal('Node', dom.window.Node);
 
     // Pinia store setup
     setActivePinia(createPinia());

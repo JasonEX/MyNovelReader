@@ -7,8 +7,8 @@ describe('readingPosition', () => {
     const dom = new JSDOM('<!doctype html><html><body></body></html>', {
       url: 'https://example.com/',
     });
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.localStorage = dom.window.localStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('localStorage', dom.window.localStorage);
     vi.stubGlobal('GM_getValue', undefined);
     vi.stubGlobal('GM_setValue', undefined);
   });

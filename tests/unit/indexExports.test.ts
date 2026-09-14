@@ -12,12 +12,9 @@ describe('src/index exports', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
   });
 
   afterEach(() => {

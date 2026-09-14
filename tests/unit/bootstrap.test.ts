@@ -175,12 +175,9 @@ describe('bootstrap', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
 
     await import('@/bootstrap');
 
@@ -199,12 +196,9 @@ describe('bootstrap', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
 
     const manager = {
       check: vi.fn(async () => ({ shouldEnable: true })),
@@ -237,12 +231,9 @@ describe('bootstrap', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
     Object.defineProperty(document, 'readyState', {
       configurable: true,
       get: () => 'complete',
@@ -289,12 +280,9 @@ describe('bootstrap', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
 
     const decision = { shouldEnable: true, method: 'detection' };
     const chapter = { title: 't', content: 'c', rawContent: 'c', url: dom.window.location.href };
@@ -354,12 +342,9 @@ describe('bootstrap', () => {
       url: 'https://example.com/chapter/1',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
 
     const first = {
       title: '第1章',
@@ -409,12 +394,9 @@ describe('bootstrap', () => {
       url: 'https://example.com/index.html',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = domInit.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = domInit.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = domInit.window.sessionStorage;
+    vi.stubGlobal('window', domInit.window);
+    vi.stubGlobal('document', domInit.window.document);
+    vi.stubGlobal('sessionStorage', domInit.window.sessionStorage);
 
     const bootstrap = await import('@/bootstrap');
 
@@ -423,12 +405,9 @@ describe('bootstrap', () => {
       url: 'https://example.com/chapter/1',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = domChapter.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = domChapter.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = domChapter.window.sessionStorage;
+    vi.stubGlobal('window', domChapter.window);
+    vi.stubGlobal('document', domChapter.window.document);
+    vi.stubGlobal('sessionStorage', domChapter.window.sessionStorage);
     document.title = 'Original Chapter Title';
     window.history.replaceState({ site: 'original' }, '', window.location.href);
 
@@ -478,12 +457,9 @@ describe('bootstrap', () => {
       url: 'https://example.com/index.html',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = domInit.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = domInit.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = domInit.window.sessionStorage;
+    vi.stubGlobal('window', domInit.window);
+    vi.stubGlobal('document', domInit.window.document);
+    vi.stubGlobal('sessionStorage', domInit.window.sessionStorage);
 
     const bootstrap = await import('@/bootstrap');
 
@@ -491,12 +467,9 @@ describe('bootstrap', () => {
       url: 'https://www.deqixs.org/24/18442_6.html',
       pretendToBeVisual: true,
     });
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = domChapter.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = domChapter.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = domChapter.window.sessionStorage;
+    vi.stubGlobal('window', domChapter.window);
+    vi.stubGlobal('document', domChapter.window.document);
+    vi.stubGlobal('sessionStorage', domChapter.window.sessionStorage);
 
     const rule = {
       id: 'deqixs',
@@ -541,12 +514,9 @@ describe('bootstrap', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
 
     const manager = {
       check: vi.fn(async () => ({ shouldEnable: false })),
@@ -578,12 +548,9 @@ describe('bootstrap', () => {
       pretendToBeVisual: true,
     });
 
-    // @ts-expect-error - test env: assigning jsdom window to globalThis
-    globalThis.window = dom.window;
-    // test env: assigning jsdom document to globalThis
-    globalThis.document = dom.window.document;
-    // test env: assigning jsdom sessionStorage to globalThis
-    globalThis.sessionStorage = dom.window.sessionStorage;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
 
     const launchError = new Error('parse failed');
     const manager = {

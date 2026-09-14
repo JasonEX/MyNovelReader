@@ -172,7 +172,7 @@ describe('Goboo section merge', () => {
       `,
       url
     );
-    globalThis.Node = doc.defaultView!.Node;
+    vi.stubGlobal('Node', doc.defaultView!.Node);
 
     const entries = collectTocCandidates(doc, url);
 

@@ -13,9 +13,9 @@ describe('ConfigStore (extra coverage)', () => {
       url: 'https://example.com/',
       pretendToBeVisual: true,
     });
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
-    globalThis.document = dom.window.document;
-    globalThis.location = dom.window.location;
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('location', dom.window.location);
 
     setActivePinia(createPinia());
   });

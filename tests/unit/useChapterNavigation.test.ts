@@ -13,9 +13,9 @@ describe('useChapterNavigation', () => {
       pretendToBeVisual: true,
     });
     // test env
-    globalThis.window = dom.window as unknown as Window & typeof globalThis;
+    vi.stubGlobal('window', dom.window);
     // test env
-    globalThis.document = dom.window.document;
+    vi.stubGlobal('document', dom.window.document);
 
     vi.stubGlobal(
       'requestAnimationFrame',
