@@ -188,22 +188,22 @@ export function createTocActions(ctx: TocActionContext) {
     const runId = ctx.runtime.sessionId();
     if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
 
-    const currentUrl = ctx.chapter.value?.url || '';
-    let indexUrl = ctx.chapter.value?.indexUrl;
-    if (
-      !indexUrl ||
-      (currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl))
-    ) {
-      indexUrl = (await ensureIndexUrl()) || undefined;
-    }
-    if (!indexUrl) {
-      ctx.showToast('未检测到目录链接', 'info', 2500);
-      return;
-    }
-
     ctx.tocLoading.value = true;
-
     try {
+      const currentUrl = ctx.chapter.value?.url || '';
+      let indexUrl = ctx.chapter.value?.indexUrl;
+      if (
+        !indexUrl ||
+        (currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl))
+      ) {
+        indexUrl = (await ensureIndexUrl()) || undefined;
+      }
+      if (ctx.runtime.isSessionStale(runId)) return;
+      if (!indexUrl) {
+        ctx.showToast('未检测到目录链接', 'info', 2500);
+        return;
+      }
+
       let entries = await _loadTocEntriesPaged(
         indexUrl,
         currentUrl || indexUrl,
@@ -211,6 +211,8 @@ export function createTocActions(ctx: TocActionContext) {
         abort => {
           if (!ctx.runtime.isSessionStale(runId)) {
             ctx.tocAbort.value = abort;
+          } else {
+            abort?.();
           }
         }
       );
@@ -226,6 +228,8 @@ export function createTocActions(ctx: TocActionContext) {
           abort => {
             if (!ctx.runtime.isSessionStale(runId)) {
               ctx.tocAbort.value = abort;
+            } else {
+              abort?.();
             }
           }
         );

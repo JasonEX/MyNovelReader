@@ -25,6 +25,7 @@ import { fetchAndParseUrl } from '@/core/utils/network';
 import { getChapterDocumentBlockReason } from '@/core/detection';
 import type { NavigationContext } from './navigationContext';
 import { parseWithSectionMerge } from './section';
+import { recordDebugEvent } from '@/core/debug/events';
 import { shouldPersistNavigationBlock } from './navigationPolicy';
 import { trimCachedContents } from './trim';
 
@@ -37,35 +38,36 @@ export function createNavigation(ctx: NavigationContext) {
     const load = prepareChapterLoad(ctx, direction, source);
     if (!load) return false;
 
-    // Prefer cached content if available (avoid refetching on race/abort failures).
-    const cached = ctx.cachedContents.value.get(load.targetUrl);
-    if (cached) {
-      return insertCachedChapter(ctx, cached, load.isNext ? 'append' : 'prepend');
-    }
-    if (ctx.persistedUrls.value.has(load.targetUrl)) {
-      const persisted = await ctx.getPersistedCachedChapter(load.targetUrl);
-      if (ctx.runtime.isViewStale(runId)) return false;
-      if (persisted) {
-        const sessionCached = { ...persisted, cachedAt: Date.now() };
-        ctx.cachedContents.value.set(load.targetUrl, sessionCached);
-        trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
-        return insertCachedChapter(ctx, sessionCached, load.isNext ? 'append' : 'prepend');
-      }
-    }
-
     load.isLoadingRef.value = true;
-
-    // Cancel in-flight request
-    if (load.pendingAbortRef.value) {
-      load.pendingAbortRef.value();
-      load.pendingAbortRef.value = null;
-    }
-
-    if (!validateTargetChapterUrl(ctx, load, source)) {
-      return false;
-    }
-
+    let outcome = 'loaded';
     try {
+      // Prefer cached content if available (avoid refetching on race/abort failures).
+      const cached = ctx.cachedContents.value.get(load.targetUrl);
+      if (cached) {
+        return await insertCachedChapter(ctx, cached, load.isNext ? 'append' : 'prepend');
+      }
+      if (ctx.persistedUrls.value.has(load.targetUrl)) {
+        const persisted = await ctx.getPersistedCachedChapter(load.targetUrl);
+        if (ctx.runtime.isViewStale(runId)) return false;
+        if (persisted) {
+          const sessionCached = { ...persisted, cachedAt: Date.now() };
+          ctx.cachedContents.value.set(load.targetUrl, sessionCached);
+          trimCachedContents(ctx.cachedContents.value, MAX_SESSION_CACHE);
+          return await insertCachedChapter(ctx, sessionCached, load.isNext ? 'append' : 'prepend');
+        }
+      }
+
+      // Cancel in-flight request
+      if (load.pendingAbortRef.value) {
+        load.pendingAbortRef.value();
+        load.pendingAbortRef.value = null;
+      }
+
+      if (!validateTargetChapterUrl(ctx, load, source)) {
+        outcome = 'invalid-url';
+        return false;
+      }
+
       const referer = load.refChapter.chapter.url;
       const parser = getParser();
       let cleanupIframe: (() => void) | null = null;
@@ -116,6 +118,7 @@ export function createNavigation(ctx: NavigationContext) {
             cleanupIframe = null;
           }
           if (iframeParsed === 'abort' || iframeParsed === 'blocked') {
+            outcome = iframeParsed;
             return false;
           }
           parsed = iframeParsed;
@@ -127,9 +130,11 @@ export function createNavigation(ctx: NavigationContext) {
       if (!parsed) {
         const fetchDoc = await loadFetchDocument(ctx, load, runId, referer);
         if (fetchDoc === 'abort') {
+          outcome = 'abort';
           return false;
         }
         if (!fetchDoc) {
+          outcome = 'fetch-failed';
           recordLoadFailure();
           return false;
         }
@@ -144,6 +149,7 @@ export function createNavigation(ctx: NavigationContext) {
           source
         );
         if (fetchParsed === 'abort' || fetchParsed === 'blocked') {
+          outcome = fetchParsed;
           return false;
         }
         parsed = fetchParsed;
@@ -153,6 +159,7 @@ export function createNavigation(ctx: NavigationContext) {
         return false;
       }
       if (!parsed) {
+        outcome = 'parse-empty';
         recordLoadFailure();
         return false;
       }
@@ -164,6 +171,7 @@ export function createNavigation(ctx: NavigationContext) {
       // Check if this is a TOC page
       const isTocPage = detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url);
       if (isTocPage) {
+        outcome = 'toc';
         if (shouldPersistNavigationBlock(source)) {
           ctx.blockedNavUrls.value.add(load.navKey);
         }
@@ -181,6 +189,7 @@ export function createNavigation(ctx: NavigationContext) {
         ) {
           // This is fine, it's actually the previous chapter
         } else if (parsed.prevUrl && !parsed.nextUrl) {
+          outcome = 'invalid-prev';
           // Page has prev but no next - likely a TOC or non-chapter page
           if (shouldPersistNavigationBlock(source)) {
             ctx.blockedNavUrls.value.add(load.navKey);
@@ -190,14 +199,21 @@ export function createNavigation(ctx: NavigationContext) {
       }
 
       clearNavFailure(ctx.navFailures, load.navKey);
-      return insertParsedChapter(ctx, load, parsed);
+      return await insertParsedChapter(ctx, load, parsed);
     } catch (e) {
+      outcome = 'exception';
       if (!ctx.runtime.isViewStale(runId)) {
         console.error(`[MNR] Failed to load ${direction} chapter:`, e);
         ctx.setError(load.errorMessage);
       }
       return false;
     } finally {
+      recordDebugEvent('chapter.load', {
+        url: load.targetUrl,
+        direction,
+        source,
+        outcome: ctx.runtime.isViewStale(runId) ? 'stale' : outcome,
+      });
       if (!ctx.runtime.isViewStale(runId)) {
         load.isLoadingRef.value = false;
       }

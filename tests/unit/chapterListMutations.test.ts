@@ -11,6 +11,7 @@ import {
   insertParsedChapter,
   rebuildChaptersFromCache,
 } from '@/ui/stores/reader/chapterListMutations';
+import { createNavigation } from '@/ui/stores/reader/navigation';
 import type { NavigationContext } from '@/ui/stores/reader/navigationContext';
 import type { ParsedChapter } from '@/core/parser';
 import type { PreparedChapterLoad } from '@/ui/stores/reader/chapterLoadGuards';
@@ -172,4 +173,55 @@ describe('chapterListMutations', () => {
     });
     expect(ctx.applyConversionToChapterEntry).toHaveBeenCalledWith(ctx.chapters.value[0].id, 'sc');
   });
+  it('reserves persisted navigation before its first await', async () => {
+    const ctx = makeContext();
+    const cached = makeCached(2);
+    let resolve!: (value: CachedChapter) => void;
+    vi.mocked(ctx.getPersistedCachedChapter).mockReturnValue(
+      new Promise(done => {
+        resolve = done;
+      })
+    );
+    ctx.persistedUrls.value.add(cached.chapter.url);
+    const actions = createNavigation(ctx);
+    const first = actions.loadNextChapter('auto');
+    const second = actions.loadNextChapter('manual');
+    expect(ctx.getPersistedCachedChapter).toHaveBeenCalledTimes(1);
+    resolve(cached);
+    expect(await first).toBe(true);
+    expect(await second).toBe(false);
+    expect(ctx.chapters.value.map(entry => entry.chapter.url)).toEqual([
+      'https://example.com/1.html',
+      cached.chapter.url,
+    ]);
+    expect(ctx.isLoadingNext.value).toBe(false);
+  });
+
+  it.each(['cached', 'parsed'] as const)(
+    'does not trim or update history after a stale %s insertion',
+    async kind => {
+      const ctx = makeContext();
+      ctx.currentConversionMode.value = 'sc';
+      let resolve!: () => void;
+      vi.mocked(ctx.applyConversionToChapterEntry).mockReturnValue(
+        new Promise(done => {
+          resolve = done;
+        })
+      );
+      const run =
+        kind === 'cached'
+          ? insertCachedChapter(ctx, makeCached(2), 'prepend')
+          : insertParsedChapter(ctx, makeLoad(false, ctx.chapters.value[0]), makeChapter(2));
+      const replacement = Array.from({ length: MAX_CACHED_CHAPTERS + 1 }, (_, index) =>
+        makeEntry(index + 20)
+      );
+      ctx.chapters.value = replacement;
+      ctx.history.value = ['new-view'];
+      vi.mocked(ctx.runtime.isViewStale).mockReturnValue(true);
+      resolve();
+      expect(await run).toBe(false);
+      expect(ctx.chapters.value).toHaveLength(MAX_CACHED_CHAPTERS + 1);
+      expect(ctx.history.value).toEqual(['new-view']);
+    }
+  );
 });

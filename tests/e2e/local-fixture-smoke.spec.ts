@@ -1386,3 +1386,52 @@ test('keeps generic chapter extraction, template TOC and cached navigation in th
   expect(documentNavigations).toBe(1);
   expect(requests.some(url => url.includes('?lang='))).toBe(false);
 });
+
+test('caches script-rendered rule chapters through an iframe and removes it afterward', async ({
+  context,
+  page,
+}) => {
+  const startUrl = 'https://twkan.com/txt/999999/500';
+  const cachedUrl = 'https://twkan.com/txt/999999/501';
+  let cachedRequests = 0;
+  let iframeRequests = 0;
+  await context.route('https://twkan.com/**', async route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (request.url() === cachedUrl) {
+      cachedRequests++;
+      if (request.isNavigationRequest() && request.frame() !== page.mainFrame()) iframeRequests++;
+    }
+    const id = path.endsWith('/501') ? 501 : 500;
+    const content = `<p>动态缓存章节 ${id}。</p>${paragraphs}`;
+    const body =
+      path.startsWith('/book/') || path.startsWith('/ajax_novels/')
+        ? `<title>离线测试</title><a href="${startUrl}">第500章 起程</a><a href="${cachedUrl}">第501章 归来</a>`
+        : `<title>第${id}章 归来-离线测试-小说-台灣小說網</title>
+         <h1>第${id}章 归来</h1><a href="/book/999999/index.html">目录</a>
+         <div id="txtcontent0"></div>
+         <script>document.getElementById('txtcontent0').innerHTML = ${JSON.stringify(content)};</script>`;
+    await route.fulfill({ body, contentType: 'text/html; charset=utf-8' });
+  });
+  await addMyNovelReaderUserscript(context);
+  const logs = createConsoleCollector(page);
+  await page.goto(startUrl);
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+  await root.getByRole('button', { name: '打开目录' }).click();
+  await expect(root.locator('.mnr-chapter-list li')).toHaveCount(2);
+  page.once('dialog', dialog => dialog.accept());
+  await root.getByRole('button', { name: '缓存本书', exact: true }).click();
+  await expect(
+    root.locator('.mnr-chapter-list li').filter({ hasText: '第501章' }).locator('.mnr-cache-mark')
+  ).toBeVisible();
+  await expect(root.getByRole('button', { name: '缓存本书', exact: true })).toBeVisible();
+  expect(iframeRequests).toBe(1);
+  expect(cachedRequests).toBe(1);
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await root.locator('.mnr-chapter-button').filter({ hasText: '第501章 归来' }).click();
+  await expect(page).toHaveURL(cachedUrl);
+  await expect(root.locator('.mnr-reader-content')).toContainText('动态缓存章节 501');
+  expect(cachedRequests).toBe(1);
+  expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+});

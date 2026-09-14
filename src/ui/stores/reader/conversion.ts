@@ -21,7 +21,8 @@ export async function applyConversionToChapterEntry(
   originalContents: Map<string, string>,
   originalTitles: Map<string, { title: string; bookTitle?: string }>,
   entryId: string,
-  mode: ConversionMode
+  mode: ConversionMode,
+  isCurrent: () => boolean = () => true
 ): Promise<void> {
   const entry = chapters.find(e => e.id === entryId);
   if (!entry) return;
@@ -51,7 +52,12 @@ export async function applyConversionToChapterEntry(
     }
   }
 
-  if (Object.keys(updates).length > 0) {
+  if (
+    isCurrent() &&
+    originalContents.get(entryId) === originalContent &&
+    originalTitles.get(entryId) === originalTitle &&
+    Object.keys(updates).length > 0
+  ) {
     entry.chapter = { ...entry.chapter, ...updates };
   }
 }

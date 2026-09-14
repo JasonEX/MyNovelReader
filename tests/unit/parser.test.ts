@@ -42,6 +42,7 @@ vi.mock('@/core/rules/RuleManager', () => ({
   }),
 }));
 
+import { DetectionEngine, TitleDetector } from '@/core/detection';
 import { Parser } from '@/core/parser/Parser';
 
 describe('Parser', () => {
@@ -1070,60 +1071,29 @@ describe('Parser', () => {
     await expect(promise).resolves.toBe(true);
   });
 
-  it('extractTitle uses doc._mnrUrl when doc.location is missing', () => {
-    const detect = vi.fn((_doc: Document, _url: string) => ({
-      results: {
-        title: { chapterTitle: 'c', bookTitle: 'b', confidence: 1, method: 'pattern' },
-      },
-      confidence: {
-        overall: 1,
-        content: 0,
-        navigation: 0,
-        title: 1,
-        isReliable: true,
-        reasons: [],
-      },
-    })) as unknown as DetectionEngineLike['detect'];
-
-    (parser as unknown as { detectionEngine: DetectionEngineLike }).detectionEngine = {
-      detect,
-      detectNavigation: vi.fn(() => ({
-        next: null,
-        prev: null,
-        index: null,
-      })) as unknown as DetectionEngineLike['detectNavigation'],
-      detectSection: vi.fn(() => ({
-        isSection: false,
-        nextSectionUrl: null,
-        nextChapterUrl: null,
-        confidence: 0,
-      })) as unknown as DetectionEngineLike['detectSection'],
-      quickCheck: vi.fn(() => true) as unknown as DetectionEngineLike['quickCheck'],
-    };
-
+  it('uses title-only detection for rule fallback on a detached document', async () => {
     const doc = new DOMParser().parseFromString(
-      '<!doctype html><html><head></head><body></body></html>',
+      '<title>第12章 风起，云涌 - 山海归途 - 小说网</title><h1>第12章 风起，云涌</h1><div id="content">' +
+        '正文'.repeat(300) +
+        '</div>',
       'text/html'
-    ) as Document & {
-      _mnrUrl?: string;
-    };
-    doc._mnrUrl = 'https://example.com/_mnr';
-
-    const extractTitle = (
-      parser as unknown as {
-        extractTitle: (doc: Document, rule: SiteRule) => { chapter: string; book?: string };
-      }
-    ).extractTitle.bind(parser);
-
-    const out = extractTitle(doc, {
-      id: 'r',
+    );
+    const expected = new TitleDetector().detect(doc);
+    const fullDetection = vi.spyOn(DetectionEngine.prototype, 'detect');
+    const titleDetection = vi.spyOn(DetectionEngine.prototype, 'detectTitle');
+    const rule: SiteRule = {
+      id: 'title-fallback',
       version: 1,
-      match: { pattern: '.*', type: 'regex' },
+      match: { pattern: '.*' },
       content: { selector: '#content' },
-      meta: { source: 'builtin' },
-    });
-
-    expect(out.chapter).toBe('c');
-    expect(detect).toHaveBeenCalledWith(doc, 'https://example.com/_mnr');
+      navigation: { prev: false, next: false, index: false },
+    };
+    mockMatchRule.mockResolvedValue({ rule, source: 'builtin', matchedPattern: '.*' });
+    const result = await parser.parse(doc, 'https://example.com/123.html');
+    expect(result?.title).toBe(expected.chapterTitle);
+    expect(result?.bookTitle).toBe(expected.bookTitle);
+    expect(result?.content).toContain('正文');
+    expect(fullDetection).not.toHaveBeenCalled();
+    expect(titleDetection).toHaveBeenCalledTimes(1);
   });
 });

@@ -11,6 +11,7 @@ export async function insertCachedChapter(
   cached: CachedChapter,
   position: 'append' | 'prepend'
 ): Promise<boolean> {
+  const runId = ctx.runtime.viewId();
   const suffix = position === 'append' ? 'cached' : 'cached-prev';
   const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
   const entry = {
@@ -36,6 +37,7 @@ export async function insertCachedChapter(
   if (ctx.currentConversionMode.value !== 'none') {
     await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
   }
+  if (ctx.runtime.isViewStale(runId)) return false;
 
   trimDisplayChapters(ctx, position === 'append');
 
@@ -47,6 +49,7 @@ export async function insertParsedChapter(
   load: PreparedChapterLoad,
   parsed: ParsedChapter
 ): Promise<boolean> {
+  const runId = ctx.runtime.viewId();
   const suffix = load.isNext ? '' : 'prev-';
   const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
   const entry = {
@@ -77,6 +80,7 @@ export async function insertParsedChapter(
   if (ctx.currentConversionMode.value !== 'none') {
     await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
   }
+  if (ctx.runtime.isViewStale(runId)) return false;
 
   if (!ctx.history.value.includes(parsed.url)) {
     if (load.isNext) {
@@ -96,6 +100,7 @@ export async function rebuildChaptersFromCache(
   cached: CachedChapter,
   url: string
 ): Promise<boolean> {
+  const runId = ctx.runtime.viewId();
   ctx.chapters.value = [];
   ctx.currentChapterIndex.value = 0;
   ctx.loadedUrls.value.clear();
@@ -119,6 +124,7 @@ export async function rebuildChaptersFromCache(
   if (ctx.currentConversionMode.value !== 'none') {
     await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
   }
+  if (ctx.runtime.isViewStale(runId)) return false;
 
   return true;
 }

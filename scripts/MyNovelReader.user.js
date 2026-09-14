@@ -4688,13 +4688,16 @@
 			const results = {
 				content,
 				navigation,
-				title: this.titleDetector.detect(doc),
+				title: this.detectTitle(doc),
 				section: this.detectSection(doc, currentUrl, navigation)
 			};
 			return {
 				results,
 				confidence: this.confidenceScorer.score(results)
 			};
+		}
+		detectTitle(doc = document) {
+			return this.titleDetector.detect(doc);
 		}
 		detectNavigation(doc = document, currentUrl = window.location.href) {
 			const navigation = this.navigationDetector.detect(doc, currentUrl);
@@ -7857,10 +7860,7 @@
 			let book;
 			let detection = null;
 			const getDetection = () => {
-				if (!detection) {
-					const currentUrl = doc.location?.href || doc._mnrUrl || window.location.href;
-					detection = this.detectionEngine.detect(doc, currentUrl);
-				}
+				detection ??= this.detectionEngine.detectTitle(doc);
 				return detection;
 			};
 			if (rule.title?.selector) {
@@ -7877,14 +7877,14 @@
 			}
 			if (!chapter) {
 				const detected = getDetection();
-				chapter = detected.results.title.chapterTitle;
-				book = book || detected.results.title.bookTitle;
+				chapter = detected.chapterTitle;
+				book = book || detected.bookTitle;
 			}
 			if (!book && rule.title?.bookSelector) {
 				const el = this.selectElement(doc, rule.title.bookSelector);
 				if (el) book = el.textContent?.trim();
 			}
-			if (!book) book = getDetection().results.title.bookTitle;
+			if (!book) book = getDetection().bookTitle;
 			if (rule.title?.replace && chapter) try {
 				chapter = chapter.replace(new RegExp(rule.title.replace), "").trim();
 			} catch (e) {
@@ -17990,7 +17990,7 @@ ul, ol {
 			return html;
 		}
 	}
-	async function applyConversionToChapterEntry(chapters, originalContents, originalTitles, entryId, mode) {
+	async function applyConversionToChapterEntry(chapters, originalContents, originalTitles, entryId, mode, isCurrent = () => true) {
 		const entry = chapters.find((e) => e.id === entryId);
 		if (!entry) return;
 		const originalContent = originalContents.get(entryId);
@@ -18010,7 +18010,7 @@ ul, ol {
 				updates.bookTitle = originalTitle.bookTitle ? await convertText(originalTitle.bookTitle, mode, conversionOptions) : originalTitle.bookTitle;
 			}
 		}
-		if (Object.keys(updates).length > 0) entry.chapter = {
+		if (isCurrent() && originalContents.get(entryId) === originalContent && originalTitles.get(entryId) === originalTitle && Object.keys(updates).length > 0) entry.chapter = {
 			...entry.chapter,
 			...updates
 		};
@@ -19247,17 +19247,19 @@ ul, ol {
 		async function loadToc() {
 			const runId = ctx.runtime.sessionId();
 			if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
-			const currentUrl = ctx.chapter.value?.url || "";
-			let indexUrl = ctx.chapter.value?.indexUrl;
-			if (!indexUrl || currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl)) indexUrl = await ensureIndexUrl() || void 0;
-			if (!indexUrl) {
-				ctx.showToast("未检测到目录链接", "info", 2500);
-				return;
-			}
 			ctx.tocLoading.value = true;
 			try {
+				const currentUrl = ctx.chapter.value?.url || "";
+				let indexUrl = ctx.chapter.value?.indexUrl;
+				if (!indexUrl || currentUrl && normalizeUrlForBlock(indexUrl) === normalizeUrlForBlock(currentUrl)) indexUrl = await ensureIndexUrl() || void 0;
+				if (ctx.runtime.isSessionStale(runId)) return;
+				if (!indexUrl) {
+					ctx.showToast("未检测到目录链接", "info", 2500);
+					return;
+				}
 				let entries = await _loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, ctx.rule.value ?? void 0, (abort) => {
 					if (!ctx.runtime.isSessionStale(runId)) ctx.tocAbort.value = abort;
+					else abort?.();
 				});
 				if (ctx.runtime.isSessionStale(runId)) return;
 				if (entries.length === 0) {
@@ -19265,6 +19267,7 @@ ul, ol {
 					if (ctx.runtime.isSessionStale(runId)) return;
 					entries = await _loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, ctx.rule.value ?? void 0, (abort) => {
 						if (!ctx.runtime.isSessionStale(runId)) ctx.tocAbort.value = abort;
+						else abort?.();
 					});
 					if (ctx.runtime.isSessionStale(runId)) return;
 				}
@@ -19304,203 +19307,6 @@ ul, ol {
 		const entries = Array.from(navFailures.entries()).sort((a, b) => a[1].nextRetryAt - b[1].nextRetryAt);
 		const toDeleteCount = Math.min(entries.length, navFailures.size - limit);
 		for (let i = 0; i < toDeleteCount; i++) navFailures.delete(entries[i][0]);
-	}
-	function createCacheAll(ctx) {
-		async function startCacheAll(urls) {
-			const runId = ctx.runtime.sessionId();
-			if (ctx.cacheProgress.value.running) return;
-			const seenUrls = new Set();
-			const knownLockedUrls = new Set();
-			ctx.cacheFailedUrls.value = [];
-			await ctx.restoreCache();
-			if (ctx.runtime.isSessionStale(runId)) return;
-			const persistedSet = new Set(ctx.persistedUrls.value);
-			const cacheBook = getCurrentBookCacheKey(ctx.chapter.value?.indexUrl);
-			let taskList = urls ? [...urls] : [];
-			ctx.cacheQueue.value = [...taskList];
-			if (!taskList.length) {
-				const indexUrl = ctx.chapter.value?.indexUrl;
-				const currentUrl = ctx.chapter.value?.url;
-				if (indexUrl) {
-					const tocEntries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, ctx.rule.value ?? void 0, (abort) => {
-						if (!ctx.runtime.isSessionStale(runId)) ctx.cacheAbort.value = abort;
-					});
-					if (ctx.runtime.isSessionStale(runId)) return;
-					ctx.cacheAbort.value = null;
-					const tocLinks = [];
-					let removedPersistedLocked = false;
-					for (const entry of tocEntries.slice(0, 1e4)) {
-						const url = normalizeUrlForFetch(entry.url);
-						if (entry.access === "locked") {
-							knownLockedUrls.add(url);
-							ctx.cachedContents.value.delete(url);
-							removedPersistedLocked = persistedSet.delete(url) || removedPersistedLocked;
-						} else tocLinks.push(url);
-					}
-					if (removedPersistedLocked && cacheBook) {
-						ctx.persistedUrls.value = new Set(persistedSet);
-						if (persistedSet.size > 0) persistCacheIndex(cacheBook, persistedSet);
-						else deletePersistedCacheIndex(cacheBook);
-					}
-					taskList = tocLinks.filter((u) => !ctx.loadedUrls.value.has(u) && !ctx.cachedContents.value.has(u) && !persistedSet.has(u));
-					ctx.cacheQueue.value = [...taskList];
-				}
-			}
-			const estimatedTotal = taskList.length;
-			if (ctx.runtime.isSessionStale(runId)) return;
-			if (estimatedTotal === 0) {
-				ctx.cacheProgress.value = {
-					done: 0,
-					total: 0,
-					failed: 0,
-					running: false
-				};
-				return;
-			}
-			ctx.cacheProgress.value = {
-				done: 0,
-				total: estimatedTotal,
-				failed: 0,
-				running: true
-			};
-			let nextUrl = taskList.shift();
-			let referer = ctx.chapters.value[ctx.chapters.value.length - 1]?.chapter.url || ctx.chapter.value?.url;
-			let persistedSinceIndexWrite = 0;
-			let hasWrittenIndexCheckpoint = false;
-			while (ctx.cacheProgress.value.running && nextUrl) {
-				const targetUrl = normalizeUrlForFetch(nextUrl);
-				if (seenUrls.has(targetUrl) || ctx.loadedUrls.value.has(targetUrl) || ctx.cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
-					ctx.cacheProgress.value = {
-						...ctx.cacheProgress.value,
-						done: ctx.cacheProgress.value.done + 1
-					};
-					nextUrl = taskList.shift() ?? null;
-					continue;
-				}
-				const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
-				if (ctx.runtime.isSessionStale(runId)) {
-					abort();
-					break;
-				}
-				ctx.cacheAbort.value = abort;
-				const result = await promise;
-				if (ctx.runtime.isSessionStale(runId)) {
-					abort();
-					break;
-				}
-				ctx.cacheAbort.value = null;
-				if (result.error === "abort") break;
-				if (!result.doc) {
-					ctx.cacheFailedUrls.value.push(targetUrl);
-					ctx.cacheProgress.value = {
-						...ctx.cacheProgress.value,
-						done: ctx.cacheProgress.value.done + 1,
-						failed: ctx.cacheProgress.value.failed + 1
-					};
-					nextUrl = taskList.shift() ?? null;
-					continue;
-				}
-				const blockReason = getChapterDocumentBlockReason(result.doc);
-				if (blockReason) {
-					if (blockReason === "cloudflare") ctx.cacheFailedUrls.value.push(targetUrl);
-					ctx.cacheProgress.value = {
-						...ctx.cacheProgress.value,
-						done: ctx.cacheProgress.value.done + 1,
-						failed: ctx.cacheProgress.value.failed + (blockReason === "cloudflare" ? 1 : 0)
-					};
-					nextUrl = taskList.shift() ?? null;
-					continue;
-				}
-				const parser = getParser();
-				const controller = new AbortController();
-				const abortMerge = () => controller.abort();
-				ctx.cacheAbort.value = abortMerge;
-				let parsed;
-				try {
-					parsed = await parseWithSectionMerge(parser, result.doc, targetUrl, { signal: controller.signal });
-				} finally {
-					if (ctx.cacheAbort.value === abortMerge) ctx.cacheAbort.value = null;
-				}
-				if (controller.signal.aborted) break;
-				if (ctx.runtime.isSessionStale(runId)) break;
-				if (!parsed) {
-					ctx.cacheFailedUrls.value.push(targetUrl);
-					ctx.cacheProgress.value = {
-						...ctx.cacheProgress.value,
-						done: ctx.cacheProgress.value.done + 1,
-						failed: ctx.cacheProgress.value.failed + 1
-					};
-					nextUrl = taskList.shift() ?? null;
-					continue;
-				}
-				const cached = {
-					chapter: parsed,
-					rule: parsed.rule,
-					cachedAt: Date.now()
-				};
-				ctx.cachedContents.value.set(parsed.url, cached);
-				seenUrls.add(parsed.url);
-				trimCachedContents(ctx.cachedContents.value, 500);
-				if (cacheBook) {
-					if (persistCachedChapter(cacheBook, parsed.url, cached)) {
-						persistedSet.add(parsed.url);
-						persistedSinceIndexWrite += 1;
-						if (!hasWrittenIndexCheckpoint || persistedSinceIndexWrite >= 50) {
-							if (persistCacheIndex(cacheBook, persistedSet)) {
-								persistedSinceIndexWrite = 0;
-								hasWrittenIndexCheckpoint = true;
-							}
-						}
-					}
-				}
-				ctx.cacheProgress.value = {
-					...ctx.cacheProgress.value,
-					done: ctx.cacheProgress.value.done + 1
-				};
-				referer = parsed.url;
-				nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
-				if (nextUrl && knownLockedUrls.has(normalizeUrlForFetch(nextUrl))) nextUrl = null;
-				if (taskList.length === 0 && nextUrl) {
-					const normalizedNext = normalizeUrlForFetch(nextUrl);
-					if (!seenUrls.has(normalizedNext) && !ctx.loadedUrls.value.has(normalizedNext) && !ctx.cachedContents.value.has(normalizedNext) && !persistedSet.has(normalizedNext)) ctx.cacheProgress.value = {
-						...ctx.cacheProgress.value,
-						total: ctx.cacheProgress.value.done + 1
-					};
-				}
-			}
-			if (ctx.runtime.isSessionStale(runId) || !ctx.cacheProgress.value.running) return;
-			ctx.cacheProgress.value = {
-				...ctx.cacheProgress.value,
-				running: false
-			};
-			ctx.cacheAbort.value = null;
-			if (cacheBook && persistedSet.size > 0) ctx.persistedUrls.value = persistedSet;
-			await ctx.persistCache();
-			if (ctx.cacheProgress.value.failed > 0) ctx.showToast(`缓存完成，${ctx.cacheProgress.value.failed} 章失败`, "error", 3500);
-			else ctx.showToast("离线缓存完成", "info", 2500);
-		}
-		function cancelCacheAll() {
-			ctx.cacheProgress.value = {
-				done: 0,
-				total: 0,
-				failed: 0,
-				running: false
-			};
-			ctx.cacheQueue.value = [];
-			ctx.cacheFailedUrls.value = [];
-			ctx.cacheAbort.value?.();
-			ctx.cacheAbort.value = null;
-		}
-		function retryFailedCache() {
-			const urls = [...ctx.cacheFailedUrls.value];
-			if (urls.length === 0) return Promise.resolve();
-			return startCacheAll(urls);
-		}
-		return {
-			startCacheAll,
-			cancelCacheAll,
-			retryFailedCache
-		};
 	}
 	function recordNavFailure(failures, key, opts) {
 		const count = (failures.get(key)?.count || 0) + 1;
@@ -19582,11 +19388,15 @@ ul, ol {
 				iframe.src = url;
 				parent.appendChild(iframe);
 			}),
-			abort: () => finish(null)
+			abort: () => {
+				cleanup();
+				finish(null);
+			}
 		};
 	}
 	async function loadFetchDocument(ctx, load, runId, referer) {
-		const ciweimaoDoc = await loadCiweimaoApiDocument(load);
+		const ciweimaoDoc = await loadRuleApiDocument(load.targetUrl, load.refChapter);
+		if (ctx.runtime.isViewStale(runId)) return "abort";
 		if (ciweimaoDoc) return ciweimaoDoc;
 		const fetchLoader = fetchAndParseUrl(load.targetUrl, referer);
 		const abort = fetchLoader.abort;
@@ -19602,19 +19412,29 @@ ul, ol {
 		}
 		clearPendingAbort(load, abort);
 		if (fetchResult.error === "abort") return "abort";
+		if (!fetchResult.doc) recordDebugEvent("chapter.fetch.failed", {
+			url: load.targetUrl,
+			reason: fetchResult.error,
+			status: fetchResult.status
+		});
 		return fetchResult.doc;
 	}
-	async function loadCiweimaoApiDocument(load) {
-		const ruleId = load.refChapter.rule?.id || load.refChapter.chapter.rule?.id || "";
+	async function loadRuleApiDocument(url, reference) {
+		const ruleId = reference.rule?.id || reference.chapter.rule?.id || "";
 		if (ruleId !== "ciweimao" && ruleId !== "ciweimao-wap") return null;
-		return fetchCiweimaoApiDocument(load.targetUrl, {
-			bookTitle: load.refChapter.chapter.bookTitle,
-			indexUrl: load.refChapter.chapter.indexUrl,
-			url: load.refChapter.chapter.url
+		return fetchCiweimaoApiDocument(url, {
+			bookTitle: reference.chapter.bookTitle,
+			indexUrl: reference.chapter.indexUrl,
+			url: reference.chapter.url
 		});
 	}
 	async function parseCandidateDocument(ctx, load, parser, doc, runId, _referer, source) {
+		if (ctx.runtime.isViewStale(runId)) return "abort";
 		const blockReason = getChapterDocumentBlockReason(doc);
+		if (blockReason) recordDebugEvent("chapter.rejected", {
+			url: load.targetUrl,
+			reason: blockReason
+		});
 		if (blockReason === "cloudflare") {
 			const count = recordNavFailure(ctx.navFailures, load.navKey, { maxFailures: 200 });
 			if (source === "manual" || count === 1) ctx.showToast("Cloudflare 验证页面，请在新标签页中完成验证后重试", "info", 4e3);
@@ -19638,110 +19458,6 @@ ul, ol {
 	}
 	function clearPendingAbort(load, abort) {
 		if (load.pendingAbortRef.value === abort) load.pendingAbortRef.value = null;
-	}
-	async function insertCachedChapter(ctx, cached, position) {
-		const suffix = position === "append" ? "cached" : "cached-prev";
-		const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
-		const entry = {
-			chapter: { ...cached.chapter },
-			rule: cached.rule,
-			id
-		};
-		if (position === "append") ctx.chapters.value.push(entry);
-		else {
-			ctx.chapters.value.unshift(entry);
-			ctx.currentChapterIndex.value++;
-		}
-		ctx.loadedUrls.value.add(entry.chapter.url);
-		ctx.originalContents.value.set(id, cached.chapter.content);
-		ctx.originalTitles.value.set(id, {
-			title: cached.chapter.title,
-			bookTitle: cached.chapter.bookTitle
-		});
-		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-		trimDisplayChapters(ctx, position === "append");
-		return true;
-	}
-	async function insertParsedChapter(ctx, load, parsed) {
-		const suffix = load.isNext ? "" : "prev-";
-		const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
-		const entry = {
-			chapter: parsed,
-			rule: parsed.rule,
-			id
-		};
-		if (load.isNext) ctx.chapters.value.push(entry);
-		else {
-			ctx.chapters.value.unshift(entry);
-			ctx.currentChapterIndex.value++;
-		}
-		ctx.loadedUrls.value.add(parsed.url);
-		ctx.originalContents.value.set(id, parsed.content);
-		ctx.originalTitles.value.set(id, {
-			title: parsed.title,
-			bookTitle: parsed.bookTitle
-		});
-		ctx.cachedContents.value.set(parsed.url, {
-			chapter: parsed,
-			rule: parsed.rule,
-			cachedAt: Date.now()
-		});
-		trimCachedContents(ctx.cachedContents.value, 500);
-		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-		if (!ctx.history.value.includes(parsed.url)) {
-			if (load.isNext) ctx.history.value.push(parsed.url);
-			else ctx.history.value.unshift(parsed.url);
-		}
-		trimDisplayChapters(ctx, load.isNext);
-		return true;
-	}
-	async function rebuildChaptersFromCache(ctx, cached, url) {
-		ctx.chapters.value = [];
-		ctx.currentChapterIndex.value = 0;
-		ctx.loadedUrls.value.clear();
-		ctx.originalContents.value.clear();
-		ctx.originalTitles.value.clear();
-		const id = `chapter-${Date.now()}-jump-0`;
-		ctx.chapters.value.push({
-			chapter: { ...cached.chapter },
-			rule: cached.rule,
-			id
-		});
-		ctx.loadedUrls.value.add(url);
-		ctx.originalContents.value.set(id, cached.chapter.content);
-		ctx.originalTitles.value.set(id, {
-			title: cached.chapter.title,
-			bookTitle: cached.chapter.bookTitle
-		});
-		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
-		return true;
-	}
-	function trimDisplayChapters(ctx, isAppend) {
-		if (ctx.chapters.value.length <= 6) return;
-		if (isAppend && ctx.currentChapterIndex.value > 2) {
-			const removed = ctx.chapters.value.shift();
-			if (removed) {
-				ctx.loadedUrls.value.delete(removed.chapter.url);
-				ctx.originalContents.value.delete(removed.id);
-				ctx.originalTitles.value.delete(removed.id);
-				ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
-			}
-			return;
-		}
-		if (!isAppend) {
-			const removed = ctx.chapters.value.pop();
-			if (removed) {
-				ctx.loadedUrls.value.delete(removed.chapter.url);
-				ctx.originalContents.value.delete(removed.id);
-				ctx.originalTitles.value.delete(removed.id);
-			}
-		}
-	}
-	function shouldPersistNavigationBlock(source) {
-		return source === "manual";
-	}
-	function shouldUseNavigationFailureCooldown(source) {
-		return source === "auto";
 	}
 	function isInvalidChapterUrl(url, currentChapterUrl) {
 		try {
@@ -19842,6 +19558,364 @@ ul, ol {
 		if (linkTexts.filter((t) => chapterNamePattern.test(t)).length > 5) return true;
 		return false;
 	}
+	function createCacheAll(ctx) {
+		let taskId = 0;
+		async function startCacheAll(urls) {
+			const runId = ctx.runtime.sessionId();
+			if (ctx.cacheProgress.value.running) return;
+			const currentTask = ++taskId;
+			const isCurrent = () => currentTask === taskId && !ctx.runtime.isSessionStale(runId);
+			ctx.cacheProgress.value = {
+				done: 0,
+				total: 0,
+				failed: 0,
+				running: true
+			};
+			try {
+				const seenUrls = new Set();
+				const knownLockedUrls = new Set();
+				ctx.cacheFailedUrls.value = [];
+				await ctx.restoreCache();
+				if (!isCurrent()) return;
+				const persistedSet = new Set(ctx.persistedUrls.value);
+				const cacheBook = getCurrentBookCacheKey(ctx.chapter.value?.indexUrl);
+				let taskList = urls ? [...urls] : [];
+				ctx.cacheQueue.value = [...taskList];
+				if (!taskList.length) {
+					const indexUrl = ctx.chapter.value?.indexUrl;
+					const currentUrl = ctx.chapter.value?.url;
+					if (indexUrl) {
+						const tocEntries = await loadTocEntriesPaged(indexUrl, currentUrl || indexUrl, ctx.rule.value ?? void 0, (abort) => {
+							if (isCurrent()) ctx.cacheAbort.value = abort;
+							else abort?.();
+						});
+						if (!isCurrent()) return;
+						ctx.cacheAbort.value = null;
+						const tocLinks = [];
+						let removedPersistedLocked = false;
+						for (const entry of tocEntries.slice(0, 1e4)) {
+							const url = normalizeUrlForFetch(entry.url);
+							if (entry.access === "locked") {
+								knownLockedUrls.add(url);
+								ctx.cachedContents.value.delete(url);
+								removedPersistedLocked = persistedSet.delete(url) || removedPersistedLocked;
+							} else tocLinks.push(url);
+						}
+						if (removedPersistedLocked && cacheBook) {
+							ctx.persistedUrls.value = new Set(persistedSet);
+							if (persistedSet.size > 0) persistCacheIndex(cacheBook, persistedSet);
+							else deletePersistedCacheIndex(cacheBook);
+						}
+						taskList = tocLinks.filter((u) => !ctx.loadedUrls.value.has(u) && !ctx.cachedContents.value.has(u) && !persistedSet.has(u));
+						ctx.cacheQueue.value = [...taskList];
+					}
+				}
+				const estimatedTotal = taskList.length;
+				if (!isCurrent()) return;
+				if (estimatedTotal === 0) {
+					ctx.cacheProgress.value = {
+						done: 0,
+						total: 0,
+						failed: 0,
+						running: false
+					};
+					return;
+				}
+				ctx.cacheProgress.value = {
+					done: 0,
+					total: estimatedTotal,
+					failed: 0,
+					running: true
+				};
+				let nextUrl = taskList.shift();
+				let referer = ctx.chapters.value[ctx.chapters.value.length - 1]?.chapter.url || ctx.chapter.value?.url;
+				let persistedSinceIndexWrite = 0;
+				let hasWrittenIndexCheckpoint = false;
+				while (isCurrent() && ctx.cacheProgress.value.running && nextUrl) {
+					const targetUrl = normalizeUrlForFetch(nextUrl);
+					if (seenUrls.has(targetUrl) || ctx.loadedUrls.value.has(targetUrl) || ctx.cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
+						ctx.cacheProgress.value = {
+							...ctx.cacheProgress.value,
+							done: ctx.cacheProgress.value.done + 1
+						};
+						nextUrl = taskList.shift() ?? null;
+						continue;
+					}
+					let cleanupIframe;
+					try {
+						const parseDocument = async (doc) => {
+							const controller = new AbortController();
+							const abortMerge = () => {
+								controller.abort();
+								cleanupIframe?.();
+							};
+							ctx.cacheAbort.value = abortMerge;
+							try {
+								const parsed = await parseWithSectionMerge(getParser(), doc, targetUrl, { signal: controller.signal });
+								return controller.signal.aborted || !isCurrent() ? null : parsed;
+							} finally {
+								if (ctx.cacheAbort.value === abortMerge) ctx.cacheAbort.value = null;
+							}
+						};
+						let parsed = null;
+						let blockReason = null;
+						const reference = ctx.chapter.value;
+						const rule = ctx.rule.value ?? reference?.rule;
+						if (rule?.advanced?.useIframe) {
+							const loader = loadDocumentInIframe(targetUrl);
+							ctx.cacheAbort.value = loader.abort;
+							const loaded = await loader.promise;
+							cleanupIframe = loaded?.cleanup;
+							if (!isCurrent()) break;
+							ctx.cacheAbort.value = null;
+							if (loaded) {
+								blockReason = getChapterDocumentBlockReason(loaded.doc);
+								if (!blockReason) parsed = await parseDocument(loaded.doc);
+							}
+							cleanupIframe?.();
+							cleanupIframe = void 0;
+							if (!isCurrent()) break;
+						}
+						if (!parsed && !blockReason) {
+							const apiDoc = reference ? await loadRuleApiDocument(targetUrl, {
+								chapter: reference,
+								rule
+							}) : null;
+							if (!isCurrent()) break;
+							let doc = apiDoc;
+							if (!doc) {
+								const { promise, abort } = fetchAndParseUrl(targetUrl, referer);
+								ctx.cacheAbort.value = abort;
+								const result = await promise;
+								if (!isCurrent()) break;
+								ctx.cacheAbort.value = null;
+								if (result.error === "abort") break;
+								doc = result.doc;
+								if (!doc) recordDebugEvent("cache.chapter.failed", {
+									url: targetUrl,
+									reason: result.error,
+									status: result.status
+								});
+							}
+							if (doc) {
+								blockReason = getChapterDocumentBlockReason(doc);
+								if (!blockReason) parsed = await parseDocument(doc);
+							}
+						}
+						if (!isCurrent()) break;
+						const isToc = parsed && detectTocPage(parsed.content, parsed.url, reference?.url || targetUrl);
+						if (blockReason || !parsed || isToc) {
+							recordDebugEvent("cache.chapter.rejected", {
+								url: targetUrl,
+								reason: blockReason || (isToc ? "toc" : "parse-empty")
+							});
+							if (blockReason !== "vip") ctx.cacheFailedUrls.value.push(targetUrl);
+							ctx.cacheProgress.value = {
+								...ctx.cacheProgress.value,
+								done: ctx.cacheProgress.value.done + 1,
+								failed: ctx.cacheProgress.value.failed + (blockReason === "vip" ? 0 : 1)
+							};
+							nextUrl = taskList.shift() ?? null;
+							continue;
+						}
+						const cached = {
+							chapter: parsed,
+							rule: parsed.rule,
+							cachedAt: Date.now()
+						};
+						ctx.cachedContents.value.set(parsed.url, cached);
+						seenUrls.add(parsed.url);
+						trimCachedContents(ctx.cachedContents.value, 500);
+						if (cacheBook) {
+							if (persistCachedChapter(cacheBook, parsed.url, cached)) {
+								persistedSet.add(parsed.url);
+								persistedSinceIndexWrite += 1;
+								if (!hasWrittenIndexCheckpoint || persistedSinceIndexWrite >= 50) {
+									if (persistCacheIndex(cacheBook, persistedSet)) {
+										persistedSinceIndexWrite = 0;
+										hasWrittenIndexCheckpoint = true;
+									}
+								}
+							}
+						}
+						ctx.cacheProgress.value = {
+							...ctx.cacheProgress.value,
+							done: ctx.cacheProgress.value.done + 1
+						};
+						referer = parsed.url;
+						nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
+						if (nextUrl && knownLockedUrls.has(normalizeUrlForFetch(nextUrl))) nextUrl = null;
+						if (taskList.length === 0 && nextUrl) {
+							const normalizedNext = normalizeUrlForFetch(nextUrl);
+							if (!seenUrls.has(normalizedNext) && !ctx.loadedUrls.value.has(normalizedNext) && !ctx.cachedContents.value.has(normalizedNext) && !persistedSet.has(normalizedNext)) ctx.cacheProgress.value = {
+								...ctx.cacheProgress.value,
+								total: ctx.cacheProgress.value.done + 1
+							};
+						}
+					} finally {
+						cleanupIframe?.();
+					}
+				}
+				if (!isCurrent() || !ctx.cacheProgress.value.running) return;
+				if (cacheBook && persistedSet.size > 0) ctx.persistedUrls.value = persistedSet;
+				await ctx.persistCache();
+				if (!isCurrent()) return;
+				if (ctx.cacheProgress.value.failed > 0) ctx.showToast(`缓存完成，${ctx.cacheProgress.value.failed} 章失败`, "error", 3500);
+				else ctx.showToast("离线缓存完成", "info", 2500);
+			} catch (error) {
+				if (isCurrent()) {
+					console.error("[MNR] Cache task failed:", error);
+					recordDebugEvent("cache.failed", {
+						reason: "exception",
+						error: String(error)
+					}, "error");
+					ctx.showToast("离线缓存失败，可重试", "error", 3500);
+				}
+			} finally {
+				if (isCurrent()) {
+					ctx.cacheAbort.value?.();
+					ctx.cacheAbort.value = null;
+					ctx.cacheProgress.value = {
+						...ctx.cacheProgress.value,
+						running: false
+					};
+				}
+			}
+		}
+		function cancelCacheAll() {
+			taskId += 1;
+			ctx.cacheProgress.value = {
+				done: 0,
+				total: 0,
+				failed: 0,
+				running: false
+			};
+			ctx.cacheQueue.value = [];
+			ctx.cacheFailedUrls.value = [];
+			ctx.cacheAbort.value?.();
+			ctx.cacheAbort.value = null;
+		}
+		function retryFailedCache() {
+			const urls = [...ctx.cacheFailedUrls.value];
+			if (urls.length === 0) return Promise.resolve();
+			return startCacheAll(urls);
+		}
+		return {
+			startCacheAll,
+			cancelCacheAll,
+			retryFailedCache
+		};
+	}
+	async function insertCachedChapter(ctx, cached, position) {
+		const runId = ctx.runtime.viewId();
+		const suffix = position === "append" ? "cached" : "cached-prev";
+		const id = `chapter-${Date.now()}-${suffix}-${ctx.chapters.value.length}`;
+		const entry = {
+			chapter: { ...cached.chapter },
+			rule: cached.rule,
+			id
+		};
+		if (position === "append") ctx.chapters.value.push(entry);
+		else {
+			ctx.chapters.value.unshift(entry);
+			ctx.currentChapterIndex.value++;
+		}
+		ctx.loadedUrls.value.add(entry.chapter.url);
+		ctx.originalContents.value.set(id, cached.chapter.content);
+		ctx.originalTitles.value.set(id, {
+			title: cached.chapter.title,
+			bookTitle: cached.chapter.bookTitle
+		});
+		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+		if (ctx.runtime.isViewStale(runId)) return false;
+		trimDisplayChapters(ctx, position === "append");
+		return true;
+	}
+	async function insertParsedChapter(ctx, load, parsed) {
+		const runId = ctx.runtime.viewId();
+		const suffix = load.isNext ? "" : "prev-";
+		const id = `chapter-${Date.now()}-${suffix}${ctx.chapters.value.length}`;
+		const entry = {
+			chapter: parsed,
+			rule: parsed.rule,
+			id
+		};
+		if (load.isNext) ctx.chapters.value.push(entry);
+		else {
+			ctx.chapters.value.unshift(entry);
+			ctx.currentChapterIndex.value++;
+		}
+		ctx.loadedUrls.value.add(parsed.url);
+		ctx.originalContents.value.set(id, parsed.content);
+		ctx.originalTitles.value.set(id, {
+			title: parsed.title,
+			bookTitle: parsed.bookTitle
+		});
+		ctx.cachedContents.value.set(parsed.url, {
+			chapter: parsed,
+			rule: parsed.rule,
+			cachedAt: Date.now()
+		});
+		trimCachedContents(ctx.cachedContents.value, 500);
+		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+		if (ctx.runtime.isViewStale(runId)) return false;
+		if (!ctx.history.value.includes(parsed.url)) {
+			if (load.isNext) ctx.history.value.push(parsed.url);
+			else ctx.history.value.unshift(parsed.url);
+		}
+		trimDisplayChapters(ctx, load.isNext);
+		return true;
+	}
+	async function rebuildChaptersFromCache(ctx, cached, url) {
+		const runId = ctx.runtime.viewId();
+		ctx.chapters.value = [];
+		ctx.currentChapterIndex.value = 0;
+		ctx.loadedUrls.value.clear();
+		ctx.originalContents.value.clear();
+		ctx.originalTitles.value.clear();
+		const id = `chapter-${Date.now()}-jump-0`;
+		ctx.chapters.value.push({
+			chapter: { ...cached.chapter },
+			rule: cached.rule,
+			id
+		});
+		ctx.loadedUrls.value.add(url);
+		ctx.originalContents.value.set(id, cached.chapter.content);
+		ctx.originalTitles.value.set(id, {
+			title: cached.chapter.title,
+			bookTitle: cached.chapter.bookTitle
+		});
+		if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(id, ctx.currentConversionMode.value);
+		if (ctx.runtime.isViewStale(runId)) return false;
+		return true;
+	}
+	function trimDisplayChapters(ctx, isAppend) {
+		if (ctx.chapters.value.length <= 6) return;
+		if (isAppend && ctx.currentChapterIndex.value > 2) {
+			const removed = ctx.chapters.value.shift();
+			if (removed) {
+				ctx.loadedUrls.value.delete(removed.chapter.url);
+				ctx.originalContents.value.delete(removed.id);
+				ctx.originalTitles.value.delete(removed.id);
+				ctx.currentChapterIndex.value = Math.max(0, ctx.currentChapterIndex.value - 1);
+			}
+			return;
+		}
+		if (!isAppend) {
+			const removed = ctx.chapters.value.pop();
+			if (removed) {
+				ctx.loadedUrls.value.delete(removed.chapter.url);
+				ctx.originalContents.value.delete(removed.id);
+				ctx.originalTitles.value.delete(removed.id);
+			}
+		}
+	}
+	function shouldPersistNavigationBlock(source) {
+		return source === "manual";
+	}
+	function shouldUseNavigationFailureCooldown(source) {
+		return source === "auto";
+	}
 	function prepareChapterLoad(ctx, direction, source) {
 		const isNext = direction === "next";
 		const refChapter = isNext ? ctx.chapters.value[ctx.chapters.value.length - 1] : ctx.chapters.value[0];
@@ -19901,28 +19975,32 @@ ul, ol {
 			const runId = ctx.runtime.viewId();
 			const load = prepareChapterLoad(ctx, direction, source);
 			if (!load) return false;
-			const cached = ctx.cachedContents.value.get(load.targetUrl);
-			if (cached) return insertCachedChapter(ctx, cached, load.isNext ? "append" : "prepend");
-			if (ctx.persistedUrls.value.has(load.targetUrl)) {
-				const persisted = await ctx.getPersistedCachedChapter(load.targetUrl);
-				if (ctx.runtime.isViewStale(runId)) return false;
-				if (persisted) {
-					const sessionCached = {
-						...persisted,
-						cachedAt: Date.now()
-					};
-					ctx.cachedContents.value.set(load.targetUrl, sessionCached);
-					trimCachedContents(ctx.cachedContents.value, 500);
-					return insertCachedChapter(ctx, sessionCached, load.isNext ? "append" : "prepend");
-				}
-			}
 			load.isLoadingRef.value = true;
-			if (load.pendingAbortRef.value) {
-				load.pendingAbortRef.value();
-				load.pendingAbortRef.value = null;
-			}
-			if (!validateTargetChapterUrl(ctx, load, source)) return false;
+			let outcome = "loaded";
 			try {
+				const cached = ctx.cachedContents.value.get(load.targetUrl);
+				if (cached) return await insertCachedChapter(ctx, cached, load.isNext ? "append" : "prepend");
+				if (ctx.persistedUrls.value.has(load.targetUrl)) {
+					const persisted = await ctx.getPersistedCachedChapter(load.targetUrl);
+					if (ctx.runtime.isViewStale(runId)) return false;
+					if (persisted) {
+						const sessionCached = {
+							...persisted,
+							cachedAt: Date.now()
+						};
+						ctx.cachedContents.value.set(load.targetUrl, sessionCached);
+						trimCachedContents(ctx.cachedContents.value, 500);
+						return await insertCachedChapter(ctx, sessionCached, load.isNext ? "append" : "prepend");
+					}
+				}
+				if (load.pendingAbortRef.value) {
+					load.pendingAbortRef.value();
+					load.pendingAbortRef.value = null;
+				}
+				if (!validateTargetChapterUrl(ctx, load, source)) {
+					outcome = "invalid-url";
+					return false;
+				}
 				const referer = load.refChapter.chapter.url;
 				const parser = getParser();
 				let cleanupIframe = null;
@@ -19955,24 +20033,35 @@ ul, ol {
 							cleanupIframe?.();
 							cleanupIframe = null;
 						}
-						if (iframeParsed === "abort" || iframeParsed === "blocked") return false;
+						if (iframeParsed === "abort" || iframeParsed === "blocked") {
+							outcome = iframeParsed;
+							return false;
+						}
 						parsed = iframeParsed;
 					}
 				}
 				cleanupIframe?.();
 				if (!parsed) {
 					const fetchDoc = await loadFetchDocument(ctx, load, runId, referer);
-					if (fetchDoc === "abort") return false;
+					if (fetchDoc === "abort") {
+						outcome = "abort";
+						return false;
+					}
 					if (!fetchDoc) {
+						outcome = "fetch-failed";
 						recordLoadFailure();
 						return false;
 					}
 					const fetchParsed = await parseCandidateDocument(ctx, load, parser, fetchDoc, runId, referer, source);
-					if (fetchParsed === "abort" || fetchParsed === "blocked") return false;
+					if (fetchParsed === "abort" || fetchParsed === "blocked") {
+						outcome = fetchParsed;
+						return false;
+					}
 					parsed = fetchParsed;
 				}
 				if (ctx.runtime.isViewStale(runId)) return false;
 				if (!parsed) {
+					outcome = "parse-empty";
 					recordLoadFailure();
 					return false;
 				}
@@ -19980,25 +20069,34 @@ ul, ol {
 				if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
 				if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
 				if (detectTocPage(parsed.content, load.targetUrl, load.refChapter.chapter.url)) {
+					outcome = "toc";
 					if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(load.navKey);
 					if (source === "manual") ctx.showToast(load.endMessage, "info");
 					return false;
 				}
 				if (!load.isNext) {
 					if (parsed.nextUrl && normalizeUrl(parsed.nextUrl) === normalizeUrl(load.refChapter.chapter.url)) {} else if (parsed.prevUrl && !parsed.nextUrl) {
+						outcome = "invalid-prev";
 						if (shouldPersistNavigationBlock(source)) ctx.blockedNavUrls.value.add(load.navKey);
 						return false;
 					}
 				}
 				clearNavFailure(ctx.navFailures, load.navKey);
-				return insertParsedChapter(ctx, load, parsed);
+				return await insertParsedChapter(ctx, load, parsed);
 			} catch (e) {
+				outcome = "exception";
 				if (!ctx.runtime.isViewStale(runId)) {
 					console.error(`[MNR] Failed to load ${direction} chapter:`, e);
 					ctx.setError(load.errorMessage);
 				}
 				return false;
 			} finally {
+				recordDebugEvent("chapter.load", {
+					url: load.targetUrl,
+					direction,
+					source,
+					outcome: ctx.runtime.isViewStale(runId) ? "stale" : outcome
+				});
 				if (!ctx.runtime.isViewStale(runId)) load.isLoadingRef.value = false;
 			}
 		}
@@ -20256,16 +20354,31 @@ ul, ol {
 				toastTimer.value = null;
 			}
 		}
+		let conversionId = 0;
+		let tocConversionId = 0;
 		async function applyConversionToChapterEntry$1(entryId, mode) {
-			await applyConversionToChapterEntry(chapters.value, originalContents.value, originalTitles.value, entryId, mode);
+			const requestId = conversionId;
+			const viewId = runtime.viewId();
+			await applyConversionToChapterEntry(chapters.value, originalContents.value, originalTitles.value, entryId, mode, () => requestId === conversionId && mode === currentConversionMode.value && !runtime.isViewStale(viewId));
 		}
 		async function applyTocConversion$1(mode) {
-			toc.value = await applyTocConversion(tocOriginal.value, mode, chapter.value?.sourceScript);
+			const requestId = ++tocConversionId;
+			const sessionId = runtime.sessionId();
+			const source = tocOriginal.value;
+			const converted = await applyTocConversion(source, mode, chapter.value?.sourceScript);
+			if (requestId === tocConversionId && !runtime.isSessionStale(sessionId) && source === tocOriginal.value && mode === currentConversionMode.value) toc.value = converted;
 		}
 		async function applyTextConversion(mode) {
+			const requestId = ++conversionId;
+			const sessionId = runtime.sessionId();
+			const isCurrent = () => requestId === conversionId && !runtime.isSessionStale(sessionId);
 			currentConversionMode.value = mode;
-			for (const entry of chapters.value) await applyConversionToChapterEntry$1(entry.id, mode);
+			for (const entry of chapters.value) {
+				await applyConversionToChapterEntry$1(entry.id, mode);
+				if (!isCurrent()) return;
+			}
 			await applyTocConversion$1(mode);
+			if (!isCurrent()) return;
 			syncCurrentHostPage();
 		}
 		async function getPersistedCachedChapterForCurrentBook(url) {

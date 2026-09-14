@@ -329,15 +329,9 @@ export class Parser {
   private extractTitle(doc: Document, rule: SiteRule): { chapter: string; book?: string } {
     let chapter = '';
     let book: string | undefined;
-    let detection: ReturnType<typeof this.detectionEngine.detect> | null = null;
-    const getDetection = (): ReturnType<typeof this.detectionEngine.detect> => {
-      if (!detection) {
-        const currentUrl =
-          doc.location?.href ||
-          (doc as Document & { _mnrUrl?: string })._mnrUrl ||
-          window.location.href;
-        detection = this.detectionEngine.detect(doc, currentUrl);
-      }
+    let detection: ReturnType<typeof this.detectionEngine.detectTitle> | null = null;
+    const getDetection = () => {
+      detection ??= this.detectionEngine.detectTitle(doc);
       return detection;
     };
 
@@ -368,8 +362,8 @@ export class Parser {
     // Fallback to detection
     if (!chapter) {
       const detected = getDetection();
-      chapter = detected.results.title.chapterTitle;
-      book = book || detected.results.title.bookTitle;
+      chapter = detected.chapterTitle;
+      book = book || detected.bookTitle;
     }
 
     // Try book title selector
@@ -382,7 +376,7 @@ export class Parser {
 
     if (!book) {
       const detected = getDetection();
-      book = detected.results.title.bookTitle;
+      book = detected.bookTitle;
     }
 
     // Apply title cleanup

@@ -7,6 +7,7 @@ import type {
   DetectionResults,
   NavigationResult,
   SectionDetectionResult,
+  TitleResult,
 } from './types';
 import { ConfidenceScorer } from './ConfidenceScorer';
 import { ContentDetector } from './ContentDetector';
@@ -41,7 +42,7 @@ export class DetectionEngine {
     // Run all detectors
     const content = this.contentDetector.detect(doc);
     const navigation = this.detectNavigation(doc, currentUrl);
-    const title = this.titleDetector.detect(doc);
+    const title = this.detectTitle(doc);
 
     // Detect multi-page chapter sections
     const section = this.detectSection(doc, currentUrl, navigation);
@@ -57,6 +58,11 @@ export class DetectionEngine {
     const confidence = this.confidenceScorer.score(results);
 
     return { results, confidence };
+  }
+
+  /** Detect titles without scanning content or navigation. */
+  detectTitle(doc: Document = document): TitleResult {
+    return this.titleDetector.detect(doc);
   }
 
   /**

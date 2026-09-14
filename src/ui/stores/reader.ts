@@ -182,29 +182,54 @@ export const useReaderStore = defineStore('reader', () => {
     }
   }
 
+  let conversionId = 0;
+  let tocConversionId = 0;
+
   async function applyConversionToChapterEntry(
     entryId: string,
     mode: ConversionMode
   ): Promise<void> {
+    const requestId = conversionId;
+    const viewId = runtime.viewId();
     await applyConversionImpl(
       chapters.value,
       originalContents.value,
       originalTitles.value,
       entryId,
-      mode
+      mode,
+      () =>
+        requestId === conversionId &&
+        mode === currentConversionMode.value &&
+        !runtime.isViewStale(viewId)
     );
   }
 
   async function applyTocConversion(mode: ConversionMode): Promise<void> {
-    toc.value = await applyTocConversionImpl(tocOriginal.value, mode, chapter.value?.sourceScript);
+    const requestId = ++tocConversionId;
+    const sessionId = runtime.sessionId();
+    const source = tocOriginal.value;
+    const converted = await applyTocConversionImpl(source, mode, chapter.value?.sourceScript);
+    if (
+      requestId === tocConversionId &&
+      !runtime.isSessionStale(sessionId) &&
+      source === tocOriginal.value &&
+      mode === currentConversionMode.value
+    ) {
+      toc.value = converted;
+    }
   }
 
   async function applyTextConversion(mode: ConversionMode): Promise<void> {
+    const requestId = ++conversionId;
+    const sessionId = runtime.sessionId();
+    const isCurrent = () => requestId === conversionId && !runtime.isSessionStale(sessionId);
     currentConversionMode.value = mode;
     for (const entry of chapters.value) {
       await applyConversionToChapterEntry(entry.id, mode);
+      if (!isCurrent()) return;
     }
     await applyTocConversion(mode);
+    if (!isCurrent()) return;
     syncCurrentHostPage();
   }
 

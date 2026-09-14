@@ -93,6 +93,51 @@ describe('ReaderStore - workflows', () => {
     ).toContain('第二页');
   });
 
+  it('reserves TOC loading before detecting a missing index URL', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第一章',
+      content: '<p>正文</p>',
+      rawContent: '<p>正文</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+    mockGetParser.mockReturnValue({
+      detect: () => ({
+        results: { navigation: { index: { url: 'https://example.com/book/1/index.html' } } },
+      }),
+    });
+    mockLoadTocEntriesPaged.mockResolvedValueOnce([
+      { title: '第一章', url: 'https://example.com/book/1/1.html' },
+    ]);
+    await Promise.all([store.loadToc(), store.loadToc()]);
+    expect(mockLoadTocEntriesPaged).toHaveBeenCalledTimes(1);
+    expect(store.tocLoading).toBe(false);
+  });
+
+  it('does not fetch the detected TOC after exiting during preparation', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第一章',
+      content: '<p>正文</p>',
+      rawContent: '<p>正文</p>',
+      url: 'https://example.com/book/1/1.html',
+      confidence: 1,
+      method: 'rule',
+    });
+    mockGetParser.mockReturnValue({
+      detect: () => ({
+        results: { navigation: { index: { url: 'https://example.com/book/1/index.html' } } },
+      }),
+    });
+    const run = store.loadToc();
+    store.deactivate();
+    await run;
+    expect(mockLoadTocEntriesPaged).not.toHaveBeenCalled();
+    expect(store.toc).toEqual([]);
+  });
+
   it('loadToc retries once when first attempt returns empty', async () => {
     vi.useFakeTimers();
 
@@ -549,7 +594,7 @@ describe('ReaderStore - workflows', () => {
     mockFetchAndParseUrl.mockReturnValue({ promise, abort });
 
     const p = store.startCacheAll(['https://example.com/book/1/2.html']);
-    await Promise.resolve();
+    await vi.waitFor(() => expect(mockFetchAndParseUrl).toHaveBeenCalledTimes(1));
 
     store.cancelCacheAll();
     await p;

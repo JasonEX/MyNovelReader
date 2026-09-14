@@ -9,7 +9,9 @@ import type { NavigationContext } from './navigationContext';
 import { normalizeUrlForBlock } from './utils';
 import { parseWithSectionMerge } from './section';
 import type { PreparedChapterLoad } from './chapterLoadGuards';
+import { recordDebugEvent } from '@/core/debug/events';
 import { recordNavFailure } from './navFailure';
+import type { SiteRule } from '@/core/rules/types';
 
 export type FetchDocumentResult = Document | 'abort' | null;
 export type ParsedCandidateResult = ParsedChapter | 'abort' | 'blocked' | null;
@@ -93,7 +95,10 @@ export function loadDocumentInIframe(
 
   return {
     promise,
-    abort: () => finish(null),
+    abort: () => {
+      cleanup();
+      finish(null);
+    },
   };
 }
 
@@ -103,7 +108,8 @@ export async function loadFetchDocument(
   runId: number,
   referer: string
 ): Promise<FetchDocumentResult> {
-  const ciweimaoDoc = await loadCiweimaoApiDocument(load);
+  const ciweimaoDoc = await loadRuleApiDocument(load.targetUrl, load.refChapter);
+  if (ctx.runtime.isViewStale(runId)) return 'abort';
   if (ciweimaoDoc) return ciweimaoDoc;
 
   const fetchLoader = fetchAndParseUrl(load.targetUrl, referer);
@@ -124,17 +130,27 @@ export async function loadFetchDocument(
   if (fetchResult.error === 'abort') {
     return 'abort';
   }
+  if (!fetchResult.doc) {
+    recordDebugEvent('chapter.fetch.failed', {
+      url: load.targetUrl,
+      reason: fetchResult.error,
+      status: fetchResult.status,
+    });
+  }
   return fetchResult.doc;
 }
 
-async function loadCiweimaoApiDocument(load: PreparedChapterLoad): Promise<Document | null> {
-  const ruleId = load.refChapter.rule?.id || load.refChapter.chapter.rule?.id || '';
+export async function loadRuleApiDocument(
+  url: string,
+  reference: { chapter: ParsedChapter; rule?: SiteRule }
+): Promise<Document | null> {
+  const ruleId = reference.rule?.id || reference.chapter.rule?.id || '';
   if (ruleId !== 'ciweimao' && ruleId !== 'ciweimao-wap') return null;
 
-  return fetchCiweimaoApiDocument(load.targetUrl, {
-    bookTitle: load.refChapter.chapter.bookTitle,
-    indexUrl: load.refChapter.chapter.indexUrl,
-    url: load.refChapter.chapter.url,
+  return fetchCiweimaoApiDocument(url, {
+    bookTitle: reference.chapter.bookTitle,
+    indexUrl: reference.chapter.indexUrl,
+    url: reference.chapter.url,
   });
 }
 
@@ -147,7 +163,11 @@ export async function parseCandidateDocument(
   _referer: string,
   source: LoadSource
 ): Promise<ParsedCandidateResult> {
+  if (ctx.runtime.isViewStale(runId)) return 'abort';
   const blockReason = getChapterDocumentBlockReason(doc);
+  if (blockReason) {
+    recordDebugEvent('chapter.rejected', { url: load.targetUrl, reason: blockReason });
+  }
   if (blockReason === 'cloudflare') {
     const count = recordNavFailure(ctx.navFailures, load.navKey, {
       maxFailures: MAX_NAV_FAILURES,
