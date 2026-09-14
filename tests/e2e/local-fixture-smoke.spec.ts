@@ -490,7 +490,7 @@ test('runs the built userscript and restores the host page after exit', async ({
     )
     .toEqual({
       visible: true,
-      groups: ['排版细节', '阅读行为', '本站与高级'],
+      groups: ['排版细节', '阅读行为', '本站与高级', '规则语法与数量限制'],
       sliders: 6,
       mainInert: true,
       activeId: 'mnr-settings-title',
@@ -554,7 +554,7 @@ test('runs the built userscript and restores the host page after exit', async ({
     .locator('#mnr-reader-root')
     .locator('details')
     .filter({ hasText: '本站与高级' });
-  await advancedSettings.locator('summary').click();
+  await advancedSettings.locator(':scope > summary').click();
   const siteAutoEnable = advancedSettings.locator('.mnr-switch-row').filter({
     hasText: '在本站自动开启',
   });
@@ -565,7 +565,7 @@ test('runs the built userscript and restores the host page after exit', async ({
 
   const customCss = advancedSettings.locator('textarea#mnr-custom-css');
   const customCleanupDraft = advancedSettings.locator('#mnr-custom-cleanup-draft');
-  const addCustomCleanup = advancedSettings.getByRole('button', { name: '添加到本站' });
+  const addCustomCleanup = advancedSettings.getByRole('button', { name: '添加规则' });
   const customCleanup = advancedSettings.locator('#mnr-custom-cleanup-regex');
   await expect(advancedSettings.locator('#mnr-custom-cleanup-site')).toContainText('mnr.test');
   const editorStyles = await Promise.all(

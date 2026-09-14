@@ -142,7 +142,7 @@ describe('UI component smoke', () => {
       Array.from(document.querySelectorAll('details > summary'), summary =>
         summary.textContent?.trim()
       )
-    ).toEqual(['排版细节', '阅读行为', '本站与高级']);
+    ).toEqual(['排版细节', '阅读行为', '本站与高级', '规则语法与数量限制']);
     const customCleanup = document.querySelector<HTMLTextAreaElement>('#mnr-custom-cleanup-regex');
     const customCleanupDraft = document.querySelector<HTMLInputElement>(
       '#mnr-custom-cleanup-draft'

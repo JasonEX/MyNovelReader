@@ -250,74 +250,89 @@
                 @input="updateCustomCSS"
               ></textarea>
 
-              <label class="mnr-field-label" for="mnr-custom-cleanup-regex">自定义正则清理</label>
-              <p id="mnr-custom-cleanup-help" class="mnr-field-help">
-                每行一条，匹配段落文本后删除整段；无前缀规则对所有网站生效，@host=域名
-                规则仅对对应网站生效。全局最多 {{ MAX_CUSTOM_PARAGRAPH_GLOBAL_FILTERS }} 条，
-                每站最多 {{ MAX_CUSTOM_PARAGRAPH_SITE_FILTERS }} 条，全部最多
-                {{ MAX_CUSTOM_PARAGRAPH_FILTERS }} 条，每条
-                {{ MAX_CUSTOM_PARAGRAPH_FILTER_LENGTH }} 字符。
-              </p>
-              <div class="mnr-cleanup-add">
-                <input
-                  id="mnr-custom-cleanup-draft"
-                  class="mnr-cleanup-input"
-                  type="text"
-                  spellcheck="false"
-                  aria-label="本站清理正则"
-                  :aria-describedby="
-                    customCleanupDraftError
-                      ? 'mnr-custom-cleanup-site mnr-custom-cleanup-draft-error'
-                      : 'mnr-custom-cleanup-site'
-                  "
-                  :aria-invalid="!!customCleanupDraftError"
-                  placeholder="输入本站正则"
-                  :value="customCleanupDraft"
-                  @input="updateCustomCleanupDraft"
-                />
-                <button
-                  type="button"
-                  class="mnr-secondary-action mnr-cleanup-add-button"
-                  :disabled="!customCleanupHostname || !customCleanupDraft.trim()"
-                  @click="addCurrentSiteCleanupRule"
+              <div class="mnr-cleanup-fields">
+                <h4 class="mnr-field-label">自定义正则清理</h4>
+                <p id="mnr-custom-cleanup-help" class="mnr-field-help">
+                  每行一条正则，匹配后隐藏整段正文。
+                </p>
+                <p id="mnr-custom-cleanup-site" class="mnr-field-help mnr-cleanup-site">
+                  本站 · {{ customCleanupHostname || '无法识别' }}
+                </p>
+                <div class="mnr-cleanup-add">
+                  <input
+                    id="mnr-custom-cleanup-draft"
+                    class="mnr-cleanup-input"
+                    type="text"
+                    spellcheck="false"
+                    aria-label="本站清理正则"
+                    :aria-describedby="
+                      customCleanupDraftError
+                        ? 'mnr-custom-cleanup-site mnr-custom-cleanup-draft-error'
+                        : 'mnr-custom-cleanup-site'
+                    "
+                    :aria-invalid="!!customCleanupDraftError"
+                    placeholder="输入本站正则"
+                    :value="customCleanupDraft"
+                    @input="updateCustomCleanupDraft"
+                  />
+                  <button
+                    type="button"
+                    class="mnr-secondary-action mnr-cleanup-add-button"
+                    :disabled="!customCleanupHostname || !customCleanupDraft.trim()"
+                    @click="addCurrentSiteCleanupRule"
+                  >
+                    添加规则
+                  </button>
+                </div>
+                <p
+                  v-if="customCleanupDraftError"
+                  id="mnr-custom-cleanup-draft-error"
+                  class="mnr-field-error"
+                  role="status"
                 >
-                  添加到本站
-                </button>
+                  {{ customCleanupDraftError }}
+                </p>
+                <label class="mnr-cleanup-editor-label" for="mnr-custom-cleanup-regex"
+                  >全部规则</label
+                >
+                <textarea
+                  id="mnr-custom-cleanup-regex"
+                  class="mnr-custom-css"
+                  rows="4"
+                  spellcheck="false"
+                  :aria-describedby="
+                    customCleanupErrors.length > 0
+                      ? 'mnr-custom-cleanup-help mnr-custom-cleanup-error'
+                      : 'mnr-custom-cleanup-help'
+                  "
+                  :aria-invalid="customCleanupErrors.length > 0"
+                  placeholder="例如：小说免费阅读，请收藏.*"
+                  :value="configStore.customCleanupRegex"
+                  @input="updateCustomCleanupRegex"
+                ></textarea>
+                <p
+                  v-if="customCleanupErrors.length > 0"
+                  id="mnr-custom-cleanup-error"
+                  class="mnr-field-error"
+                  role="status"
+                >
+                  {{ customCleanupErrorMessage }}
+                </p>
+
+                <details class="mnr-cleanup-guide">
+                  <summary>规则语法与数量限制</summary>
+                  <p>
+                    无前缀时对所有网站生效；以 <code>@host=域名</code> 开头时仅对该网站生效。
+                    上方“添加规则”会自动填写本站前缀。
+                  </p>
+                  <p>
+                    全局最多 {{ MAX_CUSTOM_PARAGRAPH_GLOBAL_FILTERS }} 条，每站最多
+                    {{ MAX_CUSTOM_PARAGRAPH_SITE_FILTERS }} 条，合计最多
+                    {{ MAX_CUSTOM_PARAGRAPH_FILTERS }} 条；每条最多
+                    {{ MAX_CUSTOM_PARAGRAPH_FILTER_LENGTH }} 字符。
+                  </p>
+                </details>
               </div>
-              <p id="mnr-custom-cleanup-site" class="mnr-field-help mnr-cleanup-site">
-                当前网站：{{ customCleanupHostname || '无法识别' }}
-              </p>
-              <p
-                v-if="customCleanupDraftError"
-                id="mnr-custom-cleanup-draft-error"
-                class="mnr-field-error"
-                role="status"
-              >
-                {{ customCleanupDraftError }}
-              </p>
-              <textarea
-                id="mnr-custom-cleanup-regex"
-                class="mnr-custom-css"
-                rows="4"
-                spellcheck="false"
-                :aria-describedby="
-                  customCleanupErrors.length > 0
-                    ? 'mnr-custom-cleanup-help mnr-custom-cleanup-error'
-                    : 'mnr-custom-cleanup-help'
-                "
-                :aria-invalid="customCleanupErrors.length > 0"
-                placeholder="小说免费阅读，请收藏.*【1qxs\.com】"
-                :value="configStore.customCleanupRegex"
-                @input="updateCustomCleanupRegex"
-              ></textarea>
-              <p
-                v-if="customCleanupErrors.length > 0"
-                id="mnr-custom-cleanup-error"
-                class="mnr-field-error"
-                role="status"
-              >
-                {{ customCleanupErrorMessage }}
-              </p>
 
               <button class="mnr-secondary-action" @click="emit('copyDiagnostics')">
                 复制诊断信息
@@ -769,6 +784,41 @@ watch(
     monospace;
 }
 
+.mnr-cleanup-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.mnr-cleanup-fields .mnr-field-label,
+.mnr-cleanup-fields .mnr-field-help,
+.mnr-cleanup-fields .mnr-field-error {
+  margin: 0;
+}
+
+.mnr-cleanup-editor-label,
+.mnr-cleanup-guide {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mnr-cleanup-guide {
+  color: var(--mnr-text, #333);
+}
+
+.mnr-cleanup-guide summary {
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+.mnr-cleanup-guide p {
+  margin: 8px 0 0;
+}
+
+.mnr-cleanup-guide code {
+  overflow-wrap: anywhere;
+}
+
 .mnr-cleanup-add {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -803,7 +853,6 @@ watch(
 }
 
 .mnr-cleanup-site {
-  margin: 6px 0 8px;
   overflow-wrap: anywhere;
 }
 
@@ -856,6 +905,7 @@ watch(
 .mnr-segment:focus-visible,
 .mnr-secondary-action:focus-visible,
 .mnr-settings-group summary:focus-visible,
+.mnr-cleanup-guide summary:focus-visible,
 .mnr-switch-row input:focus-visible,
 .mnr-cleanup-input:focus-visible,
 .mnr-custom-css:focus-visible,
