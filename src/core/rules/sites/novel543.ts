@@ -20,8 +20,9 @@ export const novel543Rule: SiteRule = {
   match: { pattern: CHAPTER_URL.source },
   content: {
     selector: '.chapter-content > .content',
+    // Match both source markup and paragraph-wrapped markup before content normalization.
     remove:
-      '.adBlock, .gadBlock, [id^=div-onead-], div:has(> p img[src="/images/vip.png"]):has(> a[href$="/auth/govip.html"])',
+      '.adBlock, .gadBlock, [id^=div-onead-], div:has(> img[src="/images/vip.png"]):has(> a[href$="/auth/govip.html"]), div:has(> p img[src="/images/vip.png"]):has(> a[href$="/auth/govip.html"])',
   },
   navigation: {
     prev: '.foot-nav a:contains(上一章)',

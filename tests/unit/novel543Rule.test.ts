@@ -5,6 +5,7 @@ import {
   novel543BookTitle,
   novel543ChapterPath,
   novel543Origin,
+  novel543RawVipPromotion,
   novel543VipPromotion,
 } from '../testUtils/novel543';
 
@@ -25,6 +26,17 @@ const doc = (html: string) => {
 };
 
 describe('Novel543 rule', () => {
+  it('removes the VIP promotion before paragraph normalization wraps its image', async () => {
+    const parsedDoc = doc(makeNovel543Chapter(570));
+    parsedDoc
+      .querySelector('.chapter-content > .content')!
+      .insertAdjacentHTML('beforeend', novel543RawVipPromotion);
+    const parsed = await new Parser().parse(parsedDoc, url(570));
+    expect(parsed?.content).not.toContain('/auth/govip.html');
+    expect(parsed?.content).not.toContain('/images/vip.png');
+    expect(parsed?.content).toContain('第1頁末句');
+  });
+
   it('matches only its chapter URLs', () => {
     expect(builtInRules).toContain(novel543Rule);
     const match = new RegExp(novel543Rule.match.pattern);

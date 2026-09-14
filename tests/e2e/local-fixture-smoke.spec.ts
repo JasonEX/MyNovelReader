@@ -1565,6 +1565,18 @@ for (const startPage of [1, 2]) {
     await root.getByRole('button', { name: '第942章 百倍獎勵', exact: true }).click();
     await expect(page).toHaveURL(novel543Origin + novel543ChapterPath(942));
     await expect(root.locator('.mnr-reader')).toBeVisible();
+    for (const chapter of [943, 944, 945, 946]) {
+      // Respect the reader's smooth-navigation lock between keyboard commands.
+      await page.waitForTimeout(800);
+      await root.locator('.mnr-reader-main').focus();
+      await page.keyboard.press('ArrowRight');
+      await expect(page).toHaveURL(novel543Origin + novel543ChapterPath(chapter));
+      const loaded = root.locator(`article[data-chapter-url$="/8096_${chapter}.html"]`);
+      await expect(loaded).toContainText('第1頁末句');
+      await expect(loaded).toContainText('第2頁末句');
+      await expect(loaded.locator('a[href$="/auth/govip.html"]')).toHaveCount(0);
+      await expect(loaded.locator('img[src$="/images/vip.png"]')).toHaveCount(0);
+    }
     expect(documentNavigations).toBe(1);
     expect(requests.some(url => url.endsWith('/8096.html'))).toBe(false);
     expect(logs.some(line => line.includes('pageerror'))).toBe(false);
