@@ -1491,7 +1491,7 @@
 	function createDOMPurify() {
 		let window = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : getGlobal();
 		const DOMPurify = (root) => createDOMPurify(root);
-		DOMPurify.version = "3.4.14";
+		DOMPurify.version = "3.4.15";
 		DOMPurify.removed = [];
 		if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document || !window.Element) {
 			DOMPurify.isSupported = false;
@@ -1508,6 +1508,7 @@
 		const ElementPrototype = Element.prototype;
 		const cloneNode = lookupGetter(ElementPrototype, "cloneNode");
 		const remove = lookupGetter(ElementPrototype, "remove");
+		const removeAttributeNode = lookupGetter(ElementPrototype, "removeAttributeNode");
 		const getNextSibling = lookupGetter(ElementPrototype, "nextSibling");
 		const getChildNodes = lookupGetter(ElementPrototype, "childNodes");
 		const getParentNode = lookupGetter(ElementPrototype, "parentNode");
@@ -1898,7 +1899,7 @@
 		};
 		const _stripAttributeNode = function _stripAttributeNode(element, attribute, name) {
 			try {
-				element.removeAttributeNode(attribute);
+				removeAttributeNode(element, attribute);
 			} catch (_) {
 				try {
 					element.removeAttribute(name);
@@ -1937,7 +1938,7 @@
 				from: element
 			});
 			try {
-				if (attr) element.removeAttributeNode(attr);
+				if (attr) removeAttributeNode(element, attr);
 				else element.removeAttribute(name);
 			} catch (_) {
 				try {
@@ -2054,7 +2055,7 @@
 			const realTagName = getNodeName ? getNodeName(element) : null;
 			if (typeof realTagName !== "string") return false;
 			if (transformCaseFunc(realTagName) !== "form") return false;
-			return typeof element.nodeName !== "string" || typeof element.textContent !== "string" || typeof element.removeChild !== "function" || element.attributes !== getAttributes(element) || typeof element.removeAttribute !== "function" || typeof element.setAttribute !== "function" || typeof element.namespaceURI !== "string" || typeof element.insertBefore !== "function" || typeof element.hasChildNodes !== "function" || element.nodeType !== getNodeType(element) || element.childNodes !== getChildNodes(element);
+			return typeof element.nodeName !== "string" || typeof element.textContent !== "string" || typeof element.removeChild !== "function" || element.attributes !== getAttributes(element) || typeof element.removeAttribute !== "function" || typeof element.removeAttributeNode !== "function" || typeof element.getAttributeNode !== "function" || typeof element.setAttribute !== "function" || typeof element.namespaceURI !== "string" || typeof element.insertBefore !== "function" || typeof element.hasChildNodes !== "function" || element.nodeType !== getNodeType(element) || element.childNodes !== getChildNodes(element);
 		};
 		const _isDocumentFragment = function _isDocumentFragment(value) {
 			if (!getNodeType || typeof value !== "object" || value === null) return false;
@@ -2197,10 +2198,14 @@
 			try {
 				if (namespaceURI) currentNode.setAttributeNS(namespaceURI, name, value);
 				else currentNode.setAttribute(name, value);
-				if (_isClobbered(currentNode)) _forceRemove(currentNode);
-				else arrayPop(DOMPurify.removed);
+				if (_isClobbered(currentNode)) {
+					_forceRemove(currentNode);
+					return false;
+				}
+				return true;
 			} catch (_) {
 				_removeAttribute(name, currentNode);
+				return false;
 			}
 		};
 		const _sanitizeAttributes = function _sanitizeAttributes(currentNode) {
@@ -2223,6 +2228,7 @@
 				const lcName = transformCaseFunc(name);
 				const initValue = attrValue;
 				let value = name === "value" ? initValue : stringTrim(initValue);
+				let recreatedNamedProp = false;
 				hookEvent.attrName = lcName;
 				hookEvent.attrValue = value;
 				hookEvent.keepAttr = true;
@@ -2232,6 +2238,7 @@
 				if (SANITIZE_NAMED_PROPS && (lcName === "id" || lcName === "name") && stringIndexOf(value, SANITIZE_NAMED_PROPS_PREFIX) !== 0) {
 					_removeAttribute(name, currentNode, attr);
 					value = SANITIZE_NAMED_PROPS_PREFIX + value;
+					recreatedNamedProp = true;
 				}
 				if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|script|title|xmp|textarea|noscript|iframe|noembed|noframes)/i, value)) {
 					_removeAttribute(name, currentNode, attr);
@@ -2256,7 +2263,9 @@
 					continue;
 				}
 				value = _applyTrustedTypesToAttribute(lcTag, lcName, namespaceURI, value);
-				if (value !== initValue) _setAttributeValue(currentNode, name, namespaceURI, value);
+				if (value !== initValue) {
+					if (_setAttributeValue(currentNode, name, namespaceURI, value) && recreatedNamedProp) arrayPop(DOMPurify.removed);
+				}
 			}
 			_executeHooks(hooks.afterSanitizeAttributes, currentNode, null);
 		};
@@ -2366,7 +2375,7 @@
 				if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === "BODY") body = importedNode;
 				else if (importedNode.nodeName === "HTML") body = importedNode;
 				else body.appendChild(importedNode);
-				_sanitizeAttachedShadowRoots(importedNode);
+				_sanitizeAttachedShadowRoots(body);
 			} else {
 				if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT && dirty.indexOf("<") === -1) return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? _createTrustedHTML(dirty) : dirty;
 				body = _initDocument(dirty);
@@ -12439,8 +12448,8 @@
 			const oldLength = c1.length;
 			const newLength = c2.length;
 			const commonLength = Math.min(oldLength, newLength);
-			let i;
-			for (i = 0; i < commonLength; i++) {
+			let i = 0;
+			for (; i < commonLength; i++) {
 				const nextChild = c2[i] = optimized ? cloneIfMounted(c2[i]) : normalizeVNode(c2[i]);
 				patch(c1[i], nextChild, container, null, parentComponent, parentSuspense, namespace, slotScopeIds, optimized);
 			}
