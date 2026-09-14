@@ -75,6 +75,20 @@ describe('ChineseConverter', () => {
     );
   });
 
+  it('normalizes compatibility ideographs before simplifying and preserves other symbols', async () => {
+    await expect(convertText('車 龍 神 福 ① Ａ', 'sc', { sourceScript: 'hant' })).resolves.toBe(
+      '车 龙 神 福 ① Ａ'
+    );
+  });
+
+  it('keeps Japanese repairs, phrase conversion and 著 word protection in the same passage', async () => {
+    await expect(
+      convertText('彼は広場で読書。連忙聯絡著名學者，看著乾涸的河流，想起乾坤。', 'sc', {
+        sourceScript: 'jpan',
+      })
+    ).resolves.toBe('彼は广场で读书。连忙联络著名学者，看着干涸的河流，想起乾坤。');
+  });
+
   it('convertText preserves semantic Traditional words while normalizing aspect 著', async () => {
     await expect(convertText('著作 原著 著名 看著 挥动著 乾坤 乾涸', 'sc')).resolves.toBe(
       '著作 原著 著名 看着 挥动着 乾坤 干涸'
@@ -108,6 +122,14 @@ describe('ChineseConverter', () => {
 
     await expect(convertHTML(html, 'sc', { sourceScript: 'hans' })).resolves.toBe(html);
     expect(createElementSpy).not.toHaveBeenCalled();
+  });
+
+  it('converts marked nodes in mixed HTML without changing Simplified prose or attributes', async () => {
+    const html = '<p>搁这说我坏话是吧</p><p title="黒竜">黒竜看著著作，連忙走過乾涸的河床。</p>';
+
+    await expect(convertHTML(html, 'sc', { sourceScript: 'mixed' })).resolves.toBe(
+      '<p>搁这说我坏话是吧</p><p title="黒竜">黑龙看着著作，连忙走过干涸的河床。</p>'
+    );
   });
 
   it('convertHTML returns input for mode none / empty', async () => {

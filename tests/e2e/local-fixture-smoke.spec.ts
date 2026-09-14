@@ -96,6 +96,7 @@ function makeSto9Fixture(options: {
           <div class="txtad">正文頂部廣告</div>
           &emsp;&emsp;s🎤to9.com為您提供最快的小說更新<br><br>
           ${content}
+          &emsp;&emsp;黒竜看著著作，連忙穿過乾涸的河床。車龍神福。<br><br>
           <div class="txtcenter">章中廣告</div>
           &emsp;&emsp;（還有更新耶）
         </div>
@@ -746,6 +747,22 @@ test('applies the Sto9 adapter and loads its complete dynamic catalog', async ({
     )
     .toEqual({ rows: 3, position: '第 2 / 3 章' });
   await expect(readerRoot.locator('.mnr-chapter-button.active')).toContainText('第765章');
+
+  await readerRoot.getByRole('button', { name: '关闭目录', exact: true }).click();
+  const originalContent = await readerContent.first().innerHTML();
+  await readerRoot.getByRole('button', { name: '打开设置', exact: true }).click();
+  await readerRoot.getByRole('button', { name: '简体', exact: true }).click();
+  await expect(readerContent.first()).toContainText('黑龙看着著作，连忙穿过干涸的河床。车龙神福。');
+  await readerRoot.getByRole('button', { name: '关闭设置', exact: true }).click();
+  await readerRoot.getByRole('button', { name: '打开目录', exact: true }).click();
+  await expect(readerRoot.locator('.mnr-chapter-button').last()).toContainText('援军到了');
+
+  await readerRoot.getByRole('button', { name: '关闭目录', exact: true }).click();
+  await readerRoot.getByRole('button', { name: '打开设置', exact: true }).click();
+  for (const mode of ['繁體', '原文']) {
+    await readerRoot.getByRole('button', { name: mode, exact: true }).click();
+    await expect(readerContent.first()).toHaveJSProperty('innerHTML', originalContent);
+  }
 });
 
 test('keeps normal Cloudflare JS Detection pages readable across previous navigation', async ({

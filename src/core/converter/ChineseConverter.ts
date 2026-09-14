@@ -4,10 +4,11 @@
  * Traditional/variant/Japanese-shinjitai -> Simplified conversion.
  */
 
-import * as t2cnPreset from 'opencc-js/preset/t2cn';
 import { type ChineseScript, hasSimplifiedConversionMarkers } from '@/core/converter/scriptProfile';
-import { ConverterBuilder, type ConverterFunction } from 'opencc-js/core';
+import { ConverterFactory, type ConverterFunction } from 'opencc-js/core';
+import cjkCompatibility from 'opencc-js/dict/CJK_Compatibility_Ideographs';
 import { tify } from 'chinese-conv';
+import traditionalToSimplified from 'opencc-js/to/cn';
 
 export type ConversionMode = 'none' | 'sc' | 'tc';
 
@@ -132,7 +133,9 @@ const protectedZhuWords = [
 ];
 
 function getSimplifiedConverter(): ConverterFunction {
-  simplifiedConverter ??= ConverterBuilder(t2cnPreset)({ from: 't', to: 'cn' });
+  // Match OpenCC's t2s chain: normalize compatibility ideographs before phrases/characters.
+  // Keep the Japanese repairs below separate from the unused regional presets.
+  simplifiedConverter ??= ConverterFactory([cjkCompatibility], ...traditionalToSimplified);
   return simplifiedConverter;
 }
 

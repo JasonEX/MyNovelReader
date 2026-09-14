@@ -9,8 +9,19 @@ const gzipLimit = 250 * 1024;
 const gzipBytes = gzipSync(source).byteLength;
 
 console.log(
-  `[bundle] raw ${(source.byteLength / 1024).toFixed(1)} KiB, gzip ${(gzipBytes / 1024).toFixed(1)} KiB`
+  `[bundle] raw ${(source.byteLength / 1024).toFixed(1)} KiB (${source.byteLength} bytes), gzip ${(gzipBytes / 1024).toFixed(1)} KiB (${gzipBytes} bytes)`
 );
+console.log(
+  `[bundle] remaining: raw ${rawLimit - source.byteLength} bytes, gzip ${gzipLimit - gzipBytes} bytes`
+);
+
+// Optionally compare with a saved build: npm run check:size -- /path/to/baseline.user.js
+if (process.argv[2]) {
+  const baseline = readFileSync(process.argv[2]);
+  console.log(
+    `[bundle] change vs baseline: raw ${source.byteLength - baseline.byteLength} bytes, gzip ${gzipBytes - gzipSync(baseline).byteLength} bytes`
+  );
+}
 
 if (source.byteLength > rawLimit || gzipBytes > gzipLimit) {
   console.error('[bundle] size budget exceeded: 900 KiB raw / 250 KiB gzip');

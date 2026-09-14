@@ -83,5 +83,17 @@ does not justify a riskier parser shortcut that could reduce extraction correctn
 - raw: at most 900 KiB
 - gzip: at most 250 KiB
 
-The current build is about 832 KiB raw and 231 KiB gzip. Minification is intentionally disabled so the
-installed userscript remains inspectable.
+The 9.4.5 build after dependency trimming is about 829 KiB raw and 221 KiB gzip, down from
+900 KiB / 248 KiB before trimming. Minification remains disabled so the installed userscript stays
+inspectable. The build excludes Vue's unused Options API and imports only OpenCC's t2s dictionaries.
+Compatibility-ideograph normalization still runs before phrase/character conversion; Japanese repairs,
+source-script guards and the separate Simplified-to-Traditional converter are preserved.
+
+`check:size` reports exact byte counts and remaining budget. To compare against a saved userscript:
+
+```bash
+npm run check:size -- /path/to/baseline.user.js
+```
+
+The gzip value measures compressibility, not browser memory or per-chapter network usage. Review
+growth by its source and browser behavior before adjusting these budgets.
