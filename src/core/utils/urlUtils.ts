@@ -3,6 +3,7 @@
  */
 
 import { parseChapterSectionFromPathname } from './sectionPath';
+import { parseNovel543Url } from '@/core/rules/sites/novel543';
 
 /**
  * Normalize absolute URL
@@ -36,6 +37,9 @@ export function normalizeAbsoluteUrl(href: string, base?: string): string {
  * /123_2.html or /123-2.html -> /123.html
  */
 export function getSectionBaseUrl(url: string): string | null {
+  const novel543 = parseNovel543Url(url);
+  if (novel543) return novel543.page > 1 ? novel543.chapterUrl : null;
+
   // /123_2.html -> /123.html
   const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
   if (m) return `${m[1]}${m[2]}`;
@@ -110,6 +114,15 @@ export function isSectionLikeUrl(currentUrl: string, nextUrl: string): boolean {
     const current = new URL(currentUrl);
     const next = new URL(nextUrl, current);
     if (current.host !== next.host) return false;
+
+    const currentPage = parseNovel543Url(current.href);
+    const nextPage = parseNovel543Url(next.href);
+    if (currentPage || nextPage) {
+      return (
+        currentPage?.chapterUrl === nextPage?.chapterUrl &&
+        nextPage?.page === (currentPage?.page ?? 0) + 1
+      );
+    }
 
     const currentPath = current.pathname;
     const nextPath = next.pathname;

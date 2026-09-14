@@ -10,6 +10,14 @@ import {
   waitForMnrReader,
 } from './mnrE2e';
 
+import {
+  makeNovel543Chapter,
+  makeNovel543Toc,
+  novel543BookTitle,
+  novel543ChapterPath,
+  novel543Origin,
+} from '../testUtils/novel543';
+
 const targetUrl = 'http://mnr.test/chapter/100.html';
 const paragraphs = Array.from(
   { length: 72 },
@@ -1491,3 +1499,50 @@ test('keeps same-origin chapter requests in the page session with bound fetch wr
   expect(nextRequests).toBe(1);
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });
+
+for (const startPage of [1, 2]) {
+  test(`merges Novel543 chapters from page ${startPage} and keeps catalog jumps in the reader`, async ({
+    context,
+    page,
+  }) => {
+    let documentNavigations = 0;
+    const requests: string[] = [];
+    await context.route(`${novel543Origin}/**`, route => {
+      const request = route.request();
+      requests.push(request.url());
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame())
+        documentNavigations++;
+      const match = new URL(request.url()).pathname.match(/8096_(\d+)(?:_(\d+))?\.html$/);
+      return route.fulfill({
+        body: match
+          ? makeNovel543Chapter(Number(match[1]), Number(match[2] || 1))
+          : makeNovel543Toc(),
+        contentType: 'text/html; charset=utf-8',
+      });
+    });
+    await addMyNovelReaderUserscript(context);
+    const logs = createConsoleCollector(page);
+    await page.goto(novel543Origin + novel543ChapterPath(941, startPage));
+    await waitForMnrReader(page);
+    const root = page.locator('#mnr-reader-root');
+    const first = root.locator('article[data-chapter-url$="/8096_941.html"]');
+    await expect(first.locator('.mnr-chapter-title')).toHaveText('第941章 百倍獎勵');
+    await expect(first).toContainText('第1頁末句');
+    await expect(first).toContainText('第2頁末句');
+    await expect(first).not.toContainText('站內信');
+    await expect(first).not.toContainText('可以試試搜作者哦');
+    await expect(first).not.toContainText('廣告干擾');
+    await expect(page).toHaveTitle(`第941章 百倍獎勵 - ${novel543BookTitle}`);
+    await expect(root.locator('article[data-chapter-url$="/8096_942.html"]')).toContainText(
+      '第2頁末句'
+    );
+    await root.getByRole('button', { name: '打开目录' }).click();
+    await expect(root.locator('.mnr-chapter-list li')).toHaveCount(4);
+    await root.getByRole('button', { name: '第942章 百倍獎勵', exact: true }).click();
+    await expect(page).toHaveURL(novel543Origin + novel543ChapterPath(942));
+    await expect(root.locator('.mnr-reader')).toBeVisible();
+    expect(documentNavigations).toBe(1);
+    expect(requests.some(url => url.endsWith('/8096.html'))).toBe(false);
+    expect(logs.some(line => line.includes('pageerror'))).toBe(false);
+  });
+}

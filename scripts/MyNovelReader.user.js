@@ -398,6 +398,56 @@
 		};
 		return null;
 	}
+	var novel543_exports = __exportAll({
+		novel543Rule: () => novel543Rule,
+		parseNovel543Url: () => parseNovel543Url
+	});
+	var CHAPTER_URL = /^https?:\/\/(?:www\.)?novel543\.com(\/\d+\/\d+_\d+)(?:_(\d+))?\.html(?:[?#].*)?$/;
+	function parseNovel543Url(url) {
+		const match = url.match(CHAPTER_URL);
+		if (!match) return null;
+		const parsed = new URL(url);
+		parsed.pathname = `${match[1]}.html`;
+		parsed.hash = "";
+		return {
+			chapterUrl: parsed.href,
+			page: Number(match[2] || 1)
+		};
+	}
+	var novel543Rule = {
+		id: "novel543",
+		name: "稷下書院",
+		version: 1,
+		match: { pattern: CHAPTER_URL.source },
+		content: {
+			selector: ".chapter-content > .content",
+			remove: ".adBlock, .gadBlock, [id^=div-onead-]"
+		},
+		navigation: {
+			prev: ".foot-nav a:contains(上一章)",
+			index: ".foot-nav a[href$=\"/dir\"]",
+			next: ".foot-nav a:contains(下一章)"
+		},
+		title: {
+			selector: ".chapter-content > h1",
+			replace: "\\s*[（(]\\d+\\s*/\\s*\\d+[）)]\\s*$",
+			bookSelector: ".header .nav li:last-child a"
+		},
+		toc: { excludeAncestors: ".chaplist > ul:not(.all)" },
+		hooks: { beforeParse: (doc) => {
+			const bookLink = doc.querySelector(".header .nav li:last-child a");
+			const bookTitle = doc.querySelector("meta[name=keywords]")?.content.match(/^(.+?)官方首[發发](?:[,，]|$)/)?.[1];
+			if (bookLink && !bookLink.textContent?.trim() && bookTitle) bookLink.textContent = bookTitle;
+			for (const p of doc.querySelectorAll("#chapterWarp .content > div > p")) {
+				const label = p.firstChild;
+				if (label?.nodeName === "SPAN" && /^[溫温]馨提示[:：]$/.test(label.textContent?.trim() || "")) p.remove();
+			}
+		} },
+		meta: {
+			source: "builtin",
+			exampleUrl: "https://www.novel543.com/1019622989/8096_941.html"
+		}
+	};
 	function normalizeAbsoluteUrl(href, base) {
 		const baseCandidates = [base];
 		if (typeof document !== "undefined") baseCandidates.push(document.baseURI);
@@ -415,6 +465,8 @@
 		}
 	}
 	function getSectionBaseUrl(url) {
+		const novel543 = parseNovel543Url(url);
+		if (novel543) return novel543.page > 1 ? novel543.chapterUrl : null;
 		const m = url.match(/^(.*\/\d+)[_-]\d+(\.html?)$/i);
 		if (m) return `${m[1]}${m[2]}`;
 		try {
@@ -474,6 +526,9 @@
 			const current = new URL(currentUrl);
 			const next = new URL(nextUrl, current);
 			if (current.host !== next.host) return false;
+			const currentPage = parseNovel543Url(current.href);
+			const nextPage = parseNovel543Url(next.href);
+			if (currentPage || nextPage) return currentPage?.chapterUrl === nextPage?.chapterUrl && nextPage?.page === (currentPage?.page ?? 0) + 1;
 			const currentPath = current.pathname;
 			const nextPath = next.pathname;
 			const c = parseChapterSectionFromPathname(currentPath);
@@ -7065,6 +7120,7 @@
 		"./dingdianzww.ts": dingdianzww_exports,
 		"./goboo.ts": goboo_exports$1,
 		"./hetushu.ts": hetushu_exports,
+		"./novel543.ts": novel543_exports,
 		"./qidian.ts": qidian_exports$1,
 		"./shu69.ts": shu69_exports,
 		"./sto9.ts": sto9_exports$1,
