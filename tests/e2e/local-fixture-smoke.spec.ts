@@ -19,6 +19,93 @@ import {
 } from '../testUtils/novel543';
 
 const targetUrl = 'http://mnr.test/chapter/100.html';
+
+test('ixdzs loads its complete API catalog and navigates within the book', async ({
+  page,
+  context,
+}) => {
+  const origin = 'https://ixdzs8.com';
+  const bookTitle = '高武：变身软妹后，我成了灾厄？';
+  const catalogRequests: string[] = [];
+  await context.route(`${origin}/**`, async route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === '/novel/clist/') {
+      catalogRequests.push(route.request().postData() || '');
+      expect(route.request().method()).toBe('POST');
+      await route.fulfill({
+        json: {
+          rs: 200,
+          data: Array.from({ length: 457 }, (_, i) => ({
+            ctype: '0',
+            ordernum: String(i + 1),
+            title: `第${i + 1}章 目录测试`,
+          })),
+        },
+      });
+      return;
+    }
+    const chapter = Number(url.pathname.match(/p(\d+)\.html$/)?.[1]);
+    await route.fulfill({
+      contentType: 'text/html; charset=utf-8',
+      body: chapter
+        ? `<!doctype html><html><head><title>第${chapter}章 目录测试_${bookTitle}-爱下电子书</title></head><body>
+        <h1 class="page-d-name">第${chapter}章 目录测试</h1>
+        <article class="page-content"><section>${'<p>这是目录跳转后的完整正文，用于验证阅读器继续阅读。</p>'.repeat(60)}</section></article>
+        <div class="chapter-act"><a class="chapter-pre" href="/read/644554/p${chapter - 1}.html">上一章</a>
+        <a href="/read/644554/">书籍页</a>
+        <a class="chapter-next" href="/read/644554/p${chapter + 1}.html">下一章</a></div>
+        </body></html>`
+        : '<a href="/read/999/p1.html">其他小说推荐</a>',
+    });
+  });
+  await addMyNovelReaderUserscript(context);
+  await page.goto(`${origin}/read/644554/p120.html`);
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+  await root.getByRole('button', { name: '打开目录', exact: true }).click();
+  await expect(root.locator('.mnr-drawer-position')).toContainText('/ 457');
+  await expect(root.locator('.mnr-chapter-list')).not.toContainText('其他小说推荐');
+  await expect(root.locator('.mnr-drawer-title')).toHaveText(bookTitle);
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 720 });
+    const layout = await root.locator('.mnr-drawer-title').evaluate(title => {
+      const rect = title.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(title);
+      const text = range.getBoundingClientRect();
+      const close = title.closest('header')!.querySelector('button')!.getBoundingClientRect();
+      return {
+        compact: rect.height <= 2 * parseFloat(getComputedStyle(title).lineHeight) + 1,
+        textFits:
+          text.left >= rect.left - 1 &&
+          text.right <= rect.right + 1 &&
+          text.bottom <= rect.bottom + 1,
+        closeFits: close.left >= rect.right && close.right <= innerWidth,
+      };
+    });
+    expect(layout).toEqual({ compact: true, textFits: true, closeFits: true });
+    await expect(root.locator('.mnr-drawer-search')).toBeInViewport();
+    const titleHeights = await root.locator('.mnr-drawer-title').evaluate(title => {
+      const original = title.textContent;
+      const lineHeight = parseFloat(getComputedStyle(title).lineHeight);
+      title.textContent = '短书名';
+      const short = title.getBoundingClientRect().height;
+      title.textContent = '这是用于检查目录头部空间的特别长书名'.repeat(8);
+      const long = title.getBoundingClientRect().height;
+      title.textContent = original;
+      return { short, long, lineHeight };
+    });
+    expect(titleHeights.short).toBeCloseTo(titleHeights.lineHeight);
+    expect(titleHeights.long).toBeCloseTo(titleHeights.lineHeight * 2);
+  }
+  await page.setViewportSize({ width: 320, height: 720 });
+  await root.locator('#mnr-chapter-search').fill('第250章');
+  await root.getByRole('button', { name: '第250章 目录测试', exact: true }).click();
+  await expect(page).toHaveURL(`${origin}/read/644554/p250.html`);
+  await expect(root.locator('article[data-chapter-url$="/p250.html"]')).toContainText('完整正文');
+  expect(catalogRequests).toEqual(['bid=644554']);
+});
+
 const paragraphs = Array.from(
   { length: 72 },
   (_, index) =>

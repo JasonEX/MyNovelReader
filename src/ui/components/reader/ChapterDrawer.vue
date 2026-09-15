@@ -337,12 +337,15 @@ watch(
 }
 
 .mnr-drawer-title {
+  display: -webkit-box;
   overflow: hidden;
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .mnr-drawer-position {
