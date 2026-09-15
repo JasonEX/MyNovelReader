@@ -5701,6 +5701,21 @@
 		}
 		return typeof current === "string" ? current : current.toString(crypto.enc.Utf8);
 	}
+	async function fetchCiweimaoContent(chapterId, pageUrl, helpers) {
+		const origin = new URL(pageUrl).origin;
+		const session = await fetchCiweimaoJson(`${origin}/chapter/ajax_get_session_code?chapter_id=${chapterId}`, pageUrl, helpers);
+		if (!session || !isSuccessCode(session.code)) return "";
+		const accessKeyValue = session.chapter_access_key;
+		if (accessKeyValue === void 0 || accessKeyValue === null) return "";
+		const accessKey = String(accessKeyValue);
+		const data = await fetchCiweimaoJson(`${origin}/chapter/get_book_chapter_detail_info?chapter_id=${chapterId}&chapter_access_key=${accessKey}`, pageUrl, helpers);
+		if (!data || !isSuccessCode(data.code)) return "";
+		const chapterContent = data.chapter_content;
+		const encryptedKeys = Array.isArray(data.encryt_keys) ? data.encryt_keys.filter((key) => typeof key === "string") : [];
+		const crypto = getCrypto();
+		if (typeof chapterContent !== "string" || encryptedKeys.length === 0 || !crypto) return "";
+		return decryptCiweimaoContent(chapterContent, encryptedKeys, accessKey, crypto);
+	}
 	async function decryptCiweimaoIfNeeded(doc, contentEl, pageUrl, helpers) {
 		const hasWatermark = !!contentEl.querySelector("#J_BookRead_WaterMark, .watermark");
 		const text = (contentEl.textContent || "").replace(/\s+/g, "").trim();
@@ -5708,19 +5723,7 @@
 		if (!(hasWatermark || text.length < 200 || chapterParas < 3)) return;
 		const chapterId = doc.querySelector("#J_BookCnt")?.getAttribute("data-id") || (pageUrl.match(/chapter\/(\d+)/) || [])[1];
 		if (!chapterId) return;
-		const origin = new URL(pageUrl).origin;
-		const session = await fetchCiweimaoJson(`${origin}/chapter/ajax_get_session_code?chapter_id=${chapterId}`, pageUrl, helpers);
-		if (!session || !isSuccessCode(session.code)) return;
-		const accessKeyValue = session.chapter_access_key;
-		if (accessKeyValue === void 0 || accessKeyValue === null) return;
-		const accessKey = String(accessKeyValue);
-		const data = await fetchCiweimaoJson(`${origin}/chapter/get_book_chapter_detail_info?chapter_id=${chapterId}&chapter_access_key=${accessKey}`, pageUrl, helpers);
-		if (!data || !isSuccessCode(data.code)) return;
-		const chapterContent = data.chapter_content;
-		const encryptedKeys = Array.isArray(data.encryt_keys) ? data.encryt_keys.filter((key) => typeof key === "string") : [];
-		const crypto = getCrypto();
-		if (typeof chapterContent !== "string" || encryptedKeys.length === 0 || !crypto) return;
-		const html = decryptCiweimaoContent(chapterContent, encryptedKeys, accessKey, crypto);
+		const html = await fetchCiweimaoContent(chapterId, pageUrl, helpers);
 		if (html) contentEl.innerHTML = html;
 	}
 	function normalizeWatermarkText(value) {
@@ -5810,13 +5813,6 @@
 			const hasImg = p.querySelector("img");
 			const text = (p.textContent || "").replace(/\s+/g, "").trim();
 			if (hasImg && text.length <= 6) p.remove();
-		});
-		const normalizeTailText = (value) => value.replace(/\s+/g, "").replace(/[\u3000]/g, "").replace(/[，。！？、“”‘’（）()【】[\]<>《》:：;；·~…—-]/g, "");
-		Array.from(contentEl.querySelectorAll("p")).map((p) => ({
-			p,
-			text: normalizeTailText(p.textContent || "")
-		})).filter((item) => item.text).slice(-8).forEach(({ p, text }) => {
-			if (text && /^[\u4e00-\u9fff]{2,6}$/.test(text)) p.remove();
 		});
 	}
 	var tocCache = new Map();
@@ -5924,19 +5920,7 @@
 			const entry = toc.entries[tocIndex];
 			const prevUrl = toc.entries[tocIndex - 1]?.url || "";
 			const nextUrl = toc.entries[tocIndex + 1]?.url || "";
-			const origin = new URL(normalizedTargetUrl).origin;
-			const session = await fetchCiweimaoJson(`${origin}/chapter/ajax_get_session_code?chapter_id=${chapterId}`, normalizedTargetUrl);
-			if (!session || !isSuccessCode(session.code)) return null;
-			const accessKeyValue = session.chapter_access_key;
-			if (accessKeyValue === void 0 || accessKeyValue === null) return null;
-			const accessKey = String(accessKeyValue);
-			const data = await fetchCiweimaoJson(`${origin}/chapter/get_book_chapter_detail_info?chapter_id=${chapterId}&chapter_access_key=${accessKey}`, normalizedTargetUrl);
-			if (!data || !isSuccessCode(data.code)) return null;
-			const chapterContent = data.chapter_content;
-			const encryptedKeys = Array.isArray(data.encryt_keys) ? data.encryt_keys.filter((key) => typeof key === "string") : [];
-			const crypto = getCrypto();
-			if (typeof chapterContent !== "string" || encryptedKeys.length === 0 || !crypto) return null;
-			const html = decryptCiweimaoContent(chapterContent, encryptedKeys, accessKey, crypto);
+			const html = await fetchCiweimaoContent(chapterId, normalizedTargetUrl);
 			if (!html) return null;
 			const doc = createCiweimaoApiDocument({
 				bookTitle: toc.bookTitle || refChapter.bookTitle || "",
@@ -6026,19 +6010,10 @@
 			exampleUrl: "https://wap.ciweimao.com/chapter/113489050"
 		}
 	};
-	var deqixs_exports = __exportAll({
-		deqixsCoRule: () => deqixsCoRule,
-		deqixsRule: () => deqixsRule
-	});
-	function getScriptText$1(doc) {
+	function getScriptText(doc) {
 		return Array.from(doc.scripts).map((script) => script.textContent || "").join("\n");
 	}
-	function extractJsValue(source, name) {
-		const pattern = new RegExp(`(?:var|let|const)\\s+${name}\\s*=\\s*(?:['"]([^'"]+)['"]|([^;\\s]+))\\s*;`);
-		const match = source.match(pattern);
-		return match?.[1] || match?.[2] || null;
-	}
-	function appendHiddenLink$1(doc, id, href, text, base) {
+	function appendHiddenLink(doc, id, href, text, base) {
 		if (!href || href === "#" || /^javascript:/i.test(href) || doc.getElementById(id)) return;
 		try {
 			const link = doc.createElement("a");
@@ -6049,12 +6024,21 @@
 			doc.body?.appendChild(link);
 		} catch {}
 	}
-	function extractChapterNav$1(scriptText) {
+	function extractChapterNav(scriptText) {
 		const match = scriptText.match(/if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"][\s\S]*?\}\s*else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"]/);
 		return {
 			prev: match?.[1] || null,
 			next: match?.[2] || null
 		};
+	}
+	var deqixs_exports = __exportAll({
+		deqixsCoRule: () => deqixsCoRule,
+		deqixsRule: () => deqixsRule
+	});
+	function extractJsValue(source, name) {
+		const pattern = new RegExp(`(?:var|let|const)\\s+${name}\\s*=\\s*(?:['"]([^'"]+)['"]|([^;\\s]+))\\s*;`);
+		const match = source.match(pattern);
+		return match?.[1] || match?.[2] || null;
 	}
 	var deqixsCoBeforeParse = async (doc, url, helpers) => {
 		try {
@@ -6062,9 +6046,9 @@
 			const pathMatch = new URL(pageUrl).pathname.match(/^\/books\/(\d+)\/(\d+)\.html$/);
 			if (!pathMatch) return;
 			const [, articleId, chapterId] = pathMatch;
-			const nav = extractChapterNav$1(getScriptText$1(doc));
-			appendHiddenLink$1(doc, "mnr-deqixs-co-prev", nav.prev, "上一章", pageUrl);
-			appendHiddenLink$1(doc, "mnr-deqixs-co-next", nav.next, "下一章", pageUrl);
+			const nav = extractChapterNav(getScriptText(doc));
+			appendHiddenLink(doc, "mnr-deqixs-co-prev", nav.prev, "上一章", pageUrl);
+			appendHiddenLink(doc, "mnr-deqixs-co-next", nav.next, "下一章", pageUrl);
 			const tokenScriptSrc = doc.querySelector("script[src*=\"/scripts/chapter.js.php\"]")?.getAttribute("src");
 			if (!tokenScriptSrc || !helpers) return;
 			const tokenScriptUrl = new URL(tokenScriptSrc, pageUrl).toString();
@@ -6172,27 +6156,6 @@
 		}
 	};
 	var dingdianzww_exports = __exportAll({ dingdianzwwRule: () => dingdianzwwRule });
-	function getScriptText(doc) {
-		return Array.from(doc.scripts).map((script) => script.textContent || "").join("\n");
-	}
-	function appendHiddenLink(doc, id, href, text, base) {
-		if (!href || href === "#" || /^javascript:/i.test(href) || doc.getElementById(id)) return;
-		try {
-			const link = doc.createElement("a");
-			link.id = id;
-			link.href = new URL(href, base).toString();
-			link.textContent = text;
-			link.style.display = "none";
-			doc.body?.appendChild(link);
-		} catch {}
-	}
-	function extractChapterNav(scriptText) {
-		const match = scriptText.match(/if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"][\s\S]*?\}\s*else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"]/);
-		return {
-			prev: match?.[1] || null,
-			next: match?.[2] || null
-		};
-	}
 	function extractChapterIds(pageUrl, scriptText) {
 		const pathMatch = new URL(pageUrl).pathname.match(/^\/(\d+)\/(\d+)(?:_\d+)?\.html$/);
 		const articleId = pathMatch?.[1] || scriptText.match(/const\s+articleId\s*=\s*(\d+)/)?.[1];
@@ -18200,6 +18163,110 @@ ul, ol {
 	function calculateBackoff(failureCount, baseMs = 1500, maxMs = 3e4) {
 		return Math.min(baseMs * Math.pow(2, failureCount - 1), maxMs);
 	}
+	function getPageFetch() {
+		if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") return unsafeWindow.fetch.bind(unsafeWindow);
+		if (typeof window !== "undefined" && typeof window.fetch === "function") return window.fetch.bind(window);
+		return typeof fetch === "function" ? fetch : null;
+	}
+	function requestSiteData(url, options) {
+		return new Promise((resolve) => {
+			const controller = new AbortController();
+			let gmRequest;
+			let settled = false;
+			const timeoutMs = options.timeoutMs ?? 1e4;
+			const finish = (value) => {
+				if (settled) return;
+				settled = true;
+				clearTimeout(timer);
+				options.setAbort(null);
+				resolve(value);
+			};
+			const cancel = () => {
+				if (settled) return;
+				finish(null);
+				controller.abort();
+				try {
+					gmRequest?.abort();
+				} catch (error) {
+					console.debug("[MNR] Site request abort failed:", error);
+				}
+			};
+			const timer = setTimeout(cancel, timeoutMs);
+			options.setAbort(cancel);
+			const parse = (data) => {
+				try {
+					return options.parse(data);
+				} catch (error) {
+					console.debug("[MNR] Invalid site response:", error);
+					return null;
+				}
+			};
+			(async () => {
+				try {
+					if (settled) return;
+					const fetcher = getPageFetch();
+					if (fetcher) try {
+						const response = await fetcher(url, {
+							method: options.method ?? "GET",
+							credentials: "include",
+							headers: options.headers,
+							...options.body === void 0 ? {} : { body: options.body },
+							signal: controller.signal
+						});
+						if (settled) return;
+						if (response.ok) {
+							const data = await response[options.responseType]();
+							if (settled) return;
+							const value = parse(data);
+							if (value !== null) {
+								finish(value);
+								return;
+							}
+						}
+					} catch (error) {
+						if (!settled) console.debug("[MNR] Native site request failed:", error);
+					}
+					if (settled) return;
+					const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
+					if (options.gmFallback === false || !gmXhr) {
+						finish(null);
+						return;
+					}
+					gmRequest = gmXhr({
+						method: options.method ?? "GET",
+						url,
+						data: options.body,
+						headers: {
+							...options.headers,
+							...options.referrer ? { Referer: options.referrer } : {}
+						},
+						timeout: timeoutMs,
+						withCredentials: true,
+						onload: (response) => {
+							if (settled) return;
+							if (response.status < 200 || response.status >= 300) {
+								finish(null);
+								return;
+							}
+							try {
+								const data = options.responseType === "json" ? JSON.parse(response.responseText) : response.responseText;
+								finish(parse(data));
+							} catch (error) {
+								console.debug("[MNR] Invalid GM site response:", error);
+								finish(null);
+							}
+						},
+						onerror: () => finish(null),
+						onabort: () => finish(null),
+						ontimeout: cancel
+					});
+				} catch (error) {
+					console.warn("[MNR] Site request failed:", error);
+					finish(null);
+				}
+			})();
+		});
+	}
 	var ajaxChapterList_exports = __exportAll({ createAjaxChapterListLoader: () => createAjaxChapterListLoader });
 	function resolvePageUrl(indexUrl, currentUrl, options) {
 		const fallbackBase = typeof location !== "undefined" && typeof location.href === "string" && location.href || "https://example.invalid/";
@@ -18232,75 +18299,6 @@ ul, ol {
 		const bookId = extractBookId(indexUrl, currentUrl, pageUrl, options);
 		if (!bookId) return null;
 		return new URL(`/ajax_novels/chapterlist/${bookId}.html`, pageUrl.origin).toString();
-	}
-	function getNativeFetch$1() {
-		if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") return unsafeWindow.fetch.bind(unsafeWindow);
-		if (typeof window !== "undefined" && typeof window.fetch === "function") return window.fetch.bind(window);
-		if (typeof fetch === "function") return fetch;
-		return null;
-	}
-	async function requestChapterListNative(apiUrl, setAbort) {
-		const fetcher = getNativeFetch$1();
-		if (!fetcher) return null;
-		const controller = new AbortController();
-		setAbort(() => controller.abort());
-		try {
-			const response = await fetcher(apiUrl, {
-				credentials: "include",
-				headers: {
-					Accept: "text/html, */*; q=0.01",
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				signal: controller.signal
-			});
-			if (!response.ok) return null;
-			return await response.text();
-		} catch {
-			return null;
-		} finally {
-			setAbort(null);
-		}
-	}
-	async function requestChapterListGm(apiUrl, referer, setAbort) {
-		const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
-		if (!gmXhr) return null;
-		return new Promise((resolve) => {
-			let settled = false;
-			const finish = (value) => {
-				if (settled) return;
-				settled = true;
-				setAbort(null);
-				resolve(value);
-			};
-			const headers = {
-				Accept: "text/html, */*; q=0.01",
-				"X-Requested-With": "XMLHttpRequest"
-			};
-			if (referer) headers.Referer = referer;
-			const request = gmXhr({
-				method: "GET",
-				url: apiUrl,
-				headers,
-				timeout: 1e4,
-				withCredentials: true,
-				onload: (response) => {
-					if (response.status < 200 || response.status >= 300) {
-						finish(null);
-						return;
-					}
-					finish(response.responseText);
-				},
-				onerror: () => finish(null),
-				onabort: () => finish(null),
-				ontimeout: () => finish(null)
-			});
-			setAbort(() => {
-				try {
-					request.abort();
-				} catch {}
-				finish(null);
-			});
-		});
 	}
 	function parseChapterList(html, apiUrl, options) {
 		if (!html.trim() || typeof DOMParser === "undefined") return [];
@@ -18335,12 +18333,19 @@ ul, ol {
 	async function loadChapterList(context, options) {
 		const apiUrl = buildChapterListUrl(context.indexUrl, context.currentUrl, options);
 		if (!apiUrl) return [];
-		const nativeHtml = await requestChapterListNative(apiUrl, context.setAbort);
-		let entries = nativeHtml ? parseChapterList(nativeHtml, apiUrl, options) : [];
-		if (entries.length > 0) return entries;
-		const gmHtml = await requestChapterListGm(apiUrl, context.currentUrl || context.indexUrl, context.setAbort);
-		entries = gmHtml ? parseChapterList(gmHtml, apiUrl, options) : [];
-		return entries;
+		return await requestSiteData(apiUrl, {
+			responseType: "text",
+			setAbort: context.setAbort,
+			referrer: context.currentUrl || context.indexUrl,
+			headers: {
+				Accept: "text/html, */*; q=0.01",
+				"X-Requested-With": "XMLHttpRequest"
+			},
+			parse: (data) => {
+				const entries = typeof data === "string" ? parseChapterList(data, apiUrl, options) : [];
+				return entries.length ? entries : null;
+			}
+		}) || [];
 	}
 	function createAjaxChapterListLoader(options) {
 		return {
@@ -18381,45 +18386,37 @@ ul, ol {
 			const pageUrl = getBookUrl(context);
 			if (!pageUrl) return [];
 			const bookId = pageUrl.pathname.split("/")[2];
-			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), 15e3);
-			context.setAbort(() => controller.abort());
-			try {
-				const response = await (typeof unsafeWindow !== "undefined" ? unsafeWindow : window).fetch(new URL("/novel/clist/", pageUrl.origin).href, {
-					method: "POST",
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-						"X-Requested-With": "XMLHttpRequest"
-					},
-					body: new URLSearchParams({ bid: bookId }).toString(),
-					signal: controller.signal
-				});
-				if (!response.ok) throw new Error(`HTTP ${response.status}`);
-				const payload = await response.json();
-				if (payload?.rs !== 200 || !Array.isArray(payload.data)) throw new Error("Invalid chapter-list response");
-				const entries = [];
-				const seen = new Set();
-				for (const row of payload.data) {
-					if (!row || String(row.ctype) !== "0") continue;
-					const number = String(row.ordernum);
-					if (!/^[1-9]\d*$/.test(number) || typeof row.title !== "string") continue;
-					const title = row.title.trim();
-					if (!title || seen.has(number)) continue;
-					seen.add(number);
-					entries.push({
-						title,
-						url: new URL(`/read/${bookId}/p${number}.html`, pageUrl.origin).href
-					});
+			return await requestSiteData(new URL("/novel/clist/", pageUrl.origin).href, {
+				responseType: "json",
+				setAbort: context.setAbort,
+				timeoutMs: 15e3,
+				gmFallback: false,
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+					"X-Requested-With": "XMLHttpRequest"
+				},
+				body: new URLSearchParams({ bid: bookId }).toString(),
+				parse: (data) => {
+					const payload = data;
+					if (payload?.rs !== 200 || !Array.isArray(payload.data)) throw new Error("Invalid chapter-list response");
+					const entries = [];
+					const seen = new Set();
+					for (const row of payload.data) {
+						if (!row || String(row.ctype) !== "0") continue;
+						const number = String(row.ordernum);
+						if (!/^[1-9]\d*$/.test(number) || typeof row.title !== "string") continue;
+						const title = row.title.trim();
+						if (!title || seen.has(number)) continue;
+						seen.add(number);
+						entries.push({
+							title,
+							url: new URL(`/read/${bookId}/p${number}.html`, pageUrl.origin).href
+						});
+					}
+					return entries;
 				}
-				return entries;
-			} catch (error) {
-				if (!controller.signal.aborted) console.error("[MNR] ixdzs TOC loading failed:", error);
-				return [];
-			} finally {
-				clearTimeout(timeout);
-				context.setAbort(null);
-			}
+			}) || [];
 		}
 	};
 	var qidian_exports = __exportAll({ qidianTocLoader: () => qidianTocLoader });
@@ -18464,79 +18461,6 @@ ul, ol {
 		apiUrl.searchParams.set("bookId", bookId);
 		return apiUrl.toString();
 	}
-	function getNativeFetch() {
-		if (typeof unsafeWindow !== "undefined" && typeof unsafeWindow.fetch === "function") return unsafeWindow.fetch.bind(unsafeWindow);
-		if (typeof window !== "undefined" && typeof window.fetch === "function") return window.fetch.bind(window);
-		if (typeof fetch === "function") return fetch;
-		return null;
-	}
-	async function requestQidianCategoryNative(apiUrl, setAbort) {
-		const fetcher = getNativeFetch();
-		if (!fetcher) return null;
-		const controller = new AbortController();
-		setAbort(() => controller.abort());
-		try {
-			const response = await fetcher(apiUrl, {
-				credentials: "include",
-				headers: {
-					Accept: "application/json, text/javascript, */*; q=0.01",
-					"X-Requested-With": "XMLHttpRequest"
-				},
-				signal: controller.signal
-			});
-			if (!response.ok) return null;
-			return await response.json();
-		} catch {
-			return null;
-		} finally {
-			setAbort(null);
-		}
-	}
-	async function requestQidianCategoryGm(apiUrl, currentUrl, setAbort) {
-		const gmXhr = typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
-		if (!gmXhr) return null;
-		return new Promise((resolve) => {
-			let settled = false;
-			const finish = (value) => {
-				if (settled) return;
-				settled = true;
-				setAbort(null);
-				resolve(value);
-			};
-			const headers = {
-				Accept: "application/json, text/javascript, */*; q=0.01",
-				"X-Requested-With": "XMLHttpRequest"
-			};
-			if (currentUrl) headers.Referer = currentUrl;
-			const request = gmXhr({
-				method: "GET",
-				url: apiUrl,
-				headers,
-				timeout: 1e4,
-				withCredentials: true,
-				onload: (response) => {
-					if (response.status < 200 || response.status >= 300) {
-						finish(null);
-						return;
-					}
-					try {
-						finish(JSON.parse(response.responseText));
-					} catch {
-						finish(null);
-					}
-				},
-				onerror: () => finish(null),
-				onabort: () => finish(null),
-				ontimeout: () => finish(null)
-			});
-			setAbort(() => {
-				try {
-					request.abort();
-				} catch {}
-				finish(null);
-			});
-		});
-	}
 	function dedupeQidianTocEntries(candidates) {
 		const seenUrls = new Set();
 		const results = [];
@@ -18574,9 +18498,19 @@ ul, ol {
 	async function loadQidianTocEntries(indexUrl, currentUrl, setAbort) {
 		const apiUrl = buildQidianCategoryUrl(indexUrl, currentUrl);
 		if (!apiUrl) return [];
-		const nativeResponse = await requestQidianCategoryNative(apiUrl, setAbort);
-		if (nativeResponse?.code === 0) return qidianCategoryToEntries(nativeResponse, indexUrl, currentUrl);
-		return qidianCategoryToEntries(await requestQidianCategoryGm(apiUrl, currentUrl || indexUrl, setAbort), indexUrl, currentUrl);
+		return await requestSiteData(apiUrl, {
+			responseType: "json",
+			setAbort,
+			referrer: currentUrl || indexUrl,
+			headers: {
+				Accept: "application/json, text/javascript, */*; q=0.01",
+				"X-Requested-With": "XMLHttpRequest"
+			},
+			parse: (data) => {
+				const response = data;
+				return response?.code === 0 ? qidianCategoryToEntries(response, indexUrl, currentUrl) : null;
+			}
+		}) || [];
 	}
 	var qidianTocLoader = {
 		id: "qidian",

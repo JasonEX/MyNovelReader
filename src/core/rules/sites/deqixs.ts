@@ -1,10 +1,5 @@
+import { appendHiddenLink, extractChapterNav, getScriptText } from '../helpers/scriptNavigation';
 import type { BeforeParseHook, SiteRule } from '../types';
-
-function getScriptText(doc: Document): string {
-  return Array.from(doc.scripts)
-    .map(script => script.textContent || '')
-    .join('\n');
-}
 
 function extractJsValue(source: string, name: string): string | null {
   const pattern = new RegExp(
@@ -12,38 +7,6 @@ function extractJsValue(source: string, name: string): string | null {
   );
   const match = source.match(pattern);
   return match?.[1] || match?.[2] || null;
-}
-
-function appendHiddenLink(
-  doc: Document,
-  id: string,
-  href: string | null,
-  text: string,
-  base: string
-): void {
-  if (!href || href === '#' || /^javascript:/i.test(href) || doc.getElementById(id)) return;
-
-  try {
-    const link = doc.createElement('a');
-    link.id = id;
-    link.href = new URL(href, base).toString();
-    link.textContent = text;
-    link.style.display = 'none';
-    doc.body?.appendChild(link);
-  } catch {
-    // ignore invalid URLs from site scripts
-  }
-}
-
-function extractChapterNav(scriptText: string): { prev: string | null; next: string | null } {
-  const match = scriptText.match(
-    /if\s*\(\s*direction\s*===\s*['"]prev['"]\s*\)\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"][\s\S]*?\}\s*else\s*\{[\s\S]*?chapterUrl\s*=\s*['"]([^'"]+)['"]/
-  );
-
-  return {
-    prev: match?.[1] || null,
-    next: match?.[2] || null,
-  };
 }
 
 const deqixsCoBeforeParse: BeforeParseHook = async (doc, url, helpers) => {

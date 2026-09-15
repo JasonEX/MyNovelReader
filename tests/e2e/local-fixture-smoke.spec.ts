@@ -20,6 +20,49 @@ import {
 
 const targetUrl = 'http://mnr.test/chapter/100.html';
 
+test('Ciweimao keeps short closing prose across initial parsing and chapter navigation', async ({
+  page,
+  context,
+}) => {
+  const origin = 'https://www.ciweimao.com';
+  await context.route(`${origin}/**`, async route => {
+    const url = new URL(route.request().url());
+    const id = Number(url.pathname.match(/^\/chapter\/(\d+)$/)?.[1]);
+    if (!id) {
+      await route.fulfill({ json: { code: 403 } });
+      return;
+    }
+    await route.fulfill({
+      contentType: 'text/html; charset=utf-8',
+      body: `<!doctype html><html><head><title>第${id}章 山谷归途</title></head><body>
+      <div class="breadcrumb"><a href="/book/1001">山谷归途</a></div>
+      <div class="read-hd"><h1 class="chapter">第${id}章 山谷归途</h1></div>
+      <div class="book-read-page"><a href="/chapter-list/1001">目录</a>
+        <a id="J_BtnPagePrev" href="/chapter/${id - 1}">上一章</a>
+        <a id="J_BtnPageNext" href="/chapter/${id + 1}">下一章</a></div>
+      <div id="J_BookCnt" data-id="${id}"></div><div id="J_BookRead">
+      ${`<p class="chapter">${'队员们在山中继续寻找失踪的同伴。'.repeat(20)}</p>`.repeat(6)}
+      <p class="chapter">回家。</p><p class="chapter">“我知道了。”</p><p class="chapter">他没有回头</p>
+      <p class="chapter"><span>Qw9Er</span></p></div></body></html>`,
+    });
+  });
+  await addMyNovelReaderUserscript(context);
+  await page.goto(`${origin}/chapter/120`);
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+  for (const id of [120, 121]) {
+    if (id === 121) {
+      await page.keyboard.press('ArrowRight');
+      await expect(page).toHaveURL(`${origin}/chapter/121`);
+    }
+    const article = root.locator(`article[data-chapter-url="${origin}/chapter/${id}"]`);
+    await expect(article).toContainText('回家。');
+    await expect(article).toContainText('“我知道了。”');
+    await expect(article).toContainText('他没有回头');
+    await expect(article).not.toContainText('Qw9Er');
+  }
+});
+
 test('ixdzs loads its complete API catalog and navigates within the book', async ({
   page,
   context,

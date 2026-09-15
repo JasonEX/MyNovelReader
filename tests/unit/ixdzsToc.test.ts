@@ -62,10 +62,8 @@ describe('ixdzs TOC', () => {
   ])('does not fall back to unrelated book recommendations on API failure', async response => {
     const fetchMock = vi.fn().mockResolvedValue(response);
     vi.stubGlobal('unsafeWindow', { fetch: fetchMock });
-    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(await loadTocEntriesPaged(indexUrl, currentUrl, undefined, vi.fn())).toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalled();
   });
 
   it('aborts the pending catalog request and clears its handle', async () => {

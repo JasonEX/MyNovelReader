@@ -1,8 +1,7 @@
 import { normalizeUrlForFetch, resolveUrl } from '../utils';
 import type { SpecialTocLoader, SpecialTocLoaderContext } from './index';
+import { requestSiteData } from '@/core/utils/siteRequest';
 import type { TocEntry } from '../types';
-
-type RequestAbortSetter = (abort: (() => void) | null) => void;
 
 interface AjaxChapterListLoaderOptions {
   id: string;
@@ -73,99 +72,6 @@ function buildChapterListUrl(
   return new URL(`/ajax_novels/chapterlist/${bookId}.html`, pageUrl.origin).toString();
 }
 
-function getNativeFetch(): typeof fetch | null {
-  if (typeof unsafeWindow !== 'undefined' && typeof unsafeWindow.fetch === 'function') {
-    return unsafeWindow.fetch.bind(unsafeWindow) as typeof fetch;
-  }
-  if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-    return window.fetch.bind(window) as typeof fetch;
-  }
-  if (typeof fetch === 'function') {
-    return fetch;
-  }
-  return null;
-}
-
-async function requestChapterListNative(
-  apiUrl: string,
-  setAbort: RequestAbortSetter
-): Promise<string | null> {
-  const fetcher = getNativeFetch();
-  if (!fetcher) return null;
-
-  const controller = new AbortController();
-  setAbort(() => controller.abort());
-
-  try {
-    const response = await fetcher(apiUrl, {
-      credentials: 'include',
-      headers: {
-        Accept: 'text/html, */*; q=0.01',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      signal: controller.signal,
-    });
-    if (!response.ok) return null;
-    return await response.text();
-  } catch {
-    return null;
-  } finally {
-    setAbort(null);
-  }
-}
-
-async function requestChapterListGm(
-  apiUrl: string,
-  referer: string,
-  setAbort: RequestAbortSetter
-): Promise<string | null> {
-  const gmXhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : null;
-  if (!gmXhr) return null;
-
-  return new Promise(resolve => {
-    let settled = false;
-    const finish = (value: string | null) => {
-      if (settled) return;
-      settled = true;
-      setAbort(null);
-      resolve(value);
-    };
-
-    const headers: Record<string, string> = {
-      Accept: 'text/html, */*; q=0.01',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-    if (referer) headers.Referer = referer;
-
-    const request = gmXhr({
-      method: 'GET',
-      url: apiUrl,
-      headers,
-      timeout: 10000,
-      withCredentials: true,
-      onload: response => {
-        if (response.status < 200 || response.status >= 300) {
-          finish(null);
-          return;
-        }
-        finish(response.responseText);
-      },
-      onerror: () => finish(null),
-      onabort: () => finish(null),
-      ontimeout: () => finish(null),
-    });
-
-    setAbort(() => {
-      try {
-        request.abort();
-      } catch {
-        // Ignore abort errors from userscript managers.
-      }
-      finish(null);
-    });
-  });
-}
-
 function parseChapterList(
   html: string,
   apiUrl: string,
@@ -215,17 +121,18 @@ async function loadChapterList(
   const apiUrl = buildChapterListUrl(context.indexUrl, context.currentUrl, options);
   if (!apiUrl) return [];
 
-  const nativeHtml = await requestChapterListNative(apiUrl, context.setAbort);
-  let entries = nativeHtml ? parseChapterList(nativeHtml, apiUrl, options) : [];
-  if (entries.length > 0) return entries;
-
-  const gmHtml = await requestChapterListGm(
-    apiUrl,
-    context.currentUrl || context.indexUrl,
-    context.setAbort
+  return (
+    (await requestSiteData(apiUrl, {
+      responseType: 'text',
+      setAbort: context.setAbort,
+      referrer: context.currentUrl || context.indexUrl,
+      headers: { Accept: 'text/html, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest' },
+      parse: data => {
+        const entries = typeof data === 'string' ? parseChapterList(data, apiUrl, options) : [];
+        return entries.length ? entries : null;
+      },
+    })) || []
   );
-  entries = gmHtml ? parseChapterList(gmHtml, apiUrl, options) : [];
-  return entries;
 }
 
 export function createAjaxChapterListLoader(

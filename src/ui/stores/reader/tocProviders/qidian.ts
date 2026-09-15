@@ -1,4 +1,5 @@
 import { extractBookId, normalizeUrlForFetch, resolveUrl } from '../utils';
+import { requestSiteData } from '@/core/utils/siteRequest';
 import type { SiteRule } from '@/core/rules/types';
 import type { TocEntry } from '../types';
 
@@ -85,105 +86,6 @@ function buildQidianCategoryUrl(indexUrl: string, currentUrl: string): string | 
   return apiUrl.toString();
 }
 
-function getNativeFetch(): typeof fetch | null {
-  if (typeof unsafeWindow !== 'undefined' && typeof unsafeWindow.fetch === 'function') {
-    return unsafeWindow.fetch.bind(unsafeWindow) as typeof fetch;
-  }
-  if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-    return window.fetch.bind(window) as typeof fetch;
-  }
-  if (typeof fetch === 'function') {
-    return fetch;
-  }
-  return null;
-}
-
-async function requestQidianCategoryNative(
-  apiUrl: string,
-  setAbort: (abort: (() => void) | null) => void
-): Promise<QidianCategoryResponse | null> {
-  const fetcher = getNativeFetch();
-  if (!fetcher) return null;
-
-  const controller = new AbortController();
-  setAbort(() => controller.abort());
-
-  try {
-    const response = await fetcher(apiUrl, {
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json, text/javascript, */*; q=0.01',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      signal: controller.signal,
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as QidianCategoryResponse;
-  } catch {
-    return null;
-  } finally {
-    setAbort(null);
-  }
-}
-
-async function requestQidianCategoryGm(
-  apiUrl: string,
-  currentUrl: string,
-  setAbort: (abort: (() => void) | null) => void
-): Promise<QidianCategoryResponse | null> {
-  const gmXhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : null;
-  if (!gmXhr) return null;
-
-  return new Promise(resolve => {
-    let settled = false;
-    const finish = (value: QidianCategoryResponse | null) => {
-      if (settled) return;
-      settled = true;
-      setAbort(null);
-      resolve(value);
-    };
-
-    const headers: Record<string, string> = {
-      Accept: 'application/json, text/javascript, */*; q=0.01',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-    if (currentUrl) {
-      headers.Referer = currentUrl;
-    }
-
-    const request = gmXhr({
-      method: 'GET',
-      url: apiUrl,
-      headers,
-      timeout: 10000,
-      withCredentials: true,
-      onload: response => {
-        if (response.status < 200 || response.status >= 300) {
-          finish(null);
-          return;
-        }
-        try {
-          finish(JSON.parse(response.responseText) as QidianCategoryResponse);
-        } catch {
-          finish(null);
-        }
-      },
-      onerror: () => finish(null),
-      onabort: () => finish(null),
-      ontimeout: () => finish(null),
-    });
-
-    setAbort(() => {
-      try {
-        request.abort();
-      } catch {
-        // ignore
-      }
-      finish(null);
-    });
-  });
-}
-
 function dedupeQidianTocEntries(candidates: TocEntry[]): TocEntry[] {
   const seenUrls = new Set<string>();
   const results: TocEntry[] = [];
@@ -245,13 +147,23 @@ async function loadQidianTocEntries(
   const apiUrl = buildQidianCategoryUrl(indexUrl, currentUrl);
   if (!apiUrl) return [];
 
-  const nativeResponse = await requestQidianCategoryNative(apiUrl, setAbort);
-  if (nativeResponse?.code === 0) {
-    return qidianCategoryToEntries(nativeResponse, indexUrl, currentUrl);
-  }
-
-  const gmResponse = await requestQidianCategoryGm(apiUrl, currentUrl || indexUrl, setAbort);
-  return qidianCategoryToEntries(gmResponse, indexUrl, currentUrl);
+  return (
+    (await requestSiteData(apiUrl, {
+      responseType: 'json',
+      setAbort,
+      referrer: currentUrl || indexUrl,
+      headers: {
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      parse: data => {
+        const response = data as QidianCategoryResponse | null;
+        return response?.code === 0
+          ? qidianCategoryToEntries(response, indexUrl, currentUrl)
+          : null;
+      },
+    })) || []
+  );
 }
 
 export const qidianTocLoader = {

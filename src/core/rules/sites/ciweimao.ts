@@ -189,6 +189,41 @@ function decryptCiweimaoContent(
   return typeof current === 'string' ? current : current.toString(crypto.enc.Utf8);
 }
 
+async function fetchCiweimaoContent(
+  chapterId: string,
+  pageUrl: string,
+  helpers?: HookHelpers
+): Promise<string> {
+  const origin = new URL(pageUrl).origin;
+  const session = await fetchCiweimaoJson(
+    `${origin}/chapter/ajax_get_session_code?chapter_id=${chapterId}`,
+    pageUrl,
+    helpers
+  );
+  if (!session || !isSuccessCode(session.code)) return '';
+
+  const accessKeyValue = session.chapter_access_key;
+  if (accessKeyValue === undefined || accessKeyValue === null) return '';
+  const accessKey = String(accessKeyValue);
+
+  const data = await fetchCiweimaoJson(
+    `${origin}/chapter/get_book_chapter_detail_info?chapter_id=${chapterId}&chapter_access_key=${accessKey}`,
+    pageUrl,
+    helpers
+  );
+  if (!data || !isSuccessCode(data.code)) return '';
+
+  const chapterContent = data.chapter_content;
+  const encryptedKeys = Array.isArray(data.encryt_keys)
+    ? data.encryt_keys.filter((key): key is string => typeof key === 'string')
+    : [];
+  const crypto = getCrypto();
+  if (typeof chapterContent !== 'string' || encryptedKeys.length === 0 || !crypto) return '';
+
+  const html = decryptCiweimaoContent(chapterContent, encryptedKeys, accessKey, crypto);
+  return html;
+}
+
 async function decryptCiweimaoIfNeeded(
   doc: Document,
   contentEl: Element,
@@ -206,33 +241,7 @@ async function decryptCiweimaoIfNeeded(
     (pageUrl.match(/chapter\/(\d+)/) || [])[1];
   if (!chapterId) return;
 
-  const origin = new URL(pageUrl).origin;
-  const session = await fetchCiweimaoJson(
-    `${origin}/chapter/ajax_get_session_code?chapter_id=${chapterId}`,
-    pageUrl,
-    helpers
-  );
-  if (!session || !isSuccessCode(session.code)) return;
-
-  const accessKeyValue = session.chapter_access_key;
-  if (accessKeyValue === undefined || accessKeyValue === null) return;
-  const accessKey = String(accessKeyValue);
-
-  const data = await fetchCiweimaoJson(
-    `${origin}/chapter/get_book_chapter_detail_info?chapter_id=${chapterId}&chapter_access_key=${accessKey}`,
-    pageUrl,
-    helpers
-  );
-  if (!data || !isSuccessCode(data.code)) return;
-
-  const chapterContent = data.chapter_content;
-  const encryptedKeys = Array.isArray(data.encryt_keys)
-    ? data.encryt_keys.filter((key): key is string => typeof key === 'string')
-    : [];
-  const crypto = getCrypto();
-  if (typeof chapterContent !== 'string' || encryptedKeys.length === 0 || !crypto) return;
-
-  const html = decryptCiweimaoContent(chapterContent, encryptedKeys, accessKey, crypto);
+  const html = await fetchCiweimaoContent(chapterId, pageUrl, helpers);
   if (html) {
     contentEl.innerHTML = html;
   }
@@ -354,19 +363,7 @@ function cleanupCiweimaoWatermarks(doc: Document, contentEl: Element): void {
     }
   });
 
-  const normalizeTailText = (value: string): string =>
-    value
-      .replace(/\s+/g, '')
-      .replace(/[\u3000]/g, '')
-      .replace(/[，。！？、“”‘’（）()【】[\]<>《》:：;；·~…—-]/g, '');
-  const textParas = Array.from(contentEl.querySelectorAll('p'))
-    .map(p => ({ p, text: normalizeTailText(p.textContent || '') }))
-    .filter(item => item.text);
-  textParas.slice(-8).forEach(({ p, text }) => {
-    if (text && /^[\u4e00-\u9fff]{2,6}$/.test(text)) {
-      p.remove();
-    }
-  });
+  // Short closing paragraphs can be legitimate prose; length alone is not a watermark signal.
 }
 
 const tocCache = new Map<string, Promise<CiweimaoToc | null>>();
@@ -516,30 +513,7 @@ export async function fetchCiweimaoApiDocument(
     const entry = toc.entries[tocIndex];
     const prevUrl = toc.entries[tocIndex - 1]?.url || '';
     const nextUrl = toc.entries[tocIndex + 1]?.url || '';
-    const origin = new URL(normalizedTargetUrl).origin;
-    const session = await fetchCiweimaoJson(
-      `${origin}/chapter/ajax_get_session_code?chapter_id=${chapterId}`,
-      normalizedTargetUrl
-    );
-    if (!session || !isSuccessCode(session.code)) return null;
-
-    const accessKeyValue = session.chapter_access_key;
-    if (accessKeyValue === undefined || accessKeyValue === null) return null;
-    const accessKey = String(accessKeyValue);
-    const data = await fetchCiweimaoJson(
-      `${origin}/chapter/get_book_chapter_detail_info?chapter_id=${chapterId}&chapter_access_key=${accessKey}`,
-      normalizedTargetUrl
-    );
-    if (!data || !isSuccessCode(data.code)) return null;
-
-    const chapterContent = data.chapter_content;
-    const encryptedKeys = Array.isArray(data.encryt_keys)
-      ? data.encryt_keys.filter((key): key is string => typeof key === 'string')
-      : [];
-    const crypto = getCrypto();
-    if (typeof chapterContent !== 'string' || encryptedKeys.length === 0 || !crypto) return null;
-
-    const html = decryptCiweimaoContent(chapterContent, encryptedKeys, accessKey, crypto);
+    const html = await fetchCiweimaoContent(chapterId, normalizedTargetUrl);
     if (!html) return null;
 
     const doc = createCiweimaoApiDocument({
