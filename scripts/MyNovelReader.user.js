@@ -3,7 +3,7 @@
 // @name:zh-CN         小说阅读脚本
 // @name:zh-TW         小說閱讀腳本
 // @namespace          https://github.com/ywzhaiqi
-// @version            9.5.3
+// @version            9.5.4
 // @author             ywzhaiqi
 // @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
 // @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
@@ -6906,6 +6906,23 @@
 			exampleUrl: "https://www.shudugu.org/109/1226047.html"
 		}
 	};
+	var tiantang_exports = __exportAll({ tiantangRule: () => tiantangRule });
+	var tiantangRule = {
+		id: "tiantang",
+		name: "格格党（tiantang100）",
+		version: 1,
+		match: { pattern: "^https?://www\\.tiantang100\\.org/\\d+/\\d+/\\d+(?:_\\d+)?\\.html(?:[?#].*)?$" },
+		content: { selector: "#content" },
+		navigation: { index: "#mnr-tiantang-index" },
+		hooks: { beforeParse(doc, url) {
+			if (!url || !new RegExp(tiantangRule.match.pattern).test(url)) return;
+			appendHiddenLink(doc, "mnr-tiantang-index", ".", "目录", url);
+		} },
+		meta: {
+			source: "builtin",
+			exampleUrl: "http://www.tiantang100.org/337/337644/1889083.html"
+		}
+	};
 	var ttks_exports = __exportAll({ ttksRule: () => ttksRule });
 	var WATERMARK_TAIL_PATTERN = /\s*(?:[（(【]\s*)?(?:[寫写]到[這这][裡里]我希望[讀读]者[記记]一下我[們们]域名|由[於于][緩缓]存原因[，,]?[請请]用[戶户]直接(?:瀏覽|浏览)器(?:訪問|访问)|本[書书]首[發发]|天天看[小小說说]{2}解[書书]荒|[記记]住本站域名)[\s\S]*$/u;
 	var ttksBeforeParse = (doc) => {
@@ -7088,6 +7105,7 @@
 		"./shu69.ts": shu69_exports,
 		"./sto9.ts": sto9_exports$1,
 		"./sudugu.ts": sudugu_exports,
+		"./tiantang.ts": tiantang_exports,
 		"./ttks.ts": ttks_exports,
 		"./twkan.ts": twkan_exports$1,
 		"./uuread.ts": uuread_exports,
@@ -8766,7 +8784,7 @@
 		else if (options) managerInstance.updateOptions(options);
 		return managerInstance;
 	}
-	var VERSION = "9.5.3";
+	var VERSION = "9.5.4";
 	var BUILD_DATE = "2026-07-31";
 	var SENSITIVE_QUERY_KEY = /(?:^|[_-])(?:token|auth|session|sid|key|sign|signature|ticket|password|passwd|pwd|jwt|credential|access|refresh|challenge|chl)(?:[_-]|$)|^__cf_/i;
 	function redactUrl(url) {
@@ -9168,10 +9186,10 @@
 	}
 	var listDelimiterRE = /;(?![^(]*\))/g;
 	var propertyDelimiterRE = /:([^]+)/;
-	var styleCommentRE = /\/\*[^]*?\*\//g;
+	var styleCommentRE = /"(?:[^"\\]|\\[^])*"|'(?:[^'\\]|\\[^])*'|\\[^]|\/\*[^]*?\*\//g;
 	function parseStringStyle(cssText) {
 		const ret = {};
-		cssText.replace(styleCommentRE, "").split(listDelimiterRE).forEach((item) => {
+		cssText.replace(styleCommentRE, (match) => match.startsWith("/*") ? "" : match).split(listDelimiterRE).forEach((item) => {
 			if (item) {
 				const tmp = item.split(propertyDelimiterRE);
 				tmp.length > 1 && (ret[tmp[0].trim()] = tmp[1].trim());
@@ -9197,19 +9215,19 @@
 	function includeBooleanAttr(value) {
 		return !!value || value === "";
 	}
-	function looseCompareArrays(a, b) {
+	function looseCompareArrays(a, b, seen) {
 		if (a.length !== b.length) return false;
 		let equal = true;
-		for (let i = 0; equal && i < a.length; i++) equal = looseEqual(a[i], b[i]);
+		for (let i = 0; equal && i < a.length; i++) equal = looseEqual(a[i], b[i], seen);
 		return equal;
 	}
-	function looseCompareCollections(a, b) {
+	function looseCompareCollections(a, b, seen) {
 		if (a.size !== b.size) return false;
 		const candidates = Array.from(b);
 		const matched = new Uint8Array(candidates.length);
 		for (const item of a) {
 			let index = -1;
-			for (let i = 0; i < candidates.length; i++) if (!matched[i] && looseEqual(item, candidates[i])) {
+			for (let i = 0; i < candidates.length; i++) if (!matched[i] && looseEqual(item, candidates[i], seen)) {
 				index = i;
 				break;
 			}
@@ -9218,7 +9236,33 @@
 		}
 		return true;
 	}
-	function looseEqual(a, b) {
+	function looseCompareObjects(a, b, seen) {
+		let aValidType = isMap(a);
+		let bValidType = isMap(b);
+		if (aValidType || bValidType) return aValidType && bValidType ? looseCompareCollections(a, b, seen) : false;
+		aValidType = isSet(a);
+		bValidType = isSet(b);
+		if (aValidType || bValidType) return aValidType && bValidType ? looseCompareCollections(a, b, seen) : false;
+		if (Object.keys(a).length !== Object.keys(b).length) return false;
+		for (const key in a) {
+			const aHasKey = a.hasOwnProperty(key);
+			const bHasKey = b.hasOwnProperty(key);
+			if (aHasKey && !bHasKey || !aHasKey && bHasKey || !looseEqual(a[key], b[key], seen)) return false;
+		}
+		return String(a) === String(b);
+	}
+	function looseCompareNested(a, b, seen, compare) {
+		if (!seen) seen = [new Map(), new Map()];
+		const [seenA, seenB] = seen;
+		if (seenA.has(a) || seenB.has(b)) return seenA.get(a) === b && seenB.get(b) === a;
+		seenA.set(a, b);
+		seenB.set(b, a);
+		const equal = compare(a, b, seen);
+		seenA.delete(a);
+		seenB.delete(b);
+		return equal;
+	}
+	function looseEqual(a, b, seen) {
 		if (a === b) return true;
 		let aValidType = isDate(a);
 		let bValidType = isDate(b);
@@ -9228,23 +9272,12 @@
 		if (aValidType || bValidType) return a === b;
 		aValidType = isArray(a);
 		bValidType = isArray(b);
-		if (aValidType || bValidType) return aValidType && bValidType ? looseCompareArrays(a, b) : false;
+		if (aValidType || bValidType) return aValidType && bValidType ? looseCompareNested(a, b, seen, looseCompareArrays) : false;
 		aValidType = isObject(a);
 		bValidType = isObject(b);
 		if (aValidType || bValidType) {
 			if (!aValidType || !bValidType) return false;
-			aValidType = isMap(a);
-			bValidType = isMap(b);
-			if (aValidType || bValidType) return aValidType && bValidType ? looseCompareCollections(a, b) : false;
-			aValidType = isSet(a);
-			bValidType = isSet(b);
-			if (aValidType || bValidType) return aValidType && bValidType ? looseCompareCollections(a, b) : false;
-			if (Object.keys(a).length !== Object.keys(b).length) return false;
-			for (const key in a) {
-				const aHasKey = a.hasOwnProperty(key);
-				const bHasKey = b.hasOwnProperty(key);
-				if (aHasKey && !bHasKey || !aHasKey && bHasKey || !looseEqual(a[key], b[key])) return false;
-			}
+			return looseCompareNested(a, b, seen, looseCompareObjects);
 		}
 		return String(a) === String(b);
 	}
@@ -9760,7 +9793,9 @@
 		const raw = toRaw(array);
 		if (raw === array) return raw;
 		track(raw, "iterate", ARRAY_ITERATE_KEY);
-		return isShallow(array) ? raw : raw.map(toReactive);
+		if (isShallow(array)) return raw;
+		if (!isReadonly(array)) return raw.map(toReactive);
+		return isReactive(array) ? raw.map((item) => toReadonly(toReactive(item))) : raw.map(toReadonly);
 	}
 	function shallowReadArray(arr) {
 		track(arr = toRaw(arr), "iterate", ARRAY_ITERATE_KEY);
@@ -11814,6 +11849,10 @@
 				optimized = false;
 				n2.dynamicChildren = null;
 			}
+			if (n2.dynamicChildren && n1 && n1.dynamicChildren && n1.dynamicChildren.hasOnce) {
+				if (n2.dynamicChildren === EMPTY_ARR) n2.dynamicChildren = [];
+				n2.dynamicChildren.hasOnce = true;
+			}
 			const { type, ref, shapeFlag } = n2;
 			switch (type) {
 				case Text:
@@ -12030,6 +12069,7 @@
 			const instance = n2.component = n1.component;
 			if (shouldUpdateComponent(n1, n2, optimized)) {
 				if (instance.asyncDep && !instance.asyncResolved) {
+					n2.el = n1.el;
 					updateComponentPreRender(instance, n2, optimized);
 					return;
 				} else {
@@ -12309,13 +12349,13 @@
 		};
 		const unmount = (vnode, parentComponent, parentSuspense, doRemove = false, optimized = false) => {
 			const { type, props, ref, children, dynamicChildren, shapeFlag, patchFlag, dirs, cacheIndex, memo } = vnode;
-			if (patchFlag === -2) optimized = false;
+			if (patchFlag === -2 || dynamicChildren && dynamicChildren.hasOnce) optimized = false;
 			if (ref != null) {
 				pauseTracking();
 				setRef(ref, null, parentSuspense, vnode, true);
 				resetTracking();
 			}
-			if (cacheIndex != null) parentComponent.renderCache[cacheIndex] = void 0;
+			if (cacheIndex != null && (!vnode.ctx || vnode.ctx === parentComponent)) parentComponent.renderCache[cacheIndex] = void 0;
 			if (shapeFlag & 256) {
 				parentComponent.ctx.deactivate(vnode);
 				return;
@@ -12351,6 +12391,7 @@
 			}
 			if (type === Static) {
 				removeStaticNode(vnode);
+				if (transition && !transition.persisted && transition.afterLeave) transition.afterLeave();
 				return;
 			}
 			const performRemove = () => {
@@ -12381,6 +12422,9 @@
 			scope.stop();
 			if (job) {
 				job.flags |= 8;
+				unmount(subTree, instance, parentSuspense, doRemove);
+			} else if (instance.vnode.el && subTree) {
+				subTree.transition = instance.vnode.transition;
 				unmount(subTree, instance, parentSuspense, doRemove);
 			}
 			if (um) queuePostRenderEffect(um, parentSuspense);
@@ -12674,7 +12718,8 @@
 			el: vnode.el,
 			anchor: vnode.anchor,
 			ctx: vnode.ctx,
-			ce: vnode.ce
+			ce: vnode.ce,
+			cacheIndex: vnode.cacheIndex
 		};
 		if (transition && cloneTransition) setTransitionHooks(cloned, transition.clone(cloned));
 		return cloned;
@@ -12976,7 +13021,7 @@
 			setBlockTracking(1);
 		}
 	}
-	var version = "3.5.42";
+	var version = "3.5.43";
 	var policy = void 0;
 	var tt = typeof window !== "undefined" && window.trustedTypes;
 	if (tt) try {

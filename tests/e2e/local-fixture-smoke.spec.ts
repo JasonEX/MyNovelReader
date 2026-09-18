@@ -1713,3 +1713,54 @@ for (const startPage of [1, 2]) {
     expect(parserLogs).toEqual([]);
   });
 }
+
+test('uses the Tiantang full catalog and shared pagination to navigate', async ({
+  page,
+  context,
+}) => {
+  const {
+    makeTiantangOverview,
+    makeTiantangToc,
+    tiantangChapterPath,
+    tiantangDirectory,
+    tiantangIndexPath,
+    tiantangOrigin,
+  } = await import('../testUtils/tiantang');
+  const catalogRequests: string[] = [];
+  await context.route(`${tiantangOrigin}/**`, async route => {
+    const pathname = new URL(route.request().url()).pathname;
+    let body: string;
+    if (pathname === tiantangIndexPath) {
+      catalogRequests.push(pathname);
+      body = makeTiantangOverview();
+    } else if (pathname.endsWith('/')) {
+      catalogRequests.push(pathname);
+      const number = Number(pathname.slice(tiantangDirectory.length).replace('/', '')) || 1;
+      body = makeTiantangToc(number);
+    } else {
+      const chapter = Number(pathname.match(/(\d+)\.html$/)?.[1]) - 1888827;
+      body = `<html><head><title>第${chapter}章 测试正文_测试书名</title></head><body>
+        <h1 class="bookname">第${chapter}章 测试正文</h1>
+        <div class="bottem1"><a href="${tiantangChapterPath(chapter - 1)}" rel="prev">上一章</a><a href="${tiantangIndexPath}" rel="index">目录</a><a href="${tiantangChapterPath(chapter + 1)}" rel="next">下一章</a></div>
+        <div id="content">${paragraphs}</div>
+        </body></html>`;
+    }
+    await route.fulfill({ contentType: 'text/html; charset=utf-8', body });
+  });
+  await addMyNovelReaderUserscript(context);
+  await page.goto(tiantangOrigin + tiantangChapterPath(256));
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+  await root.getByRole('button', { name: '打开目录', exact: true }).click();
+  await expect(root.locator('.mnr-drawer-position')).toContainText('/ 298');
+  await expect(root.getByRole('button', { name: '第256章 测试正文', exact: true })).toBeVisible();
+  await root.getByRole('button', { name: '第257章 测试正文', exact: true }).click();
+  await expect(page).toHaveURL(tiantangOrigin + tiantangChapterPath(257));
+  await expect(
+    root.locator('article[data-chapter-url$="/1889084.html"] .mnr-chapter-title')
+  ).toContainText('第257章');
+  expect(catalogRequests).toEqual([
+    tiantangDirectory,
+    ...[2, 3, 4, 5, 6].map(number => `${tiantangDirectory}${number}/`),
+  ]);
+});
