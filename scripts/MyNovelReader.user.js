@@ -2519,23 +2519,22 @@
 		return DOMPurify;
 	}
 	var purify = createDOMPurify();
-	var SAFE_DATA_ATTR = [
-		"data-src",
-		"data-original",
-		"data-lazy-src",
-		"data-original-src",
-		"data-srcset",
-		"data-url",
-		"data-actualsrc",
-		"data-echo"
-	];
 	var DEFAULT_CONFIG = {
 		USE_PROFILES: {
 			html: true,
 			svg: true
 		},
 		ADD_DATA_URI_TAGS: ["img"],
-		ADD_ATTR: SAFE_DATA_ATTR,
+		ADD_ATTR: [
+			"data-src",
+			"data-original",
+			"data-lazy-src",
+			"data-original-src",
+			"data-srcset",
+			"data-url",
+			"data-actualsrc",
+			"data-echo"
+		],
 		ALLOW_DATA_ATTR: false,
 		FORBID_TAGS: [
 			"script",
@@ -2576,93 +2575,18 @@
 			"oninput"
 		],
 		SANITIZE_DOM: true,
-		KEEP_CONTENT: true,
-		SAFE_FOR_TEMPLATES: true,
-		ALLOWED_TAGS: [
-			"p",
-			"br",
-			"hr",
-			"div",
-			"span",
-			"h1",
-			"h2",
-			"h3",
-			"h4",
-			"h5",
-			"h6",
-			"strong",
-			"b",
-			"em",
-			"i",
-			"u",
-			"s",
-			"strike",
-			"ul",
-			"ol",
-			"li",
-			"blockquote",
-			"pre",
-			"code",
-			"a",
-			"img",
-			"table",
-			"thead",
-			"tbody",
-			"tfoot",
-			"tr",
-			"th",
-			"td",
-			"sub",
-			"sup",
-			"small",
-			"big",
-			"svg",
-			"g",
-			"path",
-			"circle",
-			"rect",
-			"line",
-			"polygon",
-			"text",
-			"tspan",
-			"textPath",
-			"use",
-			"symbol",
-			"defs"
-		],
-		ALLOWED_ATTR: [
-			"href",
-			"title",
-			"alt",
-			"src",
-			"width",
-			"height",
-			"class",
-			"id",
-			"style",
-			"dir",
-			...SAFE_DATA_ATTR,
-			"rowspan",
-			"colspan",
-			"viewBox",
-			"xmlns",
-			"fill",
-			"stroke",
-			"d",
-			"cx",
-			"cy",
-			"r",
-			"x",
-			"y",
-			"width",
-			"height"
-		]
+		KEEP_CONTENT: true
 	};
 	var domPurifyHooksInstalled = false;
 	function sanitizeSvgContent(html) {
 		return html.replace(/<svg[^>]*>/gi, (match) => {
 			return match.replace(/\s+on\w+\s*=\s*(["'][^"']*["']|[^\s>]*)/gi, "");
-		}).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/javascript:/gi, "").replace(/vbscript:/gi, "").replace(/\s+href\s*=\s*["']\s*data:[^"']*["']/gi, "").replace(/expression\([^)]*\)/gi, "");
+		}).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+	}
+	function isUnsafeInlineStyle(value) {
+		let compact = "";
+		for (const character of value) if (character.charCodeAt(0) > 32) compact += character.toLowerCase();
+		return compact.includes("expression(") || compact.includes("url(javascript:") || compact.includes("url('javascript:") || compact.includes("url(\"javascript:") || compact.includes("url(vbscript:") || compact.includes("url('vbscript:") || compact.includes("url(\"vbscript:");
 	}
 	function basicSanitize(html) {
 		if (typeof document === "undefined") return html;
@@ -2704,7 +2628,7 @@
 					attrsToRemove.push(attr.name);
 					continue;
 				}
-				if (name === "href") {
+				if (name === "href" || name === "xlink:href") {
 					if (value.startsWith("javascript:") || value.startsWith("vbscript:") || value.startsWith("data:")) {
 						attrsToRemove.push(attr.name);
 						continue;
@@ -2737,6 +2661,9 @@
 			html = sanitizeSvgContent(html);
 			if (typeof window === "undefined" || typeof purify?.sanitize !== "function") return basicSanitize(html);
 			if (!domPurifyHooksInstalled && typeof purify?.addHook === "function") {
+				purify.addHook("uponSanitizeAttribute", (_node, data) => {
+					if (data.attrName.toLowerCase() === "style" && isUnsafeInlineStyle(data.attrValue)) data.keepAttr = false;
+				});
 				purify.addHook("afterSanitizeAttributes", (node) => {
 					const el = node;
 					if (!el || el.nodeType !== 1) return;
@@ -7430,6 +7357,7 @@
 			if (a === 192 && b === 168) return true;
 			return false;
 		}
+		if (!host.includes(":")) return false;
 		if (host === "::1") return true;
 		if (host.startsWith("fe80:")) return true;
 		if (host.startsWith("fc") || host.startsWith("fd")) return true;
@@ -7486,6 +7414,14 @@
 		} catch {
 			return new TextDecoder("utf-8").decode(buffer);
 		}
+	}
+	function extractContentTypeFromResponseHeaders(headers) {
+		for (const line of headers.split(/\r?\n/)) {
+			const separator = line.indexOf(":");
+			if (separator === -1) continue;
+			if (line.slice(0, separator).trim().toLowerCase() === "content-type") return line.slice(separator + 1).trim() || null;
+		}
+		return null;
 	}
 	async function readFetchResponseText(response) {
 		if (typeof response.arrayBuffer !== "function" || typeof TextDecoder === "undefined") return response.text();
@@ -7578,12 +7514,14 @@
 						url: requestUrl,
 						headers,
 						timeout: timeoutMs,
-						overrideMimeType: "text/html;charset=" + document.characterSet,
+						responseType: "arraybuffer",
 						onload: (response) => {
 							const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
 							if (response.status >= 200 && response.status < 300) {
+								const responseBytes = response.response;
+								const html = responseBytes && typeof responseBytes.byteLength === "number" ? decodeHtmlBytes(responseBytes, extractContentTypeFromResponseHeaders(response.responseHeaders)) : response.responseText;
 								resolve({
-									...parseHtmlToDoc(response.responseText, finalUrl),
+									...parseHtmlToDoc(html, finalUrl),
 									status: response.status,
 									finalUrl
 								});
@@ -17674,7 +17612,8 @@ ul, ol {
 	function generateBookId(indexUrl) {
 		try {
 			const url = new URL(indexUrl);
-			return url.hostname + url.pathname.replace(/\//g, "_");
+			const pathId = url.hostname + url.pathname.replace(/\//g, "_");
+			return url.search ? `${pathId}~q~${encodeBase64UrlUtf8(url.search)}` : pathId;
 		} catch {
 			return btoa(indexUrl).slice(0, 32);
 		}
@@ -17775,10 +17714,13 @@ ul, ol {
 		}
 		return null;
 	}
-	function persistCache(cacheBook, cachedContents, persistedUrls) {
+	function persistCache(cacheBook, cachedContents, persistedUrls, skipChapterUrls = new Set()) {
 		if (typeof GM_setValue === "undefined") return persistedUrls;
 		const persistedSet = new Set(persistedUrls);
-		for (const [url, cached] of cachedContents) if (persistCachedChapter(cacheBook, url, cached)) persistedSet.add(url);
+		for (const [url, cached] of cachedContents) {
+			if (persistedSet.has(url) && skipChapterUrls.has(url)) continue;
+			if (persistCachedChapter(cacheBook, url, cached)) persistedSet.add(url);
+		}
 		if (persistedSet.size === 0) return persistedSet;
 		persistCacheIndex(cacheBook, persistedSet);
 		return persistedSet;
@@ -19244,9 +19186,11 @@ ul, ol {
 				if (!isCurrent()) return;
 				const persistedSet = new Set(ctx.persistedUrls.value);
 				const cacheBook = getCurrentBookCacheKey(ctx.chapter.value?.indexUrl);
-				let taskList = urls ? [...urls] : [];
+				const indexUrlKey = cacheBook ? normalizeUrlForBlock(cacheBook.indexUrl) : null;
+				const isIndexUrl = (url) => indexUrlKey !== null && normalizeUrlForBlock(url) === indexUrlKey;
+				let taskList = urls ? urls.map(normalizeUrlForFetch).filter((url) => !isIndexUrl(url)) : [];
 				ctx.cacheQueue.value = [...taskList];
-				if (!taskList.length) {
+				if (urls === void 0 && !taskList.length) {
 					const indexUrl = ctx.chapter.value?.indexUrl;
 					const currentUrl = ctx.chapter.value?.url;
 					if (indexUrl) {
@@ -19271,7 +19215,7 @@ ul, ol {
 							if (persistedSet.size > 0) persistCacheIndex(cacheBook, persistedSet);
 							else deletePersistedCacheIndex(cacheBook);
 						}
-						taskList = tocLinks.filter((u) => !ctx.loadedUrls.value.has(u) && !ctx.cachedContents.value.has(u) && !persistedSet.has(u));
+						taskList = tocLinks.filter((u) => !isIndexUrl(u) && !ctx.loadedUrls.value.has(u) && !ctx.cachedContents.value.has(u) && !persistedSet.has(u));
 						ctx.cacheQueue.value = [...taskList];
 					}
 				}
@@ -19409,7 +19353,7 @@ ul, ol {
 						};
 						referer = parsed.url;
 						nextUrl = taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
-						if (nextUrl && knownLockedUrls.has(normalizeUrlForFetch(nextUrl))) nextUrl = null;
+						if (nextUrl && (isIndexUrl(nextUrl) || knownLockedUrls.has(normalizeUrlForFetch(nextUrl)))) nextUrl = null;
 						if (taskList.length === 0 && nextUrl) {
 							const normalizedNext = normalizeUrlForFetch(nextUrl);
 							if (!seenUrls.has(normalizedNext) && !ctx.loadedUrls.value.has(normalizedNext) && !ctx.cachedContents.value.has(normalizedNext) && !persistedSet.has(normalizedNext)) ctx.cacheProgress.value = {
@@ -19423,7 +19367,7 @@ ul, ol {
 				}
 				if (!isCurrent() || !ctx.cacheProgress.value.running) return;
 				if (cacheBook && persistedSet.size > 0) ctx.persistedUrls.value = persistedSet;
-				await ctx.persistCache();
+				await ctx.persistCache(persistedSet);
 				if (!isCurrent()) return;
 				if (ctx.cacheProgress.value.failed > 0) ctx.showToast(`缓存完成，${ctx.cacheProgress.value.failed} 章失败`, "error", 3500);
 				else ctx.showToast("离线缓存完成", "info", 2500);
@@ -20051,11 +19995,11 @@ ul, ol {
 			if (!cacheBook) return null;
 			return getPersistedCachedChapter(cacheBook, url);
 		}
-		async function persistCache$1() {
+		async function persistCache$1(skipChapterUrls) {
 			const runId = runtime.sessionId();
 			const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
 			if (!cacheBook) return;
-			const result = persistCache(cacheBook, cachedContents.value, persistedUrls.value);
+			const result = persistCache(cacheBook, cachedContents.value, persistedUrls.value, skipChapterUrls);
 			if (!runtime.isSessionStale(runId)) persistedUrls.value = result;
 		}
 		async function restoreCache$1() {
@@ -20559,18 +20503,49 @@ ul, ol {
 			return url;
 		}
 	}
-	async function loadPositions() {
-		if (positionCache) return positionCache;
+	function parsePositions(stored) {
+		if (typeof stored === "string") stored = JSON.parse(stored);
+		if (!stored || typeof stored !== "object") return {};
+		const positions = {};
+		for (const [url, value] of Object.entries(stored)) {
+			const position = value;
+			if (!position || !Number.isFinite(position.percent) || !Number.isFinite(position.updatedAt)) continue;
+			positions[url] = {
+				percent: position.percent,
+				updatedAt: position.updatedAt
+			};
+		}
+		return positions;
+	}
+	function trimPositions(positions) {
+		const entries = Object.entries(positions);
+		if (entries.length <= MAX_SAVED_POSITIONS) return positions;
+		const trimmed = {};
+		for (const [url, position] of entries.sort(([, a], [, b]) => b.updatedAt - a.updatedAt).slice(0, MAX_SAVED_POSITIONS)) trimmed[url] = position;
+		return trimmed;
+	}
+	function mergePositions(...sources) {
+		const merged = {};
+		for (const source of sources) for (const [url, position] of Object.entries(source)) {
+			const existing = merged[url];
+			if (!existing || position.updatedAt >= existing.updatedAt) merged[url] = position;
+		}
+		return trimPositions(merged);
+	}
+	async function readStoredPositions() {
 		try {
 			let stored = null;
 			if (typeof GM_getValue !== "undefined") stored = await GM_getValue(STORAGE_KEY, null);
 			else if (typeof localStorage !== "undefined") stored = localStorage.getItem(STORAGE_KEY);
-			if (typeof stored === "string") stored = JSON.parse(stored);
-			positionCache = stored && typeof stored === "object" ? stored : {};
+			return parsePositions(stored);
 		} catch (error) {
 			console.error("[MNR] Failed to load reading positions:", error);
-			positionCache = {};
+			return {};
 		}
+	}
+	async function loadPositions(refresh = false) {
+		if (positionCache && !refresh) return positionCache;
+		positionCache = mergePositions(await readStoredPositions(), positionCache ?? {});
 		return positionCache;
 	}
 	async function persistPositions(serialized) {
@@ -20579,7 +20554,7 @@ ul, ol {
 	}
 	async function getReadingPosition(url) {
 		if (!url) return null;
-		const position = (await loadPositions())[normalizeChapterUrl(url)];
+		const position = (await loadPositions(true))[normalizeChapterUrl(url)];
 		if (!position || !Number.isFinite(position.percent)) return null;
 		return Math.max(0, Math.min(100, position.percent));
 	}
@@ -20594,7 +20569,7 @@ ul, ol {
 				percent: normalizedPercent,
 				updatedAt: Date.now()
 			};
-			if (isNewPosition && Object.keys(positions).length > MAX_SAVED_POSITIONS) Object.entries(positions).sort(([, a], [, b]) => b.updatedAt - a.updatedAt).slice(MAX_SAVED_POSITIONS).forEach(([key]) => delete positions[key]);
+			if (isNewPosition && Object.keys(positions).length > MAX_SAVED_POSITIONS) positionCache = trimPositions(positions);
 			dirty = true;
 			schedulePersist();
 		}).catch((error) => console.error("[MNR] Failed to update reading position:", error));
@@ -20613,10 +20588,13 @@ ul, ol {
 			persistTimer = null;
 		}
 		if (!dirty) return persistQueue;
-		const positions = await loadPositions();
-		const serialized = JSON.stringify(positions);
+		const snapshot = mergePositions(await loadPositions());
 		dirty = false;
-		persistQueue = persistQueue.then(() => persistPositions(serialized)).catch((error) => console.error("[MNR] Failed to save reading positions:", error));
+		persistQueue = persistQueue.then(async () => {
+			const merged = mergePositions(await readStoredPositions(), snapshot);
+			await persistPositions(JSON.stringify(merged));
+			positionCache = mergePositions(merged, positionCache ?? {});
+		}).catch((error) => console.error("[MNR] Failed to save reading positions:", error));
 		return persistQueue;
 	}
 	var SCROLL_THROTTLE_MS = 16;

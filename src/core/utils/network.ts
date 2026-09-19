@@ -84,6 +84,7 @@ function isPrivateNetworkHost(hostname: string): boolean {
   }
 
   // IPv6 (URL.hostname includes brackets in some runtimes, normalizeHostname removes them)
+  if (!host.includes(':')) return false;
   if (host === '::1') return true; // loopback
   if (host.startsWith('fe80:')) return true; // link-local
   if (host.startsWith('fc') || host.startsWith('fd')) return true; // unique local (fc00::/7)
@@ -174,6 +175,17 @@ function decodeHtmlBytes(
   } catch {
     return new TextDecoder('utf-8').decode(buffer);
   }
+}
+
+function extractContentTypeFromResponseHeaders(headers: string): string | null {
+  for (const line of headers.split(/\r?\n/)) {
+    const separator = line.indexOf(':');
+    if (separator === -1) continue;
+    if (line.slice(0, separator).trim().toLowerCase() === 'content-type') {
+      return line.slice(separator + 1).trim() || null;
+    }
+  }
+  return null;
 }
 
 async function readFetchResponseText(response: Response): Promise<string> {
@@ -315,13 +327,21 @@ export function fetchAndParseUrl(
           url: requestUrl,
           headers,
           timeout: timeoutMs,
-          overrideMimeType: 'text/html;charset=' + document.characterSet,
+          responseType: 'arraybuffer',
           onload: response => {
             const finalUrl = response.finalUrl
               ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl)
               : null;
             if (response.status >= 200 && response.status < 300) {
-              const parsed = parseHtmlToDoc(response.responseText, finalUrl);
+              const responseBytes = response.response;
+              const html =
+                responseBytes && typeof responseBytes.byteLength === 'number'
+                  ? decodeHtmlBytes(
+                      responseBytes,
+                      extractContentTypeFromResponseHeaders(response.responseHeaders)
+                    )
+                  : response.responseText;
+              const parsed = parseHtmlToDoc(html, finalUrl);
               resolve({
                 ...parsed,
                 status: response.status,

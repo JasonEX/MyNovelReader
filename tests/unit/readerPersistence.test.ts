@@ -22,8 +22,16 @@ import type { CachedChapter } from '@/ui/stores/reader/types';
 describe('persistence pure helpers', () => {
   it('generateBookId uses hostname + pathname', () => {
     const id = generateBookId('https://example.com/book/123/');
-    expect(id).toContain('example.com');
-    expect(id).toContain('book');
+    expect(id).toBe('example.com_book_123_');
+  });
+
+  it('generateBookId distinguishes query-addressed books', () => {
+    const first = generateBookId('https://example.com/book.php?id=1');
+    const second = generateBookId('https://example.com/book.php?id=2');
+
+    expect(first).not.toBe(second);
+    expect(first).toContain('example.com_book.php~q~');
+    expect(second).toContain('example.com_book.php~q~');
   });
 
   it('generateBookId falls back to btoa for invalid URL', () => {
@@ -155,6 +163,24 @@ describe('persistence GM_* functions', () => {
     );
     expect(index?.lastUpdated).toBe(1234);
     expect(index?.lastAccessed).toBe(1234);
+  });
+
+  it('persistCache skips chapters already written during the active cache run', () => {
+    const firstUrl = 'https://example.com/ch/1';
+    const secondUrl = 'https://example.com/ch/2';
+    const contents = new Map<string, CachedChapter>([
+      [firstUrl, makeCached(firstUrl)],
+      [secondUrl, makeCached(secondUrl)],
+    ]);
+
+    persistCache(cacheBook, contents, new Set([firstUrl]), new Set([firstUrl]));
+
+    expect(storage.has(getCacheV2ChapterKey(cacheBook.bookId, firstUrl))).toBe(false);
+    expect(storage.has(getCacheV2ChapterKey(cacheBook.bookId, secondUrl))).toBe(true);
+    const index = parseStoredJson<{ urls: string[] }>(
+      storage.get(getCacheV2IndexKey(cacheBook.bookId))
+    );
+    expect(index?.urls).toEqual(expect.arrayContaining([firstUrl, secondUrl]));
   });
 
   it('persistCacheIndex writes only the v2 index', () => {

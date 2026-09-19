@@ -25,9 +25,51 @@ function normalizeChapterUrl(url: string): string {
   }
 }
 
-async function loadPositions(): Promise<ReadingPositionMap> {
-  if (positionCache) return positionCache;
+function parsePositions(stored: unknown): ReadingPositionMap {
+  if (typeof stored === 'string') stored = JSON.parse(stored);
+  if (!stored || typeof stored !== 'object') return {};
 
+  const positions: ReadingPositionMap = {};
+  for (const [url, value] of Object.entries(stored)) {
+    const position = value as Partial<ReadingPosition> | null;
+    if (!position || !Number.isFinite(position.percent) || !Number.isFinite(position.updatedAt)) {
+      continue;
+    }
+    positions[url] = {
+      percent: position.percent as number,
+      updatedAt: position.updatedAt as number,
+    };
+  }
+  return positions;
+}
+
+function trimPositions(positions: ReadingPositionMap): ReadingPositionMap {
+  const entries = Object.entries(positions);
+  if (entries.length <= MAX_SAVED_POSITIONS) return positions;
+
+  const trimmed: ReadingPositionMap = {};
+  for (const [url, position] of entries
+    .sort(([, a], [, b]) => b.updatedAt - a.updatedAt)
+    .slice(0, MAX_SAVED_POSITIONS)) {
+    trimmed[url] = position;
+  }
+  return trimmed;
+}
+
+function mergePositions(...sources: ReadingPositionMap[]): ReadingPositionMap {
+  const merged: ReadingPositionMap = {};
+  for (const source of sources) {
+    for (const [url, position] of Object.entries(source)) {
+      const existing = merged[url];
+      if (!existing || position.updatedAt >= existing.updatedAt) {
+        merged[url] = position;
+      }
+    }
+  }
+  return trimPositions(merged);
+}
+
+async function readStoredPositions(): Promise<ReadingPositionMap> {
   try {
     let stored: unknown = null;
     if (typeof GM_getValue !== 'undefined') {
@@ -35,14 +77,18 @@ async function loadPositions(): Promise<ReadingPositionMap> {
     } else if (typeof localStorage !== 'undefined') {
       stored = localStorage.getItem(STORAGE_KEY);
     }
-
-    if (typeof stored === 'string') stored = JSON.parse(stored);
-    positionCache = stored && typeof stored === 'object' ? (stored as ReadingPositionMap) : {};
+    return parsePositions(stored);
   } catch (error) {
     console.error('[MNR] Failed to load reading positions:', error);
-    positionCache = {};
+    return {};
   }
+}
 
+async function loadPositions(refresh = false): Promise<ReadingPositionMap> {
+  if (positionCache && !refresh) return positionCache;
+
+  const stored = await readStoredPositions();
+  positionCache = mergePositions(stored, positionCache ?? {});
   return positionCache;
 }
 
@@ -56,7 +102,7 @@ async function persistPositions(serialized: string): Promise<void> {
 
 export async function getReadingPosition(url: string): Promise<number | null> {
   if (!url) return null;
-  const positions = await loadPositions();
+  const positions = await loadPositions(true);
   const position = positions[normalizeChapterUrl(url)];
   if (!position || !Number.isFinite(position.percent)) return null;
   return Math.max(0, Math.min(100, position.percent));
@@ -74,11 +120,7 @@ export function saveReadingPosition(url: string, percent: number): void {
       positions[normalizedUrl] = { percent: normalizedPercent, updatedAt: Date.now() };
 
       if (isNewPosition && Object.keys(positions).length > MAX_SAVED_POSITIONS) {
-        const entries = Object.entries(positions);
-        entries
-          .sort(([, a], [, b]) => b.updatedAt - a.updatedAt)
-          .slice(MAX_SAVED_POSITIONS)
-          .forEach(([key]) => delete positions[key]);
+        positionCache = trimPositions(positions);
       }
 
       dirty = true;
@@ -103,11 +145,14 @@ export async function flushReadingPositions(): Promise<void> {
   }
   if (!dirty) return persistQueue;
 
-  const positions = await loadPositions();
-  const serialized = JSON.stringify(positions);
+  const snapshot = mergePositions(await loadPositions());
   dirty = false;
   persistQueue = persistQueue
-    .then(() => persistPositions(serialized))
+    .then(async () => {
+      const merged = mergePositions(await readStoredPositions(), snapshot);
+      await persistPositions(JSON.stringify(merged));
+      positionCache = mergePositions(merged, positionCache ?? {});
+    })
     .catch(error => console.error('[MNR] Failed to save reading positions:', error));
   return persistQueue;
 }

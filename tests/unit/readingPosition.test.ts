@@ -111,4 +111,34 @@ describe('readingPosition', () => {
       expect.stringContaining('"percent":20')
     );
   });
+
+  it('merges positions saved by another tab before writing', async () => {
+    let stored: string | null = null;
+    vi.stubGlobal(
+      'GM_getValue',
+      vi.fn(() => stored)
+    );
+    vi.stubGlobal(
+      'GM_setValue',
+      vi.fn((_key: string, value: string) => {
+        stored = value;
+      })
+    );
+
+    const tabA = await import('@/ui/stores/reader/readingPosition');
+    tabA.saveReadingPosition('https://example.com/book-a/1', 10);
+    await tabA.flushReadingPositions();
+
+    vi.resetModules();
+    const tabB = await import('@/ui/stores/reader/readingPosition');
+    tabB.saveReadingPosition('https://example.com/book-b/1', 20);
+    await tabB.flushReadingPositions();
+
+    tabA.saveReadingPosition('https://example.com/book-a/1', 30);
+    await tabA.flushReadingPositions();
+
+    const positions = JSON.parse(stored || '{}');
+    expect(positions['https://example.com/book-a/1'].percent).toBe(30);
+    expect(positions['https://example.com/book-b/1'].percent).toBe(20);
+  });
 });

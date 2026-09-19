@@ -74,6 +74,26 @@ describe('network utilities', () => {
     expect(res.error).toBe('invalid-url');
   });
 
+  it('allows public hostnames beginning with fc or fd across hosts', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          responseText: '<!doctype html><html><body>ok</body></html>',
+        })
+      );
+      return { abort: () => {} };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const fd = await fetchAndParseUrl('https://fdxs.com/1/2.html', 'https://www.fdxs.com/').promise;
+    const fc = await fetchAndParseUrl('https://fcxs.net/1/2.html', 'https://www.fcxs.net/').promise;
+
+    expect(fd.error).toBeNull();
+    expect(fc.error).toBeNull();
+    expect(gm).toHaveBeenCalledTimes(2);
+  });
+
   it('allows private-network hosts when referer is the same host (IPv6)', async () => {
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
       opts.onload?.(
@@ -119,6 +139,32 @@ describe('network utilities', () => {
       'https://example.com/ch1'
     );
     expect(gm).toHaveBeenCalledTimes(1);
+  });
+
+  it('GM_xmlhttpRequest decodes legacy HTML from response bytes', async () => {
+    const gbkHtml =
+      '3c21646f63747970652068746d6c3e3c68746d6c3e3c686561643e3c6d65746120636861727365743d2267626b223e3c2f686561643e3c626f64793e3c6120687265663d222f7478742f31223eb5da31d5c220b2e2cad43c2f613e3c2f626f64793e3c2f68746d6c3e';
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      expect(opts.responseType).toBe('arraybuffer');
+      expect(opts.overrideMimeType).toBeUndefined();
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          response: hexToArrayBuffer(gbkHtml),
+          responseHeaders: 'Content-Type: text/html; charset=gbk\r\n',
+        })
+      );
+      return { abort: () => {} };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const result = await fetchAndParseUrl(
+      'https://legacy.example/chapter/1',
+      'https://reader.example/'
+    ).promise;
+
+    expect(result.error).toBeNull();
+    expect(result.doc?.querySelector('a')?.textContent).toBe('第1章 测试');
   });
 
   it('retries on HTTP 500 and succeeds', async () => {

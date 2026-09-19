@@ -73,7 +73,8 @@ export function generateBookId(indexUrl: string): string {
   try {
     const url = new URL(indexUrl);
     // Use pathname as book ID (usually contains book identifier)
-    return url.hostname + url.pathname.replace(/\//g, '_');
+    const pathId = url.hostname + url.pathname.replace(/\//g, '_');
+    return url.search ? `${pathId}~q~${encodeBase64UrlUtf8(url.search)}` : pathId;
   } catch {
     // Fallback to simple hash
     return btoa(indexUrl).slice(0, 32);
@@ -234,12 +235,14 @@ export function getPersistedCachedChapter(
 export function persistCache(
   cacheBook: CacheBookKey,
   cachedContents: Map<string, CachedChapter>,
-  persistedUrls: Set<string>
+  persistedUrls: Set<string>,
+  skipChapterUrls: ReadonlySet<string> = new Set()
 ): Set<string> {
   if (typeof GM_setValue === 'undefined') return persistedUrls;
 
   const persistedSet = new Set(persistedUrls);
   for (const [url, cached] of cachedContents) {
+    if (persistedSet.has(url) && skipChapterUrls.has(url)) continue;
     const persisted = persistCachedChapter(cacheBook, url, cached);
     if (persisted) {
       persistedSet.add(url);

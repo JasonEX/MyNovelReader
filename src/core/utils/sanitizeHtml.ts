@@ -20,11 +20,12 @@ const SAFE_DATA_ATTR = [
 
 /**
  * Enhanced security configuration for DOMPurify
- * - Strict attribute and tag filtering
+ * - DOMPurify-maintained HTML/SVG allow-lists
  * - SVG-specific security measures
  * - Protection against common XSS vectors
  */
 const ENHANCED_CONFIG: Config = {
+  // Keep DOMPurify's maintained safe HTML/SVG sets instead of a parallel hand-written list.
   USE_PROFILES: { html: true, svg: true },
   // Allow `data:` URIs for <img> so base64 chapter images can render.
   ADD_DATA_URI_TAGS: ['img'],
@@ -76,91 +77,6 @@ const ENHANCED_CONFIG: Config = {
   SANITIZE_DOM: true,
   // Keep text/content when removing forbidden tags (e.g., unwrap <form> but keep inner text).
   KEEP_CONTENT: true,
-  // Safe for template usage
-  SAFE_FOR_TEMPLATES: true,
-  // Allow only safe SVG elements
-  ALLOWED_TAGS: [
-    // Safe HTML tags
-    'p',
-    'br',
-    'hr',
-    'div',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'strike',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'table',
-    'thead',
-    'tbody',
-    'tfoot',
-    'tr',
-    'th',
-    'td',
-    'sub',
-    'sup',
-    'small',
-    'big',
-    // Safe SVG elements (for images/icons only)
-    'svg',
-    'g',
-    'path',
-    'circle',
-    'rect',
-    'line',
-    'polygon',
-    'text',
-    'tspan',
-    'textPath',
-    'use',
-    'symbol',
-    'defs',
-  ],
-  // Allow safe attributes only
-  ALLOWED_ATTR: [
-    'href',
-    'title',
-    'alt',
-    'src',
-    'width',
-    'height',
-    'class',
-    'id',
-    'style',
-    'dir',
-    ...SAFE_DATA_ATTR,
-    'rowspan',
-    'colspan',
-    'viewBox',
-    'xmlns',
-    'fill',
-    'stroke',
-    'd',
-    'cx',
-    'cy',
-    'r',
-    'x',
-    'y',
-    'width',
-    'height', // SVG attributes
-  ],
 };
 
 const DEFAULT_CONFIG: Config = ENHANCED_CONFIG;
@@ -181,14 +97,22 @@ function sanitizeSvgContent(html: string): string {
       })
       // Remove script tags (including those inside SVG)
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      // Remove javascript: protocol
-      .replace(/javascript:/gi, '')
-      // Remove vbscript: protocol
-      .replace(/vbscript:/gi, '')
-      // Remove data: protocol in href (can be used for XSS/phishing)
-      .replace(/\s+href\s*=\s*["']\s*data:[^"']*["']/gi, '')
-      // Remove expression() in CSS (IE XSS vector)
-      .replace(/expression\([^)]*\)/gi, '')
+  );
+}
+
+function isUnsafeInlineStyle(value: string): boolean {
+  let compact = '';
+  for (const character of value) {
+    if (character.charCodeAt(0) > 0x20) compact += character.toLowerCase();
+  }
+  return (
+    compact.includes('expression(') ||
+    compact.includes('url(javascript:') ||
+    compact.includes("url('javascript:") ||
+    compact.includes('url("javascript:') ||
+    compact.includes('url(vbscript:') ||
+    compact.includes("url('vbscript:") ||
+    compact.includes('url("vbscript:')
   );
 }
 
@@ -253,7 +177,7 @@ function basicSanitize(html: string): string {
       }
 
       // Remove dangerous protocols
-      if (name === 'href') {
+      if (name === 'href' || name === 'xlink:href') {
         if (
           value.startsWith('javascript:') ||
           value.startsWith('vbscript:') ||
@@ -316,6 +240,11 @@ export function sanitizeHtml(html: string, config: Config = DEFAULT_CONFIG): str
     }
 
     if (!domPurifyHooksInstalled && typeof DOMPurify?.addHook === 'function') {
+      DOMPurify.addHook('uponSanitizeAttribute', (_node, data) => {
+        if (data.attrName.toLowerCase() === 'style' && isUnsafeInlineStyle(data.attrValue)) {
+          data.keepAttr = false;
+        }
+      });
       DOMPurify.addHook('afterSanitizeAttributes', (node: unknown) => {
         const el = node as Element | null;
         if (!el || (el as unknown as { nodeType?: number }).nodeType !== 1) return;

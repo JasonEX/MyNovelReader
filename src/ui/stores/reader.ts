@@ -241,11 +241,16 @@ export const useReaderStore = defineStore('reader', () => {
     return getPersistedCachedChapter(cacheBook, url);
   }
 
-  async function persistCache(): Promise<void> {
+  async function persistCache(skipChapterUrls?: ReadonlySet<string>): Promise<void> {
     const runId = runtime.sessionId();
     const cacheBook = getCurrentBookCacheKey(chapter.value?.indexUrl);
     if (!cacheBook) return;
-    const result = persistCacheImpl(cacheBook, cachedContents.value, persistedUrls.value);
+    const result = persistCacheImpl(
+      cacheBook,
+      cachedContents.value,
+      persistedUrls.value,
+      skipChapterUrls
+    );
     if (!runtime.isSessionStale(runId)) {
       persistedUrls.value = result;
     }

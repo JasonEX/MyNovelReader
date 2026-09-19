@@ -19,11 +19,11 @@ import {
   PERSISTED_CACHE_INDEX_CHECKPOINT_CHAPTERS,
 } from './persistence';
 import { loadDocumentInIframe, loadRuleApiDocument } from './chapterFetch';
+import { normalizeUrlForBlock, normalizeUrlForFetch } from './utils';
 
 import { detectTocPage } from './detection';
 import { loadTocEntriesPaged } from './toc';
 import { MAX_SESSION_CACHE } from './types';
-import { normalizeUrlForFetch } from './utils';
 import { parseWithSectionMerge } from './section';
 import { recordDebugEvent } from '@/core/debug/events';
 import { trimCachedContents } from './trim';
@@ -53,7 +53,7 @@ export interface CacheAllContext {
 
   // Callbacks
   restoreCache: () => Promise<void>;
-  persistCache: () => Promise<void>;
+  persistCache: (skipChapterUrls?: ReadonlySet<string>) => Promise<void>;
   showToast: (message: string, type?: 'info' | 'error', duration?: number) => void;
 }
 
@@ -82,12 +82,15 @@ export function createCacheAll(ctx: CacheAllContext) {
       if (!isCurrent()) return;
       const persistedSet = new Set(ctx.persistedUrls.value);
       const cacheBook = getCurrentBookCacheKey(ctx.chapter.value?.indexUrl);
+      const indexUrlKey = cacheBook ? normalizeUrlForBlock(cacheBook.indexUrl) : null;
+      const isIndexUrl = (url: string) =>
+        indexUrlKey !== null && normalizeUrlForBlock(url) === indexUrlKey;
 
-      let taskList = urls ? [...urls] : []; // No limit
+      let taskList = urls ? urls.map(normalizeUrlForFetch).filter(url => !isIndexUrl(url)) : []; // No limit
       ctx.cacheQueue.value = [...taskList];
 
       // 目录列表：current.indexUrl -> 解析出章节列表，缓存全本
-      if (!taskList.length) {
+      if (urls === undefined && !taskList.length) {
         const indexUrl = ctx.chapter.value?.indexUrl;
         const currentUrl = ctx.chapter.value?.url;
         if (indexUrl) {
@@ -129,6 +132,7 @@ export function createCacheAll(ctx: CacheAllContext) {
           // Cache entire book, filter already cached/persisted
           taskList = tocLinks.filter(
             u =>
+              !isIndexUrl(u) &&
               !ctx.loadedUrls.value.has(u) &&
               !ctx.cachedContents.value.has(u) &&
               !persistedSet.has(u)
@@ -291,7 +295,10 @@ export function createCacheAll(ctx: CacheAllContext) {
           referer = parsed.url;
           nextUrl =
             taskList.shift() ?? (parsed.nextUrl ? normalizeUrlForFetch(parsed.nextUrl) : null);
-          if (nextUrl && knownLockedUrls.has(normalizeUrlForFetch(nextUrl))) {
+          if (
+            nextUrl &&
+            (isIndexUrl(nextUrl) || knownLockedUrls.has(normalizeUrlForFetch(nextUrl)))
+          ) {
             nextUrl = null;
           }
 
@@ -321,7 +328,7 @@ export function createCacheAll(ctx: CacheAllContext) {
       if (cacheBook && persistedSet.size > 0) {
         ctx.persistedUrls.value = persistedSet;
       }
-      await ctx.persistCache();
+      await ctx.persistCache(persistedSet);
       if (!isCurrent()) return;
 
       if (ctx.cacheProgress.value.failed > 0) {

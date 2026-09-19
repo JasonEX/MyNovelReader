@@ -78,6 +78,7 @@ interface xhrParams {
 
     timeout?: number;
     withCredentials?: boolean;
+    responseType?: 'arraybuffer';
 
     upload?: XhrUpload;
 
@@ -109,6 +110,7 @@ interface GmXhrResponse {
   readyState: number;
   responseHeaders: string;
   responseText: string;
+  response?: ArrayBuffer;
   status: number;
   statusText: string;
   context?: unknown;

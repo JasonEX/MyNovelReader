@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CacheAllContext, createCacheAll } from '@/ui/stores/reader/cacheAll';
 import { computed, ref } from 'vue';
 import { createReaderRuntime } from '@/ui/stores/reader/runtime';
@@ -66,6 +66,9 @@ beforeEach(() => {
   mocks.fetch.mockImplementation(() => ({ promise: Promise.resolve(response()), abort: vi.fn() }));
   mocks.parse.mockResolvedValue(chapter);
 });
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 describe('cache task ownership', () => {
   it('reserves the task before restoring storage', async () => {
     const ctx = makeContext();
@@ -124,6 +127,45 @@ describe('cache task ownership', () => {
     await createCacheAll(ctx).startCacheAll([target]);
     expect(ctx.cachedContents.value.size).toBe(0);
     expect(ctx.cacheFailedUrls.value).toEqual([target]);
+  });
+
+  it('stops at the book index after the final queued chapter', async () => {
+    const indexUrl = 'https://example.com/read/100/';
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl }));
+    mocks.toc.mockResolvedValue([{ title: chapter.title, url: target }]);
+    mocks.parse.mockResolvedValue({ ...chapter, indexUrl, nextUrl: indexUrl });
+
+    await createCacheAll(ctx).startCacheAll();
+
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    expect(mocks.fetch).toHaveBeenCalledWith(target, target);
+    expect(ctx.cacheProgress.value).toMatchObject({ done: 1, total: 1, failed: 0 });
+    expect(ctx.cacheFailedUrls.value).toEqual([]);
+  });
+
+  it('does not turn an explicit index-only retry into another full-book request', async () => {
+    const indexUrl = 'https://example.com/read/100/';
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl }));
+
+    await createCacheAll(ctx).startCacheAll([indexUrl]);
+
+    expect(mocks.toc).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(ctx.cacheProgress.value).toEqual({ done: 0, total: 0, failed: 0, running: false });
+  });
+
+  it('skips all known persisted chapters during the final cache flush', async () => {
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+    vi.stubGlobal('GM_setValue', vi.fn());
+
+    await createCacheAll(ctx).startCacheAll([target]);
+
+    const skipped = vi.mocked(ctx.persistCache).mock.calls[0]?.[0];
+    expect(skipped).toBeInstanceOf(Set);
+    expect(Array.from(skipped ?? [])).toEqual([target]);
   });
 });
 

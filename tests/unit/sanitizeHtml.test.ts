@@ -102,9 +102,33 @@ describe('sanitizeHtml (basicSanitize fallback)', () => {
     expect(result).not.toContain('href="javascript:');
     expect(result).not.toContain('src="vbscript:');
   });
+
+  it('preserves literal template and protocol-like text', () => {
+    const html =
+      '<p>【系统】{{任务}}：击杀十只狼</p>' +
+      '<p>价格是${100}元</p>' +
+      '<p>写了 javascript:alert、expression(思考) 和 href="data:text/plain,x"</p>';
+
+    expect(sanitizeHtml(html)).toBe(html);
+  });
 });
 
 describe('sanitizeHtml (DOMPurify path)', () => {
+  it('preserves literal template and protocol-like text', () => {
+    const html =
+      '<p>【系统】{{任务}}：击杀十只狼</p>' +
+      '<p>价格是${100}元</p>' +
+      '<p>写了 javascript:alert、expression(思考) 和 href="data:text/plain,x"</p>';
+
+    expect(sanitizeHtml(html)).toBe(html);
+  });
+
+  it('removes unsafe inline styles without changing ordinary text', () => {
+    const result = sanitizeHtml('<p style="width: expression(alert(1))">expression(思考)</p>');
+    expect(result).not.toContain('style=');
+    expect(result).toContain('expression(思考)');
+  });
+
   it('removes unsafe data:image SVG sources from img via hook', () => {
     const svg = 'data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+PC9zdmc+';
     const html = `<img src="${svg}" />`;
