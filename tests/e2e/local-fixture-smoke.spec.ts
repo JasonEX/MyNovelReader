@@ -1241,6 +1241,148 @@ test('treats Space as one locked page-turn command while the key is held', async
   await expect.poll(() => readerMain.evaluate(main => main.scrollTop)).toBeLessThan(3);
 });
 
+test('leaves Enter on a focused toolbar button to native activation', async ({ context, page }) => {
+  await context.route(targetUrl, route =>
+    route.fulfill({
+      body: fixtureHtml,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addYingChuangUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+
+  const reader = page.locator('#mnr-reader-root');
+  const settingsButton = reader.getByRole('button', { name: '打开设置' });
+  const settingsPanel = reader.locator('.mnr-settings-panel');
+
+  // Closing the panel restores focus to the toolbar button that opened it.
+  await settingsButton.click();
+  await expect(settingsPanel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(settingsPanel).toHaveCount(0);
+  await expect(settingsButton).toBeFocused();
+
+  // Enter must activate the focused button, not the "open index page" reader shortcut.
+  await page.keyboard.press('Enter');
+  await expect(settingsPanel).toBeVisible();
+  expect(page.url()).toBe(targetUrl);
+});
+
+test('cleans host overlays before restoring a page after switching to aggressive mode', async ({
+  context,
+  page,
+}) => {
+  const fixtureWithOverlay = fixtureHtml.replace(
+    '</body>',
+    `<a id="host-overlay" class="host-overlay" href="https://ads.example/"
+      style="position: fixed; inset: 0; z-index: 2001; background: transparent"></a></body>`
+  );
+  await context.route(targetUrl, route =>
+    route.fulfill({
+      body: fixtureWithOverlay,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addYingChuangUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+
+  const reader = page.locator('#mnr-reader-root');
+  const overlay = page.locator('#host-overlay');
+  await expect
+    .poll(() => overlay.evaluate(element => (element as HTMLElement).style.display))
+    .toBe('');
+
+  await reader.getByRole('button', { name: '打开设置' }).click();
+  await reader.locator('summary').filter({ hasText: '本站与高级' }).click();
+  const aggressiveButton = reader.getByRole('button', { name: '强力', exact: true });
+  await aggressiveButton.click();
+  await expect(aggressiveButton).toHaveAttribute('aria-pressed', 'true');
+
+  // The host is display:none while reading, so the geometry-dependent pass is deferred to exit.
+  expect(await overlay.evaluate(element => (element as HTMLElement).style.display)).toBe('');
+  await reader.getByRole('button', { name: '退出阅读模式' }).click();
+
+  await expect(reader).toHaveCount(0);
+  await expect
+    .poll(() => overlay.evaluate(element => (element as HTMLElement).style.display))
+    .toBe('none');
+  await expect(overlay).toBeHidden();
+});
+
+test('carries deferred overlay cleanup across a slow canonical exit navigation', async ({
+  context,
+  page,
+}) => {
+  const nextUrl = 'http://mnr.test/chapter/101.html';
+  const canonicalNextUrl = `${nextUrl}/`;
+  const withOverlay = (html: string) =>
+    html.replace(
+      '</body>',
+      `<a id="host-overlay" href="https://ads.example/"
+        style="position: fixed; inset: 0; z-index: 2001; background: transparent"></a></body>`
+    );
+  let destinationNavigations = 0;
+
+  await context.route('http://mnr.test/chapter/**', async route => {
+    const request = route.request();
+    const isDestination = request.url() === nextUrl;
+    if (isDestination && request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      destinationNavigations++;
+      await new Promise(resolve => setTimeout(resolve, 5_250));
+      return route.fulfill({
+        body: withOverlay(nextFixtureHtml).replace(
+          '<head>',
+          `<head><script>history.replaceState(history.state, '', ${JSON.stringify(
+            canonicalNextUrl
+          )});</script>`
+        ),
+        contentType: 'text/html; charset=utf-8',
+        status: 200,
+      });
+    }
+    return route.fulfill({
+      body: withOverlay(isDestination ? nextFixtureHtml : fixtureHtml),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    });
+  });
+  await addYingChuangUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+  const reader = page.locator('#mnr-reader-root');
+  await expect(reader.locator(`article[data-chapter-url="${nextUrl}"]`)).toContainText(
+    '第101章 手势续读'
+  );
+  await reader.getByRole('button', { name: '打开设置' }).click();
+  await reader.locator('summary').filter({ hasText: '本站与高级' }).click();
+  await reader.getByRole('button', { name: '强力', exact: true }).click();
+  await page.keyboard.press('Escape');
+
+  await page.waitForTimeout(800);
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(nextUrl);
+  await expect(reader).toHaveCount(1);
+  await reader.getByRole('button', { name: '打开设置' }).click();
+  await reader.getByRole('button', { name: '退出阅读模式' }).click();
+
+  await expect(page).toHaveURL(canonicalNextUrl);
+  await expect(reader).toHaveCount(0);
+  await expect(page.locator('#mnr-entry-root')).toHaveCount(1);
+  await expect.poll(() => destinationNavigations).toBe(1);
+  const destinationOverlay = page.locator('#host-overlay');
+  await expect
+    .poll(() => destinationOverlay.evaluate(element => (element as HTMLElement).style.display))
+    .toBe('none');
+  await expect(destinationOverlay).toBeHidden();
+});
+
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
@@ -1543,6 +1685,36 @@ test('keeps generic chapter extraction, template TOC and cached navigation in th
   await expect(root.locator('.mnr-reader')).toBeVisible();
   expect(documentNavigations).toBe(1);
   expect(requests.some(url => url.includes('?lang='))).toBe(false);
+});
+
+test('preloads chapters beneath a dotted section-like slug', async ({ context, page }) => {
+  const firstUrl = 'http://mnr.test/novel/about.time/chapter-11';
+  const nextUrl = 'http://mnr.test/novel/about.time/chapter-12';
+  let nextRequests = 0;
+
+  await context.route('http://mnr.test/novel/about.time/**', async route => {
+    const url = new URL(route.request().url());
+    const chapter = Number(url.pathname.match(/chapter-(\d+)$/)?.[1]);
+    if (url.href === nextUrl) nextRequests++;
+    await route.fulfill({
+      body: `<!doctype html><html><head><title>第${chapter}章 点号路径测试</title></head>
+        <body><article><h1>第${chapter}章 点号路径测试</h1>
+        <div id="content">${paragraphs}</div>
+        ${chapter > 11 ? '<a href="/novel/about.time/chapter-11">上一章</a>' : ''}
+        ${chapter < 12 ? '<a href="/novel/about.time/chapter-12">下一章</a>' : ''}
+        </article></body></html>`,
+      contentType: 'text/html; charset=utf-8',
+    });
+  });
+  await addYingChuangUserscript(context);
+  await page.goto(firstUrl);
+  await waitForMnrReader(page);
+
+  const nextChapter = page
+    .locator('#mnr-reader-root')
+    .locator(`article[data-chapter-url="${nextUrl}"]`);
+  await expect(nextChapter).toContainText('第12章 点号路径测试');
+  expect(nextRequests).toBeGreaterThan(0);
 });
 
 test('caches script-rendered rule chapters through an iframe and removes it afterward', async ({

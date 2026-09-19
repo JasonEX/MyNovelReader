@@ -33,6 +33,13 @@ import { ReaderView } from '@/ui/components/reader';
 import type { SiteRule } from '@/core/rules/types';
 import { useReaderStore } from '@/ui/stores/reader';
 
+const EXIT_NAVIGATION_KEY = 'mnr_exit_navigation';
+
+interface ExitNavigation {
+  targetUrl: string;
+  cleanupHostOverlays: boolean;
+}
+
 /** Application state */
 interface AppState {
   isInitialized: boolean;
@@ -41,6 +48,7 @@ interface AppState {
   currentDecision: AutoEnableDecision | null;
   originalHostPage: HostPageSnapshot | null; // Host page state when reader was opened
   entryPageKind: PageKind | null; // page kind when reader was opened
+  pendingHostOverlayCleanup: boolean; // deferred until the hidden host page is restored
 }
 
 // Global app state
@@ -51,6 +59,7 @@ const appState: AppState = {
   currentDecision: null,
   originalHostPage: null,
   entryPageKind: null,
+  pendingHostOverlayCleanup: false,
 };
 
 // Vue app instance
@@ -157,21 +166,7 @@ async function runAutoEnable(): Promise<void> {
     protectionOptions,
   });
 
-  // Check if we should skip auto-enable (e.g., after exiting reader and navigating to new chapter)
-  const skipFlag = sessionStorage.getItem('mnr_skip_auto_enable');
-  if (skipFlag) {
-    // Always clear the flag
-    sessionStorage.removeItem('mnr_skip_auto_enable');
-
-    // Only skip if flag was set recently (within 5 seconds)
-    const flagTime = parseInt(skipFlag, 10);
-    if (!isNaN(flagTime) && Date.now() - flagTime < 5000) {
-      // Keep a manual entry instead of auto-enabling.
-      getSiteProtection().deactivate();
-      showReaderEntry();
-      return;
-    }
-  }
+  if (consumeExitNavigation()) return;
 
   // First, check the decision to handle user-disabled case
   const decision = await manager.check(document);
@@ -352,6 +347,53 @@ function hideOriginalContent(): void {
   document.head.appendChild(style);
 }
 
+function cleanupHostPageOverlays(): void {
+  try {
+    getSiteProtection().removeOverlays();
+  } catch (e) {
+    console.error('[MNR] Failed to clean host page overlays:', e);
+  }
+}
+
+function normalizeExitDestination(url: string): string {
+  const normalized = normalizeUrlForFetch(url);
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.pathname.length > 1) parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+    return parsed.toString();
+  } catch {
+    return normalized.replace(/\/+$/, '');
+  }
+}
+
+/** Consume the one-shot transition created when the reader exits onto another chapter. */
+function consumeExitNavigation(): boolean {
+  const serialized = sessionStorage.getItem(EXIT_NAVIGATION_KEY);
+  if (!serialized) return false;
+  sessionStorage.removeItem(EXIT_NAVIGATION_KEY);
+
+  let transition: ExitNavigation;
+  try {
+    transition = JSON.parse(serialized) as ExitNavigation;
+  } catch {
+    return false;
+  }
+  if (
+    typeof transition?.targetUrl !== 'string' ||
+    typeof transition.cleanupHostOverlays !== 'boolean' ||
+    normalizeExitDestination(transition.targetUrl) !==
+      normalizeExitDestination(window.location.href)
+  ) {
+    return false;
+  }
+
+  appState.autoEnableDone = true;
+  getSiteProtection().deactivate();
+  if (transition.cleanupHostOverlays) cleanupHostPageOverlays();
+  showReaderEntry();
+  return true;
+}
+
 /**
  * Close the reader and restore original page
  */
@@ -377,6 +419,16 @@ export function closeReader(): void {
   // Get the original page state (saved when reader was opened)
   const originalHostPage = appState.originalHostPage;
   const originalUrl = originalHostPage?.url || null;
+  const navigationTarget =
+    targetUrl &&
+    originalUrl &&
+    normalizeUrlForFetch(targetUrl) !== normalizeUrlForFetch(originalUrl)
+      ? targetUrl
+      : null;
+  const shouldCleanupHostOverlays = appState.pendingHostOverlayCleanup && !navigationTarget;
+  const shouldCarryHostOverlayCleanup =
+    appState.pendingHostOverlayCleanup && navigationTarget !== null;
+  appState.pendingHostOverlayCleanup = false;
 
   // Unmount app
   if (app) {
@@ -398,6 +450,12 @@ export function closeReader(): void {
     hideStyle.remove();
   }
 
+  // While the reader is open, the host page is display:none and overlay geometry is unavailable.
+  // Run a newly selected aggressive-mode cleanup after revealing the host, before the next paint.
+  if (shouldCleanupHostOverlays) {
+    cleanupHostPageOverlays();
+  }
+
   // Update state
   if (pinia) {
     const readerStore = useReaderStore(pinia);
@@ -412,14 +470,17 @@ export function closeReader(): void {
   // navigate to the target URL so page content matches what user was reading
   // Chapter URLs are canonicalized (no hash, no redundant ?page=1); compare the same way so
   // closing on the entry chapter restores in place instead of reloading.
-  if (
-    targetUrl &&
-    originalUrl &&
-    normalizeUrlForFetch(targetUrl) !== normalizeUrlForFetch(originalUrl)
-  ) {
-    // Set flag to prevent auto-enable on the new page
-    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
-    window.location.href = targetUrl;
+  if (navigationTarget) {
+    // Bind this one-shot exit state to its destination instead of a short wall-clock window:
+    // slow pages still consume it, while redirects or later unrelated visits cannot.
+    sessionStorage.setItem(
+      EXIT_NAVIGATION_KEY,
+      JSON.stringify({
+        targetUrl: normalizeExitDestination(navigationTarget),
+        cleanupHostOverlays: shouldCarryHostOverlayCleanup,
+      } satisfies ExitNavigation)
+    );
+    window.location.href = navigationTarget;
     return; // The next page load will decide whether to show the manual entry.
   }
 
@@ -452,9 +513,17 @@ function setCurrentSiteAutoEnable(enabled: boolean): void {
 async function setProtectionMode(mode: 'standard' | 'aggressive'): Promise<void> {
   if (!pinia) return;
   const configStore = useConfigStore(pinia);
+  const previousMode = configStore.protection.mode;
   configStore.updateProtection({ mode });
-  await configStore.flushSave();
+
+  if (previousMode !== mode) {
+    // Overlay cleanup is intentionally destructive and needs visible host-page geometry. Defer it
+    // until closeReader removes the host-hiding stylesheet; switching back cancels the pending pass.
+    appState.pendingHostOverlayCleanup = mode === 'aggressive';
+  }
+
   getSiteProtection().activate(toProtectionOptions(configStore.protection));
+  await configStore.flushSave();
 }
 
 /** Show the isolated manual entry without initializing reader state. */
@@ -491,6 +560,8 @@ function hideReaderEntry(): void {
  * Manually enter reading mode.
  */
 export async function manualEnable(): Promise<void> {
+  // Already reading: re-parsing the host page would only repeat requests and protection setup.
+  if (appState.isActive) return;
   const currentUrl = window.location.href;
   recordDebugEvent('bootstrap.manualEnable', { url: currentUrl });
   hideReaderEntry();
@@ -610,6 +681,7 @@ async function bootstrap(): Promise<void> {
   if (!isTopFrame()) return;
   installGlobalDebugErrorListeners();
   if (appState.isActive) return;
+  if (consumeExitNavigation()) return;
 
   const url = window.location.href;
   if (!(await shouldBootstrapForPage(url, document))) {
