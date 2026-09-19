@@ -19059,11 +19059,12 @@ ul, ol {
 				/\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
 				/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
 				/\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+				/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\.(?:html?|php|aspx)$/i,
 				/\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
 				/\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
 				/\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
 			]) if (pattern.test(normalizedUrl) || pattern.test(pathname)) return true;
-			if (/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)(?:[/.]|$)/i.test(pathname)) return true;
+			if (/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)(?:\/|$)/i.test(pathname)) return true;
 			if (currentChapterUrl) {
 				const currentParsed = new URL(currentChapterUrl);
 				const currentParts = currentParsed.pathname.split("/").filter(Boolean);

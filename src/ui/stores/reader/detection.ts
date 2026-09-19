@@ -40,6 +40,7 @@ export function isInvalidChapterUrl(url: string, currentChapterUrl?: string): bo
       /\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i, // Book index without chapter
       /\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
       /\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
+      /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\.(?:html?|php|aspx)$/i,
       // Ciweimao: non-chapter endpoints under /chapter/
       /\/chapter\/get_par_tsu_list(?:$|[/?#])/i,
       /\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
@@ -53,9 +54,10 @@ export function isInvalidChapterUrl(url: string, currentChapterUrl?: string): bo
     }
 
     // Non-chapter sections must be whole path segments: hostnames (author.example.com) and
-    // slugs (/helpful-hero/, /tagline-3.html) are not site sections.
+    // slugs (/helpful-hero/, /about.time/) are not site sections. File endpoints such as
+    // /search.php are handled separately above.
     if (
-      /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)(?:[/.]|$)/i.test(
+      /\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)(?:\/|$)/i.test(
         pathname
       )
     ) {

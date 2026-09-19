@@ -42,6 +42,12 @@ describe('Reader detection utilities', () => {
         'https://example.com/novel/helpful-hero/chapter-11'
       )
     ).toBe(false);
+    expect(
+      isInvalidChapterUrl(
+        'https://example.com/novel/about.time/chapter-12',
+        'https://example.com/novel/about.time/chapter-11'
+      )
+    ).toBe(false);
     expect(isInvalidChapterUrl('https://example.com/b/12/tagline-3.html')).toBe(false);
   });
 

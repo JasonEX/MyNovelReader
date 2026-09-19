@@ -1619,6 +1619,36 @@ test('keeps generic chapter extraction, template TOC and cached navigation in th
   expect(requests.some(url => url.includes('?lang='))).toBe(false);
 });
 
+test('preloads chapters beneath a dotted section-like slug', async ({ context, page }) => {
+  const firstUrl = 'http://mnr.test/novel/about.time/chapter-11';
+  const nextUrl = 'http://mnr.test/novel/about.time/chapter-12';
+  let nextRequests = 0;
+
+  await context.route('http://mnr.test/novel/about.time/**', async route => {
+    const url = new URL(route.request().url());
+    const chapter = Number(url.pathname.match(/chapter-(\d+)$/)?.[1]);
+    if (url.href === nextUrl) nextRequests++;
+    await route.fulfill({
+      body: `<!doctype html><html><head><title>第${chapter}章 点号路径测试</title></head>
+        <body><article><h1>第${chapter}章 点号路径测试</h1>
+        <div id="content">${paragraphs}</div>
+        ${chapter > 11 ? '<a href="/novel/about.time/chapter-11">上一章</a>' : ''}
+        ${chapter < 12 ? '<a href="/novel/about.time/chapter-12">下一章</a>' : ''}
+        </article></body></html>`,
+      contentType: 'text/html; charset=utf-8',
+    });
+  });
+  await addYingChuangUserscript(context);
+  await page.goto(firstUrl);
+  await waitForMnrReader(page);
+
+  const nextChapter = page
+    .locator('#mnr-reader-root')
+    .locator(`article[data-chapter-url="${nextUrl}"]`);
+  await expect(nextChapter).toContainText('第12章 点号路径测试');
+  expect(nextRequests).toBeGreaterThan(0);
+});
+
 test('caches script-rendered rule chapters through an iframe and removes it afterward', async ({
   context,
   page,
