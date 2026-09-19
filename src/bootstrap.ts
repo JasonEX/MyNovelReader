@@ -491,6 +491,8 @@ function hideReaderEntry(): void {
  * Manually enter reading mode.
  */
 export async function manualEnable(): Promise<void> {
+  // Already reading: re-parsing the host page would only repeat requests and protection setup.
+  if (appState.isActive) return;
   const currentUrl = window.location.href;
   recordDebugEvent('bootstrap.manualEnable', { url: currentUrl });
   hideReaderEntry();

@@ -1241,6 +1241,36 @@ test('treats Space as one locked page-turn command while the key is held', async
   await expect.poll(() => readerMain.evaluate(main => main.scrollTop)).toBeLessThan(3);
 });
 
+test('leaves Enter on a focused toolbar button to native activation', async ({ context, page }) => {
+  await context.route(targetUrl, route =>
+    route.fulfill({
+      body: fixtureHtml,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addYingChuangUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+
+  const reader = page.locator('#mnr-reader-root');
+  const settingsButton = reader.getByRole('button', { name: '打开设置' });
+  const settingsPanel = reader.locator('.mnr-settings-panel');
+
+  // Closing the panel restores focus to the toolbar button that opened it.
+  await settingsButton.click();
+  await expect(settingsPanel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(settingsPanel).toHaveCount(0);
+  await expect(settingsButton).toBeFocused();
+
+  // Enter must activate the focused button, not the "open index page" reader shortcut.
+  await page.keyboard.press('Enter');
+  await expect(settingsPanel).toBeVisible();
+  expect(page.url()).toBe(targetUrl);
+});
+
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 

@@ -8433,7 +8433,7 @@
 			if (!this.options.enableProtection) return;
 			const protection = getSiteProtection();
 			protection.activate(this.options.protectionOptions);
-			protection.removeOverlays();
+			if (this.options.protectionOptions?.cleanupScripts) protection.removeOverlays();
 		}
 		deactivateProtection() {
 			if (this.options.enableProtection) getSiteProtection().deactivate();
@@ -19056,7 +19056,6 @@ ul, ol {
 			for (const pattern of [
 				/^https?:\/\/[^/]+\/?$/i,
 				/^https?:\/\/[^/]+\/(?:index|home|main)?\.?(?:html?|php)?$/i,
-				/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)\/?/i,
 				/\/(?:book|novel|xiaoshuo|info)\/?\d*\/?$/i,
 				/\/(?:list|catalog|toc|contents?)\.?(?:html?)?$/i,
 				/\/(?:index|list|last|LastPage|end)\.(?:html?|php|aspx)/i,
@@ -19064,6 +19063,7 @@ ul, ol {
 				/\/chapter\/ajax_get_session_code(?:$|[/?#])/i,
 				/\/chapter\/get_book_chapter_detail_info(?:$|[/?#])/i
 			]) if (pattern.test(normalizedUrl) || pattern.test(pathname)) return true;
+			if (/\/(?:user|login|register|search|rank|category|tag|author|help|about|contact|faq)(?:[/.]|$)/i.test(pathname)) return true;
 			if (currentChapterUrl) {
 				const currentParsed = new URL(currentChapterUrl);
 				const currentParts = currentParsed.pathname.split("/").filter(Boolean);
@@ -19121,20 +19121,18 @@ ul, ol {
 			if (!href) return false;
 			return normalizeUrlLocal(href) === currentPath;
 		}) && linkCount > 5) return true;
-		const tocKeywords = [
-			"目录",
-			"章节列表",
-			"章节目录",
-			"全部章节",
-			"最新章节",
-			"小说目录",
-			"table of contents",
-			"toc",
-			"catalog",
-			"index"
-		];
-		const pageText = textContent.toLowerCase();
-		const keywordMatches = tocKeywords.filter((kw) => pageText.includes(kw.toLowerCase()));
+		const keywordMatches = [
+			/目录/,
+			/章节列表/,
+			/章节目录/,
+			/全部章节/,
+			/最新章节/,
+			/小说目录/,
+			/\btable of contents\b/i,
+			/\btoc\b/i,
+			/\bcatalog\b/i,
+			/\bindex\b/i
+		].filter((kw) => kw.test(textContent));
 		if (keywordMatches.length >= 2 || keywordMatches.length >= 1 && linkCount > 15) return true;
 		const linkTexts = Array.from(links).map((a) => a.textContent?.trim() || "").filter((t) => t.length > 0);
 		const chapterNamePattern = /^第.{1,10}[章节回话篇集卷]/;
@@ -19772,7 +19770,7 @@ ul, ol {
 				if (parsed.nextUrl) parsed.nextUrl = normalizeUrlForFetch(parsed.nextUrl);
 				if (parsed.indexUrl) parsed.indexUrl = normalizeUrlForFetch(parsed.indexUrl);
 				current.chapter = parsed;
-				current.rule = parsed.rule;
+				current.rule = parsed.rule || current.rule;
 				ctx.originalContents.value.set(current.id, parsed.content);
 				ctx.originalTitles.value.set(current.id, {
 					title: parsed.title,
@@ -19780,7 +19778,7 @@ ul, ol {
 				});
 				ctx.cachedContents.value.set(parsed.url, {
 					chapter: parsed,
-					rule: parsed.rule,
+					rule: current.rule,
 					cachedAt: Date.now()
 				});
 				if (ctx.currentConversionMode.value !== "none") await ctx.applyConversionToChapterEntry(current.id, ctx.currentConversionMode.value);
@@ -20436,6 +20434,11 @@ ul, ol {
 		if (path.length === 0 && isInputElement(e.target)) return true;
 		return isInputElement(getDeepActiveElement());
 	}
+	var INTERACTIVE_CONTROL_SELECTOR = "button, a[href], summary, [role=\"button\"], [role=\"link\"]";
+	function isControlActivationEvent(e, key) {
+		if (key !== "enter" && key !== " ") return false;
+		return (typeof e.composedPath === "function" ? e.composedPath() : [e.target]).some((node) => typeof node?.matches === "function" && node.matches(INTERACTIVE_CONTROL_SELECTOR));
+	}
 	function hasModifiers(e) {
 		return e.ctrlKey || e.altKey || e.metaKey;
 	}
@@ -20451,6 +20454,7 @@ ul, ol {
 			if (e.isComposing) return;
 			const key = e.key.toLowerCase();
 			const editableEvent = isEditableEvent(e);
+			if (isControlActivationEvent(e, key)) return;
 			for (const shortcut of shortcuts) {
 				if (!(Array.isArray(shortcut.key) ? shortcut.key : [shortcut.key]).map((k) => k.toLowerCase()).includes(key)) continue;
 				if (ignoreInputs && !shortcut.allowInInputs && editableEvent) continue;
@@ -23224,6 +23228,7 @@ ul, ol {
 		readerEntryCleanup = null;
 	}
 	async function manualEnable() {
+		if (appState.isActive) return;
 		const currentUrl = window.location.href;
 		recordDebugEvent("bootstrap.manualEnable", { url: currentUrl });
 		hideReaderEntry();

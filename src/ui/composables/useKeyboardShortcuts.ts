@@ -64,6 +64,22 @@ function isEditableEvent(e: KeyboardEvent): boolean {
   return isInputElement(getDeepActiveElement());
 }
 
+const INTERACTIVE_CONTROL_SELECTOR = 'button, a[href], summary, [role="button"], [role="link"]';
+
+/**
+ * Enter/Space on a focused control is native activation (e.g. a toolbar button kept focus after
+ * a click), so it must not be consumed by reader shortcuts.
+ */
+function isControlActivationEvent(e: KeyboardEvent, key: string): boolean {
+  if (key !== 'enter' && key !== ' ') return false;
+  const path = typeof e.composedPath === 'function' ? e.composedPath() : [e.target];
+  return path.some(
+    node =>
+      typeof (node as Partial<Element> | null)?.matches === 'function' &&
+      (node as Element).matches(INTERACTIVE_CONTROL_SELECTOR)
+  );
+}
+
 /**
  * Check if any modifier key (Ctrl/Alt/Meta) is pressed.
  * Note: Shift is not included as it's commonly used with letter keys.
@@ -105,6 +121,7 @@ export function useKeyboardShortcuts(
 
     const key = e.key.toLowerCase();
     const editableEvent = isEditableEvent(e);
+    if (isControlActivationEvent(e, key)) return;
 
     // Try to match a shortcut
     for (const shortcut of shortcuts) {
