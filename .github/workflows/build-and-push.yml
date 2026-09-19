@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: generated-userscript
-          path: scripts/MyNovelReader.user.js
+          path: scripts/YingChuang.user.js
           if-no-files-found: error
 
   sync-artifact:
@@ -73,16 +73,16 @@ jobs:
           path: scripts
 
       - name: Normalize EOL
-        run: sed -i 's/\r//g' scripts/MyNovelReader.user.js
+        run: sed -i 's/\r//g' scripts/YingChuang.user.js
 
       - name: Commit and push generated script
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet scripts/MyNovelReader.user.js; then
+          if git diff --quiet scripts/YingChuang.user.js; then
             echo "No changes in generated script; skipping commit."
             exit 0
           fi
-          git add scripts/MyNovelReader.user.js
+          git add scripts/YingChuang.user.js
           git commit -m "auto: user script generated"
           git push

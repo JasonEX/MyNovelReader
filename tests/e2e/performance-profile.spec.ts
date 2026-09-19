@@ -4,7 +4,7 @@ import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   getFirstPage,
   getMnrE2eConfig,
   launchPersistentMnrContext,
@@ -155,7 +155,7 @@ test('profiles large-TOC and reader interactions on a deterministic page', async
       body: `<!doctype html><html><body>${toc}</body></html>`,
     })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   const startupStartedAt = performance.now();
   await page.goto(chapterUrl, { waitUntil: 'domcontentloaded' });
   await waitForMnrReader(page);
@@ -250,7 +250,7 @@ test('measures coalesced settings and reading-position writes', async ({
       body: `<!doctype html><html><head><title>第一章 存储测试</title></head><body><h1>第一章 存储测试</h1><main id="content">${paragraphs}</main><nav><a href="/chapter/2.html">下一章</a></nav></body></html>`,
     })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   await page.goto(chapterUrl, { waitUntil: 'domcontentloaded' });
   await waitForMnrReader(page);
 
@@ -341,7 +341,7 @@ test('profiles startup and rendering on the real target chapter', async ({
   });
 
   try {
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
     const page = await getFirstPage(context);
     const profiler = await startProfiler(context, page);
     const startedAt = performance.now();

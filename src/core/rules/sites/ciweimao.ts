@@ -529,7 +529,7 @@ export async function fetchCiweimaoApiDocument(
     if (contentEl) cleanupCiweimaoWatermarks(doc, contentEl);
     return doc;
   } catch (e) {
-    console.warn('[MyNovelReader] Ciweimao API document error:', e);
+    console.warn('[YingChuang] Ciweimao API document error:', e);
     return null;
   }
 }
@@ -554,7 +554,7 @@ const ciweimaoBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
     await decryptCiweimaoIfNeeded(doc, contentEl, pageUrl, helpers);
     cleanupCiweimaoWatermarks(doc, contentEl);
   } catch (e) {
-    console.warn('[MyNovelReader] Ciweimao beforeParse error:', e);
+    console.warn('[YingChuang] Ciweimao beforeParse error:', e);
   }
 };
 

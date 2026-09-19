@@ -1,18 +1,20 @@
 // ==UserScript==
-// @name               My Novel Reader
-// @name:zh-CN         小说阅读脚本
-// @name:zh-TW         小說閱讀腳本
-// @namespace          https://github.com/ywzhaiqi
+// @name               YingChuang
+// @name:zh-CN         萤窗
+// @name:zh-TW         螢窗
+// @namespace          https://github.com/JasonEX
 // @version            9.5.5
-// @author             ywzhaiqi
-// @description        小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
-// @description:zh-CN  小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页
-// @description:zh-TW  小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁
+// @author             JasonEX
+// @description        萤窗：小说阅读脚本，智能正文识别、连续阅读、阅读位置恢复、简繁转换
+// @description:zh-CN  萤窗：小说阅读脚本，智能正文识别、连续阅读、阅读位置恢复、简繁转换
+// @description:zh-TW  螢窗：小說閱讀腳本，智慧正文識別、連續閱讀、閱讀位置恢復、簡繁轉換
 // @license            GPL version 3
-// @homepage           https://github.com/JasonEX/MyNovelReader#readme
-// @homepageURL        https://greasyfork.org/scripts/292/
-// @source             https://github.com/JasonEX/MyNovelReader.git
-// @supportURL         https://github.com/JasonEX/MyNovelReader/issues
+// @homepage           https://github.com/JasonEX/YingChuang#readme
+// @homepageURL        https://github.com/JasonEX/YingChuang#readme
+// @source             https://github.com/JasonEX/YingChuang.git
+// @supportURL         https://github.com/JasonEX/YingChuang/issues
+// @downloadURL        https://raw.githubusercontent.com/JasonEX/YingChuang/master/scripts/YingChuang.user.js
+// @updateURL          https://raw.githubusercontent.com/JasonEX/YingChuang/master/scripts/YingChuang.user.js
 // @match              *://*/*.html
 // @match              *://*/*.htm
 // @match              *://*/*.shtml
@@ -5862,7 +5864,7 @@
 			if (contentEl) cleanupCiweimaoWatermarks(doc, contentEl);
 			return doc;
 		} catch (e) {
-			console.warn("[MyNovelReader] Ciweimao API document error:", e);
+			console.warn("[YingChuang] Ciweimao API document error:", e);
 			return null;
 		}
 	}
@@ -5880,7 +5882,7 @@
 			await decryptCiweimaoIfNeeded(doc, contentEl, pageUrl, helpers);
 			cleanupCiweimaoWatermarks(doc, contentEl);
 		} catch (e) {
-			console.warn("[MyNovelReader] Ciweimao beforeParse error:", e);
+			console.warn("[YingChuang] Ciweimao beforeParse error:", e);
 		}
 	};
 	var ciweimaoContent = {
@@ -6016,7 +6018,7 @@
 				contentEl.setAttribute("data-mnr-deqixs-full", "1");
 			}
 		} catch (e) {
-			console.warn("[MyNovelReader] Deqixs.co beforeParse error:", e);
+			console.warn("[YingChuang] Deqixs.co beforeParse error:", e);
 		}
 	};
 	var deqixsRule = {
@@ -6132,7 +6134,7 @@
 			contentEl.innerHTML = content;
 			contentEl.setAttribute("data-mnr-dingdianzww-full", "1");
 		} catch (e) {
-			console.warn("[MyNovelReader] Dingdianzww beforeParse error:", e);
+			console.warn("[YingChuang] Dingdianzww beforeParse error:", e);
 		}
 	};
 	var dingdianzwwRule = {
@@ -6195,7 +6197,7 @@
 				if (isPromotion || !hasEncodedContent && isLoadMoreBlocker) p.remove();
 			});
 		} catch (e) {
-			console.warn("[MyNovelReader] Goboo beforeParse error:", e);
+			console.warn("[YingChuang] Goboo beforeParse error:", e);
 		}
 	};
 	var gobooRule = {
@@ -6386,7 +6388,7 @@
 				if (doc.defaultView && hasPendingSubstepContent(doc, contentEl)) await waitForLiveSubstepContent(doc, contentEl);
 				let ready = hasRestoredSubstepContent(doc, contentEl);
 				if (!ready && (!doc.defaultView || !hasPendingSubstepContent(doc, contentEl))) ready = await restoreSubstepContent(doc, contentEl, pageUrl);
-				if (!ready) console.warn("[MyNovelReader] Hetushu content reorder did not complete:", pageUrl);
+				if (!ready) console.warn("[YingChuang] Hetushu content reorder did not complete:", pageUrl);
 			}
 			const titleEl = contentEl.querySelector("h2");
 			const watermarkSelector = "acronym, bdo, big, cite, code, dfn, kbd, q, s, samp, strike, tt, u, var, ins";
@@ -6492,7 +6494,7 @@
 			contentEl.innerHTML = "";
 			contentEl.appendChild(fragment);
 		} catch (e) {
-			console.warn("[MyNovelReader] Hetushu beforeParse error:", e);
+			console.warn("[YingChuang] Hetushu beforeParse error:", e);
 		}
 	};
 	var hetushuRule = {
@@ -6632,7 +6634,7 @@
 			}
 			doc.body.appendChild(navContainer);
 		} catch (e) {
-			console.warn("[MyNovelReader] Qidian beforeParse error:", e);
+			console.warn("[YingChuang] Qidian beforeParse error:", e);
 		}
 	};
 	var qidianContent = {
@@ -6725,7 +6727,7 @@
 				parent.appendChild(title);
 			}
 		} catch (e) {
-			console.warn("[MyNovelReader] 69shu beforeParse error:", e);
+			console.warn("[YingChuang] 69shu beforeParse error:", e);
 		}
 	};
 	var shu69Rule = {
@@ -23031,7 +23033,7 @@ ul, ol {
 	}
 	async function ensureInitialized() {
 		if (appState.isInitialized) return;
-		console.log(`[MNR] MyNovelReader v${VERSION} (${BUILD_DATE})`);
+		console.log(`[MNR] YingChuang v${VERSION} (${BUILD_DATE})`);
 		try {
 			pinia = createPinia();
 			await useConfigStore(pinia).load();

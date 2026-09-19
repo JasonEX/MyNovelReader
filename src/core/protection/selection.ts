@@ -1,6 +1,6 @@
 /**
  * Helpers that restore ordinary user interaction: right-click, selection,
- * copy/cut, and keyboard propagation for MyNovelReader controls.
+ * copy/cut, and keyboard propagation for YingChuang controls.
  */
 
 export function enableRightClick(): () => void {

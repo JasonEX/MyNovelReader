@@ -1,5 +1,5 @@
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   assertMnrSmokeState,
   createConsoleCollector,
   getFirstPage,
@@ -14,7 +14,7 @@ import { test } from '@playwright/test';
 const smokeConfig = getMnrE2eConfig();
 test.setTimeout(Math.max(120_000, smokeConfig.readerTimeoutMs + 60_000));
 
-test('injects MyNovelReader into a real chapter page and renders reader UI', async ({
+test('injects YingChuang into a real chapter page and renders reader UI', async ({
   browserName: _browserName,
 }, testInfo) => {
   const config = getMnrE2eConfig();
@@ -24,7 +24,7 @@ test('injects MyNovelReader into a real chapter page and renders reader UI', asy
   });
 
   try {
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
 
     const page = await getFirstPage(context);
     const logs = createConsoleCollector(page);

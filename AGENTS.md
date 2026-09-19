@@ -1,4 +1,4 @@
-# Agent Guidelines for MyNovelReader
+# Agent Guidelines for YingChuang
 
 ## Commands
 
@@ -55,7 +55,7 @@
 
 ## Release and Artifact Rules
 
-- `scripts/MyNovelReader.user.js` is a generated build artifact. Rebuild it after version,
+- `scripts/YingChuang.user.js` is a generated build artifact. Rebuild it after version,
   metadata, runtime, detector/parser, CSS injection, or release-surface changes.
 - For patch/minor releases, use `npm version <patch|minor> --no-git-tag-version`, rebuild the
   userscript, then rerun validation before committing.
@@ -72,10 +72,10 @@
 - `src/core/` - Core logic (detection, parser, rules, converter, protection, utils)
 - `src/ui/` - UI components
 - `tests/unit/` - Vitest unit tests
-- `scripts/` - Build output (`scripts/MyNovelReader.user.js`)
+- `scripts/` - Build output (`scripts/YingChuang.user.js`)
 
 ## Notes
 
 - This is a UserScript (Tampermonkey); GM\_\* APIs are globals
-- Vue 3 + Vite 8 + TypeScript 6; builds to `scripts/MyNovelReader.user.js`
+- Vue 3 + Vite 8 + TypeScript 6; builds to `scripts/YingChuang.user.js`
 - ESLint has relaxed rules for legacy code; fix warnings incrementally

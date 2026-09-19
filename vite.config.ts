@@ -56,7 +56,7 @@ export default defineConfig({
             // Store CSS for Shadow DOM injection
             globalState.styles = (globalState.styles || '') + cssCode;
 
-            // Inject only into MyNovelReader Shadow DOM roots.
+            // Inject only into YingChuang Shadow DOM roots.
             if (globalState.shadowRoots) {
               globalState.shadowRoots.forEach(function (shadowRoot) {
                 var shadowStyle = shadowRoot.querySelector('#mnr-app-styles');
@@ -78,7 +78,7 @@ export default defineConfig({
       entry: entryPoint,
       userscript,
       build: {
-        fileName: 'MyNovelReader.user.js',
+        fileName: 'YingChuang.user.js',
         autoGrant: false,
       },
     }),

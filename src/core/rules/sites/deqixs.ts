@@ -72,7 +72,7 @@ const deqixsCoBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
       contentEl.setAttribute('data-mnr-deqixs-full', '1');
     }
   } catch (e) {
-    console.warn('[MyNovelReader] Deqixs.co beforeParse error:', e);
+    console.warn('[YingChuang] Deqixs.co beforeParse error:', e);
   }
 };
 

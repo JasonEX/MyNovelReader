@@ -2,7 +2,7 @@ import type { Browser, Page } from '@playwright/test';
 import { chromium, test } from '@playwright/test';
 
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   assertMnrSmokeState,
   createConsoleCollector,
   getMnrE2eConfig,
@@ -11,7 +11,7 @@ import {
   waitForMnrReader,
 } from './mnrE2e';
 
-test('injects MyNovelReader through an existing Chrome CDP session', async ({
+test('injects YingChuang through an existing Chrome CDP session', async ({
   browserName: _browserName,
 }, testInfo) => {
   const endpoint = process.env.MNR_E2E_CDP_ENDPOINT;
@@ -32,7 +32,7 @@ test('injects MyNovelReader through an existing Chrome CDP session', async ({
       throw new Error(`No default Chrome context found at ${endpoint}`);
     }
 
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
 
     page = await context.newPage();
     const logs = createConsoleCollector(page);

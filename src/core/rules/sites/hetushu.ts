@@ -190,7 +190,7 @@ const hetushuBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
         ready = await restoreSubstepContent(doc, contentEl, pageUrl);
       }
       if (!ready) {
-        console.warn('[MyNovelReader] Hetushu content reorder did not complete:', pageUrl);
+        console.warn('[YingChuang] Hetushu content reorder did not complete:', pageUrl);
       }
     }
     const titleEl = contentEl.querySelector('h2');
@@ -314,7 +314,7 @@ const hetushuBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
     contentEl.innerHTML = '';
     contentEl.appendChild(fragment);
   } catch (e) {
-    console.warn('[MyNovelReader] Hetushu beforeParse error:', e);
+    console.warn('[YingChuang] Hetushu beforeParse error:', e);
   }
 };
 

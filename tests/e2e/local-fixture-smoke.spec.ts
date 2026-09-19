@@ -2,7 +2,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import fs from 'node:fs';
 
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   assertMnrSmokeState,
   createConsoleCollector,
   createGmMockScript,
@@ -46,7 +46,7 @@ test('Ciweimao keeps short closing prose across initial parsing and chapter navi
       <p class="chapter"><span>Qw9Er</span></p></div></body></html>`,
     });
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   await page.goto(`${origin}/chapter/120`);
   await waitForMnrReader(page);
   const root = page.locator('#mnr-reader-root');
@@ -101,7 +101,7 @@ test('ixdzs loads its complete API catalog and navigates within the book', async
         : '<a href="/read/999/p1.html">其他小说推荐</a>',
     });
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   await page.goto(`${origin}/read/644554/p120.html`);
   await waitForMnrReader(page);
   const root = page.locator('#mnr-reader-root');
@@ -496,7 +496,7 @@ test('runs the built userscript and restores the host page after exit', async ({
       status: 200,
     })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
 
   const logs = createConsoleCollector(page);
   await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
@@ -846,7 +846,7 @@ test('applies the Sto9 adapter and loads its complete dynamic catalog', async ({
       status: 200,
     })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
 
   await page.goto(sto9FixtureUrl, { waitUntil: 'domcontentloaded' });
   const state = await waitForMnrReader(page);
@@ -924,7 +924,7 @@ test('keeps normal Cloudflare JS Detection pages readable across previous naviga
   await context.route('**/cdn-cgi/challenge-platform/scripts/jsd/main.js', route =>
     route.fulfill({ body: '', contentType: 'text/javascript', status: 200 })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
 
   await page.goto(hetushuSecondUrl, { waitUntil: 'domcontentloaded' });
   const readerRoot = page.locator('#mnr-reader-root');
@@ -999,7 +999,7 @@ test('auto-starts TTKS and preloads through a short author-note chapter', async 
       status: 200,
     });
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
 
   await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
   const readerRoot = page.locator('#mnr-reader-root');
@@ -1075,7 +1075,7 @@ test('keeps detection details internal and hands a dismissed prompt off to manua
       status: 200,
     })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   const logs = createConsoleCollector(page);
   await page.goto(promptUrl, { waitUntil: 'domcontentloaded' });
 
@@ -1144,7 +1144,7 @@ test('shows the first Goboo section before rate-limited background merging compl
       requestTimes.set(request.url(), Date.now() - startedAt);
     }
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   const logs = createConsoleCollector(page);
 
   await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
@@ -1200,7 +1200,7 @@ test('treats Space as one locked page-turn command while the key is held', async
       status: 200,
     })
   );
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
 
   await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
   assertMnrSmokeState(await waitForMnrReader(page));
@@ -1267,7 +1267,7 @@ test.describe('mobile gesture paging', () => {
         status: 200,
       });
     });
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
 
     const logs = createConsoleCollector(page);
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
@@ -1393,7 +1393,7 @@ test.describe('mobile gesture paging', () => {
         status: 200,
       });
     });
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
 
     await page.goto(firstUrl, { waitUntil: 'domcontentloaded' });
     assertMnrSmokeState(await waitForMnrReader(page));
@@ -1509,7 +1509,7 @@ test('keeps generic chapter extraction, template TOC and cached navigation in th
          </article>`;
     await route.fulfill({ body, contentType: 'text/html; charset=utf-8' });
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   await page.goto(startUrl);
   await waitForMnrReader(page);
   const root = page.locator('#mnr-reader-root');
@@ -1571,7 +1571,7 @@ test('caches script-rendered rule chapters through an iframe and removes it afte
          <script>document.getElementById('txtcontent0').innerHTML = ${JSON.stringify(content)};</script>`;
     await route.fulfill({ body, contentType: 'text/html; charset=utf-8' });
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   const logs = createConsoleCollector(page);
   await page.goto(startUrl);
   await waitForMnrReader(page);
@@ -1667,7 +1667,7 @@ for (const startPage of [1, 2]) {
         contentType: 'text/html; charset=utf-8',
       });
     });
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
     const logs = createConsoleCollector(page);
     const parserLogs: string[] = [];
     page.on('console', message => {
@@ -1747,7 +1747,7 @@ test('uses the Tiantang full catalog and shared pagination to navigate', async (
     }
     await route.fulfill({ contentType: 'text/html; charset=utf-8', body });
   });
-  await addMyNovelReaderUserscript(context);
+  await addYingChuangUserscript(context);
   await page.goto(tiantangOrigin + tiantangChapterPath(256));
   await waitForMnrReader(page);
   const root = page.locator('#mnr-reader-root');

@@ -1,5 +1,5 @@
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   createConsoleCollector,
   getMnrE2eConfig,
   launchPersistentMnrContext,
@@ -363,7 +363,7 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
   const chapterRequests: string[] = [];
 
   try {
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
     context.on('request', request => {
       const url = request.url();
       if (new RegExp(`hetushu\\.com/book/${BOOK_ID}/\\d+\\.html`).test(url)) {
@@ -488,7 +488,7 @@ test('Hetushu manual reader flow covers prev/next, ten chapters, TOC, cache, tit
     );
 
     if (logs.some(line => /pageerror|Manual enable error|Failed to load/i.test(line))) {
-      throw new Error(`Unexpected MyNovelReader error logs:\n${logs.join('\n')}`);
+      throw new Error(`Unexpected YingChuang error logs:\n${logs.join('\n')}`);
     }
   } finally {
     await context.close();

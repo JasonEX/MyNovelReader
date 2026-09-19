@@ -89,7 +89,7 @@ export function getMnrE2eConfig(): MnrE2eConfig {
     readerTimeoutMs: envNumber('MNR_E2E_READER_TIMEOUT_MS', 90_000),
     targetUrl: process.env.MNR_E2E_URL || DEFAULT_TARGET_URL,
     userScriptPath:
-      process.env.MNR_E2E_USERSCRIPT || path.join(repoRoot, 'scripts', 'MyNovelReader.user.js'),
+      process.env.MNR_E2E_USERSCRIPT || path.join(repoRoot, 'scripts', 'YingChuang.user.js'),
     warmupMinBodyChars: envNumber('MNR_E2E_WARMUP_MIN_BODY_CHARS', 500),
     warmupTimeoutMs: envNumber('MNR_E2E_WARMUP_TIMEOUT_MS', 10 * 60 * 1000),
   };
@@ -138,7 +138,7 @@ export async function launchPersistentMnrContext(
   return context;
 }
 
-export async function addMyNovelReaderUserscript(context: BrowserContext): Promise<void> {
+export async function addYingChuangUserscript(context: BrowserContext): Promise<void> {
   const config = getMnrE2eConfig();
   const userScript = fs.readFileSync(config.userScriptPath, 'utf8');
 
@@ -335,7 +335,7 @@ export function createConsoleCollector(page: Page): string[] {
     if (
       text.includes('[MNR]') ||
       text.includes('[RuleStorage]') ||
-      text.includes('[MyNovelReader]') ||
+      text.includes('[YingChuang]') ||
       text.includes('[AutoEnableManager]')
     ) {
       logs.push(`${message.type()}: ${text}`);
@@ -384,8 +384,8 @@ export function createGmMockScript(): string {
   window.unsafeWindow = window;
   window.GM_info = {
     script: {
-      name: 'My Novel Reader',
-      namespace: 'https://github.com/ywzhaiqi',
+      name: 'YingChuang',
+      namespace: 'https://github.com/JasonEX',
       description: 'playwright e2e',
       version: '9.0.0',
       includes: [],

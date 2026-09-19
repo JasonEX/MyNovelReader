@@ -1,5 +1,5 @@
 /**
- * MyNovelReader - Main entry point
+ * YingChuang (萤窗) - Main entry point
  *
  * A lightweight novel reader userscript with smart auto-detection
  */

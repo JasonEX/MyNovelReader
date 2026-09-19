@@ -126,7 +126,7 @@ export async function initialize(): Promise<void> {
 async function ensureInitialized(): Promise<void> {
   if (appState.isInitialized) return;
 
-  console.log(`[MNR] MyNovelReader v${VERSION} (${BUILD_DATE})`);
+  console.log(`[MNR] YingChuang v${VERSION} (${BUILD_DATE})`);
 
   try {
     // Create Pinia store

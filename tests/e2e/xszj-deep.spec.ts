@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   createConsoleCollector,
   launchPersistentMnrContext,
   printRunSummary,
@@ -98,7 +98,7 @@ test('xszj deep flow merges query-paged chapter and covers prev/next navigation'
   const pagedRequests: string[] = [];
 
   try {
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
     context.on('request', request => {
       const url = request.url();
       if (/xszj\.org\/b\/490346\/c\/1534359\?page=\d/.test(url)) {
@@ -213,7 +213,7 @@ test('xszj deep link entry converges on the canonical chapter URL', async ({
   const chapterRequests: string[] = [];
 
   try {
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
     context.on('request', request => {
       const url = request.url();
       if (/xszj\.org\/b\/490346\/c\/1534359(?:\?page=\d+)?$/.test(url)) {

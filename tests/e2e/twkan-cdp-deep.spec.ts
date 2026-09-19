@@ -2,7 +2,7 @@ import type { Browser, Page } from '@playwright/test';
 import { chromium, expect, test } from '@playwright/test';
 
 import {
-  addMyNovelReaderUserscript,
+  addYingChuangUserscript,
   createConsoleCollector,
   printRunSummary,
   saveStableScreenshot,
@@ -184,7 +184,7 @@ test('Twkan CDP flow covers prev/next, TOC and cached chapter navigation', async
     const context = browser.contexts()[0];
     if (!context) throw new Error(`No default Chrome context found at ${endpoint}`);
 
-    await addMyNovelReaderUserscript(context);
+    await addYingChuangUserscript(context);
     context.on('request', request => {
       const url = request.url();
       if (/twkan\.com\/txt\/93181\/\d+/.test(url)) {
@@ -240,7 +240,7 @@ test('Twkan CDP flow covers prev/next, TOC and cached chapter navigation', async
     });
 
     if (logs.some(line => /pageerror|Manual enable error|Failed to load/i.test(line))) {
-      throw new Error(`Unexpected MyNovelReader error logs:\n${logs.join('\n')}`);
+      throw new Error(`Unexpected YingChuang error logs:\n${logs.join('\n')}`);
     }
   } finally {
     await page?.close().catch(() => undefined);

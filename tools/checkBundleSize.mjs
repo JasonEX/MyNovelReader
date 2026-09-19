@@ -2,7 +2,7 @@ import { gzipSync } from 'node:zlib';
 import process from 'node:process';
 import { readFileSync } from 'node:fs';
 
-const file = new URL('../scripts/MyNovelReader.user.js', import.meta.url);
+const file = new URL('../scripts/YingChuang.user.js', import.meta.url);
 const source = readFileSync(file);
 const rawLimit = 900 * 1024;
 const gzipLimit = 250 * 1024;

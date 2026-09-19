@@ -1,19 +1,20 @@
-# My Novel Reader
+# 萤窗 YingChuang
 
-[![User script generation](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/JasonEX/MyNovelReader/actions/workflows/build-and-push.yml)
+[![User script generation](https://github.com/JasonEX/YingChuang/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/JasonEX/YingChuang/actions/workflows/build-and-push.yml)
+
+> 萤窗雪案——借一点萤光，安静读书。
 
 现代化的小说阅读 UserScript，支持智能正文识别、连续阅读、阅读位置恢复、简繁转换和克制的排版定制。核心逻辑使用 TypeScript 实现。
 
 ## 安装
 
-### 稳定版（821938089 上游）
+- [从 GitHub 安装][install_github]（Tampermonkey / Violentmonkey 会自动识别并提示安装，之后自动更新）
 
-- [Github][install_github]
-- [jsDelivr][install_jsdelivr]
+萤窗是全新的脚本，与旧版 My Novel Reader 互不相关，可以并存；旧版的设置与阅读进度不会迁移。
 
-### 开发版 / 本仓库
+### 本地构建
 
-- 运行 `npm install && npm run build`，油猴在"从文件安装"中选择 `scripts/MyNovelReader.user.js`。
+- 运行 `npm install && npm run build`，油猴在"从文件安装"中选择 `scripts/YingChuang.user.js`。
 - 开发调试可执行 `npm run dev` 持续构建，然后在油猴中指向同一文件。
 
 ## 开发
@@ -36,7 +37,7 @@
 ```bash
 npm install                  # 安装依赖并安装 Husky 钩子
 npm run dev                  # 监听文件变化自动构建到 scripts/
-npm run build                # 生产构建，生成 scripts/MyNovelReader.user.js
+npm run build                # 生产构建，生成 scripts/YingChuang.user.js
 npm run check:size           # 检查用户脚本原始与 gzip 体积预算
 npm run profile:performance  # 生成本地压力场景 Chrome CPU Profile
 npm run profile:performance:real # 额外生成真实站点启动 Profile
@@ -70,7 +71,7 @@ MNR_E2E_URL="https://example.com/book/1/2.html" npm run e2e:smoke
 `e2e:warmup` 会打开 Playwright 的持久化 Chromium profile。如果页面出现 Cloudflare
 或站点验证，人工在弹出的浏览器里完成一次即可；脚本检测到目标页可读后会自动关闭浏览器并保留
 cookie/profile。之后 `e2e:smoke` 会复用同一个 profile，自动构建、注入
-`scripts/MyNovelReader.user.js`、断言阅读器 Shadow DOM 已挂载、正文长度达标、原页面已隐藏、
+`scripts/YingChuang.user.js`、断言阅读器 Shadow DOM 已挂载、正文长度达标、原页面已隐藏、
 样式已注入，并保存截图到 `.test/mnr-e2e/`。
 
 如果站点明显识别 Playwright 默认浏览器，可以改用真实 Chrome 的 CDP 会话。先在
@@ -138,18 +139,16 @@ npm run e2e:smoke:cdp
   - [Firefox][ignore-x-frame-options-firefox]
 - 新增站点适配或较大改动时，保持 `npm run lint:strict` 与 `npm test` 通过。
 
-## 原作者
+## 致谢
 
-- [Github][ywzhaiqi_github]
-- [Greasy Fork][ywzhaiqi_greasyfork]
+萤窗在 [ywzhaiqi][ywzhaiqi_github] 的 My Novel Reader 及 [821938089][upstream_github] 的维护版本基础上完全重写。感谢原作者与历代贡献者。
 
 ## 许可证
 
 本项目以 [GPL-3.0-only](LICENSE) 发布。
 
 [ywzhaiqi_github]: https://github.com/ywzhaiqi/userscript
-[ywzhaiqi_greasyfork]: https://greasyfork.org/users/145-ywzhaiqi
-[install_github]: https://github.com/821938089/MyNovelReader/raw/master/scripts/MyNovelReader.user.js
-[install_jsdelivr]: https://cdn.jsdelivr.net/gh/821938089/MyNovelReader@master/scripts/MyNovelReader.user.js
+[upstream_github]: https://github.com/821938089/MyNovelReader
+[install_github]: https://raw.githubusercontent.com/JasonEX/YingChuang/master/scripts/YingChuang.user.js
 [ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
 [ignore-x-frame-options-firefox]: https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/

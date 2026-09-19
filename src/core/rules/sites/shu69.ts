@@ -56,7 +56,7 @@ const shu69BeforeParse: BeforeParseHook = (doc, url) => {
       parent.appendChild(title);
     }
   } catch (e) {
-    console.warn('[MyNovelReader] 69shu beforeParse error:', e);
+    console.warn('[YingChuang] 69shu beforeParse error:', e);
   }
 };
 

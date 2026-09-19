@@ -185,7 +185,7 @@ const qidianBeforeParse: BeforeParseHook = (doc, url) => {
 
     doc.body.appendChild(navContainer);
   } catch (e) {
-    console.warn('[MyNovelReader] Qidian beforeParse error:', e);
+    console.warn('[YingChuang] Qidian beforeParse error:', e);
   }
 };
 

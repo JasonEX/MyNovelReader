@@ -11,27 +11,31 @@ import { VERSION } from './version.ts';
 // Keep @connect permissive so GM_xmlhttpRequest works on any supported host.
 const CONNECTS = ['*'];
 
+const SCRIPT_URL =
+  'https://raw.githubusercontent.com/JasonEX/YingChuang/master/scripts/YingChuang.user.js';
+
 type LocalizedText = Record<string, string>;
 type UserscriptResourceMap = Record<string, string>;
 
 const META_BASE = {
   name: {
-    '': 'My Novel Reader',
-    'zh-CN': '小说阅读脚本',
-    'zh-TW': '小說閱讀腳本',
+    '': 'YingChuang',
+    'zh-CN': '萤窗',
+    'zh-TW': '螢窗',
   } satisfies LocalizedText,
-  namespace: 'https://github.com/ywzhaiqi',
-  author: 'ywzhaiqi',
+  namespace: 'https://github.com/JasonEX',
+  author: 'JasonEX',
   description: {
-    '': '小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页',
-    'zh-CN': '小说阅读脚本，统一阅读样式，内容去广告、修正拼音字、段落整理，自动下一页',
-    'zh-TW': '小說閱讀腳本，統一閱讀樣式，內容去廣告、修正拼音字、段落整理，自動下一頁',
+    '': '萤窗：小说阅读脚本，智能正文识别、连续阅读、阅读位置恢复、简繁转换',
+    'zh-CN': '萤窗：小说阅读脚本，智能正文识别、连续阅读、阅读位置恢复、简繁转换',
+    'zh-TW': '螢窗：小說閱讀腳本，智慧正文識別、連續閱讀、閱讀位置恢復、簡繁轉換',
   } satisfies LocalizedText,
   license: 'GPL version 3',
-  homepage: 'https://github.com/JasonEX/MyNovelReader#readme',
-  homepageURL: 'https://greasyfork.org/scripts/292/',
-  source: 'https://github.com/JasonEX/MyNovelReader.git',
-  supportURL: 'https://github.com/JasonEX/MyNovelReader/issues',
+  homepage: 'https://github.com/JasonEX/YingChuang#readme',
+  downloadURL: SCRIPT_URL,
+  updateURL: SCRIPT_URL,
+  source: 'https://github.com/JasonEX/YingChuang.git',
+  supportURL: 'https://github.com/JasonEX/YingChuang/issues',
 
   // GM API grants
   grants: [
@@ -162,7 +166,8 @@ export function generateMetaBlock(meta: UserscriptMeta = META): string {
   pushLocalizedMeta(lines, 'description', meta.description);
   pushMetaLine(lines, 'license', meta.license);
   pushMetaLine(lines, 'homepage', meta.homepage);
-  pushMetaLine(lines, 'homepageURL', meta.homepageURL);
+  pushMetaLine(lines, 'downloadURL', meta.downloadURL);
+  pushMetaLine(lines, 'updateURL', meta.updateURL);
   pushMetaLine(lines, 'source', meta.source);
   pushMetaLine(lines, 'supportURL', meta.supportURL);
   pushMetaLine(lines, 'run-at', 'document-start');
@@ -225,7 +230,8 @@ export function toUserscriptConfig(meta: UserscriptMeta = META): Record<string, 
     description: meta.description,
     license: meta.license,
     homepage: meta.homepage,
-    homepageURL: meta.homepageURL,
+    downloadURL: meta.downloadURL,
+    updateURL: meta.updateURL,
     source: meta.source,
     supportURL: meta.supportURL,
     // Run as early as possible to block mobile ad-tech redirects (common on some novel sites).

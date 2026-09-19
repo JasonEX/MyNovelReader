@@ -34,11 +34,11 @@ describe('userscript meta', () => {
     const block = generateMetaBlock(meta);
 
     expect(block).toContain('// ==UserScript==');
-    expect(block).toContain('// @name          My Novel Reader');
-    expect(block).toContain('// @name:zh-CN    小说阅读脚本');
+    expect(block).toContain('// @name          YingChuang');
+    expect(block).toContain('// @name:zh-CN    萤窗');
     expect(block).toContain('// @description:zh-TW');
     expect(block).toContain('// @version       1.2.3');
-    expect(block).toContain('// @description:zh-CN 小说阅读脚本');
+    expect(block).toContain('// @description:zh-CN 萤窗：小说阅读脚本');
     expect(block).toContain('// @run-at        document-start');
     expect(block).toContain('// @match         *://*/*.html');
     expect(block).toContain('// @match         *://*/gb_*/*/*');
@@ -78,10 +78,7 @@ describe('userscript meta', () => {
       version: string;
     };
     const sourceMeta = createMeta({ version: packageJson.version });
-    const artifact = readFileSync(
-      resolve(process.cwd(), 'scripts', 'MyNovelReader.user.js'),
-      'utf8'
-    );
+    const artifact = readFileSync(resolve(process.cwd(), 'scripts', 'YingChuang.user.js'), 'utf8');
     const header = parseMetaBlock(artifact);
 
     expect(header.name).toEqual([sourceMeta.name['']]);
@@ -95,7 +92,8 @@ describe('userscript meta', () => {
     expect(header['description:zh-TW']).toEqual([sourceMeta.description['zh-TW']]);
     expect(header.license).toEqual([sourceMeta.license]);
     expect(header.homepage).toEqual([sourceMeta.homepage]);
-    expect(header.homepageURL).toEqual([sourceMeta.homepageURL]);
+    expect(header.downloadURL).toEqual([sourceMeta.downloadURL]);
+    expect(header.updateURL).toEqual([sourceMeta.updateURL]);
     expect(header.source).toEqual([sourceMeta.source]);
     expect(header.supportURL).toEqual([sourceMeta.supportURL]);
     expect(header['run-at']).toEqual(['document-start']);

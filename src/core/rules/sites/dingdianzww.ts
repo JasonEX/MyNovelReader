@@ -69,7 +69,7 @@ const dingdianzwwBeforeParse: BeforeParseHook = async (doc, url, helpers) => {
     contentEl.innerHTML = content;
     contentEl.setAttribute('data-mnr-dingdianzww-full', '1');
   } catch (e) {
-    console.warn('[MyNovelReader] Dingdianzww beforeParse error:', e);
+    console.warn('[YingChuang] Dingdianzww beforeParse error:', e);
   }
 };
 

@@ -30,7 +30,7 @@ const gobooBeforeParse: BeforeParseHook = (doc, url) => {
       }
     });
   } catch (e) {
-    console.warn('[MyNovelReader] Goboo beforeParse error:', e);
+    console.warn('[YingChuang] Goboo beforeParse error:', e);
   }
 };
 
