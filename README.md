@@ -4,13 +4,44 @@
 
 > 萤窗雪案——借一点萤光，安静读书。
 
-现代化的小说阅读 UserScript，支持智能正文识别、连续阅读、阅读位置恢复、简繁转换和克制的排版定制。核心逻辑使用 TypeScript 实现。
+萤窗是一个小说阅读 UserScript：在章节页上识别正文，换成干净、统一的阅读界面，并连续加载后续章节。
+
+## 功能
+
+- **智能正文识别**：通用检测器自动识别章节正文、标题与上下章链接，另有 15 个常见站点的内置规则。
+- **连续阅读**：滚动到底自动加载下一章，也可以手动翻章。
+- **阅读位置恢复**：重新打开读过的章节时，回到上次读到的位置（保留最近 200 章）。
+- **目录与离线阅读**：目录抽屉支持搜索章节，可将全书缓存下来离线阅读。
+- **排版定制**：主题、字体、字号、行距、字间距、段落缩进、内容宽度与页面边距，支持自定义 CSS。
+- **简繁转换**：原文 / 简体 / 繁體 一键切换。
+- **内容清理**：内置广告与杂讯清理，可按站点添加自定义正则。
+- **网站防护**：拦截弹窗与恶意跳转、移除遮罩层，恢复右键、选中与复制；分「标准」「强力」两档。
+- **按站点自动进入**：可设置在某个站点直接进入阅读模式。
 
 ## 安装
 
-- [从 GitHub 安装][install_github]（Tampermonkey / Violentmonkey 会自动识别并提示安装，之后自动更新）
+1. 先安装 [Tampermonkey](https://www.tampermonkey.net/) 或 [Violentmonkey](https://violentmonkey.github.io/)。
+2. 打开 [YingChuang.user.js][install_github]，扩展会自动提示安装。之后会从 GitHub 自动更新。
 
 萤窗是全新的脚本，与旧版 My Novel Reader 互不相关，可以并存；旧版的设置与阅读进度不会迁移。
+
+## 使用
+
+打开小说章节页，检测到正文后会出现「进入阅读模式」提示；也可以在油猴菜单中选择「进入阅读模式」。
+
+| 按键                  | 功能            |
+| --------------------- | --------------- |
+| `←` / `P`，`→` / `N`  | 上一章 / 下一章 |
+| `空格` / `Shift+空格` | 向下 / 向上翻屏 |
+| `↑` / `↓`             | 滚动            |
+| `Tab`                 | 打开 / 关闭目录 |
+| `S` / `,`             | 打开 / 关闭设置 |
+| `Enter`               | 返回本书目录页  |
+| `Q`                   | 退出阅读模式    |
+
+键盘导航可在设置中关闭；触屏设备可开启「左右滑动翻屏」。
+
+遇到识别错误或站点问题，请在油猴菜单中选择「复制诊断信息」，附在 [Issue](https://github.com/JasonEX/YingChuang/issues) 里。
 
 ### 本地构建
 
@@ -21,15 +52,15 @@
 
 ### 环境要求
 
-- Node.js >= 20.19
+- Node.js 22.22+ 或 24.15+（CI 使用 Node 24）
 - npm（建议 10+）
 
 ### 技术栈
 
 - **构建工具**: Vite 8 + vite-plugin-monkey
 - **前端框架**: Vue 3 (Composition API) + Pinia
-- **语言**: TypeScript
-- **测试框架**: Vitest (jsdom)
+- **语言**: TypeScript 6
+- **测试框架**: Vitest (jsdom) + Playwright（E2E）
 - **代码规范**: ESLint + Prettier + lint-staged（Husky pre-commit）
 
 ### 常用命令
@@ -48,13 +79,13 @@ npm run e2e:warmup           # 打开持久化浏览器 profile，手动通过 C
 npm run e2e:smoke            # 构建并在真实章节页注入脚本，验证阅读器实际渲染
 npm run e2e:smoke:headed     # 有些站点不信任 headless 时，用有界面浏览器跑同一套 smoke
 npm run e2e:smoke:cdp        # 连接已开启远程调试端口的真实 Chrome 会话做 smoke
-npm run e2e:local             # 构建并运行本地固定页面 smoke
+npm run e2e:local            # 构建并运行本地固定页面 smoke
 npm run lint                 # 基础语法检查
 npm run lint:strict          # 不允许有 warnings
 npm run lint:fix             # 自动修复可修复的 lint 问题
 npm run typecheck            # TypeScript 类型检查（noEmit）
 npm run typecheck:tests      # 测试代码 TypeScript 类型检查
-npm run validate             # 完整本地验证
+npm run validate             # 完整本地验证（与 CI 一致）
 npm run format               # Prettier 全量格式化
 npx vitest run tests/unit/xxx.test.ts  # 运行单个测试
 ```
@@ -99,6 +130,10 @@ npm run e2e:smoke:cdp
 - `MNR_E2E_CDP_ENDPOINT`：真实 Chrome 的 CDP 地址，例如 `http://127.0.0.1:9222`
 - `MNR_E2E_HEADLESS=false`：用有界面浏览器跑 smoke；等价于常用场景下的 `npm run e2e:smoke:headed`
 - `MNR_E2E_MIN_CONTENT_CHARS`：阅读器正文最少字符数断言，默认 `1000`
+- `MNR_E2E_USERSCRIPT`：注入的脚本路径，默认 `scripts/YingChuang.user.js`
+- `MNR_E2E_ARTIFACT_DIR`：截图等产物目录，默认 `.test/mnr-e2e`
+- `MNR_E2E_USER_AGENT`：覆盖浏览器 User-Agent
+- `MNR_E2E_READER_TIMEOUT_MS` / `MNR_E2E_WARMUP_TIMEOUT_MS`：阅读器挂载与预热的超时
 
 ### 项目结构
 
@@ -116,28 +151,30 @@ npm run e2e:smoke:cdp
 │   │   │   ├── ContentDetector.ts    # 内容检测器
 │   │   │   ├── NavigationDetector.ts # 导航检测
 │   │   │   ├── TitleDetector.ts      # 标题检测
+│   │   │   ├── ChapterDocumentClassifier.ts # 章节页分类
 │   │   │   └── ConfidenceScorer.ts   # 置信度评分
 │   │   ├── parser/          # 内容解析
 │   │   ├── converter/       # 繁简转换
-│   │   ├── rules/           # 内置站点规则管理
-│   │   ├── protection/      # 站点保护
+│   │   ├── rules/           # 站点规则（sites/ 为内置规则）
+│   │   ├── protection/      # 网站防护
+│   │   ├── debug/           # 诊断信息
 │   │   └── utils/           # 工具函数
 │   ├── ui/                  # UI
 │   │   ├── components/      # 组件
 │   │   ├── composables/     # 组合式逻辑
 │   │   └── stores/          # Pinia stores
 │   └── typings/             # 类型定义
-├── tests/unit/              # Vitest 单元测试
-├── scripts/                 # 构建输出 MyNovelReader.user.js
+├── tests/
+│   ├── unit/                # Vitest 单元测试
+│   ├── e2e/                 # Playwright E2E（本地固定页面 + 真实站点）
+│   └── testUtils/           # 测试辅助
+├── scripts/                 # 构建输出 YingChuang.user.js（由 CI 提交）
 └── coverage/                # 覆盖率输出（忽略提交）
 ```
 
 ### 注意事项
 
-- 部分站点需要安装 `ignore-x-frame-headers` 扩展绕过 iframe 限制：
-  - [Chrome][ignore-x-frame-options-chrome]
-  - [Firefox][ignore-x-frame-options-firefox]
-- 新增站点适配或较大改动时，保持 `npm run lint:strict` 与 `npm test` 通过。
+- 新增站点适配或较大改动时，提交前运行 `npm run validate`（与 CI 相同的完整校验）。
 
 ## 致谢
 
@@ -150,5 +187,3 @@ npm run e2e:smoke:cdp
 [ywzhaiqi_github]: https://github.com/ywzhaiqi/userscript
 [upstream_github]: https://github.com/821938089/MyNovelReader
 [install_github]: https://raw.githubusercontent.com/JasonEX/YingChuang/master/scripts/YingChuang.user.js
-[ignore-x-frame-options-chrome]: https://chromewebstore.google.com/detail/ignore-x-frame-headers/ohgdnhkppgeemnmjebhedjneajcedppf
-[ignore-x-frame-options-firefox]: https://addons.mozilla.org/firefox/addon/ignore-x-frame-options-header/
