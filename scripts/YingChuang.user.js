@@ -23144,6 +23144,16 @@ ul, ol {
 			console.error("[MNR] Failed to clean host page overlays:", e);
 		}
 	}
+	function normalizeExitDestination(url) {
+		const normalized = normalizeUrlForFetch$1(url);
+		try {
+			const parsed = new URL(normalized);
+			if (parsed.pathname.length > 1) parsed.pathname = parsed.pathname.replace(/\/+$/, "");
+			return parsed.toString();
+		} catch {
+			return normalized.replace(/\/+$/, "");
+		}
+	}
 	function consumeExitNavigation() {
 		const serialized = sessionStorage.getItem(EXIT_NAVIGATION_KEY);
 		if (!serialized) return false;
@@ -23154,7 +23164,7 @@ ul, ol {
 		} catch {
 			return false;
 		}
-		if (typeof transition?.targetUrl !== "string" || typeof transition.cleanupHostOverlays !== "boolean" || normalizeUrlForFetch$1(transition.targetUrl) !== normalizeUrlForFetch$1(window.location.href)) return false;
+		if (typeof transition?.targetUrl !== "string" || typeof transition.cleanupHostOverlays !== "boolean" || normalizeExitDestination(transition.targetUrl) !== normalizeExitDestination(window.location.href)) return false;
 		appState.autoEnableDone = true;
 		getSiteProtection().deactivate();
 		if (transition.cleanupHostOverlays) cleanupHostPageOverlays();
@@ -23196,7 +23206,7 @@ ul, ol {
 		appState.entryPageKind = null;
 		if (navigationTarget) {
 			sessionStorage.setItem(EXIT_NAVIGATION_KEY, JSON.stringify({
-				targetUrl: normalizeUrlForFetch$1(navigationTarget),
+				targetUrl: normalizeExitDestination(navigationTarget),
 				cleanupHostOverlays: shouldCarryHostOverlayCleanup
 			}));
 			window.location.href = navigationTarget;

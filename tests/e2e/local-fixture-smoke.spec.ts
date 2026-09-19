@@ -1315,11 +1315,12 @@ test('cleans host overlays before restoring a page after switching to aggressive
   await expect(overlay).toBeHidden();
 });
 
-test('carries deferred overlay cleanup across a slow exit navigation', async ({
+test('carries deferred overlay cleanup across a slow canonical exit navigation', async ({
   context,
   page,
 }) => {
   const nextUrl = 'http://mnr.test/chapter/101.html';
+  const canonicalNextUrl = `${nextUrl}/`;
   const withOverlay = (html: string) =>
     html.replace(
       '</body>',
@@ -1328,12 +1329,22 @@ test('carries deferred overlay cleanup across a slow exit navigation', async ({
     );
   let destinationNavigations = 0;
 
-  await context.route('http://mnr.test/chapter/*.html', async route => {
+  await context.route('http://mnr.test/chapter/**', async route => {
     const request = route.request();
     const isDestination = request.url() === nextUrl;
     if (isDestination && request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       destinationNavigations++;
       await new Promise(resolve => setTimeout(resolve, 5_250));
+      return route.fulfill({
+        body: withOverlay(nextFixtureHtml).replace(
+          '<head>',
+          `<head><script>history.replaceState(history.state, '', ${JSON.stringify(
+            canonicalNextUrl
+          )});</script>`
+        ),
+        contentType: 'text/html; charset=utf-8',
+        status: 200,
+      });
     }
     return route.fulfill({
       body: withOverlay(isDestination ? nextFixtureHtml : fixtureHtml),
@@ -1361,6 +1372,7 @@ test('carries deferred overlay cleanup across a slow exit navigation', async ({
   await reader.getByRole('button', { name: '打开设置' }).click();
   await reader.getByRole('button', { name: '退出阅读模式' }).click();
 
+  await expect(page).toHaveURL(canonicalNextUrl);
   await expect(reader).toHaveCount(0);
   await expect(page.locator('#mnr-entry-root')).toHaveCount(1);
   await expect.poll(() => destinationNavigations).toBe(1);

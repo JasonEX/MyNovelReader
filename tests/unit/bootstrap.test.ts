@@ -235,7 +235,7 @@ describe('bootstrap', () => {
 
   it('consumes matching deferred overlay cleanup on a skipped destination load', async () => {
     dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
-      url: 'https://example.com/chapter/2',
+      url: 'https://example.com/chapter/2/',
       pretendToBeVisual: true,
     });
 
@@ -250,7 +250,10 @@ describe('bootstrap', () => {
 
     sessionStorage.setItem(
       'mnr_exit_navigation',
-      JSON.stringify({ targetUrl: window.location.href, cleanupHostOverlays: true })
+      JSON.stringify({
+        targetUrl: 'https://example.com/chapter/2',
+        cleanupHostOverlays: true,
+      })
     );
     await import('@/bootstrap');
 

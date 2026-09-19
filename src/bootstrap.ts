@@ -355,6 +355,17 @@ function cleanupHostPageOverlays(): void {
   }
 }
 
+function normalizeExitDestination(url: string): string {
+  const normalized = normalizeUrlForFetch(url);
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.pathname.length > 1) parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+    return parsed.toString();
+  } catch {
+    return normalized.replace(/\/+$/, '');
+  }
+}
+
 /** Consume the one-shot transition created when the reader exits onto another chapter. */
 function consumeExitNavigation(): boolean {
   const serialized = sessionStorage.getItem(EXIT_NAVIGATION_KEY);
@@ -370,7 +381,8 @@ function consumeExitNavigation(): boolean {
   if (
     typeof transition?.targetUrl !== 'string' ||
     typeof transition.cleanupHostOverlays !== 'boolean' ||
-    normalizeUrlForFetch(transition.targetUrl) !== normalizeUrlForFetch(window.location.href)
+    normalizeExitDestination(transition.targetUrl) !==
+      normalizeExitDestination(window.location.href)
   ) {
     return false;
   }
@@ -464,7 +476,7 @@ export function closeReader(): void {
     sessionStorage.setItem(
       EXIT_NAVIGATION_KEY,
       JSON.stringify({
-        targetUrl: normalizeUrlForFetch(navigationTarget),
+        targetUrl: normalizeExitDestination(navigationTarget),
         cleanupHostOverlays: shouldCarryHostOverlayCleanup,
       } satisfies ExitNavigation)
     );
