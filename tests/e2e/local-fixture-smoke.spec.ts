@@ -1271,6 +1271,50 @@ test('leaves Enter on a focused toolbar button to native activation', async ({ c
   expect(page.url()).toBe(targetUrl);
 });
 
+test('cleans host overlays before restoring a page after switching to aggressive mode', async ({
+  context,
+  page,
+}) => {
+  const fixtureWithOverlay = fixtureHtml.replace(
+    '</body>',
+    `<a id="host-overlay" class="host-overlay" href="https://ads.example/"
+      style="position: fixed; inset: 0; z-index: 2001; background: transparent"></a></body>`
+  );
+  await context.route(targetUrl, route =>
+    route.fulfill({
+      body: fixtureWithOverlay,
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    })
+  );
+  await addYingChuangUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+
+  const reader = page.locator('#mnr-reader-root');
+  const overlay = page.locator('#host-overlay');
+  await expect
+    .poll(() => overlay.evaluate(element => (element as HTMLElement).style.display))
+    .toBe('');
+
+  await reader.getByRole('button', { name: '打开设置' }).click();
+  await reader.locator('summary').filter({ hasText: '本站与高级' }).click();
+  const aggressiveButton = reader.getByRole('button', { name: '强力', exact: true });
+  await aggressiveButton.click();
+  await expect(aggressiveButton).toHaveAttribute('aria-pressed', 'true');
+
+  // The host is display:none while reading, so the geometry-dependent pass is deferred to exit.
+  expect(await overlay.evaluate(element => (element as HTMLElement).style.display)).toBe('');
+  await reader.getByRole('button', { name: '退出阅读模式' }).click();
+
+  await expect(reader).toHaveCount(0);
+  await expect
+    .poll(() => overlay.evaluate(element => (element as HTMLElement).style.display))
+    .toBe('none');
+  await expect(overlay).toBeHidden();
+});
+
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 

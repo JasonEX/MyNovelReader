@@ -29,6 +29,7 @@ const {
   mockGetAutoEnableManager,
   mockGetRuleManager,
   mockGetSitePreference,
+  mockRemoveOverlays,
   mockSetSitePreference,
 } = vi.hoisted(() => ({
   mockActivateProtection: vi.fn(),
@@ -36,6 +37,7 @@ const {
   mockGetAutoEnableManager: vi.fn(),
   mockGetRuleManager: vi.fn(),
   mockGetSitePreference: vi.fn(),
+  mockRemoveOverlays: vi.fn(),
   mockSetSitePreference: vi.fn(),
 }));
 
@@ -51,6 +53,7 @@ vi.mock('@/core/protection', () => ({
   getSiteProtection: () => ({
     activate: mockActivateProtection,
     deactivate: mockDeactivateProtection,
+    removeOverlays: mockRemoveOverlays,
   }),
 }));
 
@@ -129,6 +132,7 @@ describe('bootstrap', () => {
     mockGetAutoEnableManager.mockReset();
     mockGetRuleManager.mockReset();
     mockGetSitePreference.mockReset();
+    mockRemoveOverlays.mockReset();
     mockSetSitePreference.mockReset();
     mockGetRuleManager.mockReturnValue({
       initialize: vi.fn(async () => {}),
@@ -335,6 +339,13 @@ describe('bootstrap', () => {
     expect(mockActivateProtection).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'aggressive' })
     );
+    expect(mockRemoveOverlays).not.toHaveBeenCalled();
+
+    mockRemoveOverlays.mockImplementationOnce(() => {
+      expect(document.getElementById('mnr-hide-original')).toBeNull();
+    });
+    bootstrap.closeReader();
+    expect(mockRemoveOverlays).toHaveBeenCalledTimes(1);
   });
 
   it('updates a progressive chapter without mounting a second reader', async () => {

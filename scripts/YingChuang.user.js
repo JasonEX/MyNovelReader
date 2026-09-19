@@ -22957,7 +22957,8 @@ ul, ol {
 		isActive: false,
 		currentDecision: null,
 		originalHostPage: null,
-		entryPageKind: null
+		entryPageKind: null,
+		pendingHostOverlayCleanup: false
 	};
 	var app = null;
 	var pinia = null;
@@ -23156,6 +23157,9 @@ ul, ol {
 		}
 		const originalHostPage = appState.originalHostPage;
 		const originalUrl = originalHostPage?.url || null;
+		const navigationTarget = targetUrl && originalUrl && normalizeUrlForFetch$1(targetUrl) !== normalizeUrlForFetch$1(originalUrl) ? targetUrl : null;
+		const shouldCleanupHostOverlays = appState.pendingHostOverlayCleanup && !navigationTarget;
+		appState.pendingHostOverlayCleanup = false;
 		if (app) {
 			app.unmount();
 			app = null;
@@ -23167,13 +23171,18 @@ ul, ol {
 		}
 		const hideStyle = document.getElementById("mnr-hide-original");
 		if (hideStyle) hideStyle.remove();
+		if (shouldCleanupHostOverlays) try {
+			getSiteProtection().removeOverlays();
+		} catch (e) {
+			console.error("[MNR] Failed to clean host page overlays:", e);
+		}
 		if (pinia) useReaderStore(pinia).deactivate();
 		appState.isActive = false;
 		appState.originalHostPage = null;
 		appState.entryPageKind = null;
-		if (targetUrl && originalUrl && normalizeUrlForFetch$1(targetUrl) !== normalizeUrlForFetch$1(originalUrl)) {
+		if (navigationTarget) {
 			sessionStorage.setItem("mnr_skip_auto_enable", Date.now().toString());
-			window.location.href = targetUrl;
+			window.location.href = navigationTarget;
 			return;
 		}
 		restoreHostPageSnapshot(originalHostPage);
@@ -23201,9 +23210,11 @@ ul, ol {
 	async function setProtectionMode(mode) {
 		if (!pinia) return;
 		const configStore = useConfigStore(pinia);
+		const previousMode = configStore.protection.mode;
 		configStore.updateProtection({ mode });
-		await configStore.flushSave();
+		if (previousMode !== mode) appState.pendingHostOverlayCleanup = mode === "aggressive";
 		getSiteProtection().activate(toProtectionOptions(configStore.protection));
+		await configStore.flushSave();
 	}
 	function showReaderEntry() {
 		if (appState.isActive || readerEntryApp) return;

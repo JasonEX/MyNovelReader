@@ -41,6 +41,7 @@ interface AppState {
   currentDecision: AutoEnableDecision | null;
   originalHostPage: HostPageSnapshot | null; // Host page state when reader was opened
   entryPageKind: PageKind | null; // page kind when reader was opened
+  pendingHostOverlayCleanup: boolean; // deferred until the hidden host page is restored
 }
 
 // Global app state
@@ -51,6 +52,7 @@ const appState: AppState = {
   currentDecision: null,
   originalHostPage: null,
   entryPageKind: null,
+  pendingHostOverlayCleanup: false,
 };
 
 // Vue app instance
@@ -377,6 +379,14 @@ export function closeReader(): void {
   // Get the original page state (saved when reader was opened)
   const originalHostPage = appState.originalHostPage;
   const originalUrl = originalHostPage?.url || null;
+  const navigationTarget =
+    targetUrl &&
+    originalUrl &&
+    normalizeUrlForFetch(targetUrl) !== normalizeUrlForFetch(originalUrl)
+      ? targetUrl
+      : null;
+  const shouldCleanupHostOverlays = appState.pendingHostOverlayCleanup && !navigationTarget;
+  appState.pendingHostOverlayCleanup = false;
 
   // Unmount app
   if (app) {
@@ -398,6 +408,16 @@ export function closeReader(): void {
     hideStyle.remove();
   }
 
+  // While the reader is open, the host page is display:none and overlay geometry is unavailable.
+  // Run a newly selected aggressive-mode cleanup after revealing the host, before the next paint.
+  if (shouldCleanupHostOverlays) {
+    try {
+      getSiteProtection().removeOverlays();
+    } catch (e) {
+      console.error('[MNR] Failed to clean host page overlays:', e);
+    }
+  }
+
   // Update state
   if (pinia) {
     const readerStore = useReaderStore(pinia);
@@ -412,14 +432,10 @@ export function closeReader(): void {
   // navigate to the target URL so page content matches what user was reading
   // Chapter URLs are canonicalized (no hash, no redundant ?page=1); compare the same way so
   // closing on the entry chapter restores in place instead of reloading.
-  if (
-    targetUrl &&
-    originalUrl &&
-    normalizeUrlForFetch(targetUrl) !== normalizeUrlForFetch(originalUrl)
-  ) {
+  if (navigationTarget) {
     // Set flag to prevent auto-enable on the new page
     sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
-    window.location.href = targetUrl;
+    window.location.href = navigationTarget;
     return; // The next page load will decide whether to show the manual entry.
   }
 
@@ -452,9 +468,17 @@ function setCurrentSiteAutoEnable(enabled: boolean): void {
 async function setProtectionMode(mode: 'standard' | 'aggressive'): Promise<void> {
   if (!pinia) return;
   const configStore = useConfigStore(pinia);
+  const previousMode = configStore.protection.mode;
   configStore.updateProtection({ mode });
-  await configStore.flushSave();
+
+  if (previousMode !== mode) {
+    // Overlay cleanup is intentionally destructive and needs visible host-page geometry. Defer it
+    // until closeReader removes the host-hiding stylesheet; switching back cancels the pending pass.
+    appState.pendingHostOverlayCleanup = mode === 'aggressive';
+  }
+
   getSiteProtection().activate(toProtectionOptions(configStore.protection));
+  await configStore.flushSave();
 }
 
 /** Show the isolated manual entry without initializing reader state. */
