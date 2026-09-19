@@ -167,6 +167,28 @@ describe('network utilities', () => {
     expect(result.doc?.querySelector('a')?.textContent).toBe('第1章 测试');
   });
 
+  it('settles GM_xmlhttpRequest as a parse failure when response bytes cannot be decoded', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.(
+        makeXhrResponse(opts, {
+          status: 200,
+          // Userscript managers may hand back a buffer-like object from another realm.
+          response: { byteLength: 16 } as unknown as ArrayBuffer,
+        })
+      );
+      return { abort: () => {} };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const result = await fetchAndParseUrl(
+      'https://legacy.example/chapter/1',
+      'https://reader.example/'
+    ).promise;
+
+    expect(result).toMatchObject({ doc: null, status: 200, error: 'parse' });
+    expect(gm).toHaveBeenCalledTimes(1);
+  });
+
   it('retries on HTTP 500 and succeeds', async () => {
     let calls = 0;
     const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {

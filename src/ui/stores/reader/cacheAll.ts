@@ -155,6 +155,8 @@ export function createCacheAll(ctx: CacheAllContext) {
         ctx.chapters.value[ctx.chapters.value.length - 1]?.chapter.url || ctx.chapter.value?.url;
       let persistedSinceIndexWrite = 0;
       let hasWrittenIndexCheckpoint = false;
+      // Only this run's writes are current; older persisted copies may predate a re-parse.
+      const writtenUrls = new Set<string>();
 
       while (isCurrent() && ctx.cacheProgress.value.running && nextUrl) {
         const targetUrl = normalizeUrlForFetch(nextUrl);
@@ -272,6 +274,7 @@ export function createCacheAll(ctx: CacheAllContext) {
             const persisted = persistCachedChapter(cacheBook, parsed.url, cached);
             if (persisted) {
               persistedSet.add(parsed.url);
+              writtenUrls.add(parsed.url);
               persistedSinceIndexWrite += 1;
               if (
                 !hasWrittenIndexCheckpoint ||
@@ -328,7 +331,7 @@ export function createCacheAll(ctx: CacheAllContext) {
       if (cacheBook && persistedSet.size > 0) {
         ctx.persistedUrls.value = persistedSet;
       }
-      await ctx.persistCache(persistedSet);
+      await ctx.persistCache(writtenUrls);
       if (!isCurrent()) return;
 
       if (ctx.cacheProgress.value.failed > 0) {

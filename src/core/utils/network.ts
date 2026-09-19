@@ -334,13 +334,21 @@ export function fetchAndParseUrl(
               : null;
             if (response.status >= 200 && response.status < 300) {
               const responseBytes = response.response;
-              const html =
-                responseBytes && typeof responseBytes.byteLength === 'number'
-                  ? decodeHtmlBytes(
-                      responseBytes,
-                      extractContentTypeFromResponseHeaders(response.responseHeaders)
-                    )
-                  : response.responseText;
+              let html: string;
+              try {
+                html =
+                  responseBytes && typeof responseBytes.byteLength === 'number'
+                    ? decodeHtmlBytes(
+                        responseBytes,
+                        extractContentTypeFromResponseHeaders(response.responseHeaders)
+                      )
+                    : response.responseText;
+              } catch (e) {
+                // A throw inside onload would leave this request unsettled forever.
+                console.error('[MNR] Decode error:', e);
+                resolve({ doc: null, status: response.status, finalUrl, error: 'parse' });
+                return;
+              }
               const parsed = parseHtmlToDoc(html, finalUrl);
               resolve({
                 ...parsed,

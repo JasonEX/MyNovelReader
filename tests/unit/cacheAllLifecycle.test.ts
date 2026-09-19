@@ -156,9 +156,11 @@ describe('cache task ownership', () => {
     expect(ctx.cacheProgress.value).toEqual({ done: 0, total: 0, failed: 0, running: false });
   });
 
-  it('skips all known persisted chapters during the final cache flush', async () => {
+  it('skips only chapters written by this run during the final cache flush', async () => {
     const ctx = makeContext();
     ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+    // Persisted earlier; its in-memory copy may be newer, so the final flush must rewrite it.
+    ctx.persistedUrls.value = new Set(['https://example.com/read/100/199.html']);
     vi.stubGlobal('GM_setValue', vi.fn());
 
     await createCacheAll(ctx).startCacheAll([target]);

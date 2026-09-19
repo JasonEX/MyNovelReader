@@ -7519,7 +7519,19 @@
 							const finalUrl = response.finalUrl ? resolveAndValidateHttpUrl(response.finalUrl, requestUrl) : null;
 							if (response.status >= 200 && response.status < 300) {
 								const responseBytes = response.response;
-								const html = responseBytes && typeof responseBytes.byteLength === "number" ? decodeHtmlBytes(responseBytes, extractContentTypeFromResponseHeaders(response.responseHeaders)) : response.responseText;
+								let html;
+								try {
+									html = responseBytes && typeof responseBytes.byteLength === "number" ? decodeHtmlBytes(responseBytes, extractContentTypeFromResponseHeaders(response.responseHeaders)) : response.responseText;
+								} catch (e) {
+									console.error("[MNR] Decode error:", e);
+									resolve({
+										doc: null,
+										status: response.status,
+										finalUrl,
+										error: "parse"
+									});
+									return;
+								}
 								resolve({
 									...parseHtmlToDoc(html, finalUrl),
 									status: response.status,
@@ -19240,6 +19252,7 @@ ul, ol {
 				let referer = ctx.chapters.value[ctx.chapters.value.length - 1]?.chapter.url || ctx.chapter.value?.url;
 				let persistedSinceIndexWrite = 0;
 				let hasWrittenIndexCheckpoint = false;
+				const writtenUrls = new Set();
 				while (isCurrent() && ctx.cacheProgress.value.running && nextUrl) {
 					const targetUrl = normalizeUrlForFetch(nextUrl);
 					if (seenUrls.has(targetUrl) || ctx.loadedUrls.value.has(targetUrl) || ctx.cachedContents.value.has(targetUrl) || persistedSet.has(targetUrl)) {
@@ -19338,6 +19351,7 @@ ul, ol {
 						if (cacheBook) {
 							if (persistCachedChapter(cacheBook, parsed.url, cached)) {
 								persistedSet.add(parsed.url);
+								writtenUrls.add(parsed.url);
 								persistedSinceIndexWrite += 1;
 								if (!hasWrittenIndexCheckpoint || persistedSinceIndexWrite >= 50) {
 									if (persistCacheIndex(cacheBook, persistedSet)) {
@@ -19367,7 +19381,7 @@ ul, ol {
 				}
 				if (!isCurrent() || !ctx.cacheProgress.value.running) return;
 				if (cacheBook && persistedSet.size > 0) ctx.persistedUrls.value = persistedSet;
-				await ctx.persistCache(persistedSet);
+				await ctx.persistCache(writtenUrls);
 				if (!isCurrent()) return;
 				if (ctx.cacheProgress.value.failed > 0) ctx.showToast(`缓存完成，${ctx.cacheProgress.value.failed} 章失败`, "error", 3500);
 				else ctx.showToast("离线缓存完成", "info", 2500);
