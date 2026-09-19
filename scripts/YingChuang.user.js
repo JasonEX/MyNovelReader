@@ -22952,8 +22952,7 @@ ul, ol {
 			};
 		}
 	}), [["__scopeId", "data-v-cb73e76a"]]);
-	var SKIP_AUTO_ENABLE_KEY = "mnr_skip_auto_enable";
-	var HOST_OVERLAY_CLEANUP_KEY = "mnr_cleanup_host_overlays";
+	var EXIT_NAVIGATION_KEY = "mnr_exit_navigation";
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -23146,16 +23145,19 @@ ul, ol {
 		}
 	}
 	function consumeExitNavigation() {
-		const transitionToken = sessionStorage.getItem(SKIP_AUTO_ENABLE_KEY);
-		if (!transitionToken) return false;
-		sessionStorage.removeItem(SKIP_AUTO_ENABLE_KEY);
-		const cleanupToken = sessionStorage.getItem(HOST_OVERLAY_CLEANUP_KEY);
-		sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
-		const transitionTime = Number.parseInt(transitionToken, 10);
-		if (!Number.isFinite(transitionTime) || Date.now() - transitionTime >= 5e3) return false;
+		const serialized = sessionStorage.getItem(EXIT_NAVIGATION_KEY);
+		if (!serialized) return false;
+		sessionStorage.removeItem(EXIT_NAVIGATION_KEY);
+		let transition;
+		try {
+			transition = JSON.parse(serialized);
+		} catch {
+			return false;
+		}
+		if (typeof transition?.targetUrl !== "string" || typeof transition.cleanupHostOverlays !== "boolean" || normalizeUrlForFetch$1(transition.targetUrl) !== normalizeUrlForFetch$1(window.location.href)) return false;
 		appState.autoEnableDone = true;
 		getSiteProtection().deactivate();
-		if (cleanupToken === transitionToken) cleanupHostPageOverlays();
+		if (transition.cleanupHostOverlays) cleanupHostPageOverlays();
 		showReaderEntry();
 		return true;
 	}
@@ -23193,10 +23195,10 @@ ul, ol {
 		appState.originalHostPage = null;
 		appState.entryPageKind = null;
 		if (navigationTarget) {
-			const transitionToken = Date.now().toString();
-			sessionStorage.setItem(SKIP_AUTO_ENABLE_KEY, transitionToken);
-			sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
-			if (shouldCarryHostOverlayCleanup) sessionStorage.setItem(HOST_OVERLAY_CLEANUP_KEY, transitionToken);
+			sessionStorage.setItem(EXIT_NAVIGATION_KEY, JSON.stringify({
+				targetUrl: normalizeUrlForFetch$1(navigationTarget),
+				cleanupHostOverlays: shouldCarryHostOverlayCleanup
+			}));
 			window.location.href = navigationTarget;
 			return;
 		}

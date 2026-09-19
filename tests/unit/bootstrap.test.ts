@@ -194,7 +194,7 @@ describe('bootstrap', () => {
     );
   });
 
-  it('shows an isolated manual entry when the skip flag is set', async () => {
+  it('shows an isolated manual entry for the matching exit destination', async () => {
     dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/index.html',
       pretendToBeVisual: true,
@@ -215,7 +215,10 @@ describe('bootstrap', () => {
 
     const bootstrap = await import('@/bootstrap');
 
-    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    sessionStorage.setItem(
+      'mnr_exit_navigation',
+      JSON.stringify({ targetUrl: window.location.href, cleanupHostOverlays: false })
+    );
     await bootstrap.initialize();
 
     const entryHost = document.getElementById('mnr-entry-root');
@@ -224,7 +227,7 @@ describe('bootstrap', () => {
     expect(entryHost?.shadowRoot?.querySelector('#mnr-entry-button')?.textContent).toBe(
       '进入阅读模式'
     );
-    expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
+    expect(sessionStorage.getItem('mnr_exit_navigation')).toBeNull();
     expect(manager.check).not.toHaveBeenCalled();
     expect(mockRemoveOverlays).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);
@@ -245,16 +248,16 @@ describe('bootstrap', () => {
     });
     mockGetSitePreference.mockReturnValue({ enabled: false, timestamp: Date.now() });
 
-    const transitionToken = Date.now().toString();
-    sessionStorage.setItem('mnr_skip_auto_enable', transitionToken);
-    sessionStorage.setItem('mnr_cleanup_host_overlays', transitionToken);
+    sessionStorage.setItem(
+      'mnr_exit_navigation',
+      JSON.stringify({ targetUrl: window.location.href, cleanupHostOverlays: true })
+    );
     await import('@/bootstrap');
 
     expect(mockDeactivateProtection).toHaveBeenCalled();
     expect(mockRemoveOverlays).toHaveBeenCalledTimes(1);
     expect(document.getElementById('mnr-entry-root')).not.toBeNull();
-    expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
-    expect(sessionStorage.getItem('mnr_cleanup_host_overlays')).toBeNull();
+    expect(sessionStorage.getItem('mnr_exit_navigation')).toBeNull();
     expect(mockDeactivateProtection.mock.invocationCallOrder.at(-1)).toBeLessThan(
       mockRemoveOverlays.mock.invocationCallOrder[0]
     );
@@ -541,7 +544,7 @@ describe('bootstrap', () => {
 
     bootstrap.closeReader();
 
-    expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
+    expect(sessionStorage.getItem('mnr_exit_navigation')).toBeNull();
     expect(window.location.href).toBe('https://example.com/chapter/1#comments');
     expect(document.title).toBe('Original Chapter Title');
     expect(document.getElementById('mnr-entry-root')).not.toBeNull();
@@ -623,7 +626,10 @@ describe('bootstrap', () => {
     mockGetAutoEnableManager.mockReturnValue(manager);
 
     const bootstrap = await import('@/bootstrap');
-    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    sessionStorage.setItem(
+      'mnr_exit_navigation',
+      JSON.stringify({ targetUrl: window.location.href, cleanupHostOverlays: false })
+    );
     await bootstrap.initialize();
 
     const entryHost = document.getElementById('mnr-entry-root');
@@ -660,7 +666,10 @@ describe('bootstrap', () => {
     mockGetAutoEnableManager.mockReturnValue(manager);
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    sessionStorage.setItem(
+      'mnr_exit_navigation',
+      JSON.stringify({ targetUrl: window.location.href, cleanupHostOverlays: false })
+    );
     const bootstrap = await import('@/bootstrap');
     await bootstrap.initialize();
 

@@ -1315,7 +1315,10 @@ test('cleans host overlays before restoring a page after switching to aggressive
   await expect(overlay).toBeHidden();
 });
 
-test('carries deferred overlay cleanup across exit navigation', async ({ context, page }) => {
+test('carries deferred overlay cleanup across a slow exit navigation', async ({
+  context,
+  page,
+}) => {
   const nextUrl = 'http://mnr.test/chapter/101.html';
   const withOverlay = (html: string) =>
     html.replace(
@@ -1325,11 +1328,12 @@ test('carries deferred overlay cleanup across exit navigation', async ({ context
     );
   let destinationNavigations = 0;
 
-  await context.route('http://mnr.test/chapter/*.html', route => {
+  await context.route('http://mnr.test/chapter/*.html', async route => {
     const request = route.request();
     const isDestination = request.url() === nextUrl;
     if (isDestination && request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       destinationNavigations++;
+      await new Promise(resolve => setTimeout(resolve, 5_250));
     }
     return route.fulfill({
       body: withOverlay(isDestination ? nextFixtureHtml : fixtureHtml),

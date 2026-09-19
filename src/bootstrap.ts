@@ -33,8 +33,12 @@ import { ReaderView } from '@/ui/components/reader';
 import type { SiteRule } from '@/core/rules/types';
 import { useReaderStore } from '@/ui/stores/reader';
 
-const SKIP_AUTO_ENABLE_KEY = 'mnr_skip_auto_enable';
-const HOST_OVERLAY_CLEANUP_KEY = 'mnr_cleanup_host_overlays';
+const EXIT_NAVIGATION_KEY = 'mnr_exit_navigation';
+
+interface ExitNavigation {
+  targetUrl: string;
+  cleanupHostOverlays: boolean;
+}
 
 /** Application state */
 interface AppState {
@@ -353,19 +357,27 @@ function cleanupHostPageOverlays(): void {
 
 /** Consume the one-shot transition created when the reader exits onto another chapter. */
 function consumeExitNavigation(): boolean {
-  const transitionToken = sessionStorage.getItem(SKIP_AUTO_ENABLE_KEY);
-  if (!transitionToken) return false;
+  const serialized = sessionStorage.getItem(EXIT_NAVIGATION_KEY);
+  if (!serialized) return false;
+  sessionStorage.removeItem(EXIT_NAVIGATION_KEY);
 
-  sessionStorage.removeItem(SKIP_AUTO_ENABLE_KEY);
-  const cleanupToken = sessionStorage.getItem(HOST_OVERLAY_CLEANUP_KEY);
-  sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
-
-  const transitionTime = Number.parseInt(transitionToken, 10);
-  if (!Number.isFinite(transitionTime) || Date.now() - transitionTime >= 5000) return false;
+  let transition: ExitNavigation;
+  try {
+    transition = JSON.parse(serialized) as ExitNavigation;
+  } catch {
+    return false;
+  }
+  if (
+    typeof transition?.targetUrl !== 'string' ||
+    typeof transition.cleanupHostOverlays !== 'boolean' ||
+    normalizeUrlForFetch(transition.targetUrl) !== normalizeUrlForFetch(window.location.href)
+  ) {
+    return false;
+  }
 
   appState.autoEnableDone = true;
   getSiteProtection().deactivate();
-  if (cleanupToken === transitionToken) cleanupHostPageOverlays();
+  if (transition.cleanupHostOverlays) cleanupHostPageOverlays();
   showReaderEntry();
   return true;
 }
@@ -447,13 +459,15 @@ export function closeReader(): void {
   // Chapter URLs are canonicalized (no hash, no redundant ?page=1); compare the same way so
   // closing on the entry chapter restores in place instead of reloading.
   if (navigationTarget) {
-    // Pair any deferred cleanup with this exact exit transition so stale state cannot apply it.
-    const transitionToken = Date.now().toString();
-    sessionStorage.setItem(SKIP_AUTO_ENABLE_KEY, transitionToken);
-    sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
-    if (shouldCarryHostOverlayCleanup) {
-      sessionStorage.setItem(HOST_OVERLAY_CLEANUP_KEY, transitionToken);
-    }
+    // Bind this one-shot exit state to its destination instead of a short wall-clock window:
+    // slow pages still consume it, while redirects or later unrelated visits cannot.
+    sessionStorage.setItem(
+      EXIT_NAVIGATION_KEY,
+      JSON.stringify({
+        targetUrl: normalizeUrlForFetch(navigationTarget),
+        cleanupHostOverlays: shouldCarryHostOverlayCleanup,
+      } satisfies ExitNavigation)
+    );
     window.location.href = navigationTarget;
     return; // The next page load will decide whether to show the manual entry.
   }
