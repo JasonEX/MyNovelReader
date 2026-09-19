@@ -178,6 +178,14 @@ describe('ConfigStore (extra coverage)', () => {
     expect(toProtectionOptions(store.protection).clearTimers).toBe(true);
   });
 
+  it('keeps real page visibility available to the reader', () => {
+    const store = useConfigStore();
+
+    expect(toProtectionOptions(store.protection).blockVisibilityDetection).toBe(false);
+    store.updateProtection({ mode: 'aggressive' });
+    expect(toProtectionOptions(store.protection).blockVisibilityDetection).toBe(false);
+  });
+
   it('setCustomCSS applies CSS inside Shadow DOM', () => {
     const { shadowRoot } = createShadowMount('mnr-config-extra-root');
     const store = useConfigStore();

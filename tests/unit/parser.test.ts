@@ -150,8 +150,8 @@ describe('Parser', () => {
     const doc = dom.window.document;
 
     const gmXhr = vi.fn(
-      (opts: { url: string; onload: (resp: { responseText: string }) => void }) => {
-        opts.onload({ responseText: 'ok' });
+      (opts: { url: string; onload: (resp: { responseText: string; status: number }) => void }) => {
+        opts.onload({ responseText: 'ok', status: 200 });
       }
     );
     vi.stubGlobal('GM_xmlhttpRequest', gmXhr);
@@ -696,6 +696,29 @@ describe('Parser', () => {
 
     expect(result).toBe('ok');
     expect(gm).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetchText ignores GM_xmlhttpRequest error pages', async () => {
+    const gm = vi.fn((opts: GM_xmlhttpRequestOptions) => {
+      opts.onload?.({
+        readyState: 4,
+        responseHeaders: '',
+        responseText: '<html>404</html>',
+        status: 404,
+        statusText: 'Not Found',
+        finalUrl: opts.url,
+      });
+      return { abort: () => {} };
+    });
+    vi.stubGlobal('GM_xmlhttpRequest', gm);
+
+    const fetchText = (
+      parser as unknown as {
+        fetchText: (url: string, options?: HookFetchOptions) => Promise<string | null>;
+      }
+    ).fetchText.bind(parser);
+
+    await expect(fetchText('https://example.com/a')).resolves.toBeNull();
   });
 
   it('fetchText passes referrer as Referer for GM_xmlhttpRequest', async () => {

@@ -1594,6 +1594,63 @@ test('caches script-rendered rule chapters through an iframe and removes it afte
   expect(logs.some(line => line.includes('pageerror'))).toBe(false);
 });
 
+test('does not queue cache-all work when the drawer closes during TOC loading', async ({
+  context,
+  page,
+}) => {
+  const startUrl = 'https://twkan.com/txt/999998/500';
+  const cachedUrl = 'https://twkan.com/txt/999998/501';
+  let releaseToc!: () => void;
+  const tocGate = new Promise<void>(resolve => {
+    releaseToc = resolve;
+  });
+  await context.route('https://twkan.com/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.startsWith('/book/') || path.startsWith('/ajax_novels/')) {
+      await tocGate;
+      await route.fulfill({
+        body: `<title>离线测试</title><a href="${startUrl}">第500章 起程</a><a href="${cachedUrl}">第501章 归来</a>`,
+        contentType: 'text/html; charset=utf-8',
+      });
+      return;
+    }
+    const id = path.endsWith('/501') ? 501 : 500;
+    const content = `<p>单次确认章节 ${id}。</p>${paragraphs}`;
+    await route.fulfill({
+      body: `<title>第${id}章 归来-离线测试-小说-台灣小說網</title>
+         <h1>第${id}章 归来</h1><a href="/book/999998/index.html">目录</a>
+         <div id="txtcontent0"></div>
+         <script>document.getElementById('txtcontent0').innerHTML = ${JSON.stringify(content)};</script>`,
+      contentType: 'text/html; charset=utf-8',
+    });
+  });
+  await addYingChuangUserscript(context);
+  await page.goto(startUrl);
+  await waitForMnrReader(page);
+  const root = page.locator('#mnr-reader-root');
+
+  let dialogs = 0;
+  page.on('dialog', dialog => {
+    dialogs++;
+    void dialog.accept();
+  });
+  await root.getByRole('button', { name: '打开目录' }).click();
+  const cacheButton = root.getByRole('button', { name: '缓存本书', exact: true });
+  await expect(cacheButton).toBeDisabled();
+  await root.getByRole('button', { name: '关闭目录' }).click();
+  releaseToc();
+  await page.waitForTimeout(300);
+  expect(dialogs).toBe(0);
+
+  await root.getByRole('button', { name: '打开目录' }).click();
+  await expect(cacheButton).toBeEnabled();
+  await cacheButton.click();
+  await expect(
+    root.locator('.mnr-chapter-list li').filter({ hasText: '第501章' }).locator('.mnr-cache-mark')
+  ).toBeVisible();
+  expect(dialogs).toBe(1);
+});
+
 test('keeps same-origin chapter requests in the page session with bound fetch wrappers', async ({
   context,
   page,

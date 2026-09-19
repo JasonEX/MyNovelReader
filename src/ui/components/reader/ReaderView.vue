@@ -325,22 +325,29 @@ function handleContentClick(e: MouseEvent) {
   }
 }
 
-async function handleCacheAll() {
+function handleCacheAll() {
   if (readerStore.cacheProgress.running) {
     readerStore.cancelCacheAll();
     readerStore.showToast('已取消离线缓存', 'info');
     return;
   }
+  if (readerStore.tocLoading) return;
 
-  await readerStore.loadToc();
+  // A failed or empty TOC can be retried without queuing a cache intent behind the request.
+  if (readerStore.toc.length === 0) {
+    void readerStore.loadToc();
+    return;
+  }
+
   const remaining = readerStore.tocWithStatus.filter(
     entry => entry.access !== 'locked' && !entry.isPersisted
   ).length;
-  const message =
-    remaining > 0
-      ? `预计缓存 ${remaining} 章，过程可能需要一些时间。是否继续？`
-      : '将从当前章节开始缓存后续内容，是否继续？';
-  if (!window.confirm(message)) return;
+  if (
+    remaining > 0 &&
+    !window.confirm(`预计缓存 ${remaining} 章，过程可能需要一些时间。是否继续？`)
+  ) {
+    return;
+  }
   void readerStore.startCacheAll();
 }
 

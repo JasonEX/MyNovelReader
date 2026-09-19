@@ -50,7 +50,12 @@
           <strong id="mnr-offline-title">离线阅读</strong>
           <span aria-live="polite">{{ offlineStatus }}</span>
         </div>
-        <button class="mnr-offline-action primary" type="button" @click="emit('cacheAll')">
+        <button
+          class="mnr-offline-action primary"
+          type="button"
+          :disabled="loading"
+          @click="emit('cacheAll')"
+        >
           {{ cacheProgress.running ? '取消' : '缓存本书' }}
         </button>
       </div>
@@ -438,6 +443,11 @@ watch(
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.mnr-offline-action:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .mnr-offline-action.primary {

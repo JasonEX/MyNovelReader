@@ -33,6 +33,17 @@
   detector shortcuts unless they are proven output-equivalent and browser-verified.
 - Generated/local artifacts such as `coverage/` and `test-results/` are for validation only and
   should not be committed.
+- Start from the global state machine. Before changing a function, identify which lifecycle
+  transition it affects (bootstrap → auto-enable decision → protection activate/deactivate →
+  reader session/view → close or navigate) and check the change against the whole flow.
+- Consider cost: runtime work (DOM scans, timers, extra requests, anti-bot/rate-limit exposure,
+  storage) and maintenance burden. Prefer the cheaper option when outcomes are equivalent.
+- Respect the userscript positioning: stay lightweight, never break the host page, keep the
+  bundle small, and do not grow app-scale features.
+- Make the minimal reasonable change: fix the root cause with the smallest correct diff; do not
+  expand scope speculatively.
+- Separate generic changes from site rules. Site-specific quirks belong in
+  `src/core/rules/sites/*`; generic detection, parsing, and reader code must stay site-agnostic.
 
 ## Validation Policy
 

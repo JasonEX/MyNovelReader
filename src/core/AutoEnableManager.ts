@@ -407,6 +407,8 @@ export class AutoEnableManager {
     try {
       const hostname = new URL(url).hostname;
       const storage = getRuleStorage();
+      // Only an unset preference may become enabled; an explicit opt-out survives manual entry.
+      if (storage.getSitePreference(hostname)) return;
       storage.setSitePreference(hostname, { enabled: true, timestamp: Date.now() });
     } catch (e) {
       console.error('[AutoEnableManager] Failed to save site preference:', e);

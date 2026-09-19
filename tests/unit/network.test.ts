@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchAndParseUrl, getGmXhr, normalizeUrlForFetch } from '@/core/utils/network';
+import {
+  fetchAndParseUrl,
+  getGmXhr,
+  normalizeUrlForFetch,
+  resolveAndValidateHttpUrl,
+} from '@/core/utils/network';
 
 const makeXhrResponse = (
   opts: GM_xmlhttpRequestOptions,
@@ -72,6 +77,27 @@ describe('network utilities', () => {
   it('blocks private-network hosts when referer is on a different host', async () => {
     const res = await fetchAndParseUrl('http://127.0.0.1/ch', 'https://example.com/').promise;
     expect(res.error).toBe('invalid-url');
+  });
+
+  it.each([
+    'http://[::ffff:127.0.0.1]/ch',
+    'http://[::ffff:c0a8:101]/ch',
+    'http://[::]/ch',
+    'http://0.1.2.3/ch',
+    'http://100.64.0.1/ch',
+  ])('blocks mapped and reserved private host %s across hosts', async url => {
+    const res = await fetchAndParseUrl(url, 'https://example.com/').promise;
+    expect(res.error).toBe('invalid-url');
+  });
+
+  it.each([
+    'http://localhost./ch',
+    'http://reader.localhost./ch',
+    'http://[fe80::1]/ch',
+    'http://[fe90::1]/ch',
+    'http://[febf:ffff::1]/ch',
+  ])('blocks canonical localhost and the full IPv6 link-local range for %s', url => {
+    expect(resolveAndValidateHttpUrl(url, 'https://example.com/')).toBeNull();
   });
 
   it('allows public hostnames beginning with fc or fd across hosts', async () => {

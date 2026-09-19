@@ -59,14 +59,15 @@ function normalizeHostname(hostname: string): string {
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
     return trimmed.slice(1, -1).toLowerCase();
   }
-  return trimmed.toLowerCase();
+  // URL keeps the root-label dot in fully-qualified hostnames (for example localhost.).
+  return trimmed.toLowerCase().replace(/\.$/, '');
 }
 
 function isPrivateNetworkHost(hostname: string): boolean {
   const host = normalizeHostname(hostname);
   if (!host) return true;
 
-  if (host === 'localhost') return true;
+  if (host === 'localhost' || host.endsWith('.localhost')) return true;
   if (host === '0.0.0.0') return true;
 
   const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
@@ -75,7 +76,9 @@ function isPrivateNetworkHost(hostname: string): boolean {
     if (parts.some(n => !Number.isFinite(n) || n < 0 || n > 255)) return true;
 
     const [a, b] = parts;
+    if (a === 0) return true; // 0.0.0.0/8 "this network"
     if (a === 10) return true; // 10.0.0.0/8
+    if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 carrier-grade NAT
     if (a === 127) return true; // 127.0.0.0/8 loopback
     if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local
     if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
@@ -85,9 +88,20 @@ function isPrivateNetworkHost(hostname: string): boolean {
 
   // IPv6 (URL.hostname includes brackets in some runtimes, normalizeHostname removes them)
   if (!host.includes(':')) return false;
-  if (host === '::1') return true; // loopback
-  if (host.startsWith('fe80:')) return true; // link-local
-  if (host.startsWith('fc') || host.startsWith('fd')) return true; // unique local (fc00::/7)
+  if (host === '::' || host === '::1') return true; // unspecified / loopback
+  // IPv4-mapped (::ffff:a.b.c.d); URL serializes the IPv4 part as two hex groups.
+  const mapped = host.match(
+    /^::ffff:(?:([0-9a-f]{1,4}):([0-9a-f]{1,4})|(\d{1,3}(?:\.\d{1,3}){3}))$/
+  );
+  if (mapped) {
+    if (mapped[3]) return isPrivateNetworkHost(mapped[3]);
+    const high = parseInt(mapped[1], 16);
+    const low = parseInt(mapped[2], 16);
+    return isPrivateNetworkHost(`${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`);
+  }
+  const firstHextet = parseInt(host.slice(0, host.indexOf(':')) || '0', 16);
+  if ((firstHextet & 0xffc0) === 0xfe80) return true; // link-local (fe80::/10)
+  if ((firstHextet & 0xfe00) === 0xfc00) return true; // unique local (fc00::/7)
 
   return false;
 }

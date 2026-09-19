@@ -3,7 +3,7 @@
  * Handles caching all chapters from TOC sequentially with persistence.
  */
 
-import type { CachedChapter, CacheProgressState } from './types';
+import type { CachedChapter, CacheProgressState, TocEntry } from './types';
 import type { ComputedRef, Ref } from 'vue';
 import { fetchAndParseUrl } from '@/core/utils/network';
 import { getChapterDocumentBlockReason } from '@/core/detection';
@@ -22,7 +22,6 @@ import { loadDocumentInIframe, loadRuleApiDocument } from './chapterFetch';
 import { normalizeUrlForBlock, normalizeUrlForFetch } from './utils';
 
 import { detectTocPage } from './detection';
-import { loadTocEntriesPaged } from './toc';
 import { MAX_SESSION_CACHE } from './types';
 import { parseWithSectionMerge } from './section';
 import { recordDebugEvent } from '@/core/debug/events';
@@ -36,9 +35,10 @@ export interface CacheAllContext {
   cacheQueue: Ref<string[]>;
   cacheFailedUrls: Ref<string[]>;
   cacheAbort: Ref<(() => void) | null>;
-  loadedUrls: Ref<Set<string>>;
   cachedContents: Ref<Map<string, CachedChapter>>;
   persistedUrls: Ref<Set<string>>;
+  /** Unconverted TOC of the current book, filled by loadToc(). */
+  tocOriginal: Ref<TocEntry[]>;
 
   // Computed
   chapter: ComputedRef<ParsedChapter | null>;
@@ -52,6 +52,8 @@ export interface CacheAllContext {
   };
 
   // Callbacks
+  /** The reader's single TOC loader; it reports missing or empty TOCs itself. */
+  loadToc: () => Promise<void>;
   restoreCache: () => Promise<void>;
   persistCache: (skipChapterUrls?: ReadonlySet<string>) => Promise<void>;
   showToast: (message: string, type?: 'info' | 'error', duration?: number) => void;
@@ -69,6 +71,7 @@ export function createCacheAll(ctx: CacheAllContext) {
     const runId = ctx.runtime.sessionId();
     if (ctx.cacheProgress.value.running) return;
 
+    const fullBook = urls === undefined;
     const currentTask = ++taskId;
     const isCurrent = () => currentTask === taskId && !ctx.runtime.isSessionStale(runId);
     ctx.cacheProgress.value = { done: 0, total: 0, failed: 0, running: true };
@@ -76,6 +79,13 @@ export function createCacheAll(ctx: CacheAllContext) {
       const seenUrls = new Set<string>();
       const knownLockedUrls = new Set<string>();
       ctx.cacheFailedUrls.value = [];
+
+      if (fullBook) {
+        await ctx.loadToc();
+        if (!isCurrent()) return;
+        // loadToc already reported a missing or empty TOC.
+        if (ctx.tocOriginal.value.length === 0) return;
+      }
 
       // Ensure we have the latest persistedUrls before building the task list.
       await ctx.restoreCache();
@@ -86,66 +96,54 @@ export function createCacheAll(ctx: CacheAllContext) {
       const isIndexUrl = (url: string) =>
         indexUrlKey !== null && normalizeUrlForBlock(url) === indexUrlKey;
 
+      let cacheableChapterCount = 0;
       let taskList = urls ? urls.map(normalizeUrlForFetch).filter(url => !isIndexUrl(url)) : []; // No limit
       ctx.cacheQueue.value = [...taskList];
 
-      // 目录列表：current.indexUrl -> 解析出章节列表，缓存全本
-      if (urls === undefined && !taskList.length) {
-        const indexUrl = ctx.chapter.value?.indexUrl;
-        const currentUrl = ctx.chapter.value?.url;
-        if (indexUrl) {
-          const tocEntries = await loadTocEntriesPaged(
-            indexUrl,
-            currentUrl || indexUrl,
-            ctx.rule.value ?? undefined,
-            abort => {
-              if (isCurrent()) {
-                ctx.cacheAbort.value = abort;
-              } else {
-                abort?.();
-              }
-            }
-          );
-          if (!isCurrent()) return;
-          ctx.cacheAbort.value = null;
-
-          const tocLinks: string[] = [];
-          let removedPersistedLocked = false;
-          for (const entry of tocEntries.slice(0, 10000)) {
-            const url = normalizeUrlForFetch(entry.url);
-            if (entry.access === 'locked') {
-              knownLockedUrls.add(url);
-              ctx.cachedContents.value.delete(url);
-              removedPersistedLocked = persistedSet.delete(url) || removedPersistedLocked;
-            } else {
-              tocLinks.push(url);
-            }
+      // 目录列表：由阅读器统一加载的目录决定缓存全本的任务
+      if (fullBook) {
+        const tocEntries = ctx.tocOriginal.value;
+        const tocLinks = new Set<string>();
+        let removedPersistedLocked = false;
+        for (const entry of tocEntries.slice(0, 10000)) {
+          const url = normalizeUrlForFetch(entry.url);
+          if (entry.access === 'locked') {
+            knownLockedUrls.add(url);
+            ctx.cachedContents.value.delete(url);
+            removedPersistedLocked = persistedSet.delete(url) || removedPersistedLocked;
+          } else {
+            if (!isIndexUrl(url)) tocLinks.add(url);
           }
-          if (removedPersistedLocked && cacheBook) {
-            ctx.persistedUrls.value = new Set(persistedSet);
-            if (persistedSet.size > 0) {
-              persistCacheIndex(cacheBook, persistedSet);
-            } else {
-              deletePersistedCacheIndex(cacheBook);
-            }
-          }
-          // Cache entire book, filter already cached/persisted
-          taskList = tocLinks.filter(
-            u =>
-              !isIndexUrl(u) &&
-              !ctx.loadedUrls.value.has(u) &&
-              !ctx.cachedContents.value.has(u) &&
-              !persistedSet.has(u)
-          );
-          ctx.cacheQueue.value = [...taskList];
         }
+        if (removedPersistedLocked && cacheBook) {
+          ctx.persistedUrls.value = new Set(persistedSet);
+          if (persistedSet.size > 0) {
+            persistCacheIndex(cacheBook, persistedSet);
+          } else {
+            deletePersistedCacheIndex(cacheBook);
+          }
+        }
+        cacheableChapterCount = tocLinks.size;
+        // In-memory chapters need only the final storage flush; persisted chapters need no work.
+        taskList = Array.from(tocLinks).filter(
+          url => !ctx.cachedContents.value.has(url) && !persistedSet.has(url)
+        );
+        ctx.cacheQueue.value = [...taskList];
       }
 
       // Total is actual list length
       const estimatedTotal = taskList.length;
       if (!isCurrent()) return;
       if (estimatedTotal === 0) {
-        ctx.cacheProgress.value = { done: 0, total: 0, failed: 0, running: false };
+        if (fullBook) {
+          if (cacheableChapterCount === 0) {
+            ctx.showToast('目录中没有可缓存的章节', 'info');
+            return;
+          }
+          await ctx.persistCache();
+          if (!isCurrent()) return;
+          ctx.showToast('本书章节已全部缓存', 'info');
+        }
         return;
       }
       ctx.cacheProgress.value = { done: 0, total: estimatedTotal, failed: 0, running: true };
@@ -161,10 +159,9 @@ export function createCacheAll(ctx: CacheAllContext) {
       while (isCurrent() && ctx.cacheProgress.value.running && nextUrl) {
         const targetUrl = normalizeUrlForFetch(nextUrl);
 
-        // 去重 - check loadedUrls, session cache, and persisted cache
+        // 去重 - only stored content can satisfy an offline-cache task.
         if (
           seenUrls.has(targetUrl) ||
-          ctx.loadedUrls.value.has(targetUrl) ||
           ctx.cachedContents.value.has(targetUrl) ||
           persistedSet.has(targetUrl)
         ) {
@@ -310,7 +307,6 @@ export function createCacheAll(ctx: CacheAllContext) {
             const normalizedNext = normalizeUrlForFetch(nextUrl);
             if (
               !seenUrls.has(normalizedNext) &&
-              !ctx.loadedUrls.value.has(normalizedNext) &&
               !ctx.cachedContents.value.has(normalizedNext) &&
               !persistedSet.has(normalizedNext)
             ) {
