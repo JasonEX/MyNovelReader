@@ -27,6 +27,7 @@ import { createShadowMount } from '@/ui/shadowMount';
 import { getRuleManager } from '@/core/rules/RuleManager';
 import { getRuleStorage } from '@/core/rules/RuleStorage';
 import { getSiteProtection } from '@/core/protection';
+import { normalizeUrlForFetch } from '@/core/utils/network';
 import type { ParsedChapter } from '@/core/parser';
 import { ReaderView } from '@/ui/components/reader';
 import type { SiteRule } from '@/core/rules/types';
@@ -409,7 +410,13 @@ export function closeReader(): void {
 
   // If current chapter URL is different from the original page URL,
   // navigate to the target URL so page content matches what user was reading
-  if (targetUrl && originalUrl && targetUrl !== originalUrl) {
+  // Chapter URLs are canonicalized (no hash, no redundant ?page=1); compare the same way so
+  // closing on the entry chapter restores in place instead of reloading.
+  if (
+    targetUrl &&
+    originalUrl &&
+    normalizeUrlForFetch(targetUrl) !== normalizeUrlForFetch(originalUrl)
+  ) {
     // Set flag to prevent auto-enable on the new page
     sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
     window.location.href = targetUrl;

@@ -116,6 +116,40 @@ describe('ReaderStore - workflows', () => {
     expect(store.tocLoading).toBe(false);
   });
 
+  it('lets a second loadToc caller await the in-flight TOC', async () => {
+    const store = useReaderStore();
+    store.setChapter({
+      title: '第一章',
+      content: '<p>正文</p>',
+      rawContent: '<p>正文</p>',
+      url: 'https://example.com/book/1/1.html',
+      indexUrl: 'https://example.com/book/1/index.html',
+      confidence: 1,
+      method: 'rule',
+    });
+    let resolveToc!: (entries: Array<{ title: string; url: string }>) => void;
+    mockLoadTocEntriesPaged.mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveToc = resolve;
+      })
+    );
+
+    // Opening the drawer starts the load without awaiting it; cache-all then awaits loadToc().
+    void store.loadToc();
+    let secondSettled = false;
+    const second = store.loadToc().then(() => {
+      secondSettled = true;
+    });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(secondSettled).toBe(false);
+
+    resolveToc([{ title: '第一章', url: 'https://example.com/book/1/1.html' }]);
+    await second;
+
+    expect(mockLoadTocEntriesPaged).toHaveBeenCalledTimes(1);
+    expect(store.toc).toHaveLength(1);
+  });
+
   it('does not fetch the detected TOC after exiting during preparation', async () => {
     const store = useReaderStore();
     store.setChapter({
@@ -223,6 +257,37 @@ describe('ReaderStore - workflows', () => {
     expect(store.cacheProgress.done).toBe(1);
     expect(store.cachedContents.has('https://example.com/book/1/2.html')).toBe(true);
     expect(store.persistedUrls.has('https://example.com/book/1/2.html')).toBe(true);
+  });
+
+  it('persists the current in-memory chapter when the full-book TOC needs no request', async () => {
+    const gm = createGmStorageMock();
+    stubGmStorage(gm);
+    const store = useReaderStore();
+    const currentUrl = 'https://example.com/book/1/1.html';
+    const indexUrl = 'https://example.com/book/1/index.html';
+    store.setChapter({
+      title: '第1章',
+      content: '<p>init</p>',
+      rawContent: '<p>init</p>',
+      url: currentUrl,
+      indexUrl,
+      confidence: 1,
+      method: 'rule',
+    });
+    mockLoadTocEntriesPaged.mockResolvedValue([{ title: '第1章', url: currentUrl }]);
+
+    await store.startCacheAll();
+
+    const bookId = 'example.com_book_1_index.html';
+    expect(fetchAndParseUrl).not.toHaveBeenCalled();
+    expect(parseWithSectionMerge).not.toHaveBeenCalled();
+    expect(store.persistedUrls.has(currentUrl)).toBe(true);
+    expect(parseStoredJson(gm.store.get(getCacheV2ChapterKey(bookId, currentUrl)))).toMatchObject({
+      chapter: { url: currentUrl, content: '<p>init</p>' },
+    });
+    expect(parseStoredJson(gm.store.get(getCacheV2IndexKey(bookId)))).toMatchObject({
+      urls: [currentUrl],
+    });
   });
 
   it('skips VIP documents without parsing, persisting, or adding them to retry failures', async () => {

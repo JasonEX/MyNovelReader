@@ -7,7 +7,6 @@ import type { ParsedChapter } from '@/core/parser';
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   parse: vi.fn(),
-  toc: vi.fn(),
   iframe: vi.fn(),
   api: vi.fn(),
 }));
@@ -18,7 +17,6 @@ vi.mock('@/ui/stores/reader/chapterFetch', () => ({
 vi.mock('@/core/utils/network', () => ({ fetchAndParseUrl: mocks.fetch }));
 vi.mock('@/core/parser', () => ({ getParser: () => ({}) }));
 vi.mock('@/ui/stores/reader/section', () => ({ parseWithSectionMerge: mocks.parse }));
-vi.mock('@/ui/stores/reader/toc', () => ({ loadTocEntriesPaged: mocks.toc }));
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -42,13 +40,14 @@ function makeContext(): CacheAllContext {
     cacheQueue: ref([]),
     cacheFailedUrls: ref([]),
     cacheAbort: ref(null),
-    loadedUrls: ref(new Set()),
     cachedContents: ref(new Map()),
     persistedUrls: ref(new Set()),
+    tocOriginal: ref([]),
     chapter: computed(() => chapter),
     rule: computed(() => null),
     chapters: ref([]),
     runtime: createReaderRuntime(),
+    loadToc: vi.fn(async () => {}),
     restoreCache: vi.fn(async () => {}),
     persistCache: vi.fn(async () => {}),
     showToast: vi.fn(),
@@ -129,11 +128,73 @@ describe('cache task ownership', () => {
     expect(ctx.cacheFailedUrls.value).toEqual([target]);
   });
 
+  it('builds full-book tasks from the reader TOC loader', async () => {
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+    vi.mocked(ctx.loadToc).mockImplementation(async () => {
+      ctx.tocOriginal.value = [{ title: chapter.title, url: target }];
+    });
+
+    await createCacheAll(ctx).startCacheAll();
+
+    expect(ctx.loadToc).toHaveBeenCalledTimes(1);
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves missing-TOC reporting to the TOC loader', async () => {
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+
+    await createCacheAll(ctx).startCacheAll();
+
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(ctx.showToast).not.toHaveBeenCalled();
+    expect(ctx.cacheProgress.value.running).toBe(false);
+  });
+
+  it('reports a book whose chapters are all cached', async () => {
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+    ctx.tocOriginal.value = [{ title: chapter.title, url: target }];
+    ctx.persistedUrls.value = new Set([target]);
+
+    await createCacheAll(ctx).startCacheAll();
+
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(ctx.persistCache).toHaveBeenCalledTimes(1);
+    expect(ctx.showToast).toHaveBeenCalledWith('本书章节已全部缓存', 'info');
+  });
+
+  it('persists an in-memory full-book chapter without fetching it again', async () => {
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+    ctx.tocOriginal.value = [{ title: chapter.title, url: target }];
+    ctx.cachedContents.value.set(target, { chapter, cachedAt: Date.now() });
+
+    await createCacheAll(ctx).startCacheAll();
+
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(ctx.persistCache).toHaveBeenCalledTimes(1);
+    expect(ctx.showToast).toHaveBeenCalledWith('本书章节已全部缓存', 'info');
+  });
+
+  it('reports a locked-only TOC without claiming that the book is cached', async () => {
+    const ctx = makeContext();
+    ctx.chapter = computed(() => ({ ...chapter, indexUrl: 'https://example.com/read/100/' }));
+    ctx.tocOriginal.value = [{ title: chapter.title, url: target, access: 'locked' }];
+
+    await createCacheAll(ctx).startCacheAll();
+
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(ctx.persistCache).not.toHaveBeenCalled();
+    expect(ctx.showToast).toHaveBeenCalledWith('目录中没有可缓存的章节', 'info');
+  });
+
   it('stops at the book index after the final queued chapter', async () => {
     const indexUrl = 'https://example.com/read/100/';
     const ctx = makeContext();
     ctx.chapter = computed(() => ({ ...chapter, indexUrl }));
-    mocks.toc.mockResolvedValue([{ title: chapter.title, url: target }]);
+    ctx.tocOriginal.value = [{ title: chapter.title, url: target }];
     mocks.parse.mockResolvedValue({ ...chapter, indexUrl, nextUrl: indexUrl });
 
     await createCacheAll(ctx).startCacheAll();
@@ -151,7 +212,7 @@ describe('cache task ownership', () => {
 
     await createCacheAll(ctx).startCacheAll([indexUrl]);
 
-    expect(mocks.toc).not.toHaveBeenCalled();
+    expect(ctx.loadToc).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
     expect(ctx.cacheProgress.value).toEqual({ done: 0, total: 0, failed: 0, running: false });
   });

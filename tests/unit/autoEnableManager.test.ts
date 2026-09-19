@@ -507,6 +507,32 @@ describe('AutoEnableManager', () => {
     expect(launchCallback).toHaveBeenCalledTimes(1);
   });
 
+  it('manualEnable remembers an unset site preference', async () => {
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+    manager.setLaunchCallback(vi.fn());
+
+    await manager.manualEnable(createDoc('https://example.com/chapter/1'));
+
+    expect(mockedRuleStorage.setSitePreference).toHaveBeenCalledWith('example.com', {
+      enabled: true,
+      timestamp: expect.any(Number),
+    });
+  });
+
+  it('manualEnable keeps an explicit site opt-out', async () => {
+    mockedRuleStorage.getSitePreference.mockReturnValue({ enabled: false, timestamp: 1 });
+    const { AutoEnableManager } = await import('@/core/AutoEnableManager');
+    const manager = new AutoEnableManager({ enableProtection: false });
+    const launchCallback = vi.fn();
+    manager.setLaunchCallback(launchCallback);
+
+    await manager.manualEnable(createDoc('https://example.com/chapter/1'));
+
+    expect(launchCallback).toHaveBeenCalledTimes(1);
+    expect(mockedRuleStorage.setSitePreference).not.toHaveBeenCalled();
+  });
+
   it('manualEnable does not parse or launch a locked chapter document', async () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     const { AutoEnableManager } = await import('@/core/AutoEnableManager');

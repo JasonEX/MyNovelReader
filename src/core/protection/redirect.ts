@@ -11,94 +11,9 @@ export function blockRedirects(options: RedirectProtectionOptions = {}): () => v
   const metaRefresh = document.querySelectorAll('meta[http-equiv="refresh"]');
   metaRefresh.forEach(meta => meta.remove());
 
-  // Override location change methods (may fail in some environments where these are read-only)
-  const originalAssign = window.location.assign.bind(window.location);
-  const originalReplace = window.location.replace.bind(window.location);
-
-  const isAllowedNavigation = (url: string): boolean => {
-    try {
-      const targetUrl = new URL(url, window.location.href);
-
-      // Allow Cloudflare challenge/captcha pages to prevent verification loops
-      const cloudflareHosts = ['challenges.cloudflare.com', 'captcha.cloudflare.com'];
-      if (cloudflareHosts.some(h => targetUrl.hostname === h)) {
-        return true;
-      }
-
-      // Allow same-origin Cloudflare verification paths (e.g. /cdn-cgi/l/chk_jschl)
-      if (
-        targetUrl.origin === window.location.origin &&
-        targetUrl.pathname.startsWith('/cdn-cgi/')
-      ) {
-        return true;
-      }
-
-      // Allow same-origin navigations
-      if (targetUrl.origin === window.location.origin) {
-        // Block common ad/redirect patterns.
-        // Patterns must use word boundaries to avoid false positives:
-        // e.g. /ad/ must not match "/read/", "/thread/", "/upload/"
-        const blockedPatterns = [
-          /(?:^|[/_-])ads?(?:[/_-]|$)/i,
-          /(?:^|[/_-])click[_-]?track/i,
-          /(?:^|[/_-])redirect(?:[/_-]|$)/i,
-          /(?:^|[/_-])jump[_-]?to/i,
-          /(?:^|[/_-])go[_-]?to[_-]?url/i,
-          /(?:^|[/_-])link[_-]?out/i,
-          /(?:^|[/_-])external(?:[/_-]|$)/i,
-        ];
-        return !blockedPatterns.some(p => p.test(targetUrl.pathname));
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  };
-
-  // Try to override location methods - may fail in Firefox userscript environments
-  let locationOverrideSucceeded = false;
-  const locationProto = Object.getPrototypeOf(window.location) as Location | null;
-  const originalHrefDesc = locationProto
-    ? Object.getOwnPropertyDescriptor(locationProto, 'href')
-    : null;
-  try {
-    const target = locationProto || window.location;
-
-    Object.defineProperty(target, 'assign', {
-      value: (url: string) => {
-        if (isAllowedNavigation(url)) originalAssign(url);
-      },
-      writable: true,
-      configurable: true,
-    });
-
-    Object.defineProperty(target, 'replace', {
-      value: (url: string) => {
-        if (isAllowedNavigation(url)) originalReplace(url);
-      },
-      writable: true,
-      configurable: true,
-    });
-
-    // Also try to guard location.href setter against unwanted navigation.
-    // Many mobile ad scripts use: location.href = 'https://...'
-    if (locationProto) {
-      if (originalHrefDesc?.set && originalHrefDesc.get) {
-        Object.defineProperty(locationProto, 'href', {
-          get: originalHrefDesc.get,
-          set: function (url: string) {
-            if (isAllowedNavigation(url)) {
-              originalHrefDesc.set?.call(this, url);
-            }
-          },
-          configurable: true,
-        });
-      }
-    }
-    locationOverrideSucceeded = true;
-  } catch {
-    // In Firefox userscript environments, location properties are often read-only
-  }
+  // location.href/assign/replace are [LegacyUnforgeable] own, non-configurable properties in
+  // Chrome and Firefox, so a userscript cannot intercept them; redirects are handled below
+  // through timers, dynamic script/iframe injection and document.write instead.
 
   // Intercept setTimeout/setInterval for timed redirects
   const originalSetTimeout = window.setTimeout;
@@ -307,19 +222,6 @@ export function blockRedirects(options: RedirectProtectionOptions = {}): () => v
   }
 
   return () => {
-    if (locationOverrideSucceeded) {
-      try {
-        const target = locationProto || window.location;
-        Object.defineProperty(target, 'assign', { value: originalAssign, configurable: true });
-        Object.defineProperty(target, 'replace', { value: originalReplace, configurable: true });
-
-        if (locationProto && originalHrefDesc) {
-          Object.defineProperty(locationProto, 'href', originalHrefDesc);
-        }
-      } catch {
-        // Ignore errors during cleanup
-      }
-    }
     window.setTimeout = originalSetTimeout;
     window.setInterval = originalSetInterval;
 

@@ -277,4 +277,39 @@ describe('UI component smoke', () => {
     app.unmount();
     mountEl.remove();
   });
+
+  it('ChapterDrawer disables cache-all while the TOC is loading', async () => {
+    const loading = ref(true);
+    const onCacheAll = vi.fn();
+    const mountEl = document.createElement('div');
+    document.body.appendChild(mountEl);
+    const app = createApp({
+      render: () =>
+        h(ChapterDrawer, {
+          isOpen: true,
+          chapters: [],
+          loading: loading.value,
+          cacheProgress: { done: 0, total: 0, failed: 0, running: false },
+          persistedCount: 0,
+          onCacheAll,
+        }),
+    });
+
+    app.mount(mountEl);
+    await nextTick();
+
+    const cacheButton = document.querySelector<HTMLButtonElement>('.mnr-offline-action.primary');
+    expect(cacheButton?.disabled).toBe(true);
+    cacheButton?.click();
+    expect(onCacheAll).not.toHaveBeenCalled();
+
+    loading.value = false;
+    await nextTick();
+    expect(cacheButton?.disabled).toBe(false);
+    cacheButton?.click();
+    expect(onCacheAll).toHaveBeenCalledTimes(1);
+
+    app.unmount();
+    mountEl.remove();
+  });
 });

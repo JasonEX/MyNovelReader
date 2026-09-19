@@ -452,6 +452,56 @@ describe('bootstrap', () => {
     expect(bootstrap.isActive()).toBe(false);
   });
 
+  it('closeReader restores in place when only the entry URL hash differs', async () => {
+    const domInit = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/index.html',
+      pretendToBeVisual: true,
+    });
+    vi.stubGlobal('window', domInit.window);
+    vi.stubGlobal('document', domInit.window.document);
+    vi.stubGlobal('sessionStorage', domInit.window.sessionStorage);
+
+    const bootstrap = await import('@/bootstrap');
+
+    const domChapter = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/chapter/1#comments',
+      pretendToBeVisual: true,
+    });
+    vi.stubGlobal('window', domChapter.window);
+    vi.stubGlobal('document', domChapter.window.document);
+    vi.stubGlobal('sessionStorage', domChapter.window.sessionStorage);
+    document.title = 'Original Chapter Title';
+
+    const chapter = {
+      title: 't',
+      content: 'c',
+      rawContent: 'c',
+      url: 'https://example.com/chapter/1',
+    };
+    let launchCb: ((c: unknown) => void) | null = null;
+    mockGetAutoEnableManager.mockReturnValue({
+      check: vi.fn(async () => ({ shouldEnable: true, method: 'detection' })),
+      setPromptCallback: vi.fn(),
+      setLaunchCallback: vi.fn((cb: (c: unknown) => void) => {
+        launchCb = cb;
+      }),
+      execute: vi.fn(async () => {
+        launchCb?.(chapter);
+      }),
+      manualEnable: vi.fn(async () => {}),
+    });
+
+    await bootstrap.initialize();
+    expect(bootstrap.isActive()).toBe(true);
+
+    bootstrap.closeReader();
+
+    expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
+    expect(window.location.href).toBe('https://example.com/chapter/1#comments');
+    expect(document.title).toBe('Original Chapter Title');
+    expect(document.getElementById('mnr-entry-root')).not.toBeNull();
+  });
+
   it('closeReader keeps manual entry for rule-matched ambiguous chapter URLs', async () => {
     const domInit = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
       url: 'https://example.com/index.html',

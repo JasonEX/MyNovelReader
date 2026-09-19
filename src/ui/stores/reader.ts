@@ -303,23 +303,6 @@ export const useReaderStore = defineStore('reader', () => {
     getPersistedCachedChapter: getPersistedCachedChapterForCurrentBook,
   });
 
-  const { startCacheAll, cancelCacheAll, retryFailedCache } = createCacheAll({
-    cacheProgress,
-    cacheQueue,
-    cacheFailedUrls,
-    cacheAbort,
-    loadedUrls,
-    cachedContents,
-    persistedUrls,
-    chapter,
-    rule,
-    chapters,
-    runtime,
-    restoreCache,
-    persistCache,
-    showToast,
-  });
-
   const tocActions = createTocActions({
     toc,
     tocOriginal,
@@ -333,6 +316,24 @@ export const useReaderStore = defineStore('reader', () => {
     showToast,
     applyTocConversion,
     loadTocEntriesPaged,
+  });
+
+  const { startCacheAll, cancelCacheAll, retryFailedCache } = createCacheAll({
+    cacheProgress,
+    cacheQueue,
+    cacheFailedUrls,
+    cacheAbort,
+    cachedContents,
+    persistedUrls,
+    tocOriginal,
+    chapter,
+    rule,
+    chapters,
+    runtime,
+    loadToc: tocActions.loadToc,
+    restoreCache,
+    persistCache,
+    showToast,
   });
 
   // ---- Core actions ----

@@ -165,6 +165,9 @@ export function toProtectionOptions(settings: ProtectionSettings): ProtectionOpt
     clearTimers: aggressive,
     unlockKeyboard: true,
     cleanupScripts: aggressive,
+    // The reader shares the host document: faking visibility would also hide tab switches from
+    // the reader's own position flush and preload pause.
+    blockVisibilityDetection: false,
   };
 }
 

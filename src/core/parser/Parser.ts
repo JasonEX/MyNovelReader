@@ -736,7 +736,8 @@ export class Parser {
           headers: gmHeaders,
           timeout: timeoutMs,
           withCredentials,
-          onload: resp => resolve(resp.responseText || null),
+          onload: resp =>
+            resolve(resp.status >= 200 && resp.status < 300 ? resp.responseText || null : null),
           onerror: () => resolve(null),
           ontimeout: () => resolve(null),
         });

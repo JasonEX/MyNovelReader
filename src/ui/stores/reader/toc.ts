@@ -184,10 +184,22 @@ export function createTocActions(ctx: TocActionContext) {
     }
   }
 
-  async function loadToc(): Promise<void> {
-    const runId = ctx.runtime.sessionId();
-    if (ctx.toc.value.length > 0 || ctx.tocLoading.value) return;
+  let inflight: { runId: number; promise: Promise<void> } | null = null;
 
+  /** Callers awaiting loadToc() must see the settled TOC, so share an in-flight load. */
+  function loadToc(): Promise<void> {
+    const runId = ctx.runtime.sessionId();
+    if (ctx.toc.value.length > 0) return Promise.resolve();
+    if (inflight?.runId === runId) return inflight.promise;
+
+    const promise = runLoadToc(runId).finally(() => {
+      if (inflight?.promise === promise) inflight = null;
+    });
+    inflight = { runId, promise };
+    return promise;
+  }
+
+  async function runLoadToc(runId: number): Promise<void> {
     ctx.tocLoading.value = true;
     try {
       const currentUrl = ctx.chapter.value?.url || '';
