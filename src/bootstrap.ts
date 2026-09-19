@@ -33,6 +33,9 @@ import { ReaderView } from '@/ui/components/reader';
 import type { SiteRule } from '@/core/rules/types';
 import { useReaderStore } from '@/ui/stores/reader';
 
+const SKIP_AUTO_ENABLE_KEY = 'mnr_skip_auto_enable';
+const HOST_OVERLAY_CLEANUP_KEY = 'mnr_cleanup_host_overlays';
+
 /** Application state */
 interface AppState {
   isInitialized: boolean;
@@ -159,21 +162,7 @@ async function runAutoEnable(): Promise<void> {
     protectionOptions,
   });
 
-  // Check if we should skip auto-enable (e.g., after exiting reader and navigating to new chapter)
-  const skipFlag = sessionStorage.getItem('mnr_skip_auto_enable');
-  if (skipFlag) {
-    // Always clear the flag
-    sessionStorage.removeItem('mnr_skip_auto_enable');
-
-    // Only skip if flag was set recently (within 5 seconds)
-    const flagTime = parseInt(skipFlag, 10);
-    if (!isNaN(flagTime) && Date.now() - flagTime < 5000) {
-      // Keep a manual entry instead of auto-enabling.
-      getSiteProtection().deactivate();
-      showReaderEntry();
-      return;
-    }
-  }
+  if (consumeExitNavigation()) return;
 
   // First, check the decision to handle user-disabled case
   const decision = await manager.check(document);
@@ -354,6 +343,33 @@ function hideOriginalContent(): void {
   document.head.appendChild(style);
 }
 
+function cleanupHostPageOverlays(): void {
+  try {
+    getSiteProtection().removeOverlays();
+  } catch (e) {
+    console.error('[MNR] Failed to clean host page overlays:', e);
+  }
+}
+
+/** Consume the one-shot transition created when the reader exits onto another chapter. */
+function consumeExitNavigation(): boolean {
+  const transitionToken = sessionStorage.getItem(SKIP_AUTO_ENABLE_KEY);
+  if (!transitionToken) return false;
+
+  sessionStorage.removeItem(SKIP_AUTO_ENABLE_KEY);
+  const cleanupToken = sessionStorage.getItem(HOST_OVERLAY_CLEANUP_KEY);
+  sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
+
+  const transitionTime = Number.parseInt(transitionToken, 10);
+  if (!Number.isFinite(transitionTime) || Date.now() - transitionTime >= 5000) return false;
+
+  appState.autoEnableDone = true;
+  getSiteProtection().deactivate();
+  if (cleanupToken === transitionToken) cleanupHostPageOverlays();
+  showReaderEntry();
+  return true;
+}
+
 /**
  * Close the reader and restore original page
  */
@@ -386,6 +402,8 @@ export function closeReader(): void {
       ? targetUrl
       : null;
   const shouldCleanupHostOverlays = appState.pendingHostOverlayCleanup && !navigationTarget;
+  const shouldCarryHostOverlayCleanup =
+    appState.pendingHostOverlayCleanup && navigationTarget !== null;
   appState.pendingHostOverlayCleanup = false;
 
   // Unmount app
@@ -411,11 +429,7 @@ export function closeReader(): void {
   // While the reader is open, the host page is display:none and overlay geometry is unavailable.
   // Run a newly selected aggressive-mode cleanup after revealing the host, before the next paint.
   if (shouldCleanupHostOverlays) {
-    try {
-      getSiteProtection().removeOverlays();
-    } catch (e) {
-      console.error('[MNR] Failed to clean host page overlays:', e);
-    }
+    cleanupHostPageOverlays();
   }
 
   // Update state
@@ -433,8 +447,13 @@ export function closeReader(): void {
   // Chapter URLs are canonicalized (no hash, no redundant ?page=1); compare the same way so
   // closing on the entry chapter restores in place instead of reloading.
   if (navigationTarget) {
-    // Set flag to prevent auto-enable on the new page
-    sessionStorage.setItem('mnr_skip_auto_enable', Date.now().toString());
+    // Pair any deferred cleanup with this exact exit transition so stale state cannot apply it.
+    const transitionToken = Date.now().toString();
+    sessionStorage.setItem(SKIP_AUTO_ENABLE_KEY, transitionToken);
+    sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
+    if (shouldCarryHostOverlayCleanup) {
+      sessionStorage.setItem(HOST_OVERLAY_CLEANUP_KEY, transitionToken);
+    }
     window.location.href = navigationTarget;
     return; // The next page load will decide whether to show the manual entry.
   }
@@ -636,6 +655,7 @@ async function bootstrap(): Promise<void> {
   if (!isTopFrame()) return;
   installGlobalDebugErrorListeners();
   if (appState.isActive) return;
+  if (consumeExitNavigation()) return;
 
   const url = window.location.href;
   if (!(await shouldBootstrapForPage(url, document))) {

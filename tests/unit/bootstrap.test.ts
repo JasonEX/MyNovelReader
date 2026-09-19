@@ -226,7 +226,41 @@ describe('bootstrap', () => {
     );
     expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
     expect(manager.check).not.toHaveBeenCalled();
+    expect(mockRemoveOverlays).not.toHaveBeenCalled();
     expect(configStore.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('consumes matching deferred overlay cleanup on a skipped destination load', async () => {
+    dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
+      url: 'https://example.com/chapter/2',
+      pretendToBeVisual: true,
+    });
+
+    vi.stubGlobal('window', dom.window);
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('sessionStorage', dom.window.sessionStorage);
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete',
+    });
+    mockGetSitePreference.mockReturnValue({ enabled: false, timestamp: Date.now() });
+
+    const transitionToken = Date.now().toString();
+    sessionStorage.setItem('mnr_skip_auto_enable', transitionToken);
+    sessionStorage.setItem('mnr_cleanup_host_overlays', transitionToken);
+    await import('@/bootstrap');
+
+    expect(mockDeactivateProtection).toHaveBeenCalled();
+    expect(mockRemoveOverlays).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('mnr-entry-root')).not.toBeNull();
+    expect(sessionStorage.getItem('mnr_skip_auto_enable')).toBeNull();
+    expect(sessionStorage.getItem('mnr_cleanup_host_overlays')).toBeNull();
+    expect(mockDeactivateProtection.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      mockRemoveOverlays.mock.invocationCallOrder[0]
+    );
+    expect(configStore.load).not.toHaveBeenCalled();
+    expect(mockGetSitePreference).not.toHaveBeenCalled();
+    expect(mockGetAutoEnableManager).not.toHaveBeenCalled();
   });
 
   it('auto-bootstraps ambiguous section pages when an explicit rule matches', async () => {

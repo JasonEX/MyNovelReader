@@ -1315,6 +1315,58 @@ test('cleans host overlays before restoring a page after switching to aggressive
   await expect(overlay).toBeHidden();
 });
 
+test('carries deferred overlay cleanup across exit navigation', async ({ context, page }) => {
+  const nextUrl = 'http://mnr.test/chapter/101.html';
+  const withOverlay = (html: string) =>
+    html.replace(
+      '</body>',
+      `<a id="host-overlay" href="https://ads.example/"
+        style="position: fixed; inset: 0; z-index: 2001; background: transparent"></a></body>`
+    );
+  let destinationNavigations = 0;
+
+  await context.route('http://mnr.test/chapter/*.html', route => {
+    const request = route.request();
+    const isDestination = request.url() === nextUrl;
+    if (isDestination && request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      destinationNavigations++;
+    }
+    return route.fulfill({
+      body: withOverlay(isDestination ? nextFixtureHtml : fixtureHtml),
+      contentType: 'text/html; charset=utf-8',
+      status: 200,
+    });
+  });
+  await addYingChuangUserscript(context);
+
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
+  assertMnrSmokeState(await waitForMnrReader(page));
+  const reader = page.locator('#mnr-reader-root');
+  await expect(reader.locator(`article[data-chapter-url="${nextUrl}"]`)).toContainText(
+    '第101章 手势续读'
+  );
+  await reader.getByRole('button', { name: '打开设置' }).click();
+  await reader.locator('summary').filter({ hasText: '本站与高级' }).click();
+  await reader.getByRole('button', { name: '强力', exact: true }).click();
+  await page.keyboard.press('Escape');
+
+  await page.waitForTimeout(800);
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(nextUrl);
+  await expect(reader).toHaveCount(1);
+  await reader.getByRole('button', { name: '打开设置' }).click();
+  await reader.getByRole('button', { name: '退出阅读模式' }).click();
+
+  await expect(reader).toHaveCount(0);
+  await expect(page.locator('#mnr-entry-root')).toHaveCount(1);
+  await expect.poll(() => destinationNavigations).toBe(1);
+  const destinationOverlay = page.locator('#host-overlay');
+  await expect
+    .poll(() => destinationOverlay.evaluate(element => (element as HTMLElement).style.display))
+    .toBe('none');
+  await expect(destinationOverlay).toBeHidden();
+});
+
 test.describe('mobile gesture paging', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 

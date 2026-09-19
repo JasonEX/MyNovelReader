@@ -22952,6 +22952,8 @@ ul, ol {
 			};
 		}
 	}), [["__scopeId", "data-v-cb73e76a"]]);
+	var SKIP_AUTO_ENABLE_KEY = "mnr_skip_auto_enable";
+	var HOST_OVERLAY_CLEANUP_KEY = "mnr_cleanup_host_overlays";
 	var appState = {
 		isInitialized: false,
 		autoEnableDone: false,
@@ -23023,16 +23025,7 @@ ul, ol {
 			enableProtection: true,
 			protectionOptions: toProtectionOptions(useConfigStore(pinia).protection)
 		});
-		const skipFlag = sessionStorage.getItem("mnr_skip_auto_enable");
-		if (skipFlag) {
-			sessionStorage.removeItem("mnr_skip_auto_enable");
-			const flagTime = parseInt(skipFlag, 10);
-			if (!isNaN(flagTime) && Date.now() - flagTime < 5e3) {
-				getSiteProtection().deactivate();
-				showReaderEntry();
-				return;
-			}
-		}
+		if (consumeExitNavigation()) return;
 		const decision = await manager.check(document);
 		appState.currentDecision = decision;
 		if (decision.method === "user-disabled" || decision.showManualEntry) {
@@ -23145,6 +23138,27 @@ ul, ol {
   `;
 		document.head.appendChild(style);
 	}
+	function cleanupHostPageOverlays() {
+		try {
+			getSiteProtection().removeOverlays();
+		} catch (e) {
+			console.error("[MNR] Failed to clean host page overlays:", e);
+		}
+	}
+	function consumeExitNavigation() {
+		const transitionToken = sessionStorage.getItem(SKIP_AUTO_ENABLE_KEY);
+		if (!transitionToken) return false;
+		sessionStorage.removeItem(SKIP_AUTO_ENABLE_KEY);
+		const cleanupToken = sessionStorage.getItem(HOST_OVERLAY_CLEANUP_KEY);
+		sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
+		const transitionTime = Number.parseInt(transitionToken, 10);
+		if (!Number.isFinite(transitionTime) || Date.now() - transitionTime >= 5e3) return false;
+		appState.autoEnableDone = true;
+		getSiteProtection().deactivate();
+		if (cleanupToken === transitionToken) cleanupHostPageOverlays();
+		showReaderEntry();
+		return true;
+	}
 	function closeReader() {
 		if (!appState.isActive) return;
 		recordDebugEvent("bootstrap.closeReader");
@@ -23160,6 +23174,7 @@ ul, ol {
 		const originalUrl = originalHostPage?.url || null;
 		const navigationTarget = targetUrl && originalUrl && normalizeUrlForFetch$1(targetUrl) !== normalizeUrlForFetch$1(originalUrl) ? targetUrl : null;
 		const shouldCleanupHostOverlays = appState.pendingHostOverlayCleanup && !navigationTarget;
+		const shouldCarryHostOverlayCleanup = appState.pendingHostOverlayCleanup && navigationTarget !== null;
 		appState.pendingHostOverlayCleanup = false;
 		if (app) {
 			app.unmount();
@@ -23172,17 +23187,16 @@ ul, ol {
 		}
 		const hideStyle = document.getElementById("mnr-hide-original");
 		if (hideStyle) hideStyle.remove();
-		if (shouldCleanupHostOverlays) try {
-			getSiteProtection().removeOverlays();
-		} catch (e) {
-			console.error("[MNR] Failed to clean host page overlays:", e);
-		}
+		if (shouldCleanupHostOverlays) cleanupHostPageOverlays();
 		if (pinia) useReaderStore(pinia).deactivate();
 		appState.isActive = false;
 		appState.originalHostPage = null;
 		appState.entryPageKind = null;
 		if (navigationTarget) {
-			sessionStorage.setItem("mnr_skip_auto_enable", Date.now().toString());
+			const transitionToken = Date.now().toString();
+			sessionStorage.setItem(SKIP_AUTO_ENABLE_KEY, transitionToken);
+			sessionStorage.removeItem(HOST_OVERLAY_CLEANUP_KEY);
+			if (shouldCarryHostOverlayCleanup) sessionStorage.setItem(HOST_OVERLAY_CLEANUP_KEY, transitionToken);
 			window.location.href = navigationTarget;
 			return;
 		}
@@ -23316,6 +23330,7 @@ ul, ol {
 		if (!isTopFrame()) return;
 		installGlobalDebugErrorListeners();
 		if (appState.isActive) return;
+		if (consumeExitNavigation()) return;
 		const url = window.location.href;
 		if (!await shouldBootstrapForPage(url, document)) {
 			getSiteProtection().deactivate();
